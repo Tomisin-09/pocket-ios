@@ -26,9 +26,11 @@ worked on in one place.
   usage string goes back in the same commit.
 - AI session suggestions (later) run through a backend proxy that holds the API
   key; the app never does. See `docs/decisions/0002-ai-proxy-backend.md`.
-- **The Red Moon Oracle** — the weekly reading, reached from Home ▸ Learn — is built
-  through stage S1 of `docs/decisions/0187-red-moon-oracle.md`, and **S0 and S1 contain
-  no network at all**. The reading is written on the device by `LocalOracle`, which
+- **The Red Moon Oracle** — the weekly reading — is built through stage S1 of
+  `docs/decisions/0187-red-moon-oracle.md`, and **S0 and S1 contain no network at all**.
+  ⚠ **It is shipped but not reachable**: `docs/decisions/0211-a-door-that-waits-for-the-voice.md`
+  closed its door on Home while the reading's register is unsettled. The code, the guards and
+  the tests all stay; only the tile is hidden. The reading is written on the device by `LocalOracle`, which
   ADR 0092 §A2 requires as a deterministic fallback regardless; building it first means
   every safety mechanism (the tone guard, the pain and distress matchers, the whole
   request DTO and its seven privacy rules) is exercised by real material before a token

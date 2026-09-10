@@ -2,6 +2,12 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-07 (`pocket-303-home-tile-grid`)
+- **Amended by:** ADR 0211 — the map is **five reachable destinations, not six**: the Red Moon
+  Oracle's door is closed while its register is unsettled, and its tile is drawn `.hidden()` in the
+  Learn row (0211 D3). Everything this ADR decided stands — the three sections, two to a row, the
+  subtitles gone, and §1's rule that a destination's accessibility label is the UI-test contract.
+  The hidden tile still sets the Learn row's height, so reopening the door moves nothing else; the
+  arithmetic below that says *six* is the arithmetic of the tiles drawn, not of the doors that open.
 - **Relates to:** **reverses ADR 0102**'s rejection of a tile grid, on the stated grounds that it
   was decided at four cards. Keeps everything else 0102 established — the three titled sections, and
   §1's rule that a destination's accessibility label is the UI-test contract. Spends the height on

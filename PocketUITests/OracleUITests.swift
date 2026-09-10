@@ -19,17 +19,32 @@ import XCTest
 /// the identical reason (ADR 0190 D8's note). So this test can assert the **whole** path: the card,
 /// the screen, the week it names, the button, and a reading with prose in it.
 ///
+/// ### The door has to be asked for now (ADR 0211)
+///
+/// The Oracle is shelved: its tile is drawn hidden on Home, so a player cannot reach any of this.
+/// The feature itself was not touched — which is exactly why this suite is kept rather than deleted,
+/// and why it launches with `-oracleDoor`. A shelved feature whose tests still run is a feature that
+/// can come back; one whose tests were deleted with its door is a rewrite.
+///
+/// ⚠ **A pass here is only meaningful if this class actually ran.** `-only-testing:` a class that
+/// executes nothing exits 0, and the shape of this change — a suite that now depends on a launch
+/// argument to find its first element — is precisely the shape that goes quietly green by running
+/// zero tests. Read the count, not the exit status.
 final class OracleUITests: UITestCase {
 
     @MainActor
     func testTheOracleOpensFromTheLearnSectionAndSaysWhereItIsInTheWeek() throws {
-        let app = launchApp()
+        let app = launchApp(extraArguments: [UITestHooks.oracleDoorArgument])
 
         // Matched by label prefix, like the Toolkit card beside it: the subtitle is copy and copy
         // moves. The name does not.
         let oracleCard = app.buttons
             .matching(NSPredicate(format: "label BEGINSWITH %@", "Red Moon Oracle,")).firstMatch
-        XCTAssertTrue(oracleCard.waitForExistence(timeout: Self.uiTimeout), "Oracle card missing on Home")
+        XCTAssertTrue(oracleCard.waitForExistence(timeout: Self.uiTimeout), """
+            Oracle card missing on Home. Since ADR 0211 the tile is hidden unless the launch \
+            carries \(UITestHooks.oracleDoorArgument) as well as \(UITestHooks.launchArgument) — \
+            check the door before looking at the card.
+            """)
         XCTAssertTrue(scrollIntoView(oracleCard, in: app), "Oracle card not reachable by scrolling")
         oracleCard.tap()
 

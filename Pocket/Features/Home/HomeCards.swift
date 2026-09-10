@@ -100,8 +100,12 @@ struct HomeTile: View {
             .multilineTextAlignment(.center)
         }
         // `maxHeight: .infinity` is what makes a row of two even: an `HStack`'s children take the
-        // height of the tallest, so "Red Moon Oracle" wrapping to two lines lifts the Toolkit beside
-        // it rather than leaving a step in the grid.
+        // height of the tallest, so a title that wraps lifts the tile beside it rather than leaving
+        // a step in the grid. ⚠ The example this comment used to give was wrong: "Red Moon Oracle"
+        // does **not** wrap at tile width — measured on an iPhone 17 at default Dynamic Type, the
+        // Learn row is exactly as tall as the single-line Practice row (311px, ADR 0211). The real
+        // wrapping case is larger Dynamic Type, and the `Song library` caption, which does add a
+        // line and does lift the Journal beside it.
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 16)
         .padding(.horizontal, 10)

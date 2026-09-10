@@ -1207,7 +1207,8 @@ built. `TunerEngine` also stops restoring `.playback` unconditionally: it now re
 the thing that flipped the category, so a future call site with a take armed underneath cannot reach the
 same trap. Tuning **during** a block is declined; the honest answer is a `Tune up` block type.
 
-The six home destinations (Practice / Metronome · Song library / Journal · Red Moon Oracle / Toolkit)
+The home destinations (Practice / Metronome · Song library / Journal · Toolkit — and the Red Moon
+Oracle, **drawn but hidden** since ADR 0211 closed its door)
 share one presentational `HomeTile` component — a glyph in a washed circle over a centred title, on a
 washed card, two to a row inside the `HomeSection` each belongs to (ADR 0197). Each tile supplies its
 copy and its `PocketColor` hue trio, keeping the owning link/button and the **accessibility label** in
@@ -1970,6 +1971,11 @@ disk use. Surfaced as *Settings ▸ Your data ▸ Storage*, under Export on the 
     until ADR 0187 S4 fills it in alongside the privacy-policy and manifest changes.
 
 ## The Red Moon Oracle (Core/Oracle + Features/Oracle, ADR 0187)
+
+⚠ **Built, and not reachable.** ADR 0211 closed the Oracle's door on Home while the reading's
+register is unsettled — nothing in the app presents `OracleView` except `OracleUITests`, through a
+launch argument. Everything below is still compiled, still tested and still accurate; read it as a
+description of a shelf, not of a live surface.
 
 Stages S0 and S1 are built. **Neither contains a network call**, and together they are a complete
 feature: the reading is written on the device by `LocalOracle`, which ADR 0092 §A2 requires as a
