@@ -319,7 +319,7 @@ only once a couple of folders exist — the progressive disclosure the instrumen
 a flat rail is easy; if people do nest, a Home door needs to answer "which level" as well as "which
 library", and is more expensive than it looks.
 
-## The analytics sample list should live next to the enum (logged 2026-09-09, ADR 0210)
+## The analytics sample list should live next to the enum — **DONE 2026-09-10** (logged 2026-09-09, ADR 0210)
 
 `AnalyticsEventTests.everyEvent` is a hand-maintained list standing in for the exhaustiveness
 `AnalyticsEvent` cannot have (it has associated values, so it is not `CaseIterable`). Its own header
@@ -335,6 +335,24 @@ The fix its own header asks for: move the sample array into `AnalyticsEvent.swif
 `static let everyEvent`, so adding a case and forgetting the sample are one edit in one file rather
 than two edits in two targets. A `#if DEBUG` guard keeps it out of a release binary if that matters.
 Cheap, and the next miss is otherwise silent for however long it takes somebody to count again.
+
+> **Done, on `pocket-315-analytics-sample-list`.** `AnalyticsEvent.everyEvent` is now a `static let`
+> three lines below the cases it samples. **No `#if DEBUG`** — eighteen enum values carrying no
+> strings cost nothing in a release binary, and `RecordingSink` next door already declines the same
+> guard for the same reason: a conditional is one more way for two things to disagree.
+>
+> **A fourth instance was found while fixing the third, in the same file.**
+> `testTextValuesAreOnlyEnumRawValues` enumerated `PaywallTrigger`'s reporting names as **six string
+> literals**; `reportingName` returns **nine**. `received_exercise`, `home` and `launch` were
+> missing, and `.launch` is genuinely emitted by `PaywallHost` on every locked cold launch. Nothing
+> failed, because the event samples exercise only two triggers — so seven of the nine had never had
+> their payload inspected by any test at all. Now `PaywallTrigger.everyTrigger` sits beside *its*
+> cases, the permitted set is read from it, and `testEveryPaywallTriggerEmitsOnlyPermittedText`
+> builds both paywall events from every trigger. That is the assertion whose absence hid this.
+>
+> The generalisation, since this is four for four: **a list of literals describing an enum drifts,
+> wherever it is kept.** Keeping it in the same file as the enum does not make it correct — it makes
+> the miss visible to whoever is already editing.
 
 ## Nothing catches an additive archive field declared the wrong way (logged 2026-09-10, ADR 0212)
 
