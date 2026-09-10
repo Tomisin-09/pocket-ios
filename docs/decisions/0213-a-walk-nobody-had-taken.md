@@ -140,6 +140,30 @@ a `Toggle` identifiable at a glance rather than at a call site.
 The cost is real and worth stating: **this tool cannot be read as a score.** A falling finding count
 is not progress and a rising one is not regression. It is a list of places to look.
 
+### D10 — a label is a code change, and this one segfaulted
+
+The smallest fix in this pass — `.accessibilityLabel("Description")`, one line — crashed
+`RoutineDetailView` on every open: `EXC_BAD_ACCESS` in `swift_retain`, under `initializeWithCopy for
+Section` and `initializeWithCopy for ClosedRange<>.Index` (that range is `lineLimit(3...8)`). Adding
+a modifier to a chain inside a `Section` inside a `List` inside an already-large body is not free.
+Extracting the chain into `@ViewBuilder private var descriptionField: some View` erases the nested
+generic into an opaque type and the crash goes with it. Failed 2 of 2 inline, passed 3 of 3 extracted.
+
+**What this ADR takes from it is not about SwiftUI.** It is that the whole pre-push checklist was
+green on that build: `swiftlint --strict` clean, `xcodebuild build` succeeded, and the `PocketAll`
+plan passed **3000 unit and 17 UI tests**. It passed because **no UI test opens the routine editor**.
+The only thing that opened that screen was the shoot — which D2 puts outside CI on purpose, and which
+`check-manual.py` C14 keeps there.
+
+So: **after changing a SwiftUI body, run that screen's shoot class**, not only the test plan
+(`POCKET_SHOOT_ONLY=<ManualXShots>`, about four minutes). And read `Application <bundle id> is not
+running` in a shoot log as *the app crashed*, not as a selector that missed — the crash report in
+`~/Library/Logs/DiagnosticReports/` is the evidence, and it names the file.
+
+This is also the sharpest argument for **Pass B** that this pass produced. An accessibility change
+that is invisible to every automated check we run is exactly the thing a person holding the phone
+notices in a second.
+
 ## Consequences
 
 The backlog item closes. The design brief's checklist gains a mechanism behind the VoiceOver line,
