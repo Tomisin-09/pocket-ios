@@ -899,7 +899,14 @@ projected onto `PlannerLoop.templates`; untagged loops stay Path-B only, no sche
 resolves a `repertoire` skill to the goal's target song (its loops + the song run), with a **soft**
 down-weight when a skill's direct prerequisites are unrated (never a hard gate — ADR 0016 ↔ 0071 at
 the selection level). The dueScore multiply stays in `SessionBuilder`,
-so goal-priority and dueness/mastery compose once. `GoalTemplateLibrary` seeds four curated goals. The
+so goal-priority and dueness/mastery compose once. `GoalTemplateLibrary` seeds ten curated goals.
+**ADR 0216 slice 1** reads this machinery back to the player without changing it: `GoalReach` asks
+`CandidateDeriver` what each of a goal's skills pulls — **one skill at a time**, so a drill two
+skills share is credited to both — for the reach line under every skill in the goal editors;
+`SkillAssociation` answers *which types work on a skill by default* in `ExerciseTemplate.displayOrder`
+(never the family map's `Dictionary` order) and picks the single fix to offer for a skill that
+reaches nothing; `SkillExplainer` is the text behind a skill's ⓘ — one hand-written sentence per
+taxonomy row, the rest derived from the same tables the deriver reads. All three are pure. The
 profile's declared taste tilts this pool via a **lift-only `PracticeEmphasis`** (ADR 0113 S3): a
 `deriveCandidates(…, emphasis:)` multiplier (default `.neutral`) that raises a candidate's priority
 when its skill is in the declared genres' `GenreSkillMap` union or its mode matches the dream's

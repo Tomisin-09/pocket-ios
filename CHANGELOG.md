@@ -54,6 +54,22 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
   The reading is still written on your device, still weekly, and still never grades you.
 
+### Added
+
+- **A goal now says what it will bring before you build a session.** Under every skill in the goal
+  editor — for this session's goals and your long-term ones — is what that skill would actually
+  pull from your library: *2 exercises · 1 loop*, *3 loops · the song itself*. A skill that pulls
+  nothing says *Nothing in your library yet* where you chose it, instead of leaving a gap in the
+  session you only notice later, and offers the kind of exercise that works on it — or says what
+  would, when no drill can. Counts only: nothing here is a score.
+- **Every skill has an ⓘ.** What the skill is, which kinds of drill and which loops work on it, and
+  what comes before it — in the goal editor, in the full skill list, and anywhere a drill or loop
+  lists its skills.
+- **Drills and loops say which skills they work on.** An exercise's ⓘ sheet has a **Works on**
+  section, set by its template; a loop's editor has one too, filled by the tags that name a kind of
+  drill. Until now the only way to find out which goals a drill answered was to build a session and
+  see what came up.
+
 ## [1.3] — build 7, cut 2026-09-10
 
 The first App Store submission since 1.1 (build 3, approved 2026-08-12). Everything below landed

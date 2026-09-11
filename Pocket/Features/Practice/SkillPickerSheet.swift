@@ -50,20 +50,27 @@ struct SkillPickerSheet: View {
         }
     }
 
+    /// The toggle and the ⓘ are **siblings** (ADR 0216 D5) — a button inside a button's label fires
+    /// both, so reading about a skill would also add it.
     private func skillRow(_ skill: SkillInfo) -> some View {
         let isKept = keptSkillIDs.contains(skill.id)
-        return Button { toggle(skill.id) } label: {
-            HStack {
-                Text(skill.name)
-                    .font(.futura(.body))
-                    .foregroundStyle(PocketColor.textPrimary)
-                Spacer()
-                Image(systemName: isKept ? "checkmark.circle.fill" : "plus.circle")
-                    .foregroundStyle(isKept ? PocketColor.practice : PocketColor.textSecondary)
+        return HStack(spacing: 4) {
+            Button { toggle(skill.id) } label: {
+                HStack {
+                    Text(skill.name)
+                        .font(.futura(.body))
+                        .foregroundStyle(PocketColor.textPrimary)
+                    Spacer()
+                    Image(systemName: isKept ? "checkmark.circle.fill" : "plus.circle")
+                        .foregroundStyle(isKept ? PocketColor.practice : PocketColor.textSecondary)
+                }
+                .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel(skill.name)
+            .accessibilityAddTraits(isKept ? .isSelected : [])
+            InfoPopoverButton(subject: skill.name, info: SkillExplainer.text(for: skill.id))
         }
-        .buttonStyle(.plain)
         .listRowBackground(PocketColor.background)
     }
 

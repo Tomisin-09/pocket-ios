@@ -90,7 +90,7 @@ actually schedules and an empty one schedules nothing.
 ### Then trim it
 
 <!-- shot: sessions/goal-editor | role: screen
-     | alt: The Edit goal form with the name, the Low / Normal / High priority control, the skills list, Mark as met and Delete goal
+     | alt: The Edit goal form with the name, the Low / Normal / High priority control, and the skills list, each skill saying what it would bring from your library and how to fill one that brings nothing, down to Mark as met
      | state: seeded library, Today's session, an existing goal reopened -->
 
 - **Name** — what you would call it out loud.
@@ -98,7 +98,12 @@ actually schedules and an empty one schedules nothing.
   today's session, not a deadline. Long-term goals have no priority control; their rank does the
   same job.
 - **Skills** — tap to include or drop one, or **Add skills** to pick more from the full catalogue.
-  **Save** stays unavailable until at least one is kept.
+  **Save** stays unavailable until at least one is kept. Under each skill is what it would actually
+  bring from your library — *2 exercises · 1 loop*, say — worked out exactly the way the session
+  will be. A kept skill that brings nothing says *Nothing in your library yet*, and below it either
+  a button that makes the kind of exercise that works on it, or a line saying what would. The **ⓘ**
+  beside any skill says what it is, which kinds of drill and loop work on it, and what comes
+  before it.
 - **Target song** — this row appears only when you have kept a skill that needs a song to mean
   anything. Pick one and the goal schedules that song's loops and a play-through of it, which is
   what turns "learn this song" into actual blocks.

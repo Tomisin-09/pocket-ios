@@ -139,7 +139,9 @@ The screen stays awake while you play, unless you have turned that off in Settin
 
 Two things are reachable at any point, including mid-run: the **quick note** button in the toolbar,
 for a thought you want to keep before it goes, and the **ⓘ**, which opens the drill's reference
-sheet — its template, description, linked songs, meter and rhythm.
+sheet — its template, description, linked songs, meter and rhythm, and under **Works on** the skills
+its template makes it work on, so the goals that can bring it into a session. Each skill has its own
+**ⓘ**.
 
 You can also arm a **recording** before you start, which captures your playing through the mic as a
 take. That is covered with the rest of the journal.

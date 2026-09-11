@@ -160,6 +160,9 @@ holding a row, and no selection mode. It starts collapsed.
 - **`Journal`** — notes written against this loop, showing a count or `None`.
 - **`Where you learned it`** — links out to whatever explains this passage, with an `Add a link`
   button. See [where you learned it](../references.md).
+- **`Works on`** — the skills this loop serves, so the goals that can bring it into a session. A
+  tag that names a kind of drill — the ✨ suggestions under Tags — is what puts them here, and each
+  says which tag it came from.
 - **`Tags`** — your own labels, plus a row of suggestions.
 - **`Colour`** — how the span is drawn on the waveform, including `Custom colour`.
 - **`Delete loop`** at the bottom.

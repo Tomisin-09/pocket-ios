@@ -2,6 +2,10 @@
 
 - **Status:** Accepted (principles recorded; build deferred to the Phase 3 planner)
 - **Date:** 2026-06-18
+- **Amended by:** ADR 0216 D7 (2026-09-11, built in its slice 2). **S2**'s *"drawn from a defined
+  taxonomy"* is no longer the whole vocabulary: a player may create a **custom skill**, with their
+  own description, that a goal can name and a drill or loop can state. The taxonomy remains the
+  controlled vocabulary for everything the app itself authors; S1 and S3–S7 stand.
 
 ## Context
 

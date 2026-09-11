@@ -57,10 +57,17 @@ final class ManualSessionShots: ManualShotCase {
         tap(element(in: app, labelStartingWith: "Tighten your timing"), labelled: "the saved goal",
             revealing: app.buttons["Normal"], called: "the goal editor")
 
+        // **`Delete goal` is not asserted here, and the marker no longer promises it.** Each skill row
+        // now carries what it would bring from the library, and a kept skill that brings nothing adds
+        // a fix line under that (ADR 0216) — on this erased device Tighten your timing's three skills
+        // all do, which is the state the page's Skills bullet describes. That pushes the last button
+        // below the fold. Corrected in the marker rather than answered with a `swipeUp`, the rule
+        // `routines/editor` states: a figure scrolled to satisfy its caption is of somewhere the
+        // reader never is.
         capture(app, slug: "sessions/goal-editor",
                 assertingOnScreen: "Edit goal",
                 alsoRequiring: ["Priority", "Low", "Normal", "High", "Skills",
-                                "Mark as met", "Delete goal"])
+                                "Nothing in your library yet", "Add skills", "Mark as met"])
 
         // Cancel, not Save — the goal is already as this pass wants it, and a Save here would be a
         // write made only to close a sheet.

@@ -63,7 +63,7 @@ text addressed to the player, and both can judge.
 
 | Job | Surface | Output | Local fallback (0092 §A2) |
 |---|---|---|---|
-| **Clarify a goal** | `GoalEditorView` / `LongTermGoalEditorView`, via the shared `GoalAuthoringSections` | a `Goal` proposal — title, skill trim, priority, optional target song | `GoalTemplateLibrary` (10 curated templates), the incumbent |
+| **Clarify a goal** | `GoalEditorView` / `LongTermGoalEditorView`, via the shared `GoalAuthoringSections` | a `Goal` proposal — title, skill trim, priority, optional target song | `GoalTemplateLibrary` (10 curated templates), the incumbent — **and, since ADR 0216, each skill's reach line and fix**, which a model's proposal would pre-fill rather than replace |
 | **Propose an exercise** | ADR 0187 D9's prompt box | a `NewExercisePlan` pre-fill; `ExerciseTemplate` stays closed | none needed — the control is simply absent offline |
 | **Explain a session** | `RoutineDetailView`, on a generated routine | one tone- and focus-guarded paragraph over a session `SessionBuilder` already built | none needed — the session stands without it |
 | **Mirror** | `OracleView` — **shipped** | the weekly reading | `LocalOracle` — **shipped** |

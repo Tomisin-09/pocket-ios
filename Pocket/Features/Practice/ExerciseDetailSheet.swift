@@ -104,6 +104,9 @@ struct ExerciseDetailSheet: View {
                     ReferencesSection(owner: exercise, accent: PocketColor.practice,
                                       editing: $editingReference, presenting: $referenceAttachments)
                     if !isFreeform { feelSection }
+                    // Which goals can find this drill (ADR 0216 D6). Directly above the template,
+                    // because in slice 1 the template is what decides it.
+                    worksOnSection
                     templateSection
                 }
             }
@@ -156,7 +159,7 @@ struct ExerciseDetailSheet: View {
             }
         } footer: {
             Text("The kind of drill, set when it was created. It groups the exercise in your "
-                 + "library and can't be changed.")
+                 + "library, decides the skills it works on, and can't be changed.")
         }
     }
 

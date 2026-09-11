@@ -207,6 +207,9 @@ struct LoopEditSheet: View {
                 // journal entry, not part of the local-copy edit Cancel discards.
                 ReferencesSection(owner: loop, accent: PocketColor.practice,
                                   editing: $editingReference, presenting: $referenceAttachments)
+                // Directly above Tags, because in slice 1 a tag is what puts a skill here
+                // (ADR 0216 D6) — so adding a ✨ chip visibly changes the section above it.
+                worksOnSection
                 tagsSection
                 Section {
                     LoopColorPicker(autoColor: autoColor, choice: $colorChoice)
