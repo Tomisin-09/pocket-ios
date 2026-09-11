@@ -15,6 +15,9 @@ struct LoopEditSnapshot: Equatable {
     var commandTempo: Double?
     var loopType: LoopType
     var tags: [String]
+    /// The skills the loop states (ADR 0216 D1) — set on this sheet's Skills section, so Undo has to
+    /// cover them for the same reason it covers the tags beside them.
+    var skillIDs: [String]
     var colorIndex: Int?
     var customColorHex: String?
     /// The favourite pin (ADR 0119), editable here since ADR 0125 — so Undo covers it too.
@@ -31,6 +34,7 @@ struct LoopEditSnapshot: Equatable {
         commandTempo = loop.commandTempo
         loopType = loop.loopType
         tags = loop.tags
+        skillIDs = loop.skillIDs
         colorIndex = loop.colorIndex
         customColorHex = loop.customColorHex
         isFavorite = loop.isFavorite
@@ -48,6 +52,7 @@ struct LoopEditSnapshot: Equatable {
         loop.commandTempo = commandTempo
         loop.loopType = loopType
         loop.tags = tags
+        loop.skillIDs = skillIDs
         loop.colorIndex = colorIndex
         loop.customColorHex = customColorHex
         loop.isFavorite = isFavorite

@@ -101,4 +101,21 @@ class UITestCase: XCTestCase {
         let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: element)
         return XCTWaiter().wait(for: [gone], timeout: timeout) == .completed
     }
+
+    /// Tap `control` until `destination` appears. A freshly launched Home can take a tap and do
+    /// nothing — the card is in the tree and hittable, the touch lands before the screen settles, and
+    /// the app is left where it was — so a single tap and a wait for the next screen fails on
+    /// whichever run happens to be fastest. A control that has gone means the tap did land, and the
+    /// destination is only slow.
+    @MainActor
+    func tap(_ control: XCUIElement, until destination: XCUIElement,
+             in app: XCUIApplication, attempts: Int = 3) -> Bool {
+        for _ in 0..<attempts {
+            guard control.exists else { return destination.waitForExistence(timeout: Self.uiTimeout) }
+            guard scrollIntoView(control, in: app) else { return false }
+            control.tap()
+            if destination.waitForExistence(timeout: 3) { return true }
+        }
+        return destination.exists
+    }
 }

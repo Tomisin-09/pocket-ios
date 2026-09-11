@@ -3,7 +3,7 @@ import XCTest
 
 /// ADR 0216 D5 — the text behind a skill's ⓘ. The one-liners are hand-written, so they are held to
 /// exactly the taxonomy; the rest is derived from the planner's own tables, so it is pinned against
-/// the routes the planner actually takes.
+/// the routes the planner actually takes. A skill the player made shows their own words.
 final class SkillExplainerTests: XCTestCase {
 
     func testEveryTaxonomySkillHasALineAndNoLineIsOrphaned() {
@@ -19,19 +19,25 @@ final class SkillExplainerTests: XCTestCase {
         }
     }
 
-    func testWorkedOnByNamesEveryRouteThePlannerTakes() {
+    func testWorkedOnByNamesEveryDefaultRouteThePlannerTakes() {
         XCTAssertEqual(SkillExplainer.workedOnBy("pick.sweep"),
-                       "Worked on by Picking and Arpeggios exercises, and loops tagged Picking or Arpeggios.")
+                       "By default, worked on by Picking and Arpeggios exercises, "
+                       + "and loops tagged Picking or Arpeggios.")
         // Not "loops tagged Ear Training, and any loop…" — the second route already contains the first.
-        XCTAssertEqual(SkillExplainer.workedOnBy("ear.transcribe"), "Worked on by any loop you run in Train your ear.")
+        XCTAssertEqual(SkillExplainer.workedOnBy("ear.transcribe"),
+                       "By default, worked on by any loop you run in Train your ear.")
         XCTAssertEqual(SkillExplainer.workedOnBy("improv.vocabulary"),
-                       "Worked on by Scales exercises, loops tagged Scales, backing tracks you run in "
+                       "By default, worked on by Scales exercises, loops tagged Scales, backing tracks you run in "
                        + "Improvise, and the target song you give a goal.")
-        XCTAssertEqual(SkillExplainer.workedOnBy("rep.learn-song"), "Worked on by the target song you give a goal.")
+        XCTAssertEqual(SkillExplainer.workedOnBy("rep.learn-song"),
+                       "By default, worked on by the target song you give a goal.")
     }
 
-    func testASkillNothingServesSaysSo() {
-        XCTAssertEqual(SkillExplainer.workedOnBy("fret.vibrato"), "Nothing you can make works on this by default yet.")
+    func testASkillWithNoDefaultRouteSaysHowToGiveItOne() {
+        XCTAssertEqual(SkillExplainer.workedOnBy("fret.vibrato"), SkillExplainer.noDefaultRoute)
+        // The template's player-facing name: "freeform" is the code's word, never the player's.
+        XCTAssertTrue(SkillExplainer.noDefaultRoute.contains("write your own practice"))
+        XCTAssertFalse(SkillExplainer.noDefaultRoute.lowercased().contains("freeform"))
     }
 
     func testComesAfterNamesThePrerequisites() {
@@ -47,6 +53,26 @@ final class SkillExplainerTests: XCTestCase {
                         .joined(separator: "\n\n"))
         // No prerequisites ⇒ two parts, not a trailing blank one.
         XCTAssertEqual(SkillExplainer.text(for: "pick.alternate").components(separatedBy: "\n\n").count, 2)
+    }
+
+    func testASkillThePlayerMadeShowsTheirOwnWords() {
+        let text = SkillExplainer.customText(info: "  Layering parts with a looper pedal. ")
+        XCTAssertTrue(text.hasPrefix("Layering parts with a looper pedal.\n\n"))
+    }
+
+    func testASkillWithNoDescriptionStillSaysSomething() {
+        XCTAssertTrue(SkillExplainer.customText(info: "").hasPrefix("A skill you made."))
+    }
+
+    func testTheVocabularyNamesAndExplainsBothKinds() {
+        let looping = SkillAssociation.customID(UUID())
+        let vocabulary = SkillVocabulary(custom: [looping: .init(name: "Live looping", info: "Pedal work.")])
+        XCTAssertEqual(vocabulary.name("pick.alternate"), "Alternate picking")
+        XCTAssertEqual(vocabulary.name(looping), "Live looping")
+        XCTAssertEqual(vocabulary.explanation("pick.alternate"), SkillExplainer.text(for: "pick.alternate"))
+        XCTAssertTrue(vocabulary.explanation(looping).hasPrefix("Pedal work."))
+        XCTAssertEqual(vocabulary.resolvable(["pick.alternate", looping, SkillAssociation.customID(UUID())]),
+                       ["pick.alternate", looping], "a skill that was deleted is not listed")
     }
 
     func testListed() {

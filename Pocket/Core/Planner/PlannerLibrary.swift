@@ -22,6 +22,13 @@ struct PlannerExercise: Equatable {
     /// for a freeform block, and only because the player said so. Defaulted so every existing
     /// construction site (and every test) is unchanged.
     var awayFromInstrument: Bool = false
+    /// The skills the player **stated** for this drill (ADR 0216 D1), already stripped of ids that
+    /// name nothing. Empty means *its type's defaults* — which is every drill made before 0216 — so
+    /// every existing construction site, and the planner's output over them, is unchanged.
+    var skillIDs: [String] = []
+
+    /// What this drill works on — `SkillAssociation`'s one rule, which every Path-A match reads.
+    var skills: [String] { SkillAssociation.effectiveSkills(template: template, stated: skillIDs) }
 }
 
 /// A projected loop bound to a song (Path B). `songUID` is the owning song's derived planner id
@@ -52,6 +59,13 @@ struct PlannerLoop: Equatable {
     /// to guarantee that as a fourth mode arrives. Defaults to "nothing qualifies", so a caller that
     /// doesn't set it can only ever under-offer.
     var modeFacts = LoopModeAccess.Facts(hasCommandTempo: false, audioResolves: false)
+
+    /// The skills the player **stated** for this loop in its editor (ADR 0216 D1), already stripped
+    /// of ids that name nothing. Defaulted, so every existing construction site is unchanged.
+    var skillIDs: [String] = []
+
+    /// What this loop works on — its stated skills, then its bucket tags' (`SkillAssociation`).
+    var skills: [String] { SkillAssociation.loopSkills(stated: skillIDs, templates: templates) }
 }
 
 /// A projected song run (Path B). Keyed by the derived `Song.plannerUID` — Song has no stored `uid`

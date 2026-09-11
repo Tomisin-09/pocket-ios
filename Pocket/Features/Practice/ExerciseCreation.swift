@@ -87,6 +87,9 @@ extension NewExercisePlan {
                                                 instrument: instrument,
                                                 notes: notes)
         exercise.awayFromInstrument = awayFromInstrument
+        // A drill made from a goal skill's fix arrives already saying what it is for (ADR 0216 D4);
+        // every other plan states nothing, so the drill follows its type.
+        exercise.skillIDs = skillIDs
         if let strum { exercise.setStrumPattern(strum) }
         if let fretboard { exercise.setFretboardContent(fretboard) }
         if let chords { exercise.setChordProgression(chords) }

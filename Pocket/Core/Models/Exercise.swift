@@ -139,10 +139,6 @@ final class Exercise {
         set { instrumentRaw = newValue.rawValue }
     }
 
-    /// The runtime **renderer** (ADR 0065) — *derived* from the template, never stored separately.
-    /// The run screen switches its content surface on this; the strum payload accessor gates on it.
-    var kind: ExerciseKind { template.renderer }
-
     /// The template's content as a versioned `Codable` blob (ADR 0065 T4) — a strum pattern,
     /// a fretboard sequence, … — opaque to SwiftData because it is **never** relationally
     /// queried. **Optional ⇒ additive migration**; `nil` (or an undecodable/unknown payload)
@@ -200,6 +196,10 @@ final class Exercise {
     /// the migration stays exempt (CoreData 134110), and **never a `@Relationship`**: that is what
     /// buys multi-membership and costs no reparenting decision. Empty means *unfiled*.
     var folders: [String] = []
+
+    /// What the drill works on, as stated (ADR 0216 D1): empty follows its type, non-empty replaces it.
+    /// Read through `SkillAssociation.effectiveSkills`. Declaration-defaulted, like `folders`.
+    var skillIDs: [String] = []
 
     /// Optional free-text notes about the exercise. On a **freeform** block this is not a note
     /// *about* the drill — it **is** the drill (ADR 0136 F2): the player's own written instructions,

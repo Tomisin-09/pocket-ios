@@ -25,6 +25,11 @@ struct ExerciseRecord: Codable, Equatable, Sendable {
     /// `tags` above keeps being written, populated with these folders' leaf names, so a build
     /// without folders still shows a received drill something meaningful.
     var folders: [String]?
+    /// The skills this drill states (ADR 0216 D1) — taxonomy ids, and `custom:<uid>` for skills the
+    /// player made. `Optional` for `folders`' reason above: an archive written before 0216 has no key,
+    /// and a non-optional array would fail the whole decode. Absent and empty both mean *follows its
+    /// type*.
+    var skillIDs: [String]?
     var presetSlug: String?
     var isFavorite: Bool
     var dateAdded: Date

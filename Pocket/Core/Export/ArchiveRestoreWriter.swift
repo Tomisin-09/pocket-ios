@@ -14,6 +14,14 @@ struct RestoreResolver {
     var loops: [UUID: Loop] = [:]
     var exercises: [UUID: Exercise] = [:]
 
+    /// The skills the player made that the library already holds (ADR 0216 D7): their uids, and
+    /// their ids by folded name, so a restored skill with the same name lands as *that* one.
+    var existingCustomSkillUIDs: Set<UUID> = []
+    var customSkillIDsByName: [String: String] = [:]
+    /// Each `custom:<uid>` the archive carries → the id it lands as: itself, or the same-named row it
+    /// folded onto. Filled by `addCustomSkills` before anything that names a skill is built.
+    var customSkillIDs: [String: String] = [:]
+
     /// Read what the library already has. Fetched whole rather than queried per record: a restore
     /// resolves thousands of links, and a fetch per link is the shape that turns a restore into a
     /// minute of spinning.
@@ -24,10 +32,21 @@ struct RestoreResolver {
                                 uniquingKeysWith: { first, _ in first })
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
         self.exercises = Dictionary(exercises.map { ($0.uid, $0) }, uniquingKeysWith: { first, _ in first })
+        let customSkills = (try? context.fetch(FetchDescriptor<CustomSkill>())) ?? []
+        self.existingCustomSkillUIDs = Set(customSkills.map(\.uid))
+        self.customSkillIDsByName = Dictionary(customSkills.map { (CustomSkill.foldedName($0.name), $0.skillID) },
+                                               uniquingKeysWith: { first, _ in first })
     }
 
     /// An empty resolver, for a restore into an empty library and for tests.
     init() {}
+
+    /// A restored drill's, loop's or goal's `skillIDs`, as they land: every skill the player made
+    /// renamed to the row it resolved to, and a repeat the fold created counted once.
+    func skillIDs(_ ids: [String]) -> [String] {
+        var seen: Set<String> = []
+        return ids.map { customSkillIDs[$0] ?? $0 }.filter { seen.insert($0).inserted }
+    }
 }
 
 /// Everything a restore will add, built and **not yet inserted** (ADR 0188 S3).
@@ -55,6 +74,10 @@ struct RestoredLibrary {
     /// folder was in the archive because the same player made it.
     var folders: [PracticeFolder] = []
 
+    /// Skills the player made (ADR 0216 D7). Absent from `rowCount` for the folders' reason: they are
+    /// vocabulary the restored drills and goals name, not items the preview counts.
+    var customSkills: [CustomSkill] = []
+
     /// Take audio to write out of the zip once the rows exist, keyed by file name (D7).
     var takeAudio: [String: ZipEntry] = [:]
 
@@ -80,6 +103,7 @@ struct RestoredLibrary {
     /// are re-attached after the loops are, rather than riding in on an assignment made before the
     /// song existed.
     func insert(into context: ModelContext) {
+        customSkills.forEach(context.insert)
         for song in songs {
             let (loops, markers, references) = (song.loops, song.markers, song.references)
             let loopReferences = loops.map { ($0, $0.references) }
@@ -186,6 +210,8 @@ enum ArchiveRestoreWriter {
         var resolver = resolver
         var landing = RestoredLibrary()
 
+        // First, because every drill, loop and goal below names these by id (ADR 0216 D7).
+        addCustomSkills(archive.customSkills ?? [], into: &landing, resolver: &resolver)
         addSongs(archive.songs, existing: existing, into: &landing, resolver: &resolver)
         addExercises(archive.exercises, existing: existing, into: &landing, resolver: &resolver)
         addSavedChords(archive.savedChords, existing: existing, into: &landing)
@@ -206,6 +232,33 @@ enum ArchiveRestoreWriter {
         let attachments = landing.referencedAttachmentNames
         landing.referenceImages = referenceImages.filter { attachments.contains($0.key) }
         return landing
+    }
+
+    /// The skills the player made (ADR 0216 D7), before anything that names them.
+    ///
+    /// **A same-named skill folds onto the one already here** rather than landing twice. The name is
+    /// how the player tells them apart, and two *Live looping* rows would be one skill split across
+    /// two ids, each scheduling half of what it should. The fold is recorded on the resolver, so every
+    /// drill, loop and goal that follows names the row that exists. A skill whose uid the library
+    /// already has maps onto itself and is not rebuilt — the D6 rule that nothing is overwritten.
+    static func addCustomSkills(_ records: [CustomSkillRecord],
+                                into landing: inout RestoredLibrary,
+                                resolver: inout RestoreResolver) {
+        for record in records {
+            let archiveID = SkillAssociation.customID(record.uid)
+            guard resolver.customSkillIDs[archiveID] == nil else { continue }
+            let folded = CustomSkill.foldedName(record.name)
+            if resolver.existingCustomSkillUIDs.contains(record.uid) {
+                resolver.customSkillIDs[archiveID] = archiveID
+            } else if let target = resolver.customSkillIDsByName[folded] {
+                resolver.customSkillIDs[archiveID] = target
+            } else {
+                landing.customSkills.append(CustomSkill(uid: record.uid, name: record.name,
+                                                        info: record.info, dateAdded: record.dateAdded))
+                resolver.customSkillIDs[archiveID] = archiveID
+                resolver.customSkillIDsByName[folded] = archiveID
+            }
+        }
     }
 }
 

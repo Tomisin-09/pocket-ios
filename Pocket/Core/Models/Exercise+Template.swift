@@ -6,6 +6,10 @@ import Foundation
 /// enforced in one place.
 extension Exercise {
 
+    /// The runtime **renderer** (ADR 0065) — *derived* from the template, never stored separately.
+    /// The run screen switches its content surface on this; the strum payload accessor gates on it.
+    var kind: ExerciseKind { template.renderer }
+
     /// The decoded **strumming** pattern, or `nil` when this isn't a strumming-template exercise
     /// (its renderer isn't `.strumming`), the payload is absent, or it can't be decoded (a newer
     /// build's blob an older build can't read). A `nil` here sends the run screen to the metronome

@@ -14,7 +14,10 @@ final class GoalSkillReachUITests: UITestCase {
     @MainActor
     func testSkillRowsSayWhatTheyReachAndTheInfoButtonDoesNotToggle() {
         let app = launchApp()
-        openNewGoalEditor(from: "Build speed", in: app)
+        // Title *and* blurb: a saved goal from the same template is listed behind the picker as
+        // "Build speed, 3 skills, NORMAL", and the store outlives the run, so the title alone can
+        // match that row instead of the template.
+        openNewGoalEditor(from: "Build speed, Push picking", in: app)
 
         let skill = app.buttons["Alternate picking"]
         XCTAssertTrue(skill.waitForExistence(timeout: Self.uiTimeout), "no Alternate picking row")
@@ -45,7 +48,7 @@ final class GoalSkillReachUITests: UITestCase {
     private func openNewGoalEditor(from template: String, in app: XCUIApplication) {
         let practice = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Practice,")).firstMatch
         XCTAssertTrue(practice.waitForExistence(timeout: Self.uiTimeout), "no Practice card on Home")
-        practice.tap()
+        XCTAssertTrue(tap(practice, until: app.navigationBars["Practice"], in: app), "the Practice tap never landed")
 
         let planner = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Today's session")).firstMatch
         XCTAssertTrue(planner.waitForExistence(timeout: Self.uiTimeout), "no Today's session row")

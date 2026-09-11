@@ -121,6 +121,10 @@ enum SharedPracticeBuilder {
     static func shareable(_ exercise: Exercise) -> ExerciseRecord {
         var record = ArchiveBuilder.exerciseRecord(exercise)
         record.folders = nil
+        // What the drill works on crosses, in the shared vocabulary only (ADR 0216 D7). A skill the
+        // sender made names a row on the sender's phone; the receiver drops it too, and this side
+        // doesn't rely on that — but the sender's own words shouldn't leave the device unasked.
+        record.skillIDs = record.skillIDs?.filter { !SkillAssociation.isCustom($0) }
         record.lastPracticed = nil
         record.isFavorite = false
         record.presetSlug = nil

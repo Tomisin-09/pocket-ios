@@ -70,6 +70,19 @@ struct PracticeArchive: Codable, Equatable, Sendable {
     /// `Optional`, like the two membership fields, so an archive written before folders still
     /// decodes.
     var folderMarkers: [String]?
+
+    /// The skills the player made (ADR 0216 D7), each with the description behind its ⓘ. Drills,
+    /// loops and goals name them by `custom:<uid>` in their own `skillIDs`; this is what those ids
+    /// resolve to. `Optional`, so an archive written before 0216 still decodes.
+    var customSkills: [CustomSkillRecord]?
+}
+
+/// A skill the player made (ADR 0216 D7) — its name and the description behind its ⓘ.
+struct CustomSkillRecord: Codable, Equatable, Sendable {
+    var uid: UUID
+    var name: String
+    var info: String
+    var dateAdded: Date
 }
 
 extension PracticeArchive {

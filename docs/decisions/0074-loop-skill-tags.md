@@ -6,9 +6,10 @@
   (loop tags). Pairs with ADR 0015 (goal → candidate selection), ADR 0070 (no grading).
 - **Supersedes:** nothing.
 - **Amended by:** ADR 0216 (2026-09-11). Its slice 1 shows what a loop's bucket tags already do, in a
-  **Works on** section above Tags. Its slice 2 (D6) replaces the ✨ chip row with a real **Skills**
-  field on the loop. **Recognised bucket tags keep being read** either way, and nothing copies them
-  anywhere, so every loop tagged under this ADR keeps working.
+  **Works on** section above Tags. Its slice 2 (D6) makes that section editable — a loop states its
+  own skills in `Loop.skillIDs` — and removes the ✨ chip row. **Recognised bucket tags keep being
+  read** either way, and nothing copies them anywhere, so every loop tagged under this ADR keeps
+  working.
 
 ## Context
 

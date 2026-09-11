@@ -16,6 +16,9 @@ extension ArchiveBuilder {
             // Sorted like every other collection here: two exports of an unchanged library have to
             // produce byte-identical JSON, and `folders` is stored in the order things were filed.
             folders: exercise.folders.sorted(),
+            // As stored: `SkillAssociation.storedSkills` already writes a canonical order, and it is
+            // the order the Works on section lists them in.
+            skillIDs: exercise.skillIDs,
             presetSlug: exercise.presetSlug,
             isFavorite: exercise.isFavorite,
             dateAdded: exercise.dateAdded,

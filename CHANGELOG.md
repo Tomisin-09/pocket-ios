@@ -65,10 +65,21 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Every skill has an ⓘ.** What the skill is, which kinds of drill and which loops work on it, and
   what comes before it — in the goal editor, in the full skill list, and anywhere a drill or loop
   lists its skills.
-- **Drills and loops say which skills they work on.** An exercise's ⓘ sheet has a **Works on**
-  section, set by its template; a loop's editor has one too, filled by the tags that name a kind of
-  drill. Until now the only way to find out which goals a drill answered was to build a session and
-  see what came up.
+- **Drills and loops say which skills they work on — and you can change them.** An exercise's ⓘ
+  sheet has a **Works on** section. Its template sets where it starts; **Change skills** narrows it
+  to what this drill is really for, or adds skills its template doesn't name, and the goals that can
+  bring it into a session follow. **Use its type’s skills** puts it back. A loop's editor has one
+  too: add the skills a passage works on, beside any that come from its tags. The ✨ skill
+  suggestions under a loop's tags are gone — this replaces them. Until now the only way to find out
+  which goals a drill answered was to build a session and see what came up.
+- **Skills of your own.** Practice the app never anticipated — live looping, say — can now be a
+  skill. Make one with **New skill** in any skill list and write what it is in your own words; that
+  is what its ⓘ shows. A goal on it brings whatever drill or loop you mark with it. Swipe it in the
+  list to edit or delete it. Your own skills are in your backup, and stay behind when you share a
+  routine.
+- **Every skill has something to fill it.** A skill no kind of drill works on — songwriting, note
+  names, bends — offers **Write your own practice for it**, which makes a Your own practice
+  exercise already marked with that skill.
 
 ## [1.3] — build 7, cut 2026-09-10
 

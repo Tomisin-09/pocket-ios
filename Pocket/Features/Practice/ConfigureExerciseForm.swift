@@ -87,14 +87,20 @@ struct ConfigureExerciseForm: View {
 
     private let range = StandaloneMetronomeEngine.bpmRange
 
+    /// What the drill will work on, by name, when a goal skill's fix made it (ADR 0216 D4). Shown so
+    /// the player can see it — the plan carries the ids, and nothing else on this step would say so.
+    let statedSkillNames: [String]
+
     init(template: ExerciseTemplate, initialCommand: Int, initialSignature: TimeSignature,
          initialInstrument: Instrument = .guitar, initialSongs: [Song] = [],
+         statedSkillNames: [String] = [],
          create: @escaping (NewExercisePlan) -> Void) {
         self.template = template
         self.initialCommand = initialCommand
         self.initialSignature = initialSignature
         self.initialInstrument = initialInstrument
         self.initialSongs = initialSongs
+        self.statedSkillNames = statedSkillNames
         self.create = create
         _pickedSongs = State(initialValue: initialSongs)
         _command = State(initialValue: initialCommand)
@@ -133,6 +139,22 @@ struct ConfigureExerciseForm: View {
             chordProgression: sheetSeed.chordProgression))
     }
 
+    /// **Works on**, for a drill made from a goal skill's fix (ADR 0216 D4). Rows are built in a
+    /// function, not inline in the `Section` — the shape that once segfaulted the routine editor.
+    private var statedSkillsSection: some View {
+        Section {
+            ForEach(statedSkillNames, id: \.self) { statedSkillRow($0) }
+        } header: {
+            Text("Works on")
+        } footer: {
+            Text("Change it later from the exercise\u{2019}s \u{24D8}.")
+        }
+    }
+
+    private func statedSkillRow(_ name: String) -> some View {
+        Text(name).foregroundStyle(PocketColor.textPrimary)
+    }
+
     var body: some View {
         Form {
             Section("Name") {
@@ -154,6 +176,7 @@ struct ConfigureExerciseForm: View {
             // whose value the run screen never reads is a question with no honest answer.
             if template != .freeform { tempoAndMeterSections }
             songsSection
+            if !statedSkillNames.isEmpty { statedSkillsSection }
             templateSection
         }
         .scrollDismissesKeyboard(.interactively)

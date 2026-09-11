@@ -88,6 +88,12 @@ final class Loop {
     /// array stays CloudKit-clean. Promotion to a `LoopTag` `@Model` stays out of scope.
     var tags: [String] = []
 
+    /// **The skills this loop works on, as the player stated them** (ADR 0216 D1) — its editor's
+    /// Skills field. Added to whatever its bucket tags carry (ADR 0074), never replacing them: the
+    /// tags are still read and are never migrated. Taxonomy ids, plus `custom:<uid>` for skills the
+    /// player made (D7). Declaration default keeps the migration additive (CoreData 134110).
+    var skillIDs: [String] = []
+
     /// A manual **favourite** pin (ADR 0119) — the player's explicit "keep this passage close,"
     /// surfaced by the Loops library's Favourites filter, which across every song's loops gives a
     /// "my key passages" view the per-song browse can't. Distinct from `mastery`/`focus` (the

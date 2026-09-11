@@ -1,10 +1,10 @@
 # ADR 0216 — what a drill is for
 
-- **Status:** Accepted — **slice 1 built** (2026-09-11, `pocket-319-skills-you-can-see`); **slice 2 not
-  started**. Slice 1 is everything that *shows* the link between skills and material; slice 2 is
-  everything that *changes* it (D1–D3's rule, D6's editing, D7). Until slice 2 lands, an exercise's
-  skills are still exactly its type's, and nobody can create a skill.
-- **Date:** 2026-09-11 (`pocket-319-skills-you-can-see`)
+- **Status:** Accepted — **both slices built** (2026-09-11): slice 1 on `pocket-319-skills-you-can-see`,
+  slice 2 on `pocket-320-shape-what-a-drill-is-for`. Slice 1 is everything that *shows* the link
+  between skills and material; slice 2 is everything that *changes* it (D1–D3's rule, D6's editing,
+  D7).
+- **Date:** 2026-09-11 (`pocket-319-skills-you-can-see`, `pocket-320-shape-what-a-drill-is-for`)
 - **Amends:** ADR 0073 — Decision 4's type-only resolution becomes a **default** each drill can narrow
   or expand (D1, slice 2). Path A/B and the soft prerequisite stage stand. Also its §4 (Decision 7):
   a goal may name a custom skill (D7).
@@ -91,8 +91,8 @@ the list (shape, not provenance); a received routine carries its taxonomy skills
 
 `PracticePlanner.library` projects each unit's served skills through `SkillAssociation`, and
 `CandidateDeriver` reads that set in both `techniqueCandidates` and `prereqMet` — so an expanded drill
-also counts toward its new skill's prerequisite readiness. The deriver currently skips any id outside
-the taxonomy; it gains a custom-skill branch (D7). `LongTermGoalEcho` inherits all of it, because it
+also counts toward its new skill's prerequisite readiness. The deriver used to skip any id outside
+the taxonomy; it now has a custom-skill branch (D7). `LongTermGoalEcho` inherits all of it, because it
 re-derives.
 
 ### D4 — the goal editor says what each skill reaches (slice 1)
@@ -114,13 +114,13 @@ A kept skill that reaches nothing offers **one fix**, chosen by `SkillAssociatio
 | Make an exercise | *New Chords exercise* — opens the create sheet on that type | a creatable type serves it by default |
 | Run a loop | a line of text | ear skills (*Train your ear*), improvisation (*Improvise*) |
 | Target song | a line pointing at the section below | repertoire skills |
-| Tag a loop | a line of text | only a retired type serves it (Theory, Rhythm) |
-| — | *Nothing you can make works on this yet* | Bends, Vibrato |
+| Write your own practice | *Write your own practice for it* — opens the create sheet on a Freeform exercise (*Your own practice* to the player) that already states the skill | every other skill: the ones only a retired type serves (Note names, Intervals, Syncopation, Songwriting), the ones no type serves (Bends, Vibrato), and every custom skill |
 
 The type offered is the creatable one whose family-map row lists the skill **earliest**, ties broken
 by create-menu order — so *Clean chord changes* offers Chords, where it leads the row, rather than
-Strumming, where it follows strumming itself. Slice 2 adds *Write a freeform block for it* for the
-last two rows and for custom skills.
+Strumming, where it follows strumming itself. Slice 1 shipped two rows the freeform row replaced: *Tag
+a loop* for a skill only a retired type serves, and *Nothing you can make works on this yet* for
+Bends and Vibrato.
 
 ### D5 — every skill has an ⓘ (slice 1)
 
@@ -138,14 +138,19 @@ also add it.
 
 ### D6 — the link is visible from the material's side (slice 1 shows, slice 2 edits)
 
-- **Exercise ⓘ sheet — Works on**, above Template. Slice 1 lists the type's skills with their ⓘ, and
-  the Template footer now says the type *"decides the skills it works on"*. It is absent for Basic,
-  Warm-up and Freeform, where a section with nothing in it and no way to change it would be a dead
-  end. Slice 2 makes it editable over the whole catalogue, captioned *From its type* or *Set by you*,
-  with a reset.
-- **Loop editor — Works on**, directly above Tags. Slice 1 reads it from the loop's *local* tags, so a
-  ✨ chip added below changes the section above before Done, and Cancel removes both together. Slice
-  2 replaces the ✨ row with a proper Skills picker.
+- **Exercise ⓘ sheet — Works on**, above Template. Slice 1 listed the type's skills with their ⓘ,
+  and the Template footer says the type *"decides the skills it works on"*. Slice 2 makes it
+  editable: **Add skills** or **Change skills** opens the picker over the whole catalogue plus the
+  player's own, the type's skills pre-kept and badged *From its type*. The footer reads *From its
+  type, Picking* until the list is edited and *Set by you* after, and **Use its type’s skills**
+  resets it. Slice 1 left the section off Basic and Freeform, where it could only be empty and
+  unchangeable; now that it can be changed it shows on every type but Warm-up, because those two are
+  exactly the drills that need to say.
+- **Loop editor — Works on**, directly above Tags. It lists the skills the loop states, then the ones
+  a recognised tag carries, captioned *From your tag Picking*. **Add skills** edits the stated ones
+  only — a tag's skills are the tag's, and go when it does. It reads the loop's *local* copy, so an
+  edit shows before Done and Cancel takes it back. The ✨ skill-bucket chip row under Tags is gone;
+  the descriptive tag suggestions stay.
 
 ### D7 — custom skills, with the player's own description (slice 2)
 
@@ -157,11 +162,12 @@ one reason: *an orphan skill schedules nothing*. D4 makes an orphan **visible** 
   info, dateAdded }`, no relationships. Goals and units reference it as `custom:<uid>` inside the
   `skillIDs` they already have, so a rename changes one row and no references. Names are unique
   case-insensitively, through `Labels.canonical`.
-- **Created in the shared picker** — a search with no exact match offers *Create "Live looping"*, then
-  a form with **Name** and **What it is** — everywhere the picker opens.
-- **Managed where it's picked**, under a *Your own* section: *Edit* and *Delete*. Delete states what
-  it's used by, as a count, and strips the id from those goals and units in the same save. Present
-  the edit form by `uid`, never `.sheet(item:)` on the model (ADR 0090).
+- **Created in the shared picker** — **New skill** at the top of *Your own*, or *Create “Live
+  looping”* for a search nothing matches — then a form with a name and **What it is**, everywhere
+  the picker opens. A skill made there is kept straight away.
+- **Managed where it's picked**, under *Your own*: *Edit* and *Delete* as swipe actions. Delete states
+  what it's used by, as a count, and strips the id from those goals and units in the same save.
+  Present the edit form by `uid`, never `.sheet(item:)` on the model (ADR 0090).
 - **Planner:** resolves to every unit that states it; no prerequisites, no down-weight.
 - **Backup vs sharing:** the archive carries every `CustomSkill`, and restore folds onto an existing
   one of the same name. A **shared routine drops custom ids** — someone else's vocabulary shouldn't
@@ -188,13 +194,52 @@ Oracle code, merging two custom skills (backlog), and custom skills with prerequ
 - **The goal row's accessibility label stays the skill's name**, and the reach line is its *value*, so
   VoiceOver and every UI test find a row by the same words as before.
 
+## What building slice 2 settled
+
+- **A typed drill's picker cannot close empty.** Empty means *the type's default*, so closing the
+  Works on picker with nothing kept would silently put back every skill just dropped. For a type
+  with defaults, **Done** stays unavailable until one is kept (`requiresOne`) and swiping the sheet
+  away is disabled with it; going back to the type is its own button.
+- **The fix enum has four cases.** *Tag a loop* and `.nothing` both became `.makeFreeform`: a Freeform
+  block stating the skill is a route every skill has, so *nothing you can make works on this* stopped
+  being true, and a tag naming a retired type was always a worse route than stating the skill.
+- **One vocabulary for names and ⓘ text.** `SkillVocabulary` turns any id into a name and an
+  explanation, custom skills included; every row goes through it, and an id that names nothing
+  reads *Unknown skill*, never `custom:…`.
+- **The planner lets any well-formed custom id through.** `PracticePlanner.library` has no
+  custom-skill fetch, so `SkillAssociation.resolvable` with no set of known ids accepts anything
+  custom-shaped. A dangling one pulls only units that still state it, and delete strips it from those
+  in the same save. Screens pass the set, and drop it.
+- **Both ends of a share drop custom ids.** The sender strips them so a skill's uid never leaves the
+  device inside a shared routine; the receiver strips them too, for a file another build wrote.
+- **Restore lands custom skills first**, before any drill, loop or goal that names one. A same-named
+  skill folds onto the existing row and the restore resolver remaps every id that named it; a uid
+  already in the store maps onto itself and is not rebuilt. They are left out of the restore's row
+  count, which counts things the player practises.
+- **`Exercise.swift` was at its 400-line cap.** `kind` moved to `Exercise+Template.swift` to make room
+  for the field and its doc comment.
+- **Rows are built in functions.** Both Works on sections and the custom-skill form keep their
+  modifier chains out of the `Section` builder, where one such chain once segfaulted the routine
+  editor.
+- **The fix says the template's name, not the code's.** It was first built as *Write a freeform block
+  for it*; a screenshot showed it opening a sheet whose template reads *Your own practice*, which
+  is what the manual and every other screen call it. "Freeform" is the case name, and a button was
+  the only place a player would have met it. It is *Write your own practice for it*.
+- **The create sheet says what the drill will work on.** The same screenshot showed the fix opening
+  a form with no trace of the skill it was tapped under — the ids ride on the plan, invisibly. The
+  configure step now shows a **Works on** section whenever the new drill arrives stating skills,
+  and only then.
+
 ## Consequences
 
 - A goal now says what it will schedule before Generate is pressed, one skill at a time, and a dead
   skill says so where it's chosen rather than where its absence is felt.
-- Six skills have no route a player can take by making a drill today — *Note names*, *Intervals*,
-  *Syncopation*, *Bends*, *Vibrato* and *Songwriting*. Slice 1 names the honest route for each (a
-  loop tag for four of them, none at all for two), and slice 2 gives every one a Freeform route.
+- Six skills had no route a player could take by making a drill — *Note names*, *Intervals*,
+  *Syncopation*, *Bends*, *Vibrato* and *Songwriting*. Slice 1 named the honest route for each (a
+  loop tag for four of them, none at all for two); slice 2 gives every one a Freeform route, and
+  that is now the fix the goal editor offers.
+- Two custom skills cannot be merged. A player with near-duplicates deletes one, and re-marks what it
+  was on (backlog).
 - The goal editor's figure (`sessions/goal-editor`) changes, and is re-shot.
 - The Oracle's clarifier, when it comes back, has a form to pre-fill and a fallback that already
   works — ADR 0092 §A2 satisfied before its stage starts.

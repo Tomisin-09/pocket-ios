@@ -51,7 +51,13 @@ extension ArchiveRestoreWriter {
             song.noteValue = record.noteValue
             song.showsGridlines = record.showsGridlines
             song.lastPracticedSpeed = record.lastPracticedSpeed
-            song.loops = record.loops.map(loop)
+            song.loops = record.loops.map { saved in
+                let made = loop(from: saved)
+                // Through the resolver, like a drill's (ADR 0216 D7): a skill that folded onto a
+                // same-named one already here is named by that row.
+                made.skillIDs = resolver.skillIDs(saved.skillIDs ?? [])
+                return made
+            }
             song.markers = record.markers.map {
                 let marker = Marker(seconds: $0.seconds, label: $0.label)
                 marker.uid = $0.uid
@@ -178,6 +184,9 @@ extension ArchiveRestoreWriter {
             // saying "no folders" — but for a restore the two land identically, and the alternative
             // was every one of those archives failing to decode at all.
             drill.folders = FolderPath.normalized(record.folders ?? [])
+            // `?? []` for the same reason (ADR 0216 D2), and through the resolver so a skill the
+            // player made that folded onto a same-named one already here is named by *that* row.
+            drill.skillIDs = resolver.skillIDs(record.skillIDs ?? [])
             drill.dateAdded = record.dateAdded
             drill.lastPracticed = record.lastPracticed
             drill.isFavorite = record.isFavorite

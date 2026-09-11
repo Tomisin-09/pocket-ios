@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// The parts of goal authoring **both tiers share** (ADR 0171 D5): pick a starting template, trim
@@ -101,14 +102,20 @@ struct GoalSkillsSection: View {
     /// What each offered skill reaches, keyed by skill id — from `goalSkillReach`, so both editors
     /// measure the same way.
     var reach: [String: SkillReach] = [:]
-    /// Called with the fix the player tapped under a skill that reaches nothing.
-    var onFix: (SkillAssociation.Fix) -> Void = { _ in }
+    /// Called with the skill and the fix the player tapped under it, when it reaches nothing.
+    var onFix: (String, SkillAssociation.Fix) -> Void = { _, _ in }
+    /// The skills the player made (ADR 0216 D7), so a row names one by its name, never its id.
+    @Query private var customSkills: [CustomSkill]
 
     var body: some View {
-        Section {
+        let vocabulary = SkillVocabulary(customSkills)
+        return Section {
             ForEach(offeredSkillIDs, id: \.self) { skillID in
-                GoalSkillRow(skillID: skillID, isKept: keptSkillIDs.contains(skillID),
-                             reach: reach[skillID], onToggle: { toggle(skillID) }, onFix: onFix)
+                GoalSkillRow(skillID: skillID, name: vocabulary.name(skillID),
+                             explanation: vocabulary.explanation(skillID),
+                             isKept: keptSkillIDs.contains(skillID),
+                             reach: reach[skillID], onToggle: { toggle(skillID) },
+                             onFix: { onFix(skillID, $0) })
                     .listRowBackground(PocketColor.background)
             }
             Button { showingSkillPicker = true } label: {

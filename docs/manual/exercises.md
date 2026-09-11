@@ -140,8 +140,14 @@ The screen stays awake while you play, unless you have turned that off in Settin
 Two things are reachable at any point, including mid-run: the **quick note** button in the toolbar,
 for a thought you want to keep before it goes, and the **ⓘ**, which opens the drill's reference
 sheet — its template, description, linked songs, meter and rhythm, and under **Works on** the skills
-its template makes it work on, so the goals that can bring it into a session. Each skill has its own
-**ⓘ**.
+it works on, so the goals that can bring it into a session. Each skill has its own **ⓘ**.
+
+Its template sets where **Works on** starts. **Change skills** narrows that to what this drill is
+really for, or adds skills its template doesn't name — any skill in the catalogue, or one of your
+own — and the section then says *Set by you*. **Use its type’s skills** puts it back. A drill whose
+template has skills always keeps at least one, since that button is the way back to none of your
+own. A Basic or **Your own practice** exercise starts with nothing here, and **Add skills** is how
+it says what it's for. A Warm-up works on no skill, and has no **Works on**.
 
 You can also arm a **recording** before you start, which captures your playing through the mic as a
 take. That is covered with the rest of the journal.

@@ -26,8 +26,8 @@ struct GoalEditorView: View {
     @Query private var loops: [Loop]
     /// For a drill made from a skill's fix: the profile's instrument and default command tempo.
     @Query private var profiles: [Profile]
-    /// The type a skill's fix is creating a drill of, while that sheet is up.
-    @State private var newExerciseTemplate: ExerciseTemplate?
+    /// The drill a skill's fix is creating, while that sheet is up.
+    @State private var fixExercise: SkillFixExercise?
 
     /// The chosen template for a new goal — `nil` until picked (the picker is shown until then).
     @State private var template: GoalTemplate?
@@ -125,23 +125,13 @@ struct GoalEditorView: View {
         .sheet(isPresented: $showingSkillPicker) {
             SkillPickerSheet(offeredSkillIDs: $offeredSkillIDs, keptSkillIDs: $keptSkillIDs)
         }
-        .sheet(isPresented: Binding(get: { newExerciseTemplate != nil },
-                                    set: { if !$0 { newExerciseTemplate = nil } })) {
-            if let newExerciseTemplate {
-                NewExerciseSheet(initialCommand: profiles.first?.experience?.defaultCommandTempo
-                                     ?? StandaloneMetronomeEngine.defaultCommandBPM,
-                                 fixedTemplate: newExerciseTemplate,
-                                 defaultInstrument: profiles.first?.preferredInstrument ?? .guitar,
-                                 onCreate: { $0.finalise(in: context) })
-            }
-        }
+        .skillFixSheet($fixExercise, profile: profiles.first, context: context)
     }
 
-    /// A skill's fix, tapped. Only *make an exercise* acts; the rest are lines of text. The drill is
-    /// made through the one insert path (ADR 0128), and the skill's line updates when it lands.
-    private func applyFix(_ fix: SkillAssociation.Fix) {
-        guard case .makeExercise(let template) = fix else { return }
-        newExerciseTemplate = template
+    /// A skill's fix, tapped. Only the two that make a drill act; the rest are lines of text.
+    private func applyFix(_ skillID: String, _ fix: SkillAssociation.Fix) {
+        guard let exercise = SkillFixExercise(fix: fix, skillID: skillID) else { return }
+        fixExercise = exercise
         haptic(.light)
     }
 

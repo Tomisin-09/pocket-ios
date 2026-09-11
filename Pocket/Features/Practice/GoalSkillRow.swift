@@ -9,14 +9,16 @@ import SwiftUI
 /// its own line. Every one of them is `.plain`, so a `List` row doesn't route a tap anywhere else.
 struct GoalSkillRow: View {
     let skillID: String
+    /// What to call it, and what its ⓘ says — from the section's `SkillVocabulary`, so a skill the
+    /// player made shows its own name and description (ADR 0216 D7).
+    let name: String
+    let explanation: String
     let isKept: Bool
     /// What this skill reaches, or `nil` when the editor has nothing to measure against.
     let reach: SkillReach?
     let onToggle: () -> Void
     /// Called with the fix the player tapped — only the actionable ones reach here.
     let onFix: (SkillAssociation.Fix) -> Void
-
-    private var name: String { TechniqueTaxonomy.info(skillID)?.name ?? skillID }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -45,7 +47,7 @@ struct GoalSkillRow: View {
                 .accessibilityLabel(name)
                 .accessibilityValue(reach.map(GoalReach.summary) ?? "")
                 .accessibilityAddTraits(isKept ? .isSelected : [])
-                InfoPopoverButton(subject: name, info: SkillExplainer.text(for: skillID))
+                InfoPopoverButton(subject: name, info: explanation)
             }
             // Only under a skill that is kept and reaches nothing: a dropped skill schedules nothing
             // by choice, and one that reaches something needs no help.
@@ -57,23 +59,26 @@ struct GoalSkillRow: View {
         let fix = SkillAssociation.fix(for: skillID)
         switch fix {
         case .makeExercise(let template):
-            Button { onFix(fix) } label: {
-                Label("New \(template.displayName) exercise", systemImage: "plus.circle")
-                    .font(.futura(.subheadline, weight: .semibold))
-                    .foregroundStyle(PocketColor.practice)
-            }
-            .buttonStyle(.plain)
+            fixButton("New \(template.displayName) exercise", fix)
+        case .makeFreeform:
+            // The template's player-facing name, never the code's "freeform" (ADR 0216).
+            fixButton("Write your own practice for it", fix)
         case .runLoopIn(let mode):
             hint(mode == .improvise
                  ? "Mark a loop as a backing track, then run it in Improvise."
                  : "Set a loop on one of your songs, then run it in Train your ear.")
         case .pickTargetSong:
             hint("Pick a target song below.")
-        case .tagLoop(let template):
-            hint("Tag a loop \u{201C}\(template.displayName)\u{201D} in its editor to bring it in.")
-        case .nothing:
-            hint("Nothing you can make works on this yet.")
         }
+    }
+
+    private func fixButton(_ title: String, _ fix: SkillAssociation.Fix) -> some View {
+        Button { onFix(fix) } label: {
+            Label(title, systemImage: "plus.circle")
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(PocketColor.practice)
+        }
+        .buttonStyle(.plain)
     }
 
     private func hint(_ text: String) -> some View {

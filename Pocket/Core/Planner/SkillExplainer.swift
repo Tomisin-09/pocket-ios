@@ -7,9 +7,10 @@ import Foundation
 /// `docs/practice-techniques.md`): generic technique names, no third-party prose. They say what a
 /// skill *is*, never how well anyone does it (ADR 0070).
 ///
-/// The rest of the text is **derived, not written**: which types work on a skill comes from the same
-/// `SkillFamilyMap` the planner reads, and what comes first from the taxonomy's prerequisites. So
-/// the ⓘ cannot claim a route the planner doesn't take.
+/// The rest of the text is **derived, not written**: which types work on a skill by default comes
+/// from the same `SkillFamilyMap` the planner reads, and what comes first from the taxonomy's
+/// prerequisites. So the ⓘ cannot claim a route the planner doesn't take. *By default*, because a
+/// drill can be narrowed away from its type's skills or expanded past them (D1).
 enum SkillExplainer {
 
     /// One sentence per taxonomy row. `SkillExplainerTests` holds this to exactly the taxonomy: a
@@ -56,11 +57,17 @@ enum SkillExplainer {
         "create.songwriting": "Turning the chords and lines you know into songs of your own."
     ]
 
+    /// One line for a skill with no route by default — true of a handful of taxonomy skills, and
+    /// the whole point of the freeform fix (D4).
+    static let noDefaultRoute = "No kind of drill works on this by default \u{2014} mark any drill or loop "
+        + "with it, or write your own practice for it."
+
     /// The one-line description, or `nil` for an id outside the taxonomy.
     static func line(for skillID: String) -> String? { lines[skillID] }
 
-    /// Where a skill comes from in the player's library, as one sentence — every route the planner
-    /// takes for it, in the order a player would reach for them.
+    /// Where a skill comes from in the player's library by default, as one sentence — every route
+    /// the planner takes for it when nobody has said otherwise, in the order a player would reach
+    /// for them.
     static func workedOnBy(_ skillID: String) -> String {
         var routes: [String] = []
         let exerciseTypes = SkillAssociation.creatableTemplates(forSkill: skillID)
@@ -90,11 +97,11 @@ enum SkillExplainer {
         if TechniqueTaxonomy.mode(skillID)?.isRepertoire == true {
             routes.append("the target song you give a goal")
         }
-        guard let last = routes.last else { return "Nothing you can make works on this by default yet." }
+        guard let last = routes.last else { return noDefaultRoute }
         // The routes get a serial comma, because a route can itself contain "and" ("Picking and
         // Arpeggios exercises") and two bare "and"s in a row read as one list.
         let sentence = routes.count == 1 ? last : routes.dropLast().joined(separator: ", ") + ", and " + last
-        return "Worked on by \(sentence)."
+        return "By default, worked on by \(sentence)."
     }
 
     /// *"Comes after Economy picking."* — the taxonomy's direct prerequisites, by name. `nil` when
@@ -109,6 +116,15 @@ enum SkillExplainer {
     static func text(for skillID: String) -> String {
         [line(for: skillID), workedOnBy(skillID), comesAfter(skillID)]
             .compactMap { $0 }
+            .joined(separator: "\n\n")
+    }
+
+    /// The ⓘ text for a skill the player made (D7): **their** description, then how it is worked
+    /// on. With no description, a line that says what it is — never an empty popover.
+    static func customText(info: String) -> String {
+        let own = info.trimmingCharacters(in: .whitespacesAndNewlines)
+        return [own.isEmpty ? "A skill you made." : own,
+                "Worked on by any drill or loop you mark with it."]
             .joined(separator: "\n\n")
     }
 

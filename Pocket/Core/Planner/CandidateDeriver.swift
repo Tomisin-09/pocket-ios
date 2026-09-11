@@ -6,13 +6,15 @@ import Foundation
 /// (ADR 0002 — deferred), exactly like `SessionBuilder`.
 ///
 /// Per active goal → each of its skills, routed by the taxonomy `default mode` (Decision 5):
-///  - **Path A** (the four technique modes): resolve to library **exercises** via the coarse
-///    `SkillFamilyMap` (Decision 4), plus any **loops** the user tagged with a matching skill bucket
-///    (Slice 4, Decision 8), weighted by the goal (S5) and **soft-down-weighted** when the skill's
-///    direct prerequisites are unrated / low-mastery (Decision 6 — a soft stage, never a hard gate:
-///    the advanced thing still appears, just later in the U-shape).
+///  - **Path A** (the four technique modes): resolve to library **exercises** that work on the skill
+///    — their type's defaults, or the list the player stated (`SkillAssociation`, ADR 0216 D1) —
+///    plus any **loops** that work on it, by a stated skill or a matching bucket tag (Slice 4,
+///    Decision 8), weighted by the goal (S5) and **soft-down-weighted** when the skill's direct
+///    prerequisites are unrated / low-mastery (Decision 6 — a soft stage, never a hard gate: the
+///    advanced thing still appears, just later in the U-shape).
 ///  - **Path B** (`repertoire` mode): resolve to the goal's **target song** — its loops plus the
 ///    song run itself (Decision 5). Song-routed, not skill-matched.
+///  - **A skill the player made** (ADR 0216 D7): every unit that states it, and nothing else.
 ///
 /// A skill with no goal never produces a candidate (S4); an exercise that no goal skill covers is
 /// excluded. A unit surfaced by several goals keeps its **strongest** claim (max priority). The
@@ -46,12 +48,18 @@ enum CandidateDeriver {
 
         for goal in goals where !goal.isMet {
             for skillID in goal.skillIDs {
-                guard let info = TechniqueTaxonomy.info(skillID) else { continue }  // unknown ⇒ skip
-                let resolved = info.mode.isRepertoire
-                    ? repertoireCandidates(goal: goal, skillID: skillID, library: library,
-                                           emphasis: emphasis)
-                    : techniqueCandidates(goal: goal, info: info, library: library,
-                                          emphasis: emphasis)
+                let resolved: [PlannerCandidate]
+                if let info = TechniqueTaxonomy.info(skillID) {
+                    resolved = info.mode.isRepertoire
+                        ? repertoireCandidates(goal: goal, skillID: skillID, library: library,
+                                               emphasis: emphasis)
+                        : techniqueCandidates(goal: goal, info: info, library: library,
+                                              emphasis: emphasis)
+                } else if SkillAssociation.isCustom(skillID) {
+                    resolved = customCandidates(goal: goal, skillID: skillID, library: library)
+                } else {
+                    continue  // unknown ⇒ skip
+                }
                 for candidate in resolved {
                     // Keyed on the **unit**, never on unit-plus-mode (ADR 0139 O2b): a loop that both
                     // a repertoire goal and an ear goal claim must appear once, with the stronger
@@ -109,9 +117,9 @@ enum CandidateDeriver {
         }
     }
 
-    /// **Path A** — a technique skill resolves to every library **exercise** whose template can serve
-    /// it (`SkillFamilyMap`), plus any **loop** the user has tagged with a skill bucket that serves it
-    /// (Slice 4, Decision 8 — untagged loops carry no template and stay Path-B only), plus any loop
+    /// **Path A** — a technique skill resolves to every library **exercise** that works on it (its
+    /// type's defaults or its stated list, `PlannerExercise.skills`), plus any **loop** that works on
+    /// it (a stated skill, or a bucket tag — untagged, unstated loops stay Path-B only), plus any loop
     /// that serves the skill by **capability** with no tag at all (ADR 0139 O2 — the `ear.*` skills,
     /// whose exercise template was pulled when ear training shipped as a loop mode). Each candidate
     /// carries the goal weight softened by prerequisite readiness.
@@ -121,28 +129,43 @@ enum CandidateDeriver {
                                             emphasis: PracticeEmphasis) -> [PlannerCandidate] {
         let priority = goal.weight * prereqReadiness(for: info, library: library)
             * emphasis.multiplier(forSkillID: info.id, mode: info.mode)
+        return statingCandidates(goal: goal, skillID: info.id, priority: priority, library: library)
+            + directLoopCandidates(goal: goal, skillID: info.id, priority: priority, library: library)
+    }
+
+    /// **A skill the player made** (ADR 0216 D7) — every drill and loop that states it, and nothing
+    /// else: no family map knows it, no mode runs it, and it has no prerequisites to soften it. It
+    /// carries the goal's weight untilted, since no profile emphasis can name it.
+    private static func customCandidates(goal: PlannerGoal, skillID: String,
+                                         library: PlannerLibrary) -> [PlannerCandidate] {
+        statingCandidates(goal: goal, skillID: skillID, priority: goal.weight, library: library)
+    }
+
+    /// The exercises and loops whose skills include `skillID` — by type default, stated list or
+    /// bucket tag — as candidates at `priority`. The one match Path A and custom skills share.
+    private static func statingCandidates(goal: PlannerGoal, skillID: String, priority: Double,
+                                          library: PlannerLibrary) -> [PlannerCandidate] {
         let exercises = library.exercises
-            .filter { SkillFamilyMap.template($0.template, serves: info.id) }
+            .filter { $0.skills.contains(skillID) }
             .map { exercise in
                 PlannerCandidate(unit: PlannerUnitRef(exercise.uid, .exercise),
                                  priority: priority,
                                  mastery: exercise.mastery, masteryIsStale: exercise.masteryIsStale,
                                  lastPracticed: exercise.lastPracticed,
                                  estimatedMinutes: exercise.estimatedMinutes,
-                                 skillID: info.id, goalUID: goal.uid)
+                                 skillID: skillID, goalUID: goal.uid)
             }
         let loops = library.loops
-            .filter { loop in loop.templates.contains { SkillFamilyMap.template($0, serves: info.id) } }
+            .filter { $0.skills.contains(skillID) }
             .map { loop in
                 PlannerCandidate(unit: PlannerUnitRef(loop.uid, .loop),
                                  priority: priority,
                                  mastery: loop.mastery, masteryIsStale: loop.masteryIsStale,
                                  lastPracticed: loop.lastPracticed,
                                  estimatedMinutes: loop.estimatedMinutes,
-                                 skillID: info.id, goalUID: goal.uid)
+                                 skillID: skillID, goalUID: goal.uid)
             }
-        return exercises + loops + directLoopCandidates(goal: goal, skillID: info.id,
-                                                        priority: priority, library: library)
+        return exercises + loops
     }
 
     /// Loops that serve a skill **by what they are** — the ADR 0135 B6 / 0139 O2 route, shared by
@@ -217,11 +240,12 @@ enum CandidateDeriver {
         return max(prereqFloor, factor)
     }
 
-    /// Whether a prerequisite skill is "met": the player's exercises for it (via the family map)
+    /// Whether a prerequisite skill is "met": the player's exercises that work on it — by type or by
+    /// statement, so a drill expanded to cover it counts and one narrowed away from it doesn't —
     /// average at least `prereqReadyMastery`. No rated exercise ⇒ unmet (unrated = not demonstrated).
     private static func prereqMet(_ skillID: String, library: PlannerLibrary) -> Bool {
         let rated = library.exercises
-            .filter { SkillFamilyMap.template($0.template, serves: skillID) }
+            .filter { $0.skills.contains(skillID) }
             .compactMap(\.mastery)
         guard !rated.isEmpty else { return false }
         let average = Double(rated.reduce(0, +)) / Double(rated.count)

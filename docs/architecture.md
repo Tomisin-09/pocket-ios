@@ -906,7 +906,13 @@ skills share is credited to both — for the reach line under every skill in the
 `SkillAssociation` answers *which types work on a skill by default* in `ExerciseTemplate.displayOrder`
 (never the family map's `Dictionary` order) and picks the single fix to offer for a skill that
 reaches nothing; `SkillExplainer` is the text behind a skill's ⓘ — one hand-written sentence per
-taxonomy row, the rest derived from the same tables the deriver reads. All three are pure. The
+taxonomy row, the rest derived from the same tables the deriver reads. All three are pure.
+**Slice 2** makes the link editable: `Exercise.skillIDs` / `Loop.skillIDs` state what a unit is for
+— empty follows the type, non-empty replaces it (`SkillAssociation.effectiveSkills`), and a loop adds
+its recognised tags (`loopSkills`) — projected onto `PlannerExercise.skills` / `PlannerLoop.skills`,
+which `techniqueCandidates` and `prereqMet` read in place of `SkillFamilyMap`. A `custom:<uid>` id
+names a `CustomSkill` row and resolves to every unit that states it, at the goal's weight. With
+nothing stated the output is exactly the family map's, and a test holds it there. The
 profile's declared taste tilts this pool via a **lift-only `PracticeEmphasis`** (ADR 0113 S3): a
 `deriveCandidates(…, emphasis:)` multiplier (default `.neutral`) that raises a candidate's priority
 when its skill is in the declared genres' `GenreSkillMap` union or its mode matches the dream's
@@ -1270,6 +1276,15 @@ empty, because that line was Home's only word about adding a first song.
   back where they were, and a library now starts with **no folders at all**, offering a
   `FolderInviteRow` (modelled on the empty song library's offer to import) until somebody makes one.
   A folder exists because it was asked for; nothing derives one.
+- **`CustomSkill`** (ADR 0216 D7, slice 2) is a skill the player names — `uid`, `name`, `info` (the
+  text behind its ⓘ), `dateAdded`, **no relationships**. Goals, drills and loops reference it as the
+  string id `custom:<uid>` inside the `skillIDs` they already carry (`Exercise.skillIDs` and
+  `Loop.skillIDs` are slice 2's two declaration-defaulted `[String]` fields), so renaming one changes
+  one row and no references. Names are unique case-insensitively through `Labels.canonical`.
+  **`CustomSkillStore`** is its one cross-model writer, as `PracticeFolderStore` is for folders:
+  delete strips the id from every goal, long-term goal, drill and loop in the same save, and a drill
+  left with an empty list goes back to its type's skills. `SkillVocabulary` is the read side — every
+  row renders a skill through it, so a raw `custom:` id never reaches the screen.
 - **`PracticeRun`** (ADR 0117, Slice 1) is the **practice log** — the app's only record of *when* you
   practised, and the substrate every time-windowed stat needs. Append-only, **one row per completed
   unit-run** rather than per practice sit: a routine of six exercises at six tempos writes six rows, and
@@ -1810,6 +1825,15 @@ true (ADR 0150 §118-121).
     everything else is implied by its members' paths — and restored markers are deliberately absent
     from `RestoredLibrary.rowCount`, because the restore preview promises a number of library items
     and a folder is not one.
+  - **And three optional skill fields** (ADR 0216 slice 2), Optional for the same reason:
+    `ExerciseRecord.skillIDs`, `LoopRecord.skillIDs` and `PracticeArchive.customSkills`
+    (`[CustomSkillRecord]?` — `uid`, `name`, `info`, `dateAdded`). Restore lands custom skills
+    **before** anything that names them; one whose name folds onto an existing skill joins that row,
+    and the resolver remaps every id that named it, while a uid already in the store maps onto
+    itself. Like folder markers they are left out of `rowCount`. A **shared routine** carries a
+    drill's taxonomy skills and drops its custom ones at **both** ends — the sender so a skill's uid
+    never leaves the device, the receiver for a file another build wrote — because someone else's
+    vocabulary shouldn't create skills in yours.
   - **A loop or song block arrives named, not dropped.** A `loopUID` is meaningless without the song
     that owns it, so those ids are nulled and a `SharedBlockPlaceholder` carries the label instead —
     the block lands as the orphan the app already draws (`RoutineItem.isOrphaned`). Dropping it
