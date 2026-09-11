@@ -130,13 +130,16 @@ enum PracticePlanner {
                                        masteryIsStale: $0.masteryIsStale,
                                        lastPracticed: $0.lastPracticed,
                                        estimatedMinutes: estimatedMinutes(for: $0),
-                                       awayFromInstrument: $0.declaresAwayFromInstrument) },
+                                       awayFromInstrument: $0.declaresAwayFromInstrument,
+                                       // What the player stated (ADR 0216 D1); empty follows the type.
+                                       skillIDs: SkillAssociation.resolvable($0.skillIDs)) },
             loops: loops.map { PlannerLoop(uid: $0.uid, songUID: $0.song.map { PlannerID.uid(from: $0.sourceID) },
                                            mastery: $0.mastery, masteryIsStale: $0.masteryIsStale,
                                            lastPracticed: lastPracticed[$0.uid],
                                            estimatedMinutes: estimatedMinutes(for: $0),
                                            templates: recognizedTemplates(for: $0),
-                                           modeFacts: LoopModeAccess.Facts($0)) },
+                                           modeFacts: LoopModeAccess.Facts($0),
+                                           skillIDs: SkillAssociation.resolvable($0.skillIDs)) },
             songs: songs.map { PlannerSong(uid: PlannerID.uid(from: $0.sourceID),
                                            lastPracticed: $0.lastPracticed,
                                            estimatedMinutes: estimatedMinutes(for: $0)) })

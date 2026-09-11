@@ -36,6 +36,10 @@ struct NewExercisePlan {
     /// `insert` (the same ordering constraint `UnitDuplication` documents). Empty for a drill that
     /// isn't tied to any song, which is the common case.
     let songs: [Song]
+    /// The skills the new drill **states** (ADR 0216 D1) — set only when a goal skill's fix made it
+    /// (a freeform block for a skill no type works on). Empty everywhere else, so the drill follows
+    /// its type.
+    var skillIDs: [String] = []
 }
 
 /// Create a new exercise from within **Practice** (ADR 0046 / 0068 revised). Two steps: **pick a
@@ -62,6 +66,16 @@ struct NewExerciseSheet: View {
     /// hosts; the song player's tempo-carry gateway (ADR 0170) passes the song the carried tempo was
     /// read off, so a drill born out of a song arrives already tied to it.
     var initialSongs: [Song] = []
+    /// Skills the created drill states (ADR 0216 D4) — a goal skill's fix passes the skill it was
+    /// tapped under. Stamped onto the plan here, so the configure form needn't know about it.
+    var statedSkillIDs: [String] = []
+    /// The player's own skills, so a stated custom id reads as its name on the configure step.
+    @Query private var customSkills: [CustomSkill]
+    /// `statedSkillIDs` by name, less any that name nothing — what the configure step shows.
+    private var statedSkillNames: [String] {
+        let vocabulary = SkillVocabulary(customSkills)
+        return vocabulary.resolvable(statedSkillIDs).map(vocabulary.name)
+    }
     /// Called with the assembled plan when the user confirms. The caller inserts the model.
     let onCreate: (NewExercisePlan) -> Void
 
@@ -100,12 +114,14 @@ struct NewExerciseSheet: View {
          fixedTemplate: ExerciseTemplate? = nil,
          defaultInstrument: Instrument = .guitar,
          initialSongs: [Song] = [],
+         statedSkillIDs: [String] = [],
          onCreate: @escaping (NewExercisePlan) -> Void) {
         self.initialCommand = initialCommand
         self.initialSignature = initialSignature
         self.fixedTemplate = fixedTemplate
         self.defaultInstrument = defaultInstrument
         self.initialSongs = initialSongs
+        self.statedSkillIDs = statedSkillIDs
         self.onCreate = onCreate
         _instrument = State(initialValue: defaultInstrument)
     }
@@ -117,7 +133,7 @@ struct NewExerciseSheet: View {
                     ConfigureExerciseForm(template: fixedTemplate, initialCommand: initialCommand,
                                           initialSignature: initialSignature,
                                           initialInstrument: instrument, initialSongs: initialSongs,
-                                          create: create)
+                                          statedSkillNames: statedSkillNames, create: create)
                 } else {
                     ExerciseTemplatePicker(instrument: $instrument) { template, instrument in
                         chosen = TemplateChoice(template: template, instrument: instrument)
@@ -128,7 +144,7 @@ struct NewExerciseSheet: View {
                 ConfigureExerciseForm(template: choice.template, initialCommand: initialCommand,
                                       initialSignature: initialSignature,
                                       initialInstrument: choice.instrument, initialSongs: initialSongs,
-                                      create: create)
+                                      statedSkillNames: statedSkillNames, create: create)
             }
             .tint(PocketColor.practice)
             .toolbar {
@@ -147,7 +163,9 @@ struct NewExerciseSheet: View {
 
     private func create(_ plan: NewExercisePlan) {
         created = true
-        onCreate(plan)
+        var stated = plan
+        stated.skillIDs = statedSkillIDs
+        onCreate(stated)
         dismiss()
     }
 }

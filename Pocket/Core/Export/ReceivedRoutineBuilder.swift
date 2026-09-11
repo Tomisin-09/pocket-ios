@@ -276,6 +276,11 @@ enum ReceivedRoutineBuilder {
         drill.awayFromInstrument = record.awayFromInstrument
         drill.clickEnabled = record.clickEnabled
         drill.clickBPM = record.clickBPM
+        // What the drill is *for* crosses (ADR 0216 D7) — in the shared vocabulary only. A skill the
+        // sender made is theirs: its id names a row this library doesn't have, and minting one would
+        // put somebody else's words into the receiver's catalogue. Left with nothing, the drill
+        // follows its type, like any drill that never said.
+        drill.skillIDs = (record.skillIDs ?? []).filter { !SkillAssociation.isCustom($0) }
         // **The four enum columns are assigned raw, not through their typed setters.** Only
         // `RoutineItemKind`, `LoopRunMode` and `EntryKind` have an `init(raw:)`; `ExerciseTemplate`,
         // `Instrument`, `Subdivision` and `MetronomeIntervalUnit` resolve with a `?? default` inside

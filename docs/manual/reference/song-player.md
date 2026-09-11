@@ -160,6 +160,9 @@ holding a row, and no selection mode. It starts collapsed.
 - **`Journal`** — notes written against this loop, showing a count or `None`.
 - **`Where you learned it`** — links out to whatever explains this passage, with an `Add a link`
   button. See [where you learned it](../references.md).
+- **`Works on`** — the skills this loop serves, so the goals that can bring it into a session.
+  `Add skills` states them, from the whole catalogue or your own. A tag that names a kind of drill
+  adds that kind's skills too, each saying which tag it came from, and they go when the tag does.
 - **`Tags`** — your own labels, plus a row of suggestions.
 - **`Colour`** — how the span is drawn on the waveform, including `Custom colour`.
 - **`Delete loop`** at the bottom.

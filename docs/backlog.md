@@ -32,6 +32,17 @@ What's needed:
 Not blocking the app: nothing in the build reads this. It blocks *the manual being complete*, which
 is the deliverable ADR 0165 defines.
 
+## Merging two custom skills (logged 2026-09-11, ADR 0216 D7)
+
+A player can make *Live looping* on Monday and *Looper* on Friday, mark drills with both, and have
+no way to say they are one skill. Today the answer is to delete one — the delete confirmation says
+how many goals, drills and loops it's on — and re-mark those by hand. Case-folded name uniqueness
+(`Labels.canonical`) stops the exact-duplicate case at write, and restore already folds a same-named
+skill onto the existing row, so the mechanism a merge needs exists: `CustomSkillStore.delete` is a
+strip over every holder, and a merge is the same pass writing the survivor's id instead of removing
+the loser's. What isn't decided is the surface (a *Merge into…* swipe action beside Edit and Delete?)
+and whose description survives. Not started because nobody has hit it yet.
+
 ## The manual has no page for the Oracle (logged 2026-09-05, ADR 0187 S1) — now **correctly** absent
 
 > **Superseded in its urgency by ADR 0211 (2026-09-10), not closed.** The Oracle's door is shut, so
@@ -1786,9 +1797,10 @@ unit-plus-mode, or one loop appears twice in a session (once to train, once to s
 
 Decided too: user-facing name is **"Away from your instrument"**, never "off-guitar" — ADR 0116 made
 this multi-instrument and a bassist shouldn't be offered a guitar-named session; the taxonomy case
-keeps its name in code. Not fixed (§O7): `know.*` and `create.songwriting` have the same
-zero-candidate hole, but unlike ear there's no shipped mode behind them — fixing that means a theory
-surface (ADR 0094 T1, still deferred), and the honest interim is a freeform block the player writes.
+keeps its name in code. §O7: `know.*` and `create.songwriting` had the same zero-candidate hole.
+**Closed for the planner by ADR 0216 slice 2** — a Freeform block can state any skill, and the goal
+editor offers *Write your own practice for it* for exactly these. A theory surface (ADR 0094 T1) is
+still deferred: the block is the player's, not a mode the app runs.
 Honest limitation: the session is only as good as the loop library, so it lands better for
 established users than new ones, and the empty state has to say something useful.
 

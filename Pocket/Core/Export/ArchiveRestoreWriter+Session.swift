@@ -81,9 +81,11 @@ extension ArchiveRestoreWriter {
         var seen = Set<UUID>()
         for record in archive.goals where !existing.goalUIDs.contains(record.uid) {
             guard seen.insert(record.uid).inserted else { continue }
+            // Skill ids through the resolver (ADR 0216 D7): a skill the player made that folded onto
+            // a same-named one already here is named by that row.
             let goal = Goal(title: record.title,
                             weight: record.weight,
-                            skillIDs: record.skillIDs,
+                            skillIDs: resolver.skillIDs(record.skillIDs),
                             targetSong: record.targetSongID.flatMap { resolver.songs[$0] },
                             isMet: record.isMet,
                             dateAdded: record.dateAdded)
@@ -93,7 +95,7 @@ extension ArchiveRestoreWriter {
         for record in archive.longTermGoals where !existing.longTermGoalUIDs.contains(record.uid) {
             guard seen.insert(record.uid).inserted else { continue }
             let goal = LongTermGoal(title: record.title,
-                                    skillIDs: record.skillIDs,
+                                    skillIDs: resolver.skillIDs(record.skillIDs),
                                     order: record.order,
                                     targetSong: record.targetSongID.flatMap { resolver.songs[$0] },
                                     isMet: record.isMet,

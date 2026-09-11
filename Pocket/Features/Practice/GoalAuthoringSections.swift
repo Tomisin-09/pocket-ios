@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// The parts of goal authoring **both tiers share** (ADR 0171 D5): pick a starting template, trim
@@ -92,28 +93,30 @@ struct GoalTemplatePicker: View {
 }
 
 /// The trimmable skill list — every offered skill as a toggle row, plus a way into the full catalog.
+/// Each row also says what the skill actually pulls from the player's library, and offers a fix
+/// when a kept skill pulls nothing (ADR 0216 D4).
 struct GoalSkillsSection: View {
     @Binding var offeredSkillIDs: [String]
     @Binding var keptSkillIDs: Set<String>
     @Binding var showingSkillPicker: Bool
+    /// What each offered skill reaches, keyed by skill id — from `goalSkillReach`, so both editors
+    /// measure the same way.
+    var reach: [String: SkillReach] = [:]
+    /// Called with the skill and the fix the player tapped under it, when it reaches nothing.
+    var onFix: (String, SkillAssociation.Fix) -> Void = { _, _ in }
+    /// The skills the player made (ADR 0216 D7), so a row names one by its name, never its id.
+    @Query private var customSkills: [CustomSkill]
 
     var body: some View {
-        Section {
+        let vocabulary = SkillVocabulary(customSkills)
+        return Section {
             ForEach(offeredSkillIDs, id: \.self) { skillID in
-                Button { toggle(skillID) } label: {
-                    HStack {
-                        Text(TechniqueTaxonomy.info(skillID)?.name ?? skillID)
-                            .font(.futura(.body))
-                            .foregroundStyle(PocketColor.textPrimary)
-                        Spacer()
-                        Image(systemName: keptSkillIDs.contains(skillID) ? "checkmark.circle.fill" : "circle")
-                            .foregroundStyle(keptSkillIDs.contains(skillID)
-                                             ? PocketColor.practice : PocketColor.textSecondary)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .listRowBackground(PocketColor.background)
+                GoalSkillRow(skillID: skillID, name: vocabulary.name(skillID),
+                             explanation: vocabulary.explanation(skillID),
+                             isKept: keptSkillIDs.contains(skillID),
+                             reach: reach[skillID], onToggle: { toggle(skillID) },
+                             onFix: { onFix(skillID, $0) })
+                    .listRowBackground(PocketColor.background)
             }
             Button { showingSkillPicker = true } label: {
                 Label("Add skills", systemImage: "plus.circle")
@@ -179,6 +182,19 @@ struct GoalTargetSongSection: View {
                 .font(.futura(.caption))
         }
     }
+}
+
+/// What each offered skill reaches in the player's library (ADR 0216 D4), keyed by skill id — shared
+/// by both editors so the two can't measure differently. The target song is passed only while a
+/// kept skill needs one, matching what `save()` would store, so the line never counts a song the
+/// goal won't keep.
+@MainActor
+func goalSkillReach(_ skillIDs: [String], targetSong: Song?, exercises: [Exercise], loops: [Loop],
+                    songs: [Song]) -> [String: SkillReach] {
+    let library = PracticePlanner.library(exercises: exercises, loops: loops, songs: songs)
+    let songUID = targetSong.map { PlannerID.uid(from: $0.sourceID) }
+    let reach = GoalReach.reach(skillIDs: skillIDs, targetSongUID: songUID, library: library)
+    return Dictionary(reach.map { ($0.skillID, $0) }, uniquingKeysWith: { first, _ in first })
 }
 
 /// Whether any kept skill routes via the target song (Path B) — shared by both editors so the two

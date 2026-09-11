@@ -45,6 +45,14 @@ struct ExerciseDetailSheet: View {
     /// the same reason `showingSongPicker` is: a sheet presented from inside the `Form` dismisses
     /// *this* sheet instead of opening. Internal so `ExerciseDetailSheet+Folders` can reach it.
     @State var filingFolders = false
+    /// The skills picker, and the working copy it edits (ADR 0216 D6) — held here for
+    /// `filingFolders`' reason. Internal so `ExerciseDetailSheet+Skills` can reach them.
+    @State var editingSkills = false
+    @State var skillOffered: [String] = []
+    @State var skillKept: Set<String> = []
+    /// The skills the player made, for Works on's names and ⓘ text (ADR 0216 D7).
+    @Query var customSkills: [CustomSkill]
+    var vocabulary: SkillVocabulary { SkillVocabulary(customSkills) }
     /// The reference link being added or edited (ADR 0167). Held here, not in `ReferencesSection`,
     /// because a sheet presented from inside this `Form` dismisses *this* sheet instead of opening —
     /// the same reason `showingSongPicker` lives here. See `ReferenceLinkEditing`.
@@ -104,6 +112,9 @@ struct ExerciseDetailSheet: View {
                     ReferencesSection(owner: exercise, accent: PocketColor.practice,
                                       editing: $editingReference, presenting: $referenceAttachments)
                     if !isFreeform { feelSection }
+                    // Which goals can find this drill (ADR 0216 D6). Directly above the template,
+                    // because in slice 1 the template is what decides it.
+                    worksOnSection
                     templateSection
                 }
             }
@@ -124,6 +135,7 @@ struct ExerciseDetailSheet: View {
                     accent: PocketColor.practice)
             }
             .sheet(isPresented: $filingFolders) { foldersPicker }
+            .sheet(isPresented: $editingSkills, onDismiss: commitSkills) { skillsPicker }
             .referenceLinkEditing($editingReference, owner: exercise,
                                   accent: PocketColor.practice)
             .referenceAttachments($referenceAttachments, naming: $editingReference, owner: exercise,
@@ -156,7 +168,7 @@ struct ExerciseDetailSheet: View {
             }
         } footer: {
             Text("The kind of drill, set when it was created. It groups the exercise in your "
-                 + "library and can't be changed.")
+                 + "library, decides the skills it works on, and can't be changed.")
         }
     }
 

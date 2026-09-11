@@ -87,10 +87,17 @@ catalogue, so you can name the goal yourself. What you cannot make is a goal wit
 **Save** stays unavailable until you have kept at least one, because a goal's skills are what it
 actually schedules and an empty one schedules nothing.
 
+If the skill you mean isn't in the catalogue, make it. **New skill**, at the top of the list under
+**Your own**, takes a name and, if you like, a line saying what it is — that line is what its **ⓘ**
+shows. Search for a name nothing matches and the same row offers to create it. A skill of your own
+brings whatever drill or loop you mark with it, and nothing else. Swipe it in the
+list to edit or delete it; deleting says how many goals, drills and loops it's on, and takes it off
+all of them.
+
 ### Then trim it
 
 <!-- shot: sessions/goal-editor | role: screen
-     | alt: The Edit goal form with the name, the Low / Normal / High priority control, the skills list, Mark as met and Delete goal
+     | alt: The Edit goal form with the name, the Low / Normal / High priority control, and the skills list, each skill saying what it would bring from your library and how to fill one that brings nothing, down to Mark as met
      | state: seeded library, Today's session, an existing goal reopened -->
 
 - **Name** — what you would call it out loud.
@@ -98,7 +105,13 @@ actually schedules and an empty one schedules nothing.
   today's session, not a deadline. Long-term goals have no priority control; their rank does the
   same job.
 - **Skills** — tap to include or drop one, or **Add skills** to pick more from the full catalogue.
-  **Save** stays unavailable until at least one is kept.
+  **Save** stays unavailable until at least one is kept. Under each skill is what it would actually
+  bring from your library — *2 exercises · 1 loop*, say — worked out exactly the way the session
+  will be. A kept skill that brings nothing says *Nothing in your library yet*, and below it either
+  a button that makes the kind of exercise that works on it — **Write your own practice for it**,
+  for a skill no kind of drill works on, or one of your own — or a line saying what would. The **ⓘ**
+  beside any skill says what it is, which kinds of drill and loop work on it, and what comes
+  before it.
 - **Target song** — this row appears only when you have kept a skill that needs a song to mean
   anything. Pick one and the goal schedules that song's loops and a play-through of it, which is
   what turns "learn this song" into actual blocks.

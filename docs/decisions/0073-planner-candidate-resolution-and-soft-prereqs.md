@@ -5,6 +5,11 @@
 - **Extends:** ADR 0015 (goal → candidate selection). Pairs with ADR 0072 (self-rated mastery +
   dueScore), ADR 0014 (session transform), ADR 0016 (speed staging), ADR 0070 (no grading).
 - **Supersedes:** nothing.
+- **Amended by:** ADR 0216 (2026-09-11). **Decision 4** — a drill's type becomes a **default** it
+  can narrow or expand, per drill (0216 D1, built in its slice 2: an empty stored list still
+  resolves by type exactly as written here). **§4 / Decision 7** — a goal may also name a **custom
+  skill** the player creates (0216 D7, slice 2). Path A / Path B and the soft prerequisite stage
+  stand as written.
 
 ## Context
 

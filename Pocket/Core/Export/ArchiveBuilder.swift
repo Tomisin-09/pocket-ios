@@ -21,6 +21,9 @@ struct ArchiveSource {
     /// The empty-folder markers (ADR 0210 D4). Only the markers are read: a folder with something in
     /// it is already implied by its members' paths.
     var folders: [PracticeFolder] = []
+    /// The skills the player made (ADR 0216 D7) — what every `custom:<uid>` in a drill's, loop's or
+    /// goal's `skillIDs` resolves to.
+    var customSkills: [CustomSkill] = []
 }
 
 /// Turns the live store into a `PracticeArchive` (ADR 0181).
@@ -82,7 +85,10 @@ enum ArchiveBuilder {
                 .sorted { ($1.createdAt, $0.uid.uuidString) < ($0.createdAt, $1.uid.uuidString) }
                 .map(recordingRecord),
             profile: source.profile.map(profileRecord),
-            folderMarkers: source.folders.map(\.path).sorted()
+            folderMarkers: source.folders.map(\.path).sorted(),
+            customSkills: source.customSkills
+                .sorted { ($0.dateAdded, $0.uid.uuidString) < ($1.dateAdded, $1.uid.uuidString) }
+                .map { CustomSkillRecord(uid: $0.uid, name: $0.name, info: $0.info, dateAdded: $0.dateAdded) }
         )
     }
 
@@ -160,6 +166,8 @@ enum ArchiveBuilder {
             repeats: loop.repeats,
             loopTypeRaw: loop.loopTypeRaw,
             tags: loop.tags.sorted(),
+            // As stored — already canonical, and the order the loop's Skills section lists them in.
+            skillIDs: loop.skillIDs,
             isFavorite: loop.isFavorite,
             isBackingTrack: loop.isBackingTrack,
             lastPracticedSpeed: loop.lastPracticedSpeed,

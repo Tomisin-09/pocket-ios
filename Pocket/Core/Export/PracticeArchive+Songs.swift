@@ -77,6 +77,9 @@ struct LoopRecord: Codable, Equatable, Sendable {
     var repeats: Int
     var loopTypeRaw: String
     var tags: [String]
+    /// The skills this loop states (ADR 0216 D1). `Optional` for `ExerciseRecord.folders`' reason —
+    /// an archive written before 0216 has no key, and a missing non-optional array fails the decode.
+    var skillIDs: [String]?
     var isFavorite: Bool
     var isBackingTrack: Bool
 

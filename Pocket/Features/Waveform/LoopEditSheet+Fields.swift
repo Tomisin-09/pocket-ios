@@ -257,35 +257,13 @@ extension LoopEditSheet {
                 Button("Add", action: addTag)
                     .disabled(Labels.canonical(newTag) == nil)
             }
-            if !skillTagSuggestions.isEmpty {
-                skillTagChips
-            }
+            // The ✨ skill-bucket chips that used to sit here are gone (ADR 0216 D6): Works on above
+            // says what a loop is for directly. A tag that spells a kind of drill still counts
+            // (ADR 0074) — it just isn't the way in any more.
             if !tagSuggestions.isEmpty {
                 tagSuggestionChips
             }
         }
-    }
-
-    /// The **skill-bucket** suggestions (V2 planner Slice 4): tagging a loop with one lets the
-    /// planner's technique goals surface it (Path A). Always present (not drawn from other loops),
-    /// excludes buckets already on this loop, prefixed ✨ so it reads apart from descriptive tags.
-    private var skillTagChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                ForEach(skillTagSuggestions, id: \.self) { suggestion in
-                    TagChip(text: "✨ \(suggestion)", style: .suggestion) {
-                        tags = Labels.adding(suggestion, to: tags)
-                    }
-                }
-            }
-        }
-        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-    }
-
-    /// The recognised skill-bucket tags not already applied to this loop, in canonical order.
-    private var skillTagSuggestions: [String] {
-        let applied = Set(tags.map { $0.lowercased() })
-        return SkillFamilyMap.suggestedLoopTags.filter { !applied.contains($0.lowercased()) }
     }
 
     /// Tappable chips of tags used on other loops — tap to add; horizontally scrolling since long.

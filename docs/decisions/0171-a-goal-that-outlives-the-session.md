@@ -2,6 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-19 (`pocket-276-long-term-goals`)
+- **Amended by:** ADR 0216 D7 (2026-09-11, built in its slice 2). D5's *"the ban on free text is
+  likewise untouched"* no longer holds for **custom skills**, which a player creates with their own
+  description. The Save gate D5 actually relies on — no goal with no skills — is unchanged, and so
+  is everything else here. (0216's slice 1 also adds a reach line under each skill in this tier's
+  editor.)
 - **Relates to:** ADR 0015 (the planner's goal model — S1 "the goals are *not equal*", S5 weight,
   S6 met, S7 "one near-term goal"), ADR 0014 (the session layout the goals feed),
   ADR 0129 (the block model that cut Quick to three items and forced round-robin),

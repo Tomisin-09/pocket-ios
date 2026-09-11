@@ -39,6 +39,9 @@ struct LoopEditSheet: View {
     // `@Query` of every `Loop`: this sheet opens over playing audio, and fetching (and
     // faulting) the whole loop table during presentation is what made that open feel slow.
     @State var tagPool: [String] = []
+    /// The skills the player made (ADR 0216 D7), for the Works on section's names and ⓘ text. A
+    /// `@Query` is fine here where one of every `Loop` was not: this table holds a handful of rows.
+    @Query var customSkills: [CustomSkill]
     /// The reference link being added or edited (ADR 0167). Held at this level, like the journal
     /// sheet below it — a sheet presented from inside this `Form` dismisses *this* sheet instead of
     /// opening. See `ReferenceLinkEditing`.
@@ -56,6 +59,13 @@ struct LoopEditSheet: View {
     @State var loopType: LoopType
     // Loop tags (ADR 0034) — local copy, written back on Done.
     @State var tags: [String]
+    // The skills the loop states (ADR 0216 D1) — local copy, written back on Done.
+    @State var skillIDs: [String]
+    /// Whether the skills picker is up, and the working copy it edits (ADR 0216 D6). Presented from
+    /// `body` for `editingReference`'s reason.
+    @State var editingSkills = false
+    @State var skillOffered: [String] = []
+    @State var skillKept: Set<String> = []
     // The favourite pin (ADR 0119). It was only settable from the Loops library's star until
     // ADR 0125 gave the selection bar a bulk star — leaving the *single* loop you're already
     // editing as the one place you couldn't set it.
@@ -74,6 +84,9 @@ struct LoopEditSheet: View {
     // partial detent (device bug 2026-07-10). A Button + confirmationDialog is reliable at any detent.
     @State var showingTypeOptions = false
     @State var showingFocusOptions = false
+
+    /// Names and ⓘ text for every skill id this sheet can show.
+    var vocabulary: SkillVocabulary { SkillVocabulary(customSkills) }
 
     init(loop: Loop, autoColor: Color,
          onDelete: @escaping () -> Void, onAdjustRange: @escaping () -> Void,
@@ -96,6 +109,7 @@ struct LoopEditSheet: View {
         _commandTempo = State(initialValue: loop.commandTempo)
         _loopType = State(initialValue: loop.loopType)
         _tags = State(initialValue: loop.tags)
+        _skillIDs = State(initialValue: loop.skillIDs)
         _isFavorite = State(initialValue: loop.isFavorite)
         _isBackingTrack = State(initialValue: loop.isBackingTrack)
     }
@@ -146,6 +160,7 @@ struct LoopEditSheet: View {
         loop.rateMastery(mastery)
         loop.loopType = loopType
         loop.tags = tags
+        loop.skillIDs = skillIDs
         loop.isFavorite = isFavorite
         loop.isBackingTrack = isBackingTrack
         applyColorChoice()
@@ -207,6 +222,9 @@ struct LoopEditSheet: View {
                 // journal entry, not part of the local-copy edit Cancel discards.
                 ReferencesSection(owner: loop, accent: PocketColor.practice,
                                   editing: $editingReference, presenting: $referenceAttachments)
+                // Directly above Tags, because a recognised tag still puts a skill here (ADR 0074)
+                // alongside the ones stated (ADR 0216 D6) — the two read as one subject.
+                worksOnSection
                 tagsSection
                 Section {
                     LoopColorPicker(autoColor: autoColor, choice: $colorChoice)
@@ -251,6 +269,7 @@ struct LoopEditSheet: View {
         .referenceLinkEditing($editingReference, owner: loop, accent: PocketColor.practice)
         .referenceAttachments($referenceAttachments, naming: $editingReference, owner: loop,
                               accent: PocketColor.practice)
+        .sheet(isPresented: $editingSkills, onDismiss: applyPickedSkills) { skillsPicker }
         .sheet(isPresented: $showingJournal) {
             // Authorable again from song loops (ADR 0088, reversing 0058's waveform read-only) —
             // the same `JournalWriter` path the Practice run screen uses, each entry snapshotting

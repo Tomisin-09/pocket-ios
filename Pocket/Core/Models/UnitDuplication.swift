@@ -90,6 +90,8 @@ extension Exercise {
                             tags: tags,
                             notes: notes)
         copy.targetTempoOverride = targetTempoOverride
+        // What it works on is shape, not history (ADR 0216 D2) — a copy is for the same skills.
+        copy.skillIDs = skillIDs
         return copy
     }
 }

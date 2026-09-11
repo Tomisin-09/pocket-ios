@@ -20,6 +20,14 @@ struct GoalEditorView: View {
     let existing: Goal?
     /// The song library, for the repertoire target picker.
     let songs: [Song]
+    /// The drill and loop libraries, for the line under each skill saying what it would actually
+    /// pull into a session (ADR 0216 D4).
+    @Query private var exercises: [Exercise]
+    @Query private var loops: [Loop]
+    /// For a drill made from a skill's fix: the profile's instrument and default command tempo.
+    @Query private var profiles: [Profile]
+    /// The drill a skill's fix is creating, while that sheet is up.
+    @State private var fixExercise: SkillFixExercise?
 
     /// The chosen template for a new goal — `nil` until picked (the picker is shown until then).
     @State private var template: GoalTemplate?
@@ -104,7 +112,11 @@ struct GoalEditorView: View {
             }
 
             GoalSkillsSection(offeredSkillIDs: $offeredSkillIDs, keptSkillIDs: $keptSkillIDs,
-                              showingSkillPicker: $showingSkillPicker)
+                              showingSkillPicker: $showingSkillPicker,
+                              reach: goalSkillReach(offeredSkillIDs,
+                                                    targetSong: needsTargetSong ? targetSong : nil,
+                                                    exercises: exercises, loops: loops, songs: songs),
+                              onFix: applyFix)
 
             if needsTargetSong { GoalTargetSongSection(songs: songs, targetSong: $targetSong) }
 
@@ -113,6 +125,14 @@ struct GoalEditorView: View {
         .sheet(isPresented: $showingSkillPicker) {
             SkillPickerSheet(offeredSkillIDs: $offeredSkillIDs, keptSkillIDs: $keptSkillIDs)
         }
+        .skillFixSheet($fixExercise, profile: profiles.first, context: context)
+    }
+
+    /// A skill's fix, tapped. Only the two that make a drill act; the rest are lines of text.
+    private func applyFix(_ skillID: String, _ fix: SkillAssociation.Fix) {
+        guard let exercise = SkillFixExercise(fix: fix, skillID: skillID) else { return }
+        fixExercise = exercise
+        haptic(.light)
     }
 
     private var metAndDeleteSection: some View {
