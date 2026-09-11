@@ -33,13 +33,14 @@ extension LoopEditSheet {
         editSkillsButton(isEmpty: stated.isEmpty)
     }
 
-    /// Tinted like the sheet's other add rows (*Add a link*), which carry the practice accent rather
-    /// than the system blue a bare `Button` in this `Form` falls back to.
+    /// Coloured the way the sheet's other add rows are (*Add a link*, `ReferencesSection`): a
+    /// `foregroundStyle` on the label. A `.tint` on the button coloured the title but left the
+    /// symbol in the system blue a bare `Button` in this `Form` falls back to.
     private func editSkillsButton(isEmpty: Bool) -> some View {
         Button(action: beginEditingSkills) {
             Label(isEmpty ? "Add skills" : "Change skills", systemImage: "plus.circle")
+                .foregroundStyle(PocketColor.practice)
         }
-        .tint(PocketColor.practice)
     }
 
     private var emptyWorksOnLine: some View {
