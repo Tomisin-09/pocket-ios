@@ -4,14 +4,21 @@ This is the canonical copy of the public user manual. It is written here, review
 code it describes, and rendered by the `.co.uk` site at `/redmoon/manual/<slug>` — **one markdown
 file, one route, no exceptions.** The site is a rendering target, not an author.
 
-**Ported so far: `references`, as the route `/redmoon/manual/references`** (built on the site repo's
-`decops-061-manual-references`; it is live once that merges into `uk-site`, which auto-deploys). It
-went first because it is the one page whose feature and whose prose landed together, so nothing in
-it was waiting on a build.
-The port is a hand-written route in the site repo, `app/redmoon/manual/references/page.tsx`, reusing
-the `.privacy-*` prose classes the beta guide already reuses; figures come from `shots/figures/` at
-640px wide, dropped into `public/redmoon/manual/`. **A page is not ported until its figures are
-current** — see the `references/section` row in the shoot table below for what that cost.
+**Publishing is an export, not a port** ([ADR 0217](../decisions/0217-the-manual-is-rendered-not-ported.md)).
+The site keeps a copy of these pages in its `content/manual/` and renders every one of them from a
+single route at build time; nothing in the site is written by hand per page, and nothing there may
+be edited, because the next export replaces it. To publish a change:
+
+```sh
+./scripts/export-manual.py ~/Documents/laundry-pickup-project                  # the text
+./scripts/export-manual.py ~/Documents/laundry-pickup-project --figures FILE   # and figures
+```
+
+then commit and push a site branch — `uk-site` auto-deploys, so merging is publishing. The export
+runs `check-manual.py` first, and the site build fails on a link or `#anchor` that names nothing.
+**A figure is published by being on the `--figures` list**, which holds only figures somebody has
+compared against the current app; a marker with no image renders as nothing, so a page ships text
+first. The `references/section` row in the shoot table below is why.
 
 The decision behind all of it is [ADR 0165 — the manual quotes the app](../decisions/0165-the-manual-quotes-the-app.md).
 Read it before writing a page. The short version:

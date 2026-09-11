@@ -140,7 +140,9 @@ docs/          architecture.md, positioning.md (who we're up against and the lin
   what the app's compiled catalogs actually say. It is the one step with no `if:` on it — a
   docs-only change is exactly what it guards, and exactly what switches everything else off. Stdlib
   Python, no dependencies, so it runs on either runner; it sits inside `lint-build-test` rather than
-  in `scope` or a job of its own, for the reason 0133 gives.
+  in `scope` or a job of its own, for the reason 0133 gives. Publishing the manual is
+  `scripts/export-manual.py` into the site repo (`docs/decisions/0217`), which runs this check first
+  and pushes nothing.
 - **Flake control** (`docs/decisions/0146`): the UI tests wait on a readiness signal the app raises
   when first-launch seeding completes, not on a guess about how slow the runner is — every test
   launches through `UITestCase.launchApp()`, which carries the one generous wait. CI also boots and
