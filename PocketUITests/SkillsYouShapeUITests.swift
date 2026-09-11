@@ -34,8 +34,10 @@ final class SkillsYouShapeUITests: UITestCase {
         form.buttons["Save"].tap()
 
         // The picker is a sheet over the editor, and a kept skill is a row in both at once, so the
-        // name alone matches two buttons. The picker's list is the one with a *Your own* section.
-        let pickerList = app.collectionViews.containing(.staticText, identifier: "Your own").firstMatch
+        // name alone matches two buttons. The picker's list is the one holding the *New skill* row —
+        // never its *Your own* header: iOS 18 reads a section header back in capitals ("YOUR OWN")
+        // where iOS 26 does not, so a header match passes locally and finds nothing on CI.
+        let pickerList = app.collectionViews.containing(.button, identifier: "New skill").firstMatch
         let made = pickerList.buttons[name]
         XCTAssertTrue(made.waitForExistence(timeout: Self.uiTimeout), "the new skill isn't in the picker")
         XCTAssertTrue(made.isSelected, "a skill made from the picker is kept straight away")
