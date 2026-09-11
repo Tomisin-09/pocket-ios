@@ -56,6 +56,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **The manual is on the web.** Every page — getting started, songs and looping, exercises,
+  routines and sessions, the journal, the toolkit, and a reference that names every control on
+  every screen — at `decooperations.co.uk/redmoon/manual`, rendered from the same pages that are
+  checked against the app on every change (ADR 0217). Screenshots arrive page by page, each once it
+  has been checked against the current build.
 - **A goal now says what it will bring before you build a session.** Under every skill in the goal
   editor — for this session's goals and your long-term ones — is what that skill would actually
   pull from your library: *2 exercises · 1 loop*, *3 loops · the song itself*. A skill that pulls

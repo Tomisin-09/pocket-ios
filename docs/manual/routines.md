@@ -128,7 +128,7 @@ Every block gets a **3 · 2 · 1** count-in, so an auto-started block never begi
 
 Starting a routine asks first: **Tune up first?**, over three answers.
 
-- **Tune up** opens the whole tuner — the same one in the [Toolkit](toolkit.md#the-tuner) — with
+- **Tune up** opens the whole tuner — the same one in the [Toolkit](toolkit.md#tuner) — with
   **Start practising** pinned to the bottom. Tune, then tap that and the routine begins.
 - **Not now** starts the routine straight away.
 - **Don't ask again** starts it and never asks again. That is the same switch as

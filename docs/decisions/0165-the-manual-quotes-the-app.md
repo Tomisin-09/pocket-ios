@@ -10,6 +10,9 @@
   <br>Drafted 2026-08-13, accepted 2026-08-14. `CHANGELOG.md` still gets no entry until the manual
   **ports** to the site, which is the trigger set in Consequences and is unchanged by this.
 - **Date:** 2026-08-13
+- **Amended by:** ADR 0217 (2026-09-11) — D1's *port* is a build-time render of a copy that
+  `scripts/export-manual.py` writes into the site, not a hand-written route per page, and D7's
+  figures publish only once reviewed. D2–D6, the marker grammar and every check stand.
 - **Extends:** ADR 0145 (help is something you look up). Its D5 (*quote, don't restate*) and D6
   (*no numbers*) were written for one compiled catalog; this ADR lifts both out of the FAQ and
   makes them repo-wide rules with a check behind them.
