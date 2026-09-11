@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftData
 import SwiftUI
 
@@ -21,6 +22,11 @@ struct HomeView: View {
     /// Practice reminders (ADR 0186). Home owns the launch sweep (D3) and the tap landing (D6),
     /// because both need a `ModelContext` to resolve a `uid` against and this is where the store is.
     @Environment(PracticeReminder.self) var practiceReminder
+    /// The system review prompt (ADR 0214). Read here, in a live view scope, and handed **down** as a
+    /// closure — never stored. `RequestReviewAction` is `Sendable`, so the compiler would happily let
+    /// a service type keep one; what it would be keeping is a handle to an environment that has since
+    /// been rebuilt. Non-private because `HomeView+ProfileMoment` fires the ladder's last rung.
+    @Environment(\.requestReview) var requestReview
     /// The mailbox `AppDelegate` posts a tapped reminder's routine into (ADR 0186 D6). A shared
     /// instance rather than an environment value because the delegate that fills it lives outside
     /// the SwiftUI environment entirely; `@Observable` still tracks it from here.
@@ -74,7 +80,9 @@ struct HomeView: View {
     @State private var importModel = SongImportModel()
     /// Pushes the library after a home-screen import lands songs, so the user sees
     /// where they went (from the library itself there's nowhere to go).
-    @State private var showingLibrary = false
+    /// Internal since ADR 0214: `screenIsSettled` in `HomeView+ProfileMoment` reads it, because a
+    /// review ask must not fire one frame before a push takes the screen.
+    @State var showingLibrary = false
     /// The song a single-file import just created — pushed straight to its waveform instead of the
     /// library ("open on create"). A batch still lands in the library.
     /// Non-private since ADR 0219: the starter-track card lands here too, because adopting it *is*
@@ -91,6 +99,11 @@ struct HomeView: View {
     /// through `@Query` as each seeder commits, exactly as before. Internal, not private, because
     /// both live in `HomeView+Seeding`.
     @State var seedingComplete = false
+    /// Whether Home has appeared once already in this process (ADR 0214). Set at the end of every
+    /// `maybeOfferProfileMoment()`, read by `screenIsSettled` — the review ask deliberately skips the
+    /// **launch** appearance: a cold launch is the player arriving to do something, and the ask waits
+    /// for the walk back instead.
+    @State var homeHasAppearedThisLaunch = false
 
     /// How many routines the "recent routines" rail shows.
     private let recentRoutineLimit = 3

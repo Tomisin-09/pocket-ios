@@ -75,6 +75,20 @@ struct AboutSection: View {
                 }
             }
 
+            // The permanent door for rating (ADR 0214), and deliberately **not** a second
+            // `requestReview()`. App Store Review Guideline 1.1.7 forbids wiring that API to a
+            // control the player taps to rate, and it would be the wrong thing here anyway: it shows
+            // nothing once its budget is spent, so a tapped row would silently do nothing. The
+            // write-review URL always opens. Above the two legal links because those are
+            // conventionally last and this is not one of them.
+            Link(destination: Self.writeReview) {
+                LabeledContent("Rate Red Moon") {
+                    Image(systemName: "arrow.up.right")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
             // Apple's standard EULA (the licence that governs use of the app on the
             // App Store) applies by default when we ship no custom terms — see
             // docs/app-store-license-obligations.md. Red Moon sells nothing (ADR 0237), so no
@@ -132,6 +146,20 @@ struct AboutSection: View {
     /// its dedicated URL. A valid compile-time literal.
     private static let privacyPolicy =
         URL(string: "https://decooperations.co.uk/privacy#red-moon-practice")!
+
+    /// The App Store's **write a review** sheet for Red Moon (ADR 0214).
+    ///
+    /// `6789618726` is Red Moon's numeric Apple ID from App Store Connect ▸ App Information (given by
+    /// the owner, 2026-10-01). It is not derivable from the bundle id and `fastlane/Appfile` carries
+    /// only `app_identifier`, so this literal is the one place it lives. Unconfirmable before the app
+    /// is live: Apple's public lookup returns nothing for an unreleased app, so the first check that
+    /// this row lands on a real page is tapping it on a store build.
+    ///
+    /// The id stays inside the one literal rather than being interpolated from a separate constant,
+    /// so the "a valid compile-time literal" justification the other two URLs here rest on still
+    /// holds. If a second door ever wants it, hoist both into a shared type then — not before.
+    private static let writeReview =
+        URL(string: "https://apps.apple.com/app/id6789618726?action=write-review")!
 }
 
 #Preview {

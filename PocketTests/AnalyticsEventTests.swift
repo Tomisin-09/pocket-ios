@@ -31,7 +31,7 @@ final class AnalyticsEventTests: XCTestCase {
     // MARK: - Wire format
 
     func testVocabularyIsComplete() {
-        XCTAssertEqual(AnalyticsEvent.everyEvent.count, 14,
+        XCTAssertEqual(AnalyticsEvent.everyEvent.count, 15,
                        "The vocabulary changed. Pin the new event's name and payload here, and "
                        + "check it against the 20k/month free tier before shipping it.")
     }
@@ -51,7 +51,8 @@ final class AnalyticsEventTests: XCTestCase {
                         "exercise_received",
                         "archive_exported",
                         "archive_restored",
-                        "mic_permission"],
+                        "mic_permission",
+                        "review_requested"],
                        "An event name changed. This breaks the dashboard series permanently — "
                        + "rename the Swift case instead.")
     }
@@ -88,7 +89,8 @@ final class AnalyticsEventTests: XCTestCase {
             ["template"],
             ["includes_take_audio", "takes"],
             ["already_present", "items_added", "take_files"],
-            ["outcome"]
+            ["outcome"],
+            ["trigger"]
         ], "A payload key changed — the dashboard breakdown built on it will go empty.")
     }
 
@@ -103,6 +105,7 @@ final class AnalyticsEventTests: XCTestCase {
         permitted.formUnion(LatencyBucket.allCases.map(\.rawValue))
         permitted.formUnion(Tool.allCases.map(\.rawValue))
         permitted.formUnion(MicOutcome.allCases.map(\.rawValue))
+        permitted.formUnion(ReviewTrigger.allCases.map(\.rawValue))
         permitted.formUnion(ExerciseTemplate.allCases.map(\.rawValue))
         permitted.formUnion(Instrument.allCases.map(\.rawValue))
         return permitted

@@ -23,11 +23,14 @@ struct DeveloperSettingsView: View {
             Section {
                 Button("Reset naming prompt", role: .destructive, action: resetNamingPrompt)
                 Button("Reset first-launch intake", role: .destructive, action: resetIntake)
+                Button("Reset review ask", role: .destructive, action: resetReviewAsk)
             } header: {
                 Text("First-run flows")
             } footer: {
                 Text("Clears your artist name and re-arms the “you've earned a name” prompt; the "
-                     + "second row re-arms the first-launch curation intake.")
+                     + "second row re-arms the first-launch curation intake. The third forgets that "
+                     + "we asked for a review — note that iOS keeps its own budget on top of ours, "
+                     + "so the system dialog may still decline to appear.")
             }
         }
         .settingsScreen(title: "Developer")
@@ -44,6 +47,14 @@ struct DeveloperSettingsView: View {
     /// visible/editable under "You"); this only flips the "seen" gate so Home offers the flow again.
     private func resetIntake() {
         artistIntakeSeen = false
+    }
+
+    /// Forget that the app has asked for a review, so the ladder's last rung can be exercised again
+    /// (ADR 0214). This clears **our** record only — iOS's own three-per-year budget is invisible to
+    /// the process and unaffected, so the system dialog may still show nothing after this. That is
+    /// the feature's central fact, not a bug in this button.
+    private func resetReviewAsk() {
+        ReviewPrompt.resetForTesting()
     }
 }
 

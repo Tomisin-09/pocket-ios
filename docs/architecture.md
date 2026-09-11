@@ -2467,6 +2467,39 @@ root beside `practiceReminder`, injected via `.environment`. Both readers take i
 *optional* environment value — the non-optional form traps wherever that root is absent. Surfaced as
 *Settings ▸ Help & About ▸ Diagnostics*, deliberately not a Settings hub destination.
 
+## Asking for a review (Core/Review, ADR 0214)
+
+The app's only StoreKit use since ADR 0237 deleted `StoreManager`, and it presents nothing of its
+own. Two types, the split ADR 0186 D4 established:
+
+- **`ReviewPromptPlan`** — pure, Foundation-only, unit-tested. Holds every gate: **five completed
+  sittings** (a sitting, not a run — `PracticeLog.sittings(_:gap:)` merges an evening's runs), at most
+  one ask per marketing version, at most one per 180 days, and a `screenIsSettled` flag the caller
+  computes. Returns `.ask` or `.hold(reason)` — a reason rather than a `Bool`, so a test asserts which
+  rule fired. The sitting count is an `@autoclosure` evaluated **last**, so the SwiftData fetch behind
+  it never runs on a normal launch.
+- **`ReviewPrompt`** — `@MainActor enum`, one static seam. Owns a single `UserDefaults` key holding a
+  JSON `Ask { askedAt, version }` and nothing else.
+
+⚠ **The app can never learn whether the prompt appeared.** `requestReview()` returns `Void`,
+synchronously, with no completion; iOS may draw the dialog or draw nothing and never says which. So
+the only fact stored is *the app asked* — never *shown*, *dismissed* or a rating — it is written
+**before** the call, and no rule may branch on an outcome, because there is no input from which such a
+rule could be written. Apple's three-per-365 budget is deliberately **not** modelled: every gate above
+is stricter, so theirs is never approached.
+
+`RequestReviewAction` is read as `@Environment(\.requestReview)` in `HomeView` and handed **down** as a
+closure. It is never stored — the SDK declares it `Sendable`, so the compiler permits exactly the
+mistake ADR 0186 D4 records for `UNUserNotificationCenter`.
+
+Raised as the **fifth and last rung** of the `HomeView+ProfileMoment` ladder, after the intake, the
+naming invitation and the analytics disclosure, and only on an appearance that is not the launch one —
+a cold launch is the player arriving to do something, so the ask waits for the walk back. The permanent door is a plain `Link` in *Settings ▸ Help & About*, never a second
+`requestReview()` (Guideline 1.1.7, and it would silently do nothing once the budget is spent).
+
+Analytics: one event, `review_requested(trigger:)`, sent by the presenter — never
+`review_prompt_shown`, which would be a fact the app does not have.
+
 ## Testing
 
 - **Unit (PocketTests):** pure logic — tempo math, slider mapping, automator

@@ -18,7 +18,7 @@ import Foundation
 /// - **Nothing that grades playing** (ADR 0070). No mastery values, no achieved tempo, no accuracy.
 ///   Pocket does not judge how well you played and the telemetry must not create a back door to it.
 ///
-/// The set is kept deliberately small — **fourteen** events, nothing per-beat or per-tap — both
+/// The set is kept deliberately small — **fifteen** events, nothing per-beat or per-tap — both
 /// because a large one goes unread and because the hosted free tier is 20k events/month. (It was
 /// thirteen when ADR 0120 wrote that number, and this sentence said "~13" until the count was
 /// checked; `everyEvent` below is the list, and `AnalyticsEventTests` pins its size.)
@@ -113,6 +113,19 @@ enum AnalyticsEvent: Equatable {
     /// The outcome of a microphone permission request. Both the tuner and recording are dead ends
     /// without it, so a denial rate is a real product problem rather than a curiosity.
     case micPermission(outcome: MicOutcome)
+
+    // MARK: - Asking for a review
+
+    /// The app asked for an App Store review (ADR 0214).
+    ///
+    /// **Named for what the app did, never for what the player saw.** `requestReview()` returns
+    /// `Void` and iOS may show nothing at all, for reasons it never reports — so there is
+    /// deliberately no `review_prompt_shown`, no outcome, and no rating. Each of those would be a
+    /// number the app invented, and `ReviewPromptPlan`'s header is the long version of why.
+    ///
+    /// It is the *presenter* (`ReviewPrompt`) that sends this — no gate call site knows or cares
+    /// about analytics.
+    case reviewRequested(trigger: ReviewTrigger)
 }
 
 // MARK: - The sample of the vocabulary
@@ -134,7 +147,7 @@ extension AnalyticsEvent {
     /// case and forgetting its sample are now **one edit in one file**, three lines apart, instead of
     /// two edits in two targets — and the compiler puts the cases and the samples on the same screen.
     ///
-    /// Not `#if DEBUG`: fourteen enum values carrying no strings cost nothing in a release binary,
+    /// Not `#if DEBUG`: fifteen enum values carrying no strings cost nothing in a release binary,
     /// and `AnalyticsSink.RecordingSink` next door already declines the same guard for the same
     /// reason — a conditional is another way for two things to disagree.
     ///
@@ -154,7 +167,8 @@ extension AnalyticsEvent {
         .exerciseReceived(template: .picking),
         .archiveExported(includesTakeAudio: true, takes: 12),
         .archiveRestored(itemsAdded: 40, alreadyPresent: 8, takeFiles: 12),
-        .micPermission(outcome: .granted)
+        .micPermission(outcome: .granted),
+        .reviewRequested(trigger: .sittings)
     ]
 }
 
@@ -179,6 +193,7 @@ extension AnalyticsEvent {
         case .archiveExported: return "archive_exported"
         case .archiveRestored: return "archive_restored"
         case .micPermission: return "mic_permission"
+        case .reviewRequested: return "review_requested"
         }
     }
 
@@ -237,6 +252,11 @@ extension AnalyticsEvent {
 
         case let .micPermission(outcome):
             return ["outcome": .text(outcome.rawValue)]
+
+        // One axis, and no second one to add: there is nothing to narrow, and nothing about the
+        // outcome that the app is permitted to know.
+        case let .reviewRequested(trigger):
+            return ["trigger": .text(trigger.rawValue)]
         }
     }
 }
@@ -310,4 +330,20 @@ enum Tool: String, CaseIterable {
 enum MicOutcome: String, CaseIterable {
     case granted
     case denied
+}
+
+/// Which door asked for the review (ADR 0214).
+///
+/// **One case, and that is the whole vocabulary today.** The permanent `Rate Red Moon` row in
+/// Settings is a `Link` that leaves the app for the App Store — it raises no prompt and reports
+/// nothing back — so there is no `settingsRow` case here, for exactly the reason `PracticeSource`
+/// has no `planner` case: a case that can never be emitted is a dashboard category permanently at
+/// zero, which reads as a broken funnel rather than an absent one.
+///
+/// The axis exists all the same, so a second trigger is additive to the wire format rather than a
+/// break in it.
+enum ReviewTrigger: String, CaseIterable {
+    /// The last rung of Home's profile-moment ladder, at `ReviewPromptPlan.sittingsBeforeAsking`
+    /// completed sittings.
+    case sittings
 }

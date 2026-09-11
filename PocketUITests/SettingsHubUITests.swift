@@ -61,6 +61,42 @@ final class SettingsHubUITests: UITestCase {
                       "Sound & feel screen did not appear")
     }
 
+    /// **Help & About carries the rating door** (ADR 0214 D8). Asserted here rather than left to the
+    /// manual's C9 check, which proves only that the *string* exists in the source — not that the row
+    /// is reachable, which is the half this class exists for.
+    ///
+    /// The label only. Following the `Link` is impossible: it leaves the app for the App Store, where
+    /// XCUITest cannot go. Nor can any test assert the *other* half of ADR 0214 — whether iOS drew the
+    /// system prompt — because `requestReview()` never reports back.
+    @MainActor
+    func testHelpAndAboutOffersAWayToRate() throws {
+        let app = launchApp()
+
+        let gear = app.buttons["Settings"].firstMatch
+        XCTAssertTrue(gear.waitForExistence(timeout: Self.uiTimeout), "Settings gear missing on Home")
+        gear.tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: Self.uiTimeout),
+                      "Settings hub did not appear")
+
+        let aboutRow = firstElement(in: app, labelStartingWith: "Help & About")
+        XCTAssertTrue(aboutRow.waitForExistence(timeout: Self.uiTimeout), "Help & About row missing")
+        XCTAssertTrue(scrollIntoView(aboutRow, in: app), "Help & About row not reachable by scrolling")
+        aboutRow.tap()
+        XCTAssertTrue(app.navigationBars["Help & About"].waitForExistence(timeout: Self.uiTimeout),
+                      "Help & About screen did not appear")
+
+        let rateRow = firstElement(in: app, labelStartingWith: "Rate Red Moon")
+        XCTAssertTrue(rateRow.waitForExistence(timeout: Self.uiTimeout),
+                      "Rate Red Moon row missing from Help & About")
+
+        // The screen itself, so a layout regression in this section is visible rather than inferred
+        // from a label existing — the row sits between Diagnostics and the two legal links.
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "help-and-about"
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
     /// The first element of any type whose accessibility label begins with `prefix` — robust to whether
     /// a `NavigationLink` surfaces as a button, cell or other element.
     @MainActor
