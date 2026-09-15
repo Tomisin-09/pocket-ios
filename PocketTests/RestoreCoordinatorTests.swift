@@ -34,7 +34,7 @@ final class RestoreCoordinatorTests: XCTestCase {
         let container = try ModelContainer(
             for: Song.self, Loop.self, Marker.self, JournalEntry.self, Exercise.self,
             Routine.self, RoutineItem.self, Recording.self, TakeNote.self, PracticeRun.self,
-            Goal.self, LongTermGoal.self, SavedChord.self, Profile.self, ReferenceLink.self,
+            Goal.self, LongTermGoal.self, SavedChord.self, SavedProgression.self, Profile.self, ReferenceLink.self,
             configurations: config)
         return ModelContext(container)
     }

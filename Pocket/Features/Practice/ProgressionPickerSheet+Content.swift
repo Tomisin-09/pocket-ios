@@ -10,6 +10,7 @@ extension ProgressionPickerSheet {
         } header: {
             Text("Key")
         }
+        yourProgressionsSection
         Section {
             ForEach(ProgressionTemplate.catalog) { templateRow($0) }
         } header: {
@@ -57,17 +58,23 @@ extension ProgressionPickerSheet {
     }
 
     private func templateRow(_ template: ProgressionTemplate) -> some View {
-        let isSelected = source == .template(template.id)
-        return VStack(alignment: .leading, spacing: 10) {
-            Button {
-                source = .template(template.id)
-            } label: {
+        progressionRow(template, isSelected: source == .template(template.id),
+                       identifier: "progression.template.\(template.id)") {
+            source = .template(template.id)
+        }
+    }
+
+    /// One progression — built-in, or the player's dressed as one. Selected, it opens into the preview.
+    func progressionRow(_ row: ProgressionTemplate, isSelected: Bool, identifier: String,
+                        select: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Button(action: select) {
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(template.displayTitle)
+                        Text(row.displayTitle)
                             .font(.futura(.subheadline, weight: .semibold))
                             .foregroundStyle(isSelected ? PocketColor.practice : PocketColor.textPrimary)
-                        Text(isSelected ? template.detail : "\(template.detail) · \(chordNames(template))")
+                        Text(isSelected ? row.detail : "\(row.detail) · \(chordNames(row.steps))")
                             .font(.futura(.caption))
                             .foregroundStyle(PocketColor.textSecondary)
                     }
@@ -82,17 +89,17 @@ extension ProgressionPickerSheet {
             }
             .buttonStyle(.borderless)
             .accessibilityAddTraits(isSelected ? [.isSelected] : [])
-            .accessibilityIdentifier("progression.template.\(template.id)")
+            .accessibilityIdentifier(identifier)
 
             if isSelected { previewStrip }
         }
     }
 
     /// The chords a row plays in the current key, each named once — "G · D · Em · C".
-    private func chordNames(_ template: ProgressionTemplate) -> String {
-        let key = ProgressionKey(tonic: tonic, isMinor: template.steps.readsAsMinor)
+    private func chordNames(_ steps: [ProgressionStep]) -> String {
+        let key = ProgressionKey(tonic: tonic, isMinor: steps.readsAsMinor)
         var seen = Set<String>()
-        return template.steps.map { key.chordName(of: $0, preference: spelling) }
+        return steps.map { key.chordName(of: $0, preference: spelling) }
             .filter { seen.insert($0).inserted }
             .joined(separator: " · ")
     }

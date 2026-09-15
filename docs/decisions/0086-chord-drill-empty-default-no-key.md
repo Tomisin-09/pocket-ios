@@ -5,6 +5,11 @@
 - **Builds on:** ADR 0065 (the Chords template — `ChordProgression` / `ChordChange` / `ChordDiagramView`).
 - **Relates to:** ADR 0084 (movable + custom chords). Once a player can place any chord — including a
   bespoke custom voicing — the key/numeral scaffolding reads as more cost than benefit (see below).
+- **Amended by:** ADR 0218 (2026-09-15) — *Use a progression* adds an **opt-in** way to fill a drill
+  from a standard progression, a two-chord change or one the player wrote. **C1 stands**: a drill still
+  opens empty and nothing is seeded. **C2 is narrowed, not reversed**: Roman numerals return only inside
+  that sheet and its builder, where they explain the choice; the editor, run screen and previews still
+  name chords by name alone. C3 is untouched — 0218 writes no `keyRoot`.
 
 ## Context
 

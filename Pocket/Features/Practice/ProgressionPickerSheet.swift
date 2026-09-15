@@ -24,6 +24,8 @@ struct ProgressionPickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     /// The player's saved chords, for *Use my chords where they fit* (ADR 0218 D6).
     @Query(sort: \SavedChord.createdAt, order: .reverse) var savedChords: [SavedChord]
+    /// The progressions the player wrote — *Your progressions*, newest first (ADR 0218 D10).
+    @Query(sort: \SavedProgression.createdAt, order: .reverse) var savedProgressions: [SavedProgression]
 
     /// Key names and chord names follow the key first and this preference only where the key is silent
     /// (ADR 0123).
@@ -42,6 +44,7 @@ struct ProgressionPickerSheet: View {
     /// The two chords of *Pick your own two*.
     @State var ownPair: [ChordVoicing?] = [nil, nil]
     @State var pickerSlot: PickerSlot?
+    @State var writingProgression = false
     @State private var confirmingInsert = false
 
     enum Tab: String, CaseIterable, Identifiable {
@@ -53,6 +56,7 @@ struct ProgressionPickerSheet: View {
     /// What is selected — one thing at a time, across both tabs.
     enum Source: Hashable {
         case template(String)
+        case saved(UUID)
         case pair(String)
         case ownPair
     }
@@ -86,6 +90,15 @@ struct ProgressionPickerSheet: View {
         return ProgressionTemplate.catalog.first { $0.id == id }
     }
 
+    /// The steps of the selected progression, built-in or the player's.
+    var selectedSteps: [ProgressionStep]? {
+        switch source {
+        case .template?: return selectedTemplate?.steps
+        case .saved?: return selectedSavedProgression?.steps
+        default: return nil
+        }
+    }
+
     /// The chords the selection would insert — empty until something complete is chosen.
     var preview: [ProgressionInsert.Chord] {
         switch source {
@@ -93,6 +106,9 @@ struct ProgressionPickerSheet: View {
             guard let template = selectedTemplate else { return [] }
             return ProgressionInsert.chords(for: template.steps, fixedLengths: template.hasFixedLengths,
                                             placement: placement, swaps: swaps)
+        case .saved?:
+            guard let steps = selectedSavedProgression?.steps else { return [] }
+            return ProgressionInsert.chords(for: steps, fixedLengths: false, placement: placement, swaps: swaps)
         case .pair(let id)?:
             guard let pair = ChordPair.curated.first(where: { $0.id == id }) else { return [] }
             return ProgressionInsert.chords(for: [pair.first, pair.second], hold: hold, beatsPerBar: beatsPerBar)
@@ -118,7 +134,7 @@ struct ProgressionPickerSheet: View {
     }
 
     /// Whether the selection reads as minor — the key chips say "Am" rather than "A".
-    var readsAsMinor: Bool { selectedTemplate?.steps.readsAsMinor ?? false }
+    var readsAsMinor: Bool { selectedSteps?.readsAsMinor ?? false }
 
     /// The progression sets its own lengths (the blues), so the hold doesn't apply.
     var holdIsFixed: Bool { selectedTemplate?.hasFixedLengths ?? false }
@@ -130,6 +146,10 @@ struct ProgressionPickerSheet: View {
             guard let template = selectedTemplate else { return "these chords" }
             let key = ProgressionKey(tonic: tonic, isMinor: template.steps.readsAsMinor)
             return "\(template.displayTitle) in \(key.label(preference: spelling))"
+        case .saved?:
+            guard let saved = selectedSavedProgression else { return "these chords" }
+            let key = ProgressionKey(tonic: tonic, isMinor: saved.steps.readsAsMinor)
+            return "\(saved.name) in \(key.label(preference: spelling))"
         case .pair(let id)?:
             return ChordPair.curated.first { $0.id == id }?.title ?? "these chords"
         case .ownPair?:

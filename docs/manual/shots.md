@@ -21,6 +21,7 @@ marker grammar in [README.md](README.md).
 | `exercises/run-live` | `screen` | `exercises` | seeded library, an exercise run screen, running past the count-in |  |
 | `exercises/run-setup` | `screen` | `exercises` | seeded library, Exercises, "Alternate Picking" opened, stopped |  |
 | `exercises/staircase` | `band` | `exercises` | seeded library, an exercise run screen, staircase visible |  |
+| `exercises/use-a-progression` | `screen` | `exercises` | New exercise sheet, Chords template chosen, Use a progression tapped |  |
 | `gestures/carry-tempo` | `panel` | `gestures` | seeded library, Slow Bend, player idle at full speed, BPM readout held |  |
 | `gestures/loop-controls-popover` | `panel` | `gestures` | seeded library, Slow Bend, player idle, Loop controls tapped |  |
 | `gestures/speed-bar` | `band` | `gestures` | seeded library, Slow Bend, player idle |  |
@@ -113,4 +114,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped, top of the sheet |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 
-93 shots across 19 pages.
+94 shots across 19 pages.

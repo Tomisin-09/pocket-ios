@@ -85,6 +85,22 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Every skill has something to fill it.** A skill no kind of drill works on — songwriting, note
   names, bends — offers **Write your own practice for it**, which makes a Your own practice
   exercise already marked with that skill.
+- **Start a chord drill from a progression.** Under **Add chord** is **Use a progression**: choose
+  one of eight standard progressions — I – IV – V, the four-chord loop, the 12-bar blues and more —
+  in any of twelve keys, and it adds the chords as the shapes a hand reaches for, open where there is
+  one and a barre where there isn't. Tap any of them to swap it first, set how long each is held — a
+  bar, two beats or one — and add. **Two chords** is for drilling a single change: six common ones,
+  kept as the exact shapes shown, or any two of your own. A drill still starts empty, and one that
+  already has chords asks whether to replace them or add after them. Nothing counts your changes.
+- **Write your own progressions.** **New progression** takes chord names — tap G, C, D and you have
+  written I – IV – V — and saves them as numerals, so the progression plays in whatever key you pick
+  later. **Use my chords where they fit** lets a chord you've saved stand in for the standard shape.
+  Edit and delete them in **Toolkit ▸ My progressions**; they are in your backup like saved chords.
+
+### Changed
+
+- **Chord lengths count the drill's own bar.** A chord in a 3/4 drill held for three beats now reads
+  *3 beats · 1 bar* rather than as part of a 4/4 bar, and a one-beat chord says *1 beat*.
 
 ## [1.3] — build 7, cut 2026-09-10
 

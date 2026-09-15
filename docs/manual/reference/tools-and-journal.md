@@ -111,7 +111,7 @@ Nothing on this screen is a grade, and there is no target anywhere on it.
 
 ## Toolkit
 
-Reached from `Toolkit` on Home. Four sections, each carrying a count or a state.
+Reached from `Toolkit` on Home. Five sections, each carrying a count or a state.
 
 <!-- shot: reference/toolkit | role: screen
      | alt: The Toolkit hub listing My chords, Tuner, Glossary and Help & FAQs
@@ -120,6 +120,7 @@ Reached from `Toolkit` on Home. Four sections, each carrying a count or a state.
 | Section | Subtitle | Trailing |
 |---|---|---|
 | `My chords` | `Your saved voicings` | How many, or `None yet` |
+| `My progressions` | `Progressions you've written` | How many, or `None yet` |
 | `Tuner` | `Tune by ear or mic` | `Free` |
 | `Glossary` | `Chord, scale & theory terms` | The term count |
 | `Help & FAQs` | `How Red Moon works` | The answer count |
@@ -148,6 +149,13 @@ button. The bottom caption names the reference pitch and the tuning.
 
 A grid of saved voicings, newest first, with **+** (`Build a chord`) in the toolbar. Tap one for its
 detail — a large diagram, **Hear**, `Rename` and `Delete`. Empty, it reads `No saved chords yet`.
+
+### `My progressions`
+
+A list of written progressions, newest first — each row its name, its chords and its numerals — with
+**+** (`New progression`) in the toolbar. Tap one to open it in the builder: a name, `Written in`,
+`Chords`, `Chords in the key`, `Any chord` with its `Chord type`, `Save`, and `Delete progression`.
+Swipe a row to delete it. Empty, it reads `No progressions yet`.
 
 ### `Glossary`
 

@@ -75,6 +75,10 @@ struct PracticeArchive: Codable, Equatable, Sendable {
     /// loops and goals name them by `custom:<uid>` in their own `skillIDs`; this is what those ids
     /// resolve to. `Optional`, so an archive written before 0216 still decodes.
     var customSkills: [CustomSkillRecord]?
+
+    /// The progressions the player wrote (ADR 0218 D10), each carried as stored. `Optional`, so an
+    /// archive written before 0218 still decodes.
+    var savedProgressions: [SavedProgressionRecord]?
 }
 
 /// A skill the player made (ADR 0216 D7) — its name and the description behind its ⓘ.

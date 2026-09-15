@@ -32,6 +32,23 @@ What's needed:
 Not blocking the app: nothing in the build reads this. It blocks *the manual being complete*, which
 is the deliverable ADR 0165 defines.
 
+## Three doors ADR 0218 left closed (parked 2026-09-15)
+
+*Use a progression* shipped with progressions written in the builder. Three follow-ons came up while it
+was designed and were deliberately left out:
+
+- **Save a drill as a progression.** A drill whose chords are all standard shapes could be turned into
+  steps in a key from its editor. The conversion needs a tonic the drill doesn't store (ADR 0086 removed
+  the key), so it would have to ask for one — and a drill holding custom voicings has no exact answer.
+  The builder already covers writing the same chords by name, which is why this waited.
+- **Transpose a drill in place.** The sheet moves a *progression* exactly because it is steps; a drill is
+  shapes. Moving one means re-fitting each chord, and the 2026-09-12 design pass showed that a re-fit
+  custom voicing is a guess the player has to audit. If it comes back, reuse `ProgressionResolver` for
+  the standard chords and say plainly which ones it couldn't move.
+- **A capo.** Keeps every shape — custom voicings included — and changes the key, which is the one move
+  that is exact for a drill. Needs a capo concept the app doesn't have: the diagrams, the run screen and
+  *Hear* would all have to know the neck is shortened.
+
 ## Merging two custom skills (logged 2026-09-11, ADR 0216 D7)
 
 A player can make *Live looping* on Monday and *Looper* on Friday, mark drills with both, and have

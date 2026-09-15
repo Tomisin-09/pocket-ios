@@ -231,6 +231,20 @@ extension ArchiveRestoreWriter {
         }
     }
 
+    /// Saved progressions (ADR 0218 D10), on the saved chords' rule and for their reason: the steps are
+    /// the whole of the row, so one whose payload will not re-encode is skipped rather than landed empty.
+    static func addSavedProgressions(_ records: [SavedProgressionRecord],
+                                     existing: RestoreExistingKeys,
+                                     into landing: inout RestoredLibrary) {
+        var seen = Set<UUID>()
+        for record in records where !existing.savedProgressionUIDs.contains(record.uid) {
+            guard seen.insert(record.uid).inserted else { continue }
+            guard let payload = record.payload, let data = try? JSONEncoder().encode(payload) else { continue }
+            landing.savedProgressions.append(SavedProgression(uid: record.uid, name: record.name,
+                                                              createdAt: record.createdAt, stepsData: data))
+        }
+    }
+
     /// Reference links, with their uids and their attachment names intact.
     ///
     /// **D7's leaf-name rewrite does not apply on this door, and the reason is worth stating.** D7

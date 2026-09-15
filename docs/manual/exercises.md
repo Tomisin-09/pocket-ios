@@ -216,6 +216,36 @@ opens the picker to swap it, the stepper sets how many beats it is held for, and
 arrows move it along the progression. So an order you got wrong is a couple of taps to fix rather
 than a chord to delete and rebuild. The arrows appear once there are two chords to order.
 
+**Use a progression**, under **Add chord**, fills the drill for you instead. Nothing is added until you
+ask — a chord drill still starts empty.
+
+<!-- shot: exercises/use-a-progression | role: screen
+     | alt: The Use a progression sheet on its Progressions tab, with the row of keys, the four-chord loop selected and its four chords drawn as diagrams above the Add 4 chords button
+     | state: New exercise sheet, Chords template chosen, Use a progression tapped -->
+
+- **Progressions** lists standard ones — I – IV – V, the four-chord loop, the 12-bar blues and more —
+  under a row of keys. Pick a key and the selected progression shows the chords it would add, drawn as
+  the shapes a hand reaches for: an open shape where there is one, a barre where there isn't. The
+  numerals over each chord say where it sits in the key. Tap any chord to swap it before adding.
+- **Your progressions**, above them, are the ones you have written. **New progression** writes one
+  without leaving the drill: give it a name, say what key it is **Written in**, and tap chords in —
+  the key's own chords are laid out for you and **Any chord** reaches the rest. Chord names come first
+  and numerals underneath, so you never need to read a numeral to write one, and because it is saved
+  as numerals it plays in whatever key you pick later. Manage them in the
+  [Toolkit](toolkit.md#my-progressions).
+- **Two chords** is for drilling a single change. **Pick your own two** takes any pair, your saved
+  chords included, and the common changes — Am ↔ E, C ↔ G, a first barre — stay as the exact shapes
+  shown, because the change is in the grip.
+- **Hold each chord** sets how long every chord lasts: **1 bar** of the drill's time signature,
+  **2 beats** or **1 beat**. A shorter hold is faster changes at the same tempo. The blues keeps its own
+  lengths.
+- **Use my chords where they fit** lets a chord you've saved stand in for the standard shape wherever
+  it is the same chord, marked *yours*.
+
+The button reads how many chords it will add — **Add 4 chords** — and they arrive as ordinary chords
+you can swap, re-time or move like any other. If the drill already has chords, it asks whether to
+**Replace them** or **Add after them**. Nothing counts or scores the changes.
+
 **Create** saves it and drops you straight onto its run screen, so making a drill and playing it are
 one move.
 

@@ -24,6 +24,8 @@ struct ArchiveSource {
     /// The skills the player made (ADR 0216 D7) — what every `custom:<uid>` in a drill's, loop's or
     /// goal's `skillIDs` resolves to.
     var customSkills: [CustomSkill] = []
+    /// The progressions the player wrote (ADR 0218 D10).
+    var savedProgressions: [SavedProgression] = []
 }
 
 /// Turns the live store into a `PracticeArchive` (ADR 0181).
@@ -88,7 +90,10 @@ enum ArchiveBuilder {
             folderMarkers: source.folders.map(\.path).sorted(),
             customSkills: source.customSkills
                 .sorted { ($0.dateAdded, $0.uid.uuidString) < ($1.dateAdded, $1.uid.uuidString) }
-                .map { CustomSkillRecord(uid: $0.uid, name: $0.name, info: $0.info, dateAdded: $0.dateAdded) }
+                .map { CustomSkillRecord(uid: $0.uid, name: $0.name, info: $0.info, dateAdded: $0.dateAdded) },
+            savedProgressions: source.savedProgressions
+                .sorted { ($0.name, $0.uid.uuidString) < ($1.name, $1.uid.uuidString) }
+                .map(savedProgressionRecord)
         )
     }
 

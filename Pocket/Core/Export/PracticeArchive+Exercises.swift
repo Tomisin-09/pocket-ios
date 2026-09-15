@@ -91,3 +91,14 @@ struct SavedChordRecord: Codable, Equatable, Sendable {
     /// exactly as stored rather than picking a winner.
     var voicing: JSONValue?
 }
+
+/// A progression the player wrote (ADR 0218 D10).
+struct SavedProgressionRecord: Codable, Equatable, Sendable {
+    var uid: UUID
+    var name: String
+    var createdAt: Date
+
+    /// `SavedProgression.stepsData` — the steps and the key they were written in — decoded and nested,
+    /// exactly as stored, the way a saved chord's voicing is.
+    var payload: JSONValue?
+}
