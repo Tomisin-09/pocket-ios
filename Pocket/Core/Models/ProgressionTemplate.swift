@@ -84,12 +84,6 @@ struct ChordPair: Identifiable, Equatable, Sendable {
     let detail: String
 
     var title: String { "\(first.name) ↔ \(second.name)" }
-
-    /// The two changes to insert, each held for `hold`.
-    func changes(hold: ProgressionHold, beatsPerBar: Int) -> [ChordChange] {
-        let beats = hold.beats(forBars: 1, beatsPerBar: beatsPerBar)
-        return [ChordChange(first, beats: beats), ChordChange(second, beats: beats)]
-    }
 }
 
 extension ChordPair {

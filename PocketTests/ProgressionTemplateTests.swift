@@ -75,16 +75,15 @@ final class ProgressionTemplateTests: XCTestCase {
 
     // MARK: - Pairs (D8)
 
-    func testPairsAreExactShapesHeldForTheHold() {
+    func testPairsAreExactShapes() {
         let ids = ChordPair.curated.map(\.id)
         XCTAssertEqual(Set(ids).count, ids.count, "duplicate pair ids")
         let amE = ChordPair.curated.first { $0.id == "am-e" }
         XCTAssertEqual(amE?.first, .aMinor)
         XCTAssertEqual(amE?.second, .eMajor)
         XCTAssertEqual(amE?.title, "Am ↔ E")
-        let changes = amE?.changes(hold: .twoBeats, beatsPerBar: 4) ?? []
-        XCTAssertEqual(changes.map(\.voicing), [.aMinor, .eMajor])
-        XCTAssertEqual(changes.map(\.beats), [2, 2])
+        XCTAssertTrue(ChordPair.curated.allSatisfy { !$0.first.isBass && !$0.second.isBass },
+                      "pairs are guitar shapes")
     }
 
     // MARK: - Landing in a drill (D9)

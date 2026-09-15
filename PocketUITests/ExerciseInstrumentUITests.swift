@@ -101,46 +101,6 @@ final class ExerciseInstrumentUITests: UITestCase {
         shot.lifetime = .keepAlways
         add(shot)
     }
-
-    // MARK: - Flow
-
-    @MainActor
-    private func openNewExerciseSheet(in app: XCUIApplication) {
-        let practiceCard = app.buttons["Practice, your exercises and training runs"]
-        XCTAssertTrue(practiceCard.waitForExistence(timeout: Self.uiTimeout), "Practice card missing")
-        XCTAssertTrue(scrollIntoView(practiceCard, in: app), "Practice card not reachable by scrolling")
-        practiceCard.tap()
-        // Wait on the hub itself, not on the row inside it. A tap taken while Home is still settling
-        // from `scrollIntoView` can be swallowed, and the failure then reads "Exercises row missing"
-        // — a symptom one screen away from the cause (the ADR 0146 lesson). One re-tap, then insist.
-        if !app.navigationBars["Practice"].waitForExistence(timeout: Self.uiTimeout) {
-            practiceCard.tap()
-            XCTAssertTrue(app.navigationBars["Practice"].waitForExistence(timeout: Self.uiTimeout),
-                          "Practice hub did not open from Home")
-        }
-
-        let exercisesRow = app.cells.containing(.staticText, identifier: "Exercises").firstMatch
-        XCTAssertTrue(exercisesRow.waitForExistence(timeout: Self.uiTimeout), "Exercises library row missing")
-        exercisesRow.tap()
-
-        XCTAssertTrue(app.navigationBars["Exercises"].waitForExistence(timeout: Self.uiTimeout),
-                      "Exercises library did not appear")
-        let add = app.buttons["New exercise"]
-        XCTAssertTrue(add.waitForExistence(timeout: Self.uiTimeout), "New exercise + missing from the library toolbar")
-        add.tap()
-        XCTAssertTrue(app.navigationBars["New exercise"].waitForExistence(timeout: Self.uiTimeout),
-                      "the create sheet did not open on its template picker")
-    }
-
-    /// Tap a template row by identifier. The library behind the sheet has its own rows labelled
-    /// "Scales" and "Chords", and a label query happily matches those covered ones instead.
-    @MainActor
-    private func chooseTemplate(_ rawValue: String, in app: XCUIApplication) {
-        let row = app.buttons["template.\(rawValue)"]
-        XCTAssertTrue(row.waitForExistence(timeout: Self.uiTimeout), "\(rawValue) template row missing")
-        XCTAssertTrue(scrollIntoView(row, in: app), "\(rawValue) template row not reachable by scrolling")
-        row.tap()
-    }
 }
 
 /// Mirrors `FretboardGrid.stringCountIdentifier` — the UI test target doesn't link the app's types.
