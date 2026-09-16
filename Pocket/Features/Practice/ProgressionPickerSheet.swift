@@ -43,8 +43,8 @@ struct ProgressionPickerSheet: View {
     @State var swaps: [Int: ChordVoicing] = [:]
     /// The two chords of *Pick your own two*.
     @State var ownPair: [ChordVoicing?] = [nil, nil]
-    @State var pickerSlot: PickerSlot?
-    @State var writingProgression = false
+    /// Both sub-sheets, presented from one place. See `Route` for why that is not a tidiness choice.
+    @State var route: Route?
     @State private var confirmingInsert = false
 
     enum Tab: String, CaseIterable, Identifiable {
@@ -59,6 +59,26 @@ struct ProgressionPickerSheet: View {
         case saved(UUID)
         case pair(String)
         case ownPair
+    }
+
+    /// The sub-sheets this one presents, as one `item:` route at the root of the body.
+    ///
+    /// The builder used to hang off its own `New progression` button so it wouldn't share a
+    /// presentation point with the chord picker. That cost the selection: saving inserts a row into the
+    /// very section that owned the sheet, and on iOS 18 the rebuilt row takes the sheet's callback with
+    /// it — `select` ran against state nothing was reading any more, so the sheet came back on the
+    /// default progression instead of the one just written (CI, Xcode 16.4 / iOS 18.5; iOS 26 keeps the
+    /// write). A sheet presented from the body root has no row to lose.
+    enum Route: Identifiable {
+        case picker(PickerSlot)
+        case builder
+
+        var id: String {
+            switch self {
+            case .picker(let slot): return slot.id
+            case .builder: return "builder"
+            }
+        }
     }
 
     /// Which slot the chord picker writes into.
@@ -195,9 +215,16 @@ struct ProgressionPickerSheet: View {
         .onChange(of: tab) { source = nil }
         .onChange(of: source) { swaps = [:] }
         .onChange(of: tonic) { swaps = [:] }
-        .sheet(item: $pickerSlot) { slot in
-            ChordPickerSheet(onInsert: { place($0, in: slot) }, onSave: onSaveChord,
-                             title: slot.title, instrument: instrument)
+        .sheet(item: $route) { route in
+            switch route {
+            case .picker(let slot):
+                ChordPickerSheet(onInsert: { place($0, in: slot) }, onSave: onSaveChord,
+                                 title: slot.title, instrument: instrument)
+            case .builder:
+                NavigationStack {
+                    ProgressionBuilderView(showsCancel: true) { select($0) }
+                }
+            }
         }
         .confirmationDialog("Add \(selectionTitle)?", isPresented: $confirmingInsert, titleVisibility: .visible) {
             Button("Replace them") { commit(.replace) }

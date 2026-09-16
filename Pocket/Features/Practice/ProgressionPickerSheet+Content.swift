@@ -110,7 +110,7 @@ extension ProgressionPickerSheet {
             HStack(spacing: 8) {
                 ForEach(preview) { chord in
                     Button {
-                        pickerSlot = .swap(chord.id)
+                        route = .picker(.swap(chord.id))
                     } label: {
                         ProgressionChordChip(chord: chord)
                     }
@@ -162,7 +162,7 @@ extension ProgressionPickerSheet {
     private func ownSlot(_ index: Int) -> some View {
         let chosen = ownPair[index]
         return Button {
-            pickerSlot = .own(index)
+            route = .picker(.own(index))
         } label: {
             VStack(spacing: 4) {
                 if let chosen {

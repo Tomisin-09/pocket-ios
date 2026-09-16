@@ -22,8 +22,10 @@ extension ProgressionPickerSheet {
                     select(progression)
                 }
             }
+            // Presented from the body root (`Route`), not from here: saving inserts a row into this
+            // section, and a sheet hung off a row in it loses the selection when the row is rebuilt.
             Button {
-                writingProgression = true
+                route = .builder
             } label: {
                 Label("New progression", systemImage: "plus")
                     .font(.futura(.subheadline, weight: .semibold))
@@ -31,13 +33,6 @@ extension ProgressionPickerSheet {
             }
             .buttonStyle(.borderless)
             .accessibilityIdentifier("progression.new")
-            // Hung off the button, not the sheet, so it never shares a presentation point with the
-            // chord picker's swap sheet.
-            .sheet(isPresented: $writingProgression) {
-                NavigationStack {
-                    ProgressionBuilderView(showsCancel: true) { select($0) }
-                }
-            }
         } header: {
             Text("Your progressions")
         } footer: {

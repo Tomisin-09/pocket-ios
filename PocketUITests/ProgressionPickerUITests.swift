@@ -89,9 +89,14 @@ final class ProgressionPickerUITests: UITestCase {
         attachScreenshot(of: app, named: "progression-builder")
         app.buttons["progression.builder.save"].tap()
 
+        // The sheet's Add button is in the tree the whole time the builder is over it, so wait for the
+        // builder to go and for the label to settle — not for an element that never left.
+        XCTAssertTrue(waitForDisappearance(of: app.buttons["progression.builder.save"]),
+                      "the builder did not close on Save")
         let addButton = app.buttons["progression.add"]
         XCTAssertTrue(addButton.waitForExistence(timeout: Self.uiTimeout), "the sheet did not come back")
-        XCTAssertEqual(addButton.label, "Add 2 chords", "the progression just written should be the selection")
+        XCTAssertTrue(waitForLabel("Add 2 chords", on: addButton),
+                      "the progression just written should be the selection, not \(addButton.label)")
         attachScreenshot(of: app, named: "sheet-with-a-written-progression")
         addButton.tap()
 

@@ -154,6 +154,14 @@ Two chords tab drills a change over the click and counts nothing.
   chosen key, in the sheet and the builder.
 - **`ExerciseShapeSheet` is at exactly 400 lines.** Passing `beatsPerBar` at its call site cost a line,
   reclaimed by joining a `StrumPatternEditor` call onto one line in the same section.
+- **A sheet hung off a list row loses what it writes back.** *New progression* first presented the
+  builder from its own button, so it wouldn't share a presentation point with the chord picker's swap
+  sheet. Saving inserts a row into **that button's own section**, and on iOS 18 the rebuilt row takes
+  the sheet's callback with it: `select` ran against state nothing was reading any more, and the sheet
+  came back on the default progression rather than the one just written. Green on iOS 26 — locally and
+  on a device — and red on CI (Xcode 16.4 / iOS 18.5), which is the whole reason the older toolchain is
+  the one that gates. Both sub-sheets now present from a single `Route` at the root of the body, which
+  keeps the one presentation point that motivated the original placement.
 - **The sheet opens on I – V – vi – IV in G**, so it shows what it does before anything is tapped.
 - The editor's beat label said "1 beats"; a one-beat hold made that visible, so it now says "1 beat".
 

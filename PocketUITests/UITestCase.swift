@@ -102,6 +102,16 @@ class UITestCase: XCTestCase {
         return XCTWaiter().wait(for: [gone], timeout: timeout) == .completed
     }
 
+    /// Wait for `element` to carry `label`. For an element that is already on screen while the thing
+    /// that changes it is still happening — a button under a sheet that is dismissing — reading
+    /// `.label` outright asks what it said at an instant, not what it settled on.
+    @MainActor
+    func waitForLabel(_ label: String, on element: XCUIElement,
+                      timeout: TimeInterval = UITestCase.uiTimeout) -> Bool {
+        let settled = expectation(for: NSPredicate(format: "label == %@", label), evaluatedWith: element)
+        return XCTWaiter().wait(for: [settled], timeout: timeout) == .completed
+    }
+
     /// Tap `control` until `destination` appears. A freshly launched Home can take a tap and do
     /// nothing — the card is in the tree and hittable, the touch lands before the screen settles, and
     /// the app is left where it was — so a single tap and a wait for the next screen fails on
