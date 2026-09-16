@@ -13,6 +13,7 @@ struct RestoreExistingKeys: Sendable, Equatable {
     var songSourceIDs: Set<String> = []
     var exerciseUIDs: Set<UUID> = []
     var savedChordUIDs: Set<UUID> = []
+    var savedProgressionUIDs: Set<UUID> = []
     var routineUIDs: Set<UUID> = []
     var goalUIDs: Set<UUID> = []
     var longTermGoalUIDs: Set<UUID> = []
@@ -51,7 +52,8 @@ struct RestorePlan: Sendable, Equatable {
     /// Their names are the app's own words for these things, not the model type names: a player has
     /// a *practice log*, not `PracticeRun`s (ADR 0176 renamed that screen, and the copy follows it).
     enum Kind: String, Sendable, CaseIterable, Identifiable {
-        case songs, exercises, savedChords, routines, goals, longTermGoals, practiceLog, journal, takes
+        case songs, exercises, savedChords, savedProgressions, routines
+        case goals, longTermGoals, practiceLog, journal, takes
 
         var id: String { rawValue }
 
@@ -60,6 +62,7 @@ struct RestorePlan: Sendable, Equatable {
             case .songs: return "Songs"
             case .exercises: return "Exercises"
             case .savedChords: return "Saved chords"
+            case .savedProgressions: return "Saved progressions"
             case .routines: return "Routines"
             case .goals: return "Goals"
             case .longTermGoals: return "Long-term goals"
@@ -124,14 +127,16 @@ extension RestorePlan {
                                  takeAudio: Set<String>) -> RestorePlan {
         var plan = RestorePlan()
 
-        // Annotated rather than inferred. Nine generic calls in one array literal is the shape that
-        // blew CI's type-check budget once already (a long inferred chain, ADR 0113-era) — local
+        // Annotated rather than inferred. A long run of generic calls in one array literal is the shape
+        // that blew CI's type-check budget once already (a long inferred chain, ADR 0113-era) — local
         // Xcode has a bigger budget than CI's, so the annotation is free insurance rather than a
         // response to a measured problem.
         let lines: [Line?] = [
             line(.songs, keys: archive.songs.map(\.sourceID), existing: existing.songSourceIDs),
             line(.exercises, keys: archive.exercises.map(\.uid), existing: existing.exerciseUIDs),
             line(.savedChords, keys: archive.savedChords.map(\.uid), existing: existing.savedChordUIDs),
+            line(.savedProgressions, keys: (archive.savedProgressions ?? []).map(\.uid),
+                 existing: existing.savedProgressionUIDs),
             line(.routines, keys: archive.routines.map(\.uid), existing: existing.routineUIDs),
             line(.goals, keys: archive.goals.map(\.uid), existing: existing.goalUIDs),
             line(.longTermGoals, keys: archive.longTermGoals.map(\.uid), existing: existing.longTermGoalUIDs),

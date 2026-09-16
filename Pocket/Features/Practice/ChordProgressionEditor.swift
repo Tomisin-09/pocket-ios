@@ -20,6 +20,12 @@ struct ChordProgressionEditor: View {
     /// shapes. The rows themselves need no instrument: a diagram draws whatever neck its voicing
     /// carries, so a progression authored on either instrument renders correctly on its own.
     var instrument: Instrument = .guitar
+    /// Beats in the drill's bar — what *1 bar* means to *Use a progression*, and what the hold labels
+    /// count bars in. Defaults to 4/4, the only bar this editor assumed before ADR 0218.
+    var beatsPerBar: Int = 4
+
+    /// *Use a progression* (ADR 0218) — the second way in, beside *Add chord*.
+    @State private var showProgressionSheet = false
 
     /// Which slot the picker writes into — a new chord (`.add`) or a swap of an existing one
     /// (`.replace`). The picker emits a plain `ChordVoicing`, whatever the source (library, saved,
@@ -57,6 +63,7 @@ struct ChordProgressionEditor: View {
                 if index < progression.changeCount - 1 { Divider() }
             }
             addButton
+            useProgressionButton
         }
         .padding(.vertical, 4)
         .sheet(item: $pickerTarget) { target in
@@ -183,12 +190,34 @@ struct ChordProgressionEditor: View {
         .buttonStyle(.borderless)
     }
 
-    /// "4 beats" — or "4 beats · 1 bar" when the hold is a whole number of 4/4 bars, the way players
-    /// count changes.
+    /// Opens *Use a progression* (ADR 0218). Its sheet hangs off this button rather than the editor, so
+    /// it never shares a presentation point with the chord picker's.
+    private var useProgressionButton: some View {
+        Button {
+            showProgressionSheet = true
+        } label: {
+            Label("Use a progression", systemImage: "list.bullet")
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(PocketColor.practice)
+        }
+        .buttonStyle(.borderless)
+        .accessibilityIdentifier("progression.use")
+        .sheet(isPresented: $showProgressionSheet) {
+            ProgressionPickerSheet(existingCount: progression.changeCount, instrument: instrument,
+                                   beatsPerBar: beatsPerBar,
+                                   onInsert: { progression = progression.inserting($0, mode: $1) },
+                                   onSaveChord: save)
+        }
+    }
+
+    /// "4 beats" — or "4 beats · 1 bar" when the hold is a whole number of the drill's bars, the way
+    /// players count changes. One beat is "1 beat".
     private func beatsLabel(_ beats: Int) -> String {
-        guard beats % 4 == 0 else { return "\(beats) beats" }
-        let bars = beats / 4
-        return "\(beats) beats · \(bars) bar\(bars == 1 ? "" : "s")"
+        let bar = max(1, beatsPerBar)
+        let beatText = beats == 1 ? "1 beat" : "\(beats) beats"
+        guard beats % bar == 0 else { return beatText }
+        let bars = beats / bar
+        return "\(beatText) · \(bars) bar\(bars == 1 ? "" : "s")"
     }
 }
 

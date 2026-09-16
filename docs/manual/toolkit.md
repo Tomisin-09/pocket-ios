@@ -1,7 +1,7 @@
 # The Toolkit
 
-The reference shelf: a tuner, the chord shapes you have saved, a glossary of the words, and the help
-catalogue. Nothing here practises anything or keeps score — it is the stuff you reach for *around*
+The reference shelf: a tuner, the chord shapes you have saved, the progressions you have written, a
+glossary of the words, and the help catalogue. Nothing here practises anything or keeps score — it is the stuff you reach for *around*
 playing.
 
 <!-- faq-entries: 18 -->
@@ -10,7 +10,7 @@ The whole Toolkit is **free forever**. There is no lock anywhere in it, on purpo
 whether Red Moon is for them — or someone whose subscription has lapsed — can still tune up, read
 what the app does, and get in touch.
 
-Reach it from **Toolkit** on Home. Four sections:
+Reach it from **Toolkit** on Home. Five sections:
 
 <!-- shot: toolkit/hub | role: screen
      | alt: The Toolkit hub listing My chords, Tuner, Glossary and Help & FAQs, each with its purpose and a count or state
@@ -19,12 +19,13 @@ Reach it from **Toolkit** on Home. Four sections:
 | Section | What it is |
 |---|---|
 | **My chords** | Your saved voicings |
+| **My progressions** | Progressions you've written |
 | **Tuner** | Tune by ear or mic |
 | **Glossary** | Chord, scale & theory terms |
 | **Help & FAQs** | How Red Moon works |
 
 Each row carries its own count or state on the right — how many terms and answers there are, how many
-chords you have saved (**None yet** until you save one) — so the shelf tells you what is on it before
+chords or progressions you have saved (**None yet** until you save one) — so the shelf tells you what is on it before
 you open anything. The tuner's says **Free**, which is the app stating the rule for the whole shelf.
 
 ## Tuner
@@ -94,6 +95,25 @@ but renaming and deleting happen here.
 
 Saved chords are **one library across both instruments** — a shape carries its own neck and draws
 correctly whichever it is. Your profile's instrument only decides which neck the placer opens on.
+
+## My progressions
+
+The chord progressions you have written, newest first. Each row shows the name, the chords in the key
+you wrote it in, and its numerals underneath.
+
+- **+** in the toolbar opens the progression builder to write a new one — the same builder **New
+  progression** opens from inside a chord exercise (see [Exercises](exercises.md)).
+- Tap a progression to change its name or its chords, or to **Delete progression**. Swipe a row to
+  delete it from the list.
+- Empty, it says **No progressions yet** and offers **New progression**.
+
+A progression is saved as numerals — where each chord sits in its key — so it plays in any key you
+pick when you use it. Deleting one never touches a drill you already filled from it: those chords were
+copied in.
+
+This is the **management** home for progressions, as My chords is for chords. The *Use a progression*
+sheet inside an exercise lists them under **Your progressions** to insert, but editing and deleting
+happen here.
 
 ## Glossary
 

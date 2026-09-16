@@ -9,7 +9,8 @@ import SwiftUI
 /// Slice 1 carried the first zero-dependency tenants (ADR 0096 D5): **My Chords** (the `SavedChord`
 /// library promoted from the in-context menu to a full screen) and a static **Glossary**, joined by the
 /// **Tuner** (ADR 0115) and now **Help & FAQs** (ADR 0145) — the same animal as the glossary, a static
-/// catalog rendered by a thin screen, and the app's first in-app support path. *Hear* sounds a saved
+/// catalog rendered by a thin screen, and the app's first in-app support path. **My Progressions**
+/// (ADR 0218) sits beside My Chords as its counterpart for progressions the player writes. *Hear* sounds a saved
 /// chord from its detail (ADR 0097 Slice 1); the identifier/scales/ear-training sections remain later
 /// slices with their own ADRs. The landing is a simple list of sections in the indigo "study/reference"
 /// accent (`PocketColor.toolkit`), one visual level down from the home cards.
@@ -20,6 +21,8 @@ import SwiftUI
 struct ToolkitView: View {
     /// Drives the "N saved" count on the My Chords row — the same `@Query` the library screen reads.
     @Query private var savedChords: [SavedChord]
+    /// The same count for My Progressions (ADR 0218).
+    @Query private var savedProgressions: [SavedProgression]
 
     var body: some View {
         ScrollView {
@@ -32,6 +35,15 @@ struct ToolkitView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("My chords, \(savedCountLabel)")
+
+                NavigationLink { MyProgressionsView() } label: {
+                    ToolkitSectionRow(icon: "list.bullet",
+                                      title: "My progressions",
+                                      subtitle: "Progressions you've written",
+                                      trailing: progressionCountLabel)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("My progressions, \(progressionCountLabel)")
 
                 NavigationLink { TunerView() } label: {
                     ToolkitSectionRow(icon: "tuningfork",
@@ -78,6 +90,11 @@ struct ToolkitView: View {
     private var savedCountLabel: String {
         savedChords.isEmpty ? "None yet"
                             : "\(savedChords.count) saved"
+    }
+
+    /// The same, for My Progressions.
+    private var progressionCountLabel: String {
+        savedProgressions.isEmpty ? "None yet" : "\(savedProgressions.count) saved"
     }
 }
 
@@ -127,6 +144,6 @@ struct ToolkitSectionRow: View {
 
 #Preview("Toolkit") {
     NavigationStack { ToolkitView() }
-        .modelContainer(for: SavedChord.self, inMemory: true)
+        .modelContainer(for: [SavedChord.self, SavedProgression.self], inMemory: true)
         .preferredColorScheme(.dark)
 }

@@ -199,6 +199,26 @@ final class ManualExerciseShots: ManualShotCase {
                 alsoRequiring: ["Name", "Fretboard run", "Generate", "Draw your own"])
     }
 
+    /// `exercises/use-a-progression` — the sheet **Use a progression** opens (ADR 0218), in the state it
+    /// opens in: the four-chord loop in G, previewed. Like `testConfigure`, nothing is created — the
+    /// sheet is photographed and left, so the seeded library is untouched.
+    @MainActor
+    func testUseAProgression() {
+        let app = launchForShoot()
+        openExercises(in: app)
+
+        tap(app.buttons["New exercise"], labelled: "New exercise",
+            revealing: app.buttons["template.chords"], called: "the template picker")
+        tap(app.buttons["template.chords"], labelled: "the Chords template",
+            revealing: app.buttons["progression.use"], called: "the chords configure step")
+        tap(app.buttons["progression.use"], labelled: "Use a progression",
+            revealing: app.buttons["progression.add"], called: "the progression sheet")
+
+        capture(app, slug: "exercises/use-a-progression",
+                assertingOnScreen: "Use a progression",
+                alsoRequiring: ["Progressions", "Two chords", "Add 4 chords"])
+    }
+
     // MARK: - Navigation
 
     /// Home ▸ Practice ▸ Exercises ▸ **Alternate Picking**.

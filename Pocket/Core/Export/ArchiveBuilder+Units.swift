@@ -63,6 +63,13 @@ extension ArchiveBuilder {
                          voicing: JSONValue.decoding(chord.voicingData))
     }
 
+    static func savedProgressionRecord(_ progression: SavedProgression) -> SavedProgressionRecord {
+        SavedProgressionRecord(uid: progression.uid,
+                               name: progression.name,
+                               createdAt: progression.createdAt,
+                               payload: JSONValue.decoding(progression.stepsData))
+    }
+
     // MARK: - Routines
 
     static func routineRecord(_ routine: Routine) -> RoutineRecord {

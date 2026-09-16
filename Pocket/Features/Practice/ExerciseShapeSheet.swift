@@ -338,7 +338,8 @@ private extension ExerciseShapeSheet {
     /// contract: the template stays chords; you edit the progression, not the type.
     var chordsSection: some View {
         Section {
-            ChordProgressionEditor(progression: $chords, instrument: exercise.instrument)
+            ChordProgressionEditor(progression: $chords, instrument: exercise.instrument,
+                                   beatsPerBar: exercise.beatsPerBar)
                 .listRowBackground(Color.clear)
         } header: {
             Text("How to play — chords")
@@ -356,11 +357,10 @@ private extension ExerciseShapeSheet {
             // One row with an in-VStack hairline — a standalone `Divider` row rendered as a phantom
             // empty box between the Form's row separators (device feedback 2026-07-23).
             VStack(spacing: 14) {
-                StrumPatternEditor(beatsPerBar: exercise.beatsPerBar,
-                                   pattern: $strumChords.strumPattern)
+                StrumPatternEditor(beatsPerBar: exercise.beatsPerBar, pattern: $strumChords.strumPattern)
                 Divider()
                 ChordProgressionEditor(progression: $strumChords.chordProgression,
-                                       instrument: exercise.instrument)
+                                       instrument: exercise.instrument, beatsPerBar: exercise.beatsPerBar)
             }
             .listRowBackground(Color.clear)
         } header: {

@@ -135,6 +135,15 @@ extension ChordProgression {
                          version: version)
     }
 
+    /// Where a whole-progression insert lands when the drill already has chords (ADR 0218 D9).
+    enum InsertMode: Sendable { case replace, append }
+
+    /// The progression with `inserted` replacing every chord, or added after the last one — what *Use a
+    /// progression* writes back (ADR 0218). An empty drill is the same either way.
+    func inserting(_ inserted: [ChordChange], mode: InsertMode) -> ChordProgression {
+        with(changes: mode == .replace ? inserted : changes + inserted)
+    }
+
     /// The progression with `voicing` appended, held for `beats`.
     func appending(_ voicing: ChordVoicing, beats: Int = 4) -> ChordProgression {
         with(changes: changes + [ChordChange(voicing, beats: beats)])

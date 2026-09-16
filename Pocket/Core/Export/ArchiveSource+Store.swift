@@ -32,6 +32,7 @@ extension ArchiveSource {
         source.recordings = try context.fetch(FetchDescriptor<Recording>())
         source.folders = try context.fetch(FetchDescriptor<PracticeFolder>())
         source.customSkills = try context.fetch(FetchDescriptor<CustomSkill>())
+        source.savedProgressions = try context.fetch(FetchDescriptor<SavedProgression>())
         // At most one, by design (ADR 0113) — but fetch rather than assume, so a store that somehow
         // holds two exports the first instead of trapping.
         source.profile = try context.fetch(FetchDescriptor<Profile>()).first

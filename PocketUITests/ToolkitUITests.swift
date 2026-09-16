@@ -41,6 +41,19 @@ final class ToolkitUITests: UITestCase {
         // prefix matches; a UI test is the only thing that catches the row being unwired.
         XCTAssertTrue(firstElement(in: app, labelStartingWith: "Help and FAQs").exists,
                       "Help & FAQs section missing in Toolkit")
+        // My progressions (ADR 0218) — the management home for written progressions, beside My chords.
+        let myProgressionsRow = firstElement(in: app, labelStartingWith: "My progressions")
+        XCTAssertTrue(myProgressionsRow.exists, "My progressions section missing in Toolkit")
+        myProgressionsRow.tap()
+        let progressionsLanded = app.navigationBars["My progressions"].waitForExistence(timeout: Self.uiTimeout)
+        XCTAssertTrue(progressionsLanded, "My progressions screen did not appear")
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "toolkit-my-progressions"
+        shot.lifetime = .keepAlways
+        add(shot)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.navigationBars["Toolkit"].waitForExistence(timeout: Self.uiTimeout),
+                      "did not return to the Toolkit hub")
 
         // Opening My chords must land on its own screen — either the populated grid or the empty state.
         myChordsRow.tap()
