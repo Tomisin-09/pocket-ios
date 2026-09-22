@@ -113,6 +113,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Chord lengths count the drill's own bar.** A chord in a 3/4 drill held for three beats now reads
   *3 beats · 1 bar* rather than as part of a 4/4 bar, and a one-beat chord says *1 beat*.
 
+### Fixed
+
+- **A progression you write mid-drill is the one selected** — on iOS 18, saving from **New
+  progression** handed *Use a progression* back on its default four-chord loop instead of the
+  progression just written, so *Add* would have added the wrong chords. Everything else set up in
+  the sheet — the key, the hold, any chord swapped by hand — was lost with it. Saving a custom chord
+  from inside the same sheet went down the same path. iOS 26 was unaffected.
+
 ## [1.3] — build 7, cut 2026-09-10
 
 The first App Store submission since 1.1 (build 3, approved 2026-08-12). Everything below landed
