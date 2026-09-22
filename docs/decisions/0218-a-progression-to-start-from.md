@@ -162,6 +162,21 @@ Two chords tab drills a change over the click and counts nothing.
   on a device — and red on CI (Xcode 16.4 / iOS 18.5), which is the whole reason the older toolchain is
   the one that gates. Both sub-sheets now present from a single `Route` at the root of the body, which
   keeps the one presentation point that motivated the original placement.
+
+  **Correction, 2026-09-22 (`pocket-324-one-presentation-point`): that fix was applied one level too
+  low, and this entry is why it was missed.** It was written as a fact about *New progression* and its
+  section, so it read as settled once the builder moved. But `ChordProgressionEditor` presented the
+  *Use a progression* sheet itself from its own button, carrying a comment giving the identical
+  justification — "so it never shares a presentation point with the chord picker's" — and that editor's
+  rows are a `VStack` inside a **single `Form` row** at all four call sites. Saving a progression writes
+  to the context, the row rebuilds, and iOS 18 takes the whole `ProgressionPickerSheet` down with it:
+  the sheet came back **reinitialised**, on the default four-chord loop, losing the key, the hold and any
+  hand-swapped chord along with the selection. Identical symptom, one level up.
+  `testAProgressionWrittenMidDrillIsSelectedAndAdds` went on failing on CI and **turned `main` red at
+  `33827b4` for six days**, since it exhausted its single retry there. The editor now presents both of
+  its sheets from one `Route` at its body root too. The rule is not about that button or that section:
+  **a sheet presented from anything inside a list row can lose its state on iOS 18, however far the
+  write that rebuilds the row happens from.**
 - **The sheet opens on I – V – vi – IV in G**, so it shows what it does before anything is tapped.
 - The editor's beat label said "1 beats"; a one-beat hold made that visible, so it now says "1 beat".
 

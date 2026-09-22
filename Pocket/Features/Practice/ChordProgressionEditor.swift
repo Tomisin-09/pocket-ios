@@ -24,13 +24,9 @@ struct ChordProgressionEditor: View {
     /// count bars in. Defaults to 4/4, the only bar this editor assumed before ADR 0218.
     var beatsPerBar: Int = 4
 
-    /// *Use a progression* (ADR 0218) — the second way in, beside *Add chord*.
-    @State private var showProgressionSheet = false
-
-    /// Which slot the picker writes into — a new chord (`.add`) or a swap of an existing one
-    /// (`.replace`). The picker emits a plain `ChordVoicing`, whatever the source (library, saved,
-    /// movable grip, or the custom placer).
-    @State private var pickerTarget: ChordSlot?
+    /// Both sheets this editor presents, as one `item:` route at the body root. See `Route` for why
+    /// that is not a tidiness choice.
+    @State private var route: Route?
 
     @Environment(\.modelContext) private var modelContext
     /// The player's saved custom chords — read only to de-dupe when the custom placer saves one (the
@@ -38,6 +34,9 @@ struct ChordProgressionEditor: View {
     /// — `docs/swiftdata-gotchas.md`).
     @Query(sort: \SavedChord.name) private var savedChords: [SavedChord]
 
+    /// Which slot the chord picker writes into — a new chord (`.add`) or a swap of an existing one
+    /// (`.replace`). The picker emits a plain `ChordVoicing`, whatever the source (library, saved,
+    /// movable grip, or the custom placer).
     private enum ChordSlot: Identifiable {
         case add
         case replace(Int)
@@ -48,6 +47,31 @@ struct ChordProgressionEditor: View {
             }
         }
         var isReplace: Bool { if case .replace = self { return true } else { return false } }
+    }
+
+    /// The sheets this editor presents, as one `item:` route at the body root.
+    ///
+    /// *Use a progression* used to hang off its own button so it wouldn't share a presentation point
+    /// with the chord picker's. That cost the picker sheet its state: this editor's rows are a `VStack`
+    /// inside a **single `Form` row** at all four call sites, so when saving a progression writes to the
+    /// context and the row rebuilds, iOS 18 takes the sheet attached to the button down with it —
+    /// `ProgressionPickerSheet` came back reinitialised, on the default four-chord loop rather than the
+    /// progression just written (CI, Xcode 16.4 / iOS 18.5; iOS 26 keeps the state, which is why this
+    /// only ever failed on CI).
+    ///
+    /// `ProgressionPickerSheet.Route` already made this same move for its own sub-sheets and left the
+    /// reasoning behind; the fix was applied one level down and not here. A sheet presented from the
+    /// body root has no row to lose.
+    private enum Route: Identifiable {
+        case picker(ChordSlot)
+        case progression
+
+        var id: String {
+            switch self {
+            case .picker(let slot): return "picker-\(slot.id)"
+            case .progression: return "progression"
+            }
+        }
     }
 
     var body: some View {
@@ -66,11 +90,19 @@ struct ChordProgressionEditor: View {
             useProgressionButton
         }
         .padding(.vertical, 4)
-        .sheet(item: $pickerTarget) { target in
-            ChordPickerSheet(onInsert: { apply($0, to: target) },
-                             onSave: save,
-                             title: target.isReplace ? "Swap chord" : "Add a chord",
-                             instrument: instrument)
+        .sheet(item: $route) { route in
+            switch route {
+            case .picker(let target):
+                ChordPickerSheet(onInsert: { apply($0, to: target) },
+                                 onSave: save,
+                                 title: target.isReplace ? "Swap chord" : "Add a chord",
+                                 instrument: instrument)
+            case .progression:
+                ProgressionPickerSheet(existingCount: progression.changeCount, instrument: instrument,
+                                       beatsPerBar: beatsPerBar,
+                                       onInsert: { progression = progression.inserting($0, mode: $1) },
+                                       onSaveChord: save)
+            }
         }
     }
 
@@ -156,7 +188,7 @@ struct ChordProgressionEditor: View {
     /// as "this opens a chooser".
     private func voicingButton(index: Int, current: ChordVoicing) -> some View {
         Button {
-            pickerTarget = .replace(index)
+            route = .picker(.replace(index))
         } label: {
             HStack(spacing: 4) {
                 Text(current.name).font(.futura(.subheadline, weight: .semibold))
@@ -181,7 +213,7 @@ struct ChordProgressionEditor: View {
 
     private var addButton: some View {
         Button {
-            pickerTarget = .add
+            route = .picker(.add)
         } label: {
             Label("Add chord", systemImage: "plus.circle.fill")
                 .font(.futura(.subheadline, weight: .semibold))
@@ -190,11 +222,11 @@ struct ChordProgressionEditor: View {
         .buttonStyle(.borderless)
     }
 
-    /// Opens *Use a progression* (ADR 0218). Its sheet hangs off this button rather than the editor, so
-    /// it never shares a presentation point with the chord picker's.
+    /// Opens *Use a progression* (ADR 0218). The sheet is presented from the body root, not from here —
+    /// see `Route`.
     private var useProgressionButton: some View {
         Button {
-            showProgressionSheet = true
+            route = .progression
         } label: {
             Label("Use a progression", systemImage: "list.bullet")
                 .font(.futura(.subheadline, weight: .semibold))
@@ -202,12 +234,6 @@ struct ChordProgressionEditor: View {
         }
         .buttonStyle(.borderless)
         .accessibilityIdentifier("progression.use")
-        .sheet(isPresented: $showProgressionSheet) {
-            ProgressionPickerSheet(existingCount: progression.changeCount, instrument: instrument,
-                                   beatsPerBar: beatsPerBar,
-                                   onInsert: { progression = progression.inserting($0, mode: $1) },
-                                   onSaveChord: save)
-        }
     }
 
     /// "4 beats" — or "4 beats · 1 bar" when the hold is a whole number of the drill's bars, the way
