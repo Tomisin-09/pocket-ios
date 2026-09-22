@@ -1,6 +1,14 @@
 # ADR 0158 — the app arrives with a song
 
-- **Status:** **PARKED 2026-08-11**, the day it was written and before anything was built. See *Parked* below for what it would take to revive it, and for the two parts that were lifted out and kept.
+- **Status:** **PARKED 2026-08-11**, the day it was written and before anything was built —
+  then **superseded in substance by ADR 0219 (2026-09-22)**, which ships a bundled starter track
+  and is built. This ADR is not the mechanism that was used: 0219 adopts the file through
+  `SongFileStore.adopt` so it is an ordinary import rather than a seeded song, and it answers both
+  of this ADR's surviving objections instead of overruling them — the song arrives **by tap**, so
+  nobody receives one they did not choose, and it ships **re-encoded at 1.05 MB** rather than the
+  2.6 MB that was costed. Read 0219 for what was actually decided; the analysis below is kept
+  because it is still the expensive part and none of it is wrong. See *Parked* below for the two
+  parts that were lifted out into ADR 0149.
 - **Date:** 2026-08-11
 - **Would reverse:** ADR 0148 §7 (the bundled demo song was dropped). ADR 0148's *mechanism* — songs are copied into the container, not bookmarked — stands untouched either way.
 - **Would reopen:** ADR 0144 D3's free-taste seam, on a **new third axis** — see §4 for why this is not the one-file change D3 promised

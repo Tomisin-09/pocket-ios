@@ -80,6 +80,9 @@ enum AppSettings {
         static let seekSnapping = "seekSnapping"
         static let artistNamePromptSeen = "artistNamePromptSeen"
         static let artistIntakeSeen = "artistIntakeSeen"
+        /// Whether ADR 0144 D4's launch wall has already given up its one deferral (ADR 0219).
+        /// Set — not read — on the launch that skips the wall, so the skip can happen exactly once.
+        static let launchWallDeferred = "launchWallDeferred"
         static let clickTimbre = "clickTimbre"
         static let tunerInstrument = "tunerInstrument"
         static let tunerMode = "tunerMode"

@@ -89,8 +89,14 @@ final class Song {
     /// so pre-0044 songs migrate to `nil` without a store wipe (CoreData 134110 exempt).
     var lastPracticedSpeed: Double?
 
-    // Import identity (`SongRef`), flattened for storage. `bookmark == nil` marks
-    // the generated demo sample (no real file behind it).
+    // Import identity (`SongRef`), flattened for storage.
+    //
+    // `bookmark == nil` used to mean exactly one thing — the generated demo sample — and since
+    // ADR 0219 it means one of two: that sample, **or** the bundled starter track, which takes no
+    // bookmark because a bookmark into the app bundle resolves to a path that moves on every app
+    // update. The two are told apart by `audioFileName`, which the starter track has and the
+    // sample does not; `hasImportedAudio` below is the test that matters, and
+    // `SongAudioResolver.resolve` prefers the owned copy over any bookmark regardless.
     var sourceID: String
     var sourceRaw: String
     var bookmark: Data?
@@ -181,7 +187,12 @@ final class Song {
     /// currently resolves", which is `SongAudioResolver`'s job and a different question.
     var hasImportedAudio: Bool { audioFileName != nil || bookmark != nil }
 
-    /// The import identity. `bookmark == nil` ⇒ the generated demo sample.
+    /// Whether this is the bundled **starter track** (ADR 0219) — the one song a player without
+    /// Red Moon Pro may still practise on. Derived from the frozen `SongRef.id`, never the title,
+    /// which the player can edit.
+    var isStarterTrack: Bool { AccessPolicy.isStarterTrack(sourceID: sourceID) }
+
+    /// The import identity. See the note on `sourceID` for what a `nil` bookmark means.
     var ref: SongRef {
         SongRef(id: sourceID, source: SongRef.Source(rawValue: sourceRaw) ?? .localFile, bookmark: bookmark)
     }

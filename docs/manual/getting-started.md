@@ -51,6 +51,9 @@ here.
      | alt: The Home screen with Start today's session, the Practice and Metronome cards, and Song library, Journal and Toolkit
      | state: seeded library, Home, morning greeting -->
 
+- **A song to start on** appears at the top while your library is empty, offering *Binta* — a track
+  that comes with the app. Tapping it opens the practice screen straight away. It steps aside once
+  you have imported a song of your own.
 - **Start today's session** builds a session for you out of what you have been working on.
 - **Practice** holds your exercises, routines and saved loops.
 - **Metronome** is the click on its own.
@@ -69,6 +72,11 @@ your library.
 
 The copy matters: because the song is Red Moon's own from then on, moving or deleting the original
 later does not silence it.
+
+**If you have nothing to hand**, tap **A song to start on** at the top of Home instead. That brings
+in *Binta* — eighty-one seconds, written and recorded by us — and opens it. It arrives the same way
+an imported song does, so everything on the rest of this page works on it, and the next two moves
+are the two to try first. You can loop it, slow it and save that loop without Red Moon Pro.
 
 ### 2. Loop the hard bit
 

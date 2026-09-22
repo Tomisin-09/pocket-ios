@@ -99,6 +99,25 @@ enum HomeFeed {
             return title(lhs).localizedCaseInsensitiveCompare(title(rhs)) == .orderedAscending
         }
     }
+
+    /// Whether Home should draw the **Start here** card (ADR 0219) — the door to the bundled
+    /// starter track.
+    ///
+    /// The rule is "this player owns no song of their own", expressed as a count so it stays pure:
+    /// with the starter track already adopted that means exactly one song, without it, none. Once a
+    /// real import lands the card retires and `resumeCard` takes the slot, which is the right
+    /// hand-off — the starter track exists to be outgrown.
+    ///
+    /// **Deliberately not gated on `isPro`.** The obvious reading of ADR 0219 is that this is the
+    /// free taste and so belongs to non-Pro players only, and that is wrong in a way worth writing
+    /// down: subscribing would then *remove* the card, so a player who bought Red Moon Pro halfway
+    /// through the walkthrough would watch their starter song disappear from Home mid-sentence.
+    /// The **entitlement** question is `AccessPolicy.canPractiseSong`'s and stays narrow; the
+    /// **card** question is only ever "is this library empty", which is as true of a subscriber as
+    /// of anyone else — and a Pro player with nothing imported is exactly as stuck.
+    static func shouldOfferStarterTrack(totalSongs: Int, hasStarterTrack: Bool) -> Bool {
+        hasStarterTrack ? totalSongs == 1 : totalSongs == 0
+    }
 }
 
 /// Which kind of unit Home's **Jump back in** card offers (ADR 0193) — the player's stated

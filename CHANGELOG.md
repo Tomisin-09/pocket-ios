@@ -56,6 +56,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **A song to start on, before you decide anything.** Red Moon now arrives with one real track —
+  *Binta* by Jack Trader, eighty-one seconds, written and recorded by us — and a **Start here** card
+  on the home screen that opens it straight on the practice screen. You can loop it, slow it right
+  down and save that loop **without Red Moon Pro**, because working out whether an app suits you
+  should not require buying it first. Nothing is added to your library until you tap the card, and
+  the card steps aside the moment you import a song of your own. One song: your own library, drills,
+  routines and today's session are still part of Pro (ADR 0219).
+- **The paywall no longer greets you on the way in.** On the first launch after the opening
+  questions it stays out of the way, so the first thing you meet is the app rather than the price.
+  It appears as usual from the next launch.
+
 - **The manual is on the web.** Every page — getting started, songs and looping, exercises,
   routines and sessions, the journal, the toolkit, and a reference that names every control on
   every screen — at `decooperations.co.uk/redmoon/manual`, rendered from the same pages that are

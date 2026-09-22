@@ -63,7 +63,13 @@ struct HomeView: View {
     @State var showingIntake = false
     /// Drives the file importer — non-private for the add-song button in `HomeView+Actions`.
     @State var importing = false
-    @State private var importError: String?
+    /// Non-private since ADR 0219: adopting the starter track reports failure through this same
+    /// alert. From the player's side that *is* an import that didn't work, and a second notice
+    /// saying the same thing in different words is how two error surfaces drift apart.
+    @State var importError: String?
+    /// Whether the starter track is being adopted right now (ADR 0219) — the decode is a full-file
+    /// read, so the card shows a spinner and refuses a second tap rather than appearing dead.
+    @State var adoptingStarterTrack = false
     /// Drives multi-select import: progress overlay + partial-failure summary (shared
     /// behaviour with the library's + button).
     @State private var importModel = SongImportModel()
@@ -72,7 +78,9 @@ struct HomeView: View {
     @State private var showingLibrary = false
     /// The song a single-file import just created — pushed straight to its waveform instead of the
     /// library ("open on create"). A batch still lands in the library.
-    @State private var openingSong: Song?
+    /// Non-private since ADR 0219: the starter-track card lands here too, because adopting it *is*
+    /// an import and should arrive on the waveform the same way one does.
+    @State var openingSong: Song?
     /// The routine a tapped reminder asked for (ADR 0186 D6), resolved out of the store; `nil` when
     /// none. Bool-bound below for the same reason `openingSong` is — see that destination.
     @State var openingRoutine: Routine?
@@ -96,10 +104,20 @@ struct HomeView: View {
                     // Present only while a free trial is running (ADR 0144 D6) — draws nothing
                     // otherwise, so it costs the ordinary Home nothing.
                     TrialCountdownRow()
+                    // The one open door, above the locked CTA on purpose (ADR 0219). A player
+                    // without Pro meets `Start today's session` as a lock; leading with it and
+                    // putting the thing they *can* do underneath would be the screen arguing for
+                    // the paywall before it has shown them anything. Retires itself the moment a
+                    // song of their own lands.
+                    if offersStarterTrack { starterTrackCard }
                     startTodaySessionCard
                     // Which unit this offers is the player's choice since ADR 0193; the card, its
                     // Pro gate and the hold that changes the choice live in `HomeView+Resume`.
-                    if let target = resumeTarget { resumeCard(target) }
+                    // `duplicatesStarterTrackCard` keeps Home from stacking two cards for one song
+                    // once the starter track has been practised (ADR 0219).
+                    if let target = resumeTarget, !duplicatesStarterTrackCard(target) {
+                        resumeCard(target)
+                    }
                     // The one thing on Home that changed since yesterday (ADR 0196). Below the
                     // resume card, because what you were doing outranks how much of it there has
                     // been; above the navigation sections, because those are static for the life of

@@ -41,6 +41,12 @@ since ADR 0148 §7 the library ships with no song at all. The demo song was drop
 and is not coming back. So the guidance cannot run at first launch — at first launch there is
 nothing to guide.
 
+> **Resolved by ADR 0219 (2026-09-22), and §2 does not change.** A bundled starter track ships
+> again, adopted through `SongFileStore.adopt` — so tapping Home's *Start here* card **is** "the
+> completion of the first successful import", which is what §2 already triggers on. The paragraph
+> above is simply no longer true; the decision it was used to justify needed no adjustment, which is
+> the nicest way for a premise to fail.
+
 ## Decision
 
 ### 1. Three steps, each a real action
@@ -200,7 +206,12 @@ original reasoning stands exactly as written.
 - **A player who never imports a song never sees any of this.** Accepted, and correct: there is
   nothing to teach them yet. It does mean the import empty state carries more weight than before, and
   should be reviewed on its own terms.
-- **The flow can only be built after marker auto-naming.** One small dependency, ordered ahead.
+- ~~**The flow can only be built after marker auto-naming.** One small dependency, ordered ahead.~~
+  **Struck 2026-09-22.** There was never a dependency — §10's own *Correction (2026-08-11)* says so
+  ("this section is simply wrong, and there is no prerequisite"), but this list was not updated to
+  match, so the ADR went on reporting itself as blocked for six weeks in the one place a reader
+  checks for what is outstanding. A retraction that leaves the consequence standing has not
+  retracted anything.
 - **Experienced players get a weaker onboarding by design.** They are trusted to explore, and can
   re-enter from the catalog. If activation data later shows they activate worse than beginners, §4 is
   the clause to revisit.
