@@ -58,10 +58,24 @@ extension HomeView {
         Group {
             switch target {
             case .song(let song):
-                proGated(.song) {
-                    WaveformPracticeView(song: song, context: context)
-                } label: {
-                    JumpBackInCard(content: Self.content(song), locked: !isPro)
+                // **The starter track is the one song this door does not lock** (ADR 0219). The
+                // gate below is still ADR 0144 D4's — a second door into a Pro surface — but the
+                // surface it duplicates is now open for exactly one song, and a card that locked
+                // the song the player has been practising all week would be the app taking back
+                // something it gave. `canPractiseSong` is the same call the entitlement axis makes;
+                // resolving it here rather than reading `isPro` is what keeps the two in step.
+                let playable = AccessPolicy.canPractiseSong(isPro: isPro,
+                                                            isStarterTrack: song.isStarterTrack)
+                if playable {
+                    NavigationLink {
+                        WaveformPracticeView(song: song, context: context)
+                    } label: {
+                        JumpBackInCard(content: Self.content(song), locked: false)
+                    }
+                } else {
+                    Button { presentPaywall(.home(.song)) } label: {
+                        JumpBackInCard(content: Self.content(song), locked: true)
+                    }
                 }
             case .routine(let routine):
                 proGated(.routine) {

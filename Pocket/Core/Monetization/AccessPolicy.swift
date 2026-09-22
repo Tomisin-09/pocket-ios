@@ -120,4 +120,32 @@ enum AccessPolicy {
         guard let slug else { return false }
         return freeTasteRoutineSlugs.contains(slug)
     }
+
+    // MARK: - Songs
+
+    /// May the player **practise** this song — open its waveform, loop it, slow it, save a loop?
+    /// Pro, **or** the bundled starter track (ADR 0219).
+    ///
+    /// This is the one place ADR 0144's "every capability is `.pro`" no longer holds, and it is a
+    /// deliberate, narrow reopening rather than drift. The reasoning: 0144 D4 walls the four Home
+    /// destinations, and `trialEndsAt` is read from a real StoreKit expiration — so a fresh install
+    /// is not "in trial", it is simply not Pro. Without this a player must commit to a subscription
+    /// *before* ever hearing what the app does, and the beta cohort demonstrated where that leads.
+    ///
+    /// **One object, not a tier.** It admits exactly the song whose `SongRef.id` is
+    /// `StarterTrack.sourceID`; a second song, the library that lists it, Practice, routines and the
+    /// planner are all untouched. `freeTasteSlugs` and `freeTasteRoutineSlugs` stay empty, so ADR
+    /// 0144 D3's seam is unchanged and this does not reopen the exercise or routine lines.
+    ///
+    /// Keyed on the **frozen id**, never the title — `Song.title` is user-editable, so a player
+    /// could otherwise mint themselves a free song by renaming one (or lose the starter track by
+    /// renaming it).
+    static func canPractiseSong(isPro: Bool, isStarterTrack: Bool) -> Bool {
+        isPro || isStarterTrack
+    }
+
+    /// Whether `sourceID` (a `Song.sourceID`) is the bundled starter track.
+    static func isStarterTrack(sourceID: String?) -> Bool {
+        sourceID == StarterTrack.sourceID
+    }
 }

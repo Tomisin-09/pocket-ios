@@ -120,4 +120,37 @@ final class AccessPolicyTests: XCTestCase {
     func testStarterRoutineSlugStillMatchesTheSeededSpec() {
         XCTAssertEqual(RoutinePresets.specs.first?.slug, RoutinePresets.freeTasteSlug)
     }
+
+    // MARK: - canPractiseSong (ADR 0219)
+
+    /// The song axis is the **one** place ADR 0144's "every capability is Pro" no longer holds, so
+    /// the truth table is pinned in full rather than by example.
+    func testOnlyTheStarterTrackIsPractisableWithoutPro() {
+        XCTAssertTrue(AccessPolicy.canPractiseSong(isPro: true, isStarterTrack: true))
+        XCTAssertTrue(AccessPolicy.canPractiseSong(isPro: true, isStarterTrack: false))
+        XCTAssertTrue(AccessPolicy.canPractiseSong(isPro: false, isStarterTrack: true))
+        XCTAssertFalse(AccessPolicy.canPractiseSong(isPro: false, isStarterTrack: false))
+    }
+
+    /// Keyed on the frozen id and nothing else. A `nil` source id — which no real song has, but a
+    /// half-built one might — is never the starter track.
+    func testStarterTrackIsIdentifiedByItsFrozenID() {
+        XCTAssertTrue(AccessPolicy.isStarterTrack(sourceID: StarterTrack.sourceID))
+        XCTAssertFalse(AccessPolicy.isStarterTrack(sourceID: nil))
+        XCTAssertFalse(AccessPolicy.isStarterTrack(sourceID: ""))
+        XCTAssertFalse(AccessPolicy.isStarterTrack(sourceID: UUID().uuidString))
+        XCTAssertFalse(AccessPolicy.isStarterTrack(sourceID: StarterTrack.title))
+    }
+
+    /// **The free taste did not leak into the other two axes.** ADR 0219 reopens exactly one line,
+    /// and the cheapest way for that to go wrong later is someone "tidying" the allowlists by
+    /// filling them in. This is the assertion that would fail if they did.
+    func testTheSongAxisDidNotReopenTheExerciseOrRoutineLines() {
+        XCTAssertTrue(AccessPolicy.freeTasteSlugs.isEmpty)
+        XCTAssertTrue(AccessPolicy.freeTasteRoutineSlugs.isEmpty)
+        XCTAssertFalse(AccessPolicy.canRunRoutine(isPro: false))
+        for template in ExerciseTemplate.allCases {
+            XCTAssertFalse(AccessPolicy.canRun(template, isPro: false))
+        }
+    }
 }

@@ -160,6 +160,14 @@ struct JumpBackInCard: View {
         case mastery(Int?)
         /// A routine: how many playable blocks it holds, the same figure `RecentRoutineCard` shows.
         case blocks(Int)
+        /// Nothing to report — draws no readout at all (ADR 0219).
+        ///
+        /// Distinct from `.mastery(nil)`, which draws an em dash meaning *unrated*. That is the right
+        /// answer for a song sitting in the library with no rating yet, and the wrong one for the
+        /// starter-track card before it has been tapped: there is no song yet, so "unrated" is a
+        /// readout about nothing. Caught on device — it built and tested clean and still read as a
+        /// stray dash floating at the card's edge.
+        case none
     }
 
     let content: Content
@@ -168,11 +176,17 @@ struct JumpBackInCard: View {
     /// visible, matching `HomeTile` and the recent-routines rail. Rides on the eyebrow rather than
     /// the content row, which already ends in `MasteryReadout`.
     var locked: Bool = false
+    /// The small-caps label above the content. Defaults to the card's original wording; the
+    /// starter-track card (ADR 0219) passes its own, because it is offering a first song rather
+    /// than resuming anything and "Jump back in" would be the app claiming a history the player
+    /// does not have. Parameterising the one string beats a near-duplicate card — the layout,
+    /// lock grammar and `MasteryReadout` handling are all worth sharing.
+    var eyebrow: String = "JUMP BACK IN"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                Text("JUMP BACK IN")
+                Text(eyebrow)
                     .font(.futura(.caption2, weight: .semibold))
                     .tracking(1.5)
                     .foregroundStyle(PocketColor.textSecondary)
@@ -212,6 +226,8 @@ struct JumpBackInCard: View {
                     Text("\(count) block\(count == 1 ? "" : "s")")
                         .font(.futura(.footnote))
                         .foregroundStyle(PocketColor.textSecondary)
+                case .none:
+                    EmptyView()
                 }
             }
         }

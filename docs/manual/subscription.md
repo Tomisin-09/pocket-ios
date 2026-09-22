@@ -27,11 +27,16 @@ Three parts of the app are outside the subscription and stay that way:
 The journal is on that list for a specific reason: what you wrote and what you played is yours, and a
 subscription ending should not take it away or lock it up.
 
+There is also **one song**: *Binta*, the track that comes with the app, offered as **A song to start
+on** at the top of Home while your library is empty. You can play it, loop it, slow it down and save
+those loops without Pro, for as long as you like. It is one song and only that one — your own
+imported music, and everything in the table below, is still Pro.
+
 ## What Pro covers
 
 | | |
 |---|---|
-| **Songs** | Importing your own audio, the song library, and the whole waveform player |
+| **Songs** | Importing your own audio, the song library, and the waveform player for every song except *Binta* |
 | **Loops** | Marking loops, slowing them down, ramping them, and everything on a loop's practice record |
 | **Exercises** | Every template, building your own drills, and running them |
 | **Routines** | Building routines, playing them, and duplicating them |
@@ -45,9 +50,11 @@ catalog**, **Today's session**.
 Two ways, and they feel different on purpose.
 
 **Once per launch**, a player without Pro meets the offer at the door: a full-screen paywall with a
-**Not now** underneath it. Dismiss it and it stays away until the next time you launch the app. On a
-brand new install it waits until you have been through the first-run questions, so you meet the app
-before you meet the offer.
+**Not now** underneath it. Dismiss it and it stays away until the next time you launch the app.
+
+On a brand new install it does not appear at all. The first-run questions come first, and then the
+whole of that first launch is yours — the offer waits until the next time you open the app, so the
+first thing you meet is the app rather than the price.
 
 **Walking into a locked door** — tapping **Practice**, **Song library**, **Jump back in**, a card in
 the recent-routines rail, or **Start today's session** — opens the same paywall, with a line at the

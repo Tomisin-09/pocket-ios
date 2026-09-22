@@ -11,6 +11,17 @@
   0187 D20 says so in terms: the free floor, **Toolkit and Journal free forever** (D2), `AccessPolicy`
   as an inert seam, gate-at-read, no lifetime IAP, and trial length read from StoreKit (D5).
   Repricing was free exactly once because there were no paying subscribers; that window is now used.
+
+  **D1 is amended by ADR 0219 (2026-09-22).** "Every capability is `.pro`" now has exactly one
+  exception: `AccessPolicy.canPractiseSong` admits **one song** — the bundled starter track, named
+  by the frozen id `"starter-binta"` — so a player who has not subscribed can still loop, slow and
+  save on it. **D3's seam is untouched**: both free-taste allowlists are still empty and the
+  exercise and routine lines do not move. **D4's launch wall keeps its once-per-launch rule** and
+  gives up exactly one presentation, on the first launch after the intake. D2 (Toolkit and Journal
+  free forever), gate-at-read, and trial length read from StoreKit are all unaffected. 0219 §Context
+  is the reason: `trialEndsAt` comes from a real StoreKit expiration, so a fresh install is not "in
+  trial" — it is simply not Pro, and D4's wall was therefore asking players to buy before hearing
+  anything.
 - **Date:** 2026-08-06
 - **Supersedes:** the **tier half** of ADR 0112 (freemium monetization). 0112 stays as the record of
   why a free line existed, what it cost to build, and why it was withdrawn before it ever met a

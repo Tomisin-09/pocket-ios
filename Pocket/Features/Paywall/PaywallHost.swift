@@ -31,6 +31,9 @@ private struct PaywallHost: ViewModifier {
     /// it and appears the moment the intake is dismissed. A fresh install therefore meets the app
     /// before it meets the offer, which is also the better order.
     @AppStorage(AppSettings.Key.artistIntakeSeen) private var artistIntakeSeen = false
+    /// Whether the wall has already spent its single ADR 0219 deferral. `@AppStorage`, not `@State`:
+    /// the whole point is that it survives the launch it was set on.
+    @AppStorage(AppSettings.Key.launchWallDeferred) private var launchWallDeferred = false
     /// The trigger of the presentation now on screen, kept because `onDismiss` runs after
     /// `$trigger` has already been cleared by `.sheet(item:)`.
     @State private var presentedTrigger: PaywallTrigger?
@@ -75,6 +78,20 @@ private struct PaywallHost: ViewModifier {
     private func maybeShowLaunchWall() {
         guard artistIntakeSeen else { return }
         guard store.hasResolvedEntitlements, !store.isPro, !launchWallShown else { return }
+        // **The first launch after the intake belongs to the starter track** (ADR 0219). Dismissing
+        // the intake flips `artistIntakeSeen`, which fires this in the same session — so without
+        // this the very first thing a new player met was still a full-screen wall, and Home's one
+        // open door was behind it. They get that launch; every launch after behaves exactly as
+        // ADR 0144 D4 specified.
+        //
+        // Deliberately **one** deferral, latched in `UserDefaults` rather than keyed on whether the
+        // starter track was actually opened. A player who ignores the card must still meet the
+        // offer, and a condition that waits for an action they may never take is a wall that can be
+        // avoided forever by doing nothing — which is not a deferral, it is a deletion.
+        if !launchWallDeferred {
+            launchWallDeferred = true
+            return
+        }
         launchWallShown = true
         showingLaunchWall = true
         Analytics.send(.paywallShown(trigger: .launch))

@@ -1,6 +1,12 @@
 # ADR 0148 — a song you import is a file we keep
 
-- **Status:** Accepted
+- **Status:** Accepted — **§7 reversed by ADR 0219 (2026-09-22)**; everything else stands. A bundled
+  starter track ships again, but it is **adopted through `SongFileStore.adopt`** like any other
+  import, so this ADR's mechanism is not merely intact — it is what made the reversal defensible.
+  §7's three surviving reasons are each answered in 0219: the "second code path holding a bookmark"
+  does not exist (0219 D3), "a song none of them chose" does not apply to one that arrives by tap
+  (D2), and the 2.6 MB is 1.05 MB re-encoded (D8). The fourth reason was already withdrawn by §7's
+  own 2026-08-09 correction. **§1–§6 and §8 are untouched.**
 - **Date:** 2026-08-07 (`pocket-242-songs-we-own`)
 - **Supersedes in part:** ADR 0001's custody clause — *"imported via the Files picker and held by
   security-scoped bookmarks"*. **The source decision stands unchanged**: the practice engine is still
@@ -100,6 +106,16 @@ not play. The player is told; their loops are not deleted. Guessing that a misma
 are worthless would destroy work to tidy up a number.
 
 ### 7. The bundled demo song is dropped
+
+> **Reversed by ADR 0219 (2026-09-22) — a bundled starter track ships again.** Not by overruling
+> this section but by answering it: the song is **adopted through `SongFileStore.adopt`** (so there
+> is no second code path and no bookmark, 0219 D3/D4), it **arrives when the player taps for it**
+> (so nobody receives a song they did not choose, D2), and it ships **re-encoded at 1.05 MB** rather
+> than 2.6 MB (D8). The fourth reason below — third-party content — was already withdrawn by this
+> section's own correction. What forced the reversal was a fact this section could not have known:
+> `trialEndsAt` is read from a real StoreKit expiration, so a fresh install is not "in trial" but
+> simply not Pro, and "the library now starts empty" therefore meant a player met a paywall before
+> ever hearing the app. **The rest of this ADR is untouched.**
 
 `SongPresets` seeded one curated song on first launch — *Binta* by Jack Trader, bundled and used with
 the rights holder's permission. It goes, along with the file and `Documents/DemoAudio/`.
