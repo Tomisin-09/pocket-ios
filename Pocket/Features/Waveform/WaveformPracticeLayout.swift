@@ -52,6 +52,11 @@ struct PracticeCockpit<Header: View>: View {
                      compact: landscape)
             // 4. Mode instructions — replaced by the AB / downbeat bar while active.
             statusLine
+            // The first-song walkthrough, landscape only (ADR 0149): portrait pins it above the
+            // reference list, which landscape folds into a closed drawer.
+            if landscape, model.walkthrough != nil {
+                WalkthroughCard(model: model, compact: true)
+            }
             PlayheadWaveform(model: model,                               // 5
                              loops: loops,
                              activeLoop: activeLoop,
@@ -127,6 +132,7 @@ struct PracticeCockpit<Header: View>: View {
                      onDropSnag: model.dropSnag,
                      onPunch: model.tapAB,
                      isPunchActive: model.abActive,
+                     hintsLoop: model.walkthroughHintsLoop,
                      compact: landscape)
             .opacity(model.isSettingDownbeat ? 0.35 : 1)
             .disabled(model.isSettingDownbeat)
@@ -144,6 +150,15 @@ struct PracticeReference: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // The first-song walkthrough (ADR 0149), pinned outside the scroll view for the reason
+            // the selection bar is: it is instructions for the controls just above, and must not
+            // scroll away from them. Portrait only — `compact` is the landscape drawer.
+            if !compact, model.walkthrough != nil {
+                WalkthroughCard(model: model)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .transition(.opacity)
+            }
             // The selection bar is pinned **outside** the scroll view (ADR 0125): select a
             // row near the bottom of a long list and Delete must still be where it was, not
             // a scroll away back at the top.

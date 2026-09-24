@@ -402,6 +402,15 @@ Structured as a **fixed practice cockpit over a scrollable reference area** (see
 
 A hairline separates the cockpit from the scroll area below.
 
+**First song only — the walkthrough card (ADR 0149, ADR 0220).** Pinned above the reference list,
+outside the scroll, on the one visit that runs it: the three beats (*Loop it · Slow it down · Keep
+it*) as numbered rows — the current one expanded with its instruction and a single Help link, done
+ones ticked, later ones dimmed — with a ✕ that ends it for good. **No Next button, ever**: a beat
+ticks on the player's action. The one ceremony (the first loop kept) takes the card's place once,
+on the Teal card wash with the moon glyph. On the starter track the transport's Loop circle carries
+a breathing ring while the song waits on a marker (still under Reduce Motion). Landscape shows the
+current beat only, inline in the cockpit.
+
 **Scrollable (reference):**
 
 8. Loops panel (collapsible) — each loop shows a **name** + time range, with the

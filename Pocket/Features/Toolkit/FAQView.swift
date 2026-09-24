@@ -21,6 +21,9 @@ struct FAQView: View {
     @State private var query = ""
     /// Questions currently open, keyed on `FAQEntry.id`. Session-only on purpose — see the note above.
     @State private var expanded: Set<String> = []
+    /// Set once *Show the first-song guide again* has been tapped on this visit, so the row can say
+    /// what will happen instead of looking as though nothing did.
+    @State private var guideRearmed = false
 
     /// True while the player is searching, which is what forces matches open.
     private var isSearching: Bool {
@@ -47,6 +50,7 @@ struct FAQView: View {
                         ForEach(section.entries) { entry in
                             row(for: entry)
                         }
+                        if section.area == .gettingStarted, !isSearching { guideRow }
                     }
                 }
             }
@@ -59,6 +63,36 @@ struct FAQView: View {
         .searchable(text: $query, prompt: "Search help")
         .autocorrectionDisabled()
         .tint(PocketColor.toolkit)
+    }
+
+    /// The first-song walkthrough's way back in (ADR 0149 §4). Dismissing it is permanent and silent,
+    /// so a mis-tap would otherwise cost the player it for good, and this is where someone who changes
+    /// their mind looks. Last in *Getting started* rather than above everything: most players who
+    /// open Help never dismissed it. It re-arms rather than starts, because the walkthrough runs on
+    /// a song — so it says when that will be.
+    private var guideRow: some View {
+        Button {
+            haptic(.light)
+            AppSettings.rearmSongWalkthrough()
+            guideRearmed = true
+        } label: {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Show the first-song guide again")
+                    .font(.futura(.headline))
+                    .foregroundStyle(guideRearmed ? PocketColor.textSecondary : PocketColor.toolkit)
+                Text(guideRearmed
+                     ? "It runs the next time you open a song."
+                     : "Three steps on the next song you open: loop a part, slow it down, keep it.")
+                    .font(.futura(.subheadline))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(guideRearmed)
+        .listRowBackground(PocketColor.surfaceStandard)
     }
 
     private func row(for entry: FAQEntry) -> some View {

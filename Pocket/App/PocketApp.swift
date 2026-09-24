@@ -55,6 +55,9 @@ struct PocketApp: App {
             // against that lands on whichever side the last run left — the failure this block
             // exists to stop, and one that reads as a broken gate rather than a dirty simulator.
             OracleReadingLog().clear()
+            // The walkthrough's ledger is the same trap again (ADR 0149): a second run finds it
+            // spent. Only the test that asks for it gets it back — see `walkthroughArgument`.
+            if UITestRuntime.walkthroughIsOpen { AppSettings.resetSongWalkthroughForUITest() }
         }
     }
 

@@ -208,7 +208,11 @@ struct WaveformPracticeView: View {
                          await model.estimateTempoFromAudio().map { ($0.bpm, $0.downbeatSeconds) }
                      })
         }
-        .task { await model.loadAudio(); model.beginPlaybackSession() }
+        .task {
+            await model.loadAudio()
+            model.beginPlaybackSession()
+            model.beginWalkthroughIfArmed()     // ADR 0149: only once there is audio to walk through
+        }
         // Stop-on-exit (ADR 0025): halt playback and remove the lock-screen command
         // targets when leaving the screen, so audio stops and nothing keeps the
         // engine alive via the global command center.

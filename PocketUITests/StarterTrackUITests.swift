@@ -39,6 +39,9 @@ final class StarterTrackUITests: UITestCase {
         // of the panel's own empty state, and before the panel is folded away below — once it is,
         // an absent loop row would prove nothing.
         XCTAssertTrue(app.staticTexts["No loops yet"].exists, "The starter track arrived with a loop")
+        // `-uiTesting` alone keeps the first-song walkthrough off this screen (ADR 0149): it would sit
+        // over the controls every other test here drives. `SongWalkthroughUITests` asks for it by name.
+        XCTAssertFalse(app.buttons["Close the guide"].exists, "The walkthrough ran without -walkthrough")
 
         // Loops opens expanded and Markers collapsed (`WaveformPracticeModel`, per visit, never
         // persisted), which leaves the marker rows below the fold where SwiftUI has not built them.

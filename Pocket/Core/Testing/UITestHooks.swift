@@ -44,6 +44,15 @@ enum UITestHooks {
     /// harness itself. Read app-side through `UITestRuntime.oracleDoorIsOpen`.
     static let oracleDoorArgument = "-oracleDoor"
 
+    /// `-walkthrough`: lets the **first-song walkthrough** run under test (ADR 0149), armed afresh.
+    ///
+    /// `-uiTesting` alone suppresses it, for the reason the intake is suppressed: a card over the
+    /// practice screen would sit on top of every control the rest of the suite drives, and on top of
+    /// every figure the manual shoots there. The one test that walks it asks for it by name — a
+    /// second argument, like `oracleDoorArgument`, so the shoot can never pick it up by accident.
+    /// Read app-side through `UITestRuntime.walkthroughIsOpen`.
+    static let walkthroughArgument = "-walkthrough"
+
     /// Marks Home as **finished seeding**, not merely rendered.
     ///
     /// First-launch seeding is a `.task` that paints Home before it completes, so "Home is on

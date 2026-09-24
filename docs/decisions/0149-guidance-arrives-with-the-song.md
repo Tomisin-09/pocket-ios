@@ -1,9 +1,13 @@
 # ADR 0149 — guidance arrives with the song
 
-- **Status:** Proposed — **amended 2026-08-11** (see the amendment after §10). §1 narrows to three
-  beats on the waveform screen, §3's checklist is dropped, the long-form method moves to the
-  website, and §10's "prerequisite" turns out to already exist. **§2's first-import trigger and
-  §4–§9 stand unchanged.**
+- **Status:** Accepted — **built 2026-09-24** as ADR 0220's build step 2
+  (`pocket-327-beat-one-scripted`): the three beats, §2's trigger, §4's offer and permanent dismissal
+  with re-entry from Help, §5's one ceremony and §6's catalog links. **§8's activation measure is not
+  built** — see 0220's *Step 2 as built* for why, and for the edge-case rules the build settled
+  (beats complete in any order; "substantial experience" is the intake's top two answers). Amended
+  2026-08-11 (see the amendment after §10): §1 narrows to three beats on the waveform screen, §3's
+  checklist is dropped, the long-form method moves to the website, and §10's "prerequisite" turns
+  out to already exist. **§2's first-import trigger and §4–§9 stand unchanged.**
 - **Date:** 2026-08-08 (`pocket-245-guided-creation-onboarding`), amended 2026-08-11
 - **Extends:** ADR 0113 (the local artist profile and its intake), ADR 0145 (the compiled help
   catalog), ADR 0148 §7 (a library that starts empty)

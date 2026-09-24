@@ -148,6 +148,23 @@ extension FAQEntry {
               area: .audio),
 
         // MARK: How practice works
+        // These two are linked from the first-song walkthrough's beats (ADR 0149 §6), which point here
+        // rather than explaining themselves. `SongWalkthroughTests` pins that every linked question
+        // exists, so rewording one breaks a test, not a link.
+        .init(question: "Why loop one part of a song?",
+              answer: "Because the part you can't play yet is rarely the whole song — more often it's "
+                + "four bars, or one change. A loop plays just that span and goes round until you stop "
+                + "it, so those bars come up as often as you need them without you having to find them "
+                + "again. Tap Loop where it should start and again where it should end; drag either "
+                + "edge afterwards to move it.",
+              area: .concepts),
+        .init(question: "What happens to a loop I save?",
+              answer: "It stays with the song. Saved loops are listed under Loops on the song's "
+                + "screen: tap one to play it, and hold it for its settings — how well you know it, the "
+                + "fastest speed you own it at, whether it makes a good bed to improvise over. A loop "
+                + "can also go into a routine as a block, next to your drills and other songs, so it "
+                + "comes round again in a session.",
+              area: .concepts),
         .init(question: "What's the difference between mastery and command tempo?",
               // ADR 0145 D5: **quote** the in-app explanations rather than restating them, so the two
               // surfaces cannot drift apart. `PracticeFieldInfo` lives in `FieldInfoLabel.swift`; both

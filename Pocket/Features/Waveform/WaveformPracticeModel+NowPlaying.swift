@@ -54,6 +54,7 @@ extension WaveformPracticeModel {
     func endPlaybackSession() {
         nowPlaying.teardown()
         engine.onReachedEnd = nil       // the repeat hook must not outlive the screen (ADR 0124)
+        engine.onTick = nil             // nor may the walkthrough's watcher (ADR 0220 D3)
         engine.stop()
         // Finalise a delete still sitting in its undo window (ADR 0125) — leaving the
         // screen closes the window, rather than carrying a hidden-but-alive row into the

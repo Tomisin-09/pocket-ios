@@ -4,7 +4,7 @@ The reference shelf: a tuner, the chord shapes you have saved, the progressions 
 glossary of the words, and the help catalogue. Nothing here practises anything or keeps score — it is the stuff you reach for *around*
 playing.
 
-<!-- faq-entries: 18 -->
+<!-- faq-entries: 20 -->
 
 The whole Toolkit is **free forever**. There is no lock anywhere in it, on purpose: someone deciding
 whether Red Moon is for them — or someone whose subscription has lapsed — can still tune up, read
@@ -133,7 +133,7 @@ matter, and they are in [the app's own words](terms.md).
 
 ## Help & FAQs
 
-Eighteen questions with their answers, grouped by **Getting started**, **Audio & files**, **How
+Twenty questions with their answers, grouped by **Getting started**, **Audio & files**, **How
 practice works**, **Red Moon Pro** and **Your data**.
 
 <!-- shot: toolkit/faq | role: screen
@@ -146,6 +146,10 @@ question never says the word — and while you are searching every match opens i
 each hit open to find out whether it was the one you wanted is a waste of your time.
 
 Answers open closed again next time. They are descriptions of what the app does, never coaching.
+
+The last row of **Getting started** is not a question: **Show the first-song guide again** brings
+back the three steps your first song opened with — loop a part, slow it down, keep it. They run on
+the next song you open.
 
 There are **two doors to the same screen**: here, and **Settings ▸ Help & About ▸ Help & FAQs**.
 

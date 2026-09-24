@@ -1113,7 +1113,15 @@ drawing nothing), `PlayheadWaveform` and `PlayheadMinimap` — while the sorted 
 markers and `beatGrid` are derived by the cockpit body and passed down. Reading the playhead on
 the root body instead put all seven sheet presentations on a 120 Hz rebuild; `beatGrid` is
 memoised on a value key (tempo, the 1, time signature, duration) in
-`WaveformPracticeModel+Grid.swift` for the same reason. Landscape
+`WaveformPracticeModel+Grid.swift` for the same reason. The one **model-side** playhead reader is
+the first-song walkthrough's (ADR 0149, ADR 0220 D3): `PracticeAudioEngine.onTick` — a sibling of
+`onReachedEnd`, fired once per display frame after `currentTime` moves — hands the playhead to
+`WaveformPracticeModel+Walkthrough`, which feeds the pure `StarterTrackScript` and, when a frame
+plays through a starter-track marker, pauses and seeks back onto it. It is installed only while that
+script runs, cleared in `endPlaybackSession`, and writes nothing observable on a frame unless the
+script's stage moved. The beats themselves (`SongWalkthrough`, `Pocket/Core/Help/`) are fed by the
+model's existing choke points — `abSpan`'s and `speed`'s observers and `createLoop` — and their
+ledger lives in `UserDefaults` (`AppSettings+Walkthrough`), armed by `SongImporter.persist`. Landscape
 is gated to this screen alone by `OrientationGate.swift` (an `AppDelegate` answering
 `supportedInterfaceOrientationsFor` from a mask that a `.landscapeEnabled()` modifier
 widens on appear and reverts on disappear) — ADR 0042. Each loop has a per-loop **automator**
