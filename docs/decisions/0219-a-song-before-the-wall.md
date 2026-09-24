@@ -12,6 +12,10 @@
   the starter track is copied by the same call.
 - **Amends:** ADR 0158 — unparked and superseded in substance. Its two surviving objections are
   answered rather than overruled (D2, D8), and its mechanism is not the one built here.
+- **Amended by:** ADR 0220 — D1's "no loops **and no markers**" keeps only its first half. The
+  starter track now arrives with two markers (*Chords start*, *Solo start*), a measured tempo (83)
+  and downbeat (0.027 s), and grid lines on. It still arrives with **no loops**, for the reason D1
+  gives. `StarterTrack.bpm` (104) was wrong and becomes 83. D2–D9 stand.
 - **Relates to:** ADR 0011 (the auto-seed this does not reinstate, D2), ADR 0112 / ADR 0144 D4 (the
   wall this stands in front of), ADR 0149 (whose §2 trigger this makes fire — **unamended**, D3),
   ADR 0090 (why the destination is bool-bound), ADR 0001 (why a local file is the only option)
