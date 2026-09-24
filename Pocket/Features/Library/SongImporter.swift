@@ -129,10 +129,33 @@ enum SongImporter {
     @discardableResult
     static func importStarterTrack(_ prepared: Prepared, into context: ModelContext) -> Song {
         let song = persist(prepared, into: context)
+        signpostStarterTrack(song)
+        return song
+    }
+
+    /// Everything the starter track knows about itself on arrival: ADR 0219's metadata, and ADR
+    /// 0220's measured tempo, downbeat, grid lines and two markers.
+    ///
+    /// Written **once, at adoption, with no back-fill** (ADR 0220 D7): 0219 merged after 1.3 (7)
+    /// was cut, so no App Store player owns a bare Binta, and a test install that does is fixed by
+    /// removing the song and tapping the card again.
+    ///
+    /// Takes no context so it can be tested on an uninserted song. On an inserted one, assigning
+    /// the relationship inserts the markers with it — the shape `Song.sample()` and the archive
+    /// restore already use.
+    static func signpostStarterTrack(_ song: Song) {
         song.artist = StarterTrack.artist
         song.genre = StarterTrack.genre
         song.key = StarterTrack.key
         song.bpm = StarterTrack.bpm
-        return song
+        song.preciseBPM = StarterTrack.preciseBPM
+        song.downbeatSeconds = StarterTrack.downbeatSeconds
+        song.beatsPerBar = StarterTrack.beatsPerBar
+        song.noteValue = StarterTrack.noteValue
+        // On by default for every song; written anyway, because here the grid is part of the
+        // demonstration rather than a preference that happens to be on (D1).
+        song.showsGridlines = true
+        song.markers = StarterTrack.signposts.map { Marker(seconds: $0.seconds, label: $0.label) }
+        for marker in song.markers where marker.song == nil { marker.song = song }
     }
 }

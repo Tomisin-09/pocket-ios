@@ -78,6 +78,11 @@ in *Binta* — eighty-one seconds, written and recorded by us — and opens it. 
 an imported song does, so everything on the rest of this page works on it, and the next two moves
 are the two to try first. You can loop it, slow it and save that loop without Red Moon Pro.
 
+*Binta* also arrives knowing a little about itself: its tempo is set, so the metronome works and
+the bar lines are drawn, and two markers, *Chords start* and *Solo start*, sit either side of the
+four bars most worth looping first. They are ordinary markers — rename or delete them as you would
+your own.
+
 ### 2. Loop the hard bit
 
 Open the song. Play up to the start of the passage that keeps going wrong and tap **Loop**; play to
