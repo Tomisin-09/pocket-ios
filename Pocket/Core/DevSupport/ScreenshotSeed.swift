@@ -81,7 +81,7 @@ enum ScreenshotSeed {
         // they import with a blank artist, which reads as a bug in the library shot
         // rather than as a real library.
         "Binta": Meta(
-            artist: "Jack Trader", genre: "Afrobeat", bpm: 104, key: "F# Minor",
+            artist: "Jack Trader", genre: "Afrobeat", bpm: StarterTrack.bpm, key: "F# Minor",
             collections: ["chill"],
             loops: [LoopSpec("Head", 0.12, 0.27, 1.0, 4, 2)]),
         "Feels": Meta(

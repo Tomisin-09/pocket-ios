@@ -82,4 +82,88 @@ final class StarterTrackTests: XCTestCase {
         XCTAssertNotEqual(sample.sourceID, StarterTrack.sourceID)
         XCTAssertFalse(sample.hasImportedAudio, "The sample still has no file behind it")
     }
+
+    // MARK: - The song knows itself (ADR 0220)
+
+    /// Binta is eighty-one seconds; the grid below is drawn across that span.
+    private let duration: TimeInterval = 81
+
+    /// The measured figures, repeated as literals for the same reason `testSourceIDIsFrozen` repeats
+    /// its: they were measured off the audio (D1), and a change to either has to be a deliberate
+    /// re-measurement rather than an edit that the rest of the suite silently follows.
+    func testTempoAndDownbeatAreTheMeasuredFigures() {
+        XCTAssertEqual(StarterTrack.bpm, 83, "104 was wrong from the day ADR 0219 merged")
+        XCTAssertEqual(StarterTrack.preciseBPM, 83.0)
+        XCTAssertEqual(StarterTrack.downbeatSeconds, 0.027, accuracy: 1e-9)
+        XCTAssertEqual(StarterTrack.beatsPerBar, 4)
+        XCTAssertEqual(StarterTrack.noteValue, 4)
+        XCTAssertEqual(StarterTrack.bpm, Int(StarterTrack.preciseBPM.rounded()),
+                       "The display tempo must be the precise one rounded, or the readout and the grid disagree")
+    }
+
+    /// The positions ADR 0220 publishes in its D2 and D3 tables, to the millisecond. The code
+    /// derives them from `barStart`; this checks that derivation lands where the ADR says it does.
+    func testSignpostsLandWhereTheADRSays() {
+        XCTAssertEqual(StarterTrack.chordsStart.seconds, 23.160, accuracy: 0.001)
+        XCTAssertEqual(StarterTrack.soloStart.seconds, 34.726, accuracy: 0.001)
+        XCTAssertEqual(StarterTrack.leadInSeconds, 17.376, accuracy: 0.001)
+        XCTAssertEqual(StarterTrack.signposts.map(\.label), ["Chords start", "Solo start"])
+    }
+
+    /// **The signposts sit on bar lines the grid actually draws**, not beside them (D2). Checked
+    /// against `BeatGrid` rather than against `barStart` again, because `barStart` agreeing with
+    /// itself proves nothing — the point is that the markers, the loop edges the player's taps will
+    /// land on, and the lines on screen are the same instants.
+    func testSignpostsSitOnTheGridsBarLines() {
+        let barLines = BeatGrid.beats(bpm: StarterTrack.preciseBPM, duration: duration,
+                                      downbeat: StarterTrack.downbeatSeconds,
+                                      beatsPerBar: StarterTrack.beatsPerBar)
+            .filter(\.isDownbeat)
+            .map { $0.fraction * duration }
+        XCTAssertFalse(barLines.isEmpty, "A grid that draws nothing would pass every check below")
+
+        for seconds in StarterTrack.signposts.map(\.seconds) + [StarterTrack.leadInSeconds] {
+            let nearest = barLines.min { abs($0 - seconds) < abs($1 - seconds) } ?? .infinity
+            XCTAssertEqual(nearest, seconds, accuracy: 1e-6, "\(seconds)s is off the grid")
+        }
+    }
+
+    /// The span between the two signposts is the author's own Chords loop — four bars, sixteen
+    /// beats. Their hand-made loop, pulled off their phone on 2026-09-24, ran 23.168 → 34.731 s;
+    /// with the measured downbeat it sits within 8 ms of bar 9 and 5 ms of bar 13 (D1). If a tempo
+    /// or downbeat change drags the signposts off the passage the ADR chose, this is what notices.
+    func testTheSignpostsBracketTheAuthorsChordsLoop() {
+        XCTAssertEqual(StarterTrack.soloStart.bar - StarterTrack.chordsStart.bar, 4)
+        let beats = (StarterTrack.soloStart.seconds - StarterTrack.chordsStart.seconds)
+            * StarterTrack.preciseBPM / 60
+        XCTAssertEqual(beats, 16, accuracy: 1e-9)
+
+        XCTAssertEqual(StarterTrack.chordsStart.seconds, 23.168, accuracy: 0.010)
+        XCTAssertEqual(StarterTrack.soloStart.seconds, 34.731, accuracy: 0.010)
+        XCTAssertEqual(StarterTrack.chordsStart.bar - StarterTrack.leadInBar, 2,
+                       "The lead-in is two bars, so the section is heard arriving (D3)")
+        XCTAssertLessThan(StarterTrack.soloStart.seconds, duration)
+    }
+
+    /// Adoption writes everything the song should know, and **still no loop** — the first loop is
+    /// the player's to make (ADR 0219 D1, kept by 0220).
+    func testSignpostingWritesTheMeasuredValuesAndTwoMarkers() {
+        let song = makeSong(id: StarterTrack.sourceID)
+        song.showsGridlines = false        // prove the write, not the declaration default
+
+        SongImporter.signpostStarterTrack(song)
+
+        XCTAssertEqual(song.artist, "Jack Trader")
+        XCTAssertEqual(song.key, "F# Minor")
+        XCTAssertEqual(song.bpm, 83)
+        XCTAssertEqual(song.tempoBPM, 83.0)
+        XCTAssertEqual(song.downbeatAnchors, [StarterTrack.downbeatSeconds])
+        XCTAssertEqual(song.beatsPerBar, 4)
+        XCTAssertEqual(song.noteValue, 4)
+        XCTAssertTrue(song.showsGridlines)
+        XCTAssertEqual(song.markersByTime.map(\.label), ["Chords start", "Solo start"])
+        XCTAssertEqual(song.markersByTime.map(\.seconds),
+                       [StarterTrack.chordsStart.seconds, StarterTrack.soloStart.seconds])
+        XCTAssertTrue(song.loops.isEmpty, "A song that arrived pre-looped answers beat 1 for them")
+    }
 }

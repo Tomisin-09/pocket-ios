@@ -1,6 +1,8 @@
 # ADR 0220 — a song that arrives signposted
 
-- **Status:** Proposed
+- **Status:** Accepted — **build step 1 built** (2026-09-24, `pocket-326-the-song-knows-itself`):
+  the song arrives with its tempo, downbeat, grid lines and two markers. Steps 2 (beat 1, scripted,
+  with the rest of 0149's beats) and 3 (the two hints) are not built.
 - **Date:** 2026-09-24 (`pocket-325-a-song-that-arrives-signposted`)
 - **Amends:** ADR 0219 — D1's "no loops **and no markers**" loses its second half. The starter track
   arrives with two markers, a measured tempo and downbeat, and grid lines on (D1–D2). The first
