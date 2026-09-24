@@ -7,6 +7,11 @@
 - **Date:** 2026-08-08 (`pocket-245-guided-creation-onboarding`), amended 2026-08-11
 - **Extends:** ADR 0113 (the local artist profile and its intake), ADR 0145 (the compiled help
   catalog), ADR 0148 §7 (a library that starts empty)
+- **Amended by:** ADR 0220 — the amendment's "Markers are deliberately out" now means out as a
+  *beat*: the starter track arrives with two markers as scenery, and nobody is asked to drop one. On
+  the starter track only, beat 1 pauses at those markers so the player's two Loop taps land on them,
+  and two hints (the click, backing track) join the first session **without** becoming beats. The
+  three beats, §2's trigger, §4 and §5 stand.
 - **Constrained by:** ADR 0070 (Pocket never grades playing), ADR 0120 / 0147 (analytics are opt-in)
 - **Deliberately does not invoke:** ADR 0092 (the AI charter, still Proposed)
 
