@@ -64,4 +64,14 @@ enum RunLength {
         return label(seconds: seconds, count: ramp.totalIntervals * max(1, ramp.intervalCount),
                      unit: .bars)
     }
+
+    /// The line for a loop ramp: seconds priced by `LoopEstimate` at each plateau's own speed over the
+    /// loop's region, and the passes it holds (`≈ 2 min 40 s · 12 passes`). A loop whose song hasn't
+    /// resolved has no region to price, so it states the passes alone rather than a floor of `≈ 5 s`.
+    static func loop(_ ramp: CommandRamp, regionSeconds: Double) -> String {
+        let passes = ramp.totalIntervals * max(1, ramp.intervalCount)
+        let seconds = LoopEstimate.seconds(forRamp: ramp, regionSeconds: regionSeconds)
+        guard seconds > 0 else { return Unit.passes.label(passes) }
+        return label(seconds: seconds, count: passes, unit: .passes)
+    }
 }

@@ -116,6 +116,14 @@ extension ArchiveRestoreWriter {
         made.rampDwellIntervals = record.rampDwellIntervals
         made.includeBackoff = record.includeBackoff
         made.backoffSpeedOverride = record.backoffSpeedOverride
+        // The phase shape (ADR 0221 D8). A missing key reads as the model's own default, the shape the
+        // loop had before 0221; the holds stay in intervals of the `rampRepsPerStep` restored above,
+        // so `runShape` folds them exactly as it would have on the phone that wrote the file.
+        made.includeWarmup = record.includeWarmup ?? true
+        made.includeReach = record.includeReach ?? true
+        made.rampWarmupHold = record.rampWarmupHold ?? 1
+        made.rampReachHold = record.rampReachHold ?? 1
+        made.rampBackoffHold = record.rampBackoffHold ?? 1
         made.colorIndex = record.colorIndex
         made.customColorHex = record.customColorHex
         made.references = references(record.references)

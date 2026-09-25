@@ -997,8 +997,8 @@ free-taste preset loses `presetSlug`, so it can't inherit the ADR 0112 run allow
 `ExerciseRunView` **owns its own `StandaloneMetronomeEngine`**
 (independent of the
 metronome screen's): it edits working / command (each **typable** via `EditableTempoRow`, not
-just the −/+ steppers) plus the warm-up / reach / back-up step counts (in the collapsible
-`RoutineStepsControls`) while stopped, shows the
+just the −/+ steppers) plus the run's shape — the phase rows of `PracticeSettingsPanel` (ADR
+0221) — while stopped, shows the
 routine staircase (the shared `RoutineStairs`), and on **Start** commits the edits and hands the engine the
 `Exercise`-shaped `CommandRamp` via `engine.run(ramp:)`, then shows a live BPM / beat / session
 readout. While a run plays, `RoutineStairs` **lights the live plateau** — fed by the engine's
@@ -1039,11 +1039,11 @@ status).
 reach → back-off `CommandRamp` as an exercise, but against its time-stretched **audio** rather than
 a click — so its tempos are **percent-of-original** (`×`), not absolute BPM. `CommandRamp` and
 `TempoStretch` are **reused, not forked**: `LoopCommandRamp` maps a loop's `×` working/command/reach
-to integer percent (`0.85×` → `85`) and builds a `CommandRamp` with `unit: .seconds` (a loop has no
-metronome bars), and the `×` reach derives from `TempoStretch.targetSpeed(forCommand:)` — the
+to integer percent (`0.85×` → `85`) and builds a `CommandRamp` whose `.bars` interval counts loop
+passes (a loop has no metronome bars), and the `×` reach derives from `TempoStretch.targetSpeed(forCommand:)` — the
 unit-generic `target(forCommand:…)` with `×`-unit clamps (`+0.02…+0.10×`). `LoopRunView` mirrors
-`ExerciseRunView` (working/command as %, derived reach, the same `RoutineStairs` /
-`RoutineStepsControls`), and — like the exercise run (ADR 0082, mirroring ADR 0079) — a **standalone
+`ExerciseRunView` (working/command as %, derived reach, the same `RoutineStairs` and the same
+`PracticeSettingsPanel` phase rows in % and passes, ADR 0221 D8), and — like the exercise run (ADR 0082, mirroring ADR 0079) — a **standalone
 loop run that finishes naturally** now lands on the same `RoutineBlockDoneView` (completion beat +
 optional mastery + note + an editable **Move command to {value}** promote toggle, `PromoteOffer` at a
 200%-of-original ceiling; since a loop's command is a percent of original, every loop tempo reads with a
@@ -1059,15 +1059,21 @@ to the waveform on exit. It **owns a `LoopRunModel`** which in turn owns a priva
 `PracticeAudioEngine`: it resolves the song file (the shared `SecurityScopedAccess`, extracted from
 `WaveformPracticeModel`), loops the region (`setLoop`), and polls the engine's **`loopIteration`**
 each tick → `ramp.bpm(elapsedBars: reps)` → `setRate(percent/100)`, stopping at `ramp.isFinished`.
-The ramp advances by **loop repetitions, not seconds** — one pass through the region is one step
-(reps-per-step is user-set in the run setup, default 1; the command dwell holds several — the dwell
-count is itself user-tunable via the new additive `rampDwellIntervals` field, ADR 0078). The ramp
+The ramp advances by **loop repetitions, not seconds** — one pass through the region is one interval,
+and every hold is a number of passes (`LoopCommandRamp.passesPerInterval`, ADR 0221 D8; the command
+dwell is `rampDwellIntervals`, ADR 0078). Before 0221 a player-set **reps per step** multiplied every
+hold; it is folded in on read by `Loop.runShape` and retired (`rampRepsPerStep` written as 1) by the
+first save through `Loop.applyRunShape(_:)`, so no stored loop changes what it plays. A folded hold
+can exceed the shared 1…12 range, and `RunShape.setHold` walks such a value down rather than snapping
+it. The ramp
 reuses `CommandRamp`'s `.bars` interval mechanism with "bars" reinterpreted as loop passes, and
 `loopIteration` is rate-independent so a plateau holds a fixed number of reps regardless of the
 tempo it plays at (and freezes naturally on pause). The tempos ride existing fields —
 `speed` (working) and `commandTempo` (command), reach derived — while the **ramp shape** persists in
-four dedicated, declaration-defaulted `Int` fields added in the ADR 0057 follow-up
-(`rampWarmupSteps` / `rampReachSteps` / `rampBackoffSteps` / `rampRepsPerStep`), kept **separate**
+dedicated, declaration-defaulted fields — the ADR 0057 follow-up's `rampWarmupSteps` /
+`rampReachSteps` / `rampBackoffSteps` / `rampRepsPerStep`, and ADR 0221's `includeWarmup` /
+`includeReach` / `rampWarmupHold` / `rampReachHold` / `rampBackoffHold` (carried by `LoopRecord` as
+Optionals, so an older backup decodes and folds as it would have) — kept **separate**
 from the ADR-0013 automator (`automatorStepCount`/`automatorLoopsPerStep`, the waveform "steps to
 target" ramp) since the two ramp systems carry different semantics. All are additive with
 declaration defaults, so the loop keeps full ADR 0011/0012 migration discipline. Stage 4's waveform for real files is

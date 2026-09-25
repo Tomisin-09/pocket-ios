@@ -4,7 +4,7 @@ import SwiftUI
 /// nudges once; holding fires repeatedly and *accelerates* — a short delay, then a cadence that
 /// ramps from slow to fast the longer you hold — so a big tempo/count change no longer means
 /// dozens of taps. Replaces the duplicated `stepButton` helpers across the Practice run UI
-/// (EditableTempoRow, RoutineStepsControls, the loop reps row) with one styled, behaved control.
+/// (`EditableTempoRow`, the phase rows' `PhaseCountRow`) with one styled, behaved control.
 ///
 /// Owns its own haptics so callers pass a **pure** state mutation: one `.light` tap on press, then
 /// a throttled pulse every few repeats during a hold (a per-tick haptic would buzz continuously at

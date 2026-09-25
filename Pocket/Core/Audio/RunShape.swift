@@ -87,9 +87,14 @@ struct RunShape: Equatable {
         }
     }
 
-    /// Set a hold, clamped into `holdRange`.
+    /// Set a hold, clamped into `holdRange` — except that a hold **already above** the ceiling keeps
+    /// its value as its own ceiling, so a step down walks it down one at a time and a step up does
+    /// nothing. Only a loop can hold one: folding its old reps per step into the holds (ADR 0221 D8)
+    /// multiplies them out, and 4 reps × a dwell of 4 is 16 passes. Snapping that to 12 on the first
+    /// tap would change what the loop plays because a button was touched.
     mutating func setHold(_ phase: RampPhase, _ value: Int) {
-        let clamped = min(Self.holdRange.upperBound, max(Self.holdRange.lowerBound, value))
+        let ceiling = max(Self.holdRange.upperBound, hold(phase))
+        let clamped = min(ceiling, max(Self.holdRange.lowerBound, value))
         switch phase {
         case .warmup: warmupHold = clamped
         case .command: dwell = clamped

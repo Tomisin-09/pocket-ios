@@ -7,64 +7,41 @@ import Foundation
 /// and fed to `CommandRamp` unchanged. `CommandRamp` is reused, not forked: the plateau math,
 /// live cursor, and completion all work on percent, and `RoutineStairs` renders it as-is.
 ///
-/// Intervals are counted in **loop repetitions** — one pass through the region is one step, which is
-/// how a loop is actually practised ("play it through, then bump it up"). A loop has no metronome
-/// bars, so the ramp reuses `CommandRamp`'s `.bars` interval mechanism with "bars" reinterpreted as
-/// *loop passes*: the run driver feeds `PracticeAudioEngine.loopIteration` as the elapsed count.
-/// That count is **rate-independent** (it counts musical repetitions, not frames), so a plateau
-/// holds a fixed number of reps regardless of the tempo it plays at. Pure and UI-free so the percent
-/// rounding (the kind of tempo math that breaks silently) is unit-tested per AGENTS.md.
+/// Holds are counted in **loop passes** — one pass through the region is one interval, which is how
+/// a loop is actually practised ("play it through, then bump it up"). A loop has no metronome bars,
+/// so the ramp reuses `CommandRamp`'s `.bars` interval mechanism with "bars" reinterpreted as *loop
+/// passes*: the run driver feeds `PracticeAudioEngine.loopIteration` as the elapsed count. That count
+/// is **rate-independent** (it counts musical repetitions, not frames), so a plateau holds a fixed
+/// number of passes regardless of the tempo it plays at. Pure and UI-free so the percent rounding
+/// (the kind of tempo math that breaks silently) is unit-tested per AGENTS.md.
 enum LoopCommandRamp {
 
-    /// Default loop passes each non-dwell plateau (warm-up / reach / back-off) holds — one rep per
-    /// step, the natural "play it through, then step" unit (user-adjustable in the run setup).
-    static let defaultRepsPerStep = 1
-    /// Default intervals the command plateau dwells — the consolidation hold, in reps-per-step units
-    /// (so the dwell runs `dwellIntervals × repsPerStep` passes).
-    static let defaultDwellIntervals = 4
+    /// Passes per hold interval — one (ADR 0221 D8). A loop's holds are stated in passes, so the
+    /// interval is a single pass; it used to be a player-set **reps per step**, which multiplied
+    /// every hold and is now folded into them (`Loop.runShape`).
+    static let passesPerInterval = 1
 
     /// `×`-of-original → integer percent (`0.85×` → `85`). Rounded to the nearest whole percent
     /// so the staircase reads in clean steps; `clamped` only against negatives (a loop speed is
     /// always positive in practice).
     static func percent(_ speed: Double) -> Int { max(0, Int((speed * 100).rounded())) }
 
-    /// Build the staircase for a loop run from its `×` tempos + shaping params, in percent units.
-    /// `warmupSteps` is the count of intermediate plateaus between working and command, placed by
-    /// count (ADR 0221 D4) — it used to be converted to a stride, which rounded rungs in and out, as
-    /// an exercise's did; `reachSteps`/`backoffSteps` shape the
-    /// climb to and descent from the summit; `repsPerStep` is how many loop passes each plateau
-    /// holds (the interval the run driver advances by `loopIteration`).
+    /// Build the staircase for a loop run from its `×` tempos and its shape (ADR 0221), in percent
+    /// units and one pass per interval — so every hold in `shape` is a number of passes. The warm-up
+    /// is placed by count, as every phase is (D4); a pinned `backoffOverride` is converted with the
+    /// tempos, and an unpinned one is derived by the ramp in the same percent domain.
     static func make(working: Double, command: Double, target: Double,
-                     warmupSteps: Int,
-                     dwellIntervals: Int = defaultDwellIntervals,
-                     reachSteps: Int = 0, backoffSteps: Int = 0,
-                     includeBackoff: Bool = true, backoffOverride: Double? = nil,
-                     repsPerStep: Int = defaultRepsPerStep) -> CommandRamp {
-        let workingPct = percent(working)
-        let commandPct = percent(command)
-        let targetPct = percent(target)
-        return CommandRamp(working: workingPct, command: commandPct, target: targetPct,
-                           warmupSteps: max(0, warmupSteps), intervalCount: max(1, repsPerStep),
-                           unit: .bars,
-                           dwellIntervals: max(1, dwellIntervals), includeBackoff: includeBackoff,
-                           reachSteps: max(0, reachSteps), backoffSteps: max(0, backoffSteps),
-                           backoffOverride: backoffOverride.map(percent))
+                     shape: RunShape = RunShape(), backoffOverride: Double? = nil) -> CommandRamp {
+        let floor = percent(working), owned = percent(command), reach = percent(target)
+        let backoff = backoffOverride.map(percent)
+            ?? TempoStretch.backoffBPM(command: owned, target: reach, floor: floor)
+        return make(tempos: RampTempos(working: floor, command: owned, reach: reach, backoff: backoff),
+                    shape: shape, backoffOverride: backoffOverride.map(percent))
     }
 
-    /// Convenience: build the ramp directly from a `Loop`'s measured progression — `rampFloor` is the
-    /// warm-up floor, `command` the owned tempo, `targetSpeed` the reach (a pinned override or the auto).
-    ///
-    /// Takes `rampFloor` rather than the raw `speed`: on an un-measured loop `command` *is* `speed`, so
-    /// passing `speed` collapsed the staircase to dwell-plus-summit — no warm-up, no back off (ADR 0129
-    /// sub-decision 1, extended to loops).
-    static func make(loop: Loop, warmupSteps: Int,
-                     dwellIntervals: Int = defaultDwellIntervals,
-                     reachSteps: Int = 0, backoffSteps: Int = 0,
-                     includeBackoff: Bool = true, backoffOverride: Double? = nil,
-                     repsPerStep: Int = defaultRepsPerStep) -> CommandRamp {
-        make(working: loop.rampFloor, command: loop.command, target: loop.targetSpeed,
-             warmupSteps: warmupSteps, dwellIntervals: dwellIntervals,
-             reachSteps: reachSteps, backoffSteps: backoffSteps,
-             includeBackoff: includeBackoff, backoffOverride: backoffOverride, repsPerStep: repsPerStep)
+    /// The same, from tempos already in percent — what the run screen edits in.
+    static func make(tempos: RampTempos, shape: RunShape, backoffOverride: Int?) -> CommandRamp {
+        CommandRamp(tempos: tempos, shape: shape, backoffOverride: backoffOverride,
+                    intervalCount: passesPerInterval, unit: .bars)
     }
 }

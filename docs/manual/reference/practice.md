@@ -167,7 +167,9 @@ Empty, it explains that loops appear once you have set one on a song.
 
 A loop can be run three ways, all launched from its edit sheet in the song player:
 
-- **The ordinary loop run** — play it, slow it, ramp it.
+- **The ordinary loop run** — play it, slow it, ramp it. Its `Practice Settings` are the drill run
+  screen's four phase rows, with every tempo a percentage of the song's speed and every hold a
+  number of passes through the loop rather than bars.
 - **`Train your ear`** — hear it and answer, rather than play along.
 - **`Improvise`** — the loop as a bed to solo over.
 

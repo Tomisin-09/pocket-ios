@@ -136,15 +136,20 @@ final class Loop {
     // ("intermediate stops between working and command"), with different semantics — coupling
     // the two to save four fields is a bug magnet. Declaration defaults so SwiftData lightweight
     // migration fills loops saved before this without a store wipe (CoreData 134110 rule, ADR
-    // 0012), same discipline as the automator fields. `rampRepsPerStep` defaults to
-    // `LoopCommandRamp.defaultRepsPerStep` (1); the rest to `0` (no intermediate stops / drop).
+    // 0012), same discipline as the automator fields. The step counts default to `0` (no
+    // intermediate stops / a single drop).
     var rampWarmupSteps: Int = 0
     var rampReachSteps: Int = 0
     var rampBackoffSteps: Int = 0
+    /// Passes each hold interval lasted **before ADR 0221 D8** folded reps-per-step into the holds.
+    /// Read only through `runShape`, which multiplies the stored holds by it; the first save through
+    /// the phase rows writes the holds in passes and this as `1`, after which it never scales
+    /// anything. Kept, as dropping it would be a destructive change for no benefit.
     var rampRepsPerStep: Int = 1
-    /// How many intervals the command plateau dwells — the consolidation hold, now user-tunable
-    /// (ADR 0078). Defaults to `LoopCommandRamp.defaultDwellIntervals` (4) so loops saved before
-    /// this field migrate cleanly via SwiftData lightweight migration, matching the old fixed value.
+    /// How long the command plateau holds — the dwell (ADR 0078). In passes once the loop has been
+    /// saved through the phase rows; until then in intervals of `rampRepsPerStep` passes (ADR 0221
+    /// D8). Defaults to 4, the old fixed value, so loops saved before this field migrate cleanly via
+    /// SwiftData lightweight migration.
     var rampDwellIntervals: Int = 4
     /// Whether the ramp **backs off** below command after the summit (user-testing note 6; loop
     /// counterpart of `Exercise.includeBackoff`). Declaration default → additive migration.
@@ -152,6 +157,17 @@ final class Loop {
     /// A pinned **backoff floor** (× of original), or `nil` to derive it (note 6). Additive optional,
     /// mirroring `targetSpeedOverride`.
     var backoffSpeedOverride: Double?
+    // A run shaped phase by phase (ADR 0221 D8) — the loop mirror of `Exercise`'s fields. Every
+    // default reproduces the ramp as it was, and each is declaration-defaulted (CoreData 134110 rule).
+    /// Whether the run climbs from the floor (D2). Off ⇒ it opens at command; the floor is kept.
+    var includeWarmup: Bool = true
+    /// Whether the run summits above command (D2). Off ⇒ no reach, so no raise is offered (D6).
+    var includeReach: Bool = true
+    /// How long each warm-up, reach and back-off rung holds (D3), counted like `rampDwellIntervals`:
+    /// `1` is the old fixed hold of one interval of `rampRepsPerStep` passes.
+    var rampWarmupHold: Int = 1
+    var rampReachHold: Int = 1
+    var rampBackoffHold: Int = 1
 
     /// Manual identity-colour override: an index into `PocketColor.loopPalette`, or
     /// `nil` to derive the colour from start-order (ADR 0023 / 0031). Optional, so
@@ -361,18 +377,5 @@ final class Loop {
     func settleCommand(to speed: Double) {
         commandTempo = speed
         backoffSpeedOverride = CommandOffer.survivingBackoffPin(backoffSpeedOverride, command: speed)
-    }
-
-    /// The command-anchored **training ramp** this loop prescribes (ADR 0046 Phase B) — warm up →
-    /// dwell at command → summit at the reach → back off, in percent units, from the saved ramp-shape
-    /// fields so the routine player (ADR 0066) runs a stored recipe with no setup UI. Pure/UI-free.
-    /// Built from `rampFloor`, not the raw `speed`, so the staircase the model describes is the one a
-    /// run performs (ADR 0129 sub-decision 1).
-    var ramp: CommandRamp {
-        LoopCommandRamp.make(loop: self, warmupSteps: rampWarmupSteps,
-                             dwellIntervals: max(1, rampDwellIntervals),
-                             reachSteps: rampReachSteps, backoffSteps: rampBackoffSteps,
-                             includeBackoff: includeBackoff, backoffOverride: backoffSpeedOverride,
-                             repsPerStep: max(1, rampRepsPerStep))
     }
 }

@@ -8,15 +8,14 @@ import SwiftUI
 /// a private `PracticeAudioEngine`), so a Practice loop run is independent of the waveform screen.
 ///
 /// Two modes on one screen, mirroring the exercise run:
-/// - **Set up** (stopped): edit the warm-up **working** floor and owned **command** (as % of
-///   original), with the derived **reach**, the warm-up/reach/back-up step granularity, and the
-///   routine drawn as a staircase. A one-tap **promote** ratchets command up to the reach.
+/// - **Set up** (stopped): shape the run phase by phase — warm-up, command, reach, back off (ADR
+///   0221 D8) — in % of original and passes, with the routine drawn as a staircase.
 /// - **Running**: the live playback speed (climbing as the ramp steps the audio rate) over the
 ///   looping region, with pause / resume / stop.
 ///
-/// **Start** commits the edits to the loop (`speed` = working, `promoteCommand` = command) and
-/// hands the engine a `CommandRamp` (percent units, `.seconds` intervals) via `LoopRunModel`. Edits
-/// live in local state until Start, so leaving without starting discards them.
+/// **Start** commits the edits to the loop (`speed` = working, `promoteCommand` = command, the
+/// shape) and hands the engine a `CommandRamp` (percent units, one pass per interval) via
+/// `LoopRunModel`. Edits live in local state until Start or Save, so leaving discards them.
 struct LoopRunView: View {
     let loop: Loop
     /// Routine-session chrome (progress, Skip, auto-advance) when a block in a routine; `nil` standalone.
@@ -27,27 +26,21 @@ struct LoopRunView: View {
     // Local edit state (percent of original), seeded on appear, committed only on Start.
     @State var working = 0
     @State var command = 0
-    @State var steps = 0
-    @State var reachSteps = 0
-    @State var backoffSteps = 0
-    @State var repsPerStep = LoopCommandRamp.defaultRepsPerStep
-    /// How many intervals the command plateau dwells — the consolidation hold, now user-tunable
-    /// (ADR 0078). Seeded from the loop, committed on Start / Save like the other ramp fields.
-    @State var dwell = LoopCommandRamp.defaultDwellIntervals
+    /// The run's shape — which phases play, their rungs and their holds in passes (ADR 0221 D8).
+    /// Seeded from the loop, committed on Start / Save like the tempos.
+    @State var shape = RunShape()
     /// A manually pinned **reach** (% of original), or `nil` to use the auto-derived reach
     /// (ADR 0075). Seeded from `loop.targetSpeedOverride`, committed on Start / Save. Always kept
     /// above `command`; auto-cleared locally when command is nudged up to it, mirroring the model.
     @State var targetOverride: Int?
-    /// Whether the ramp backs off below command after the summit (user-testing note 6). Seeded from
-    /// `loop.includeBackoff`, committed on Start / Save. Default on.
-    @State var includeBackoff = true
     /// A manually pinned **backoff floor** (% of original), or `nil` for the auto derivation (note 6).
     /// Seeded from `loop.backoffSpeedOverride`, committed on Start / Save. Kept below `command`.
     @State var backoffOverride: Int?
     /// The top-level "Practice Settings" disclosure — collapsed by default so the run screen opens on
-    /// the summary + staircase (parity with the exercise run); expands to reveal tempos/reps/Steps.
+    /// the summary + staircase (parity with the exercise run); expands to the phase rows.
     @State var showSettings = false
-    @State var showSteps = false
+    /// The open phase row (ADR 0221 D1) — Command to start, the one most often tuned.
+    @State var openPhase: RampPhase? = .command
     /// Whether the routine count-in overlay is showing (routine mode only) — gates the run start.
     @State var showCountIn = false
     @State var seeded = false
@@ -59,9 +52,8 @@ struct LoopRunView: View {
     /// The Takes sheet — relisten to practice-take recordings (ADR 0069, slice 3).
     @State var showingTakes = false
     /// The setup as last persisted — captured on seed and after each Save, so the Save Changes
-    /// button shows only while the edits differ (ADR 0057). All six persisted fields — the two
-    /// tempos and the four ramp-shape controls (ADR 0057 follow-up) — are tracked, so editing any
-    /// of them arms Save Changes.
+    /// button shows only while the edits differ (ADR 0057). Every persisted field — the tempos, the
+    /// pins and the shape — is tracked, so editing any of them arms Save Changes.
     @State var baseline: LoopSetupState?
     /// When the current run started, or `nil` when nothing is running — the practice log's clock
     /// (ADR 0117). Stamped on Start and consumed by the natural-completion hook, so a run stopped by
@@ -76,14 +68,10 @@ struct LoopRunView: View {
     @State var recorder = RecordingController()
 
     var current: LoopSetupState {
-        LoopSetupState(working: working, command: command, warmupSteps: steps,
-                       reachSteps: reachSteps, backoffSteps: backoffSteps, repsPerStep: repsPerStep,
-                       dwell: dwell, targetOverride: targetOverride,
-                       includeBackoff: includeBackoff, backoffOverride: backoffOverride)
+        LoopSetupState(working: working, command: command, shape: shape,
+                       targetOverride: targetOverride, backoffOverride: backoffOverride)
     }
     private var isDirty: Bool { baseline.map { $0 != current } ?? false }
-
-    static let repsRange = 1...8
 
     /// Playback-speed bounds as integer percent — `TempoMath`'s axis, so this ceiling moves with the
     /// waveform slider and the automator ramp rather than diverging from them (ADR 0124).
@@ -93,59 +81,6 @@ struct LoopRunView: View {
         self.loop = loop
         self.routineContext = routineContext
         _model = State(initialValue: LoopRunModel(loop: loop))
-    }
-
-    /// The **auto** reach (% of original) derived from the (local) command — proportional + clamped
-    /// via the `×`-unit `TempoStretch`, mapped back to percent. The fallback for reset-to-auto.
-    var autoReach: Int {
-        LoopCommandRamp.percent(TempoStretch.targetSpeed(forCommand: Double(command) / 100))
-    }
-
-    /// The **effective** reach (% of original): a pinned override when set, else the auto reach
-    /// (ADR 0075). Every surface here reads this — the staircase summit, promote, summary. Internal
-    /// (not private) so the `+Actions` extension can snapshot it for the post-run offer (ADR 0082).
-    var reach: Int { targetOverride ?? autoReach }
-
-    /// The **auto** backoff floor (% of original) for the current tempos — the reset-to-auto fallback
-    /// (user-testing note 6). The same percent-space derivation `CommandRamp` uses when unpinned.
-    var autoBackoff: Int { TempoStretch.backoffBPM(command: command, target: reach, floor: working) }
-
-    /// The **effective** backoff floor (% of original): a pinned override when set, else the auto value.
-    var backoff: Int { backoffOverride ?? autoBackoff }
-
-    /// The warm-up's average step (percent points) at the chosen number of intermediate stops — the
-    /// panel's caption only. The ramp spaces the warm-up by count (ADR 0221 D4), not by this.
-    private var stepPercent: Int {
-        CommandRamp.warmupStepBPM(working: working, command: command, intermediateSteps: steps)
-    }
-
-    /// The routine the current edits describe — the staircase preview and the exact `CommandRamp`
-    /// (percent units) handed to the run on Start.
-    ///
-    /// Inside a **generated** session the block's allotted minutes win: the ramp is fitted to the slot
-    /// by stretching the dwell — for a loop, more passes at command — bounded against the authored
-    /// dwell (ADR 0129 as amended). Loops were left out of the block model entirely at first: a loop
-    /// block was allotted a slot and ignored it. Nothing is written back; `persist()` saves the edit
-    /// state, never the fitted value.
-    var routine: CommandRamp {
-        let authored = CommandRamp(working: working, command: command, target: reach,
-                                   warmupSteps: steps, intervalCount: max(1, repsPerStep),
-                                   unit: .bars, dwellIntervals: max(1, dwell),
-                                   includeBackoff: includeBackoff, reachSteps: reachSteps,
-                                   backoffSteps: backoffSteps, backoffOverride: backoffOverride)
-        guard let planned = routineContext?.plannedMinutes else { return authored }
-        return LoopEstimate.fitted(authored, toMinutes: planned,
-                                   regionSeconds: loop.regionSeconds)
-    }
-
-    private var hasReach: Bool { reach > command }
-
-    /// The dwell row's caption — each interval holds `repsPerStep` loop passes, so N intervals ≈
-    /// N×reps passes at command (ADR 0078). Reads the **effective** dwell off `routine`, so inside a
-    /// generated session it describes the fitted ramp rather than the stored recipe (ADR 0129) — the
-    /// caption can't claim a hold the run won't play.
-    private var dwellCaption: String {
-        "≈ \(routine.dwellIntervals * max(1, repsPerStep)) passes"
     }
 
     var isRunning: Bool { model.isRunning }
@@ -168,7 +103,10 @@ struct LoopRunView: View {
                     }
                     RoutineStairs(plateaus: routine.plateaus, command: routine.command,
                                   tint: PocketColor.practice, unit: .percent,
-                                  currentIndex: model.currentPlateau(in: routine))
+                                  currentIndex: model.currentPlateau(in: routine),
+                                  highlightedPhase: showSettings ? openPhase : nil,
+                                  lengthLine: RunLength.loop(routine,
+                                                             regionSeconds: loop.regionSeconds))
                     if !isRunning, isDirty { saveChangesButton }
                     if isRunning { runNoteCard }
                     if showsReviewBar {
@@ -282,25 +220,24 @@ struct LoopRunView: View {
 
     // MARK: - Setup (stopped)
 
-    /// The collapsible Practice Settings panel — tempos + reps + Steps behind one disclosure, so the
-    /// loop run opens on the summary + staircase (parity with the exercise run, ADR 0071).
+    /// The collapsible **Practice Settings** panel, a row per phase in % of original and passes (ADR
+    /// 0221 D8) — the exercise run's panel, so the two can't word a phase differently. The edits
+    /// still live in this view's state until Start or Save (ADR 0057).
+    ///
+    /// The command hold it reports as played is read off `routine`, not `shape`, so inside a generated
+    /// session it describes the ramp fitted to the block rather than the stored recipe (ADR 0129).
     private var practiceSettings: some View {
-        LoopSettingsPanel(
-            expanded: $showSettings,
-            working: working, command: command, reach: reach,
-            reachIsCustom: targetOverride != nil,
-            onStepWorking: { adjustWorking(by: $0) }, onTypeWorking: { setWorking($0) },
-            onStepCommand: { adjustCommand(by: $0) }, onTypeCommand: { setCommand($0) },
-            onStepReach: { adjustReach(by: $0) }, onTypeReach: { setReach($0) },
-            onResetReach: resetReach,
-            includeBackoff: $includeBackoff, backoff: backoff, backoffIsCustom: backoffOverride != nil,
-            onStepBackoff: { adjustBackoff(by: $0) }, onTypeBackoff: { setBackoff($0) },
-            onResetBackoff: resetBackoff,
-            repsPerStep: $repsPerStep, repsRange: Self.repsRange,
-            stepsExpanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
-            backoffSteps: $backoffSteps, dwell: $dwell, dwellCaption: dwellCaption,
-            warmupStepBPM: stepPercent,
-            hasReach: hasReach, tint: PocketColor.practice, onToggle: { haptic(.light) })
+        PracticeSettingsPanel(
+            expanded: $showSettings, openPhase: $openPhase, shape: $shape,
+            startAt: PhaseTempoControl(value: working, onStep: { adjustWorking(by: $0) },
+                                       onType: { setWorking($0) }),
+            command: PhaseTempoControl(value: command, onStep: { adjustCommand(by: $0) },
+                                       onType: { setCommand($0) }),
+            reach: reachControl, settleAt: settleAtControl,
+            playedDwell: routine.dwellIntervals,
+            tempoUnit: .percent, holdUnit: .passes,
+            unitsPerInterval: LoopCommandRamp.passesPerInterval,
+            tint: PocketColor.practice, onToggle: { haptic(.light) })
     }
 
     /// Persist the tuning without starting a run (ADR 0057) — shown only while the setup differs

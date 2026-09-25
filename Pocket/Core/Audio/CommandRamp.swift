@@ -96,17 +96,6 @@ struct CommandRamp: Equatable, TempoRamp {
         min(max(0, steps) + 1, maxRungs, max(1, abs(to - from)))
     }
 
-    /// The warm-up `stepBPM` that places `intermediateSteps` plateaus between `working` and
-    /// `command` — the **average** spacing. Since ADR 0221 D4 nothing builds a ramp from it; it
-    /// survives only as the loop panel's "+N % per step" caption, until step 2 of that ADR moves
-    /// loops to the phase rows. Always ≥ 1, and `1` when there's no climb.
-    static func warmupStepBPM(working: Int, command: Int, intermediateSteps: Int) -> Int {
-        let span = command - working
-        guard span > 0 else { return 1 }
-        let divisions = max(1, intermediateSteps + 1)
-        return max(1, Int((Double(span) / Double(divisions)).rounded()))
-    }
-
     /// How many intermediate plateaus a stored `stepBPM` stride implied between `working` and
     /// `command` — the one-time seed of an exercise's warm-up count from the stride it stored before
     /// ADR 0221 D4. `0` when the step jumps straight to command or there's no climb.

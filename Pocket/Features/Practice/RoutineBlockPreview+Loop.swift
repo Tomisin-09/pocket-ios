@@ -26,10 +26,11 @@ struct LoopBlockPreview: View {
     @Binding var recordsTake: Bool
     @Environment(\.modelContext) private var modelContext
     @State private var preview: LoopAudioPreviewPlayer
-    /// Disclosure state for the collapsible tempo + steps panel — purely local UI; the edits
-    /// themselves write straight to the model.
+    /// Disclosure state for the collapsible phase rows — purely local UI; the edits themselves write
+    /// straight to the model.
     @State private var showSettings = false
-    @State private var showSteps = false
+    /// The open phase row (ADR 0221 D1), whose bars the staircase lights.
+    @State private var openPhase: RampPhase? = .command
 
     init(loop: Loop, plannedMinutes: Int? = nil, usesAuthoredLength: Binding<Bool>,
          recordsTake: Binding<Bool>) {
@@ -78,12 +79,13 @@ struct LoopBlockPreview: View {
                     .padding(.top, 8)
                 }
 
-                PreviewTempoReadout(anchors: "\(effectiveRamp.working)% → \(effectiveRamp.command)%",
-                                    reach: "\(effectiveRamp.target)%", unit: "of original")
+                PreviewTempoReadout(anchors: anchors, reach: shownReach, unit: "of original")
                 settingsPanel
                 RoutineStairs(plateaus: effectiveRamp.plateaus, command: effectiveRamp.command,
-                              tint: PocketColor.practice, unit: .percent)
-                    .frame(height: 120)
+                              tint: PocketColor.practice, unit: .percent,
+                              highlightedPhase: showSettings ? openPhase : nil,
+                              lengthLine: RunLength.loop(effectiveRamp,
+                                                         regionSeconds: loop.regionSeconds))
                 if plannedMinutes != nil {
                     BlockLengthControl(usesAuthoredLength: $usesAuthoredLength,
                                        runMinutes: runMinutes, authoredMinutes: authoredMinutes,
@@ -110,53 +112,75 @@ struct LoopBlockPreview: View {
         .onDisappear { preview.stop() }
     }
 
+    // MARK: - The tempo readout
+
+    /// `70% → 85%`, or just `85%` when the run opens at command — the climb the run actually plays.
+    private var anchors: String {
+        let shape = loop.runShape
+        let tempos = loop.rampTempos
+        guard shape.includeWarmup, tempos.hasRoom(for: .warmup) else { return "\(tempos.command)%" }
+        return "\(tempos.working)% → \(tempos.command)%"
+    }
+
+    /// The reach, or `nil` when Reach is off — the readout then drops it, as the library row does
+    /// (ADR 0221 D6).
+    private var shownReach: String? { loop.includeReach ? "\(loop.rampTempos.reach)%" : nil }
+
     // MARK: - Practice Settings (ADR 0130 §4 — closes ADR 0077 §7)
     //
-    // The percent-unit panel the loop run screen uses, wired to the model rather than to local edit
-    // state: this surface has no Start to commit on, so every edit writes through and saves.
+    // The run screen's phase rows (ADR 0221 D8), in percent and passes, wired to the model rather than
+    // to local edit state: this surface has no Start to commit on, so every edit writes through and
+    // saves.
 
+    /// The command hold it reports as played is read off `effectiveRamp`, so in a generated session it
+    /// describes the ramp fitted to the block (ADR 0129).
     private var settingsPanel: some View {
-        LoopSettingsPanel(
-            expanded: $showSettings,
-            working: working, command: command, reach: reach,
-            reachIsCustom: loop.hasTargetOverride,
-            onStepWorking: { setWorking(working + $0) }, onTypeWorking: { setWorking($0) },
-            onStepCommand: { setCommand(command + $0) }, onTypeCommand: { setCommand($0) },
-            onStepReach: { pinReach(reach + $0) }, onTypeReach: { pinReach($0) },
-            onResetReach: { commit { loop.targetSpeedOverride = nil }; haptic(.light) },
-            includeBackoff: includeBackoffBinding, backoff: backoff,
-            backoffIsCustom: loop.backoffSpeedOverride != nil,
-            onStepBackoff: { pinBackoff(backoff + $0) }, onTypeBackoff: { pinBackoff($0) },
-            onResetBackoff: { commit { loop.backoffSpeedOverride = nil }; haptic(.light) },
-            repsPerStep: repsPerStepBinding, repsRange: LoopRunView.repsRange,
-            stepsExpanded: $showSteps, warmupSteps: warmupStepsBinding,
-            reachSteps: reachStepsBinding, backoffSteps: backoffStepsBinding,
-            dwell: dwellBinding, dwellCaption: dwellCaption, warmupStepBPM: warmupStepPercent,
-            hasReach: reach > command, tint: PocketColor.practice, onToggle: { haptic(.light) })
+        PracticeSettingsPanel(
+            expanded: $showSettings, openPhase: $openPhase, shape: shapeBinding,
+            startAt: startAtControl, command: commandControl, reach: reachControl,
+            settleAt: settleAtControl, playedDwell: effectiveRamp.dwellIntervals,
+            tempoUnit: .percent, holdUnit: .passes,
+            unitsPerInterval: LoopCommandRamp.passesPerInterval,
+            tint: PocketColor.practice, onToggle: { haptic(.light) })
     }
 
     /// The warm-up floor as percent — read off `Loop.rampFloor`, the same derivation `loop.ramp` and
     /// `LoopRunView.seedIfNeeded` use, so the panel and the staircase below it agree (ADR 0129).
-    private var working: Int { LoopCommandRamp.percent(loop.rampFloor) }
-    private var command: Int { LoopCommandRamp.percent(loop.command) }
-    private var reach: Int { LoopCommandRamp.percent(loop.targetSpeed) }
+    private var working: Int { loop.rampTempos.working }
+    private var command: Int { loop.rampTempos.command }
+    private var reach: Int { loop.rampTempos.reach }
+    /// The back-off floor: a pinned override when set, else the auto derivation below command.
+    private var backoff: Int { loop.backoffPercent }
 
-    /// The back-off floor: a pinned override when set, else the auto derivation below command — the
-    /// percent-space rule `LoopRunView` applies.
-    private var backoff: Int {
-        loop.backoffSpeedOverride.map(LoopCommandRamp.percent)
-            ?? TempoStretch.backoffBPM(command: command, target: reach, floor: working)
+    // The tempo controls are typed properties rather than ternaries inside `body`, which the
+    // type-checker can't resolve there (see `ExerciseBlockPreview`).
+
+    private var startAtControl: PhaseTempoControl {
+        PhaseTempoControl(value: working, onStep: { setWorking(working + $0) },
+                          onType: { setWorking($0) })
     }
 
-    /// Each dwell interval holds `repsPerStep` passes (ADR 0078), read off the **effective** ramp so
-    /// the caption states the hold the run will play.
-    private var dwellCaption: String {
-        "≈ \(effectiveRamp.dwellIntervals * max(1, loop.rampRepsPerStep)) passes"
+    private var commandControl: PhaseTempoControl {
+        PhaseTempoControl(value: command, onStep: { setCommand(command + $0) },
+                          onType: { setCommand($0) })
     }
 
-    private var warmupStepPercent: Int {
-        CommandRamp.warmupStepBPM(working: working, command: command,
-                                  intermediateSteps: loop.rampWarmupSteps)
+    private var reachControl: PhaseTempoControl {
+        var control = PhaseTempoControl(value: reach, onStep: { pinReach(reach + $0) },
+                                        onType: { pinReach($0) })
+        if loop.hasTargetOverride {
+            control.onReset = { commit { loop.targetSpeedOverride = nil }; haptic(.light) }
+        }
+        return control
+    }
+
+    private var settleAtControl: PhaseTempoControl {
+        var control = PhaseTempoControl(value: backoff, onStep: { pinBackoff(backoff + $0) },
+                                        onType: { pinBackoff($0) })
+        if loop.backoffSpeedOverride != nil {
+            control.onReset = { commit { loop.backoffSpeedOverride = nil }; haptic(.light) }
+        }
+        return control
     }
 
     /// Move the warm-up floor. On an **un-measured** loop `command` *is* `speed`, so writing the floor
@@ -199,34 +223,12 @@ struct LoopBlockPreview: View {
         min(LoopRunView.percentRange.upperBound, max(LoopRunView.percentRange.lowerBound, value))
     }
 
-    // MARK: Ramp-shape (steps) — model-backed bindings for `LoopSettingsPanel`
+    // MARK: The run's shape — model-backed for `PracticeSettingsPanel`
 
-    private var includeBackoffBinding: Binding<Bool> {
-        Binding(get: { loop.includeBackoff }, set: { new in commit { loop.includeBackoff = new } })
-    }
-
-    private var repsPerStepBinding: Binding<Int> {
-        Binding(get: { max(LoopRunView.repsRange.lowerBound, loop.rampRepsPerStep) },
-                set: { new in commit { loop.rampRepsPerStep = new } })
-    }
-
-    private var warmupStepsBinding: Binding<Int> {
-        Binding(get: { loop.rampWarmupSteps }, set: { new in commit { loop.rampWarmupSteps = max(0, new) } })
-    }
-
-    private var reachStepsBinding: Binding<Int> {
-        Binding(get: { loop.rampReachSteps }, set: { new in commit { loop.rampReachSteps = max(0, new) } })
-    }
-
-    private var backoffStepsBinding: Binding<Int> {
-        Binding(get: { loop.rampBackoffSteps },
-                set: { new in commit { loop.rampBackoffSteps = max(0, new) } })
-    }
-
-    /// The command-plateau dwell (ADR 0078), kept ≥ 1 — the command plateau must hold.
-    private var dwellBinding: Binding<Int> {
-        Binding(get: { max(1, loop.rampDwellIntervals) },
-                set: { new in commit { loop.rampDwellIntervals = max(1, new) } })
+    /// The phase switches, rungs and holds (ADR 0221 D8), read from and written straight back to the
+    /// model. A write stores the holds in passes, which retires this loop's reps per step.
+    private var shapeBinding: Binding<RunShape> {
+        Binding(get: { loop.runShape }, set: { newValue in commit { loop.applyRunShape(newValue) } })
     }
 
     /// Apply a model mutation and persist it — the preview's edits are live, not deferred.

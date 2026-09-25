@@ -126,14 +126,23 @@ final class CommandRampTests: XCTestCase {
         XCTAssertEqual(warmups, [58, 59, 60])
     }
 
-    /// The one-time seed from a stored stride (D4) — the inverse of the old `warmupStepBPM`, so an
-    /// exercise shows the setting it showed before.
+    /// The one-time seed from a stored stride (D4) — the inverse of the stride the run screen stored
+    /// before ADR 0221, so an exercise shows the setting it showed before.
     func testIntermediateStepsIsTheInverseOfWarmupStep() {
         for steps in 0...6 {
-            let step = CommandRamp.warmupStepBPM(working: 72, command: 132, intermediateSteps: steps)
+            let step = Self.storedStride(working: 72, command: 132, intermediateSteps: steps)
             XCTAssertEqual(CommandRamp.intermediateSteps(working: 72, command: 132, stepBPM: step),
                            steps, "round-trip must hold for \(steps) intermediate steps")
         }
+    }
+
+    /// The stride the run screen wrote to `rampStepBPM` before ADR 0221 D4 — the average spacing of
+    /// `intermediateSteps` stops. The app no longer computes it (`warmupStepBPM` went with the last
+    /// panel that captioned by it, in step 2); it's kept here because stores still hold its output.
+    private static func storedStride(working: Int, command: Int, intermediateSteps: Int) -> Int {
+        let span = command - working
+        guard span > 0 else { return 1 }
+        return max(1, Int((Double(span) / Double(max(1, intermediateSteps + 1))).rounded()))
     }
 
     func testIntermediateStepsZeroWhenNoClimb() {
