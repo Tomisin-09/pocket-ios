@@ -181,6 +181,32 @@ upgrade.
 - **The staircase draws a single plateau at a fixed height.** Today a run with one tempo would draw
   it at the 30% floor of the height scale.
 
+### D10 — The staircase says how long the run is
+
+Once every phase has a hold, the obvious next question is "how long is this now?", and the
+staircase's widths only answer it relatively. So a line under the staircase's captions states the
+run's length: **`≈ 1 min 5 s · 16 bars`** on an exercise, **`≈ 2 min 40 s · 12 passes`** on a loop.
+
+- **One source for the number.** The app already estimates run length: `SessionEstimate.seconds`
+  prices each plateau's bars at its own tempo and meter, and `LoopEstimate.seconds` prices each
+  plateau's passes at its own speed over the loop's region. The line reads those two functions and
+  nothing else, so it can't disagree with the planner.
+- **It describes the ramp that will actually play.** It reads the same ramp the staircase draws. In
+  a generated session that is the ramp fitted to its block (0129), so the line is the precise form of
+  0129's effective minutes. Where the fit hits its clamp, it can honestly differ from the planned
+  slot, as 0129 already allows.
+- **The count-in is not included**, as in the planner's estimates. It is a bar or two before the
+  ramp starts, not part of the ramp.
+- **Rounding** is done by one pure, unit-tested formatter: to the nearest 5 seconds below ten
+  minutes (`≈ 45 s`, `≈ 3 min 10 s`), and to whole minutes from ten minutes up (`≈ 12 min`). It
+  never reads `≈ 0 s`. The bar or pass count is exact.
+- **It is a total, not a countdown.** While the run plays, the line keeps stating the same total and
+  does not tick down. Reading a changing value in the run screen's body re-renders the screen on
+  every change, the cost 0153 records for the playhead. A clock counting down is also a different
+  feature from a length you read before you start.
+
+It is a length, not a target: nothing compares it with anything, and nothing is measured (0070).
+
 ## Model
 
 | Field | `Exercise` | `Loop` | Default | Meaning |
@@ -210,8 +236,12 @@ from an older build, has to decode and read as today's shape. Duplication copies
   hold").
 - **A 1-bar hold unit for exercises**: finer, but every stored dwell is in 4-bar intervals, so it
   would mean rewriting stored values. On the instrument, four bars is the natural phrase anyway.
-- **The run's length under the staircase**: mocked, not decided here. It is a candidate now that
-  every phase's hold can change.
+- **A countdown of time left while the run plays** instead of D10's static total. It would re-render
+  the run screen on every tick (the cost 0153 records), and "how long is this?" is a question you ask
+  before pressing Start.
+- **The run's length in whole minutes**, as the planner shows a block. Most standalone runs are
+  under five minutes, so whole minutes would show `1 min` for anything from 30 to 90 seconds and
+  hide exactly the changes a hold makes.
 
 ## Consequences
 
@@ -221,6 +251,8 @@ from an older build, has to decode and read as today's shape. Duplication copies
 - `CommandRamp` loses `stepBPM` and gains a warm-up count, two switches and three holds. Every call
   site changes, and its tests grow a case for each combination of switches.
 - `RoutineStepsControls` is deleted once both panels have moved (step 2).
+- `RoutineStairs` gains an optional length line (D10). All four callers pass it in: both run screens
+  and both block previews.
 - The manual's Practice Settings section, its pencil line, and the reference strings for these
   controls are rewritten in step 1.
 
@@ -231,13 +263,15 @@ from an older build, has to decode and read as today's shape. Duplication copies
 - The `Exercise` fields, plus backup, hand-over and duplication.
 - The phase rows on `ExerciseRunView` and the exercise block preview, and the staircase lighting.
 - D6, and D7 on both run screens.
+- D10 on the exercise screens: the length formatter and the line under the staircase.
 - Tests: plateaus for every combination of switches; holds; rung counts across spans, with Context
-  §4's cases as regression tests; the stride-to-count seed; a backup decoding without the new keys.
+  §4's cases as regression tests; the stride-to-count seed; a backup decoding without the new keys;
+  the length formatter's rounding bands and its lower bound.
 - `RowUndoUITests` and the exercise shoot class both tap the pencil on a stopped screen, so both are
   rewired here.
 
 **Step 2: loops.** The `Loop` fields, the reps-per-step fold, `LoopSettingsPanel` moved to the shared
-rows, the loop block preview, and `RoutineStepsControls` deleted.
+rows, the loop block preview and its length line in passes, and `RoutineStepsControls` deleted.
 
 **Figures owed.** One shoot, at the end of step 2 and together with ADR 0220's owed reshoot:
 `exercises/run-setup`, `exercises/practice-settings`, `exercises/staircase`, and
