@@ -42,6 +42,8 @@ struct SpeedBar: View {
     var metronomeOn: Bool = false
     var canUseMetronome: Bool = false
     var onToggleMetronome: () -> Void = {}
+    /// Ring the metronome: the first session's click hint (ADR 0220 D4).
+    var hintsMetronome: Bool = false
     /// Whole-song repeat (ADR 0124) — playback wraps to the top instead of stopping at the end.
     /// `canRepeat` is false while a loop is armed: that loop is already repeating its own region.
     var repeatsSong: Bool = false
@@ -87,6 +89,7 @@ struct SpeedBar: View {
                     MetronomeControl(isOn: metronomeOn,
                                      canClick: canUseMetronome || metronomeOn,
                                      tempoKnown: displayedBPM != nil,
+                                     isHinted: hintsMetronome,
                                      onToggle: onToggleMetronome,
                                      onSetBPM: onSetBPM)
                 }
@@ -209,6 +212,7 @@ private struct MetronomeControl: View {
     /// Whether there's a grid to click against (tempo + the 1), or a click already running.
     let canClick: Bool
     let tempoKnown: Bool
+    var isHinted = false
     let onToggle: () -> Void
     let onSetBPM: () -> Void
 
@@ -234,6 +238,9 @@ private struct MetronomeControl: View {
                         .background(Circle().fill(PocketColor.background))
                         .offset(x: 3, y: -2)
                 }
+            }
+            .overlay {
+                if isHinted { HintRing(color: PocketColor.waveformAccent).padding(-4) }
             }
             .frame(width: 44, height: 44)
             // Tap + hold as gestures on a plain shape, **not** a `Button` with a long press bolted
@@ -271,77 +278,6 @@ private struct MetronomeControl: View {
         // offers the missing step. `needsTempo` keeps the accent, since the badge is the invitation.
         if mode == .needsDownbeat { return PocketColor.textSecondary.opacity(0.4) }
         return isOn ? PocketColor.background : PocketColor.waveformAccent
-    }
-}
-
-/// Type an exact playback speed (ADR 0124). Out-of-range is **named, not clamped**: silently
-/// accepting 1.5 for a typed 2 would look like the field ate the keystrokes, so the rejection is
-/// spelled out and the value stands until it's valid. Parsing lives in `TempoMath.parse(speedEntry:)`.
-private struct SpeedEntryPopover: View {
-    @Binding var speed: Double
-    let onUserAdjust: () -> Void
-    let onDone: () -> Void
-
-    @State private var text = ""
-    @State private var error: String?
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Playback speed")
-                .font(.futura(.subheadline, weight: .semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-            HStack(spacing: 6) {
-                TextField("1.00", text: $text)
-                    .font(.pocketMono(.title3))
-                    .keyboardType(.decimalPad)
-                    .textFieldStyle(.roundedBorder)
-                    .focused($focused)
-                    .submitLabel(.done)
-                    .onSubmit(commit)
-                    .frame(width: 110)
-                Text("×")
-                    .font(.pocketMono(.title3))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-            Text(error ?? rangeHint)
-                .font(.futura(.caption))
-                .foregroundStyle(error == nil ? PocketColor.textSecondary : PocketColor.danger)
-                .fixedSize(horizontal: false, vertical: true)
-            Button(action: commit) {
-                Text("Set")
-                    .font(.futura(.subheadline, weight: .semibold))
-                    .foregroundStyle(PocketColor.background)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(Capsule().fill(PocketColor.waveformAccent))
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(16)
-        .frame(width: 230)
-        .onAppear {
-            text = String(format: "%.2f", speed)
-            focused = true
-        }
-    }
-
-    private var rangeHint: String {
-        String(format: "Between %.2f× and %.2f×", TempoMath.minSpeed, TempoMath.maxSpeed)
-    }
-
-    private func commit() {
-        switch TempoMath.parse(speedEntry: text) {
-        case .valid(let value):
-            onUserAdjust()          // a typed speed is manual control too — stand the automator down
-            speed = value
-            haptic(.light)
-            onDone()
-        case .notANumber:
-            error = "Enter a number, like 0.75"
-        case .outOfRange:
-            error = rangeHint
-        }
     }
 }
 

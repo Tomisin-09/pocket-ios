@@ -66,6 +66,41 @@ extension StarterTrackScript.Stage {
     }
 }
 
+extension StarterTrackHints.Hint {
+
+    /// A hint's name on the card, set apart from the beats' so it never reads as a fourth step (D4).
+    var title: String {
+        switch self {
+        case .click: return "Hear the beat"
+        case .backingTrack: return "Something to play over"
+        }
+    }
+
+    /// What it says. The ring does the pointing, so the words name the control rather than place it.
+    /// `loopName` is the kept loop's current name, which the player may already have changed.
+    func body(loopName: String) -> String {
+        switch self {
+        case .click:
+            // True of the engine, not a promise: the click is scheduled against the stretched
+            // playback (`MetronomeSchedule`), so it follows the speed down.
+            return "Tap the metronome for a click on every beat. It slows down with the song."
+        case .backingTrack:
+            // "Keep this where you'll find it", never "unlock this": Improvise is already on every
+            // loop (ADR 0135 B2), and the flag only decides where the loop turns up again.
+            return "Four bars of chords make a good bed to solo over. Hold \(loopName) and turn on "
+                + "Backing track to keep it with your backing tracks."
+        }
+    }
+
+    /// The ✕'s VoiceOver label: which pointer it closes, since the card's own ✕ closes the guide.
+    var dismissLabel: String {
+        switch self {
+        case .click: return "Hide the metronome hint"
+        case .backingTrack: return "Hide the backing track hint"
+        }
+    }
+}
+
 extension SongWalkthrough {
 
     /// The experienced player's offer (0149 §4): one entry point, and a way to say no.

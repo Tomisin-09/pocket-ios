@@ -82,6 +82,7 @@ extension WaveformPracticeModel {
         metronomeOn.toggle()
         if metronomeOn { pushMetronomeGrid() }
         engine.setMetronome(enabled: metronomeOn)
+        if metronomeOn { walkthroughClickTurnedOn() }   // the click hint is taken (ADR 0220 D4)
     }
 
     /// Hand the engine the beat grid in *source* seconds (fractions × duration). Called

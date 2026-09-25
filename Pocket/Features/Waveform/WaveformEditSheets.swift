@@ -26,6 +26,9 @@ struct LoopEditSheet: View {
     /// engine, so the parent stops whatever it was playing before either opens — otherwise two
     /// streams run over each other. One callback serves both; the host's response is identical.
     var onOpenNestedAudio: () -> Void = {}
+    /// Opened while the first session's backing-track hint points at this loop (ADR 0220 D4): the
+    /// sheet scrolls to the Backing track toggle and rings it.
+    var pointsAtBackingTrack = false
 
     // The field-editing sections live in `LoopEditSheet+Fields.swift` (one type, split to stay under
     // the 400-line cap), so the state they read is `internal`, not `private` — Swift has no
@@ -93,7 +96,8 @@ struct LoopEditSheet: View {
          onWiden: @escaping (TimeInterval, TimeInterval) -> Void = { _, _ in },
          onSaved: @escaping (@escaping () -> Void) -> Void,
          onPracticeNow: @escaping () -> Void = {},
-         onOpenNestedAudio: @escaping () -> Void = {}) {
+         onOpenNestedAudio: @escaping () -> Void = {},
+         pointsAtBackingTrack: Bool = false) {
         self.loop = loop
         self.autoColor = autoColor
         self.onDelete = onDelete
@@ -102,6 +106,7 @@ struct LoopEditSheet: View {
         self.onSaved = onSaved
         self.onPracticeNow = onPracticeNow
         self.onOpenNestedAudio = onOpenNestedAudio
+        self.pointsAtBackingTrack = pointsAtBackingTrack
         _name = State(initialValue: loop.name)
         _colorChoice = State(initialValue: Self.choice(for: loop))
         _mastery = State(initialValue: loop.mastery)
@@ -243,6 +248,9 @@ struct LoopEditSheet: View {
                     }
                 }
             }
+            // The backing-track hint's pointer (ADR 0220 D4): the toggle sits below the medium
+            // detent's fold, so the sheet brings it into view rather than asking for a scroll.
+            .modifier(ScrollsIntoView(id: Self.backingTrackRowID, when: pointsAtBackingTrack))
             .navigationTitle("Edit loop")
             .navigationBarTitleDisplayMode(.inline)
             // After the first frame, not during presentation — see `tagPool`.

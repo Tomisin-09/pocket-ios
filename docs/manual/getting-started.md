@@ -94,6 +94,12 @@ on and stops again on *Solo start*: tap **Loop** again, and the four bars betwee
 going round. The stops are there so your taps land on the bar lines. On any other song, and on
 *Binta* afterwards, a loop starts wherever you tap.
 
+Two pointers come with the guide on *Binta*. They are not steps, and nothing waits on them. Once the
+four bars are going round, the metronome in the speed bar is ringed: tap it to hear a click on every
+beat, and it slows down with the song. After you save the loop, its row is ringed. Hold it and turn
+on **Backing track**, and the loop is kept with your backing tracks. Edit loop opens with that
+switch in view. Each pointer has its own **✕**, and neither comes back once taken or closed.
+
 Saving your first loop is marked once, and never again. If you told the opening questions you are
 comfortable or have been playing a while, the card offers the steps rather than starting them.
 Either way **✕** closes it for good, and **Help & FAQs ▸ Show the first-song guide again** brings

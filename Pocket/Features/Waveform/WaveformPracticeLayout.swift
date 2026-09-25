@@ -46,6 +46,7 @@ struct PracticeCockpit<Header: View>: View {
                      metronomeOn: model.metronomeOn,
                      canUseMetronome: model.canUseMetronome,
                      onToggleMetronome: model.toggleMetronome,
+                     hintsMetronome: model.walkthroughHintsMetronome,
                      repeatsSong: model.repeatsSong,
                      canRepeat: model.canRepeatSong,
                      onToggleRepeat: model.toggleRepeatsSong,
@@ -183,6 +184,7 @@ struct PracticeReference: View {
                                onAdjustRange: { model.startRangeEdit($0) },
                                onAutomator: { model.editingAutomatorLoop = StableRef(value: $0) },
                                selection: model.loopSelectionSeam,               // ADR 0125
+                               hintedLoopID: model.walkthroughHintedLoopID,      // ADR 0220 D4
                                compact: compact)
                     MarkersPanel(markers: model.markers, expanded: $model.markersExpanded, // 11
                                  onSeek: model.seekToMarker, onEdit: { model.editingMarker = StableRef(value: $0) },

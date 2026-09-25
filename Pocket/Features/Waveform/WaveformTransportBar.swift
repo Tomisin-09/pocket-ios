@@ -254,26 +254,6 @@ private struct TransportControl: View {
     }
 }
 
-/// The walkthrough's pointer at a control (ADR 0220 D3): a ring that breathes, or holds still under
-/// Reduce Motion. Drawn outside the button's circle and never hit-tested, so it cannot take the tap
-/// it is asking for.
-private struct HintRing: View {
-    let color: Color
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var dimmed = false
-
-    var body: some View {
-        Circle()
-            .stroke(color, lineWidth: 2.5)
-            .opacity(dimmed ? 0.35 : 1)
-            .allowsHitTesting(false)
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { dimmed = true }
-            }
-    }
-}
-
 /// The **Snag** control (ADR 0200) — the armed transport's left slot.
 ///
 /// Same chrome as `TransportControl` (a glyph in a circle on a faint fill), but the glyph is drawn

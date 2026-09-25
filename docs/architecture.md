@@ -1121,7 +1121,11 @@ plays through a starter-track marker, pauses and seeks back onto it. It is insta
 script runs, cleared in `endPlaybackSession`, and writes nothing observable on a frame unless the
 script's stage moved. The beats themselves (`SongWalkthrough`, `Pocket/Core/Help/`) are fed by the
 model's existing choke points — `abSpan`'s and `speed`'s observers and `createLoop` — and their
-ledger lives in `UserDefaults` (`AppSettings+Walkthrough`), armed by `SongImporter.persist`. Landscape
+ledger lives in `UserDefaults` (`AppSettings+Walkthrough`), armed by `SongImporter.persist`. On the
+starter track the pure `StarterTrackHints` rides beside the script (ADR 0220 D4, step 3): fed by the
+same choke points plus `toggleMetronome`, the delete path and Edit loop's `onDismiss`, it decides the
+click and backing-track hints, and the walkthrough now ends only when no beat is outstanding **and**
+no hint is showing. Landscape
 is gated to this screen alone by `OrientationGate.swift` (an `AppDelegate` answering
 `supportedInterfaceOrientationsFor` from a mask that a `.landscapeEnabled()` modifier
 widens on appear and reverts on disappear) — ADR 0042. Each loop has a per-loop **automator**

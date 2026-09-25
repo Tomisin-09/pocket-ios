@@ -241,6 +241,9 @@ final class WaveformPracticeModel {
     /// `nil` on any other song. Behaviour in `+Walkthrough.swift`.
     var walkthrough: SongWalkthrough?
     var starterScript: StarterTrackScript?
+    /// The starter track's two hints (ADR 0220 D4), beside the beats. Outlives both the script and
+    /// the last beat: the backing-track hint arrives after the ceremony, when no beat is left.
+    var starterHints: StarterTrackHints?
     /// The playhead on the previous frame, for the script's crossing test. Never observed.
     @ObservationIgnored var lastWalkthroughTick: TimeInterval = 0
 

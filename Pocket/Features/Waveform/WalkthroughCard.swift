@@ -1,7 +1,9 @@
 import SwiftUI
 
 /// The first-song walkthrough's card (ADR 0149, ADR 0220 D3): the three beats, the experienced
-/// player's offer, and the one ceremony — whichever `SongWalkthrough.phase` says.
+/// player's offer, and the one ceremony — whichever `SongWalkthrough.phase` says. On the starter
+/// track it also carries the session's two hints (D4), under the beats and set apart from them, and
+/// once the beats are done a hint can be all it shows.
 ///
 /// **It instructs; it never advances.** There is no Next anywhere on it (0149 §1): a beat ticks when
 /// the model reports the player did the thing. The only buttons are the ✕ (permanent, §4), the
@@ -29,12 +31,18 @@ struct WalkthroughCard: View {
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.walkthrough)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.starterScript)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.walkthroughHint)
         .sheet(item: $helpEntry) { FAQAnswerSheet(entry: $0) }
         // The pause is silent on screen apart from the ring, so a VoiceOver player is *told* when
         // the script is waiting on them rather than having to find what changed.
         .onChange(of: model.starterScript?.stage) { _, stage in
             guard model.walkthroughHintsLoop, let text = stage?.instruction(isPlaying: false) else { return }
             AccessibilityNotification.Announcement(text).post()
+        }
+        // A hint is a ring and a line, both easy to miss without sight of the screen (D4).
+        .onChange(of: model.walkthroughHint) { _, hint in
+            guard let hint else { return }
+            AccessibilityNotification.Announcement(hintBody(hint)).post()
         }
     }
 
@@ -44,7 +52,15 @@ struct WalkthroughCard: View {
         case .offered: offer
         case .running(let beat): beats(walkthrough, current: beat)
         case .ceremony: ceremony
-        case .finished: EmptyView()
+        case .finished:
+            // The beats are done; what can remain is the backing-track hint, which arrives after the
+            // ceremony (D4). Its ✕ is the card's: closing the last thing on it ends the walkthrough.
+            if let hint = model.walkthroughHint {
+                hintRow(hint)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .modifier(WalkthroughCardChrome(onClose: model.dismissWalkthroughHint,
+                                                    closeLabel: hint.dismissLabel))
+            }
         }
     }
 
@@ -83,6 +99,11 @@ struct WalkthroughCard: View {
                 } else {
                     otherRow(beat, done: walkthrough.completed.contains(beat))
                 }
+            }
+            if let hint = model.walkthroughHint {
+                Divider().padding(.vertical, compact ? 6 : 2)
+                hintRow(hint)
+                    .overlay(alignment: .topTrailing) { hintClose(hint) }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -136,6 +157,54 @@ struct WalkthroughCard: View {
             return scripted
         }
         return beat.instruction
+    }
+
+    // MARK: The hints (ADR 0220 D4)
+
+    /// A hint, set apart from the beats: its badge is the glyph of what it points at rather than a
+    /// number, because it is not a step. The ring on the control does the pointing.
+    private func hintRow(_ hint: StarterTrackHints.Hint) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            ZStack {
+                Circle().fill(PocketColor.surfaceStandard.opacity(0.6))
+                Image(systemName: hint == .click ? "metronome" : "repeat")
+                    .font(.futura(size: 10, weight: .semibold))
+                    .foregroundStyle(PocketColor.waveformAccent)
+            }
+            .frame(width: 20, height: 20)
+            .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                // In the accent, not the current beat's white: two bold white titles on one card
+                // read as two steps, and a hint is not one (seen on the simulator).
+                Text(hint.title)
+                    .font(.futura(.subheadline, weight: .semibold))
+                    .foregroundStyle(PocketColor.waveformAccent)
+                Text(hintBody(hint))
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 28)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    /// The hint's own ✕ while beats are still on the card — the card's ✕ above it ends the guide.
+    private func hintClose(_ hint: StarterTrackHints.Hint) -> some View {
+        Button(action: model.dismissWalkthroughHint) {
+            Image(systemName: "xmark")
+                .font(.futura(size: 11, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+                .frame(width: 32, height: 32)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .offset(x: 10, y: -6)
+        .accessibilityLabel(hint.dismissLabel)
+    }
+
+    private func hintBody(_ hint: StarterTrackHints.Hint) -> String {
+        hint.body(loopName: model.walkthroughHintedLoopName)
     }
 
     // MARK: The ceremony (0149 §5)
@@ -209,6 +278,7 @@ private struct BeatBadge: View {
 private struct WalkthroughCardChrome: ViewModifier {
     var wash: Color = PocketColor.surfaceStandard
     var onClose: (() -> Void)?
+    var closeLabel = "Close the guide"
 
     func body(content: Content) -> some View {
         content
@@ -225,7 +295,7 @@ private struct WalkthroughCardChrome: ViewModifier {
                     }
                     .buttonStyle(.plain)
                     .padding(4)
-                    .accessibilityLabel("Close the guide")
+                    .accessibilityLabel(closeLabel)
                 }
             }
     }
