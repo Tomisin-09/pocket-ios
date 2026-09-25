@@ -113,7 +113,8 @@ struct LoopRunView: View {
     /// The **effective** backoff floor (% of original): a pinned override when set, else the auto value.
     var backoff: Int { backoffOverride ?? autoBackoff }
 
-    /// The warm-up step size (percent points) the chosen number of intermediate stops implies.
+    /// The warm-up's average step (percent points) at the chosen number of intermediate stops — the
+    /// panel's caption only. The ramp spaces the warm-up by count (ADR 0221 D4), not by this.
     private var stepPercent: Int {
         CommandRamp.warmupStepBPM(working: working, command: command, intermediateSteps: steps)
     }
@@ -128,7 +129,7 @@ struct LoopRunView: View {
     /// state, never the fitted value.
     var routine: CommandRamp {
         let authored = CommandRamp(working: working, command: command, target: reach,
-                                   stepBPM: stepPercent, intervalCount: max(1, repsPerStep),
+                                   warmupSteps: steps, intervalCount: max(1, repsPerStep),
                                    unit: .bars, dwellIntervals: max(1, dwell),
                                    includeBackoff: includeBackoff, reachSteps: reachSteps,
                                    backoffSteps: backoffSteps, backoffOverride: backoffOverride)
@@ -148,6 +149,9 @@ struct LoopRunView: View {
     }
 
     var isRunning: Bool { model.isRunning }
+    private var showsReviewBar: Bool {
+        PracticeReviewBar.isShown(isRunning: isRunning, inRoutine: routineContext != nil)
+    }
     private var title: String { loop.name.isEmpty ? "Loop" : loop.name }
 
     var body: some View {
@@ -167,7 +171,7 @@ struct LoopRunView: View {
                                   currentIndex: model.currentPlateau(in: routine))
                     if !isRunning, isDirty { saveChangesButton }
                     if isRunning { runNoteCard }
-                    if !isRunning, routineContext == nil {
+                    if showsReviewBar {
                         PracticeReviewBar(journalCount: loop.journal.count,
                                           takesCount: loop.recordings.count,
                                           onJournal: { showingJournal = true },
@@ -184,10 +188,12 @@ struct LoopRunView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // Capture, in every state (ADR 0142) — including inside a routine, where the review bar
-            // below is gated out and there was previously no way to write anything at all.
-            ToolbarItem(placement: .topBarTrailing) {
-                QuickJournalButton(isPresented: $showingQuickNote)
+            // Capture wherever the review bar's Journal isn't (ADR 0221 D7): while running, and inside
+            // a routine, where there was once no way to write anything at all (ADR 0142).
+            if !showsReviewBar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    QuickJournalButton(isPresented: $showingQuickNote)
+                }
             }
         }
         .routineSessionChrome(routineContext)

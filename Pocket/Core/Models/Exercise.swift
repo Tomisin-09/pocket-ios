@@ -151,7 +151,8 @@ final class Exercise {
     // ADR 0045 shortcut, undone here). Declaration defaults keep migration additive (the
     // CoreData 134110 rule); the three renamed fields carry `@Attribute(originalName:)` so the
     // automator* → ramp* rename is a lightweight, data-preserving migration, not a drop+add.
-    /// BPM added at each warm-up step.
+    /// BPM added at each warm-up step — the stride the warm-up was built from before ADR 0221 D4. Now
+    /// only seeds `warmupSteps` while `rampWarmupSteps` is `nil`; kept, as dropping it is destructive.
     @Attribute(originalName: "automatorStepBPM") var rampStepBPM: Int = 5
     /// How many intervals between steps (e.g. every 4 *bars* or every 30 *seconds*).
     @Attribute(originalName: "automatorIntervalCount") var rampIntervalCount: Int = 4
@@ -177,13 +178,19 @@ final class Exercise {
     /// declaration default, so pre-existing exercises migrate to `nil` (CoreData 134110 exempt),
     /// mirroring `targetTempoOverride`.
     var backoffTempoOverride: Int?
-
-    /// Whether the routine steps every N **bars** or every N **seconds** — typed view over
-    /// `rampIntervalUnitRaw`.
-    var rampIntervalUnit: MetronomeIntervalUnit {
-        get { MetronomeIntervalUnit(rawValue: rampIntervalUnitRaw) ?? .bars }
-        set { rampIntervalUnitRaw = newValue.rawValue }
-    }
+    // A run shaped phase by phase (ADR 0221). Every default reproduces the ramp as it was, and each
+    // is declaration-defaulted or Optional, so the migration is additive (CoreData 134110 rule).
+    /// Whether the run climbs from the floor (D2). Off ⇒ it opens at command; the floor is kept.
+    var includeWarmup: Bool = true
+    /// Whether the run summits above command (D2). Off ⇒ no reach, so no raise is offered (D6).
+    var includeReach: Bool = true
+    /// Intermediate warm-up stops, counted like `rampReachSteps` (D4). `nil` on every exercise saved
+    /// before 0221: read through `warmupSteps`, which derives it from `rampStepBPM` until a save.
+    var rampWarmupSteps: Int?
+    /// Intervals each warm-up, reach and back-off rung holds (D3) — `1` is the old fixed hold.
+    var rampWarmupHold: Int = 1
+    var rampReachHold: Int = 1
+    var rampBackoffHold: Int = 1
 
     /// Open descriptive tags ("warmup", "picking"), routed through the shared `Labels`
     /// canonicaliser at the write site, like `Loop.tags`. Declaration default keeps migration
@@ -307,11 +314,6 @@ final class Exercise {
     @Relationship(deleteRule: .nullify, inverse: \Recording.exercise)
     var recordings: [Recording] = []
 
-    /// Journal entries newest-first — the order the journal lists them in (mirrors `Loop`).
-    var journalByRecent: [JournalEntry] {
-        journal.sorted { $0.createdAt > $1.createdAt }
-    }
-
     /// Routine blocks that **reference** this exercise (ADR 0066 R4/R5). Inverse of
     /// `RoutineItem.exercise`, with a **nullify** delete rule: deleting the exercise
     /// clears those blocks' link (the routine survives; the block becomes orphaned and
@@ -394,7 +396,4 @@ final class Exercise {
         self.lastPracticed = lastPracticed
         self.dateAdded = dateAdded
     }
-
-    /// The time signature as a display string ("4/4", "6/8").
-    var timeSignatureLabel: String { "\(beatsPerBar)/\(noteValue)" }
 }

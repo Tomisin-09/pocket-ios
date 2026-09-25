@@ -3,8 +3,8 @@ import SwiftUI
 
 /// A **training run** on one exercise (ADR 0046, Phase A): the screen reached by tapping a unit in
 /// Practice. It **owns its own `StandaloneMetronomeEngine`**, so a drill here never disturbs the
-/// metronome screen. Two modes: **set up** (stopped) edits the three tempos — working floor, command,
-/// derived reach — plus warm-up steps, drawn as a staircase; **running** shows the live BPM and the
+/// metronome screen. Two modes: **set up** (stopped) shapes the run phase by phase — warm-up, command,
+/// reach, back off (ADR 0221) — drawn as a staircase; **running** shows the live BPM and the
 /// beat/template surface. **Start** commits the edits and hands the engine a `CommandRamp`
 /// (`engine.run(ramp:)`); edits are held in local state until then, so leaving discards. Promotion is
 /// no longer a pre-run button — a run that finishes *naturally* lands on a post-run completion screen
@@ -28,25 +28,20 @@ struct ExerciseRunView: View {
     // Local edit state — seeded from the exercise on appear, committed only on Start.
     @State var working = 0
     @State var command = 0
-    @State var steps = 0
-    @State var reachSteps = 0
-    @State var backoffSteps = 0
-    /// How many intervals the command plateau holds — the consolidation dwell, now user-tunable
-    /// (ADR 0078). Seeded from the exercise, committed on Start / Save like the other ramp fields.
-    @State var dwell = StandaloneMetronomeEngine.automatorDefaultDwell
+    /// The run's shape — which phases play, their rungs and their holds (ADR 0221). Seeded from the
+    /// exercise, committed on Start / Save like the tempos.
+    @State var shape = RunShape()
     /// A manually pinned **reach** (BPM), or `nil` to use the auto-derived reach (ADR 0075). Seeded
     /// from `exercise.targetTempoOverride`, committed on Start / Save. Always kept above `command`;
     /// auto-cleared locally when command is nudged up to it, mirroring the model.
     @State var targetOverride: Int?
-    /// Whether the routine backs off below command after the summit (user-testing note 6). Seeded
-    /// from `exercise.includeBackoff`, committed on Start / Save. Default on.
-    @State var includeBackoff = true
     /// A manually pinned **backoff floor** (BPM), or `nil` to use the auto derivation (note 6).
     /// Seeded from `exercise.backoffTempoOverride`, committed on Start / Save. Kept below `command`.
     @State var backoffOverride: Int?
-    @State var showSteps = false
     /// The top-level "Practice Settings" disclosure — collapsed by default (V1 feedback).
     @State var showSettings = false
+    /// The open phase row (ADR 0221 D1) — Command to start, the one most often tuned.
+    @State var openPhase: RampPhase? = .command
     @State var signature: TimeSignature = .standard
     /// Whether the meter sheet is showing (setup only — the picker is hidden once a run starts).
     @State private var showingSignaturePicker = false
@@ -81,10 +76,8 @@ struct ExerciseRunView: View {
 
     /// The persistable setup as it stands now — what Start / Save would write.
     var current: ExerciseSetupState {
-        ExerciseSetupState(working: working, command: command, steps: steps,
-                           reachSteps: reachSteps, backoffSteps: backoffSteps, dwell: dwell,
-                           signature: signature, targetOverride: targetOverride,
-                           includeBackoff: includeBackoff, backoffOverride: backoffOverride)
+        ExerciseSetupState(working: working, command: command, shape: shape, signature: signature,
+                           targetOverride: targetOverride, backoffOverride: backoffOverride)
     }
 
     /// True when the setup has unsaved edits — drives the Save Changes button.
@@ -98,10 +91,12 @@ struct ExerciseRunView: View {
     /// the run-setup extension to snapshot the reach for the post-run promote offer (ADR 0079).
     var reach: Int { targetOverride ?? autoReach }
 
-    /// Whether there's a climb above command to put intermediate reach stops on.
-    private var hasReach: Bool { reach > command }
-
     var isRunning: Bool { engine.transport != .stopped }
+
+    /// Whether the review bar shows — and so, inverted, whether the quick-note pencil does (ADR 0221 D7).
+    private var showsReviewBar: Bool {
+        PracticeReviewBar.isShown(isRunning: isRunning, inRoutine: routineContext != nil)
+    }
 
     var body: some View {
         ScrollView {
@@ -132,9 +127,11 @@ struct ExerciseRunView: View {
                 }
                 RoutineStairs(plateaus: routine.plateaus, command: command, tint: PocketColor.practice,
                               currentIndex: isRunning ? engine.currentRampPlateau : nil,
-                              nextIndex: isRunning ? engine.warningNextPlateau : nil)
+                              nextIndex: isRunning ? engine.warningNextPlateau : nil,
+                              highlightedPhase: showSettings ? openPhase : nil,
+                              lengthLine: RunLength.exercise(routine, beatsPerBar: signature.beats))
                 if !isRunning, routineContext == nil, isDirty { saveChangesButton }
-                if !isRunning, routineContext == nil {
+                if showsReviewBar {
                     PracticeReviewBar(journalCount: exercise.journal.count,
                                       takesCount: exercise.recordings.count,
                                       onJournal: { showingJournal = true },
@@ -154,10 +151,12 @@ struct ExerciseRunView: View {
             if !isRunning, routineContext == nil {
                 ToolbarItem(placement: .topBarTrailing) { signaturePicker }
             }
-            // Capture, in every state (ADR 0142) — a running drill and a routine block are where
-            // most notes are owed, and until now both were places you couldn't write one.
-            ToolbarItem(placement: .topBarTrailing) {
-                QuickJournalButton(isPresented: $showingQuickNote)
+            // Capture wherever the review bar's Journal isn't (ADR 0221 D7) — a running drill and a
+            // routine block, where most notes are owed (ADR 0142). Stopped, the meter takes its place.
+            if !showsReviewBar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    QuickJournalButton(isPresented: $showingQuickNote)
+                }
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showingDetail = true; haptic(.light) } label: {
@@ -272,33 +271,21 @@ struct ExerciseRunView: View {
         }
     }
 
-    /// The collapsible **Practice Settings** panel (V1 feedback): the three tempos + the nested
-    /// Steps granularity behind one disclosure header, so the setup reads as just the title,
-    /// a summary, and the staircase by default. The tempo edits still live in this view's state.
+    /// The collapsible **Practice Settings** panel (V1 feedback), a row per phase (ADR 0221). The
+    /// edits still live in this view's state until Start or Save (ADR 0057).
+    ///
+    /// The command hold it reports as played is read off `routine`, not `shape`, so inside a generated
+    /// session it describes the ramp fitted to the block rather than the stored recipe (ADR 0129).
     private var practiceSettings: some View {
         PracticeSettingsPanel(
-            expanded: $showSettings,
-            working: working, command: command, reach: reach,
-            reachIsCustom: targetOverride != nil,
-            onStepWorking: { adjustWorking(by: $0) }, onTypeWorking: { setWorking($0) },
-            onStepCommand: { adjustCommand(by: $0) }, onTypeCommand: { setCommand($0) },
-            onStepReach: { adjustReach(by: $0) }, onTypeReach: { setReach($0) },
-            onResetReach: resetReach,
-            includeBackoff: $includeBackoff, backoff: backoff, backoffIsCustom: backoffOverride != nil,
-            onStepBackoff: { adjustBackoff(by: $0) }, onTypeBackoff: { setBackoff($0) },
-            onResetBackoff: resetBackoff,
-            stepsExpanded: $showSteps, warmupSteps: $steps, reachSteps: $reachSteps,
-            backoffSteps: $backoffSteps, dwell: $dwell, dwellCaption: dwellCaption,
-            warmupStepBPM: stepBPM,
-            hasReach: hasReach, tint: PocketColor.practice, onToggle: { haptic(.light) })
-    }
-
-    /// The dwell row's caption — each interval is `automatorDefaultBars` bars at command, so N
-    /// intervals ≈ N×that many bars (ADR 0078). Reads the **effective** dwell off `routine`, not the
-    /// `dwell` edit state, so inside a generated session it describes the ramp fitted to the block
-    /// rather than the stored recipe (ADR 0129) — the caption can't claim a hold the run won't play.
-    private var dwellCaption: String {
-        "≈ \(routine.dwellIntervals * StandaloneMetronomeEngine.automatorDefaultBars) bars"
+            expanded: $showSettings, openPhase: $openPhase, shape: $shape,
+            startAt: PhaseTempoControl(value: working, onStep: { adjustWorking(by: $0) },
+                                       onType: { setWorking($0) }),
+            command: PhaseTempoControl(value: command, onStep: { adjustCommand(by: $0) },
+                                       onType: { setCommand($0) }),
+            reach: reachControl, settleAt: settleAtControl,
+            playedDwell: routine.dwellIntervals,
+            tint: PocketColor.practice, onToggle: { haptic(.light) })
     }
 
     /// The "Edit shape" action handed to the template preview cards (ADR 0077) — opens the

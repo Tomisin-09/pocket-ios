@@ -24,9 +24,14 @@ protocol TempoRamp {
 /// 3. **summit** — a brief hold at the target reach, and
 /// 4. **backoff** — a tail below command, to end the session on clean control not the edge.
 ///
+/// Only the dwell is mandatory (ADR 0221 D2): the warm-up, the reach and the backoff each have a
+/// switch, and a run with all three off is one plateau at command. A switch drops its phase's
+/// plateaus and nothing else — the floor, a pinned reach and a pinned backoff are still read, so
+/// switching a phase back on brings back the tempo it had.
+///
 /// Keyed on elapsed bars or seconds like `MetronomeAutomator`, and exposing the same
 /// `bpm(…)` / `completionInterval` / `isFinished(…)` surface so the engine drives it the same
-/// way — but the plateaus are **uneven** (the command dwell holds longer), so it can't be the
+/// way — but the plateaus are **uneven** (each phase holds for its own length), so it can't be the
 /// linear stepper. Pure and UI-free so the plateau math (the logic that breaks silently) is
 /// exhaustively unit-tested per AGENTS.md.
 struct CommandRamp: Equatable, TempoRamp {
@@ -36,9 +41,12 @@ struct CommandRamp: Equatable, TempoRamp {
     var command: Int
     /// The reach summited briefly above command.
     var target: Int
-    /// BPM added per warm-up step (positive magnitude; ≤ 0 ⇒ no warm-up, start at command).
-    var stepBPM: Int
-    /// Elapsed `unit`s per held interval (every warm-up/summit/backoff plateau holds one).
+    /// Intermediate plateaus on the climb from the floor up to command (ADR 0221 D4), so the warm-up
+    /// draws `warmupSteps + 1` rungs: the floor, then these. `0` ⇒ the floor alone, then command.
+    /// Placed **by count**, like `reachSteps` — it replaced a `stepBPM` stride whose rounding added
+    /// and dropped rungs (51 → 61 set to 6 intermediate stops played ten).
+    var warmupSteps: Int
+    /// Elapsed `unit`s per held interval — the quantum every hold below is counted in.
     var intervalCount: Int
     /// Whether the interval is counted in bars or seconds.
     var unit: MetronomeIntervalUnit
@@ -58,6 +66,17 @@ struct CommandRamp: Equatable, TempoRamp {
     /// while `includeBackoff` and when it sits below `command`. Defaulted so existing call sites are
     /// unaffected (the synthesized memberwise init still defaults an omitted optional to `nil`).
     var backoffOverride: Int?
+    /// Whether to climb from the floor at all (ADR 0221 D2). Off ⇒ the run opens at command.
+    var includeWarmup = true
+    /// Whether to summit above command (ADR 0221 D2). Off ⇒ the run never goes above command, and
+    /// the backoff descends from command itself.
+    var includeReach = true
+    /// Intervals **each** warm-up rung holds (ADR 0221 D3). Treated as ≥ 1.
+    var warmupHold = 1
+    /// Intervals each reach rung holds, the summit included. Treated as ≥ 1.
+    var reachHold = 1
+    /// Intervals each backoff rung holds, the floor included. Treated as ≥ 1.
+    var backoffHold = 1
 
     /// One held tempo and how many `intervalCount`-units it holds for.
     struct Plateau: Equatable {
@@ -65,10 +84,22 @@ struct CommandRamp: Equatable, TempoRamp {
         var intervals: Int
     }
 
-    /// The warm-up `stepBPM` that places `intermediateSteps` plateaus **strictly between**
-    /// the `working` floor and `command` (ADR 0045, Training Mode). `0` ⇒ jump straight from
-    /// working to command (one warm-up plateau, no intermediate stops). Always ≥ 1 BPM so the
-    /// ramp advances, and `1` when there's no climb (`command ≤ working`).
+    /// The most rungs a phase can draw (ADR 0221 D4): steps run 1…7, as the old 0…6 intermediate
+    /// stops did.
+    static let maxRungs = 7
+
+    /// How many rungs a phase spanning `from` → `to` **draws** when asked for `steps` intermediate
+    /// stops: `steps + 1`, but never more than the gap, because seven rungs across a 3-BPM gap would
+    /// repeat tempos. Always ≥ 1. The one rule every Steps control and every plateau list reads, so
+    /// the number shown is the number drawn (ADR 0221 D4).
+    static func rungs(steps: Int, from: Int, to: Int) -> Int {
+        min(max(0, steps) + 1, maxRungs, max(1, abs(to - from)))
+    }
+
+    /// The warm-up `stepBPM` that places `intermediateSteps` plateaus between `working` and
+    /// `command` — the **average** spacing. Since ADR 0221 D4 nothing builds a ramp from it; it
+    /// survives only as the loop panel's "+N % per step" caption, until step 2 of that ADR moves
+    /// loops to the phase rows. Always ≥ 1, and `1` when there's no climb.
     static func warmupStepBPM(working: Int, command: Int, intermediateSteps: Int) -> Int {
         let span = command - working
         guard span > 0 else { return 1 }
@@ -76,60 +107,56 @@ struct CommandRamp: Equatable, TempoRamp {
         return max(1, Int((Double(span) / Double(divisions)).rounded()))
     }
 
-    /// The inverse of `warmupStepBPM`: how many intermediate plateaus a stored `stepBPM`
-    /// puts between `working` and `command` — to seed the Training Mode stepper from the
-    /// saved granularity. `0` when the step jumps straight to command or there's no climb.
+    /// How many intermediate plateaus a stored `stepBPM` stride implied between `working` and
+    /// `command` — the one-time seed of an exercise's warm-up count from the stride it stored before
+    /// ADR 0221 D4. `0` when the step jumps straight to command or there's no climb.
     static func intermediateSteps(working: Int, command: Int, stepBPM: Int) -> Int {
         let span = command - working
         guard span > 0, stepBPM > 0 else { return 0 }
         return max(0, Int((Double(span) / Double(stepBPM)).rounded()) - 1)
     }
 
-    /// The ordered plateaus, warm-up floor through backoff tail. Warm-up, reach and backoff
-    /// plateaus each hold one interval; the command plateau holds `dwellIntervals`. The reach
-    /// climb (and the descent into the backoff) can carry `reachSteps`/`backoffSteps`
-    /// intermediate plateaus. The summit is dropped when `target ≤ command`, and the backoff
-    /// when it wouldn't sit below command.
+    /// Whether the run summits above command — the reach is on and sits above it.
+    var reachesAboveCommand: Bool { includeReach && target > command }
+
+    /// The ordered plateaus, warm-up floor through backoff tail. Each phase's rungs hold that
+    /// phase's own hold; the command plateau holds `dwellIntervals`. A phase that is switched off
+    /// contributes nothing, and so does one with no room: no warm-up unless `command > working`, no
+    /// summit unless `target > command`, no backoff unless it sits below command.
     var plateaus: [Plateau] {
         var result: [Plateau] = []
-        if stepBPM > 0, command > working {
-            var bpm = working
-            while bpm < command {
-                result.append(Plateau(bpm: bpm, intervals: 1))
-                bpm += stepBPM
-            }
+        if includeWarmup, command > working {
+            let rungs = [working] + Self.intermediateBPMs(from: working, to: command, steps: warmupSteps)
+            result += rungs.map { Plateau(bpm: $0, intervals: max(1, warmupHold)) }
         }
         result.append(Plateau(bpm: command, intervals: max(1, dwellIntervals)))
-        if target > command {
-            for bpm in Self.intermediateBPMs(from: command, to: target, steps: reachSteps) {
-                result.append(Plateau(bpm: bpm, intervals: 1))
-            }
-            result.append(Plateau(bpm: target, intervals: 1))
+        if reachesAboveCommand {
+            let rungs = Self.intermediateBPMs(from: command, to: target, steps: reachSteps) + [target]
+            result += rungs.map { Plateau(bpm: $0, intervals: max(1, reachHold)) }
         }
         if includeBackoff {
             let backoff = backoffOverride
                 ?? TempoStretch.backoffBPM(command: command, target: target, floor: working)
             if backoff < command {
-                let summit = target > command ? target : command
-                for bpm in Self.intermediateBPMs(from: summit, to: backoff, steps: backoffSteps) {
-                    result.append(Plateau(bpm: bpm, intervals: 1))
-                }
-                result.append(Plateau(bpm: backoff, intervals: 1))
+                let summit = reachesAboveCommand ? target : command
+                let rungs = Self.intermediateBPMs(from: summit, to: backoff, steps: backoffSteps) + [backoff]
+                result += rungs.map { Plateau(bpm: $0, intervals: max(1, backoffHold)) }
             }
         }
         return result
     }
 
-    /// `steps` evenly-spaced BPMs strictly **between** `from` and `to` (both endpoints excluded),
-    /// ordered from `from` toward `to`. Works in both directions (ascending reach, descending
-    /// backoff). Empty when `steps ≤ 0`, there's no gap, or rounding lands every stop on an
-    /// endpoint — so the caller always appends its own `to` plateau without duplication.
+    /// Evenly-spaced BPMs strictly **between** `from` and `to` (both endpoints excluded), ordered
+    /// from `from` toward `to` — `steps` of them, or as many as fit: the count is clamped by
+    /// `rungs(steps:from:to:)`, so every stop is a distinct tempo and none lands on an endpoint.
+    /// Works in both directions (ascending warm-up and reach, descending backoff). Empty when
+    /// `steps ≤ 0` or there's no gap, so the caller always appends its own endpoint without
+    /// duplication.
     static func intermediateBPMs(from: Int, to: Int, steps: Int) -> [Int] {
-        guard steps > 0, from != to else { return [] }
+        let count = rungs(steps: steps, from: from, to: to) - 1
+        guard count > 0 else { return [] }
         let span = Double(to - from)
-        return (1...steps)
-            .map { from + Int((span * Double($0) / Double(steps + 1)).rounded()) }
-            .filter { $0 != from && $0 != to }
+        return (1...count).map { from + Int((span * Double($0) / Double(count + 1)).rounded()) }
     }
 
     /// The tempo after `elapsedBars` bars / `elapsedSeconds` seconds: the plateau the elapsed

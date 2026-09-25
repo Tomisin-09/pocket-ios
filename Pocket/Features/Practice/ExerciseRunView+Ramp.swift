@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// `ExerciseRunView`'s **ramp derivations** — the backoff floor, the warm-up step size, and the
+/// `ExerciseRunView`'s **ramp derivations** — the backoff floor and the
 /// `CommandRamp` the staircase preview draws and `engine.run(ramp:)` plays. Split out of
 /// `ExerciseRunView` to keep that file under the 400-line cap, and grouped because they are one
 /// concern: turning the screen's live edit state into the staircase.
@@ -15,9 +15,22 @@ extension ExerciseRunView {
     /// The **effective** backoff floor: a pinned override when set, else the auto value (note 6).
     var backoff: Int { backoffOverride ?? autoBackoff }
 
-    /// The warm-up step size the chosen number of intermediate stops implies.
-    var stepBPM: Int {
-        CommandRamp.warmupStepBPM(working: working, command: command, intermediateSteps: steps)
+    /// The Reach row's tempo — carrying **Reset to auto** only while it's pinned. Built here, typed,
+    /// rather than as a ternary in the panel call, which the type-checker can't resolve inside `body`
+    /// (see `songTapHandler`).
+    var reachControl: PhaseTempoControl {
+        var control = PhaseTempoControl(value: reach, onStep: { adjustReach(by: $0) },
+                                        onType: { setReach($0) })
+        if targetOverride != nil { control.onReset = { resetReach() } }
+        return control
+    }
+
+    /// The Back off row's **Settle at**, with its reset while pinned — as `reachControl`.
+    var settleAtControl: PhaseTempoControl {
+        var control = PhaseTempoControl(value: backoff, onStep: { adjustBackoff(by: $0) },
+                                        onType: { setBackoff($0) })
+        if backoffOverride != nil { control.onReset = { resetBackoff() } }
+        return control
     }
 
     /// The routine the current edits describe — the staircase preview and the exact `CommandRamp`
@@ -29,15 +42,14 @@ extension ExerciseRunView {
     /// they will *hear* — one expression, both consumers. Standalone runs and hand-authored routines
     /// carry no planned minutes and are completely unaffected.
     ///
-    /// Nothing is written back: `persist()` saves the edit state (`dwell`), never this fitted value, so
+    /// Nothing is written back: `persist()` saves the edit state (`shape`), never this fitted value, so
     /// running a generated session cannot rewrite the exercise's authored recipe (sub-decision 3).
     var routine: CommandRamp {
-        let authored = CommandRamp(working: working, command: command, target: reach,
-                                   stepBPM: stepBPM,
+        let authored = CommandRamp(tempos: RampTempos(working: working, command: command,
+                                                      reach: reach, backoff: backoff),
+                                   shape: shape, backoffOverride: backoffOverride,
                                    intervalCount: StandaloneMetronomeEngine.automatorDefaultBars,
-                                   unit: .bars, dwellIntervals: max(1, dwell),
-                                   includeBackoff: includeBackoff, reachSteps: reachSteps,
-                                   backoffSteps: backoffSteps, backoffOverride: backoffOverride)
+                                   unit: .bars)
         guard let planned = routineContext?.plannedMinutes else { return authored }
         return SessionEstimate.fitted(authored, toMinutes: planned, beatsPerBar: signature.beats)
     }

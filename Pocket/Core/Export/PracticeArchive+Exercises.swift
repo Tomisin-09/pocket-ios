@@ -63,6 +63,17 @@ struct ExerciseRecord: Codable, Equatable, Sendable {
     var rampReachSteps: Int
     var rampBackoffSteps: Int
     var backoffTempoOverride: Int?
+    /// The phase switches, the warm-up count and the per-phase holds (ADR 0221). **All Optional**, for
+    /// `folders`' reason: a file from a build before 0221 has none of these keys, and a non-optional
+    /// field would fail the whole decode. Absent reads as today's shape — every phase on, one interval
+    /// per rung, and a warm-up count derived from `rampStepBPM` (a `nil` `rampWarmupSteps` is exactly
+    /// what the model stores for an exercise that has never been saved since).
+    var includeWarmup: Bool?
+    var includeReach: Bool?
+    var rampWarmupSteps: Int?
+    var rampWarmupHold: Int?
+    var rampReachHold: Int?
+    var rampBackoffHold: Int?
 
     var awayFromInstrument: Bool
     var clickEnabled: Bool
@@ -101,4 +112,21 @@ struct SavedProgressionRecord: Codable, Equatable, Sendable {
     /// `SavedProgression.stepsData` — the steps and the key they were written in — decoded and nested,
     /// exactly as stored, the way a saved chord's voicing is.
     var payload: JSONValue?
+}
+
+extension Exercise {
+    /// Land a record's phase shape (ADR 0221) on a drill hydrated from it — the one mapping both
+    /// doors use, a restore and a received file, so the two can't read the same file differently.
+    ///
+    /// A missing key reads as the model's own default, which is the shape the drill had before 0221
+    /// existed. `rampWarmupSteps` stays `nil` when absent, so `warmupSteps` derives it from
+    /// `rampStepBPM` — the stride the file does carry — exactly as it would on the sender's phone.
+    func applyPhaseShape(from record: ExerciseRecord) {
+        includeWarmup = record.includeWarmup ?? true
+        includeReach = record.includeReach ?? true
+        rampWarmupSteps = record.rampWarmupSteps
+        rampWarmupHold = record.rampWarmupHold ?? 1
+        rampReachHold = record.rampReachHold ?? 1
+        rampBackoffHold = record.rampBackoffHold ?? 1
+    }
 }

@@ -126,8 +126,33 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 - **Chord lengths count the drill's own bar.** A chord in a 3/4 drill held for three beats now reads
   *3 beats · 1 bar* rather than as part of a 4/4 bar, and a one-beat chord says *1 beat*.
+- **An exercise's Practice Settings are laid out phase by phase.** Four rows — **Warm-up**,
+  **Command**, **Reach** and **Back off** — in the order the run plays them, each saying what its
+  phase will do. Tap one to open its tempo, steps and hold; the staircase lights that phase's bars.
+  The nested **Steps** panel is gone, and so is command appearing twice: its tempo and its hold now
+  sit together. The warm-up floor is called **Start at**, and the back off's floor **Settle at**.
+- **Every phase has its own hold**, shown in bars. Before, only command could be lengthened, and it
+  showed as a bare count of 4-bar blocks.
+- **A run can be command alone.** Warm-up and Reach now have a switch, as Back off already did. A
+  phase you switch off keeps its tempo for when you switch it back, and a run with Reach off offers
+  no move up when it finishes, because it never went above command.
+- **The staircase says how long the run is** — *≈ 1 min 5 s · 16 bars* — under its captions, on the
+  run screen and a routine block's preview. It is the length of the run you are about to play,
+  fitted to the block where a session sized it, and it does not count down.
+- **The quick-note ✏️ is on a run screen only while it's running**, or inside a routine. Stopped,
+  the **Journal** bar under the staircase writes notes too, so the screen no longer offers two ways
+  to the same thing.
 
 ### Fixed
+
+- **An exercise's warm-up plays the number of steps it shows.** The warm-up was built by stepping a
+  rounded tempo stride, which added and dropped rungs: at 51 → 61 BPM a setting of 2 played four
+  rungs and a setting of 6 played ten. It is now spaced by count, like the reach and the back off.
+  Loops had the same fault and are fixed with it. An exercise that was hitting it keeps its setting
+  and now plays it, so it will play a different number of warm-up rungs than it did.
+- **Steps counts the bars the staircase draws**, for every phase. The old counts left out a rung —
+  *0 warm-up steps* still played the floor — so each now reads one more than it did for the same
+  setting: *0 · straight to command* is now *1*, and a warm-up that read *2* reads *3* and plays three.
 
 - **A progression you write mid-drill is the one selected** — on iOS 18, saving from **New
   progression** handed *Use a progression* back on its default four-chord loop instead of the

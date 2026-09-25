@@ -15,6 +15,12 @@ struct EditableTempoRow: View {
     let onStep: (Int) -> Void
     /// Commit a typed value — the caller clamps into range (working ≤ command ≤ bounds).
     let onType: (Int) -> Void
+    /// What VoiceOver calls the row when its visible label isn't enough on its own — the phase rows
+    /// label both command's and the reach's tempo "Tempo" (ADR 0221 D3), so they pass "Command" and
+    /// "Reach". `nil` ⇒ the label.
+    var accessibilityName: String?
+
+    private var spokenName: String { accessibilityName ?? label }
 
     @State private var draft = ""
     @FocusState private var typing: Bool
@@ -26,7 +32,7 @@ struct EditableTempoRow: View {
                 Text(caption).font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
             }
             Spacer()
-            StepperButton(symbol: "minus", label: "Lower \(label)", tint: tint) { onStep(-1) }
+            StepperButton(symbol: "minus", label: "Lower \(spokenName)", tint: tint) { onStep(-1) }
             TextField("", text: $draft)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
@@ -36,9 +42,9 @@ struct EditableTempoRow: View {
                 // pushing the −/+ apart. Pinned so the cluster matches the step rows' `Text`.
                 .frame(width: 56)
                 .focused($typing)
-                .accessibilityLabel("\(label) tempo")
+                .accessibilityLabel("\(spokenName) tempo")
                 .accessibilityValue("\(value)")
-            StepperButton(symbol: "plus", label: "Raise \(label)", tint: tint) { onStep(1) }
+            StepperButton(symbol: "plus", label: "Raise \(spokenName)", tint: tint) { onStep(1) }
         }
         .onAppear { draft = "\(value)" }
         // Keep the field in sync when the value moves from elsewhere (a stepper on the *other*

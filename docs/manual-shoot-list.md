@@ -225,7 +225,7 @@ signature of a missed tap, and the only way to keep that check honest is to name
 meant to be identical rather than loosen the check.
 
 - `exercises/staircase` — a band *same frame as `exercises/run-setup`*, `crop: 0,1355,1206,410`
-- `journal/quick-note-button` — a glyph *same frame as `exercises/run-setup`*, `crop: 856,188,120,120`
+- `journal/quick-note-button` — a glyph *same frame as `exercises/run-live`* since ADR 0221 D7 (the pencil left the stopped screen); `crop: 856,188,120,120`, measured on `run-setup`, still frames it there (checked 2026-09-25)
 - `journal/record-arm` — a glyph *same frame as `exercises/run-setup`*, `crop: 967,2306,160,160`
 - `songs/library-row` — the "Feels" row, *same frame as `reference/library`*, `crop: 0,1140,1206,330`
 - `reference/quick-note` — *same frame as `journal/quick-note`*; one sheet, wanted by both halves

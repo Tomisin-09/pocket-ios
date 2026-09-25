@@ -90,6 +90,13 @@ extension Exercise {
                             tags: tags,
                             notes: notes)
         copy.targetTempoOverride = targetTempoOverride
+        // The run's shape (ADR 0221) — the phase switches, the warm-up count and every hold.
+        copy.includeWarmup = includeWarmup
+        copy.includeReach = includeReach
+        copy.rampWarmupSteps = rampWarmupSteps
+        copy.rampWarmupHold = rampWarmupHold
+        copy.rampReachHold = rampReachHold
+        copy.rampBackoffHold = rampBackoffHold
         // What it works on is shape, not history (ADR 0216 D2) — a copy is for the same skills.
         copy.skillIDs = skillIDs
         return copy

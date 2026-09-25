@@ -1018,7 +1018,17 @@ user-tunable** via a Dwell row in the Steps panel — ADR 0078, previously hardc
 instead of borrowing the free-play automator fields the ADR 0045 shortcut reused. The `automator* → ramp*`
 rename is a **lightweight, data-preserving** migration via `@Attribute(originalName:)` (no
 drop+add), and the now-meaningless `automatorEnabled` / `automatorCeiling` columns are dropped;
-all new columns carry declaration defaults so the store opens without a 134110 wipe. Six
+all new columns carry declaration defaults so the store opens without a 134110 wipe. **ADR 0221**
+shapes the run phase by phase: six more additive fields — `includeWarmup` / `includeReach` (switches
+beside `includeBackoff`; only command is mandatory), `rampWarmupSteps: Int?` (the warm-up as a
+**count** of intermediate stops, spaced like the reach and back-off; `nil` on older rows, which
+derive it once from `rampStepBPM` through `Exercise.warmupSteps` and never read the stride again
+after a save), and `rampWarmupHold` / `rampReachHold` / `rampBackoffHold` (intervals each rung
+holds, default 1). They travel as one pure value, `RunShape`, through `Exercise.runShape` /
+`applyRunShape(_:)`; `CommandRamp` takes them in place of its old `stepBPM` and clamps every phase's
+rungs to its tempo gap (`rungs(steps:from:to:)`), so the count shown is the count drawn. The backup
+and hand-over record (`ExerciseRecord`) carries them as Optionals, applied by
+`Exercise.applyPhaseShape(from:)`. Six
 **curated in-house starter exercises** (`PracticePresets`) are seeded **once** on first launch
 (from the app root's `.task`) so Practice is never empty; seeding is gated by a versioned
 `UserDefaults` flag rather than an empty-store check, so deleted presets stay deleted, and each is

@@ -6,16 +6,18 @@ import XCTest
 /// plateau/elapsed mapping is exactly the logic that breaks silently (AGENTS.md).
 final class CommandRampTests: XCTestCase {
 
+    /// 80 → 100 with 3 intermediate warm-up stops ⇒ warm-up 80, 85, 90, 95 — the shape the old
+    /// 5-BPM stride drew here, so every expectation below survived the move to a count.
     private func ramp(working: Int = 80, command: Int = 100, target: Int = 106,
-                      step: Int = 5, interval: Int = 4, unit: MetronomeIntervalUnit = .bars,
+                      warmup: Int = 3, interval: Int = 4, unit: MetronomeIntervalUnit = .bars,
                       dwell: Int = 4, backoff: Bool = true) -> CommandRamp {
-        CommandRamp(working: working, command: command, target: target, stepBPM: step,
+        CommandRamp(working: working, command: command, target: target, warmupSteps: warmup,
                     intervalCount: interval, unit: unit, dwellIntervals: dwell,
                     includeBackoff: backoff)
     }
 
     func testPlateauSequenceWarmupDwellSummitBackoff() {
-        // 80→100 by 5 ⇒ warm-up 80,85,90,95; dwell 100; summit 106; backoff 94 (100−6).
+        // 80→100 in 4 rungs ⇒ warm-up 80,85,90,95; dwell 100; summit 106; backoff 94 (100−6).
         let plateaus = ramp().plateaus
         XCTAssertEqual(plateaus.map(\.bpm), [80, 85, 90, 95, 100, 106, 94])
         XCTAssertEqual(plateaus.map(\.intervals), [1, 1, 1, 1, 4, 1, 1])
@@ -72,30 +74,60 @@ final class CommandRampTests: XCTestCase {
         XCTAssertEqual(cmd.plateaus.first?.bpm, 100)   // no warm-up steps below command
     }
 
-    // MARK: - Intermediate warm-up steps (Training Mode granularity)
+    // MARK: - Warm-up by count (ADR 0221 D4)
 
-    func testWarmupStepPlacesTheRequestedIntermediateStops() {
-        // 70→96, 1 intermediate stop ⇒ step 13 ⇒ plateaus 70, 83 (intermediate), 96.
-        let step = CommandRamp.warmupStepBPM(working: 70, command: 96, intermediateSteps: 1)
-        XCTAssertEqual(step, 13)
-        // backoff off so the < command filter isolates the warm-up climb (the tail is also below).
-        let warmups = ramp(working: 70, command: 96, target: 102, step: step, backoff: false)
+    func testWarmupPlacesTheRequestedIntermediateStops() {
+        // 70→96, 1 intermediate stop ⇒ the floor and one stop midway (83), then command.
+        let warmups = ramp(working: 70, command: 96, target: 102, warmup: 1, backoff: false)
             .plateaus.filter { $0.bpm < 96 }
-        XCTAssertEqual(warmups.map(\.bpm), [70, 83])   // floor + one intermediate stop
+        XCTAssertEqual(warmups.map(\.bpm), [70, 83])
     }
 
-    func testWarmupStepZeroJumpsStraightToCommand() {
-        // 0 intermediate stops ⇒ step spans the whole climb ⇒ no plateau between floor and command.
-        let step = CommandRamp.warmupStepBPM(working: 70, command: 96, intermediateSteps: 0)
-        let warmups = ramp(working: 70, command: 96, target: 102, step: step, backoff: false)
+    func testZeroWarmupStepsIsTheFloorAloneThenCommand() {
+        let warmups = ramp(working: 70, command: 96, target: 102, warmup: 0, backoff: false)
             .plateaus.filter { $0.bpm < 96 }
         XCTAssertEqual(warmups.map(\.bpm), [70])
     }
 
-    func testWarmupStepNeverZeroEvenWithNoClimb() {
-        XCTAssertEqual(CommandRamp.warmupStepBPM(working: 100, command: 100, intermediateSteps: 3), 1)
+    /// Context §4 of ADR 0221, pinned: at 51 → 61 the stride walk played **four** rungs for a setting
+    /// of 2 and **ten** for a setting of 6. By count, the rungs are the setting plus the floor.
+    func testTheStrideBugIsGone() {
+        func warmups(_ steps: Int) -> [Int] {
+            ramp(working: 51, command: 61, target: 65, warmup: steps, backoff: false)
+                .plateaus.map(\.bpm).filter { $0 < 61 }
+        }
+        XCTAssertEqual(warmups(2), [51, 54, 58])
+        XCTAssertEqual(warmups(6).count, 7)
+        XCTAssertEqual(warmups(6), [51, 52, 54, 55, 57, 58, 60])
     }
 
+    func testRungCountsMatchTheSettingAcrossSpans() {
+        for (working, command) in [(51, 61), (70, 96), (40, 180), (88, 90)] {
+            for steps in 0...6 {
+                let drawn = ramp(working: working, command: command, target: command + 5,
+                                 warmup: steps, backoff: false)
+                    .plateaus.filter { $0.bpm < command }
+                let expected = CommandRamp.rungs(steps: steps, from: working, to: command)
+                XCTAssertEqual(drawn.count, expected, "\(working)→\(command) at \(steps)")
+                XCTAssertEqual(Set(drawn.map(\.bpm)).count, drawn.count, "a rung repeated a tempo")
+            }
+        }
+    }
+
+    /// Seven rungs over a 3-BPM gap would repeat tempos, so the count is capped at the gap (D4).
+    func testRungsNeverExceedTheGapOrSeven() {
+        XCTAssertEqual(CommandRamp.rungs(steps: 6, from: 58, to: 61), 3)
+        XCTAssertEqual(CommandRamp.rungs(steps: 6, from: 40, to: 180), 7)
+        XCTAssertEqual(CommandRamp.rungs(steps: 20, from: 40, to: 180), 7)
+        XCTAssertEqual(CommandRamp.rungs(steps: 0, from: 60, to: 60), 1)
+        XCTAssertEqual(CommandRamp.rungs(steps: 3, from: 120, to: 100), 4)   // descending too
+        let warmups = ramp(working: 58, command: 61, target: 65, warmup: 6, backoff: false)
+            .plateaus.map(\.bpm).filter { $0 < 61 }
+        XCTAssertEqual(warmups, [58, 59, 60])
+    }
+
+    /// The one-time seed from a stored stride (D4) — the inverse of the old `warmupStepBPM`, so an
+    /// exercise shows the setting it showed before.
     func testIntermediateStepsIsTheInverseOfWarmupStep() {
         for steps in 0...6 {
             let step = CommandRamp.warmupStepBPM(working: 72, command: 132, intermediateSteps: steps)
@@ -173,6 +205,8 @@ final class CommandRampTests: XCTestCase {
         XCTAssertEqual(CommandRamp.intermediateBPMs(from: 120, to: 100, steps: 3), [115, 110, 105])
         XCTAssertEqual(CommandRamp.intermediateBPMs(from: 100, to: 100, steps: 3), [])
         XCTAssertEqual(CommandRamp.intermediateBPMs(from: 100, to: 120, steps: 0), [])
+        // More stops than fit: clamped to the gap, never a repeated tempo (it used to emit 62, 62).
+        XCTAssertEqual(CommandRamp.intermediateBPMs(from: 61, to: 63, steps: 3), [62])
     }
 
     // MARK: - Live plateau cursor (staircase highlight)

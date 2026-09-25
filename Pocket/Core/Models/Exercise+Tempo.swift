@@ -70,20 +70,63 @@ extension Exercise {
     /// Whether the backoff is a manual pin vs the auto derivation — gates the reset-to-auto affordance.
     var hasBackoffOverride: Bool { backoffTempoOverride != nil }
 
+    /// The warm-up's intermediate-stop count (ADR 0221 D4) — the stored `rampWarmupSteps`, or, on an
+    /// exercise saved before that field existed, the count its old `rampStepBPM` stride implied.
+    ///
+    /// That derivation is the one the run screen always seeded its stepper with, so the exercise
+    /// shows the setting it showed before, and now plays it: the stride walk it replaced rounded
+    /// rungs in and out (51 → 61 set to 6 played ten). The first save writes the count, and from then
+    /// on the stride is never read.
+    var warmupSteps: Int {
+        rampWarmupSteps.map { max(0, $0) }
+            ?? CommandRamp.intermediateSteps(working: rampFloor, command: command, stepBPM: rampStepBPM)
+    }
+
+    /// The tempo a run of this exercise **summits** at: the reach when Reach is on, and command itself
+    /// when it's off, because a run that never went above command has nothing to raise to (ADR 0221
+    /// D6). The completion offer's raise reads this, and `CommandOffer.canRaise` turns "the summit is
+    /// command" into no raise row at all.
+    var summitTempo: Int { includeReach ? reachTempo : command }
+
+    /// The run's shape as stored (ADR 0221) — which phases play, how many rungs each draws, how long
+    /// each holds. What the run setup seeds from and what `applyRunShape(_:)` writes back.
+    var runShape: RunShape {
+        RunShape(includeWarmup: includeWarmup, includeReach: includeReach,
+                  includeBackoff: includeBackoff,
+                  warmupSteps: warmupSteps, reachSteps: max(0, rampReachSteps),
+                  backoffSteps: max(0, rampBackoffSteps),
+                  warmupHold: max(1, rampWarmupHold), dwell: max(1, dwellIntervals),
+                  reachHold: max(1, rampReachHold), backoffHold: max(1, rampBackoffHold))
+    }
+
+    /// Store a run's shape — the one write path for the run screen's Save and Start (ADR 0057) and the
+    /// block preview's live edits. Writing the warm-up **count** is what retires the old stride: from
+    /// here on `warmupSteps` reads the count, and `rampStepBPM` is never read again (ADR 0221 D4).
+    func applyRunShape(_ shape: RunShape) {
+        includeWarmup = shape.includeWarmup
+        includeReach = shape.includeReach
+        includeBackoff = shape.includeBackoff
+        rampWarmupSteps = max(0, shape.warmupSteps)
+        rampReachSteps = max(0, shape.reachSteps)
+        rampBackoffSteps = max(0, shape.backoffSteps)
+        rampWarmupHold = max(1, shape.warmupHold)
+        dwellIntervals = max(1, shape.dwell)
+        rampReachHold = max(1, shape.reachHold)
+        rampBackoffHold = max(1, shape.backoffHold)
+    }
+
     /// The command-anchored **training routine** this exercise prescribes (ADR 0045/0046):
     /// warm up from the working floor to the owned command, dwell there, summit briefly at the
-    /// derived reach, then back off below command. The single pure seam Practice launches a run
-    /// from — `engine.run(ramp:)` drives this `CommandRamp` directly instead of routing through
-    /// the automator setters. Built entirely from the saved **native** recipe (`rampStepBPM` /
-    /// interval / unit / `dwellIntervals` / `includeBackoff`). Pure and UI-free, so the plateau
-    /// math stays unit-tested per AGENTS.md.
+    /// derived reach, then back off below command — each phase with its own switch and hold (ADR
+    /// 0221). The single pure seam Practice launches a run from — `engine.run(ramp:)` drives this
+    /// `CommandRamp` directly instead of routing through the automator setters. Built entirely from
+    /// the saved **native** recipe. Pure and UI-free, so the plateau math stays unit-tested per
+    /// AGENTS.md.
     var ramp: CommandRamp {
-        CommandRamp(working: rampFloor, command: command, target: reachTempo,
-                    stepBPM: max(1, rampStepBPM), intervalCount: max(1, rampIntervalCount),
-                    unit: rampIntervalUnit, dwellIntervals: max(1, dwellIntervals),
-                    includeBackoff: includeBackoff,
-                    reachSteps: max(0, rampReachSteps), backoffSteps: max(0, rampBackoffSteps),
-                    backoffOverride: backoffTempoOverride)
+        CommandRamp(tempos: RampTempos(working: rampFloor, command: command, reach: reachTempo,
+                                       backoff: backoffTempo),
+                    shape: runShape, backoffOverride: backoffTempoOverride,
+                    intervalCount: max(1, rampIntervalCount), unit: rampIntervalUnit)
     }
 
     /// Promote a newly-owned tempo to `command` (ADR 0045 / 0075). The auto reach is derived, so
@@ -131,6 +174,16 @@ extension Exercise {
         backoffTempoOverride = CommandOffer.survivingBackoffPin(backoffTempoOverride, command: tempo)
         commandNotesPerBeat = noteRate?.perBeat
     }
+
+    /// Whether the routine steps every N **bars** or every N **seconds** — typed view over
+    /// `rampIntervalUnitRaw`.
+    var rampIntervalUnit: MetronomeIntervalUnit {
+        get { MetronomeIntervalUnit(rawValue: rampIntervalUnitRaw) ?? .bars }
+        set { rampIntervalUnitRaw = newValue.rawValue }
+    }
+
+    /// The time signature as a display string ("4/4", "6/8").
+    var timeSignatureLabel: String { "\(beatsPerBar)/\(noteValue)" }
 
     /// The Italian tempo marking for the current working tempo (ADR 0043, slice 1) —
     /// "Andante", "Allegro", … Pure derived from `currentTempo`.

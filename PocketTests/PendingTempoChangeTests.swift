@@ -7,9 +7,9 @@ import XCTest
 final class PendingTempoChangeTests: XCTestCase {
 
     private func ramp(working: Int = 80, command: Int = 100, target: Int = 106,
-                      step: Int = 5, interval: Int = 4, unit: MetronomeIntervalUnit = .bars,
+                      warmup: Int = 3, interval: Int = 4, unit: MetronomeIntervalUnit = .bars,
                       dwell: Int = 4, backoff: Bool = true) -> CommandRamp {
-        CommandRamp(working: working, command: command, target: target, stepBPM: step,
+        CommandRamp(working: working, command: command, target: target, warmupSteps: warmup,
                     intervalCount: interval, unit: unit, dwellIntervals: dwell,
                     includeBackoff: backoff)
     }
@@ -70,7 +70,7 @@ final class PendingTempoChangeTests: XCTestCase {
 
     /// A single-plateau ramp still reports its own end rather than nothing at all.
     func testSinglePlateauRampWarnsOfItsEnd() {
-        let flat = CommandRamp(working: 100, command: 100, target: 100, stepBPM: 0,
+        let flat = CommandRamp(working: 100, command: 100, target: 100, warmupSteps: 0,
                                intervalCount: 4, unit: .bars, dwellIntervals: 1,
                                includeBackoff: false)
         let change = flat.pendingChange(elapsedBars: 1, elapsedSeconds: 0)

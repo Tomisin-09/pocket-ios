@@ -1,66 +1,61 @@
 import SwiftUI
 
-/// The collapsible **Practice Settings** panel at the top of the exercise run setup (V1 feedback):
-/// the three tempos — warm-up **working** floor, owned **command**, derived **reach** — plus the
-/// nested **Steps** granularity, tucked behind one disclosure header so the run screen reads as
-/// just the title, a compact summary, and the staircase by default. Tapping the header expands it,
-/// mirroring how the `RoutineStepsControls` Steps panel it contains behaves.
+/// One tempo control in the phase rows — its value and the host's clamped edits. `onReset` is set only
+/// while the value is a pin, which is what reads it as custom and offers **Reset to auto**.
+struct PhaseTempoControl {
+    let value: Int
+    let onStep: (Int) -> Void
+    let onType: (Int) -> Void
+    var onReset: (() -> Void)?
+}
+
+/// The collapsible **Practice Settings** panel on an exercise's run setup and its routine-block preview
+/// (V1 feedback), organised **by phase** (ADR 0221 D1): four rows — Warm-up, Command, Reach, Back off —
+/// in the order the run plays them. Each row says what its phase will play; the optional three carry
+/// their switch on the row; tapping a row opens its tempo, steps and hold underneath, one row at a
+/// time. The host lights the open phase's bars in the staircase from `openPhase`.
 ///
-/// The tempo edits still live in `ExerciseRunView`'s local state (committed only on Start / Save);
-/// this view is a pure presentation shell, taking the values + clamp closures and the step bindings.
+/// It replaced a list of tempos above a nested Steps panel, which split every phase across two
+/// disclosures and showed command twice, meaning two things.
+///
+/// A pure presentation shell: the tempos route back through the host's clamp closures, and the shape
+/// is a binding, so edits land wherever the host keeps them — local until Start or Save on the run
+/// screen (ADR 0057), written straight to the model on the block preview.
 struct PracticeSettingsPanel: View {
     @Binding var expanded: Bool
-
-    // Tempos — values are read-only here; edits route back through the caller's clamp closures.
-    let working: Int
-    let command: Int
-    let reach: Int
-    /// Whether the reach is a manual pin (vs the auto derivation) — drives the caption + reset button.
-    let reachIsCustom: Bool
-    let onStepWorking: (Int) -> Void
-    let onTypeWorking: (Int) -> Void
-    let onStepCommand: (Int) -> Void
-    let onTypeCommand: (Int) -> Void
-    let onStepReach: (Int) -> Void
-    let onTypeReach: (Int) -> Void
-    let onResetReach: () -> Void
-
-    // Back-off (user-testing note 6) — an on/off for the tail below command, with an editable floor.
-    /// Whether the routine backs off below command after the summit. Default on.
-    @Binding var includeBackoff: Bool
-    let backoff: Int
-    /// Whether the backoff floor is a manual pin (vs the auto derivation) — drives caption + reset.
-    let backoffIsCustom: Bool
-    let onStepBackoff: (Int) -> Void
-    let onTypeBackoff: (Int) -> Void
-    let onResetBackoff: () -> Void
-
-    // Steps — bound straight through to the nested `RoutineStepsControls`.
-    @Binding var stepsExpanded: Bool
-    @Binding var warmupSteps: Int
-    @Binding var reachSteps: Int
-    @Binding var backoffSteps: Int
-    /// The command-plateau dwell (ADR 0078) + its per-type caption, threaded to `RoutineStepsControls`.
-    @Binding var dwell: Int
-    let dwellCaption: String
-    let warmupStepBPM: Int
-    let hasReach: Bool
+    /// The one open row, or `nil`.
+    @Binding var openPhase: RampPhase?
+    @Binding var shape: RunShape
+    /// **Start at** — the warm-up floor (`workingTempo`, ADR 0221 D5).
+    let startAt: PhaseTempoControl
+    let command: PhaseTempoControl
+    let reach: PhaseTempoControl
+    /// **Settle at** — the back off's floor.
+    let settleAt: PhaseTempoControl
+    /// The command hold the run will actually play, when a session has fitted it to a block (ADR 0129).
+    var playedDwell: Int?
+    var tempoUnit: TempoUnit = .bpm
+    var holdUnit: RunLength.Unit = .bars
+    var unitsPerInterval = StandaloneMetronomeEngine.automatorDefaultBars
     let tint: Color
-    /// Fired on any disclosure toggle (this panel's or the nested Steps') so the host plays a haptic.
+    /// Fired on the disclosure and the row taps so the host plays a haptic.
     let onToggle: () -> Void
+
+    private var tempos: RampTempos {
+        RampTempos(working: startAt.value, command: command.value, reach: reach.value,
+                   backoff: settleAt.value)
+    }
+
+    private var summary: RampSummary {
+        RampSummary(tempos: tempos, shape: shape, reachIsAuto: reach.onReset == nil,
+                    backoffIsAuto: settleAt.onReset == nil, tempoUnit: tempoUnit,
+                    holdUnit: holdUnit, unitsPerInterval: unitsPerInterval)
+    }
 
     var body: some View {
         VStack(spacing: 14) {
             header
-            if expanded {
-                tempos
-                RoutineStepsControls(expanded: $stepsExpanded, warmupSteps: $warmupSteps,
-                                     reachSteps: $reachSteps, backoffSteps: $backoffSteps,
-                                     dwell: $dwell, dwellCaption: dwellCaption,
-                                     warmupStepBPM: warmupStepBPM, reach: reach,
-                                     hasReach: hasReach, hasBackoff: includeBackoff,
-                                     tint: tint, onChange: onToggle)
-            }
+            if expanded { rows }
         }
     }
 
@@ -74,7 +69,7 @@ struct PracticeSettingsPanel: View {
                     Text("Practice Settings")
                         .font(.futura(.subheadline, weight: .semibold))
                         .foregroundStyle(PocketColor.textPrimary)
-                    Text(summary)
+                    Text(summary.header)
                         .font(.futura(.caption2))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
@@ -86,75 +81,115 @@ struct PracticeSettingsPanel: View {
             }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Practice settings, \(summary)")
-        .accessibilityHint(expanded ? "Collapse" : "Expand to adjust tempos and steps")
+        .accessibilityLabel("Practice settings, \(summary.header)")
+        .accessibilityHint(expanded ? "Collapse" : "Expand to shape each phase of the run")
     }
 
-    /// One-line tempo digest for the collapsed header — the climb and the reach at a glance.
-    private var summary: String {
-        hasReach
-            ? "\(working)→\(command) · reach \(reach) BPM"
-            : "\(working)→\(command) BPM"
-    }
-
-    private var tempos: some View {
-        VStack(spacing: 14) {
-            EditableTempoRow(label: "Working", caption: "warm-up floor", value: working,
-                             tint: tint, onStep: onStepWorking, onType: onTypeWorking)
-            EditableTempoRow(label: "Command", caption: "fastest you own", value: command,
-                             tint: tint, onStep: onStepCommand, onType: onTypeCommand)
-            EditableTempoRow(label: "Reach", caption: reachCaption, value: reach, tint: tint,
-                             onStep: onStepReach, onType: onTypeReach)
-            if reachIsCustom {
-                resetButton(action: onResetReach, hint: "Clear the custom reach; use the auto-derived goal")
+    private var rows: some View {
+        VStack(spacing: 0) {
+            ForEach(RampPhase.allCases) { phase in
+                Rectangle().fill(PocketColor.surfaceBorder).frame(height: 1)
+                PracticePhaseRow(phase: phase, summary: summary.row(phase), isOn: shape.isOn(phase),
+                                 isOpen: shape.isOn(phase) && openPhase == phase,
+                                 isOnBinding: phase.isOptional ? switchBinding(phase) : nil,
+                                 tint: tint, onTap: { toggleOpen(phase) },
+                                 controls: { controls(for: phase) })
             }
-            backoffToggle
-            if includeBackoff {
-                EditableTempoRow(label: "Back-off", caption: backoffCaption, value: backoff,
-                                 tint: tint, onStep: onStepBackoff, onType: onTypeBackoff)
-                if backoffIsCustom {
-                    resetButton(action: onResetBackoff,
-                                hint: "Clear the custom back-off; use the auto-derived floor")
+            Rectangle().fill(PocketColor.surfaceBorder).frame(height: 1)
+        }
+    }
+
+    // MARK: - An open row's controls (D3)
+
+    @ViewBuilder
+    private func controls(for phase: RampPhase) -> some View {
+        VStack(spacing: 14) {
+            switch phase {
+            case .warmup:
+                tempoRow("Start at", control: startAt, phase: phase)
+                stepsRow(phase)
+                holdRow(phase, label: "Each step")
+            case .command:
+                tempoRow("Tempo", control: command, phase: phase, spokenName: "Command")
+                holdRow(phase, label: "Hold")
+            case .reach:
+                tempoRow("Tempo", control: reach, phase: phase, spokenName: "Reach")
+                resetButton(reach, hint: "Clear the custom reach; use the auto-derived goal")
+                stepsRow(phase)
+                holdRow(phase, label: "Each step")
+            case .backoff:
+                tempoRow("Settle at", control: settleAt, phase: phase, spokenName: "Back off")
+                resetButton(settleAt, hint: "Clear the custom back off; use the auto-derived floor")
+                stepsRow(phase)
+                holdRow(phase, label: "Each step")
+            }
+        }
+    }
+
+    private func tempoRow(_ label: String, control: PhaseTempoControl, phase: RampPhase,
+                          spokenName: String? = nil) -> some View {
+        EditableTempoRow(label: label, caption: summary.pinCaption(phase), value: control.value,
+                         tint: tint, onStep: control.onStep, onType: control.onType,
+                         accessibilityName: spokenName)
+    }
+
+    /// **Steps** — the rungs the phase draws, 1 up to `min(7, gap)` (D4). The value is read back
+    /// through the same clamp the ramp uses, so it is always the number of bars drawn.
+    private func stepsRow(_ phase: RampPhase) -> some View {
+        let name = "\(phase.caption) steps"
+        return PhaseCountRow(label: "Steps", caption: summary.stepsCaption(phase),
+                             value: tempos.rungs(of: phase, in: shape),
+                             decreaseLabel: "Fewer \(name)", increaseLabel: "More \(name)",
+                             tint: tint) { delta in
+            let next = tempos.rungs(of: phase, in: shape) + delta
+            shape.setRungs(phase, min(tempos.maxRungs(of: phase, in: shape), max(1, next)))
+        }
+    }
+
+    /// A hold, shown in bars or passes and stepped by one interval (D3).
+    private func holdRow(_ phase: RampPhase, label: String) -> some View {
+        let count = shape.hold(phase) * max(1, unitsPerInterval)
+        let name = "\(phase.caption) hold"
+        return PhaseCountRow(label: label, caption: summary.holdCaption(phase, playedDwell: playedDwell),
+                             value: count, unit: holdUnit.noun(count),
+                             decreaseLabel: "Shorter \(name)", increaseLabel: "Longer \(name)",
+                             tint: tint) { delta in
+            shape.setHold(phase, shape.hold(phase) + delta)
+        }
+    }
+
+    @ViewBuilder
+    private func resetButton(_ control: PhaseTempoControl, hint: String) -> some View {
+        if let onReset = control.onReset {
+            Button(action: onReset) {
+                Label("Reset to auto", systemImage: "arrow.uturn.backward")
+                    .font(.futura(.caption)).foregroundStyle(tint)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            .accessibilityHint(hint)
+        }
+    }
+
+    // MARK: - Rows opening and switching
+
+    private func toggleOpen(_ phase: RampPhase) {
+        withAnimation(.easeInOut(duration: 0.2)) { openPhase = openPhase == phase ? nil : phase }
+        onToggle()
+    }
+
+    /// A phase's switch. Switching one on opens it, so the controls that just came back are in view;
+    /// switching the open one off closes it. Its tempo is untouched either way (D2).
+    private func switchBinding(_ phase: RampPhase) -> Binding<Bool> {
+        Binding(get: { shape.isOn(phase) }, set: { isOn in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                shape.setOn(phase, isOn)
+                if isOn {
+                    openPhase = phase
+                } else if openPhase == phase {
+                    openPhase = nil
                 }
             }
-        }
-    }
-
-    /// The on/off for the back-off tail (user-testing note 6). Off ⇒ the routine ends at command
-    /// (or the reach) instead of easing down; on ⇒ the editable floor below appears.
-    private var backoffToggle: some View {
-        Toggle(isOn: $includeBackoff) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Back off")
-                    .font(.futura(.subheadline)).foregroundStyle(PocketColor.textPrimary)
-                Text("finish below command, on control not the edge")
-                    .font(.futura(.caption2)).foregroundStyle(PocketColor.textSecondary)
-            }
-        }
-        .tint(tint)
-        .accessibilityHint("Ease the tempo down after the summit to finish on clean control")
-    }
-
-    /// Shared reset-to-auto affordance for the pinned reach / back-off rows.
-    private func resetButton(action: @escaping () -> Void, hint: String) -> some View {
-        Button(action: action) {
-            Label("Reset to auto", systemImage: "arrow.uturn.backward")
-                .font(.futura(.caption)).foregroundStyle(tint)
-        }
-        .buttonStyle(.plain)
-        .frame(maxWidth: .infinity, alignment: .trailing)
-        .accessibilityHint(hint)
-    }
-
-    /// The Back-off caption: custom-vs-auto, mirroring `reachCaption`. Auto shows the drop below
-    /// command; a pin reads "custom floor".
-    private var backoffCaption: String {
-        backoffIsCustom ? "custom floor" : "auto · −\(max(0, command - backoff)) BPM"
-    }
-
-    /// The Reach caption: custom-vs-auto (ADR 0075). Auto shows the derived stretch above command;
-    /// a pin reads "custom goal" so the override state is legible at a glance.
-    private var reachCaption: String {
-        reachIsCustom ? "custom goal" : "auto · +\(max(0, reach - command)) BPM"
+        })
     }
 }

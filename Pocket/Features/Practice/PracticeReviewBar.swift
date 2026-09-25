@@ -14,6 +14,15 @@ struct PracticeReviewBar: View {
     let onJournal: () -> Void
     let onTakes: () -> Void
 
+    /// Whether a run screen shows this bar: stopped, and standing on its own. A running screen has no
+    /// room for review, and inside a routine the block isn't the place to browse its history.
+    ///
+    /// Also the rule for the toolbar's quick-note pencil, **inverted** (ADR 0221 D7): the bar's
+    /// Journal opens a journal that writes, so the pencil shows exactly where the bar doesn't —
+    /// running, or in a routine — and capture stays one tap away in every state (ADR 0142 J1) without
+    /// being offered twice on one screen. One predicate, so the two can't overlap or both go missing.
+    static func isShown(isRunning: Bool, inRoutine: Bool) -> Bool { !isRunning && !inRoutine }
+
     var body: some View {
         HStack(spacing: 12) {
             PracticeReviewPill(title: "Journal", systemImage: "book.closed",

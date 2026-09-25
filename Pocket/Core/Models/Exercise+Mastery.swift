@@ -9,6 +9,11 @@ import Foundation
 /// See `MasteryReading` for the rule, and `Loop`'s mirror of it in `Loop+Mastery.swift`.
 extension Exercise {
 
+    /// Journal entries newest-first — the order the journal lists them in (mirrors `Loop`).
+    var journalByRecent: [JournalEntry] {
+        journal.sorted { $0.createdAt > $1.createdAt }
+    }
+
     /// Set the self-rating **and stamp the conditions it was given under** (ADR 0169).
     ///
     /// The single write path, on the model rather than at a call site, for exactly the reason

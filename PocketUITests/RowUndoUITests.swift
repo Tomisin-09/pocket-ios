@@ -103,11 +103,17 @@ final class RowUndoUITests: UITestCase {
     // MARK: - Helpers
 
     /// Write one note against a seeded drill, through the app's own capture path: Exercises → the
-    /// drill's run screen → the nav-bar quick-note button → Save. Leaves the app back on Home.
+    /// drill's run screen → Start → the nav-bar quick-note button → Save → Stop. Leaves the app back
+    /// on Home.
     ///
     /// Deliberately the **toolbar** button (ADR 0142) rather than the review bar's Journal pill: the
     /// bar is the last thing in a long `ScrollView`, so on a fresh run screen it isn't in the
     /// accessibility tree at all until you scroll it in. A toolbar item always is.
+    ///
+    /// **The run is started first** because since ADR 0221 D7 the pencil shows only where the review
+    /// bar doesn't — running, or inside a routine. A stopped screen has the bar's Journal instead.
+    /// Nothing here waits for the ramp: the note is written over the live run, which is the state the
+    /// quick-note sheet exists for, and Stop ends it before a completion screen could appear.
     @MainActor
     private func writeAJournalNote(_ text: String, in app: XCUIApplication) throws {
         try openExercisesLibrary(in: app)
@@ -117,8 +123,17 @@ final class RowUndoUITests: UITestCase {
         scrollIntoView(drill, in: app)
         drill.tap()
 
+        let start = app.buttons["Start training routine"]
+        XCTAssertTrue(start.waitForExistence(timeout: Self.uiTimeout), "no Start on the run screen")
+        // Stopped and standalone, the review bar's Journal writes, so the pencil is not offered too.
+        // Checked only once Start proves the screen is up, and the same query must then find the
+        // pencil below — so this can't pass by looking too early or at the wrong label.
         let quickNote = app.buttons["Write a quick journal note"]
-        XCTAssertTrue(quickNote.waitForExistence(timeout: Self.uiTimeout), "no quick-note button on the run screen")
+        XCTAssertFalse(quickNote.exists, "the pencil shows on a stopped run screen (ADR 0221 D7)")
+        start.tap()
+
+        XCTAssertTrue(quickNote.waitForExistence(timeout: Self.uiTimeout),
+                      "no quick-note button on the running screen (ADR 0221 D7)")
         quickNote.tap()
 
         // `TextField(axis: .vertical)` surfaces as a text *view* on some runtimes and a text field on
@@ -131,6 +146,10 @@ final class RowUndoUITests: UITestCase {
         let save = app.buttons["Save"]
         XCTAssertTrue(save.waitForExistence(timeout: Self.uiTimeout), "no Save button on the quick-note sheet")
         save.tap()
+
+        let stop = app.buttons["Stop and reset"]
+        XCTAssertTrue(stop.waitForExistence(timeout: Self.uiTimeout), "no Stop on the running screen")
+        stop.tap()
 
         try returnHome(in: app)
     }

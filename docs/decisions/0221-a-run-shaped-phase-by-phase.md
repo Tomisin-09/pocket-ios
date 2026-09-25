@@ -1,7 +1,7 @@
 # ADR 0221 — a run shaped phase by phase
 
-- **Status:** Accepted — design only. Step 1 (exercises, and the pencil on both run screens) and
-  step 2 (loops) are not yet built.
+- **Status:** Accepted. Step 1 (exercises, and the pencil on both run screens) built on
+  `pocket-330-phase-rows-exercises`; see *As built*. Step 2 (loops) is not yet built.
 - **Date:** 2026-09-25 (`pocket-329-phase-rows`)
 - **Amends:** ADR 0045 — the four-phase profile stands, but only **command** is mandatory: the
   warm-up and the summit become optional, as the back-off already is (D2), and every phase gets a
@@ -119,8 +119,9 @@ replaces the stride walk that caused Context §4.
 - **Exercises** store the count in a new `rampWarmupSteps: Int?`. When it is `nil`, as on every
   exercise saved before this ADR, the count is derived from the old stride by the existing
   `CommandRamp.intermediateSteps`, the same way the run screen already seeded its stepper. So an
-  existing exercise shows the number it showed yesterday, and now plays that many rungs. After that
-  first derivation `rampStepBPM` is no longer read. It stays in the store, because dropping it would
+  existing exercise keeps the setting it had, and now plays it. Because Steps now counts the rungs
+  drawn, the floor included, the number reads one higher than the old count did (a warm-up that read
+  2 reads 3, and plays three). After the first save `rampStepBPM` is no longer read. It stays in the store, because dropping it would
   be a destructive change for no benefit.
 - **Loops** already store a count (`rampWarmupSteps`) and only change how it is spaced.
 
@@ -273,7 +274,27 @@ from an older build, has to decode and read as today's shape. Duplication copies
 **Step 2: loops.** The `Loop` fields, the reps-per-step fold, `LoopSettingsPanel` moved to the shared
 rows, the loop block preview and its length line in passes, and `RoutineStepsControls` deleted.
 
+**As built (step 1).** Choices the decisions above left open, taken from the mockup the rows were
+chosen on, and one the build forced:
+
+- Command's row is the one open when Practice Settings expands. A switched-off row is dimmed and
+  doesn't open; switching a phase on opens its row, and switching the open one off closes it.
+- The collapsed summary names the back off too when it plays: `51 → 61 · reach 65 · back to 57 BPM`.
+- The shape travels as one value, `RunShape` (switches, rung counts, holds), and the rows' words come
+  from one pure `RampSummary`, so the run screen and the block preview can't word a phase
+  differently.
+- `CommandRamp` lost `stepBPM` in step 1, so **loops already space their warm-up by count** — they
+  pass the count they store instead of converting it to a stride. `warmupStepBPM` survives only as
+  the loop panel's "+N % per step" caption until step 2 replaces that panel.
+- The exercise block preview's **Start at** shows `rampFloor`, the floor the staircase climbs from.
+  It showed `workingTempo`, which on an exercise with no measured command *is* command, so the row
+  and the bars disagreed. Moving it pins command first, as the loop preview and the run screen's
+  save already do.
+
 **Figures owed.** One shoot, at the end of step 2 and together with ADR 0220's owed reshoot:
 `exercises/run-setup`, `exercises/practice-settings`, `exercises/staircase`, and
 `journal/quick-note-button`. That glyph was cropped from the stopped run screen, so it has to come
-from the running one now.
+from the running one now: the shoot class serves it from `exercises/run-live` since step 1. Its
+existing `crop` still frames the pencil there — the pencil moves into the meter's old slot, which is
+where it sat before — checked on a diagnostic shoot with the same `sips` call `build-figures.py`
+makes.

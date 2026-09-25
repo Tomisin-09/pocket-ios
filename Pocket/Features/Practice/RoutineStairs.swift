@@ -25,6 +25,13 @@ struct RoutineStairs: View {
     /// (ADR 0131). `nil` the rest of the time, including at the end of the ramp where there is no next
     /// bar to light.
     var nextIndex: Int?
+    /// The phase whose row is open in Practice Settings (ADR 0221 D1): its bars at full weight, the
+    /// rest dimmed, its caption in the tint — what ties a control to the bars it changes. Ignored while
+    /// a run plays, where the live cursor owns the lighting. `nil` reads as it always has.
+    var highlightedPhase: RampPhase?
+    /// The run's length, stated under the captions (ADR 0221 D10) — `≈ 1 min 5 s · 16 bars`. A total,
+    /// not a countdown: the host passes the same string while the run plays. `nil` draws no line.
+    var lengthLine: String?
 
     /// Fixed height of the bar region; the `<bpm> BPM` signpost sits in a reserved strip above it
     /// so it never clips the tallest bar.
@@ -39,31 +46,31 @@ struct RoutineStairs: View {
     /// showing, the plateau being warned about pre-lights to a middle weight (ADR 0131) — brighter
     /// than dim so it reads as *coming*, dimmer than the cursor so it can't be mistaken for *here*.
     private func fill(forIndex index: Int) -> Double {
-        guard let currentIndex else { return 0.55 }
+        guard let currentIndex else {
+            guard let lit = litRange else { return 0.55 }
+            return lit.contains(index) ? 0.95 : 0.22
+        }
         if index == currentIndex { return 0.95 }
         return index == nextIndex ? 0.55 : 0.25
     }
 
-    /// The **command dwell** plateau — the one held *at command*, signposted with its BPM so the
-    /// anchor tempo is legible without reading the summary above. Identified by tempo (`bpm ==
-    /// command`, unique: the warm-up climbs *below* command, reach/backoff sit above/below it), so the
-    /// signpost stays on the command bar even when the dwell is a single interval and so no longer the
-    /// widest bar. Falls back to the widest bar if no plateau sits exactly at command (defensive).
-    private var dwellIndex: Int? {
-        guard !plateaus.isEmpty else { return nil }
-        return plateaus.firstIndex { $0.bpm == command }
-            ?? plateaus.indices.max { plateaus[$0].intervals < plateaus[$1].intervals }
+    /// Which bars each phase drew — the one source for the captions and the open-row lighting.
+    private var phaseRanges: [RampPhase: Range<Int>] {
+        CommandRamp.phaseRanges(of: plateaus, command: command)
     }
 
-    /// The **summit** plateau — the highest-BPM bar, which splits the post-dwell tail into the
-    /// *reach* (the climb from command up to and including this peak) and the *back off* (the descent
-    /// after it). Unique by construction: the warm-up climbs below command, the reach climbs above,
-    /// and the backoff steps back down, so the max BPM is the peak. Falls back to the dwell when the
-    /// run has no summit above command (`target ≤ command`), which correctly leaves no *reach* group.
-    private var summitIndex: Int? {
-        guard !plateaus.isEmpty else { return nil }
-        return plateaus.indices.max { plateaus[$0].bpm < plateaus[$1].bpm }
+    /// The bars an open row lights, while stopped — `nil` when no row is open, a run is playing, or the
+    /// open phase drew nothing.
+    private var litRange: Range<Int>? {
+        guard currentIndex == nil, let highlightedPhase else { return nil }
+        return phaseRanges[highlightedPhase]
     }
+
+    /// The **command dwell** plateau — the one held *at command*, signposted with its BPM so the
+    /// anchor tempo is legible without reading the summary above. Found by tempo, not by "which bar is
+    /// widest" (see `CommandRamp.phaseRanges`), so the signpost stays on command even when the dwell
+    /// is a single interval.
+    private var dwellIndex: Int? { phaseRanges[.command]?.lowerBound }
 
     private static let chartHeight = barAreaHeight + labelStripHeight + 4
 
@@ -94,6 +101,14 @@ struct RoutineStairs: View {
             }
             .frame(height: Self.chartHeight)
             captionRow
+            if let lengthLine {
+                Text(lengthLine)
+                    .font(.futura(.caption2))
+                    .monospacedDigit()
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityLabel("Run length \(lengthLine)")
+            }
         }
     }
 
@@ -122,29 +137,24 @@ struct RoutineStairs: View {
             let metrics = CaptionMetrics(usableWidth: usableWidth, spacing: spacing,
                                          totalIntervals: totalIntervals, midY: geo.size.height / 2)
             ZStack {
-                if let dwell = dwellIndex {
-                    let summit = summitIndex ?? dwell
-                    if dwell > 0 {
-                        caption("warm-up", PocketColor.textSecondary, weight: .regular,
-                                over: 0..<dwell, metrics: metrics)
-                    }
-                    caption("command", tint, weight: .semibold,
-                            over: dwell..<(dwell + 1), metrics: metrics)
-                    // reach: the climb above command through the summit (only when there is one)
-                    if summit > dwell {
-                        caption("reach", PocketColor.textSecondary, weight: .regular,
-                                over: (dwell + 1)..<(summit + 1), metrics: metrics)
-                    }
-                    // back off: the descent after the summit (only when there is a tail)
-                    if summit < plateaus.count - 1 {
-                        caption("back off", PocketColor.textSecondary, weight: .regular,
-                                over: (summit + 1)..<plateaus.count, metrics: metrics)
+                ForEach(RampPhase.allCases) { phase in
+                    if let range = phaseRanges[phase] {
+                        let style = captionStyle(for: phase)
+                        caption(phase.caption, style.color, weight: style.weight, over: range,
+                                metrics: metrics)
                     }
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
         .frame(height: Self.captionHeight)
+    }
+
+    /// How a phase's caption reads. With a row open, only that phase's is in the tint; otherwise
+    /// command's is, as the anchor.
+    private func captionStyle(for phase: RampPhase) -> (color: Color, weight: Font.Weight) {
+        let lit = litRange != nil ? highlightedPhase == phase : phase == .command
+        return lit ? (tint, .semibold) : (PocketColor.textSecondary, .regular)
     }
 
     /// The bar-layout figures every caption placement needs — grouped so each caption call site takes
@@ -184,8 +194,12 @@ struct RoutineStairs: View {
         return bars + metrics.spacing * CGFloat(max(0, range.count - 1))
     }
 
+    /// A bar's height as a share of the bar area — 30% at the run's lowest tempo, full at its highest.
+    /// A run that holds one tempo throughout (command only, ADR 0221 D2) has no span to scale against,
+    /// so it draws at a fixed 62% rather than sitting on the 30% floor as if it were the slowest bar.
     private func heightFraction(_ bpm: Int, _ low: Int, _ span: Int) -> Double {
-        0.3 + 0.7 * Double(bpm - low) / Double(span)
+        guard plateaus.contains(where: { $0.bpm != low }) else { return 0.62 }
+        return 0.3 + 0.7 * Double(bpm - low) / Double(span)
     }
 
     /// The `<bpm> BPM` signpost, centred over the dwell bar and dropped down to sit just above that
@@ -226,7 +240,7 @@ struct RoutineStairs: View {
 }
 
 #Preview("Routine stairs") {
-    RoutineStairs(plateaus: CommandRamp(working: 70, command: 96, target: 110, stepBPM: 8,
+    RoutineStairs(plateaus: CommandRamp(working: 70, command: 96, target: 110, warmupSteps: 2,
                                         intervalCount: 4, unit: .bars, dwellIntervals: 4,
                                         includeBackoff: true).plateaus,
                   command: 96, tint: PocketColor.practice)
