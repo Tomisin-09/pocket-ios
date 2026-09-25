@@ -2,6 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-26
+- **Amended by:** ADR 0221 — of the four phases only **command** is mandatory now: the warm-up and
+  the summit have switches, as the backoff already had, and every phase has its own hold where this
+  ADR held all but the dwell for one interval. The warm-up is stored and built as a **rung count**,
+  spaced evenly like the reach and backoff, no longer as a `stepBPM` stride; stepping the stride
+  added and dropped rungs through rounding. The three tempos, the stretch and promotion stand.
 
 ## Context
 

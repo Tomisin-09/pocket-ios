@@ -14,6 +14,8 @@
   affordance) — removed; promotion is now offered only *after* a completed run.
 - **Scope:** **exercises only.** Loops keep their current promote behaviour. Applies to a
   standalone run *and* to an exercise block run inside a routine — see §7 for the routine flow.
+- **Amended by:** ADR 0221 — a run played with Reach switched off offers **no raise**: it never
+  went above command, so there is no reach you just played. Everything else here stands.
 - **Non-negotiable:** ADR 0070 — the app never grades. The completion screen is a neutral
   acknowledgement plus an *offer*, never a score, timing verdict, or pass/fail.
 
