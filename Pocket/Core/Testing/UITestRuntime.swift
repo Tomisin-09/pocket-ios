@@ -28,6 +28,18 @@ enum UITestRuntime {
     /// argument and not `-uiTesting` on its own.
     static let oracleDoorIsOpen = parseOracleDoor(in: CommandLine.arguments)
 
+    /// Whether the first-song walkthrough may run (ADR 0149). **Always `true` outside UI testing** —
+    /// the ledger in `AppSettings+Walkthrough` decides there. Under `-uiTesting` it takes
+    /// `-walkthrough` as well; see `UITestHooks.walkthroughArgument`.
+    static let walkthroughIsOpen = parseWalkthrough(in: CommandLine.arguments)
+
+    /// Split out to be tested, like `parseOracleDoor` — but the inverse shape: this seam closes a
+    /// door under test rather than opening one.
+    static func parseWalkthrough(in arguments: [String]) -> Bool {
+        !arguments.contains(UITestHooks.launchArgument)
+            || arguments.contains(UITestHooks.walkthroughArgument)
+    }
+
     /// Split out from the `static let` for the same reason `parseShotHour` is, and named the same
     /// way: the argument that must *also* be present is the entire guarantee here, and a guarantee
     /// nothing checks is a comment.

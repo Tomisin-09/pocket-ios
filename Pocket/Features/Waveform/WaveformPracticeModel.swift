@@ -24,6 +24,7 @@ final class WaveformPracticeModel {
             speedBeforeDrop = TempoReturn.remembered(speedBeforeDrop,
                                                      gestureStart: speedAtGestureStart ?? oldValue,
                                                      now: speed)
+            recordWalkthrough(.speedChanged(to: speed))     // beat 2 (ADR 0149): the player's hand only
         }
     }
 
@@ -230,8 +231,18 @@ final class WaveformPracticeModel {
     /// The ephemeral **A/B span** (ADR 0041) — the live, gate-free creation region set by
     /// playing along; `abEditingLoop` holds a *saved* loop lifted in for a range edit (Save
     /// writes back). Transient (ADR 0029); behaviour in `+ABSpan.swift`.
-    var abSpan: ABSpan = .idle
+    var abSpan: ABSpan = .idle {
+        didSet { if abSpan != oldValue { walkthroughSpanDidChange(from: oldValue) } }
+    }
     var abEditingLoop: Loop?
+
+    /// The first-song walkthrough (ADR 0149) — `nil` on every visit but the one that runs it, and on
+    /// that one once it ends. The starter track's scripted first beat rides beside it (ADR 0220 D3),
+    /// `nil` on any other song. Behaviour in `+Walkthrough.swift`.
+    var walkthrough: SongWalkthrough?
+    var starterScript: StarterTrackScript?
+    /// The playhead on the previous frame, for the script's crossing test. Never observed.
+    @ObservationIgnored var lastWalkthroughTick: TimeInterval = 0
 
     /// True while the *tighten to your snags* offer is showing (ADR 0200 D4). A flag rather than
     /// "a proposal exists" — the latter is true for as long as the marks are, and would evict

@@ -21,6 +21,9 @@ final class PracticeAudioEngine {
     /// Fired once when straight-through playback reaches the file's natural end — never on a manual
     /// stop/seek, never while looping. The song-block play-along (ADR 0071) hangs auto-advance off it.
     var onReachedEnd: (() -> Void)?
+    /// Fired once per display frame while playing, after `currentTime` moves: the model-side playhead
+    /// watcher ADR 0220 D3 needs, which ADR 0153 keeps out of every view body.
+    var onTick: ((TimeInterval) -> Void)?
 
     private let engine = AVAudioEngine()
     private let player = AVAudioPlayerNode()
@@ -106,9 +109,7 @@ final class PracticeAudioEngine {
         }.value
     }
 
-    func togglePlay() {
-        if isPlaying { pause() } else { play() }
-    }
+    func togglePlay() { if isPlaying { pause() } else { play() } }
 
     func play() {
         guard file != nil else { return }
@@ -132,10 +133,9 @@ final class PracticeAudioEngine {
         stopTimer()
     }
 
-    /// Tear down for screen exit (ADR 0025): halt playback, stop the engine, and
-    /// release the shared audio session so nothing keeps rendering — or holding
-    /// the session active — after the practice view is dismissed. The owning model
-    /// is recreated per visit, so the next entry reconfigures from scratch.
+    /// Tear down for screen exit (ADR 0025): halt playback, stop the engine, and release the shared
+    /// audio session so nothing keeps rendering — or holding the session active — after the practice
+    /// view is dismissed. The owning model is recreated per visit, so the next entry reconfigures.
     func stop() {
         pause()
         clickVoice.stopAll()
@@ -145,9 +145,8 @@ final class PracticeAudioEngine {
         sessionClaim.give(label: "practice")
     }
 
-    /// Move the play position; resumes from `seconds` if it was playing. A seek inside
-    /// an active loop resumes from that point within the region (not the loop start),
-    /// so you can reposition the playhead mid-loop — ADR 0041.
+    /// Move the play position; resumes from `seconds` if it was playing. A seek inside an active loop
+    /// resumes from that point within the region, not the loop start (ADR 0041).
     func seek(toSeconds seconds: TimeInterval) {
         let clamped = min(max(0, seconds), duration)
         seekFrame = AVAudioFramePosition(AudioMath.secondsToFrames(clamped, sampleRate: sampleRate))
@@ -316,6 +315,7 @@ final class PracticeAudioEngine {
             let played = heard(Double(playerTime.sampleTime) / playerTime.sampleRate)
             currentTime = min(duration, Double(seekFrame) / sampleRate + played)
         }
+        onTick?(currentTime)
     }
 
     /// Pull a rendered position back to what the ear is hearing, through the stretcher's

@@ -70,6 +70,7 @@ enum SongImporter {
     @MainActor
     @discardableResult
     static func persist(_ prepared: Prepared, into context: ModelContext) -> Song {
+        armWalkthroughIfFirstImport(in: context)
         let song = Song(title: prepared.title, duration: prepared.duration,
                         amplitudes: prepared.amplitudes, dateAdded: .now,
                         ref: SongRef(id: prepared.sourceID, source: .localFile,
@@ -77,6 +78,21 @@ enum SongImporter {
                         audioFileName: prepared.audioFileName)
         context.insert(song)
         return song
+    }
+
+    /// The first successful import arms the first-song walkthrough (ADR 0149 §2). **Here, because
+    /// every import passes through `persist`** — a picked file, a batch, and the starter track
+    /// (ADR 0219 D3) — so there is one arming site rather than one per caller.
+    ///
+    /// Asked *before* the insert, so the song being added is not its own evidence that the library
+    /// already had one. The fetch runs only while nothing has ever been armed, so no later import
+    /// pays for it; `Song.sample()` (the generated demo) holds no audio and does not count.
+    @MainActor
+    private static func armWalkthroughIfFirstImport(in context: ModelContext) {
+        guard AppSettings.songWalkthroughLedger() == .never else { return }
+        let songs = (try? context.fetch(FetchDescriptor<Song>())) ?? []
+        AppSettings.armSongWalkthroughIfFirstImport(
+            libraryAlreadyHadAudio: songs.contains(where: \.hasImportedAudio))
     }
 
     /// Single-file convenience: prepare then persist. The title defaults to the file

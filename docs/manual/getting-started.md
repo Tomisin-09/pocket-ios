@@ -83,6 +83,22 @@ the bar lines are drawn, and two markers, *Chords start* and *Solo start*, sit e
 four bars most worth looping first. They are ordinary markers — rename or delete them as you would
 your own.
 
+**The first song shows you round.** The first song you bring in — *Binta*, or one of your own —
+opens with a small card under the transport and three steps on it: **Loop it**, **Slow it down**
+and **Keep it**. Each one ticks when you do it. There is no Next button, because doing the thing is
+how it moves on, and each step carries one link into Help & FAQs for the why.
+
+On *Binta* the first step is guided. The playhead starts two bars before the chords come in; press
+play and it stops by itself on *Chords start*, with the Loop button ringed. Tap **Loop**. It plays
+on and stops again on *Solo start*: tap **Loop** again, and the four bars between the two start
+going round. The stops are there so your taps land on the bar lines. On any other song, and on
+*Binta* afterwards, a loop starts wherever you tap.
+
+Saving your first loop is marked once, and never again. If you told the opening questions you are
+comfortable or have been playing a while, the card offers the steps rather than starting them.
+Either way **✕** closes it for good, and **Help & FAQs ▸ Show the first-song guide again** brings
+it back for the next song you open.
+
 ### 2. Loop the hard bit
 
 Open the song. Play up to the start of the passage that keeps going wrong and tap **Loop**; play to

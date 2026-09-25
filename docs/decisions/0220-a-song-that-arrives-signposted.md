@@ -1,8 +1,10 @@
 # ADR 0220 — a song that arrives signposted
 
-- **Status:** Accepted — **build step 1 built** (2026-09-24, `pocket-326-the-song-knows-itself`):
-  the song arrives with its tempo, downbeat, grid lines and two markers. Steps 2 (beat 1, scripted,
-  with the rest of 0149's beats) and 3 (the two hints) are not built.
+- **Status:** Accepted — **build steps 1 and 2 built** (2026-09-24). Step 1
+  (`pocket-326-the-song-knows-itself`): the song arrives with its tempo, downbeat, grid lines and two
+  markers. Step 2 (`pocket-327-beat-one-scripted`): beat 1 scripted on the starter track, the rest of
+  0149's beats and its one ceremony — the choices the build made are under *Step 2 as built*. Step 3
+  (the two hints, D4) is not built.
 - **Date:** 2026-09-24 (`pocket-325-a-song-that-arrives-signposted`)
 - **Amends:** ADR 0219 — D1's "no loops **and no markers**" loses its second half. The starter track
   arrives with two markers, a measured tempo and downbeat, and grid lines on (D1–D2). The first
@@ -190,6 +192,64 @@ of test devices would cost more than it saves.
 3. **The two hints.** D4.
 
 Figures are reshot once, after slice 3, not per slice.
+
+## Step 2 as built (2026-09-24)
+
+ADR 0149 said what the beats are and left how they behave at the edges to the build. These are the
+answers it gave, recorded here because each one closes off an alternative.
+
+**The beats complete in any order.** A beat ticks on the action, never on a button (0149 §1), and
+the card shows whichever beat is first still outstanding. The alternative — each beat only counting
+once it is current — asks a player who saved the span before slowing it to make a second loop to
+satisfy the card. A saved loop also ticks *Loop it*: however it was made, it is a loop.
+
+**The ceremony lands on the first loop kept, even with *Slow it down* outstanding** (0149 §5 puts
+it on beat 3, and that is when beat 3 happened). Closing it returns the card to the beat still
+owed. Its latch is separate from the walkthrough's, so a re-entry from Help ticks silently.
+
+**Any player-driven step below full speed is *Slow it down* done.** The copy suggests "about half"
+with the musician's discretion attached; a tick that demanded 0.5× would be a grade (ADR 0070).
+Only the player's hand counts — arming a loop at its own tempo is the app setting the speed.
+
+**0149 §4's "substantial experience" is the intake's top two answers**: *Comfortable, want to level
+up* and *Been playing a while*. They are offered the walkthrough — one card, *Show me* or *Not now*
+— and everyone else, including anyone who skipped the question, gets it started.
+
+**Armed at the one import choke point, spent when it appears.** `SongImporter.persist` arms it,
+because every import passes through it, the starter track included (0219 D3). An import into a
+library that already held audio spends it instead, so a player upgrading into this is never walked
+through an app they already use. It is spent when the card appears — once the song's audio has
+loaded — rather than when the visit ends: a crash or a force-quit is the walk-away §4 describes, and
+a song that never loaded spends nothing. The only way back is **Show the first-song guide again**,
+last in Help & FAQs' *Getting started* (§4, §6). No schema: two `UserDefaults` keys.
+
+**The watcher.** `PracticeAudioEngine.onTick` hands the playhead to the model once per display
+frame; the pure `StarterTrackScript` decides, and the model pauses and seeks back onto the constant
+(D3, D5). Nothing observable is written on a frame unless the script's stage moved, so the card
+redraws a handful of times a walkthrough, not at 120 Hz (ADR 0153). A stop trips only on playback
+that runs *through* it — a jump of more than half a second is a seek or a skip, not playing — and
+not on a playhead already sitting on it, so resuming from the marker does not stop there again.
+Rewinding before *Chords start* without tapping Loop lets it stop there once more.
+
+**The lead-in places the playhead; it does not press play.** D3 step 1 starts playback two bars
+early. The walkthrough puts the playhead on bar 7 and the card says *Press play*: audio that starts
+itself on a screen the player has just opened, possibly somewhere quiet, is not ours to decide.
+
+**The hint that points at Loop is a ring on the button**, breathing unless Reduce Motion is on, and
+drawn outside the button so it cannot take the tap it asks for. VoiceOver announces the card's
+instruction at each pause. In landscape the card shows only the current beat, inline in the
+cockpit, because the reference list it sits above in portrait is a closed drawer there.
+
+**Each beat's single link (0149 §6) opens one Help answer.** Two were written for it: *Why loop one
+part of a song?* and *What happens to a loop I save?*; *Slow it down* points at the existing pitch
+answer. A test pins that every linked question is in the catalog.
+
+**Not built: 0149 §8's activation measure.** The analytics consent prompt arrives after a first
+practice (ADR 0120, 0147), so nothing that happens during the walkthrough is observable, and
+`loop_created` already exists. No event was added for a moment the pipeline cannot see.
+
+**Under test** the walkthrough is off unless a test asks for it with `-walkthrough`: it would sit
+over every control the suite drives, and over every figure the manual shoots on the player.
 
 ## Consequences
 

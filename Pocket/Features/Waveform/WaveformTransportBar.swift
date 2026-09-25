@@ -53,6 +53,9 @@ struct TransportBar: View {
     let onPunch: () -> Void
     /// True while a loop span is in play, so the control reads "armed" (ADR 0041).
     let isPunchActive: Bool
+    /// Ring the Loop control: the starter track's scripted first beat is holding on a marker and
+    /// waiting for this tap (ADR 0220 D3). The one hint that points at a control rather than saying so.
+    var hintsLoop: Bool = false
     /// Compact form (landscape, ADR 0042): smaller glyphs + a shorter bar so the
     /// transport always clears the bottom edge where vertical room is scarce.
     var compact: Bool = false
@@ -141,6 +144,7 @@ struct TransportBar: View {
     /// The big idle **Loop** identity circle, lit while an A/B span is forming (ADR 0041).
     private var idleLoopButton: some View {
         TransportControl(icon: "repeat", color: PocketColor.active, isActive: isPunchActive,
+                         isHinted: hintsLoop,
                          label: "Loop", diameter: identityDiameter, action: onPunch)
             .transition(.opacity)
     }
@@ -225,6 +229,8 @@ private struct TransportControl: View {
     var rotation: Double = 0
     let color: Color
     var isActive: Bool = false
+    /// A ring around the circle that says "this one, now" (ADR 0220 D3).
+    var isHinted: Bool = false
     let label: String
     var diameter: CGFloat = 52
     var glyphSize: CGFloat?
@@ -238,10 +244,33 @@ private struct TransportControl: View {
                 .foregroundStyle(isActive ? PocketColor.background : color)
                 .frame(width: diameter, height: diameter)
                 .background(Circle().fill(isActive ? color : PocketColor.surfaceStandard))
+                .overlay {
+                    if isHinted { HintRing(color: color).padding(-5) }
+                }
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
         .accessibilityAddTraits(isActive ? [.isSelected] : [])
+    }
+}
+
+/// The walkthrough's pointer at a control (ADR 0220 D3): a ring that breathes, or holds still under
+/// Reduce Motion. Drawn outside the button's circle and never hit-tested, so it cannot take the tap
+/// it is asking for.
+private struct HintRing: View {
+    let color: Color
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var dimmed = false
+
+    var body: some View {
+        Circle()
+            .stroke(color, lineWidth: 2.5)
+            .opacity(dimmed ? 0.35 : 1)
+            .allowsHitTesting(false)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) { dimmed = true }
+            }
     }
 }
 

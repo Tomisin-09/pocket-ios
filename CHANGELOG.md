@@ -65,6 +65,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   suits you should not require buying it first. Nothing is added to your library until you tap the
   card, and the card steps aside the moment you import a song of your own. One song: your own
   library, drills, routines and today's session are still part of Pro (ADR 0219, ADR 0220).
+- **Your first song shows you what the practice screen is for.** The first song you bring in — or
+  *Binta*, from the Start here card — opens with a small card under the transport and three things
+  to do: loop a part, slow it down, keep it. Each one ticks when you do it; there is no Next to
+  press. On *Binta*, playback pauses by itself where the chords come in and again where the solo
+  begins, so your two Loop taps land right on the bar lines. Saving that first loop is marked once,
+  and never again. If you told the opening questions you're comfortable or have been playing a
+  while, it is offered rather than started; ✕ closes it for good, and **Help & FAQs ▸ Show the
+  first-song guide again** brings it back. Two answers join Help & FAQs with it: *Why loop one part
+  of a song?* and *What happens to a loop I save?* (ADR 0149, ADR 0220).
 - **The paywall no longer greets you on the way in.** On the first launch after the opening
   questions it stays out of the way, so the first thing you meet is the app rather than the price.
   It appears as usual from the next launch.

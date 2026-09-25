@@ -199,6 +199,7 @@ extension WaveformPracticeModel {
         let loop = Loop(name: name, start: start, end: end, speed: speed, repeats: 4)
         context.insert(loop)
         Analytics.send(.loopCreated)
+        recordWalkthrough(.loopSaved)     // beat 3, and the one ceremony (ADR 0149 §5)
         loop.song = song          // attach → shows in `loops`, persists
         activeLoopID = loop.uid
         applyActiveLoopToEngine()
