@@ -34,8 +34,10 @@ If your library holds drills for more than one instrument, a row of chips appear
 **All**, then one per instrument you have. It is not there until it has something to do, and it goes
 away again if it stops having something to do.
 
-Hold any row for **Details**, **Add to folder…**, **Duplicate**, **Favourite** and **Delete**.
-Duplicate is the quickest way to make a variant of something you have already tuned. Delete goes
+Hold any row for **Details**, **Add to folder…**, **Add to routine…**, **Duplicate**, **Favourite**
+and **Delete**. **Add to routine…** lists your routines: tap one and the drill goes in as its last
+block, tap it again to take it back out — see [Routines](routines.md#building-one). Duplicate is the
+quickest way to make a variant of something you have already tuned. Delete goes
 behind an undo toast — the drill is only really gone once the toast has passed.
 
 ## Folders

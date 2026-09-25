@@ -3,34 +3,6 @@ import SwiftUI
 /// The drill-in levels and value projections behind `AddRoutineUnitSheet`. Split out of that file
 /// when the picker gained multi-add (ADR 0127), to keep both under the 400-line cap.
 
-/// A unit the add-to-routine picker can put into — or take back out of — the routine being edited
-/// (ADR 0127). One callback carries all four bucket types so the sheet has a single seam, and
-/// `pickID` is the **one** definition of a row's identity: the picker keys its "added" checkmarks
-/// on it and the editor keys the block it created on the same string, so the two can never drift.
-enum RoutineUnitPick {
-    case exercise(Exercise)
-    case loop(Loop)
-    /// The same `Loop`, added as an ears-only block (ADR 0104 Slice 2) — a *different* pick from
-    /// `.loop`, hence the prefixed id: both may sit in one routine.
-    case earLoop(Loop)
-    /// The same `Loop` again, added as an **improvise** block over it as a backing track (ADR 0135
-    /// Slice 2). A third distinct pick on one unit, for the same reason as `.earLoop`.
-    case improviseLoop(Loop)
-    case song(Song)
-
-    /// Stable per-row identity. A `Song` has no business `uid`; its import `sourceID` (a UUID
-    /// string for local files) stands in, as it already does in the library lists.
-    var pickID: String {
-        switch self {
-        case .exercise(let exercise): return exercise.uid.uuidString
-        case .loop(let loop): return loop.uid.uuidString
-        case .earLoop(let loop): return "ear-" + loop.uid.uuidString
-        case .improviseLoop(let loop): return "improv-" + loop.uid.uuidString
-        case .song(let song): return song.sourceID
-        }
-    }
-}
-
 /// A list of **sub-buckets** — the middle level of the picker (Exercises→templates,
 /// Loops→songs). Each row is a group that drills into its `UnitPickList`. Kept dumb (a rendered
 /// array of `PickGroup`) so the sheet owns all querying.

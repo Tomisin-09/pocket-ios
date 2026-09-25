@@ -131,9 +131,8 @@ struct RoutineDetailView: View {
         _isEditing = State(initialValue: false)
     }
 
-    /// The next explicit order value — one past the current maximum, so appends land last
-    /// regardless of prior deletions (never trust the item count, which drifts from `order`).
-    var nextOrder: Int { (routine.items.map(\.order).max() ?? -1) + 1 }
+    /// The next explicit order value — `Routine.nextOrder`, the one rule both adders share.
+    var nextOrder: Int { routine.nextOrder }
 
     /// Whether the routine has at least one runnable block — a unit block whose unit still resolves.
     /// Gates the Start button (an empty or all-orphaned routine has nothing to play). Internal for
@@ -372,10 +371,8 @@ struct RoutineDetailView: View {
         haptic(.medium)
     }
 
-    /// Renumber the blocks so `order` stays contiguous after an insert or a delete. The play order
-    /// is the explicit `order` (ADR 0066 R2), so every structural change re-lays it.
-    func renumberBlocks() {
-        for (index, item) in routine.orderedItems.enumerated() { item.order = index }
-    }
+    /// Renumber the blocks so `order` stays contiguous after an insert or a delete
+    /// (`Routine.renumberItems`).
+    func renumberBlocks() { routine.renumberItems() }
 
 }

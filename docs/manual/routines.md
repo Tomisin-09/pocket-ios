@@ -82,6 +82,13 @@ once you save it, where it sits with the routine's history — see
 
 **Save** commits; **Cancel** discards everything since you tapped Edit.
 
+**Or add from the drill's side.** Hold a row in **Exercises** or **Loops** and tap **Add to
+routine…**. Tap a routine and the drill or loop goes in as its last block, saved on the spot — no
+Edit, no Save. Tap the same routine again to take it back out, or tap another to add it there too;
+a routine that already has it says *already in it*. A loop asks whether it goes in as **Practice**,
+**Ear** or **Improv** when it can be more than one. **New routine…** makes one with it as the first
+block. To put it anywhere but the end, open the routine and drag it.
+
 ### Rests
 
 **Insert rest** does two different things. **Tap** it and a rest goes on the end, which is what you

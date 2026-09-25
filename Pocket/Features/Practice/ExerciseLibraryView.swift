@@ -5,9 +5,10 @@ import SwiftUI
 /// command-anchored drills — your own plus the seeded starters — pushed from the Practice hub.
 /// Owns exercise **creation** (the `+` → `NewExerciseSheet`) and **deletion**, since exercises live
 /// here and nowhere else. Tapping one opens its `ExerciseRunView`; holding one opens the shared row
-/// menu (Details · Duplicate · Favourite · Delete) via `.pocketRowActions` — the same affordances,
-/// in the same order, as every other list in the app (Slice 3). Delete is deferred behind an Undo
-/// toast, so the list filters out rows the `rowDeletion` seam reports as pending.
+/// menu (Details · Add to folder… · Add to routine… · Duplicate · Favourite · Delete, `+RowMenu`) via
+/// `.pocketRowActions` — the same affordances, in the same order, as every other list in the app
+/// (Slice 3). Delete is deferred behind an Undo toast, so the list filters out rows the
+/// `rowDeletion` seam reports as pending.
 ///
 /// Relies on an ambient `NavigationStack` (Practice → Home's stack), like the hub. Sort key +
 /// direction and the search query narrow the list in memory (ADR 0056) via the pure
@@ -17,8 +18,9 @@ struct ExerciseLibraryView: View {
     // extension in another file cannot see `private` (the `+Row` precedent).
     @Environment(\.modelContext) var context
     /// Red Moon Pro entitlement + the shared paywall (ADR 0112); safe preview defaults (free / no-op).
-    @Environment(\.isPro) private var isPro
-    @Environment(\.presentPaywall) private var presentPaywall
+    /// Internal for `+RowMenu`, which gates Duplicate and Add to routine… on it.
+    @Environment(\.isPro) var isPro
+    @Environment(\.presentPaywall) var presentPaywall
     /// Deferred, undoable row deletion (Slice 3). **Owned here, not by the modifier**: this view
     /// reads `isPending` itself to filter out a row awaiting its delete, and a modifier applied
     /// inside `body` can only publish to its descendants.
@@ -36,7 +38,7 @@ struct ExerciseLibraryView: View {
     @State private var opening: Exercise?
     /// The drill whose read-only reference sheet is open (Slice 3's "view info" row action) — the
     /// same `ExerciseDetailSheet` the run screen's ⓘ opens, now reachable without starting a run.
-    @State private var detailExercise: Exercise?
+    @State var detailExercise: Exercise?
     /// A song tapped in that sheet's **Songs** section, on its way to the player (ADR 0172) — the
     /// same two-state hand-off as `justCreated` → `opening` above, for the same reason, and shared
     /// with the run screen's ⓘ, which offers the identical route (`LinkedSongRoute`).
@@ -72,6 +74,8 @@ struct ExerciseLibraryView: View {
     @Query var routines: [Routine]
     /// The drill whose folder picker is open (D9), or `nil`.
     @State var filing: Exercise?
+    /// The drill on its way into a routine from its row (ADR 0222), or `nil`.
+    @State var routineRequest: AddToRoutineRequest?
     /// Whether the **Folders** section is open, persisted across launches and **default on**.
     ///
     /// It was default *off* while the tag backfill existed, because that gave a seeded library ten
@@ -256,9 +260,11 @@ struct ExerciseLibraryView: View {
                                     set: { if !$0 { filing = nil } })) {
             folderPicker
         }
+        // Item-bound safely: the request is a value with its own id, not the model (ADR 0090).
+        .sheet(item: $routineRequest) { AddToRoutineSheet(request: $0) }
     }
 
-    private func displayName(_ exercise: Exercise) -> String {
+    func displayName(_ exercise: Exercise) -> String {
         exercise.name.isEmpty ? "Untitled" : exercise.name
     }
 
@@ -275,36 +281,12 @@ struct ExerciseLibraryView: View {
         })
     }
 
-    /// The drill's own long-press actions: read what it is, or fork it (Slice 3).
-    private func menuItems(for exercise: Exercise) -> [PocketRowMenuItem] {
-        [PocketRowMenuItem("Details", systemImage: "info.circle") { detailExercise = exercise },
-         // "Add to folder…", never "Move to" (ADR 0210 D1) — a drill in two folders is the feature.
-         PocketRowMenuItem("Add to folder…", systemImage: "folder.badge.plus") { filing = exercise },
-         PocketRowMenuItem("Duplicate", systemImage: "plus.square.on.square") { duplicate(exercise) }]
-    }
-
     private func favorite(for exercise: Exercise) -> PocketRowFavorite {
         PocketRowFavorite(isFavorite: exercise.isFavorite) { exercise.isFavorite.toggle() }
     }
 
     private func deletion(for exercise: Exercise) -> PocketRowDelete {
         PocketRowDelete(id: exercise.uid, name: displayName(exercise)) { context.delete(exercise) }
-    }
-
-    /// Fork a drill into an editable copy — the cheapest way to make a variant of a template you've
-    /// already tuned (Slice 3). Copying is **authoring**, so it takes the same `canAuthor` gate as
-    /// creation (ADR 0112): a free player can run the seeded Pro-template freebies but can't fork
-    /// one into a drill of their own. The copy is inserted before its song links are assigned —
-    /// a relationship can't be set on an un-inserted model.
-    private func duplicate(_ exercise: Exercise) {
-        guard AccessPolicy.canAuthor(exercise.template, isPro: isPro) else {
-            return presentPaywall(.newExercise(exercise.template))
-        }
-        let name = CopyNaming.copyName(of: exercise.name, existing: exercises.map(\.name))
-        let copy = exercise.duplicated(named: name)
-        context.insert(copy)
-        copy.linkedSongs = exercise.linkedSongs
-        haptic(.medium)
     }
 
     /// One library row, entitlement-aware (ADR 0112): a runnable drill (free-tier template, a

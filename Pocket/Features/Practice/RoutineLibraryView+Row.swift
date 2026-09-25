@@ -62,7 +62,7 @@ extension RoutineLibraryView {
                             .accessibilityLabel("Favourite")
                     }
                 }
-                Text(summary(for: routine))
+                Text(routine.blockSummary)
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.practice)
                 if let line = self.history(for: routine, facts: facts) {
@@ -98,25 +98,6 @@ extension RoutineLibraryView {
             .foregroundStyle(PocketColor.background)
             .padding(.horizontal, 6).padding(.vertical, 1)
             .background(Capsule().fill(PocketColor.practice))
-    }
-
-    /// "3 blocks · 1 rest" — what is *in* the routine; "Empty" before any blocks.
-    ///
-    /// **Blocks, not units.** The detail screen's own section header says `Blocks` and the model
-    /// calls them blocks; this row was the only surface calling them units, which left the two
-    /// screens disagreeing about what the things in a routine are.
-    ///
-    /// **Not "exercise blocks"**, which was tried and rejected the same day: `kind.carriesUnit` is
-    /// true for a loop and a song block as well as an exercise one (ADR 0129/0134), so a routine of
-    /// two loops and a song would have read "3 exercise blocks". "Blocks" is true of all three.
-    func summary(for routine: Routine) -> String {
-        let items = routine.items
-        guard !items.isEmpty else { return "Empty" }
-        let blocks = items.filter(\.kind.carriesUnit).count
-        let rests = items.count - blocks
-        var parts = ["\(blocks) block\(blocks == 1 ? "" : "s")"]
-        if rests > 0 { parts.append("\(rests) rest\(rests == 1 ? "" : "s")") }
-        return parts.joined(separator: " · ")
     }
 
     /// "Practised 11 times · 3 days ago" — what the routine has *come to*, or `nil` when it has
