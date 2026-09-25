@@ -45,6 +45,8 @@ struct LoopsPanel: View {
     /// Multi-select (ADR 0125). The bar itself is pinned above the scroll view by
     /// `PracticeReference`; the panel only needs the state and the row intents.
     var selection = PanelSelectionSeam()
+    /// The row the first session's backing-track hint rings (ADR 0220 D4), if any.
+    var hintedLoopID: UUID?
     /// Landscape drawer (ADR 0042): tighten each row (no range, closer icons).
     var compact: Bool = false
 
@@ -71,6 +73,7 @@ struct LoopsPanel: View {
                                 isSelecting: selection.isActive,
                                 isSelected: selection.selection.contains(loop.uid),
                                 snagCount: snagCounts[loop.uid] ?? 0,
+                                isHinted: loop.uid == hintedLoopID,
                                 onActivate: { onActivate(loop) },
                                 onToggleSelection: { selection.toggle(loop.uid) },
                                 onAdjustRange: { onAdjustRange(loop) },
@@ -96,6 +99,8 @@ private struct LoopRow: View {
     let isSelected: Bool
     /// Marks inside this loop's span (ADR 0206 D1); `0` draws nothing.
     let snagCount: Int
+    /// Ringed by the backing-track hint (ADR 0220 D4): this is the row to hold.
+    var isHinted = false
     let onActivate: () -> Void
     let onToggleSelection: () -> Void
     let onAdjustRange: () -> Void
@@ -157,6 +162,13 @@ private struct LoopRow: View {
                     Button("Edit", action: onEdit)
                     Button("Adjust range", action: onAdjustRange)
                     Button("Delete", action: onDelete)
+                }
+            }
+            // Round the part that takes the hold, not the adjust pair beside it.
+            .overlay {
+                if isHinted && !isSelecting {
+                    HintRing(color: color, shape: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .padding(-4)
                 }
             }
 

@@ -27,6 +27,7 @@ extension WaveformPracticeModel {
     private func deleteLoops(_ targets: [Loop]) {
         guard !targets.isEmpty else { return }
         let uids = Set(targets.map(\.uid))
+        walkthroughLoopsDeleted(uids)     // a hint must not point at a row that has gone (ADR 0220 D4)
         let wasActive = activeLoopID.map(uids.contains) ?? false
         let previouslyActive = activeLoopID
         if wasActive {

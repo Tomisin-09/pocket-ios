@@ -1,10 +1,11 @@
 # ADR 0220 — a song that arrives signposted
 
-- **Status:** Accepted — **build steps 1 and 2 built** (2026-09-24). Step 1
+- **Status:** Accepted — **all three build steps built** (2026-09-25). Step 1
   (`pocket-326-the-song-knows-itself`): the song arrives with its tempo, downbeat, grid lines and two
   markers. Step 2 (`pocket-327-beat-one-scripted`): beat 1 scripted on the starter track, the rest of
   0149's beats and its one ceremony — the choices the build made are under *Step 2 as built*. Step 3
-  (the two hints, D4) is not built.
+  (`pocket-328-the-two-hints`): the click and backing-track hints (D4), under *Step 3 as built*,
+  which also settles where the backing-track hint points.
 - **Date:** 2026-09-24 (`pocket-325-a-song-that-arrives-signposted`)
 - **Amends:** ADR 0219 — D1's "no loops **and no markers**" loses its second half. The starter track
   arrives with two markers, a measured tempo and downbeat, and grid lines on (D1–D2). The first
@@ -251,6 +252,70 @@ practice (ADR 0120, 0147), so nothing that happens during the walkthrough is obs
 **Under test** the walkthrough is off unless a test asks for it with `-walkthrough`: it would sit
 over every control the suite drives, and over every figure the manual shoots on the player.
 
+## Step 3 as built (2026-09-25)
+
+D4 said what the two hints are. These are the answers the build gave, each of which closes off an
+alternative.
+
+**The hints are their own pure type, `StarterTrackHints`, beside the script and not inside
+`SongWalkthrough`.** That keeps D4's first rule structural: nothing the beats decide reads a hint, so
+a hint cannot gate one. It lives exactly as long as the walkthrough's visit, which has to change in
+one place: the walkthrough used to end the moment its last beat ticked, and the backing-track hint
+arrives *after* that. It now ends when no beat is outstanding **and** no hint is showing.
+
+**Starter track only.** D6 scopes D1–D5 to the starter track, and D4 is inside that. Both hints also
+depend on things only it guarantees: a grid from the first note, and four bars of chords.
+
+**The backing-track hint is offered only when the loop kept is the scripted span**, *Chords start* to
+*Solo start* within 50 ms. It says "four bars of chords make a good bed", and that is only true of that
+loop. The script seeks onto each stop, so a scripted loop lands within a millisecond, and a handle
+dropped on a marker snaps there exactly. A tap by ear, 150–250 ms late (D3), does not qualify. A
+player who loops something else is not told it makes a good bed.
+
+**The click hint arrives with the span, not with the loop saved.** "Once beat 1's loop is playing"
+is the moment the second Loop tap closes the span, because the span repeats straight away. It is not
+offered when the click is already on (there is nothing to point at). It is not offered when there is
+no grid either: the hint points at a click that exists, never at a tempo to set, which is the skill
+D1 says a new player lacks.
+
+**One hint at a time.** Keeping the loop offers the backing-track hint, which replaces a click hint
+still showing, and that click hint is spent. It has had two beats to be noticed. Showing both would put
+two pointers on one screen, the ride 0149 §5 warns against.
+
+**Shown once means once per run.** A hint that is taken, dismissed or replaced does not come back on
+that visit. It is not latched per install the way the ceremony is (0149 §5's "exactly once" is about
+the moment). A player who asks for the guide again from Help gets the hints again, because that is
+what they asked for.
+
+**Neither hint shows during the ceremony.** The ceremony card replaces the beats and the hint rows,
+and the rings go with them. The moment belongs to the player, and a pointer pulsing somewhere else
+would talk over it. The backing-track hint appears when the ceremony closes. On a re-entry, where the
+ceremony has already been seen, it appears as soon as the loop is kept.
+
+**How a hint looks.** Each hint is the same ring as beat 1's on Loop, now shared as `HintRing`, plus
+one row on the card. The ring on the metronome is teal and round. The ring on the kept loop's row is
+a rounded rectangle in the loop's own colour, and goes round the part that takes the hold, not the
+adjust pair beside it. The card row sits under the beats behind a divider. Its badge is the glyph of
+what it points at rather than a number, and its title is in the accent. Two bold white titles on one
+card read as two steps; the simulator showed that before the tint went in. The row has its own ✕,
+separate from the card's ✕, which still ends the whole guide. Once the beats are done a hint can be
+the whole card, and then the card's ✕ is the hint's. VoiceOver announces each hint when it appears.
+
+**Where the backing-track hint points: both places** (decided 2026-09-25 from simulator screenshots,
+as the Consequences below asked). A hold is the only way into Edit loop, so the card says *"Hold Loop
+1 and turn on Backing track"* and the row carries the ring. Inside the sheet, Edit loop opens
+scrolled to the toggle and rings it until it is switched on. At the sheet's medium detent the toggle
+sits four sections below the fold, so without that half a new player would hold, find Name and
+Range, and have to go looking. The Loops panel is expanded when the hint is offered, since a ring on
+a row inside a folded panel points at nothing.
+
+**What ends each hint.** The click hint ends when the click is switched on, from the hint or not. The
+backing-track hint ends when the loop is a backing track once Edit loop closes. The flag is written
+only on Done, so the model reads the loop after the sheet has gone rather than watching the toggle,
+and Cancel does not count. Deleting the kept loop also ends it, at the delete and not when the delete
+commits, because the row disappears straight away. **Improvise does not end it**: it runs on any loop
+without setting the flag, and the flag is what the hint is about.
+
 ## Consequences
 
 - **The starter track's first loop is the same for everyone.** That is the intent: every player's
@@ -265,6 +330,8 @@ over every control the suite drives, and over every figure the manual shoots on 
   the resource has to repeat the D1 measurement, and `StarterTrackTests` records why.
 - **The play-along snap question is open (D3).** If first-session analytics show players who finish
   the walkthrough then make ragged loops on their own songs, that is the ADR to write.
-- **Where the backing-track hint points is not decided.** The toggle lives inside Edit loop, one tap
-  past the loop's row, so the hint either points at the row or goes into the sheet. Decide it with a
-  screenshot of each, not from this text.
+- **Where the backing-track hint points was decided from screenshots:** both places. See *Step 3 as
+  built*. The toggle is one **hold** past the loop's row, not one tap as this line first said.
+- **The reshoot this ADR deferred is now owed.** With step 3 built, the figures that show Binta's
+  tempo, `toolkit/faq` (the guide row and two new answers), and any figure of the walkthrough are
+  taken once, together. The shoot has to pass `-walkthrough` to show the card at all.

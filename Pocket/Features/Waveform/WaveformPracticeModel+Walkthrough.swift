@@ -34,16 +34,25 @@ extension WaveformPracticeModel {
     }
 
     /// ✕ — permanent and silent (0149 §4). The ledger was already spent when the card appeared.
+    /// Takes the hints with it: they belong to the walkthrough's session, not beside it (D4).
     func dismissWalkthrough() {
         walkthrough = nil
+        starterHints = nil
         stopStarterTrackScript()
     }
 
     /// Close the ceremony. A beat still outstanding (the span was kept before it was slowed) comes
-    /// back; otherwise the walkthrough is over.
+    /// back, and so does a hint waiting behind it; otherwise the walkthrough is over.
     func dismissWalkthroughCeremony() {
         walkthrough?.dismissCeremony()
-        if walkthrough?.phase == .finished { dismissWalkthrough() }
+        endWalkthroughIfDone()
+    }
+
+    /// Over when no beat is outstanding and no hint is showing — the backing-track hint arrives
+    /// after the last beat, so the beats alone cannot say (ADR 0220 D4).
+    func endWalkthroughIfDone() {
+        guard walkthrough?.phase == .finished, starterHints?.showing == nil else { return }
+        dismissWalkthrough()
     }
 
     /// Report something the player did. Every hook calls this; it no-ops on any visit not running the
@@ -57,7 +66,7 @@ extension WaveformPracticeModel {
             AppSettings.recordSongWalkthroughCeremonySeen()
             haptic(.success)
         }
-        if next.phase == .finished { dismissWalkthrough() }
+        endWalkthroughIfDone()
     }
 
     /// Whether the Loop button carries the hint: the script is holding on a marker (D3).
@@ -70,7 +79,12 @@ extension WaveformPracticeModel {
     func walkthroughSpanDidChange(from old: ABSpan) {
         guard walkthrough != nil else { return }
         advanceScript { $0.spanChanged(scriptSpan) }
-        if !old.isSet, abSpan.isSet, abEditingLoop == nil { recordWalkthrough(.spanClosed) }
+        guard !old.isSet, abSpan.isSet, abEditingLoop == nil else { return }
+        // The span loops the moment it closes, so this is also "beat 1's loop is playing" — the
+        // click hint's cue (ADR 0220 D4). Offered before the beat is recorded, so the card that
+        // moves on to *Slow it down* arrives with it rather than redrawing twice.
+        walkthroughLoopStarted()
+        recordWalkthrough(.spanClosed)
     }
 
     /// One display frame of playback (`PracticeAudioEngine.onTick`).
@@ -96,6 +110,7 @@ extension WaveformPracticeModel {
         guard song.isStarterTrack, starterScript == nil else { return }
         let script = StarterTrackScript()
         starterScript = script
+        starterHints = StarterTrackHints()     // D4 rides with the script: starter track only (D6)
         // D3 step 1: two bars early, so the section is heard arriving. Not while a saved loop is
         // armed — a seek outside its region would land somewhere the loop never plays.
         if activeLoopID == nil { engine.seek(toSeconds: script.leadIn) }

@@ -5,7 +5,8 @@ import XCTest
 ///
 /// The rules are unit-tested (`StarterTrackScriptTests`, `SongWalkthroughTests`). What only a driven
 /// run shows is the wiring: that the engine's per-frame tick reaches the model, that the pause
-/// actually stops playback and puts the playhead on the marker, and that the card follows along.
+/// actually stops playback and puts the playhead on the marker, that the card follows along, and
+/// that the click hint (ADR 0220 D4) arrives with the loop and goes when the click is switched on.
 ///
 /// **It leaves nothing behind**, because this simulator's store is shared with the rest of the suite
 /// and `StarterTrackUITests` asserts Binta has no loops and opens at 83 BPM. So it stops short of
@@ -56,6 +57,16 @@ final class SongWalkthroughUITests: UITestCase {
         let span = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "0:23 – 0:35")).firstMatch
         XCTAssertTrue(span.exists, "The loop did not close on the two markers (bar 9 to bar 13)")
+
+        // ADR 0220 D4: the click hint arrives with the loop, and switching the click on takes it.
+        // Matched on content: the hint's row reads as one element, title and body together.
+        let clickHint = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "Tap the metronome for a click")).firstMatch
+        XCTAssertTrue(clickHint.waitForExistence(timeout: Self.uiTimeout), "The click hint did not arrive")
+        let metronome = app.buttons["Metronome click"]
+        metronome.tap()
+        XCTAssertTrue(waitForDisappearance(of: clickHint), "Turning the click on did not take the hint")
+        metronome.tap()     // and off again
 
         // Beat 2 is the player's hand on the speed.
         app.buttons["0.50×"].tap()

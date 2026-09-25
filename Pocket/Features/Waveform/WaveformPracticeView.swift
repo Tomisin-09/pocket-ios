@@ -140,9 +140,12 @@ struct WaveformPracticeView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .sheet(item: $model.editingLoop, onDismiss: model.launchPendingPractice) { ref in
+        .sheet(item: $model.editingLoop, onDismiss: {
+            model.launchPendingPractice()
+            model.walkthroughLoopEditClosed()   // the backing-track hint, taken (ADR 0220 D4)
+        }, content: { ref in
             loopEditSheet(ref.value)
-        }
+        })
         .fullScreenCover(item: $model.practiceLoop) { loop in
             // "Practice now" from the edit sheet (ADR 0082): the loop trainer full-screen. The back
             // control returns to the waveform it launched from (a cover has no back button of its own;
@@ -382,6 +385,7 @@ private extension WaveformPracticeView {
                       onWiden: { start, end in model.startWidenEdit(loop, toStart: start, end: end) },
                       onSaved: { restore in model.presentUndo("Saved changes", undo: restore) },
                       onPracticeNow: { model.pendingPracticeLoop = loop },
-                      onOpenNestedAudio: model.pauseForNestedAudio)
+                      onOpenNestedAudio: model.pauseForNestedAudio,
+                      pointsAtBackingTrack: loop.uid == model.walkthroughHintedLoopID)
     }
 }

@@ -60,6 +60,9 @@ extension LoopEditSheet {
 
     // MARK: - Backing track (ADR 0135)
 
+    /// The toggle's scroll anchor, for the backing-track hint (ADR 0220 D4).
+    static let backingTrackRowID = "loop-edit-backing-track"
+
     /// The backing-track flag and its guidance. Its **own** section because the caption is advice
     /// about this one claim — a footer under Practice would read as applying to mastery, focus and
     /// command tempo as well.
@@ -75,6 +78,16 @@ extension LoopEditSheet {
             }
             .tint(PocketColor.practice)
             .accessibilityHint("Shows this loop on the backing-tracks shelf in your loops library")
+            // Rung until it is switched on, while the first session's hint points here (ADR 0220 D4).
+            .overlay {
+                if pointsAtBackingTrack && !isBackingTrack {
+                    HintRing(color: PocketColor.practice,
+                             shape: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .padding(.horizontal, -10)
+                        .padding(.vertical, -6)
+                }
+            }
+            .id(Self.backingTrackRowID)
         } footer: {
             Text("Mark a section you want to solo over. It'll show up under Backing tracks in your "
                 + "loops library, with an Improvise button on its row. Works best over a whole "
@@ -291,5 +304,21 @@ extension LoopEditSheet {
     private func addTag() {
         tags = Labels.adding(newTag, to: tags)
         newTag = ""
+    }
+}
+
+/// Scroll a row into view once, on appear, when asked. A modifier so the `Form` it wraps keeps its
+/// indentation and the sheet's already-heavy body gains no closure for the type-checker to chew on.
+struct ScrollsIntoView<ID: Hashable>: ViewModifier {
+    let id: ID
+    let when: Bool
+
+    func body(content: Content) -> some View {
+        ScrollViewReader { proxy in
+            content.onAppear {
+                guard when else { return }
+                proxy.scrollTo(id, anchor: .center)
+            }
+        }
     }
 }
