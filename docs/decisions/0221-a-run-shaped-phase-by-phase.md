@@ -1,7 +1,7 @@
 # ADR 0221 — a run shaped phase by phase
 
 - **Status:** Accepted. Step 1 (exercises, and the pencil on both run screens) built on
-  `pocket-330-phase-rows-exercises`; see *As built*. Step 2 (loops) is not yet built.
+  `pocket-330-phase-rows-exercises`; step 2 (loops) on `pocket-331-phase-rows-loops`. See *As built*.
 - **Date:** 2026-09-25 (`pocket-329-phase-rows`)
 - **Amends:** ADR 0045 — the four-phase profile stands, but only **command** is mandatory: the
   warm-up and the summit become optional, as the back-off already is (D2), and every phase gets a
@@ -251,7 +251,7 @@ from an older build, has to decode and read as today's shape. Duplication copies
   bug, which now play the count their screen showed (D4).
 - `CommandRamp` loses `stepBPM` and gains a warm-up count, two switches and three holds. Every call
   site changes, and its tests grow a case for each combination of switches.
-- `RoutineStepsControls` is deleted once both panels have moved (step 2).
+- `RoutineStepsControls` is deleted once both panels have moved (step 2; done).
 - `RoutineStairs` gains an optional length line (D10). All four callers pass it in: both run screens
   and both block previews.
 - The manual's Practice Settings section, its pencil line, and the reference strings for these
@@ -290,6 +290,33 @@ chosen on, and one the build forced:
   It showed `workingTempo`, which on an exercise with no measured command *is* command, so the row
   and the bars disagreed. Moving it pins command first, as the loop preview and the run screen's
   save already do.
+
+**As built (step 2).** Loops moved onto the same `PracticeSettingsPanel`, and `LoopSettingsPanel`,
+`RoutineStepsControls` and `CommandRamp.warmupStepBPM` are deleted. What the decisions above left
+open:
+
+- **The fold happens on read, and the first save writes it.** `Loop.runShape` multiplies every
+  stored hold by `rampRepsPerStep`, so a loop that has never been saved through the rows already
+  shows its holds in passes and plays exactly what it played. `Loop.applyRunShape(_:)` writes the
+  passes and `rampRepsPerStep = 1`, after which the multiplication is the identity. Start saves too
+  (0057), so the fold also lands on the first run. A loop's ramp is built with one pass per interval
+  whether or not it has folded, and the tempo at every pass is the same either way (a test checks it
+  pass by pass). One thing does move by less than a step: a generated session fits a loop's dwell in
+  whole passes rather than in whole reps-per-step intervals.
+- **A folded hold may sit above 12.** D3 gives every hold 1…12 intervals, and on a loop an interval is
+  now one pass, so the range is 1…12 passes. But the fold multiplies: 4 reps a step with a dwell of 4
+  is 16 passes. Clamping it would change what the loop plays, which D8 rules out. So
+  `RunShape.setHold` treats a hold that is already above the ceiling as its own ceiling: − walks it
+  down one pass at a time, + does nothing, and once it is inside 1…12 the range holds. **Open:** the
+  old controls could reach 96 passes at command (12 × 8 reps), and the rows can author at most 12. A
+  short loop, a one-bar lick say, may want more than 12 passes at command. If it does, the fix is a
+  loop-specific ceiling, not a return to reps per step.
+- **A loop whose song hasn't resolved** has no region to price, so D10's line states the passes alone
+  (`12 passes`) rather than the formatter's `≈ 5 s` floor.
+- **The loop block preview's tempo readout** (`70% → 85%`, `reach 91%`) follows the shape: it drops
+  the climb when Warm-up is off or has no room, and the reach when Reach is off (D6).
+- **The Loops library row** prints `Command 85%` alone with Reach off (D6), and both loop completion
+  offers, standalone and in a routine, raise to `Loop.summitSpeed`, which is command when Reach is off.
 
 **Figures owed.** One shoot, at the end of step 2 and together with ADR 0220's owed reshoot:
 `exercises/run-setup`, `exercises/practice-settings`, `exercises/staircase`, and

@@ -165,8 +165,10 @@ extension RoutinePlayerView {
             // Percent-of-original throughout (ADR 0082). `backoffPercent` is already derived in the
             // integer-percent domain `CommandRamp` computes the tail in, so the offer and the ramp
             // the run just played cannot drift by a percent (ADR 0134 §3/§8).
+            // The summit, not the reach: a block run with Reach off never went above command, so
+            // there is nothing to raise to (ADR 0221 D6).
             let range = TempoMath.percentRange
-            let reach = LoopCommandRamp.percent(loop.targetSpeed)
+            let reach = LoopCommandRamp.percent(loop.summitSpeed)
             return (.init(command: LoopCommandRamp.percent(loop.command),
                           floor: range.lowerBound, ceiling: range.upperBound,
                           raiseTarget: CommandOffer.raisedCommand(reach: reach,

@@ -268,12 +268,12 @@ struct ExerciseBlockPreview: View {
 
 // MARK: - Shared preview pieces
 
-/// The tempo/speed anchor line shared by both previews: "working → command · reach", in the unit the
-/// block trains in (BPM for exercises, % of original for loops). Internal, not private, because the
-/// loop previews live in the `+Loop` split.
+/// The tempo/speed anchor line on a loop block's preview: "working → command · reach", in % of
+/// original. Internal, not private, because the loop previews live in the `+Loop` split.
 struct PreviewTempoReadout: View {
     let anchors: String
-    let reach: String
+    /// The reach, or `nil` when the run has none (ADR 0221 D6) — the caption then states the unit alone.
+    let reach: String?
     let unit: String
 
     var body: some View {
@@ -281,7 +281,7 @@ struct PreviewTempoReadout: View {
             Text(anchors)
                 .font(.pocketMono(.title3))
                 .foregroundStyle(PocketColor.textPrimary)
-            Text("reach \(reach) · \(unit)")
+            Text(reach.map { "reach \($0) · \(unit)" } ?? unit)
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }

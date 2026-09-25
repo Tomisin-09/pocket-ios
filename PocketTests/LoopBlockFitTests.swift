@@ -6,18 +6,16 @@ import XCTest
 /// Two gaps closed here. A loop block in a generated session was **allotted a slot and ignored it** —
 /// `LoopRunView` never read `plannedMinutes` at all — and a loop's staircase showed the same
 /// `working == command` collapse `Exercise.rampFloor` had already fixed: only command and reach
-/// rendered, no warm-up and no back off, because `LoopCommandRamp.make(loop:)` took the raw `speed`.
+/// rendered, no warm-up and no back off, because the loop ramp was built from the raw `speed`.
 final class LoopBlockFitTests: XCTestCase {
 
     /// A loop over a 2-minute song covering 10% of it — a 12-second region.
-    private func loop(speed: Double, command: Double? = nil, dwell: Int = 4,
-                      repsPerStep: Int = 1) -> Loop {
+    private func loop(speed: Double, command: Double? = nil, dwell: Int = 4) -> Loop {
         let loop = Loop(name: "Chorus lick", start: 0.1, end: 0.2, speed: speed, repeats: 3)
         loop.song = Song(title: "Test", duration: 120,
                          ref: SongRef(id: "s1", source: .localFile, bookmark: nil))
         loop.commandTempo = command
         loop.rampDwellIntervals = dwell
-        loop.rampRepsPerStep = repsPerStep
         return loop
     }
 
@@ -72,17 +70,17 @@ final class LoopBlockFitTests: XCTestCase {
     }
 
     func testAFlatRampIsItsPassesTimesTheirCost() {
-        // No climb, no summit, no back off: 4 dwell intervals × 2 passes each at 85% of a 12s region.
-        let ramp = LoopCommandRamp.make(working: 0.85, command: 0.85, target: 0.85, warmupSteps: 0,
-                                        dwellIntervals: 4, includeBackoff: false, repsPerStep: 2)
+        // No climb, no summit, no back off: 8 passes at 85% of a 12s region.
+        let ramp = LoopCommandRamp.make(working: 0.85, command: 0.85, target: 0.85,
+                                        shape: RunShape(includeBackoff: false, dwell: 8))
         XCTAssertEqual(ramp.plateaus.map(\.bpm), [85])
         XCTAssertEqual(LoopEstimate.seconds(forRamp: ramp, regionSeconds: 12),
                        8 * 12 * 100.0 / 85.0, accuracy: 0.001)
     }
 
     func testTheWarmUpPlateauIsPricedAtItsOwnSlowerSpeed() {
-        let ramp = LoopCommandRamp.make(working: 0.50, command: 1.0, target: 1.0, warmupSteps: 0,
-                                        dwellIntervals: 1, includeBackoff: false, repsPerStep: 1)
+        let ramp = LoopCommandRamp.make(working: 0.50, command: 1.0, target: 1.0,
+                                        shape: RunShape(includeBackoff: false, dwell: 1))
         XCTAssertEqual(ramp.plateaus.map(\.bpm), [50, 100])
         // One pass at 50% (20s) + one at 100% (10s) — a flat average would have said 2 × 10s.
         XCTAssertEqual(LoopEstimate.seconds(forRamp: ramp, regionSeconds: 10), 30, accuracy: 0.001)

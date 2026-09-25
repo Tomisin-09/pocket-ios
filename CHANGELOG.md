@@ -139,6 +139,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **The staircase says how long the run is** — *≈ 1 min 5 s · 16 bars* — under its captions, on the
   run screen and a routine block's preview. It is the length of the run you are about to play,
   fitted to the block where a session sized it, and it does not count down.
+- **A loop's Practice Settings are the same phase rows**, on its run screen and a routine block's
+  preview, with every tempo a percentage of the song's speed. Everything above comes with them: a
+  switch on Warm-up and Reach, a hold for every phase, the lit phase and the length line
+  (*≈ 2 min 40 s · 12 passes*). A loop's holds count **passes** through it, and **Reps per step** is
+  gone. It used to multiply every hold, so its value has moved into them: a loop at 2 reps a step
+  with a command of 4 now shows a command hold of 8 passes and plays exactly what it did. As on an
+  exercise, **Steps** reads one more than it used to for the same setting, and a loop with Reach off
+  shows its command alone in the Loops library and offers no move up when it finishes.
 - **The quick-note ✏️ is on a run screen only while it's running**, or inside a routine. Stopped,
   the **Journal** bar under the staircase writes notes too, so the screen no longer offers two ways
   to the same thing.

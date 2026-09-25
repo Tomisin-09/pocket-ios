@@ -259,12 +259,19 @@ struct LoopLibraryView: View {
             PracticeUnitRow(title: displayName(loop),
                             context: loop.song?.title,
                             progress: LoopModeAccess.allows(.trainer, loop)
-                                ? "Command \(LoopCommandRamp.percent(loop.command))% → "
-                                  + "\(LoopCommandRamp.percent(loop.targetSpeed))%"
+                                ? commandSummary(loop)
                                 : unmeasuredSummary(loop),
                             isFavorite: loop.isFavorite)
             Spacer(minLength: 0)
         }
+    }
+
+    /// `Command 85% → 91%` — the command and the reach a run of it climbs to, or the command alone
+    /// when Reach is off, because that is what a run of it plays (ADR 0221 D6).
+    private func commandSummary(_ loop: Loop) -> String {
+        let command = "Command \(LoopCommandRamp.percent(loop.command))%"
+        guard loop.includeReach else { return command }
+        return "\(command) → \(LoopCommandRamp.percent(loop.targetSpeed))%"
     }
 
     private func unmeasuredSummary(_ loop: Loop) -> String {

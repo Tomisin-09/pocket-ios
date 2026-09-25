@@ -28,15 +28,11 @@ extension LoopRunView {
         // a saved speed that's already lower wins (device feedback 2026-07-17). The rule itself lives
         // on `Loop.rampFloor` so the model-level staircase and this one cannot disagree (ADR 0129).
         working = clampPercent(LoopCommandRamp.percent(loop.rampFloor))
-        // Restore the saved ramp shape (ADR 0057 follow-up); migrated/new loops read the
-        // declaration defaults (no intermediate stops, single drop, one rep per step).
-        steps = loop.rampWarmupSteps
-        reachSteps = loop.rampReachSteps
-        backoffSteps = loop.rampBackoffSteps
-        repsPerStep = max(Self.repsRange.lowerBound, loop.rampRepsPerStep)
-        dwell = max(1, loop.rampDwellIntervals)
+        // Restore the saved shape, holds in passes (ADR 0221 D8). A loop not yet saved through the
+        // phase rows still stores reps per step; `runShape` folds it into the holds, so the screen
+        // shows — and Start plays — exactly what the loop played before.
+        shape = loop.runShape
         targetOverride = loop.targetSpeedOverride.map { LoopCommandRamp.percent($0) }
-        includeBackoff = loop.includeBackoff
         backoffOverride = loop.backoffSpeedOverride.map { LoopCommandRamp.percent($0) }
         // In a routine, a naturally-finished ramp auto-advances the session (never a manual stop) —
         // and logs the block as a completed unit-run first (ADR 0117), before advancing tears this
@@ -52,7 +48,7 @@ extension LoopRunView {
         baseline = current
     }
 
-    /// Write the current tempos to the loop — shared by Save Changes and Start so the two write
+    /// Write the current setup to the loop — shared by Save Changes and Start so the two write
     /// paths never diverge (ADR 0057). Re-baselines so the Save Changes button hides.
     func persist() {
         loop.speed = Double(working) / 100
@@ -60,13 +56,9 @@ extension LoopRunView {
         // After promoteCommand (which auto-clears a caught-up pin), write the current pin — always
         // above command here, so it survives — or clear it when reset to auto (ADR 0075).
         loop.targetSpeedOverride = targetOverride.map { Double($0) / 100 }
-        loop.includeBackoff = includeBackoff
         loop.backoffSpeedOverride = backoffOverride.map { Double($0) / 100 }
-        loop.rampWarmupSteps = steps
-        loop.rampReachSteps = reachSteps
-        loop.rampBackoffSteps = backoffSteps
-        loop.rampRepsPerStep = repsPerStep
-        loop.rampDwellIntervals = max(1, dwell)
+        // Writes the holds in passes and retires reps per step (ADR 0221 D8).
+        loop.applyRunShape(shape)
         try? modelContext.save()
         baseline = current
     }
@@ -126,10 +118,13 @@ extension LoopRunView {
 
     /// Wire `model.onFinished` to raise the post-run completion screen for a standalone run (ADR 0082).
     /// Fires only when the ramp runs its full course (dwell → summit → back off), never on a manual
-    /// stop. The reach/command (percent of original) are snapshotted now so the offer stays stable
+    /// stop. The summit/command (percent of original) are snapshotted now so the offer stays stable
     /// regardless of later edits.
+    ///
+    /// With Reach off the run never went above command, so the summit **is** command and the screen
+    /// offers no raise (ADR 0221 D6) — `CommandOffer.canRaise` reads that as nothing to raise to.
     private func armCompletionOffer() {
-        let summitedReach = reach
+        let summitedReach = shape.includeReach ? reach : command
         let summitedCommand = command
         model.onFinished = {
             Analytics.send(.practiceCompleted(kind: .loop))
@@ -264,24 +259,17 @@ extension LoopRunView {
     }
 }
 
-/// Snapshot of the loop run-setup fields that persist — the two tempos (working + command %) plus
-/// the four ramp-shape controls (ADR 0057 follow-up) — compared against the live values to decide
-/// whether the Save Changes button shows (ADR 0057). Every persisted field is tracked, so editing
-/// the ramp shape alone still arms Save Changes.
+/// Snapshot of the loop run-setup fields that persist — the two tempos (working + command %), the
+/// shape and the two pins — compared against the live values to decide whether the Save Changes
+/// button shows (ADR 0057). Every persisted field is tracked, so editing the shape alone still arms
+/// Save Changes.
 struct LoopSetupState: Equatable {
     var working: Int
     var command: Int
-    var warmupSteps: Int
-    var reachSteps: Int
-    var backoffSteps: Int
-    var repsPerStep: Int
-    /// The command-plateau dwell (ADR 0078) — editing it arms the Save button.
-    var dwell: Int
+    /// The phase switches, rungs and holds (ADR 0221 D8) — any change to them arms the Save button.
+    var shape: RunShape
     /// The pinned reach (% of original) or `nil` for the auto derivation — editing it arms Save (ADR 0075).
     var targetOverride: Int?
-    /// Whether the ramp backs off below command after the summit (user-testing note 6) — toggling it
-    /// arms Save. Defaulted so existing snapshot constructions stay terse; `current` always sets it.
-    var includeBackoff: Bool = true
     /// The pinned backoff floor (% of original) or `nil` for the auto derivation — editing it arms Save.
     var backoffOverride: Int?
 }

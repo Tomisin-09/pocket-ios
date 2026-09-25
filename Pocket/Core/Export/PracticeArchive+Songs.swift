@@ -102,6 +102,15 @@ struct LoopRecord: Codable, Equatable, Sendable {
     var rampDwellIntervals: Int
     var includeBackoff: Bool
     var backoffSpeedOverride: Double?
+    /// The phase switches and the per-phase holds (ADR 0221 D8). **All Optional**, for
+    /// `ExerciseRecord.folders`' reason: a file from a build before them has none of these keys, and a
+    /// non-optional field would fail the whole decode. Absent reads as today's shape — every phase on,
+    /// and each rung holding one interval of `rampRepsPerStep` passes, which the file does carry.
+    var includeWarmup: Bool?
+    var includeReach: Bool?
+    var rampWarmupHold: Int?
+    var rampReachHold: Int?
+    var rampBackoffHold: Int?
 
     var colorIndex: Int?
     var customColorHex: String?

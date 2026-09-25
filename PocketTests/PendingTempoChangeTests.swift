@@ -115,7 +115,8 @@ final class PendingTempoChangeTests: XCTestCase {
     /// unreachable from an integer rep count. Those plateaus therefore stay quiet rather than lighting
     /// permanently, which is the safe way for the deferred §7 to be unbuilt.
     func testLoopSinglePassPlateausStayQuiet() {
-        let loop = LoopCommandRamp.make(working: 0.7, command: 0.9, target: 1.0, warmupSteps: 1)
+        let loop = LoopCommandRamp.make(working: 0.7, command: 0.9, target: 1.0,
+                                        shape: RunShape(warmupSteps: 1))
         for reps in [0, 1, 6, 7] {                      // warm-up ×2, summit, backoff
             let change = loop.pendingChange(elapsedBars: Double(reps), elapsedSeconds: 0)
             XCTAssertFalse(change?.isArmed(bpm: 100, beatsPerBar: 4) == true,
@@ -126,7 +127,8 @@ final class PendingTempoChangeTests: XCTestCase {
     /// The loop **dwell** is four passes, so its window is a whole pass and it does warn — on the last
     /// one. Pinned because it is the one place a loop ramp currently speaks.
     func testLoopDwellWarnsOnItsFinalPass() {
-        let loop = LoopCommandRamp.make(working: 0.7, command: 0.9, target: 1.0, warmupSteps: 1)
+        let loop = LoopCommandRamp.make(working: 0.7, command: 0.9, target: 1.0,
+                                        shape: RunShape(warmupSteps: 1))
         XCTAssertFalse(loop.pendingChange(elapsedBars: 4, elapsedSeconds: 0)?
             .isArmed(bpm: 100, beatsPerBar: 4) == true)
         XCTAssertTrue(loop.pendingChange(elapsedBars: 5, elapsedSeconds: 0)?
