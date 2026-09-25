@@ -53,10 +53,11 @@ struct ExerciseBlockPreview: View {
     @State private var preview = CommandTempoPreviewPlayer()
     @State private var strumPreview = StrumPatternPreviewPlayer()
     @State private var showingDetail = false
-    /// Disclosure state for the collapsible tempo + steps panel — purely local UI; the edits
-    /// themselves write straight to the model (see the actions below).
+    /// Disclosure state for the collapsible phase rows — purely local UI; the edits themselves write
+    /// straight to the model (see the actions below).
     @State private var showSettings = false
-    @State private var showSteps = false
+    /// The open phase row (ADR 0221 D1), whose bars the staircase lights.
+    @State private var openPhase: RampPhase? = .command
     /// The reference picture being looked at (ADR 0167 phase 2). This screen reads references and
     /// does not edit them, so it hosts the viewer alone — no pickers, no editor.
     @State private var referenceAttachments: ReferenceAttachmentPresentation?
@@ -78,25 +79,15 @@ struct ExerciseBlockPreview: View {
                 if let sheet = exercise.strumChordSheet { StrumChordsPreview(sheet: sheet) }
 
                 PracticeSettingsPanel(
-                    expanded: $showSettings,
-                    working: exercise.workingTempo, command: exercise.command,
-                    reach: exercise.reachTempo, reachIsCustom: exercise.hasTargetOverride,
-                    onStepWorking: { stepWorking(by: $0) }, onTypeWorking: { setWorking($0) },
-                    onStepCommand: { stepCommand(by: $0) }, onTypeCommand: { setCommand($0) },
-                    onStepReach: { stepReach(by: $0) }, onTypeReach: { setReach($0) },
-                    onResetReach: resetReach,
-                    includeBackoff: includeBackoffBinding, backoff: exercise.backoffTempo,
-                    backoffIsCustom: exercise.hasBackoffOverride,
-                    onStepBackoff: { stepBackoff(by: $0) }, onTypeBackoff: { setBackoff($0) },
-                    onResetBackoff: resetBackoff,
-                    stepsExpanded: $showSteps, warmupSteps: warmupStepsBinding,
-                    reachSteps: reachStepsBinding, backoffSteps: backoffStepsBinding,
-                    dwell: dwellBinding, dwellCaption: dwellCaption,
-                    warmupStepBPM: warmupStepBPM, hasReach: hasReach,
+                    expanded: $showSettings, openPhase: $openPhase, shape: shapeBinding,
+                    startAt: startAtControl, command: commandControl, reach: reachControl,
+                    settleAt: settleAtControl, playedDwell: effectiveRamp.dwellIntervals,
                     tint: PocketColor.practice, onToggle: { haptic(.light) })
                 RoutineStairs(plateaus: effectiveRamp.plateaus, command: effectiveRamp.command,
-                              tint: PocketColor.practice)
-                    .frame(height: 120)
+                              tint: PocketColor.practice,
+                              highlightedPhase: showSettings ? openPhase : nil,
+                              lengthLine: RunLength.exercise(effectiveRamp,
+                                                             beatsPerBar: exercise.beatsPerBar))
                 if plannedMinutes != nil {
                     BlockLengthControl(usesAuthoredLength: $usesAuthoredLength,
                                        runMinutes: runMinutes, authoredMinutes: authoredMinutes,
@@ -176,11 +167,19 @@ struct ExerciseBlockPreview: View {
     // (`promoteCommand`, `targetTempoOverride`, the ramp-shape fields) and saves. Steppers stay pure
     // (no haptic — `StepperButton` owns the hold-repeat feedback); typed setters carry the commit haptic.
 
+    /// Move the warm-up floor — shown as `rampFloor`, the floor the staircase actually climbs from.
+    /// On an **un-measured** exercise `workingTempo` aliases command, so writing the floor alone would
+    /// drag command down with it; command is pinned where it reads first, as the loop preview does and
+    /// as the run screen's own save does (ADR 0129 sub-decision 1).
     private func stepWorking(by delta: Int) {
-        commit { exercise.workingTempo = clampWorking(exercise.workingTempo + delta) }
+        commit { moveFloor(to: exercise.rampFloor + delta) }
     }
     private func setWorking(_ value: Int) {
-        commit { exercise.workingTempo = clampWorking(value) }; haptic(.light)
+        commit { moveFloor(to: value) }; haptic(.light)
+    }
+    private func moveFloor(to value: Int) {
+        if !exercise.hasMeasuredCommand { exercise.promoteCommand(to: exercise.command) }
+        exercise.workingTempo = clampWorking(value)
     }
     private func stepCommand(by delta: Int) {
         commit { exercise.promoteCommand(to: clampCommand(exercise.command + delta)) }
@@ -207,61 +206,43 @@ struct ExerciseBlockPreview: View {
         min(StandaloneMetronomeEngine.bpmRange.upperBound, max(exercise.workingTempo, value))
     }
 
-    // MARK: - Ramp-shape (steps) — model-backed bindings for `PracticeSettingsPanel`
+    // MARK: - The tempo controls — built outside `body`
+    //
+    // A reset closure chosen by a ternary inside the body's one long expression gives the type-checker
+    // too much to solve, and it fails as "ambiguous use of `init`" on the `ScrollView` — the trap
+    // `ExerciseRunView.songTapHandler` records. Typed properties settle it.
 
-    /// Whether there's a climb above command to place reach stops on — gates the reach step row.
-    private var hasReach: Bool { exercise.reachTempo > exercise.command }
-
-    /// The warm-up step count the stored per-step BPM implies (the panel edits count, not BPM).
-    private var currentWarmupSteps: Int {
-        CommandRamp.intermediateSteps(working: exercise.workingTempo, command: exercise.command,
-                                      stepBPM: exercise.rampStepBPM)
+    private var startAtControl: PhaseTempoControl {
+        PhaseTempoControl(value: exercise.rampFloor, onStep: { stepWorking(by: $0) },
+                          onType: { setWorking($0) })
     }
 
-    /// The BPM each warm-up step adds at the current count — the panel's warm-up caption.
-    private var warmupStepBPM: Int {
-        CommandRamp.warmupStepBPM(working: exercise.workingTempo, command: exercise.command,
-                                  intermediateSteps: currentWarmupSteps)
+    private var commandControl: PhaseTempoControl {
+        PhaseTempoControl(value: exercise.command, onStep: { stepCommand(by: $0) },
+                          onType: { setCommand($0) })
     }
 
-    /// Warm-up steps ↔ the stored `rampStepBPM`: reading derives the count, writing re-derives the
-    /// per-step BPM the requested count implies (mirrors the run screen's persist).
-    private var warmupStepsBinding: Binding<Int> {
-        Binding(get: { currentWarmupSteps }, set: { newValue in
-            commit {
-                exercise.rampStepBPM = CommandRamp.warmupStepBPM(
-                    working: exercise.workingTempo, command: exercise.command,
-                    intermediateSteps: max(0, newValue))
-            }
-        })
+    private var reachControl: PhaseTempoControl {
+        var control = PhaseTempoControl(value: exercise.reachTempo, onStep: { stepReach(by: $0) },
+                                        onType: { setReach($0) })
+        if exercise.hasTargetOverride { control.onReset = { resetReach() } }
+        return control
     }
 
-    private var reachStepsBinding: Binding<Int> {
-        Binding(get: { exercise.rampReachSteps },
-                set: { newValue in commit { exercise.rampReachSteps = max(0, newValue) } })
+    private var settleAtControl: PhaseTempoControl {
+        var control = PhaseTempoControl(value: exercise.backoffTempo, onStep: { stepBackoff(by: $0) },
+                                        onType: { setBackoff($0) })
+        if exercise.hasBackoffOverride { control.onReset = { resetBackoff() } }
+        return control
     }
 
-    private var backoffStepsBinding: Binding<Int> {
-        Binding(get: { exercise.rampBackoffSteps },
-                set: { newValue in commit { exercise.rampBackoffSteps = max(0, newValue) } })
-    }
+    // MARK: - The run's shape — model-backed for `PracticeSettingsPanel`
 
-    /// Whether the back-off tail is on (user-testing note 6), model-backed — toggling writes live.
-    private var includeBackoffBinding: Binding<Bool> {
-        Binding(get: { exercise.includeBackoff },
-                set: { newValue in commit { exercise.includeBackoff = newValue } })
-    }
-
-    /// The command-plateau dwell (ADR 0078), model-backed — kept ≥ 1 (the command plateau must hold).
-    private var dwellBinding: Binding<Int> {
-        Binding(get: { max(1, exercise.dwellIntervals) },
-                set: { newValue in commit { exercise.dwellIntervals = max(1, newValue) } })
-    }
-
-    /// Each dwell interval is `automatorDefaultBars` bars at command — the row's caption (ADR 0078),
-    /// read off the **effective** ramp so it states the hold the run will play (ADR 0129).
-    private var dwellCaption: String {
-        "≈ \(effectiveRamp.dwellIntervals * StandaloneMetronomeEngine.automatorDefaultBars) bars"
+    /// The phase switches, rungs and holds (ADR 0221), read from and written straight back to the
+    /// model. A write stores the warm-up **count**, which retires the old stride for this exercise.
+    private var shapeBinding: Binding<RunShape> {
+        Binding(get: { exercise.runShape },
+                set: { newValue in commit { exercise.applyRunShape(newValue) } })
     }
 
     /// Pin the reach strictly above command; landing back on the auto derivation clears the pin.

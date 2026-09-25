@@ -270,6 +270,8 @@ enum ReceivedRoutineBuilder {
         // A pinned reach is a goal the author set, not a number anybody measured, so it crosses —
         // the same call `Exercise.duplicated(named:)` makes.
         drill.targetTempoOverride = record.targetTempoOverride
+        // The run's shape crosses with it (ADR 0221): which phases play and how long each holds.
+        drill.applyPhaseShape(from: record)
         // The freeform block's own settings (ADR 0136 F3/O6): a declared "no instrument needed" and
         // an optional plain click. Part of the drill's shape, and `clickBPM` is explicitly not a
         // command tempo, which is what makes carrying it safe.

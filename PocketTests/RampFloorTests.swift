@@ -47,16 +47,18 @@ final class RampFloorTests: XCTestCase {
 
     func testUnmeasuredExerciseNowClimbsAndBacksOff() {
         let exercise = Exercise(currentTempo: 80)
-        // Floor 68, default step 5 ⇒ warm-up 68 · 73 · 78; dwell at 80; reach = 80 + clamp(4.8, 3…15)
-        // ⇒ 85; backoff = max(68, 80 − 5) = 75, which now sits below command so the tail survives.
-        XCTAssertEqual(exercise.ramp.plateaus.map(\.bpm), [68, 73, 78, 80, 85, 75])
-        XCTAssertEqual(exercise.ramp.plateaus.map(\.intervals), [1, 1, 1, 4, 1, 1])
+        // Floor 68; the default 5-BPM stride seeds one intermediate stop (ADR 0221 D4) ⇒ warm-up
+        // 68 · 74 — the "1" the run screen always showed, where the stride walk used to play three
+        // rungs (68 · 73 · 78). Dwell at 80; reach = 80 + clamp(4.8, 3…15) ⇒ 85; backoff =
+        // max(68, 80 − 5) = 75, which now sits below command so the tail survives.
+        XCTAssertEqual(exercise.ramp.plateaus.map(\.bpm), [68, 74, 80, 85, 75])
+        XCTAssertEqual(exercise.ramp.plateaus.map(\.intervals), [1, 1, 4, 1, 1])
     }
 
     func testUnmeasuredExerciseUsedToHaveNeitherWarmUpNorBackoff() {
         // Pin the old behaviour to the cause, so a future change that re-aliases the floor is caught:
         // with working == command the staircase collapses to dwell + summit.
-        let collapsed = CommandRamp(working: 80, command: 80, target: 85, stepBPM: 5,
+        let collapsed = CommandRamp(working: 80, command: 80, target: 85, warmupSteps: 1,
                                     intervalCount: 4, unit: .bars, dwellIntervals: 4,
                                     includeBackoff: true)
         XCTAssertEqual(collapsed.plateaus.map(\.bpm), [80, 85])

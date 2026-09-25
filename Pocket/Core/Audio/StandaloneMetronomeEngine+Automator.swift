@@ -37,8 +37,11 @@ extension StandaloneMetronomeEngine {
     /// `nil` in free play, where the linear ramp drives instead.
     var automatorCommandRamp: CommandRamp? {
         guard let command = automatorCommandBPM else { return nil }
+        // The automator's config is a stride; the ramp counts rungs (ADR 0221 D4), so convert once.
+        let warmupSteps = CommandRamp.intermediateSteps(working: automatorStartBPM, command: command,
+                                                        stepBPM: automatorStepBPM)
         return CommandRamp(working: automatorStartBPM, command: command, target: automatorCeiling,
-                           stepBPM: automatorStepBPM, intervalCount: automatorIntervalCount,
+                           warmupSteps: warmupSteps, intervalCount: automatorIntervalCount,
                            unit: automatorUnit, dwellIntervals: Self.automatorDefaultDwell,
                            includeBackoff: true)
     }

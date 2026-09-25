@@ -18,9 +18,10 @@ strip, the three numbers under your last session.
 
 The **✏️** in the toolbar
 <!-- shot: journal/quick-note-button | role: glyph | alt: | crop: 856,188,120,120 -->
-opens **Quick note** — one field, the kind chips, **Save**. It is on the journal itself, on every
-exercise and loop run screen, and on the metronome. Opening it over a run **touches nothing**: the
-audio carries on, the click keeps time, and the note costs the run nothing.
+opens **Quick note** — one field, the kind chips, **Save**. It is on the journal itself, on the
+metronome, and on an exercise or loop run screen while the run plays or inside a routine. A stopped
+run screen has its **Journal** bar instead, which writes notes too. Opening it over a run **touches
+nothing**: the audio carries on, the click keeps time, and the note costs the run nothing.
 
 <!-- shot: journal/quick-note | role: screen
      | alt: The Quick note sheet with the What just happened? field, the row of kind chips and the line saying where the note will save

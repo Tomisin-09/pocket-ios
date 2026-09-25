@@ -75,13 +75,10 @@ extension ExerciseRunView {
             command = exercise.currentTempo
             working = max(range.lowerBound, TempoStretch.warmupFloorBPM(forCommand: command))
         }
-        steps = CommandRamp.intermediateSteps(working: working, command: command,
-                                              stepBPM: exercise.rampStepBPM)
-        reachSteps = max(0, exercise.rampReachSteps)
-        backoffSteps = max(0, exercise.rampBackoffSteps)
-        dwell = max(1, exercise.dwellIntervals)
+        // On an exercise saved before ADR 0221 the warm-up count is derived from its old stride — the
+        // one derivation the planner and the block preview read too, so all three agree.
+        shape = exercise.runShape
         targetOverride = exercise.targetTempoOverride
-        includeBackoff = exercise.includeBackoff
         backoffOverride = exercise.backoffTempoOverride
         signature = TimeSignature.forStored(beats: exercise.beatsPerBar,
                                             noteValue: exercise.noteValue,
@@ -108,14 +105,10 @@ extension ExerciseRunView {
         // Write the reach pin after promoteCommand (which drops a caught-up one) — always above
         // command here, so it survives — or clear it when reset to auto (ADR 0075).
         exercise.targetTempoOverride = targetOverride
-        exercise.rampStepBPM = stepBPM
         exercise.rampIntervalUnit = .bars
         exercise.rampIntervalCount = StandaloneMetronomeEngine.automatorDefaultBars
-        exercise.dwellIntervals = max(1, dwell)
-        exercise.includeBackoff = includeBackoff
+        exercise.applyRunShape(shape)
         exercise.backoffTempoOverride = backoffOverride
-        exercise.rampReachSteps = reachSteps
-        exercise.rampBackoffSteps = backoffSteps
         exercise.beatsPerBar = signature.beats
         exercise.noteValue = signature.noteValue
         try? modelContext.save()
@@ -169,10 +162,13 @@ extension ExerciseRunView {
     }
 
     /// Wire `onRampFinished` to raise the post-run completion screen for a standalone run (ADR 0079).
-    /// Fires only when the ramp runs its full course (dwell → summit → backoff), never on a manual
-    /// stop. The reach/command are snapshotted now so the offer is stable regardless of later edits.
+    /// Fires only when the ramp runs its full course, never on a manual stop. The summit and command
+    /// are snapshotted now so the offer is stable regardless of later edits.
+    ///
+    /// With Reach off the run never went above command, so the summit **is** command and the screen
+    /// offers no raise (ADR 0221 D6) — `CommandOffer.canRaise` reads that as nothing to raise to.
     private func armCompletionOffer() {
-        let summitedReach = reach
+        let summitedReach = shape.includeReach ? reach : command
         let summitedCommand = command
         engine.onRampFinished = {
             Analytics.send(.practiceCompleted(kind: .exercise))
@@ -325,7 +321,8 @@ extension ExerciseRunView {
 /// `Identifiable` so it drives a `fullScreenCover(item:)`.
 struct RunCompletion: Identifiable, Equatable {
     let id = UUID()
-    /// The reach the run summited — the promote's default target.
+    /// The tempo the run summited — the promote's default target. Command itself when the run had
+    /// no reach (ADR 0221 D6), which leaves nothing to raise.
     let reach: Int
     /// The command the run held — the floor the editable promote value sits above, and what the
     /// "anything to promote?" gate compares against (ADR 0079 §5).
@@ -337,17 +334,11 @@ struct RunCompletion: Identifiable, Equatable {
 struct ExerciseSetupState: Equatable {
     var working: Int
     var command: Int
-    var steps: Int
-    var reachSteps: Int
-    var backoffSteps: Int
-    /// The command-plateau dwell (ADR 0078) — editing it arms the Save button.
-    var dwell: Int
+    /// The phase switches, rungs and holds (ADR 0221) — any change to them arms the Save button.
+    var shape: RunShape
     var signature: TimeSignature
     /// The pinned reach (BPM) or `nil` for the auto derivation — editing it arms Save (ADR 0075).
     var targetOverride: Int?
-    /// Whether the routine backs off below command after the summit (user-testing note 6) —
-    /// toggling it arms Save.
-    var includeBackoff: Bool
     /// The pinned backoff floor (BPM) or `nil` for the auto derivation — editing it arms Save (note 6).
     var backoffOverride: Int?
 }

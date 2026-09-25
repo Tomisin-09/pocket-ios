@@ -108,10 +108,12 @@ show the section at all. Procedure is in [routines](../routines.md).
 
 Drills grouped into collapsible sections by **template** — the kind of drill they are — with a count
 on each header. A row shows the drill's name and its tempo line: `Command 90 → 95 BPM · 16ths`, which
-is the command tempo, the reach above it, and the rhythm.
+is the command tempo, the reach above it, and the rhythm. With the reach switched off the reach
+drops out: `Command 90 BPM · 16ths`.
 
 <!-- not-in-source: "Command 90 → 95 BPM · 16ths" — assembled from the drill's own numbers, and the
      rhythm clause drops out entirely on a drill that states no note rate. -->
+<!-- not-in-source: "Command 90 BPM · 16ths" — the same line for a drill with Reach off (ADR 0221 D6). -->
 
 The toolbar carries `List options` then `New exercise`. The search field prompts by name.
 
@@ -127,17 +129,22 @@ Opened by tapping a drill.
 - **The shape** — a fretboard, a chord progression, a strum lane — is drawn at the top, if the drill
   carries one. Many do not.
 - **`Practice Settings`** is a disclosure, collapsed by default, summarising itself when closed.
-  Inside sit the three tempos — `Working`, `Command` and `Reach` — and, under them, `Back off`, whose
-  caption reads *finish below command, on control not the edge*. A `Reset to auto` button appears
-  once you have overridden the reach.
-- **The staircase** shows the tempo plan as steps.
+  Inside are four phase rows — `Warm-up`, `Command`, `Reach` and `Back off` — each with a one-line
+  summary, and a switch on every row but `Command`. Tapping a row opens it: `Start at`, `Steps` and
+  `Each step` in the warm-up; `Tempo` and `Hold` in command; `Tempo`, `Steps` and `Each step` in the
+  reach; `Settle at`, `Steps` and `Each step` in the back off. A `Reset to auto` button appears once
+  you have overridden the reach or the back off.
+- **The staircase** shows the tempo plan as steps, lighting the open row's phase, with the run's
+  length under it.
 - **A `Journal` and `Takes` bar** holds what you have already written and recorded against this
   drill.
 - **`Start training`** commits and runs. Beside it, the **record** control arms a take.
 - **`Exercise details`** — the ⓘ — opens the drill's reference sheet, which carries its description,
   progress, linked songs, a `Where you learned it` section with an `Add a link` button, the feel and
   the template chip.
-- **The ✏️** writes a [journal note](tools-and-journal.md#journal) without touching the run.
+- **The ✏️** writes a [journal note](tools-and-journal.md#journal) without touching the run. It
+  shows while running and inside a routine; stopped, the meter sits in its place and the `Journal`
+  bar writes notes.
 
 While running, the screen shows the live BPM, a count-in if you have one turned on (`Counting in`),
 and pause / resume. `Stop and reset` ends it. A run that finishes on its own lands on a completion

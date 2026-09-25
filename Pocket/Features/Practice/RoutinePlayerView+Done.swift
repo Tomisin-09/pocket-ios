@@ -155,7 +155,9 @@ extension RoutinePlayerView {
             let range = StandaloneMetronomeEngine.bpmRange
             return (.init(command: exercise.command,
                           floor: range.lowerBound, ceiling: range.upperBound,
-                          raiseTarget: CommandOffer.raisedCommand(reach: exercise.reachTempo,
+                          // The summit, not the reach: a block run with Reach off never went
+                          // above command, so there is nothing to raise to (ADR 0221 D6).
+                          raiseTarget: CommandOffer.raisedCommand(reach: exercise.summitTempo,
                                                                   ceiling: range.upperBound),
                           settleTarget: exercise.derivedBackoff),
                     .bpm)

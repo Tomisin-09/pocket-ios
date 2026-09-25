@@ -29,8 +29,9 @@ enum LoopCommandRamp {
     static func percent(_ speed: Double) -> Int { max(0, Int((speed * 100).rounded())) }
 
     /// Build the staircase for a loop run from its `×` tempos + shaping params, in percent units.
-    /// `warmupSteps` is the count of intermediate plateaus between working and command (the
-    /// per-step BPM is derived, as in `ExerciseRunView`); `reachSteps`/`backoffSteps` shape the
+    /// `warmupSteps` is the count of intermediate plateaus between working and command, placed by
+    /// count (ADR 0221 D4) — it used to be converted to a stride, which rounded rungs in and out, as
+    /// an exercise's did; `reachSteps`/`backoffSteps` shape the
     /// climb to and descent from the summit; `repsPerStep` is how many loop passes each plateau
     /// holds (the interval the run driver advances by `loopIteration`).
     static func make(working: Double, command: Double, target: Double,
@@ -42,10 +43,9 @@ enum LoopCommandRamp {
         let workingPct = percent(working)
         let commandPct = percent(command)
         let targetPct = percent(target)
-        let stepBPM = CommandRamp.warmupStepBPM(working: workingPct, command: commandPct,
-                                                intermediateSteps: max(0, warmupSteps))
         return CommandRamp(working: workingPct, command: commandPct, target: targetPct,
-                           stepBPM: stepBPM, intervalCount: max(1, repsPerStep), unit: .bars,
+                           warmupSteps: max(0, warmupSteps), intervalCount: max(1, repsPerStep),
+                           unit: .bars,
                            dwellIntervals: max(1, dwellIntervals), includeBackoff: includeBackoff,
                            reachSteps: max(0, reachSteps), backoffSteps: max(0, backoffSteps),
                            backoffOverride: backoffOverride.map(percent))

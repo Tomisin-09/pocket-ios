@@ -35,12 +35,11 @@ final class ManualExerciseShots: ManualShotCase {
     /// settings, 76→90 · reach 95 BPM` — and pinning those would make this fail on a seed change
     /// rather than on the thing the figure is about. `90 BPM` **is** pinned, because that is the
     /// command plateau the marker names in so many words.
-    /// It also serves the manual's two run-screen **glyphs**. `journal/quick-note-button` and
-    /// `journal/record-arm` ask only for a frame with the run screen's toolbar in it, and this is the
-    /// one frame that has both: the record control is on the *setup* screen and gone once a run
-    /// starts, so `exercises/run-live` could serve the pencil and never the record arm. Both are
-    /// required in frame rather than assumed, because a crop that falls outside its master is a
-    /// figure that cannot be cut.
+    /// It also serves the manual's **record-arm glyph**, `journal/record-arm`: the record control is
+    /// on the *setup* screen and gone once a run starts. It used to serve the quick-note pencil too,
+    /// until ADR 0221 D7 took the pencil off the stopped screen — the review bar's Journal writes
+    /// there — so `exercises/run-live` serves that one now. Required in frame rather than assumed,
+    /// because a crop that falls outside its master is a figure that cannot be cut.
     @MainActor
     func testRunSetup() {
         let app = launchForShoot()
@@ -48,10 +47,9 @@ final class ManualExerciseShots: ManualShotCase {
         capture(app, slug: "exercises/run-setup",
                 assertingOnScreen: "Alternate Picking",
                 alsoRequiring: ["90 BPM", "warm-up", "command", "reach", "back off",
-                                "Write a quick journal note", "Record this session"],
+                                "Record this session"],
                 orBeginningWith: ["Practice settings,", "Start training"],
-                alsoServing: ["exercises/staircase", "journal/quick-note-button",
-                              "journal/record-arm"])
+                alsoServing: ["exercises/staircase", "journal/record-arm"])
     }
 
     /// `exercises/run-live` — a run going, past the count-in.
@@ -68,6 +66,10 @@ final class ManualExerciseShots: ManualShotCase {
     /// The fretboard the marker names has **no accessibility elements at all** — it is drawn, and
     /// nothing in the tree stands for it. It cannot be asserted, only looked at, which is what the
     /// audit of the filed image is for.
+    ///
+    /// It also serves the quick-note **pencil glyph**, `journal/quick-note-button`, which since ADR
+    /// 0221 D7 is on the toolbar only while running (or in a routine). Running, it takes the meter's
+    /// slot, so the crop measured on the stopped screen still frames it.
     @MainActor
     func testRunLive() {
         let app = launchForShoot()
@@ -88,8 +90,9 @@ final class ManualExerciseShots: ManualShotCase {
 
         capture(app, slug: "exercises/run-live",
                 assertingOnScreen: "Alternate Picking",
-                alsoRequiring: ["Stop and reset", "Pause"],
-                orBeginningWith: ["BPM ·"])
+                alsoRequiring: ["Stop and reset", "Pause", "Write a quick journal note"],
+                orBeginningWith: ["BPM ·"],
+                alsoServing: ["journal/quick-note-button"])
     }
 
     /// `journal/quick-note` · `reference/quick-note` — the mid-run capture sheet (ADR 0142).
@@ -121,10 +124,12 @@ final class ManualExerciseShots: ManualShotCase {
                 alsoServing: ["reference/quick-note"])
     }
 
-    /// `exercises/practice-settings` — the panel expanded.
+    /// `exercises/practice-settings` — the panel expanded: four phase rows (ADR 0221 D1), with
+    /// Command's open, as it is on arrival.
     ///
-    /// Gated on `Working`, which the collapsed screen does not have: the summary line above it reads
-    /// `76→90 · reach 95 BPM` and names none of the three fields. That distinction is the whole gate.
+    /// Gated on something the collapsed screen does not have — the summary line above it reads
+    /// `76 → 90 · reach 95 · back to 85 BPM` and is a single element. That distinction is the whole
+    /// gate.
     /// The first walk of this screen tapped the summary, waited on nothing, and dumped a tree
     /// **byte-identical** to the one before it — a tap that changed nothing, reported as a step that
     /// worked. Nothing but the comparison caught it, and a capture in its place would have been the
@@ -134,11 +139,11 @@ final class ManualExerciseShots: ManualShotCase {
         let app = launchForShoot()
         openAlternatePicking(in: app)
 
-        // Gated on `Raise Working` — a `StepperButton` inside the Working row, which exists only
-        // once the panel is open. The row's own `Working` text was the first gate and is the weaker
-        // one: it is a plain `Text` in an `HStack` that may or may not surface as its own element
-        // depending on how the row combines, and a gate that *might* not exist when the thing did
-        // happen is indistinguishable from one that correctly says nothing happened.
+        // Gated on `Raise Command` — a `StepperButton` in the open Command row, which exists only once
+        // the panel is open. It was `Raise Working` until ADR 0221 put the floor inside a Warm-up
+        // row that starts closed. A row's own title is the weaker gate: it is merged into the row's
+        // button label, and a gate that *might* not exist when the thing did happen is
+        // indistinguishable from one that correctly says nothing happened.
         // **Tapped once, by hand, and deliberately not through `tap(_:revealing:)`.**
         //
         // That helper retries when the control it tapped is still hittable, on the reasoning that a
@@ -157,15 +162,18 @@ final class ManualExerciseShots: ManualShotCase {
         note("expanded the Practice Settings panel")
 
         // The panel opens *below the fold*, and an element off the bottom of a scroll view is not in
-        // the tree at all — so waiting on `Raise Working` where it stood would have waited forever
+        // the tree at all — so waiting on `Raise Command` where it stood would have waited forever
         // however many times the header was tapped. `scrollIntoFrame` handles the absent case
         // (`element.exists ? element.frame : .zero`, then swipe) and is the only thing that can
         // distinguish "not scrolled to" from "not there", which its failure message then says.
-        scrollIntoFrame(app.buttons["Raise Working"], called: "the Working row", in: app)
+        scrollIntoFrame(app.buttons["Raise Command"], called: "the open Command row", in: app)
 
+        // The three switches are the optional phases' own labels; Command has none (D2), so its row
+        // is matched by the start of its label and its open controls by name.
         capture(app, slug: "exercises/practice-settings",
                 assertingOnScreen: "Alternate Picking",
-                alsoRequiring: ["Working", "Command", "Reach", "Back off"])
+                alsoRequiring: ["Warm-up", "Reach", "Back off", "Command tempo", "Hold"],
+                orBeginningWith: ["Command, "])
     }
 
     /// `exercises/configure` — the second step of creating a drill.

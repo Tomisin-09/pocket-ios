@@ -10,7 +10,7 @@ final class SessionEstimateTests: XCTestCase {
     func testSecondsRampIsIntervalsTimesCount() {
         // No warm-up climb (command == working), no summit/backoff → one dwell plateau of 5
         // intervals × 6 seconds each = 30s. Meter is irrelevant for a seconds ramp.
-        let ramp = CommandRamp(working: 120, command: 120, target: 120, stepBPM: 0,
+        let ramp = CommandRamp(working: 120, command: 120, target: 120, warmupSteps: 0,
                                intervalCount: 6, unit: .seconds, dwellIntervals: 5,
                                includeBackoff: false)
         XCTAssertEqual(SessionEstimate.seconds(forRamp: ramp, beatsPerBar: 4), 30, accuracy: 0.001)
@@ -22,7 +22,7 @@ final class SessionEstimateTests: XCTestCase {
     func testBarsRampSinglePlateauConvertsAtItsTempo() {
         // One dwell plateau: 8 intervals × 2 bars = 16 bars at 120 BPM, 4/4.
         // secondsPerBar = 4 × 60 / 120 = 2s → 16 × 2 = 32s.
-        let ramp = CommandRamp(working: 120, command: 120, target: 120, stepBPM: 0,
+        let ramp = CommandRamp(working: 120, command: 120, target: 120, warmupSteps: 0,
                                intervalCount: 2, unit: .bars, dwellIntervals: 8,
                                includeBackoff: false)
         XCTAssertEqual(SessionEstimate.seconds(forRamp: ramp, beatsPerBar: 4), 32, accuracy: 0.001)
@@ -31,7 +31,7 @@ final class SessionEstimateTests: XCTestCase {
     func testSlowerTempoTakesLongerThanFaster() {
         // Same shape, different tempo — the estimator must reflect that slow bars take longer.
         func ramp(bpm: Int) -> CommandRamp {
-            CommandRamp(working: bpm, command: bpm, target: bpm, stepBPM: 0, intervalCount: 1,
+            CommandRamp(working: bpm, command: bpm, target: bpm, warmupSteps: 0, intervalCount: 1,
                         unit: .bars, dwellIntervals: 4, includeBackoff: false)
         }
         let slow = SessionEstimate.seconds(forRamp: ramp(bpm: 60), beatsPerBar: 4)
@@ -41,10 +41,10 @@ final class SessionEstimateTests: XCTestCase {
     }
 
     func testWarmupPlateausUseTheirOwnSlowerTempo() {
-        // Warm-up 60→120 in one 60-BPM step (working 60, command 120, stepBPM 60): plateaus are
+        // Warm-up 60→120 as the floor alone (no intermediate stops): plateaus are
         // [60 (1 interval), 120 (dwell 2 intervals)]. intervalCount 1 bar, 4/4.
         //   60-BPM bar = 4s (1 bar) ; 120-BPM bars = 2s each × 2 = 4s → total 8s.
-        let ramp = CommandRamp(working: 60, command: 120, target: 120, stepBPM: 60,
+        let ramp = CommandRamp(working: 60, command: 120, target: 120, warmupSteps: 0,
                                intervalCount: 1, unit: .bars, dwellIntervals: 2,
                                includeBackoff: false)
         XCTAssertEqual(ramp.plateaus.map(\.bpm), [60, 120])
@@ -53,7 +53,7 @@ final class SessionEstimateTests: XCTestCase {
 
     func testMeterScalesBarLength() {
         // A 6/8 bar has more beats than 4/4, so the same bar count takes longer.
-        let ramp = CommandRamp(working: 120, command: 120, target: 120, stepBPM: 0, intervalCount: 1,
+        let ramp = CommandRamp(working: 120, command: 120, target: 120, warmupSteps: 0, intervalCount: 1,
                                unit: .bars, dwellIntervals: 4, includeBackoff: false)
         let four = SessionEstimate.seconds(forRamp: ramp, beatsPerBar: 4)
         let six = SessionEstimate.seconds(forRamp: ramp, beatsPerBar: 6)
@@ -63,7 +63,7 @@ final class SessionEstimateTests: XCTestCase {
     // MARK: - Guards
 
     func testDegenerateInputsFloorSafely() {
-        let ramp = CommandRamp(working: 120, command: 120, target: 120, stepBPM: 0, intervalCount: 0,
+        let ramp = CommandRamp(working: 120, command: 120, target: 120, warmupSteps: 0, intervalCount: 0,
                                unit: .bars, dwellIntervals: 1, includeBackoff: false)
         // intervalCount 0 floors to 1; still yields a sane non-negative estimate and ≥1 minute.
         XCTAssertGreaterThanOrEqual(SessionEstimate.seconds(forRamp: ramp, beatsPerBar: 0), 0)
@@ -106,12 +106,18 @@ final class SessionEstimateTests: XCTestCase {
     // MARK: - Fitting a ramp to a block (ADR 0129)
 
     /// The staircase a default, never-promoted exercise now runs: floor 68 → command 80, reach 85,
-    /// backoff 75, stepping every 4 bars in 4/4. Priced per plateau at 240/bpm seconds a bar:
-    /// 14.118 + 13.151 + 12.308 + [12.0 per dwell interval] + 11.294 + 12.8 — so everything that
-    /// isn't dwell costs **63.670s**, and one dwell interval costs **12.0s**.
+    /// backoff 75, stepping every 4 bars in 4/4. Its warm-up is one intermediate stop — the count its
+    /// default 5-BPM stride seeds (ADR 0221 D4) — so the rungs are 68 and 74. Priced per plateau at
+    /// 960/bpm seconds an interval: 14.118 + 12.973 + [12.0 per dwell interval] + 11.294 + 12.8 — so
+    /// everything that isn't dwell costs **51.185s**, and one dwell interval costs **12.0s**.
     private func freshRamp() -> CommandRamp {
-        CommandRamp(working: 68, command: 80, target: 85, stepBPM: 5, intervalCount: 4,
+        CommandRamp(working: 68, command: 80, target: 85, warmupSteps: 1, intervalCount: 4,
                     unit: .bars, dwellIntervals: 4, includeBackoff: true)
+    }
+
+    func testFreshRampIsTheDefaultExercisesRamp() {
+        XCTAssertEqual(freshRamp(), Exercise(currentTempo: 80).ramp)
+        XCTAssertEqual(freshRamp().plateaus.map(\.bpm), [68, 74, 80, 85, 75])
     }
 
     func testDwellIntervalIsPricedAtTheCommandTempo() {
@@ -121,24 +127,24 @@ final class SessionEstimateTests: XCTestCase {
     }
 
     func testFittedRampHitsATargetItCanReach() {
-        // (180s − 63.670s fixed) / 12s = 9.69 → 10 dwell intervals, just inside the 2.5× bound.
-        let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 3, beatsPerBar: 4)
-        XCTAssertEqual(fit.dwellIntervals, 10)
-        // 63.670 + 10 × 12 = 183.670s = 3.06 min.
-        XCTAssertEqual(SessionEstimate.seconds(forRamp: fit, beatsPerBar: 4), 183.670, accuracy: 0.01)
-        XCTAssertEqual(SessionEstimate.minutes(forRamp: fit, beatsPerBar: 4), 3)
+        // (120s − 51.185s fixed) / 12s = 5.73 → 6 dwell intervals, inside the 0.5×…2.5× band.
+        let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 2, beatsPerBar: 4)
+        XCTAssertEqual(fit.dwellIntervals, 6)
+        // 51.185 + 6 × 12 = 123.185s = 2.05 min.
+        XCTAssertEqual(SessionEstimate.seconds(forRamp: fit, beatsPerBar: 4), 123.185, accuracy: 0.01)
+        XCTAssertEqual(SessionEstimate.minutes(forRamp: fit, beatsPerBar: 4), 2)
     }
 
     func testFittedRampMovesTheDwellAndNothingElse() {
         let ramp = freshRamp()
-        let fit = SessionEstimate.fitted(ramp, toMinutes: 3, beatsPerBar: 4)
+        let fit = SessionEstimate.fitted(ramp, toMinutes: 2, beatsPerBar: 4)
         // Same staircase shape — only the command plateau's hold changes.
         XCTAssertEqual(fit.plateaus.map(\.bpm), ramp.plateaus.map(\.bpm))
-        XCTAssertEqual(fit.plateaus.map(\.intervals), [1, 1, 1, 10, 1, 1])
+        XCTAssertEqual(fit.plateaus.map(\.intervals), [1, 1, 6, 1, 1])
         XCTAssertEqual(fit.working, ramp.working)
         XCTAssertEqual(fit.command, ramp.command)
         XCTAssertEqual(fit.target, ramp.target)
-        XCTAssertEqual(fit.stepBPM, ramp.stepBPM)
+        XCTAssertEqual(fit.warmupSteps, ramp.warmupSteps)
         XCTAssertEqual(fit.intervalCount, ramp.intervalCount)
         XCTAssertEqual(fit.includeBackoff, ramp.includeBackoff)
     }
@@ -159,7 +165,7 @@ final class SessionEstimateTests: XCTestCase {
     /// that as enough; it wasn't, because the run overrode it anyway.
     func testTheFitWillNotStretchTheAuthoredDwellWithoutLimit() {
         let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 5, beatsPerBar: 4)
-        XCTAssertEqual(fit.dwellIntervals, 10)   // 2.5 × 4 authored, not the 19 the budget wanted
+        XCTAssertEqual(fit.dwellIntervals, 10)   // 2.5 × 4 authored, not the 21 the budget wanted
     }
 
     func testClampedDwellHoldsWithinReachOfTheAuthoredRecipe() {
@@ -178,8 +184,8 @@ final class SessionEstimateTests: XCTestCase {
     }
 
     func testFittedDwellShrinksNoFurtherThanHalfWhenTheSlotIsTooShort() {
-        // 60s target against 63.670s of fixed plateaus ⇒ the arithmetic wants a negative dwell; the
-        // recipe's own floor wins instead of collapsing the hold to a single interval.
+        // 60s target against 51.185s of fixed plateaus ⇒ the arithmetic wants a single interval; the
+        // recipe's own floor (half its 4) wins instead of collapsing the hold that far.
         let fit = SessionEstimate.fitted(freshRamp(), toMinutes: 1, beatsPerBar: 4)
         XCTAssertEqual(fit.dwellIntervals, 2)
     }
@@ -187,8 +193,8 @@ final class SessionEstimateTests: XCTestCase {
     // MARK: - What a block actually takes
 
     func testEffectiveMinutesReportTheAskWhenTheFitCanReachIt() {
-        XCTAssertEqual(SessionEstimate.effectiveMinutes(forRamp: freshRamp(), plannedMinutes: 3,
-                                                        beatsPerBar: 4), 3)
+        XCTAssertEqual(SessionEstimate.effectiveMinutes(forRamp: freshRamp(), plannedMinutes: 2,
+                                                        beatsPerBar: 4), 2)
     }
 
     /// Where the clamp bites, the *estimate* gives way — not the recipe. A 5-minute allotment that
@@ -208,7 +214,7 @@ final class SessionEstimateTests: XCTestCase {
     func testFittedSecondsRampCountsIntervalsDirectly() {
         // No warm-up, no summit, no backoff → the dwell is the whole ramp. 120s / 6s wants 20
         // intervals; the authored 5 bounds it to 2.5× = 13 (78s).
-        let ramp = CommandRamp(working: 120, command: 120, target: 120, stepBPM: 0,
+        let ramp = CommandRamp(working: 120, command: 120, target: 120, warmupSteps: 0,
                                intervalCount: 6, unit: .seconds, dwellIntervals: 5,
                                includeBackoff: false)
         let fit = SessionEstimate.fitted(ramp, toMinutes: 2, beatsPerBar: 4)

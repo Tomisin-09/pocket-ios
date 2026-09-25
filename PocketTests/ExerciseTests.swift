@@ -194,7 +194,8 @@ final class ExerciseTests: XCTestCase {
         XCTAssertEqual(ramp.working, 70)
         XCTAssertEqual(ramp.command, 100)
         XCTAssertEqual(ramp.target, TempoStretch.targetBPM(forCommand: 100))
-        XCTAssertEqual(ramp.stepBPM, 8)
+        // A stored 8-BPM stride over 70 → 100 seeds 3 intermediate stops (ADR 0221 D4).
+        XCTAssertEqual(ramp.warmupSteps, 3)
         XCTAssertEqual(ramp.intervalCount, 4)
         XCTAssertEqual(ramp.unit, .bars)
         // dwell + backoff now come from native storage, not a fixed routine shape.
@@ -229,11 +230,11 @@ final class ExerciseTests: XCTestCase {
         XCTAssertLessThan(ramp.working, ramp.command)
     }
 
-    /// Step, interval, and dwell are clamped to at least 1 so the ramp always advances and the
-    /// plateau math never divides by zero.
+    /// Interval and dwell are clamped to at least 1 so the ramp always advances and the plateau math
+    /// never divides by zero. A zero stride seeds no intermediate warm-up stops rather than a stride.
     func testRampClampsStepAndIntervalToAtLeastOne() {
         let exercise = Exercise(rampStepBPM: 0, rampIntervalCount: 0, dwellIntervals: 0)
-        XCTAssertEqual(exercise.ramp.stepBPM, 1)
+        XCTAssertEqual(exercise.ramp.warmupSteps, 0)
         XCTAssertEqual(exercise.ramp.intervalCount, 1)
         XCTAssertEqual(exercise.ramp.dwellIntervals, 1)
     }

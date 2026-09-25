@@ -93,25 +93,33 @@ against this drill.
      | alt: An exercise run screen before starting, showing the collapsed Practice Settings summary, the staircase, the Journal and Takes bar and Start training
      | state: seeded library, Exercises, "Alternate Picking" opened, stopped -->
 
-**Practice Settings** is collapsed to a one-line summary of the climb, and opens onto the numbers:
+**Practice Settings** is collapsed to a one-line summary of the phases the run will play, and opens
+onto one row per phase, in the order they play. Each row says what its phase will do; tap it to open
+its controls, one row at a time.
 
-- **Working** — the warm-up floor. Where the climb begins.
+- **Warm-up** — the climb up to command. **Start at** is the floor it climbs from.
 - **Command** — the fastest you own it. This is the anchor everything else derives from, and it is
-  defined in [the app's own words](terms.md).
-- **Reach** — where the climb is heading. Worked out from your command tempo unless you type your
+  defined in [the app's own words](terms.md). Its **Hold** is how long the run stays there, which
+  is where the reps count.
+- **Reach** — a brief touch above command. Worked out from your command tempo unless you set your
   own, in which case a **Reset to auto** appears to hand it back.
-- **Back off** — whether to ease the tempo down after the summit rather than finishing at the edge.
-  On by default, with its own floor you can pin the same way.
-- **Steps** — how many rungs the warm-up, the reach and the back-off each get, and how long the
-  drill holds at command before pushing on.
+- **Back off** — easing down after the top, so you finish on control rather than at the edge.
+  **Settle at** is where it ends, worked out or pinned the same way as the reach.
+
+Every phase but Command has a switch on its row. Turn all three off and the run is command alone,
+one tempo held for its **Hold**. A phase you switch off keeps its tempo for when you switch it back.
+
+Inside a row, **Steps** is how many rungs that phase climbs or descends in, and the number is the
+number of bars the staircase draws for it. **Each step** is how long every rung holds, in bars.
 
 <!-- shot: exercises/practice-settings | role: panel
-     | alt: The Practice Settings panel expanded, showing Working, Command, Reach, the Back off toggle and the nested Steps controls
+     | alt: The Practice Settings panel expanded into four phase rows, Warm-up, Command, Reach and Back off, with Command open on its Tempo and Hold
      | state: seeded library, an exercise run screen, Practice Settings expanded -->
 
-The **staircase** draws what those numbers add up to — the **warm-up** climb, the wide **command**
+The **staircase** draws what those settings add up to — the **warm-up** climb, the wide **command**
 plateau with its BPM over it, the **reach**, and the **back off** — so you can see the shape of the
-run before you play a note of it.
+run before you play a note of it. While a row is open, that phase's bars are lit and the rest dim.
+Under it, a line says how long the run is, roughly in time and exactly in bars.
 
 <!-- shot: exercises/staircase | role: band
      | alt: The training staircase with its warm-up steps, the wide command plateau labelled 80 BPM, the reach step and the back-off step
@@ -137,8 +145,9 @@ are in the staircase, and the drill's own surface animating along with the click
 The transport gives you **Pause** / **Resume** and a **stop** that ends the run and clears the ramp.
 The screen stays awake while you play, unless you have turned that off in Settings.
 
-Two things are reachable at any point, including mid-run: the **quick note** button in the toolbar,
-for a thought you want to keep before it goes, and the **ⓘ**, which opens the drill's reference
+While the run plays, the **quick note** button in the toolbar keeps a thought before it goes. It is
+not there when you are stopped, because the **Journal** bar under the staircase writes notes too.
+The **ⓘ** is reachable at any point, including mid-run, and opens the drill's reference
 sheet — its template, description, linked songs, meter and rhythm, and under **Works on** the skills
 it works on, so the goals that can bring it into a session. Each skill has its own **ⓘ**.
 
@@ -156,7 +165,8 @@ take. That is covered with the rest of the journal.
 
 A run that reaches the end of its staircase on its own lands on a completion screen: **Nice work**,
 then an optional mastery rating, an optional note, and the offer to move your command tempo up to
-the reach you just played.
+the reach you just played. A run with **Reach** off never went above command, so it offers no move
+up.
 
 A run you stop by hand does not land there and does not log. The practice log records runs that
 finished, because a run cut short has no honest length to claim.

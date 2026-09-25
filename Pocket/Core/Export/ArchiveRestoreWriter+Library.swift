@@ -179,6 +179,7 @@ extension ArchiveRestoreWriter {
                                  tags: record.tags,
                                  notes: record.notes)
             drill.uid = record.uid
+            drill.applyPhaseShape(from: record)
             // `?? []` is the whole cost of the field being optional (ADR 0210 D8): an archive
             // written before folders existed says nothing about them, which is not the same as
             // saying "no folders" — but for a restore the two land identically, and the alternative

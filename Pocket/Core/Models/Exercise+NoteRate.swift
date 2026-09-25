@@ -58,6 +58,8 @@ extension Exercise {
     /// The command → reach line every list row shows, with the rhythm the tempos are measured in
     /// ("Command 80 → 96 BPM · 16ths"). One property rather than four hand-built strings, so the
     /// library, the routine block row, the add-unit picker and the up-next card can't drift apart.
+    /// With Reach off it prints command alone ("Command 80 BPM"), because that is what a run of it
+    /// plays (ADR 0221 D6).
     /// The suffix is omitted when no rhythm is stated — an absent label means "not stated", never
     /// "quarters".
     ///
@@ -73,7 +75,7 @@ extension Exercise {
             guard playsFreeformClick else { return "" }
             return "Metronome \(clickBPM) BPM · \(timeSignatureLabel)"
         }
-        let tempos = "Command \(command) → \(reachTempo) BPM"
+        let tempos = includeReach ? "Command \(command) → \(reachTempo) BPM" : "Command \(command) BPM"
         guard let rate = commandNoteRate ?? noteRate else { return tempos }
         return "\(tempos) · \(rate.compactLabel)"
     }
