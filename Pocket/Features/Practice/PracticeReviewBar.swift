@@ -21,7 +21,10 @@ struct PracticeReviewBar: View {
     /// Journal opens a journal that writes, so the pencil shows exactly where the bar doesn't —
     /// running, or in a routine — and capture stays one tap away in every state (ADR 0142 J1) without
     /// being offered twice on one screen. One predicate, so the two can't overlap or both go missing.
-    static func isShown(isRunning: Bool, inRoutine: Bool) -> Bool { !isRunning && !inRoutine }
+    ///
+    /// `nonisolated` because it is pure: on CI's toolchain a `View`'s static members are main-actor
+    /// isolated, and a plain unit test could not call it.
+    nonisolated static func isShown(isRunning: Bool, inRoutine: Bool) -> Bool { !isRunning && !inRoutine }
 
     var body: some View {
         HStack(spacing: 12) {
