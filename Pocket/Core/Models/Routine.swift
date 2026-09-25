@@ -75,6 +75,37 @@ final class Routine {
     /// discipline as `Song.loopsByStart`.
     var orderedItems: [RoutineItem] { RoutineItem.ordered(items) }
 
+    /// The next explicit order value — one past the current maximum, so an append lands last
+    /// regardless of prior deletions (never trust the item count, which drifts from `order`). Shared
+    /// by the routine editor and the add-from-a-row sheet (ADR 0222), so both append the same way.
+    var nextOrder: Int { (items.map(\.order).max() ?? -1) + 1 }
+
+    /// Renumber the blocks so `order` stays contiguous after an insert or a delete. The play order
+    /// is the explicit `order` (ADR 0066 R2), so every structural change re-lays it.
+    func renumberItems() {
+        for (index, item) in orderedItems.enumerated() { item.order = index }
+    }
+
+    /// "3 blocks · 1 rest" — what is *in* the routine; "Empty" before any blocks. Read by the
+    /// Routines library row and the add-from-a-row sheet (ADR 0222), which must describe a routine
+    /// the same way.
+    ///
+    /// **Blocks, not units.** The detail screen's own section header says `Blocks` and the model
+    /// calls them blocks; the library row was once the only surface calling them units, which left
+    /// the two screens disagreeing about what the things in a routine are.
+    ///
+    /// **Not "exercise blocks"**, which was tried and rejected the same day: `kind.carriesUnit` is
+    /// true for a loop and a song block as well as an exercise one (ADR 0129/0134), so a routine of
+    /// two loops and a song would have read "3 exercise blocks". "Blocks" is true of all three.
+    var blockSummary: String {
+        guard !items.isEmpty else { return "Empty" }
+        let blocks = items.filter(\.kind.carriesUnit).count
+        let rests = items.count - blocks
+        var parts = ["\(blocks) block\(blocks == 1 ? "" : "s")"]
+        if rests > 0 { parts.append("\(rests) rest\(rests == 1 ? "" : "s")") }
+        return parts.joined(separator: " · ")
+    }
+
     /// Free-text **description**: what this session is *for* (ADR 0177). "Ten minutes before a
     /// lesson", "the bits of the Berklee week 3 sheet that actually needed work".
     ///

@@ -30,30 +30,9 @@ extension RoutineDetailView {
 
     /// Build the block for a pick, with the unit resolved into the sandbox. `nil` when the unit
     /// can't be resolved there — nothing is added rather than a block pointing at a foreign object.
+    /// Which block a pick makes is `RoutineUnitPick.block(order:)`, shared with the add-from-a-row
+    /// sheet (ADR 0222).
     private func block(for pick: RoutineUnitPick) -> RoutineItem? {
-        switch pick {
-        case .exercise(let picked):
-            guard let local = local(picked) else { return nil }
-            return .item(local, order: nextOrder)
-        case .loop(let picked):
-            guard let local = local(picked) else { return nil }
-            return .item(local, order: nextOrder)
-        case .earLoop(let picked):
-            // The same loop, run ears-only (ADR 0104 Slice 2).
-            guard let local = local(picked) else { return nil }
-            return .earLoopItem(local, order: nextOrder)
-        case .improviseLoop(let picked):
-            // The same loop again, run as a backing track to solo over (ADR 0135 Slice 2).
-            guard let local = local(picked) else { return nil }
-            return .improviseLoopItem(local, order: nextOrder)
-        case .song(let picked):
-            guard let local = local(picked) else { return nil }
-            return .item(local, order: nextOrder)
-        }
-    }
-
-    /// Re-resolve a model from the app context into this view's editing sandbox by id.
-    private func local<Model: PersistentModel>(_ model: Model) -> Model? {
-        editContext.model(for: model.persistentModelID) as? Model
+        pick.resolved(in: editContext)?.block(order: nextOrder)
     }
 }

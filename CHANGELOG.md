@@ -56,6 +56,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Add a drill or a loop to a routine from where you found it.** Hold a row in **Exercises** or
+  **Loops** and tap **Add to routine…**: pick a routine and the drill goes in as its last block.
+  Tap the routine again to take it back out, or tap a second routine to add it there too. For a
+  loop, choose whether it goes in as Practice, Ear or Improv. **New routine…** makes a routine with
+  it as the first block. Routines are part of Red Moon Pro (ADR 0222).
 - **A song to start on, before you decide anything.** Red Moon now arrives with one real track —
   *Binta* by Jack Trader, eighty-one seconds, written and recorded by us — and a **Start here** card
   on the home screen that opens it straight on the practice screen. It arrives with its tempo set,

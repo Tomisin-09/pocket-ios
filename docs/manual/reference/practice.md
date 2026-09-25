@@ -159,7 +159,8 @@ screen; one you stop by hand does not log.
 Every loop you have marked, across all your songs, in one list — the practice-side view of what the
 [song player](song-player.md) creates. The search field prompts `Loops and songs`.
 
-There is **no delete here**: a loop belongs to its song, and is removed from the song player.
+Hold a row for the ways it can run, `Add to routine…` and **Favourite**. There is **no delete
+here**: a loop belongs to its song, and is removed from the song player.
 
 Empty, it explains that loops appear once you have set one on a song.
 

@@ -16,6 +16,9 @@ import SwiftUI
 /// (ADR 0056), reusing the pure `PracticeLibrarySort`.
 struct LoopLibraryView: View {
     @Query private var allLoops: [Loop]
+    /// Routines are Pro (ADR 0144 D1); *Add to routine…* takes the editor's gate (ADR 0222).
+    @Environment(\.isPro) private var isPro
+    @Environment(\.presentPaywall) private var presentPaywall
     /// Sort key + direction, persisted across launches (ADR 0056).
     @AppStorage("loopLibrarySort") private var sortKey: LoopSortKey = .song
     @AppStorage("loopLibrarySortAscending") private var sortAscending = true
@@ -36,6 +39,8 @@ struct LoopLibraryView: View {
     /// The loop + mode a row launched, driving a programmatic push (a plain `NavigationLink` can't carry
     /// the row's side-by-side buttons without the row swallowing their taps).
     @State private var launch: LoopLaunch?
+    /// The loop on its way into a routine from its row (ADR 0222), or `nil`.
+    @State private var routineRequest: AddToRoutineRequest?
 
     /// A loop opened in one of its practice modes (ADR 0104 / 0135). Deliberately a **mode + loop**
     /// pair rather than one case per mode: the row buttons, the long-press menu and this destination
@@ -162,6 +167,8 @@ struct LoopLibraryView: View {
                 }
             }
         }
+        // Item-bound safely: the request is a value with its own id, not the model (ADR 0090).
+        .sheet(item: $routineRequest) { AddToRoutineSheet(request: $0) }
         .navigationDestination(item: $launch) { launch in
             switch launch.mode {
             case .trainer:
@@ -285,7 +292,8 @@ struct LoopLibraryView: View {
     }
 
     /// A loop's long-press actions (Slice 3): its practice modes, so each is reachable from the menu
-    /// as well as from the row's tap targets.
+    /// as well as from the row's tap targets — then **Add to routine…** (ADR 0222), offered wherever
+    /// there is at least one mode, since a mode is what a routine block runs.
     ///
     /// **No Delete here, deliberately** — a loop belongs to its song and is removed on the waveform
     /// where it was drawn (this library is a read-through, see the type doc). The shared modifier
@@ -296,11 +304,24 @@ struct LoopLibraryView: View {
     /// buttons can't disagree about what a loop can do — and so a mode added later appears in both
     /// the moment its precondition is stated.
     private func menuItems(for loop: Loop) -> [PocketRowMenuItem] {
-        LoopModeAccess.modes(for: loop).map { mode in
+        let modes = LoopModeAccess.modes(for: loop).map { mode in
             PocketRowMenuItem(mode.label, systemImage: mode.symbolName) {
                 launch = LoopLaunch(mode: mode, loop: loop)
             }
         }
+        guard let request = AddToRoutineRequest.loop(loop, named: displayName(loop)) else { return modes }
+        return modes + [PocketRowMenuItem("Add to routine…", systemImage: "text.badge.plus") {
+            addToRoutine(request)
+        }]
+    }
+
+    /// Adding a block **is** editing a routine, so the row takes the editor's own gate and paywall
+    /// reason — a second door into the same act, not a way round its wall.
+    private func addToRoutine(_ request: AddToRoutineRequest) {
+        guard AccessPolicy.canAddRoutineUnits(isPro: isPro) else {
+            return presentPaywall(.routine(.edit))
+        }
+        routineRequest = request
     }
 
     /// The favourite pin (ADR 0119) — what surfaces this passage in the cross-song "my key
