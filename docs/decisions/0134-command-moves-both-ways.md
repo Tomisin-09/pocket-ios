@@ -17,6 +17,9 @@
   played, and nothing moves a stored tempo the player did not see and accept.
 - **Scope:** exercises **and** loops, at the shared completion surface. Standalone runs and routine
   blocks under manual advance, exactly the reach ADR 0079 already has.
+- **Amended by:** ADR 0221 — when a run had Reach switched off, the raise half of the offer is
+  absent (its target is command itself, so `canRaise` is false). The settle half, §2's unrated
+  default and the rest stand.
 
 ## Context
 

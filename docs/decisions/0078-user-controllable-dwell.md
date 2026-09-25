@@ -2,6 +2,11 @@
 
 **Status:** Accepted · 2026-07-11
 
+- **Amended by:** ADR 0221 — the dwell leaves the Steps panel (which goes) and becomes the
+  **Hold** control in the Command row, shown in bars on an exercise and passes on a loop instead of
+  a raw interval count. Its 1…12 range and storage stand; warm-up, reach and back-off now each get a
+  hold with the same range. On a loop, `repsPerStep` folds into the holds.
+
 ## Context
 
 A command-anchored training ramp (`CommandRamp`, ADR 0045/0046) is: warm up from the working floor

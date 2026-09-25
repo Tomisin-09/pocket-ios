@@ -10,6 +10,10 @@
   (each loop mode gates on what it needs), ADR 0112 (free runs, Pro authors).
 - **Reverses:** the implicit rule in ADR 0038/0058 that journal capture is a **post-run, standalone**
   surface. Nothing wrote that rule down; the gate in the run screens enforced it anyway.
+- **Amended by:** ADR 0221 — J1's toolbar pencil is **hidden on a stopped, standalone** run screen,
+  where the review bar's Journal is already present and the journal it opens writes too. It shows
+  while running and inside a routine, which is where the review bar is gated out. Capture is still
+  reachable in every state; J2–J5 stand.
 
 ## Context
 
