@@ -10,11 +10,11 @@ import SwiftUI
 /// belongs to a loop, an exercise or a session stays on that owner's screen, because that is the only
 /// place its snapshot is honest. Takes are the exception, since playing one *is* their nature.
 ///
-/// ADR 0155 §3 narrows that rule rather than overturning it: this space writes **standalone** notes,
-/// and only standalone notes. What the ＋ cannot do is offer an owner picker — filing a note against a
-/// unit at a moment you are not practising it would snapshot where that unit stands *now* rather than
-/// where it stood when the thing being described happened, which is the exact dishonesty ADR 0100 §1
-/// was protecting against.
+/// ADR 0155 §3 narrows that rule rather than overturning it: this space writes **standalone** notes —
+/// and, since ADR 0224, standalone takes — and nothing owned. What the ＋ cannot do is offer an owner
+/// picker — filing a note against a unit at a moment you are not practising it would snapshot where
+/// that unit stands *now* rather than where it stood when the thing being described happened, which
+/// is the exact dishonesty ADR 0100 §1 was protecting against.
 ///
 /// All the merge / filter / owner-label logic is the pure `JournalTimeline`; this view only queries,
 /// groups by day, and renders.
@@ -74,6 +74,8 @@ struct JournalTabView: View {
     var lookbackPeriod = JournalLookback.Period.default.rawValue
     /// The standalone-note composer (ADR 0155 §3).
     @State private var composing = false
+    /// The standalone-take recorder (ADR 0224) — the ＋ menu's second door.
+    @State private var recordingTake = false
     /// One take plays at a time; stopped on dismiss (mirrors `TakesSheet`). Not `private`: the
     /// deletion glue lives in `JournalTabView+Deletion.swift`, and `private` is file-scoped.
     @State var player = RecordingPlayer()
@@ -180,8 +182,12 @@ struct JournalTabView: View {
             // The menu itself is `JournalTabView+Options.swift` — it grew a second filter with ADR
             // 0190 S2 and took this file past the 400-line cap.
             ToolbarItem(placement: .topBarTrailing) { optionsMenu }
+            // ＋ holds both of this space's writes since ADR 0224 — a note and a take, each against
+            // nothing. The take stops any audition first: the feed's player and the mic would
+            // otherwise share the session, and the take would record what the speaker was playing.
             ToolbarItem(placement: .topBarTrailing) {
-                QuickJournalButton(isPresented: $composing)
+                JournalNewMenu(onWriteNote: { composing = true },
+                               onRecordTake: { player.stop(); recordingTake = true })
             }
         }
         .navigationDestination(item: $openingOwner) { route in
@@ -193,12 +199,14 @@ struct JournalTabView: View {
         .navigationDestination(item: $openedTake) { ref in
             TakeDetailView(take: ref.value, player: player) { requestDelete(.take(ref.value)) }
         }
-        // The Journal space's own write seam (ADR 0155 §3): standalone notes, and *only* standalone
-        // notes. No owner picker — filing a note against a unit you are not currently practising is
-        // what makes a snapshot dishonest, and that prohibition outlives this screen.
+        // The Journal space's own write seam (ADR 0155 §3, widened by ADR 0224): standalone notes
+        // and standalone takes, and nothing owned. No owner picker — filing a note against a unit you
+        // are not currently practising is what makes a snapshot dishonest, and that prohibition
+        // outlives this screen.
         .sheet(isPresented: $composing) {
             QuickJournalSheet(owner: .standalone)
         }
+        .sheet(isPresented: $recordingTake) { StandaloneTakeSheet() }
         // Jump to a date (ADR 0190 D9) — the sheet and its rule live in `JournalTabView+Options`.
         .sheet(isPresented: $jumping) { jumpSheet }
         // The two Show facets — owner kind and tag (ADR 0190 D5, D10; ADR 0207 D11) — in the same

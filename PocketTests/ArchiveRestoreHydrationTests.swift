@@ -188,6 +188,35 @@ final class ArchiveRestoreHydrationTests: XCTestCase {
         XCTAssertEqual(landing.takes.first?.0.isPinned, false)
     }
 
+    // MARK: - ADR 0224, a take recorded against nothing
+
+    /// Without the flag travelling, a restored standalone take would come back reading as an
+    /// **orphan** — a take whose loop was deleted — which is a different fact about the same audio.
+    func testAStandaloneTakeComesBackStandalone() {
+        let landing = landed(archive {
+            var take = Fixture.take(uid: UUID(), fileName: "take-1.m4a")
+            take.ownerLabelAtTake = nil
+            take.isStandalone = true
+            $0.takes = [take]
+        })
+
+        XCTAssertEqual(landing.takes.first?.0.isStandalone, true)
+        XCTAssertEqual(landing.takes.first?.0.ownerKind, .standalone)
+    }
+
+    /// An archive written before ADR 0224 carries `nil`, and every take in it had an owner — so an
+    /// ownerless one there **is** an orphan, and must not be promoted to standalone on the way in.
+    func testAnArchiveWrittenBeforeStandaloneTakesRestoresNoneAsStandalone() {
+        let landing = landed(archive {
+            var take = Fixture.take(uid: UUID(), fileName: "take-1.m4a")
+            take.isStandalone = nil
+            $0.takes = [take]
+        })
+
+        XCTAssertNil(landing.takes.first?.0.isStandalone)
+        XCTAssertEqual(landing.takes.first?.0.ownerKind, Recording.OwnerKind.none)
+    }
+
     // MARK: - ADR 0205, the marks and the span history come home
 
     /// A snag's `loopUID` is a loose id copy, and it resolves on the way back in **because** the loop

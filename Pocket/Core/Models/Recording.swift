@@ -94,6 +94,16 @@ final class Recording {
     /// A plain `Bool` with a declaration default — additive, migration-exempt (CoreData 134110).
     var isPinned: Bool = false
 
+    /// Marks a take recorded against **nothing** — from the Journal's ＋ (ADR 0224). Set once at
+    /// capture, never cleared.
+    ///
+    /// A stored flag rather than "no owner is set", for the reason `JournalEntry.isStandalone` gives:
+    /// **absence is already taken.** ADR 0151 spent it on a take whose loop or exercise was deleted,
+    /// and a take recorded on purpose against nothing is a different fact that must not read as
+    /// damage. Additive optional with **no declaration default** (CoreData 134110), and `nil` on every
+    /// take captured before this is right: all of them were recorded against something.
+    var isStandalone: Bool?
+
     init(fileName: String, duration: TimeInterval, uid: UUID = UUID(), createdAt: Date = Date(),
          loop: Loop? = nil, exercise: Exercise? = nil, song: Song? = nil) {
         self.uid = uid
@@ -108,7 +118,10 @@ final class Recording {
     /// What a take was recorded against — derived from which owner relationship is set, so it can't
     /// drift from the stored links (no stored enum, dodging the SwiftData enum-attribute migration
     /// footgun — `docs/swiftdata-gotchas.md`). `loop` wins, then `exercise`, then `song`.
-    enum OwnerKind: Equatable { case loop, exercise, song, none }
+    ///
+    /// `.standalone` is a take recorded against nothing (ADR 0224); `.none` is a take whose owner was
+    /// deleted (ADR 0151). They are told apart by the stored flag, never by the absent owner.
+    enum OwnerKind: Equatable { case loop, exercise, song, standalone, none }
 
     /// The take's owner kind. Precedence is fixed so a stray double-set still resolves the same way,
     /// but a well-formed take only ever has one owner set (ADR 0058).
@@ -116,6 +129,7 @@ final class Recording {
         if loop != nil { return .loop }
         if exercise != nil { return .exercise }
         if song != nil { return .song }
+        if isStandalone == true { return .standalone }
         return .none
     }
 

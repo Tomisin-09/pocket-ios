@@ -5,6 +5,10 @@
 - **Amends:** ADR 0100 §1 (the read-only stance), narrowly
 - **Extends:** ADR 0058 (polymorphic owner) · ADR 0143 (`ownerKind` is the discriminator) · ADR 0151 (the orphan state)
 - **Second consumer:** the Metronome tool — see §8, added on refinement
+- **Amended by:** ADR 0224 (2026-09-26) — §3's *"standalone notes, and only standalone notes"* now
+  reads standalone notes **and standalone takes**: the Journal's ＋ became a menu with *Write a note*
+  and *Record a take*, and a take recorded there carries `Recording.isStandalone` for §1's reason.
+  §3a's owner-picker prohibition stands and covers takes too; nothing else here changes.
 - **Partly superseded:** §8's two refusals — *"No `.metronome` owner kind"* and *"No snapshot of the
   tempo"* — were reversed by **ADR 0160** on 2026-08-12. Everything else here stands, including §1's
   stored flag, §3a's owner-picker prohibition, and §8's decision to put the door on the metronome at

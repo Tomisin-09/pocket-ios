@@ -138,6 +138,28 @@ final class JournalOwnerFilterTests: XCTestCase {
         XCTAssertEqual(JournalTimeline.filter(items, owner: showing()).count, 2)
     }
 
+    /// **A take recorded against nothing sits with the notes written against nothing** (ADR 0224) —
+    /// and only there. The pair beside it is the whole point: an orphaned take has no owner either,
+    /// and it must stay out of *Just me*, or a take whose loop was deleted would be filed as one the
+    /// player meant to keep unattached.
+    func testAStandaloneTakeIsUnderJustMeAndAnOrphanedOneIsNot() {
+        let standalone = take(at: noon)
+        RecordingOwner.standalone.attach(to: standalone)
+        let orphan = take(at: noon - hour)
+        orphan.ownerLabelAtTake = "Slow Bend · Verse riff"
+        let standaloneNote = JournalEntry.forStandalone(text: "n", kind: .note,
+                                                        createdAt: noon - 2 * hour)
+        let items = JournalTimeline.merge(entries: [standaloneNote], takes: [standalone, orphan])
+
+        XCTAssertEqual(Set(JournalTimeline.filter(items, owner: showing(.standalone)).map(\.id)),
+                       [standalone.uid, standaloneNote.uid])
+        for kind in JournalTimeline.OwnerFilter.allCases where kind != .standalone {
+            XCTAssertFalse(JournalTimeline.filter(items, owner: showing(kind)).contains { $0.id == standalone.uid },
+                           "a standalone take surfaced under \(kind)")
+        }
+        XCTAssertEqual(JournalTimeline.filter(items, owner: showing()).count, 3)
+    }
+
     // MARK: - the union (ADR 0190 D10, ADR 0159)
 
     /// **The decision this facet turns on: a second tick widens.** An item has exactly one owner

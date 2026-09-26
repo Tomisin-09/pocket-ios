@@ -8,6 +8,8 @@ enum RecordingOwner {
     case loop(Loop)
     case exercise(Exercise)
     case song(Song)
+    /// Recorded against nothing — the Journal's ＋ (ADR 0224).
+    case standalone
 
     /// Set the matching owner relationship on `recording` (exactly one, per ADR 0058), and snapshot
     /// the owner's caption beside it (ADR 0151) so the take stays identifiable if the owner is later
@@ -18,6 +20,10 @@ enum RecordingOwner {
         case .loop(let loop): recording.loop = loop
         case .exercise(let exercise): recording.exercise = exercise
         case .song(let song): recording.song = song
+        case .standalone:
+            // The flag, and no caption: the label function below reads `nil` for a take with no
+            // owner, which is what a standalone take should say (ADR 0224) — never an owner's name.
+            recording.isStandalone = true
         }
         recording.ownerLabelAtTake = JournalTimeline.ownerLabel(
             loop: recording.loop, exercise: recording.exercise, song: recording.song)
@@ -30,6 +36,9 @@ enum RecordingOwner {
         case .loop(let loop): loop.recordingsByRecent
         case .exercise(let exercise): exercise.recordingsByRecent
         case .song(let song): song.recordingsByRecent
+        // No owner to list from — the Journal feed is where a standalone take is found, and no
+        // `TakesSheet` is ever opened for one.
+        case .standalone: []
         }
     }
 }

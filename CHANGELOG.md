@@ -56,6 +56,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Record a take that isn't about any drill.** The Journal's ✏️ is now a **＋** holding **Write a
+  note** and **Record a take**. A take recorded there belongs to nothing — a riff you want to keep,
+  how new strings sound — so it no longer has to be filed under whatever drill was open. One button
+  starts it and the same button stops and saves it, and the sheet won't close while it's recording.
+  It sits in the timeline with no caption, and under **Show ▸ Just me** beside the notes you wrote
+  there (ADR 0224).
 - **Add a drill or a loop to a routine from where you found it.** Hold a row in **Exercises** or
   **Loops** and tap **Add to routine…**: pick a routine and the drill goes in as its last block.
   Tap the routine again to take it back out, or tap a second routine to add it there too. For a

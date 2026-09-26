@@ -198,7 +198,8 @@ extension ArchiveBuilder {
                 .map {
                     TakeNoteRecord(uid: $0.uid, time: $0.time, text: $0.text, createdAt: $0.createdAt)
                 },
-            isPinned: recording.isPinned
+            isPinned: recording.isPinned,
+            isStandalone: recording.isStandalone
         )
     }
 }

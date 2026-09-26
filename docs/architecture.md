@@ -496,6 +496,16 @@ space's own ＋ through the existing `QuickJournalSheet`/`JournalWriter` path, w
 picker**: filing a note against a unit you are not currently practising is what would make the
 snapshot lie. They snapshot nothing and carry no caption, by construction.
 
+A **take** may belong to nothing too (ADR 0224), for the same reason and in the same shape:
+`Recording.isStandalone: Bool?` backs `Recording.OwnerKind.standalone`, read after the loop, exercise
+and song relationships, because a take with no owner is already ADR 0151's orphan. It is set only
+through `RecordingOwner.standalone.attach(to:)`, the choke point every owner goes through, which writes
+no `ownerLabelAtTake`. The Journal's ＋ is a two-item menu (`JournalNewMenu`), and *Record a take*
+opens `StandaloneTakeSheet`, which drives `RecordingController.toggleTake` with nothing else playing:
+no held session, so the take asserts the record category as it starts and restores playback as it
+stops. The owner filter buckets it with standalone notes, and the archive carries the flag as an
+optional (`nil` = written before 0224, when every take had an owner).
+
 A note written at the **Metronome** is the sixth kind (ADR 0160), and reverses ADR 0155 §8's refusal
 of one. That refusal was aimed at recording a bare BPM — a fragment of a *unit's* context with no
 unit behind it, which invites the reader to attach it to a drill that was never there. A metronome
