@@ -129,7 +129,8 @@ struct ExerciseRunView: View {
                               currentIndex: isRunning ? engine.currentRampPlateau : nil,
                               nextIndex: isRunning ? engine.warningNextPlateau : nil,
                               highlightedPhase: showSettings ? openPhase : nil,
-                              lengthLine: RunLength.exercise(routine, beatsPerBar: signature.beats))
+                              lengthLine: RunLength.exercise(routine, beatsPerBar: signature.beats),
+                              meter: meterOnLengthLine)
                 if !isRunning, routineContext == nil, isDirty { saveChangesButton }
                 if showsReviewBar {
                     PracticeReviewBar(journalCount: exercise.journal.count,
@@ -147,12 +148,8 @@ struct ExerciseRunView: View {
         .navigationTitle(exercise.name.isEmpty ? "Exercise" : exercise.name)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            // Meter is part of the full editor — in a routine it's fixed, tempo is the only knob (ADR 0077).
-            if !isRunning, routineContext == nil {
-                ToolbarItem(placement: .topBarTrailing) { signaturePicker }
-            }
             // Capture wherever the review bar's Journal isn't (ADR 0221 D7) — a running drill and a
-            // routine block, where most notes are owed (ADR 0142). Stopped, the meter takes its place.
+            // routine block, where most notes are owed (ADR 0142).
             if !showsReviewBar {
                 ToolbarItem(placement: .topBarTrailing) {
                     QuickJournalButton(isPresented: $showingQuickNote)
@@ -201,6 +198,9 @@ struct ExerciseRunView: View {
                content: { ExerciseDetailSheet(exercise: exercise, onOpenSong: songTapHandler) })
         .sheet(isPresented: $showingShape) {
             ExerciseShapeSheet(exercise: exercise)
+        }
+        .sheet(isPresented: $showingSignaturePicker) {
+            MeterPickerSheet(signature: $signature)
         }
         .fullScreenCover(item: $completion) { finished in
             // Reuse the routine block's Done screen for a standalone finish (ADR 0079) — the same
@@ -251,24 +251,23 @@ struct ExerciseRunView: View {
 
     // MARK: - Setup (stopped)
 
-    /// Edit the exercise's **meter** from the run setup (ADR 0052) — a compact nav-bar control shown
-    /// only while stopped. Drives the click's accents + count-in; committed on Start, so leaving
-    /// discards it.
+    /// Edit the exercise's **meter** from the run setup (ADR 0052) — a chip closing the staircase's
+    /// length line, shown only while stopped and outside a routine (in a routine the meter is fixed and
+    /// tempo is the only knob, ADR 0077). Drives the click's accents + count-in; committed on Start, so
+    /// leaving discards it.
     ///
-    /// A sheet rather than a popup menu, sharing `OptionListSection` with the metronome's own settings
-    /// so the two surfaces that choose a time signature read identically. In a menu these labels
-    /// truncated — "12/8 · Slow blues · doo-wop (in 4)" is not a menu-sized string, and the musical
-    /// context is the half that tells you which meter you want.
-    private var signaturePicker: some View {
-        Button { showingSignaturePicker = true } label: {
-            Text(signature.name)
-                .font(.futura(.subheadline, weight: .semibold))
-                .foregroundStyle(PocketColor.practice)
-        }
-        .accessibilityLabel("Time signature: \(signature.name)")
-        .sheet(isPresented: $showingSignaturePicker) {
-            MeterPickerSheet(signature: $signature)
-        }
+    /// It was a nav-bar control until 2026-09 and moved for the metronome's reason: a text control in
+    /// the bar crowds the title. Beside `… · 16 bars` it sits next to the count it decides.
+    ///
+    /// Opens a sheet rather than a popup menu (`MeterPickerSheet`, presented from the body), sharing
+    /// `OptionListSection` with the metronome's own settings so the two surfaces that choose a time
+    /// signature read identically. In a menu these labels truncated — "12/8 · Slow blues · doo-wop
+    /// (in 4)" is not a menu-sized string, and the musical context is the half that tells you which
+    /// meter you want.
+    private var meterOnLengthLine: LengthLineMeter? {
+        guard !isRunning, routineContext == nil else { return nil }
+        return LengthLineMeter(name: signature.name, tint: PocketColor.practice,
+                               wash: PocketColor.practiceCardWash) { showingSignaturePicker = true }
     }
 
     /// The collapsible **Practice Settings** panel (V1 feedback), a row per phase (ADR 0221). The

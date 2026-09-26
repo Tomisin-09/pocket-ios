@@ -2,6 +2,9 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-01
+- **Amended by:** ADR 0223 D2 (2026-09-26) — the meter control no longer sits in the run-setup nav
+  bar; it is a chip closing the staircase's length line. Everything else here stands: it shows only
+  while stopped, edits local state, and commits on Start.
 
 ## Context
 

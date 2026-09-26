@@ -135,7 +135,8 @@ Opened by tapping a drill.
   reach; `Settle at`, `Steps` and `Each step` in the back off. A `Reset to auto` button appears once
   you have overridden the reach or the back off.
 - **The staircase** shows the tempo plan as steps, lighting the open row's phase, with the run's
-  length under it.
+  length under it. While stopped, that line ends with the drill's meter — tap it to change the time
+  signature.
 - **A `Journal` and `Takes` bar** holds what you have already written and recorded against this
   drill.
 - **`Start training`** commits and runs. Beside it, the **record** control arms a take.
@@ -143,8 +144,7 @@ Opened by tapping a drill.
   progress, linked songs, a `Where you learned it` section with an `Add a link` button, the feel and
   the template chip.
 - **The ✏️** writes a [journal note](tools-and-journal.md#journal) without touching the run. It
-  shows while running and inside a routine; stopped, the meter sits in its place and the `Journal`
-  bar writes notes.
+  shows while running and inside a routine; stopped, the `Journal` bar writes notes.
 
 While running, the screen shows the live BPM, a count-in if you have one turned on (`Counting in`),
 and pause / resume. `Stop and reset` ends it. A run that finishes on its own lands on a completion

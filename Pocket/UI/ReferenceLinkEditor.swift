@@ -125,14 +125,12 @@ struct ReferenceLinkEditor: View {
 
                 Section {
                     // The house note idiom, unchanged from `Exercise.notes` and `Song.comment`:
-                    // vertical axis, a soft line range, and the keyboard's escape hatch. The
-                    // `keyboardDoneButton` is attached **once for the whole sheet** — it resigns
-                    // whichever field is first responder rather than naming one — which is also
-                    // what finally gives the Link field above an escape. That field has been
-                    // `axis: .vertical` with no way off the keyboard since ADR 0167 shipped.
+                    // vertical axis and a soft line range. The way off the keyboard is
+                    // `KeyboardDismissAccessory`, app-wide — the Link field above went without one
+                    // from ADR 0167 until a per-sheet modifier was added here, which is the kind of
+                    // omission a global accessory makes impossible.
                     TextField("What you took from it", text: $note, axis: .vertical)
                         .lineLimit(3...8)
-                        .keyboardDoneButton(tint: accent)
                 } header: {
                     Text("Note")
                 } footer: {

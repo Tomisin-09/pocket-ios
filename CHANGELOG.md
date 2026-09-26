@@ -129,6 +129,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **The metronome's time signature sits under the beat dots**, not in the top bar — the same control
+  and the same sheet, beside the dots it changes. The title is centred again: the top bar now holds
+  the back button and the ✏️, one either side.
+- **An exercise's time signature closes the line under its staircase** — *≈ 1 min 5 s · 16 bars ·
+  4/4* — rather than sitting in the top bar. Tap it to change the meter, as before.
+- **The metronome's Start button steps aside while you type** a tempo or an automator value, so the
+  field you are typing into isn't squeezed against it. It comes back when the keyboard goes.
+- **The automator's − and + buttons are easier to hit.** They look the same; the area that takes the
+  tap is bigger, as is the one on the save-as-exercise bookmark.
 - **Chord lengths count the drill's own bar.** A chord in a 3/4 drill held for three beats now reads
   *3 beats · 1 bar* rather than as part of a 4/4 bar, and a one-beat chord says *1 beat*.
 - **An exercise's Practice Settings are laid out phase by phase.** Four rows — **Warm-up**,
@@ -158,6 +167,16 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **There is a way off the keyboard again, on every screen.** On iOS 26.6 the ✓ above the keyboard
+  had stopped appearing anywhere in the app, which left a number pad — the metronome's tempo, an
+  automator value, a BPM — with no way to close it. The ✓ is now the app's own and sits above every
+  keyboard except a search field's, which has its own Search key.
+- **One ✓, not four.** With the metronome's automator on, the keyboard drew a checkmark for the
+  screen and one for each number field.
+- **A typed tempo replaces the old one.** Tapping the metronome's tempo, an automator value or an
+  exercise's tempo left the old number in the field with the cursor wherever the tap landed, so
+  typing 120 into 90 could make 12090 — and the tempo jumped to 300. The field now empties as you tap
+  it, showing the old value greyed until you type; close it without typing and nothing changes.
 - **An exercise's warm-up plays the number of steps it shows.** The warm-up was built by stepping a
   rounded tempo stride, which added and dropped rungs: at 51 → 61 BPM a setting of 2 played four
   rungs and a setting of 6 played ten. It is now spaced by count, like the reach and the back off.

@@ -12,11 +12,11 @@ Reached from the `Metronome` card on Home, and it takes the whole screen. Proced
      | state: Metronome open, stopped -->
 
 **Top bar.** A back chevron on the left. The title in the middle. On the right, the ✏️ that writes a
-journal note, then the meter control, which shows the time signature and a note glyph when a
-subdivision is on.
+journal note.
 
 **The beat dots** run across the top, one per beat in the bar. Accented beats are larger, and the
-dots dim in step with a withdrawn bar rather than carrying on.
+dots dim in step with a withdrawn bar rather than carrying on. **The meter control** sits under
+them, showing the time signature and a note glyph when a subdivision is on.
 
 **The tempo readout** is the BPM number with its Italian marking under it. The caption changes to
 `Downbeats only` or `Click withdrawn` while the click is thinning out.

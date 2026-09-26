@@ -243,9 +243,8 @@ struct RoutineBlockDoneView: View {
                 .lineLimit(2...5)
                 .padding(12)
                 .background(PocketColor.surfaceStandard, in: RoundedRectangle(cornerRadius: 12))
-                // The note grows vertically, so Return inserts a newline — give the keyboard its own
-                // checkmark to dismiss it (there's otherwise no way off the keyboard).
-                .keyboardDoneButton()
+                // The note grows vertically, so Return inserts a newline — the way off the keyboard is
+                // `KeyboardDismissAccessory`'s checkmark.
                 .scrollsIntoViewWhenFocused("note", focused: $noteFocused)
         }
     }

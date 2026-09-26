@@ -82,7 +82,6 @@ extension RoutineDetailView {
             .font(.futura(.body))
             .foregroundStyle(PocketColor.textPrimary)
             .lineLimit(3...8)
-            .keyboardDoneButton()
             // **An identifier is not a label** (ADR 0213 D8). This field carried
             // `routine.descriptionField` for the UI tests and nothing for VoiceOver, which is
             // exactly the pair 0208 D5 warned reads as covered when it is not.

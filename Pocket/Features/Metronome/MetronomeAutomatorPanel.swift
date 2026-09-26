@@ -142,6 +142,9 @@ struct MetronomeAutomatorPanel: View {
                 .foregroundStyle(PocketColor.metronome)
                 .frame(width: 36, height: 36)
                 .background(Circle().fill(PocketColor.metronomeCircleWash))
+                // Drawn at 36, touched at 44 — see `nudge`.
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Save \(engine.bpm) beats per minute as an exercise in Practice")
@@ -215,8 +218,8 @@ struct MetronomeAutomatorPanel: View {
 }
 
 /// A validated numeric field: tap the number to type it (number pad, clamped on commit), or
-/// nudge with −/+. The keyboard is dismissed by the screen-level **Done** accessory (see
-/// `MetronomeView`), which resigns first responder and commits via the focus change.
+/// nudge with −/+. The keyboard is dismissed by the app-wide checkmark (`KeyboardDismissAccessory`),
+/// which resigns first responder and commits via the focus change.
 struct AutomatorNumberField: View {
     let value: Int
     let range: ClosedRange<Int>
@@ -240,15 +243,18 @@ struct AutomatorNumberField: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        HStack(spacing: 6) {
+        // No spacing: each nudge's own 44pt touch frame carries the 6pt gap its 32pt disc used to be
+        // given here.
+        HStack(spacing: 0) {
             nudge("minus", says: adjusts.isEmpty ? "Decrease" : "Decrease the \(adjusts)") {
                 commit(value - step)
             }
-            // `TextField("", …)` — an empty placeholder is an empty label, so VoiceOver reaches an
-            // editable field with nothing to say about it (ADR 0213). The placeholder stays empty:
-            // the number is always present, so a visible placeholder would never be seen, and this
-            // is the half only a listener needs.
-            TextField("", text: $text)
+            // `TextField("", …)` — an empty title is an empty label, so VoiceOver reaches an editable
+            // field with nothing to say about it (ADR 0213); the label below is the half only a
+            // listener needs. The **prompt** is the current value: focusing empties the field, so
+            // what you type replaces the number instead of landing wherever the caret fell in it
+            // (`TypableTempo` has the case that found it), and the old value shows greyed meanwhile.
+            TextField("", text: $text, prompt: Text("\(value)"))
                 .accessibilityLabel(adjusts.isEmpty ? "Value" : adjusts.capitalized)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
@@ -256,8 +262,9 @@ struct AutomatorNumberField: View {
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 54)
                 .focused($focused)
-                .onChange(of: focused) { _, isFocused in if !isFocused { commit(Int(text) ?? value) } }
-                .keyboardDoneButton(tint: PocketColor.metronome)
+                .onChange(of: focused) { _, isFocused in
+                    if isFocused { text = "" } else { commit(Int(text) ?? value) }
+                }
             nudge("plus", says: adjusts.isEmpty ? "Increase" : "Increase the \(adjusts)") {
                 commit(value + step)
             }
@@ -274,6 +281,12 @@ struct AutomatorNumberField: View {
                 .foregroundStyle(PocketColor.textPrimary)
                 .frame(width: 32, height: 32)
                 .background(Circle().fill(PocketColor.metronomeCircleWash))
+                // **Drawn at 32, touched at 44.** Three rows of these flank a number each, and a 44pt
+                // disc would crowd the number it adjusts; the accessibility pass (ADR 0213) measured
+                // the 32pt target as too small to hit reliably. The frame grows the target and leaves
+                // the drawing alone.
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)

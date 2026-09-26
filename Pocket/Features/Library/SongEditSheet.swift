@@ -137,7 +137,6 @@ struct SongEditSheet: View {
         Section("Notes") {
             TextField("A note about this song", text: $comment, axis: .vertical)
                 .lineLimit(3...8)
-                .keyboardDoneButton(tint: PocketColor.library)
         }
     }
 
