@@ -31,7 +31,6 @@ struct FreeformInstructionsSection: View {
         Section {
             TextField("What are you practising?", text: $draft, axis: .vertical)
                 .lineLimit(4...12)
-                .keyboardDoneButton()
                 // Needs a `KeyboardFollowingScroll` around the host's container — both hosts
                 // (`ExerciseDetailSheet`, `FreeformBlockPreview`) have one; inert if a third forgets.
                 .scrollsIntoViewWhenFocused("instructions", focused: $draftFocused)

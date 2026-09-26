@@ -33,7 +33,10 @@ struct EditableTempoRow: View {
             }
             Spacer()
             StepperButton(symbol: "minus", label: "Lower \(spokenName)", tint: tint) { onStep(-1) }
-            TextField("", text: $draft)
+            // Focusing empties the field, with the current value as its greyed prompt, so a typed
+            // tempo replaces the old one rather than landing wherever the caret fell in it
+            // (`TypableTempo` has the case that found it). Empty on commit changes nothing.
+            TextField("", text: $draft, prompt: Text("\(value)"))
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
                 .font(.pocketMono(.title3))
@@ -51,16 +54,7 @@ struct EditableTempoRow: View {
         // row clamping this one, the promote button), but never while the user is mid-type.
         .onChange(of: value) { _, updated in if !typing { draft = "\(updated)" } }
         .onChange(of: typing) { _, isTyping in
-            if isTyping { draft = "\(value)" } else { commit() }
-        }
-        .toolbar {
-            if typing {
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button { typing = false } label: { Image(systemName: "checkmark") }
-                        .accessibilityLabel("Dismiss keyboard")
-                }
-            }
+            if isTyping { draft = "" } else { commit() }
         }
     }
 

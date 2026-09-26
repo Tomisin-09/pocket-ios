@@ -155,8 +155,11 @@ final class RoutineLibraryUITests: UITestCase {
     @MainActor
     private func dismissKeyboard(in app: XCUIApplication) {
         let done = app.buttons["Dismiss keyboard"]
-        guard done.exists, done.isHittable else { return }
-        done.tap()
+        guard done.exists else { return }
+        // By coordinate: the checkmark lives in a window of its own (`KeyboardDismissAccessory`), which
+        // CI's XCTest finds but never judges hittable — gating on `isHittable` here made this a silent
+        // no-op on CI. See `KeyboardDismissUITests.tapCheckmark`.
+        done.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
     }
 
     /// Swipe back to the top of the current list. Stops as soon as the content stops moving, for the

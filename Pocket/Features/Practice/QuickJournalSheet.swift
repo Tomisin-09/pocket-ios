@@ -71,9 +71,8 @@ struct QuickJournalSheet: View {
             .lineLimit(3...8)
             .padding(12)
             .background(PocketColor.surfaceStandard, in: RoundedRectangle(cornerRadius: 12))
-            // The field grows vertically, so Return inserts a newline — the keyboard needs its own
-            // way off (v2 close-out N5).
-            .keyboardDoneButton()
+            // The field grows vertically, so Return inserts a newline — the keyboard's way off is
+            // `KeyboardDismissAccessory`'s checkmark (v2 close-out N5).
             .scrollsIntoViewWhenFocused("quick-note", focused: $textFocused)
             // Opened *to write*, so the caret is already there. `.task` rather than `.onAppear`: the
             // focus has to land after the sheet's presentation transition or it is dropped.

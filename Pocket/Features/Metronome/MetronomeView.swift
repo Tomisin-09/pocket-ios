@@ -30,6 +30,10 @@ struct MetronomeView: View {
     /// would be whichever tempo the last re-render saw — neither the moment the player reached for the
     /// pencil nor the moment they saved.
     @State private var composing: PendingMetronomeNote?
+    /// Whether the keyboard is up, for the tempo or an automator field. The pinned transport steps
+    /// aside while it is: the field being typed into otherwise ends up squeezed against the Start
+    /// button, half hidden, and the keyboard's checkmark floats over Start's trailing edge.
+    @State private var keyboardUp = false
 
     /// A tap gap longer than this starts a fresh measurement — an old, stale tap shouldn't
     /// average against a new one.
@@ -59,7 +63,12 @@ struct MetronomeView: View {
                 // controls (and dismiss the time-signature menu) on every beat.
                 ScrollView {
                     VStack(spacing: 20) {
-                        BeatIndicator(engine: engine)
+                        // The dots and the meter read as one thing: how the bar is counted, and the
+                        // control that sets it.
+                        VStack(spacing: 8) {
+                            BeatIndicator(engine: engine)
+                            meterChip
+                        }
                         tempoReadout
                         tempoControls
                         MetronomeAutomatorPanel(engine: engine)
@@ -67,19 +76,21 @@ struct MetronomeView: View {
                     .padding(24)
                 }
                 .scrollDismissesKeyboard(.interactively)
-                // Transport stays pinned below the scrollable controls.
-                transport
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 24)
-                    .padding(.top, 12)
+                // Transport stays pinned below the scrollable controls — except while typing.
+                if !keyboardUp {
+                    transport
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 24)
+                        .padding(.top, 12)
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(PocketColor.background.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // Back arrow + title + meter, so the screen reads as a feature you navigate
-                // into, not a settings sheet. The meter (time signature + subdivision) moves
-                // to the trailing edge.
+                // Back arrow + title + pencil — one control either side, so the title sits centred.
+                // The meter used to be the second trailing control, and the pair was wide enough
+                // that iOS moved the title off centre to fit it; it now sits under the beat dots.
                 ToolbarItem(placement: .topBarLeading) {
                     Button { dismiss() } label: {
                         Image(systemName: "chevron.backward")
@@ -95,19 +106,10 @@ struct MetronomeView: View {
                 }
                 // The second door onto the journal (ADR 0155 §8), now writing a **metronome** note
                 // rather than a bare standalone one (ADR 0160). The sitting is snapshotted here, at
-                // the tap, because that is the moment the player is reacting to. Ahead of the meter
-                // button; the button itself is the one `ExerciseRunView` and `LoopRunView` use.
+                // the tap, because that is the moment the player is reacting to. The button itself
+                // is the one `ExerciseRunView` and `LoopRunView` use.
                 ToolbarItem(placement: .topBarTrailing) {
                     QuickJournalButton { composing = PendingMetronomeNote(sitting: engine.journalContext) }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    meterMenu
-                }
-                ToolbarItemGroup(placement: .keyboard) {
-                    Spacer()
-                    Button { dismissKeyboard() } label: { Image(systemName: "checkmark") }
-                        .tint(PocketColor.metronome)
-                        .accessibilityLabel("Dismiss keyboard")
                 }
             }
         }
@@ -116,6 +118,12 @@ struct MetronomeView: View {
         // amended): opt in explicitly, so no screen inherits it by sharing the engine type.
         .onAppear { engine.allowsClickWithdrawal = true }
         .onDisappear { engine.stop() }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            keyboardUp = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardUp = false
+        }
         .sheet(isPresented: $showingSettings) {
             MetronomeSettingsSheet(engine: engine)
         }
@@ -270,15 +278,6 @@ struct MetronomeView: View {
             engine.setBPM(Int(bpm.rounded()))
         }
     }
-
-    /// Dismiss the number-pad keyboard from the screen-level **Done** accessory. Resigning
-    /// first responder flips each field's focus, which commits its typed value.
-    private func dismissKeyboard() {
-        #if canImport(UIKit)
-        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                        to: nil, from: nil, for: nil)
-        #endif
-    }
 }
 
 /// A composer that has been opened, holding the sitting as it stood at that instant (ADR 0160 §5).
@@ -295,7 +294,7 @@ private struct PendingMetronomeNote: Identifiable {
 // MARK: - Typable tempo
 
 /// The hero BPM readout, **typed into directly**: tap the number, a number pad opens, and the value
-/// commits when focus leaves — the keyboard's **Done** (`dismissKeyboard()` above), a scroll, or a
+/// commits when focus leaves — the keyboard's checkmark (`KeyboardDismissAccessory`), a scroll, or a
 /// tap elsewhere. The screen's other three ways in (±1, the slider, TAP) all move by feel; getting
 /// to 138 from 96 took either 42 taps or a slider you can't land a specific number on.
 ///
@@ -304,6 +303,11 @@ private struct PendingMetronomeNote: Identifiable {
 /// focused (so a ramp climbing underneath can't rewrite what is half-typed), and a commit that hands
 /// the parsed value to the clamp and then resyncs — so `999`, `0` or an empty field visibly snap
 /// back to what was actually stored rather than sitting there as a number the engine never took.
+///
+/// **Tapping it empties it**, and the tempo it held shows greyed as the placeholder until you type.
+/// Before, the draft kept the old digits and the caret landed wherever the tap fell — often the
+/// start, `|90` — so typing 120 made 12090, which the clamp turned into 300. Emptied, what you type is
+/// the tempo; dismiss without typing and the empty draft commits nothing and resyncs.
 ///
 /// Its own view because it owns focus state: kept inline, every keystroke would re-render the
 /// controls around it. It also costs the readout `.contentTransition(.numericText())` — a
@@ -315,7 +319,7 @@ private struct TypableTempo: View {
     @FocusState private var typing: Bool
 
     var body: some View {
-        TextField("", text: $draft)
+        TextField("", text: $draft, prompt: Text("\(engine.bpm)"))
             .keyboardType(.numberPad)
             .multilineTextAlignment(.center)
             .font(.pocketMono(.largeTitle))
@@ -330,7 +334,7 @@ private struct TypableTempo: View {
             .onAppear { draft = "\(engine.bpm)" }
             .onChange(of: engine.bpm) { _, updated in if !typing { draft = "\(updated)" } }
             .onChange(of: typing) { _, isTyping in
-                if isTyping { draft = "\(engine.bpm)" } else { commit() }
+                if isTyping { draft = "" } else { commit() }
             }
     }
 
@@ -346,10 +350,16 @@ private struct TypableTempo: View {
 // MARK: - Meter (time signature + subdivision + click withdrawal)
 
 extension MetronomeView {
-    /// One nav-bar control for everything that shapes **how the bar is filled** — time signature,
+    /// One control for everything that shapes **how the bar is filled** — time signature,
     /// subdivision, and click withdrawal. The label shows the compact signature plus the subdivision
     /// glyph in the accent colour when one is active ("4/4 ♫"). In a same-file extension so it doesn't
     /// bloat the main view body (SwiftLint type_body_length).
+    ///
+    /// **Under the beat dots, not in the nav bar.** It sat at the bar's trailing edge beside the
+    /// journal pencil, and the pair was wider than the back button by enough that iOS could not centre
+    /// the title between them and slid it left — on a 402pt phone it missed by about 2pt, on a 375pt
+    /// one the two would have overlapped. Under the dots it also sits with the thing it changes: pick
+    /// 3/4 and the row above it becomes three dots.
     ///
     /// It **opens a sheet, not a menu.** As a menu this had reached fifteen rows across three groups:
     /// it scrolled, so its first row was always clipped and you couldn't tell which group you were in;
@@ -357,9 +367,9 @@ extension MetronomeView {
     /// bottom where you had to scroll blind to reach it. `MetronomeSettingsSheet` also has room for
     /// the footers — which is how click withdrawal got back the explanation it lost on the way out of
     /// Settings, and it is the one control here that can't do without one.
-    var meterMenu: some View {
+    var meterChip: some View {
         Button { showingSettings = true } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Text(engine.timeSignature.name)
                     .font(.pocketMono(.body))
                     .foregroundStyle(PocketColor.textPrimary)
@@ -372,7 +382,11 @@ extension MetronomeView {
                     .font(.futura(.caption2))
                     .foregroundStyle(PocketColor.textSecondary)
             }
+            .padding(.horizontal, 16)
+            .frame(minHeight: 44)
+            .background(Capsule().fill(PocketColor.metronomeCardWash))
         }
+        .buttonStyle(.plain)
         .accessibilityLabel("Metronome settings. Time signature \(engine.timeSignature.name), "
                             + "subdivision \(engine.subdivision.label)")
     }

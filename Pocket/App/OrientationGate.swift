@@ -30,6 +30,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         // Install the global Futura navigation-title appearance once, before any bar is built
         // (ADR 0110). Isolated here so the whole feature is this call plus `NavigationBarStyle`.
         NavigationBarStyle.apply()
+        // The one way off the keyboard, on every text surface — its own window, not a toolbar that
+        // each screen has to remember to attach (see `KeyboardDismissAccessory`).
+        KeyboardDismissAccessory.install()
         // Stamp the install date once (ADR 0120). Local bookkeeping, written regardless of
         // analytics consent — it is the user's own state, and only ever leaves the device as a
         // coarse age bucket, and only then if consent is later given.
@@ -74,7 +77,11 @@ enum OrientationGate {
         guard let scene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene }).first else { return }
         scene.requestGeometryUpdate(.iOS(interfaceOrientations: mask))
-        scene.windows.first?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+        // Every window, not `windows.first`: the scene can hold a second one (the keyboard's
+        // checkmark, `KeyboardDismissAccessory`), and which of the two is first is not ours to assume.
+        for window in scene.windows {
+            window.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+        }
     }
 }
 

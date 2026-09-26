@@ -128,8 +128,8 @@ Under it, a line says how long the run is, roughly in time and exactly in bars.
      | state: seeded library, an exercise run screen, staircase visible
      | crop: 0,1355,1206,410 -->
 
-The toolbar shows the drill's meter — **4/4** unless you have changed it — and tapping it sets the
-accents and the length of the count-in.
+The line under the staircase ends with the drill's meter — **4/4** unless you have changed it — and
+tapping it sets the accents and the length of the count-in.
 
 Edits here are held until you commit them. **Start training** commits and plays; a **Save changes**
 button appears when the setup differs from what is stored, if you want to keep the tuning without

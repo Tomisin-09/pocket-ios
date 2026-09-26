@@ -190,7 +190,6 @@ struct SongDetailsSheet: View {
                     .lineLimit(1...8)
                     .foregroundStyle(PocketColor.textPrimary)
                     .onAppear { notesFocused = true }   // open the keyboard on entry
-                    .keyboardDoneButton(tint: PocketColor.library)
                     .scrollsIntoViewWhenFocused("notes", focused: $notesFocused)
                 HStack {
                     Button("Cancel", role: .cancel) { endNotesEditing() }

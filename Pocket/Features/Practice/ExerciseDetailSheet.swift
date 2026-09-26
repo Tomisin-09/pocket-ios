@@ -183,7 +183,6 @@ struct ExerciseDetailSheet: View {
         Section {
             TextField("Technique cues, target feel, where it's from…", text: $notes, axis: .vertical)
                 .lineLimit(3...8)
-                .keyboardDoneButton()
             // Still here. ADR 0210's first cut took these out, on the grounds that its backfill had
             // copied every tag into a folder; with the backfill gone they are the only place a
             // drill's tags are visible at all, and removing them would have lost information with

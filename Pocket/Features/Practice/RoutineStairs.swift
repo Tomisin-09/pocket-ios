@@ -32,6 +32,14 @@ struct RoutineStairs: View {
     /// The run's length, stated under the captions (ADR 0221 D10) — `≈ 1 min 5 s · 16 bars`. A total,
     /// not a countdown: the host passes the same string while the run plays. `nil` draws no line.
     var lengthLine: String?
+    /// The meter the bars are counted in, as a chip closing the length line — `… · 16 bars · 4/4 ⌄`.
+    /// `nil` draws no chip; the exercise run screen passes one while stopped outside a routine, the
+    /// only place its meter can be changed (ADR 0077).
+    ///
+    /// Here rather than in the nav bar, where it sat until 2026-09: the meter decides how long a bar
+    /// is, so it belongs beside the bar count it governs, and a text control in the bar crowded the
+    /// title the way the metronome's did.
+    var meter: LengthLineMeter?
 
     /// Fixed height of the bar region; the `<bpm> BPM` signpost sits in a reserved strip above it
     /// so it never clips the tallest bar.
@@ -102,14 +110,38 @@ struct RoutineStairs: View {
             .frame(height: Self.chartHeight)
             captionRow
             if let lengthLine {
-                Text(lengthLine)
-                    .font(.futura(.caption2))
-                    .monospacedDigit()
-                    .foregroundStyle(PocketColor.textSecondary)
-                    .frame(maxWidth: .infinity)
-                    .accessibilityLabel("Run length \(lengthLine)")
+                HStack(spacing: 8) {
+                    Text(lengthLine)
+                        .font(.futura(.caption2))
+                        .monospacedDigit()
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .accessibilityLabel("Run length \(lengthLine)")
+                    if let meter { meterChip(meter) }
+                }
+                .frame(maxWidth: .infinity)
             }
         }
+    }
+
+    /// The meter as a small capsule — drawn compact to sit on a caption line, touched at 44pt.
+    private func meterChip(_ meter: LengthLineMeter) -> some View {
+        Button(action: meter.action) {
+            HStack(spacing: 4) {
+                Text(meter.name)
+                    .font(.pocketMono(.caption))
+                    .foregroundStyle(meter.tint)
+                Image(systemName: "chevron.down")
+                    .font(.futura(.caption2))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Capsule().fill(meter.wash))
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Time signature: \(meter.name)")
     }
 
     /// Narrowest group that still gets a caption. Below this the label would be unreadable however
@@ -237,6 +269,14 @@ struct RoutineStairs: View {
         groupWidth += spacing * CGFloat(max(0, range.count - 1))
         return leading + groupWidth / 2
     }
+}
+
+/// A time-signature control riding the staircase's length line (`RoutineStairs.meter`).
+struct LengthLineMeter {
+    let name: String
+    let tint: Color
+    let wash: Color
+    let action: () -> Void
 }
 
 #Preview("Routine stairs") {
