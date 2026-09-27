@@ -5,10 +5,11 @@ import SwiftUI
 /// the label it arrived with (ADR 0188 S2) or a plain "Unit removed". Read-only display;
 /// the editor owns reorder/delete.
 ///
-/// Blocks carry no user-editable *kind* (Focus/Warm-up/Play) in the manual editor — every
-/// unit block is focused work and rests are authored separately, so there's no
-/// category-picker to juggle across two entity types (that collided with the exercise
-/// template names, e.g. a "Warm-up" template vs a warm-up block).
+/// A unit block's *kind* (Focus/Warm-up/Play) follows from what was picked — an exercise or
+/// a loop is focused work, an ear-training loop a warm-up, an improvise loop or a song a play
+/// block (`RoutineUnitPick.block(order:)`) — and this row neither shows nor edits it; only a
+/// rest is drawn as one. There's no category-picker to juggle across two entity types (it
+/// collided with the exercise template names, e.g. a "Warm-up" template vs a warm-up block).
 struct RoutineItemRow: View {
     let item: RoutineItem
     /// 1-based position in the routine, shown as a leading number so the sequence is clear at a

@@ -2,6 +2,10 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-21
+- **Amended by:** ADR 0125 (practice-screen multi-select, 2026-07-29) — the row hold still opens the
+  edit sheet while browsing, and is re-pointed at the selection while a panel is selecting. Selection
+  mode opens from a hold on the panel **header**, not the row, so this gesture keeps its meaning. The
+  edit sheet gains a **Favourite** toggle.
 
 ## Context
 

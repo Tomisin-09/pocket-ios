@@ -2,6 +2,14 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-26
+- **Amended by:** ADR 0075 (manual reach override, 2026-07-10) — the Phase 2 `targetIsPinned` flag
+  deferred under *`targetTempo`* below is realised as a stored optional,
+  `Exercise.targetTempoOverride`, read through `reachTempo` (the override, else the derived target)
+  and cleared when a promotion meets or passes it. `targetTempo` itself becomes vestigial:
+  `promoteCommand` stops writing it and every reach reads `reachTempo`.
+- **Amended by:** ADR 0129 (sessions sized in blocks, 2026-07-31) — inside a routine block the
+  `CommandRamp` is *fitted* to the block's minutes, dwell-dominant and clamped to 0.5–2.5× the authored
+  dwell. The stored recipe is never rewritten and stays authoritative for standalone runs.
 - **Amended by:** ADR 0221 — of the four phases only **command** is mandatory now: the warm-up and
   the summit have switches, as the backoff already had, and every phase has its own hold where this
   ADR held all but the dwell for one interval. The warm-up is stored and built as a **rung count**,

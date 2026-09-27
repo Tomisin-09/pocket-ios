@@ -2,6 +2,10 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-03
+- **Amended by:** ADR 0081 (brand-led home theme, 2026-07-11) — the teal retuned here as the
+  metronome's hue now leads through **Practice**; the home Metronome card and screen take plum. The
+  practice screen's speed-bar cockpit stays teal through a `waveformAccent` token, and the loop-range
+  editing lock is untouched.
 
 ## Context
 

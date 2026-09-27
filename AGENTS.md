@@ -96,10 +96,12 @@ Run these before every commit that touches app code. Do not push until all pass.
    NNNN …` or `- **Amends:** … ADR NNNN …` (26 ADRs already do). `check-manual.py`
    **C16** reads those fields and fails if the named ADR does not refer back —
    prose alone is invisible to it, which is the deal: the field is what buys you
-   the check. The 31 back edges already missing when C16 landed are listed in
-   `KNOWN_MISSING_BACK_EDGES` and reported on every run; that number is a backlog
-   to burn down, and repairing a pair means writing the note **and** deleting the
-   line, which C16 also checks.
+   the check. There is no allowlist: the 31 edges missing when C16 landed were
+   all repaired in pocket-336, and the list that grandfathered them is gone.
+   Two traps: **every** `ADR NNNN` inside those fields is read as a claim, back
+   notes (`Amended by`) included, so cite an aside without the `ADR` prefix; and
+   a relation that is not an amendment ("leaves X unchanged", "relates to") goes
+   in its own field, not under `Amends`.
 
    **What counts as significant:** new screen, new model/service, schema or
    persistence change, removed behaviour, new entitlement or permission string,

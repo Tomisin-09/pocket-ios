@@ -3,6 +3,11 @@
 - **Status:** Accepted
 - **Date:** 2026-07-24 (`pocket-194-multi-instrument`)
 - **Builds on:** ADR 0115 (guitar tuner — shipped the `Instrument` enum + lowest-first `Tuning` value in `Core/Theory/InstrumentTuning.swift`, the data foundation this reuses). ADR 0065 (fretboard engine — the highest-first canonical convention). ADR 0068 (`ExerciseTemplate` as the immutable per-exercise axis this sits beside). ADR 0113 (local artist profile — the source of the instrument default). ADR 0036 (SwiftData: never store a raw enum attribute; back it with a `String`).
+- **Amended by:** ADR 0128 (one insert path, 2026-07-30) — the note below that the automator's **Save
+  as exercise** seam "takes the profile default directly" was not true: it passed no instrument, and
+  `Profile.setPreferredInstrument` had no caller, so every install read the guitar fallback. The
+  automator now reads the profile through the shared insert, and a Settings **Instrument** row writes
+  it.
 
 ## Context
 

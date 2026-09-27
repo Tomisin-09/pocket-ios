@@ -12,6 +12,10 @@
   rest on it. §1 (Tier 3 closed permanently), §4 (closed vocabulary + its SwiftLint rule), §5, §6 and
   §7 are untouched — and §4 in particular is *load-bearing for* 0147, whose legal basis is conditional
   on the vocabulary staying narrow.
+- **Amended by:** ADR 0128 (one insert path, 2026-07-30) — `exercise_created` is sent from one place,
+  `NewExercisePlan.finalise(in:)`, which both interactive creation paths call. It is deliberately not
+  sent from `Exercise.commandAnchored`: the preset seeder calls that too, and would report six
+  invented creations on every fresh install. §4's closed vocabulary is unchanged.
 - **Date:** 2026-07-29
 - **Extends:** ADR 0092 (AI strategy — "your playing never leaves your device" is load-bearing there
   too), ADR 0112 (freemium — the paywall gates this now reports on)

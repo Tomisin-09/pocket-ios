@@ -2,6 +2,10 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-01
+- **Amended by:** ADR 0162 (a setting you can find, 2026-08-12) — `SettingsView` stops being one
+  scrolling `Form` of sections and becomes a hub of destinations, each a pushed screen owning one
+  group of settings: the sub-screens this ADR chose a push to leave room for. Every key, default and
+  reader is unchanged, and *Scope discipline* below is not relitigated (0162 D9).
 
 ## Context
 

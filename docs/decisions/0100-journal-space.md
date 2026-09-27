@@ -2,6 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-21 (`pocket-162-journal-space`)
+- **Amended by:** ADR 0155 (a note that belongs to no unit, 2026-08-09) — §1's read-only stance gives
+  way narrowly: the Journal space can write a **standalone** note, one that belongs to no unit and
+  declares it with a stored flag, and nothing else. An entry with an owner is still written and edited
+  on that owner's screen, and the space offers no owner picker. (0224 later let it record a
+  standalone take on the same terms.)
 
 ## Context
 

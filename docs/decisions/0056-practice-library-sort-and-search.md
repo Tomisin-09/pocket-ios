@@ -2,6 +2,10 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-01
+- **Amended by:** ADR 0126 (one toolbar grammar, 2026-07-29) — sort key, direction and the favourites
+  filter collapse into one icon-only `ellipsis.circle` menu on the trailing side, so the active key is
+  no longer spelled out on the navigation bar; it is the checkmarked row inside the menu. The
+  persisted key and direction are unchanged.
 
 ## Context
 

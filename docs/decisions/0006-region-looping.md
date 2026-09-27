@@ -2,6 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-16
+- **Superseded in part by:** ADR 0008 (seamless looping, 2026-06-16) — the wrap is now gapless and
+  click-free. The loop region is pre-rendered into a PCM buffer with a crossfaded seam and played with
+  `scheduleBuffer(…, options: [.loops, .interrupts])`, the approach *Alternatives considered* below
+  rejected for V1, so the Consequences line "the wrap is **not gapless**" no longer holds. Continuous
+  looping, the exit chip and `activeLoopID` as the source of truth are untouched by 0008.
 
 ## Context
 

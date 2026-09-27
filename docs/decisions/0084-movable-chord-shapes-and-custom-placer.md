@@ -6,6 +6,11 @@
   shared `ChordVoicing` + `ChordProgression` + `ChordDiagramView`).
 - **Relates to:** ADR 0083 — shares the unsolved **slide/shift teaching cue** (0083 S8 ⇄ M6
   below); solve it once, reuse across both.
+- **Amended by:** ADR 0101 (movable 9th grips, 2026-07-21) — M3's Tier-2 *basic 9ths*, which the first
+  build left to the placer (a note in `ChordGrip.swift`), are curated movable grips: dom9, maj9 and
+  min9 on both the A- and E-shape families. `ChordGrip` learns sub-root offsets and bumps a shape up an
+  octave where it would fall off the nut; every earlier grip places exactly as before, and M5 — a grip
+  emits a plain `ChordVoicing` — holds.
 
 ## Context
 

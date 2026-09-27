@@ -11,6 +11,9 @@
   (interval player, chord voicer, scale explorer). Note 7 (later, 2026-07-20) deliberately **rejects the
   generic-interval-trainer framing** in favour of *the player's own loops, re-surfaced*. This ADR follows
   Note 7 for the first slice; ADR 0094's boundaries (T2/T3) still govern.
+- **Extended by:** ADR 0127 (multi-add, 2026-07-29) — Slice 2's **Ear training** bucket (S2.4) is one
+  of the four the add-to-routine picker now adds from without closing, and it gains an *All ear
+  training* row above its songs.
 - **Amended by:** ADR 0225 (Count the notes, 2026-09-27) — **E3**: a loop now carries a structured
   *piece*, the taps of one pass in song seconds and what each was named, because a named reader (the
   song map) needs it. The Journal is still the dated history, and free-text notes still go nowhere

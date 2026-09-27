@@ -4,7 +4,7 @@
 - **Date:** 2026-07-11
 - **Amends:** [ADR 0023](0023-blue-theme-bordered-loop-identity.md) (retires the
   song-surface **blue**), [ADR 0062](0062-light-dark-appearance.md) /
-  [ADR 0063](0063-brand-hue-saturation.md) (the teal was the *metronome* hue; it
+  [ADR 0063](0063-appearance-vibrancy-and-loop-editing-lock.md) (the teal was the *metronome* hue; it
   now leads via Practice)
 
 ## Context

@@ -5,6 +5,13 @@
 - **Builds on / revises:** ADR 0043/0046 (Exercise is a click-only, audio-free, `Song`-free
   entity), ADR 0066 (routines reference `Exercise`/`Loop`/`Song` in a sequence), ADR 0011/0012
   (SwiftData model + migration discipline).
+- **Generalised by:** ADR 0118 (a session from a Collection, 2026-07-25) — a whole Collection's
+  linked drills (deduped across songs), loops and play-throughs are sized to a `SessionLength` and
+  ordered by a structured-to-shuffled dial, through the same Save-only review seam. The edge and the
+  per-song generator are unchanged.
+- **Amended by:** ADR 0128 (one insert path, 2026-07-30) — the song link is attached at insert time by
+  `NewExercisePlan.finalise(in:)`, on both creation paths. A drill saved from the metronome automator
+  showed the Songs picker and silently dropped the pick; that path now keeps it.
 
 ## Context
 
