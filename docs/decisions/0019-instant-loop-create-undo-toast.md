@@ -2,6 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-19
+- **Amended by:** ADR 0125 (practice-screen multi-select, 2026-07-29) — the loop/marker undo toast no
+  longer snapshots a deleted object and rebuilds it on Undo, which brought a loop back without its
+  journal entries and takes. The delete hides the row and destroys the object only when the undo
+  window closes — on expiry, on a later delete, or on leaving the screen — so Undo returns the same
+  object. A multi-row delete shares one toast. Instant, auto-named loop creation is untouched by 0125.
 
 ## Context
 

@@ -2,6 +2,10 @@
 
 - **Status:** Accepted (slices 1–2 built, pocket-049 / ADR 0036 slice 5; the cross-song filter payoff, slice 3, lands with its first consumer)
 - **Date:** 2026-06-22
+- **Extended by:** ADR 0125 (practice-screen multi-select, 2026-07-29) — a selection of loops can
+  edit tags in bulk, beside type and focus. A bulk edit **adds and removes, never replaces**, and
+  Remove offers only tags every selected loop carries. The `[String]` axis and its normalisation are
+  unchanged.
 
 ## Context
 

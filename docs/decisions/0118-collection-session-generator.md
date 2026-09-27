@@ -4,6 +4,11 @@
 - **Date:** 2026-07-25 (`pocket-197-collection-session`)
 - **Builds on:** ADR 0111 (the `Exercise`↔`Song` repertoire edge and `SongRoutineBuilder`, the pure per-song producer of planner `SessionBlock`s that flows into the Save-only review screen). ADR 0066 (`Routine`/`RoutineItem`; nullify unit references). ADR 0014 (the practice-science planner rules — focused-block caps, between-block rests, the 60-minute session ceiling, and the **Quick / Focused / Full** `SessionLength` presets). ADR 0033/0035 (song **Collections** are a `[String]` label axis normalised through `Labels`, and the Library filter over them). ADR 0064 (the V2 planner as "a smarter producer of the same `SessionBlock`s"). ADR 0070 (never grade the player).
 - **Supersedes:** nothing. Generalises the ADR 0111 per-song generator to a whole collection.
+- **Amended by:** ADR 0129 (sessions sized in blocks, 2026-07-31) — a `SessionLength` preset counts
+  focused blocks of three items, here and in the planner alike, and minutes become an estimate of
+  total time. Since this ADR the two builders had read "Quick" differently — here rests were charged
+  inside the budget, in `SessionBuilder` added on top — and that divergence is withdrawn. The
+  collection pool, the dedup and the `OrderMode` dial are untouched.
 
 ## Context
 

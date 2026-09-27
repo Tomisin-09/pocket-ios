@@ -2,6 +2,15 @@
 
 - **Status:** Accepted (principles recorded; build deferred to the Phase 3 planner)
 - **Date:** 2026-06-18
+- **Amended by:** ADR 0072 (self-rated mastery and the due score, 2026-07-08) — R6's *proficiency*
+  is the player's own `mastery` rating (0–5), never a score the app measures: Pocket does not grade
+  playing (0070). R6's shape stands: an item grows more due with time since it was practised, and
+  less due as it is rated settled.
+- **Amended by:** ADR 0129 (sessions sized in blocks, 2026-07-31) — a `SessionLength` preset counts
+  **focused blocks** of three items (Quick 1 · Focused 2 · Full 4), not minutes, so R8's presets stop
+  being minute budgets and minutes become an estimate of total time. `SessionBuilder` now enforces R2's
+  block length as a floor, not only a ceiling; R3's rests are charged against the session rather than
+  added after it; R4's micro-rest cue is populated. R1, R5 and R7 are untouched.
 
 ## Context
 

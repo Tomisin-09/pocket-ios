@@ -1100,49 +1100,13 @@ SUPERSESSION_FIELD = re.compile(
     re.M | re.S)
 ADR_REF = re.compile(r"\bADR (\d{4})\b")
 
-# The back edges that were already missing when C16 landed (2026-09-07), as
-# (source, target). **This is a backlog to burn down, not an exemption.** The
-# check reports its size on every run rather than staying quiet about it, so the
-# number is visible and can only go down: repairing a pair means writing the note
-# in the target ADR and deleting the line here, and a pair that is repaired but
-# left in this list is caught by the stale-entry branch below.
-#
-# It exists because C16 found 31 of these on the day it was written, and a check
-# that fails 31 times on arrival is a check that gets bypassed. Everything
-# declared from here on is held to the rule with no grandfathering.
-KNOWN_MISSING_BACK_EDGES = frozenset([
-    ("0008", "0006"),
-    ("0072", "0014"),
-    ("0075", "0045"),
-    ("0081", "0023"),
-    ("0081", "0062"),
-    ("0081", "0063"),
-    ("0101", "0084"),
-    ("0118", "0111"),
-    ("0125", "0019"),
-    ("0125", "0023"),
-    ("0125", "0028"),
-    ("0125", "0034"),
-    ("0125", "0119"),
-    ("0126", "0056"),
-    ("0126", "0066"),
-    ("0126", "0119"),
-    ("0127", "0066"),
-    ("0127", "0071"),
-    ("0127", "0104"),
-    ("0127", "0112"),
-    ("0128", "0046"),
-    ("0128", "0111"),
-    ("0128", "0116"),
-    ("0128", "0120"),
-    ("0129", "0014"),
-    ("0129", "0045"),
-    ("0129", "0118"),
-    ("0155", "0100"),
-    ("0156", "0144"),
-    ("0161", "0145"),
-    ("0162", "0050"),
-])
+# There is no allowlist. C16 found 31 back edges already missing on the day it
+# landed (2026-09-07) and carried them in a `KNOWN_MISSING_BACK_EDGES` list so it
+# could pass on arrival; pocket-336 wrote the last of them (2026-09-27) and the
+# list went with them. Twenty-eight became notes in the older ADR. Three were not
+# amendments at all — ADR 0127 *leaves* 0071 and 0112 as they were, and 0126 only
+# relates to 0066 — so the fix there was the source's header, not the target's.
+# A new exemption would have to be argued back in as code, which is the point.
 
 
 def decision_files():
@@ -1170,6 +1134,11 @@ def supersession_claims(number, text):
     silently wrong, and a narrow declared allowlist does not. The cost is that an
     ADR which supersedes something only in its prose is not caught; the fix for
     that is to declare the field, which is the convention anyway.
+
+    **Every `ADR NNNN` inside a declared field is a claim**, `Amended by` included.
+    A back-edge note that cites a third ADR in passing — "never a score (ADR 0070)"
+    — declares an edge to it. Cite an aside without the `ADR` prefix, or move it to
+    a field this does not read (`Relates to`, `Builds on`).
     """
     targets = set()
     for field in SUPERSESSION_FIELD.finditer(text):
@@ -1197,33 +1166,21 @@ def check_c16():
     if not decisions:
         return PENDING, ["docs/decisions/ has no numbered ADRs"]
 
-    broken, stale, claims, backlog = [], [], 0, 0
+    broken, claims = [], 0
     for number in sorted(decisions):
         for target in sorted(supersession_claims(number, decisions[number][1])):
             if target not in decisions:
                 broken.append("ADR %s names ADR %s, which does not exist" % (number, target))
                 continue
             claims += 1
-            present = re.search(r"\b%s\b" % number, decisions[target][1])
-            known = (number, target) in KNOWN_MISSING_BACK_EDGES
-            if present and known:
-                stale.append("ADR %s now refers back to %s — drop the pair from "
-                             "KNOWN_MISSING_BACK_EDGES" % (target, number))
-            elif not present and known:
-                backlog += 1
-            elif not present:
+            if not re.search(r"\b%s\b" % number, decisions[target][1]):
                 broken.append(
                     "ADR %s declares it supersedes or amends ADR %s — but %s never mentions %s"
                     % (number, target, target, number))
 
-    notes = broken + stale
-    if notes:
-        return FAIL, notes + ["the back edge lands in the same commit (AGENTS.md)"]
-    summary = "%d declared supersessions, every back edge present" % claims
-    if backlog:
-        summary += "; %d pre-existing pairs still owed a note (see " \
-                   "KNOWN_MISSING_BACK_EDGES)" % backlog
-    return OK, [summary]
+    if broken:
+        return FAIL, broken + ["the back edge lands in the same commit (AGENTS.md)"]
+    return OK, ["%d declared supersessions, every back edge present" % claims]
 
 
 CHECKS = [

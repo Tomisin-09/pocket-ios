@@ -2,6 +2,10 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-03
+- **Amended by:** ADR 0081 (brand-led home theme, 2026-07-11) — the brand teal this ADR gave the
+  **metronome** now leads through **Practice**, and the metronome takes plum. Colour sets are renamed
+  from feature names to hue names, each with light and dark values baked independently — this ADR's
+  lesson, kept.
 
 ## Context
 

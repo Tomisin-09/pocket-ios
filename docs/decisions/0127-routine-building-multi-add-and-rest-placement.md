@@ -5,8 +5,10 @@
 - **Amends:** **ADR 0066** (the routine model's `rest` block gains an authoring rule — adjacency is
   now refused, though nothing about the stored model changes) and the picker behaviour introduced in
   its slice 2 (a pick no longer dismisses the sheet). Extends **ADR 0104 Slice 2** (the ear-training
-  bucket is one of the four that multi-add covers) and leaves **ADR 0071**'s edit-gating and
-  **ADR 0112**'s free-taste demo limits exactly as they were.
+  bucket is one of the four that multi-add covers).
+- **Leaves unchanged:** **ADR 0071**'s edit-gating and **ADR 0112**'s free-taste demo limits, exactly
+  as they were. (Moved out of *Amends* on 2026-09-27 — neither is amended, and the field is what the
+  back-edge check reads.)
 - **Number note:** 0120 is still reserved for the analytics/privacy ADR (`docs/backlog.md` Slice 8).
 
 ## Context

@@ -5,7 +5,9 @@
 - **Amends:** **ADR 0056** (the persisted sort key + direction survive unchanged; what changes is that
   the active key is no longer spelled out on the navigation bar) and **ADR 0119** (the favourites
   filter keeps its per-list scope and its session lifetime, but stops being its own bar button).
-  Touches the Routines entry point to the V2 planner's Quick session (**ADR 0066**/**0071**).
+- **Relates to:** the Routines entry point to the V2 planner's Quick session (**ADR 0066**/**0071**),
+  which moves into the options menu; neither ADR is amended. (Moved out of *Amends* on 2026-09-27 —
+  the field is what the back-edge check reads.)
 
 ## Context
 

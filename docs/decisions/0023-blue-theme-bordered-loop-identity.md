@@ -4,6 +4,14 @@
 - **Date:** 2026-06-20
 - **Supersedes:** the "colour = state, never identity" decision of
   [ADR 0018](0018-loop-marker-visibility.md) (lane stacking is retained).
+- **Amended by:** ADR 0081 (brand-led home theme, 2026-07-11) — the song-surface **blue** is retired
+  from the home triad and its colour sets removed: Song Library takes terracotta, Practice leads in
+  teal. The per-loop `loopPalette`, its own blue included, and colour-as-identity are untouched.
+- **Amended by:** ADR 0125 (practice-screen multi-select, 2026-07-29) — the loop's identity colour,
+  until then drawn on the waveform, minimap and transport strip, is also carried by the loop **row**:
+  its play glyph wears the loop's hue, muted to 55% unless the loop is armed. Hue carries identity and
+  saturation carries state, so the row's green leading bar stays the only "this one is playing" mark.
+  A bulk colour edit was rejected because it would undo this ADR's one-hue-per-loop identity.
 
 ## Context
 

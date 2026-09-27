@@ -2,6 +2,11 @@
 
 - **Status:** Accepted (2026-07-05)
 - **Date:** 2026-07-05
+- **Amended by:** ADR 0127 (multi-add and rest placement, 2026-07-29) — authoring gains one rule: a
+  `rest` may not sit next to a rest (`RoutineBudget.allowsRest(at:in:)`), and a refused slot says why
+  where you tapped. The rule is authoring-only: the stored model is unchanged, and a routine that
+  already holds adjacent rests still loads and runs. The slice-2 picker no longer closes on a pick; it
+  adds and stays open until **Done**.
 
 ## Context
 

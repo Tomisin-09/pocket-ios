@@ -22,6 +22,11 @@
   is the reason: `trialEndsAt` comes from a real StoreKit expiration, so a fresh install is not "in
   trial" — it is simply not Pro, and D4's wall was therefore asking players to buy before hearing
   anything.
+- **Supersession proposed by:** ADR 0156 (a paywall you can predict, 2026-08-11) — **Proposed, not
+  built.** It would replace D4's *once per launch* clause with a budget on the launch wall alone:
+  none within 24 hours of any paywall dismissal, at most one per 72 hours, and at most one per 7 days
+  from the fourth showing on. A paywall raised by touching a locked thing stays uncapped. Until 0156 is accepted and
+  built, D4 stands as written, which is what the 0219 note above assumes.
 - **Date:** 2026-08-06
 - **Supersedes:** the **tier half** of ADR 0112 (freemium monetization). 0112 stays as the record of
   why a free line existed, what it cost to build, and why it was withdrawn before it ever met a

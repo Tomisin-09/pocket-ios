@@ -2,6 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-06 (`pocket-239-help-and-faqs`)
+- **Superseded in part by:** ADR 0161 (a message you can actually send, 2026-08-12) — D7's `mailto:`
+  **Contact Support** row is replaced by an in-app form that posts over HTTPS and reports its own
+  failure, because a `mailto:` does nothing on a device with no Mail account. D7's other half stands
+  and is load-bearing again: the plain-text address in *How do I get help?* is where the form's
+  rejection error sends the player (0161 D5).
 - **Depends on:** ADR 0144 (the free/Pro answers are only writable once the tier line is settled) and
   ADR 0147 (the "Your data" answers describe analytics as 0147 leaves it, not as 0120 left it)
 - **Extends:** ADR 0096 (the Toolkit hub this becomes the fourth tenant of)

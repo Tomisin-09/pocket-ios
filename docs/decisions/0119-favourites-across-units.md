@@ -4,6 +4,12 @@
 - **Date:** 2026-07-25 (`pocket-196-favourites`)
 - **Builds on:** ADR 0011/0012/0036 (SwiftData `@Model` discipline — a business `uid`, **declaration defaults** on every non-optional attribute so lightweight migration stays additive per the CoreData 134110 mandatory-attribute rule, and the enum-attr rule that keeps custom enums out of stored attributes). ADR 0043/0046 (`Exercise` is a standalone click-only unit) and ADR 0066 (`Routine`/`RoutineItem`) and the `Loop` model — the three units gaining a star. ADR 0070 (Pocket never grades the player) — a favourite is a bookmark the player sets, not a rating the app computes.
 - **Supersedes:** nothing. First appearance of a favourite/pin concept in the store.
+- **Extended by:** ADR 0125 (practice-screen multi-select, 2026-07-29) — a selection of loops takes a
+  bulk star, which adds unless every selected loop already has one, so a mixed selection never
+  silently unstars anything. The loop edit sheet gains a **Favourite** toggle.
+- **Amended by:** ADR 0126 (one toolbar grammar, 2026-07-29) — the favourites filter stops being its
+  own bar button and becomes a row in each library's `ellipsis.circle` options menu, whose icon fills
+  while the filter is on. Its per-list scope and session lifetime are unchanged.
 
 ## Context
 

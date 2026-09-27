@@ -517,12 +517,13 @@ is not.** Four findings:
   `oldest`, nothing else (`Pocket/Features/Journal/JournalTabView.swift:38`). `MonthHeatmap`
   (`Pocket/Features/PracticeLog/MonthHeatmap.swift`) is the obvious jump control and is **already
   built** — currently reachable only from the Practice log.
-- ⚠ **Do not start with new filter UI.** Journal search is one of the four disagreeing matchers
-  documented under *A filter on the list screens* below, and `JournalTimeline.filter(_:query:)` is
-  the only one that is **not** diacritic-insensitive. That entry's order governs here too: collapse
-  the matchers onto `PickerSearch` first, then decide whether filters persist, then design the
-  affordance. Building a scope picker over the current matcher ships a uniform-looking control over
-  four different behaviours.
+- ⚠ **Do not start with new filter UI.** Journal search is one of the four matchers documented
+  under *A filter on the list screens* below. *Corrected 2026-09-27:* this bullet said
+  `JournalTimeline.filter(_:query:)` was the only one that is **not** diacritic-insensitive. There
+  were two such outliers, not one — `AddRoutineUnitSheet+Search.matches` was the other — and the
+  first step of that entry's order is done: all four matchers have called `TextMatch` since
+  2026-09-04 (`pocket-294-one-matcher`). The rest of the order still governs here: decide whether
+  filters persist (ADR 0190 D8 answers that for the Journal), then design the affordance.
 
 **The shape of the space, so a future reader does not fight it.** ADR 0100 makes the Journal
 read-only for *owned* entries on purpose — authoring stays where the snapshot is honest — and ADR
@@ -1046,8 +1047,9 @@ filter — favourites, instrument, backing-only, show-all, journal scope — is 
 resets on every visit.
 
 **Where to start when it's time.** Not with new filter UI. Collapse the four matchers onto
-`PickerSearch` first (it is already the most correct), then decide whether filters persist, and only
-then work out what a consistent filter affordance looks like. Doing it in the other order builds a
+`PickerSearch` first (it is already the most correct) — *done 2026-09-04, as `TextMatch` above* —
+then decide whether filters persist, and only then work out what a consistent filter affordance
+looks like. Doing it in the other order builds a
 uniform-looking control over four different behaviours.
 
 Also worth settling in the same pass: Routines has no search at all and no sort (fixed newest-first),
@@ -4053,16 +4055,49 @@ Ordered by value, highest first.
    work is unchanged in kind, but the cost estimate is not. Its **receiving end** is now
    written up as *receive someone else's* under *Practice support — five ideas with no
    home yet* (item 2) — one unit, additive, never destructive.
-5. **Hand-authoring cannot reach the model.** Every hand-added block is `.focused`
-   (`RoutineItemRow.swift:6-9` states the reasoning); `warmup` and `play` are
-   generator-only. The model carries three kinds and the editor can author one.
+5. **A hand-added block's kind is invisible and cannot be corrected.** *Corrected
+   2026-09-27: this item used to say hand-authoring could not reach the model at all, and
+   that was false.* Three of the four kinds are hand-reachable. The picker's
+   `RoutineUnitPick.block(order:)` makes an exercise or a loop `.focused`, an ear-training
+   loop `.warmup` and an improvise loop or a song `.play` (the factories in
+   `Pocket/Core/Models/Routine.swift`); rests are placed separately. The evidence it cited,
+   the doc comment on `RoutineItemRow`, predated ADRs 0104 and 0135 and said every unit
+   block was focused; the comment is corrected too. The real gap is narrower: the kind is
+   a **silent consequence of the pick**. The row draws only a rest as one, nothing lets a
+   player change it, and `RoutineItemKind.unitKinds` — the list a picker would offer — has
+   no call site. The likely direction is to make the kind visible and editable, keeping the
+   pick's default. That needs an ADR. ⚠ `RoutineDetailView.swift` is at 378 of 400 lines,
+   so new affordances go in a `RoutineDetailView+…` extension.
+
+   Original note: *"Hand-authoring cannot reach the model. Every hand-added block is
+   `.focused` (`RoutineItemRow.swift:6-9` states the reasoning); `warmup` and `play` are
+   generator-only. The model carries three kinds and the editor can author one."*
 6. **One seeded routine, exercise-only.** Deliberate — "the demo, shown whole", and the
    right call under progressive disclosure — but thin if routines become the headline.
    Note the tension with ADR 0144: the seam that would make a routine free forever is
    inert on purpose (`AccessPolicy.freeTasteRoutineSlugs`, and `docs/positioning.md` §9
    rejects re-opening it).
-7. **Rest length is one global setting**, though `RoutineBudget` already models per-rest
-   min/default/max minutes for planning. The model is more expressive than the editor.
+7. **One rest has three lengths, in two units.** *Corrected 2026-09-27: this item used to
+   say the model was more expressive than the editor. It isn't. A stored rest has no length
+   at all.* Traced end to end:
+   - **Planning** sizes each rest at `RoutineBudget.defaultRestMinutes`, 3 **minutes**:
+     `SessionBuilder` threads one between blocks and `CollectionSessionBuilder` charges it
+     against the budget up front, both as `SessionBlock.rest(minutes:)`. `minRestMinutes`
+     and `maxRestMinutes` (2 and 5) have no consumer anywhere.
+   - **Saving** drops the minutes. `PracticePlanner.item(for:…)` turns a planned rest into
+     `RoutineItem.rest(order:)`, and `RoutineItem` has no duration field.
+   - **The saved routine's estimate** counts a rest as zero
+     (`PracticePlanner.estimatedMinutes(forRoutine:)`).
+   - **The player** rests `AppSettings.routineRestSeconds`, in **seconds**: `5...60`, default
+     20, one global setting (`RoutineSessionPlayer`).
+
+   So a generated Focused or Full session is planned as if each rest took 3 minutes, and
+   plays each as 20 seconds. Any ADR here resolves the unit contradiction first: decide what a rest
+   *is* before giving it a per-rest field.
+
+   Original note: *"Rest length is one global setting, though `RoutineBudget` already models
+   per-rest min/default/max minutes for planning. The model is more expressive than the
+   editor."*
 8. **No routine UI tests — MOSTLY CLOSED by ADR 0178** (2026-08-22).
    `RoutineLibraryUITests` covers the library's search and the detail screen's
    *Cancel discards, Save keeps* contract on the description, and was proven non-vacuous by
