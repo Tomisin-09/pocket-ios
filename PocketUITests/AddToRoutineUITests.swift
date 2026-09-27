@@ -43,9 +43,7 @@ final class AddToRoutineUITests: UITestCase {
         let before = try XCTUnwrap(routine.value as? String)
         attach(app, named: "Add to routine — before")
 
-        routine.tap()
-        XCTAssertTrue(waitFor(routine, NSPredicate(format: "value BEGINSWITH %@", "Added, ")),
-                      "the tapped routine never read as Added")
+        XCTAssertTrue(tapUntilAdded(routine, unchangedFrom: before), "the tapped routine never read as Added")
         let after = try XCTUnwrap(routine.value as? String)
         XCTAssertEqual(try blocks(in: after), try blocks(in: before) + 1,
                        "the routine's block count did not go up by one: \(before) → \(after)")
@@ -70,12 +68,31 @@ final class AddToRoutineUITests: UITestCase {
         return try XCTUnwrap(Int(digits), "no block count at the start of “\(value)”")
     }
 
+    /// Tap the routine until it reads as Added. A tap that lands before the sheet settles is swallowed
+    /// on a fast launch (it failed that way locally on `main`, 2026-09-26), so a single tap fails the
+    /// fastest run. **A re-tap is a toggle**, though — a second tap on a routine that did take the
+    /// first would take the block back out — so it re-taps only while the row still reads exactly
+    /// what it read before, which is the evidence the first tap did nothing.
+    @MainActor
+    private func tapUntilAdded(_ routine: XCUIElement, unchangedFrom before: String,
+                               attempts: Int = 3) -> Bool {
+        let added = NSPredicate(format: "value BEGINSWITH %@", "Added, ")
+        for attempt in 1...attempts {
+            routine.tap()
+            let patience: TimeInterval = attempt == attempts ? Self.uiTimeout : 3
+            if waitFor(routine, added, timeout: patience) { return true }
+            guard routine.value as? String == before else { return false }
+        }
+        return false
+    }
+
     /// A format predicate, not a block: a block reading `XCUIElement.value` runs off the main actor,
     /// which CI's Swift 6 toolchain rejects (`waitForLabel` is the precedent).
     @MainActor
-    private func waitFor(_ element: XCUIElement, _ predicate: NSPredicate) -> Bool {
+    private func waitFor(_ element: XCUIElement, _ predicate: NSPredicate,
+                         timeout: TimeInterval = UITestCase.uiTimeout) -> Bool {
         let settled = expectation(for: predicate, evaluatedWith: element)
-        return XCTWaiter().wait(for: [settled], timeout: Self.uiTimeout) == .completed
+        return XCTWaiter().wait(for: [settled], timeout: timeout) == .completed
     }
 
     @MainActor
@@ -86,16 +103,18 @@ final class AddToRoutineUITests: UITestCase {
         add(shot)
     }
 
-    /// Home → Practice → Exercises.
+    /// Home → Practice → Exercises. Both taps go through `tap(_:until:in:)`: a freshly launched Home
+    /// can swallow the first one (this test's own local flake, 2026-09-26).
     @MainActor
     private func openExercisesLibrary(in app: XCUIApplication) throws {
         let practiceCard = app.buttons["Practice, your exercises and training runs"]
         XCTAssertTrue(practiceCard.waitForExistence(timeout: Self.uiTimeout), "Practice card missing")
-        XCTAssertTrue(scrollIntoView(practiceCard, in: app), "Practice card not reachable by scrolling")
-        practiceCard.tap()
+        XCTAssertTrue(tap(practiceCard, until: app.navigationBars["Practice"], in: app),
+                      "the Practice tap never landed")
 
         let exercisesRow = app.cells.containing(.staticText, identifier: "Exercises").firstMatch
         XCTAssertTrue(exercisesRow.waitForExistence(timeout: Self.uiTimeout), "Exercises library row missing")
-        exercisesRow.tap()
+        XCTAssertTrue(tap(exercisesRow, until: app.navigationBars["Exercises"], in: app),
+                      "the Exercises tap never landed")
     }
 }

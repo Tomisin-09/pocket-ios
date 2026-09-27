@@ -2,6 +2,9 @@
 
 - **Status:** Accepted — built (branch `pocket-056`)
 - **Date:** 2026-06-25
+- **Amended by:** ADR 0226 D4 — `.landscapeEnabled()` now takes a counted claim on landscape
+  (`OrientationLease`) instead of writing the mask on appear and disappear, so two overlapping
+  screens can't undo each other. The policy — practice screen only — stands.
 
 ## Context
 

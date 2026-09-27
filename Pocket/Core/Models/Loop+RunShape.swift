@@ -8,7 +8,7 @@ import Foundation
 /// per step**; that multiplier is folded into the holds here, on read, and retired on the first save.
 extension Loop {
 
-    /// The shape as stored, every hold in passes.
+    /// The shape as stored, every hold in passes, authorable up to `RunShape.loopHoldCeiling`.
     ///
     /// On a loop not yet saved through the phase rows the holds are still in intervals of
     /// `rampRepsPerStep` passes, so they are multiplied out: the warm-up, reach and back-off holds
@@ -24,7 +24,8 @@ extension Loop {
                         warmupHold: max(1, rampWarmupHold) * reps,
                         dwell: max(1, rampDwellIntervals) * reps,
                         reachHold: max(1, rampReachHold) * reps,
-                        backoffHold: max(1, rampBackoffHold) * reps)
+                        backoffHold: max(1, rampBackoffHold) * reps,
+                        holdCeiling: RunShape.loopHoldCeiling)
     }
 
     /// Store a run's shape — the one write path for the run screen's Save and Start (ADR 0057) and the

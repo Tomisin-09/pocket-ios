@@ -172,8 +172,7 @@ struct RoutineLibraryView: View {
         // entirely, on the one screen whose whole complaint was that a routine could not be found.
         // It also differs by OS version: the bar is in the view hierarchy from the start on iOS 26
         // and is not on iOS 18, so the default is not one behaviour but two. `SearchablePickerList`
-        // already makes this choice. Exercises and Loops still take the default — see
-        // `docs/backlog.md`.
+        // already makes this choice, and Exercises and Loops followed (ADR 0226 D1).
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always),
                     prompt: "Routines")
         // Leading is the back button alone. The session generator moves off the bar and into the

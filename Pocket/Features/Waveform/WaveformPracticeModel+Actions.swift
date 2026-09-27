@@ -128,10 +128,10 @@ extension WaveformPracticeModel {
     }
 
     /// Mark button — drop a marker at the playhead **instantly**, auto-named
-    /// ("Marker 3", via pure `AutoName`) and persisted with no naming step; rename it
+    /// ("M3", via pure `AutoName` — ADR 0226 D2) and persisted with no naming step; rename it
     /// later from its row (mirrors instant loop creation — ADR 0037, amending 0019).
     func dropMarkerAtPlayhead() {
-        let label = AutoName.next(prefix: "Marker", existing: markers.map(\.label))
+        let label = AutoName.nextMarker(existing: markers.map(\.label))
         let marker = Marker(seconds: playheadFraction * duration, label: label)
         context.insert(marker)
         marker.song = song          // attach → shows in `markers`, persists

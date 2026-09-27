@@ -50,9 +50,19 @@ struct RunShape: Equatable {
     var dwell = 4
     var reachHold = 1
     var backoffHold = 1
+    /// The longest hold the controls author, in intervals. **Carried by the shape**, not chosen by the
+    /// panel, so the loop's run screen and its block preview can't disagree about it: `Loop.runShape`
+    /// sets `loopHoldCeiling`, and everything else takes the exercise's.
+    var holdCeiling = RunShape.exerciseHoldCeiling
 
-    /// Every hold's range, in intervals — the dwell's 1…12 (ADR 0078), now shared (ADR 0221 D3).
-    static let holdRange = 1...12
+    /// An exercise's holds: 1…12 intervals of four bars — the dwell's range (ADR 0078), shared by every
+    /// phase (ADR 0221 D3).
+    static let exerciseHoldCeiling = 12
+    /// A loop's holds: 1…32 **passes** (ADR 0226 D3). An interval on a loop is one pass, and a short
+    /// loop — a one-bar lick — wants far more than twelve of them; the controls it replaced reached 96.
+    static let loopHoldCeiling = 32
+    /// Every hold's floor.
+    static let minimumHold = 1
 
     /// Whether the phase plays. Command always does.
     func isOn(_ phase: RampPhase) -> Bool {
@@ -87,14 +97,14 @@ struct RunShape: Equatable {
         }
     }
 
-    /// Set a hold, clamped into `holdRange` — except that a hold **already above** the ceiling keeps
-    /// its value as its own ceiling, so a step down walks it down one at a time and a step up does
-    /// nothing. Only a loop can hold one: folding its old reps per step into the holds (ADR 0221 D8)
-    /// multiplies them out, and 4 reps × a dwell of 4 is 16 passes. Snapping that to 12 on the first
-    /// tap would change what the loop plays because a button was touched.
+    /// Set a hold, clamped into `minimumHold…holdCeiling` — except that a hold **already above** the
+    /// ceiling keeps its value as its own ceiling, so a step down walks it down one at a time and a
+    /// step up does nothing. Only a loop can hold one: folding its old reps per step into the holds
+    /// (ADR 0221 D8) multiplies them out, and 8 reps × a dwell of 12 is 96 passes. Snapping that to the
+    /// ceiling on the first tap would change what the loop plays because a button was touched.
     mutating func setHold(_ phase: RampPhase, _ value: Int) {
-        let ceiling = max(Self.holdRange.upperBound, hold(phase))
-        let clamped = min(ceiling, max(Self.holdRange.lowerBound, value))
+        let ceiling = max(holdCeiling, hold(phase))
+        let clamped = min(ceiling, max(Self.minimumHold, value))
         switch phase {
         case .warmup: warmupHold = clamped
         case .command: dwell = clamped

@@ -20,7 +20,7 @@ import UserNotifications
 /// `NotificationRouter`.
 final class AppDelegate: NSObject, UIApplicationDelegate {
     /// The orientations currently allowed. Defaults to portrait — only a screen that opts
-    /// in (via `.landscapeEnabled()`) widens it, and reverts on disappear.
+    /// in (via `.landscapeEnabled()`) widens it, through `OrientationLease`.
     static var orientationMask: UIInterfaceOrientationMask = .portrait
 
     func application(
@@ -67,6 +67,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
 /// Sets the allowed orientation mask and asks the active scene to re-evaluate it, so a
 /// revert to `.portrait` actively rotates the device back if it's currently in landscape.
+/// `OrientationLease` is its one caller — a screen that wrote it directly would be back to the
+/// last-writer-wins bug the lease exists to prevent.
 enum OrientationGate {
     // Touches `UIApplication.shared` and the scene's geometry, all main-actor APIs (and
     // `AppDelegate.orientationMask` is main-actor isolated too), so the call must be on the
@@ -85,17 +87,82 @@ enum OrientationGate {
     }
 }
 
+/// Who is asking for landscape — **reference-counted, because the mask it drives is global** (ADR
+/// 0226 D4). The mask is one process-wide slot, and it used to be written straight from a screen's
+/// `onAppear`/`onDisappear` pair. That is right for exactly one screen at a time: the moment two
+/// overlap, the outgoing screen's `onDisappear` narrows the mask the incoming one just widened, and
+/// SwiftUI does not promise which of the pair runs first. `KeepAwakeLease` shipped that bug and was
+/// fixed by this shape (device pass 2026-08-06); the gate had the same shape and was safe only
+/// because one screen used it.
+@MainActor
+enum OrientationLease {
+    private static var holders = 0
+
+    /// How many screens are currently asking. Exposed for tests, which assert *deltas* — the count is
+    /// process-global across a run.
+    static var holderCount: Int { holders }
+
+    /// The whole decision, pure: landscape is allowed while anyone asks, and only then.
+    static func mask(holders: Int) -> UIInterfaceOrientationMask {
+        holders > 0 ? [.portrait, .landscape] : .portrait
+    }
+
+    static func retain() {
+        holders += 1
+        apply()
+    }
+
+    static func release() {
+        // Floored rather than trusting balance: an unbalanced release would otherwise drive the count
+        // negative and defeat every later `retain`.
+        holders = max(0, holders - 1)
+        apply()
+    }
+
+    /// Writes only on a change, so a second holder arriving or one of two leaving asks the scene for
+    /// nothing — a geometry request is a rotation the player may see.
+    private static func apply() {
+        let next = mask(holders: holders)
+        guard next != AppDelegate.orientationMask else { return }
+        OrientationGate.set(next)
+    }
+}
+
+/// One screen's claim on landscape — idempotent in both directions, so a re-fired `onAppear` can't
+/// inflate the count and a double teardown can't deflate it.
+@MainActor
+struct OrientationClaim {
+    private var held = false
+
+    mutating func take() {
+        guard !held else { return }
+        held = true
+        OrientationLease.retain()
+    }
+
+    mutating func give() {
+        guard held else { return }
+        held = false
+        OrientationLease.release()
+    }
+}
+
 private struct LandscapeEnabled: ViewModifier {
+    @State private var claim = OrientationClaim()
+
     func body(content: Content) -> some View {
         content
-            .onAppear { OrientationGate.set([.portrait, .landscape]) }
-            .onDisappear { OrientationGate.set(.portrait) }
+            .onAppear { claim.take() }
+            // The claim is released, **not** the mask narrowed: another landscape screen may already
+            // be on screen and holds landscape through its own claim.
+            .onDisappear { claim.give() }
     }
 }
 
 extension View {
-    /// Opt this screen into landscape; reverts to portrait-only (rotating back if needed)
-    /// when it disappears. ADR 0042: only the practice screen uses this.
+    /// Opt this screen into landscape; reverts to portrait-only (rotating back if needed) once the
+    /// last screen asking for it disappears. ADR 0042: only the practice screen uses this. Safe to
+    /// apply to a second screen — the lease counts (ADR 0226 D4).
     func landscapeEnabled() -> some View {
         modifier(LandscapeEnabled())
     }

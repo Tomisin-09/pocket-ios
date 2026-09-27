@@ -1073,9 +1073,10 @@ The ramp advances by **loop repetitions, not seconds** — one pass through the 
 and every hold is a number of passes (`LoopCommandRamp.passesPerInterval`, ADR 0221 D8; the command
 dwell is `rampDwellIntervals`, ADR 0078). Before 0221 a player-set **reps per step** multiplied every
 hold; it is folded in on read by `Loop.runShape` and retired (`rampRepsPerStep` written as 1) by the
-first save through `Loop.applyRunShape(_:)`, so no stored loop changes what it plays. A folded hold
-can exceed the shared 1…12 range, and `RunShape.setHold` walks such a value down rather than snapping
-it. The ramp
+first save through `Loop.applyRunShape(_:)`, so no stored loop changes what it plays. A loop's holds
+range over 1…32 passes, an exercise's over 1…12 intervals: the ceiling rides on the shape
+(`RunShape.holdCeiling`, which `Loop.runShape` sets — ADR 0226 D3), so no host passes it. A folded
+hold can still exceed it, and `RunShape.setHold` walks such a value down rather than snapping it. The ramp
 reuses `CommandRamp`'s `.bars` interval mechanism with "bars" reinterpreted as loop passes, and
 `loopIteration` is rate-independent so a plateau holds a fixed number of reps regardless of the
 tempo it plays at (and freezes naturally on pause). The tempos ride existing fields —
@@ -1154,7 +1155,8 @@ click and backing-track hints, and the walkthrough now ends only when no beat is
 no hint is showing. Landscape
 is gated to this screen alone by `OrientationGate.swift` (an `AppDelegate` answering
 `supportedInterfaceOrientationsFor` from a mask that a `.landscapeEnabled()` modifier
-widens on appear and reverts on disappear) — ADR 0042. Each loop has a per-loop **automator**
+widens through a counted claim, `OrientationLease`, and narrows when the last claim goes) — ADR
+0042, the lease ADR 0226 D4. Each loop has a per-loop **automator**
 (speed trainer, ADR 0013): the engine publishes `loopIteration` (loop wraps counted
 in *source* frames, so it's stable across rate changes), the view feeds it to
 `WaveformPracticeModel.automatorAdvance`, which sets `speed` from the pure

@@ -60,15 +60,17 @@ final class LoopRampSetupTests: XCTestCase {
         XCTAssertEqual(loop.rampBackoffSteps, 0)
         XCTAssertEqual(loop.rampRepsPerStep, 1)
         XCTAssertEqual(loop.rampDwellIntervals, 4)
-        // A fresh loop's shape is the default one: every phase on, one pass a rung, four at command.
-        XCTAssertEqual(loop.runShape, RunShape())
+        // A fresh loop's shape is the default one: every phase on, one pass a rung, four at command —
+        // with a loop's hold ceiling, 32 passes (ADR 0226 D3).
+        XCTAssertEqual(loop.runShape, RunShape(holdCeiling: RunShape.loopHoldCeiling))
     }
 
     func testTheShapeRoundTrips() {
         let loop = Loop(name: "Verse", start: 0.1, end: 0.3, speed: 0.85, repeats: 4)
         let shape = RunShape(includeWarmup: false, includeReach: false, includeBackoff: true,
                              warmupSteps: 3, reachSteps: 2, backoffSteps: 1,
-                             warmupHold: 2, dwell: 6, reachHold: 3, backoffHold: 5)
+                             warmupHold: 2, dwell: 6, reachHold: 3, backoffHold: 5,
+                             holdCeiling: RunShape.loopHoldCeiling)
         loop.applyRunShape(shape)
         XCTAssertEqual(loop.runShape, shape)
     }
