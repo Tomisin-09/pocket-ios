@@ -11,6 +11,11 @@
   (interval player, chord voicer, scale explorer). Note 7 (later, 2026-07-20) deliberately **rejects the
   generic-interval-trainer framing** in favour of *the player's own loops, re-surfaced*. This ADR follows
   Note 7 for the first slice; ADR 0094's boundaries (T2/T3) still govern.
+- **Amended by:** ADR 0225 (Count the notes, 2026-09-27) — **E3**: a loop now carries a structured
+  *piece*, the taps of one pass in song seconds and what each was named, because a named reader (the
+  song map) needs it. The Journal is still the dated history, and free-text notes still go nowhere
+  else. **E6**: a count the player taps and names themselves is not the tally E6 forbids; no score,
+  streak, accuracy or verdict appears. E1, E2, E4 and E5 stand.
 
 ## Context
 

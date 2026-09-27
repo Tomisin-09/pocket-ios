@@ -32,6 +32,18 @@ What's needed:
 Not blocking the app: nothing in the build reads this. It blocks *the manual being complete*, which
 is the deliverable ADR 0165 defines.
 
+## The song map — a whole song as a jigsaw of its loops (parked 2026-09-27, ADR 0225)
+
+Each transcribed loop is a solved piece; the player's own chart of the song is the finished picture,
+drawn from the pieces and never edited apart from them. Parked on purpose as a future update for
+existing players. **The design note is `docs/plans/song-map.md`**: what's decided, what's open (where
+it lives, the unprepared song, section repeats, export vs hosting, the name), and the one schema
+addition it needs (a `Starts a section` switch on `Marker`). Mockup:
+https://claude.ai/artifact/B9cjgdgZDxNfy6J2R5uqPU
+
+Cheap to pick up because ADR 0225 already stores what the map reads: every piece a player saves
+from 0225 onward is on the map the day it ships.
+
 ## Three doors ADR 0218 left closed (parked 2026-09-15)
 
 *Use a progression* shipped with progressions written in the builder. Three follow-ons came up while it

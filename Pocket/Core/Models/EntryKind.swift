@@ -17,6 +17,7 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
     case session        // a practice-session log
     case ear            // what you heard, training your ear on a loop (ADR 0104)
     case improvise      // what you played over a backing-track loop (ADR 0135)
+    case transcribed    // a piece worked out by ear and saved on its loop (ADR 0225)
 
     var id: String { rawValue }
 
@@ -31,6 +32,7 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
         case .session: return "🎬"
         case .ear: return "👂"
         case .improvise: return "🎸"
+        case .transcribed: return "🧩"
         }
     }
 
@@ -45,6 +47,7 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
         case .session: return "Session"
         case .ear: return "Ear"
         case .improvise: return "Improv"
+        case .transcribed: return "Transcribed"
         }
     }
 
@@ -55,14 +58,18 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
     init(raw: String) { self = EntryKind(rawValue: raw) ?? .default }
 
     /// Picker order: the deliberate kinds first (goal → breakthrough → struggle → idea),
-    /// then the two neutral logs (note default, then session), then the two
-    /// mode-specific tags a loop earns (ear, improv).
+    /// then the two neutral logs (note default, then session), then the three
+    /// mode-specific tags a loop earns (ear, improv, transcribed).
+    ///
+    /// 🧩 **Transcribed is in the picker on purpose** (ADR 0225). Count the notes writes it, but a
+    /// lick worked out on paper is just as solved, and "solved" is always the player's declaration —
+    /// never something the app infers.
     ///
     /// 💡 **Idea sits with the first three, not after the logs** (ADR 0207 D10). Like them it is
     /// something a player reaches for on purpose; unlike `.note` and `.session` it is never a
     /// default and never set by the app. That is the property the tag filter is built on, so the
     /// order states it.
     static var pickerOrder: [EntryKind] {
-        [.goal, .breakthrough, .struggle, .idea, .note, .session, .ear, .improvise]
+        [.goal, .breakthrough, .struggle, .idea, .note, .session, .ear, .improvise, .transcribed]
     }
 }

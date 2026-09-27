@@ -242,6 +242,8 @@ struct KindChip: View {
         case .session: return .purple
         case .ear: return PocketColor.journal   // 👂 ear-training note (ADR 0104)
         case .improvise: return PocketColor.practice   // 🎸 jam note over a backing loop (ADR 0135)
+        // 🧩 The study hue (ADR 0225): a transcription is the Toolkit's kind of work, done on a loop.
+        case .transcribed: return PocketColor.toolkit
         }
     }
 }

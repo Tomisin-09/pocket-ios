@@ -97,6 +97,35 @@ final class ContinuousLoopPlayer {
     func stop() {
         startTask?.cancel()
         startTask = nil
+        sliceTask?.cancel()
+        sliceTask = nil
         model.stop()
+    }
+
+    // MARK: - Count the notes (ADR 0225)
+
+    /// The loop's clock at this instant, or `nil` unless it is looping. What a tap reads.
+    func loopClock() -> LoopClockReading? { model.loopClock() }
+
+    private var sliceTask: Task<Void, Never>?
+
+    /// Play a moment of the song around `tap` (song seconds) at the adjuster's tempo, loading the audio
+    /// first if this visit hasn't played it yet: a saved piece can be opened for naming before the loop
+    /// has sounded. `then` fires when the slice ends on its own. A no-op while the loop plays.
+    func playSlice(at tap: TimeInterval, then: (@MainActor @Sendable () -> Void)? = nil) {
+        sliceTask?.cancel()
+        sliceTask = Task { [weak self] in
+            guard let self else { return }
+            await model.loadIfNeeded()
+            guard !Task.isCancelled, !model.loadFailed, !model.isRunning else { return }
+            model.playSlice(at: tap, percent: percent, onFinished: then)
+        }
+    }
+
+    /// Cut a slice short.
+    func stopSlice() {
+        sliceTask?.cancel()
+        sliceTask = nil
+        model.stopSlice()
     }
 }

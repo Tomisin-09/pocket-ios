@@ -199,6 +199,7 @@ enum ArchiveBuilder {
             rampBackoffHold: loop.rampBackoffHold,
             colorIndex: loop.colorIndex,
             customColorHex: loop.customColorHex,
+            transcription: loop.transcription,
             references: referenceRecords(loop.references),
             // Oldest first — the order a history is read in, and the order `LoopSpanSection` walks
             // back down. `uid` breaks a tie between two edits saved in the same instant.

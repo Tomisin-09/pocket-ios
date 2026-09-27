@@ -17,6 +17,10 @@ import SwiftUI
 /// The three structural sections live in `LoopModeSections`, shared with `ImproviseView` (ADR 0135),
 /// the sibling ramp-less mode: only the copy and the note's `EntryKind` differ between them.
 ///
+/// **Count the notes** (ADR 0225) is the one section ear training has and improvise doesn't: tap along
+/// to count a lick, then name what you heard, saved on the loop as its piece. Its state lives here so
+/// its sheet and prompt can hang off this body's root.
+///
 /// **Takes are on here too** (2026-08-06). The original exclusion reasoned that nothing is *played*
 /// over an ear block, which is true and beside the point: singing or humming a line back is the one
 /// thing you cannot judge while you are doing it, and a take is the only way to hear it afterwards.
@@ -39,6 +43,19 @@ struct EarTrainingView: View {
     /// sheet and a routine's ear block, and `.onAppear` re-fires on a return.
     @State private var reportedOpen = false
     @State private var showingTakes = false
+    /// Count the notes (ADR 0225). Held here rather than in its section so the naming sheet and the
+    /// replace prompt can sit at this body's root, never on a row.
+    @State private var counting: CountTheNotesModel
+    @AppStorage(AppSettings.Key.countShowsBeats) private var showsBeats = AppSettings.countShowsBeatsDefault
+
+    init(loop: Loop, player: ContinuousLoopPlayer, recorder: RecordingController,
+         routineContext: RoutineRunContext?) {
+        self.loop = loop
+        self.player = player
+        self.recorder = recorder
+        self.routineContext = routineContext
+        _counting = State(initialValue: CountTheNotesModel(loop: loop))
+    }
 
     var body: some View {
         KeyboardFollowingScroll {
@@ -53,6 +70,11 @@ struct EarTrainingView: View {
                                            takeCount: loop.recordings.count,
                                            bedNoun: "loop",
                                            onOpenTakes: openTakes)
+                }
+                CountTheNotesSection(model: counting, player: player, stopLoop: stopForNaming)
+                SavedPieceSection(loop: loop, spelling: counting.spelling) {
+                    stopForNaming()
+                    counting.nameSaved()
                 }
                 JournalNoteComposer(owner: .loop(loop), kind: .ear,
                                     header: "Note what you hear",
@@ -71,6 +93,20 @@ struct EarTrainingView: View {
         }
         .sheet(isPresented: $showingTakes) {
             TakesSheet(owner: .loop(loop), onDelete: deleteTake)
+        }
+        .sheet(item: Bindable(counting).naming, onDismiss: player.stop) { request in
+            NameTheNotesSheet(request: request, player: player, spelling: counting.spelling,
+                              loopType: loop.loopType) { result in
+                counting.finishNaming(request, result: result, context: modelContext)
+            }
+        }
+        .confirmationDialog("Replace the saved piece?", isPresented: Bindable(counting).confirmingReplace,
+                            titleVisibility: .visible) {
+            Button("Replace") {
+                counting.save(showingBeats: showsBeats && counting.grid != nil, context: modelContext)
+            }
+        } message: {
+            Text("This loop already has a saved piece. Its Journal line stays.")
         }
         // On the shared core, so all three hosts get it once (ADR 0050). Humming along is exactly the
         // hands-free practice the setting exists for, and this screen had never asked.
@@ -95,6 +131,13 @@ struct EarTrainingView: View {
         showingTakes = true
     }
 
+    /// Naming needs quiet: stop the loop the way every exit does, the take finalised first, before the
+    /// sheet opens (ADR 0225). A slice must never play over the loop it was cut from.
+    private func stopForNaming() {
+        finishTake()
+        player.stop()
+    }
+
     private func deleteTake(_ take: Recording) {
         try? RecordingStore.delete(fileName: take.fileName)
         modelContext.delete(take)
@@ -105,8 +148,8 @@ struct EarTrainingView: View {
 
     private var introSection: some View {
         Section {
-            Text("Listen it into your ear, then hum or sing it back — no guitar needed. Play the loop "
-                + "again and compare. No score, no right answer. Jot what you hear below.")
+            Text("Listen it into your ear, then hum or sing it back — no guitar needed. Or slow it down "
+                + "and count it: tap once for every note you hear. No score, no right answer.")
                 .font(.futura(.footnote))
                 .foregroundStyle(PocketColor.textSecondary)
         }

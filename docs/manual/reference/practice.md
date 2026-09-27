@@ -175,3 +175,17 @@ A loop can be run three ways, all launched from its edit sheet in the song playe
 - **`Improvise`** — the loop as a bed to solo over.
 
 Each has its own run screen, and each writes into the journal with its own tag.
+
+### Count the notes
+
+`Train your ear` carries a `Count the notes` section under its play and tempo controls, for working a
+lick out by ear. While the loop plays, tap the pad once for every note you hear. Each pass through the
+loop gets its own row of dots, the one playing now on top, so you can see when your passes agree. Tap a
+row to pick that pass. `Show beats` adds the song's beat lines and a count for each beat. It stays off
+until you turn it on, and only appears once the song has a tempo and its 1.
+
+`Name the notes` lays the picked pass out as numbered notes. Tap one to hear just that moment of the
+record, then name it by `Note name`, `Fret & string` or `Chord`. `Hear it, then mine` plays the moment
+and then your answer, and you decide whether they match. `Save` keeps the pass on the loop, under
+`Saved on this loop` with a line of tab if you placed frets, and writes a *Transcribed* line to the
+loop's journal. `Edit names` reopens it. Saving another pass replaces it.

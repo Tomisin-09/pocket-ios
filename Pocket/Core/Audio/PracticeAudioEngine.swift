@@ -26,7 +26,7 @@ final class PracticeAudioEngine {
     var onTick: ((TimeInterval) -> Void)?
 
     private let engine = AVAudioEngine()
-    private let player = AVAudioPlayerNode()
+    let player = AVAudioPlayerNode()
     /// Owns the time-stretching unit, its rate and its latency (ADR 0140). Read by the metronome
     /// split for the rate; engine-internal otherwise.
     let stretcher = TimeStretcher()
@@ -69,7 +69,7 @@ final class PracticeAudioEngine {
     /// minus crossfade), and the player sampleTime at which the current loop buffer began.
     var loopAnchorFrame = 0
     var loopBufferFrames = 0
-    private var loopBaseSampleTime: AVAudioFramePosition = 0
+    private(set) var loopBaseSampleTime: AVAudioFramePosition = 0
     /// Equal-power crossfade length folded into the loop seam.
     let crossfadeSeconds: TimeInterval = 0.015
 
@@ -286,7 +286,7 @@ final class PracticeAudioEngine {
     }
 
     /// The player's current render position (source frames since it started).
-    private func currentSampleTime() -> AVAudioFramePosition {
+    func currentSampleTime() -> AVAudioFramePosition {
         guard let nodeTime = player.lastRenderTime,
               let playerTime = player.playerTime(forNodeTime: nodeTime) else { return 0 }
         return playerTime.sampleTime
@@ -322,7 +322,7 @@ final class PracticeAudioEngine {
     /// rate-dependent latency (ADR 0140 §3). `currentTime` is published in *heard* time, which is why
     /// the metronome needs no offset of its own: `MetronomeSchedule` measures each beat from this
     /// value, so the click and the visual playhead are corrected by the same single subtraction.
-    private func heard(_ rendered: TimeInterval) -> TimeInterval {
+    func heard(_ rendered: TimeInterval) -> TimeInterval {
         guard compensatesStretcherLatency else { return max(0, rendered) }
         return AudioMath.heardPlayhead(rendered: rendered, latency: stretcher.latency,
                                        rate: stretcher.rate)
@@ -340,7 +340,7 @@ final class PracticeAudioEngine {
         #endif
     }
 
-    private func startEngineIfNeeded() {
+    func startEngineIfNeeded() {
         AudioPlumbing.startIfNeeded(engine, label: "practice")
         // Starting the engine initialises the stretcher's audio unit, and `'tmpt'`'s rate is a raw
         // parameter write rather than a retained Swift property (ADR 0140 §4). One write here and the
