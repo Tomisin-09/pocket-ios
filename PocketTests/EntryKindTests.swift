@@ -16,6 +16,17 @@ final class EntryKindTests: XCTestCase {
         XCTAssertEqual(EntryKind.session.rawValue, "session")
         XCTAssertEqual(EntryKind.ear.rawValue, "ear")   // ADR 0104 — ear-training note tag
         XCTAssertEqual(EntryKind.improvise.rawValue, "improvise")   // ADR 0135 — jam note tag
+        XCTAssertEqual(EntryKind.transcribed.rawValue, "transcribed")   // ADR 0225 — a solved piece
+    }
+
+    func testTranscribedKindDecodesAndHasGlyph() {
+        // The ADR 0225 addition: 🧩 "Transcribed", written by Count the notes' Save. Added the safe way,
+        // a new case on the `String`-raw enum, so an older build folds it to `.note`. It is in the picker
+        // on purpose: "solved" is always the player's declaration, and a lick worked out on paper counts.
+        XCTAssertEqual(EntryKind(raw: "transcribed"), .transcribed)
+        XCTAssertEqual(EntryKind.transcribed.emoji, "🧩")
+        XCTAssertEqual(EntryKind.transcribed.label, "Transcribed")
+        XCTAssertEqual(EntryKind.pickerOrder.last, .transcribed)
     }
 
     func testEarKindDecodesAndHasGlyph() {

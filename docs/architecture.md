@@ -581,6 +581,35 @@ not the Hear synth (ADR 0097). **Slice 2** makes it a **routine block**: a loop 
 routine chrome + a manual **Done**, no completion screen — nothing to grade), authored from a peer **Ear
 training** bucket in `AddRoutineUnitSheet`. Same `Loop` unit, no new schema — just a mode.
 
+**Count the notes** (ADR 0225) is a fourth section of the same `EarTrainingView` core: tap once for
+each note you hear, then name them. The pieces, from the audio up:
+
+- **The clock.** `PracticeAudioEngine.loopClock()` (in `+CountTheNotes`, because the main file sits on
+  the 400-line cap) reads the player's render position *on demand* and returns a pure
+  `LoopClockReading`: elapsed source seconds **unwrapped** across passes (already stretcher-corrected
+  through `heard`, ADR 0140 §3), the region start, one pass's length, the rate and the route's output
+  latency. `TapTally` takes `(outputLatency + ioBufferDuration) × rate` off and derives the pass from
+  the unwrapped position, **not** from `loopIteration`, which counts rendered wraps a full latency
+  ahead of the ear. A tap is stored as **song seconds, never beats**.
+- **The passes.** `TapPasses` (pure) numbers passes across stops and restarts and never reuses a
+  number, so Clear's Undo can't collide. `CountTheNotesModel` (owned by `EarTrainingView`) holds them
+  for the visit; nothing is stored until Save.
+- **Beats, for display only.** `CountGrid` builds the region's beats from `BeatGrid` (tempo + anchors)
+  on first read, and `TapTally.perBeatCounts` splits taps with a 12%-of-a-beat early tolerance. Because
+  taps are seconds, a 0154 anchor re-divides the same taps with nothing rewritten.
+- **The render path.** Only `LivePassRow` reads the clock every frame (a `TimelineView` leaf, ADR
+  0153), and it tells the model when the pass changes.
+- **The slice.** `playSlice(from:length:rate:)` reads 0.35 s of the file (from 80 ms before the tap)
+  into a PCM buffer, applies `AudioSlice.gain` sample by sample (a 5 ms rise, a 60 ms fall, zero at
+  both ends), pads silence for the stretcher's latency, and plays it once through the loop's own
+  stretcher at the current tempo. It is **refused while the loop plays**. `LoopRunModel` keeps a token,
+  so a slice cut short by the next one never reports finishing.
+- **Storage.** `Loop.transcriptionData: Data?` (additive, Optional) holds a `PieceTranscription`:
+  taps with optional `PieceLabel`s (pitch class · fret on a highest-first string · chord root +
+  `ChordQuality` suffix), plus the open strings any fret was placed against. Labels are tagged JSON,
+  so an unknown kind decodes as an unnamed tap. The archive carries it as `LoopRecord.transcription`.
+  `TabLine` draws the tab from the piece each time; no text copy is stored anywhere.
+
 **Each mode gates on what it needs** (ADR 0138). Both surfaces that decide which loops a player can
 reach — `LoopLibraryView` and `AddRoutineUnitSheet` — applied one test, `commandTempo != nil`, written
 for the *trainer* and inherited by every mode after it. That put ear training, the one mode you can do

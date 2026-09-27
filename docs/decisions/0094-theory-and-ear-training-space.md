@@ -6,6 +6,10 @@
   it fixes the boundaries so the first slice, when scheduled, doesn't re-litigate what's allowed.
 - **Builds on:** ADR 0070 (Pocket never grades the player), ADR 0093 (the shared chord-naming theory core),
   ADR 0085/0091 (the 12-scale catalog + mode/box model), ADR 0092 (AI strategy — the coach lever).
+- **Amended by:** ADR 0225 (Count the notes, 2026-09-27) — the Consequences' "any slice proposing a
+  tally … is out of bounds" is narrowed: a count of what the player heard, tapped and named by the
+  player, is not an app-scored tally. T2c and T3 stand unchanged. Name the notes is T2b
+  call-and-response on the player's own recording.
 
 ## Context
 

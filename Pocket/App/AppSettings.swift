@@ -93,6 +93,7 @@ enum AppSettings {
         static let tunerReferenceA = "tunerReferenceA"
         static let tunerChimeEnabled = "tunerChimeEnabled"
         static let accidentalPreference = "accidentalPreference"
+        static let countShowsBeats = "countShowsBeats"
         static let analyticsEnabled = "analyticsEnabled"
         static let analyticsPromptSeen = "analyticsPromptSeen"
         static let installDate = "installDate"

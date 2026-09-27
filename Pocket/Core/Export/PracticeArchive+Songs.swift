@@ -114,6 +114,10 @@ struct LoopRecord: Codable, Equatable, Sendable {
 
     var colorIndex: Int?
     var customColorHex: String?
+    /// The loop's piece (ADR 0225): the taps in song seconds and what each was named. Written as the
+    /// structure it is, not as the `Data` the store keeps, so the file stays readable (ADR 0188).
+    /// `Optional` for `ExerciseRecord.folders`' reason: a file from before 0225 has no key.
+    var transcription: PieceTranscription?
 
     var references: [ReferenceLinkRecord]
     /// Every recorded edit to this loop's span (ADR 0205). Nests, because `Loop.spanChanges` is

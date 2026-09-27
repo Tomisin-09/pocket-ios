@@ -95,6 +95,17 @@ final class AppSettingsTests: XCTestCase {
                                                 default: AppSettings.exerciseAnimatesDefault))
     }
 
+    // MARK: Count the notes (ADR 0225)
+
+    func testShowBeatsDefaultsOff() {
+        // Notes lead and beats are optional: the grid can be wrong, so the lines are opt-in. Both the
+        // section's `@AppStorage` and the accessor read this constant.
+        XCTAssertFalse(AppSettings.countShowsBeatsDefault)
+        XCTAssertFalse(AppSettings.resolvedBool(storedValue: nil, default: AppSettings.countShowsBeatsDefault))
+        XCTAssertTrue(AppSettings.resolvedBool(storedValue: true, default: AppSettings.countShowsBeatsDefault),
+                      "once turned on, it's remembered")
+    }
+
     // MARK: the song player's four display defaults (ADR 0163)
 
     func testSongPlayerDefaultsMatchTheShippedArrangement() {

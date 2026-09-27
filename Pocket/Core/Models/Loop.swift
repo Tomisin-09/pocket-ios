@@ -176,6 +176,9 @@ final class Loop {
     /// A free custom colour as `#RRGGBB`, set from the colour wheel (ADR 0031). Takes
     /// precedence over `colorIndex` / derived when present; `nil` means no custom colour.
     var customColorHex: String?
+    /// The loop's piece (ADR 0225): an encoded `PieceTranscription`, read through `transcription`.
+    /// `Data`, so no custom enum is stored on the model; Optional, so the migration is additive.
+    var transcriptionData: Data?
 
     /// The loop's practice journal — dated, context-snapshotting entries (ADR 0038).
     /// **Nullified, not cascaded** (ADR 0151): deleting the loop leaves the notes written about it,

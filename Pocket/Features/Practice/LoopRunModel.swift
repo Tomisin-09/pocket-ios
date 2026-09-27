@@ -158,6 +158,37 @@ final class LoopRunModel {
         engine.setRate(Self.rate(forPercent: percent))
     }
 
+    // MARK: - Count the notes (ADR 0225)
+
+    /// The loop's clock at this instant, for a tap. `nil` unless the region is looping. Read in actions,
+    /// never in a body (ADR 0153).
+    func loopClock() -> LoopClockReading? { engine.loopClock() }
+
+    /// Bumped by every slice and every stop, so only the newest slice's end is reported.
+    private var sliceToken = 0
+
+    /// Play a moment of the song around `tap` (song seconds) at `percent`, once. Only while stopped: the
+    /// naming sheet stops the loop first, and a slice never plays over it. `onFinished` fires when this
+    /// slice ends on its own, and not if a newer slice or a stop cut it short.
+    func playSlice(at tap: TimeInterval, percent: Int,
+                   onFinished: (@MainActor @Sendable () -> Void)? = nil) {
+        guard transport == .stopped, loaded, !loadFailed,
+              let window = AudioSlice.window(tap: tap, duration: engine.duration) else { return }
+        sliceToken += 1
+        let token = sliceToken
+        engine.playSlice(from: window.start, length: window.length,
+                         rate: Self.rate(forPercent: percent)) { [weak self] in
+            guard let self, token == self.sliceToken else { return }
+            onFinished?()
+        }
+    }
+
+    /// Cut a slice short. Never touches a playing loop.
+    func stopSlice() {
+        sliceToken += 1
+        engine.stopSlice()
+    }
+
     /// Pause / resume the run. The rep counter rides the engine's render position, so it freezes on
     /// pause and resumes on play with no extra bookkeeping.
     func toggle() {

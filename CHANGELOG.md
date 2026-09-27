@@ -56,6 +56,16 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Count the notes, then name them.** *Train your ear* has a new section for working a lick out by
+  ear. Slow the loop down and tap the pad once for every note you hear; each time round the loop gets
+  its own row of dots, so you can see when your passes agree. **Name the notes** lays one pass out as
+  numbered notes: tap one to hear just that moment of the record, then say what it was, by note name,
+  by fret and string, or as a chord. **Hear it, then mine** plays the moment and then your answer, and
+  you decide whether they match. Red Moon never does. **Save** keeps the pass on the loop as its
+  piece, shown under the section with a line of tab when you've placed frets, and writes a 🧩
+  *Transcribed* line to the loop's Journal. **Show beats** adds the song's beat lines and a per-beat
+  count, and it stays off until you turn it on, because the lines are only as good as the song's
+  tempo and its 1 (ADR 0225).
 - **Record a take that isn't about any drill.** The Journal's ✏️ is now a **＋** holding **Write a
   note** and **Record a take**. A take recorded there belongs to nothing — a riff you want to keep,
   how new strings sound — so it no longer has to be filed under whatever drill was open. One button
