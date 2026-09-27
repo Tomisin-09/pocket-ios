@@ -151,7 +151,10 @@ struct LoopLibraryView: View {
         .background(PocketColor.background.ignoresSafeArea())
         .navigationTitle(backingOnly ? "Backing tracks" : "Loops")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, prompt: "Loops and songs")
+        // `.always`, as Routines and Exercises (ADR 0226 D1) — a search you have to pull down for is
+        // one most players never find.
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: "Loops and songs")
         // One fixed-width trailing control for sort + filters, matching the exercise and routine
         // libraries so the inline title centres against the back button alone (`LibraryOptionsMenu`).
         .toolbar {

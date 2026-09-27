@@ -2,6 +2,8 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-22 (`pocket-281-a-routine-you-can-find`)
+- **Amended by:** ADR 0226 D1 — Exercises and Loops take `.always` too, closing D8's last
+  paragraph. D8's reasoning stands and now covers all three libraries.
 - **Relates to:** ADR 0035 (the descending flip reverses the whole list, ties included), ADR 0056
   (the sort/search shape the other two practice libraries already use), ADR 0070 (the app never
   grades the player), ADR 0119 (the favourites filter this sits beside), ADR 0127 (the authoring
@@ -127,7 +129,8 @@ because a test that depends on placement is a test that breaks when placement is
 
 Exercises and Loops still take the default. Aligning them is a change to two screens this ADR is not
 about, and a permanently visible search bar costs vertical space on every launch — a design call,
-logged in `docs/backlog.md` rather than smuggled in here.
+logged in `docs/backlog.md` rather than smuggled in here. *(Made in ADR 0226 D1: both now take
+`.always`.)*
 
 ### D9 — `LibraryOptionsMenu`'s fixed-order overload is deleted
 

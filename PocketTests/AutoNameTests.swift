@@ -34,6 +34,36 @@ final class AutoNameTests: XCTestCase {
     }
 
     func testWorksForOtherPrefixes() {
-        XCTAssertEqual(AutoName.next(prefix: "Marker", existing: ["Marker 7"]), "Marker 8")
+        XCTAssertEqual(AutoName.next(prefix: "Section", existing: ["Section 7"]), "Section 8")
+    }
+
+    func testASignedSuffixIsNotANumberThisHandedOut() {
+        // `Int` parses "+9" and "-9"; neither is a name `AutoName` wrote, so neither counts.
+        XCTAssertEqual(AutoName.next(prefix: "Loop", existing: ["Loop +9", "Loop 2"]), "Loop 3")
+    }
+
+    // MARK: - Markers: "M3" (ADR 0226 D2)
+
+    func testMarkersNameShort() {
+        XCTAssertEqual(AutoName.nextMarker(existing: []), "M1")
+        XCTAssertEqual(AutoName.nextMarker(existing: ["M1", "M2"]), "M3")
+    }
+
+    /// **The collision the change could have made.** A song's markers named before ADR 0226 keep
+    /// their long names; the short counter must continue past them, not start again at M1.
+    func testTheShortFormContinuesPastTheLongNamesMarkersAlreadyHave() {
+        XCTAssertEqual(AutoName.nextMarker(existing: ["Marker 1", "Marker 5"]), "M6")
+        XCTAssertEqual(AutoName.nextMarker(existing: ["Marker 3", "M4"]), "M5")
+        XCTAssertEqual(AutoName.nextMarker(existing: ["M7", "Marker 2"]), "M8")
+    }
+
+    func testMarkerNamesTheUserTypedStillDontCount() {
+        let existing = ["Mid solo", "Marker", "M", "Marker 2b", "M 9", "M3"]
+        XCTAssertEqual(AutoName.nextMarker(existing: existing), "M4")
+    }
+
+    func testTheHighWaterMarkHoldsForMarkers() {
+        // M2 was deleted — the next is past the highest still present.
+        XCTAssertEqual(AutoName.nextMarker(existing: ["M1", "M3"]), "M4")
     }
 }

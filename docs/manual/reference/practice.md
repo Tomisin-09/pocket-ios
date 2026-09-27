@@ -115,7 +115,7 @@ drops out: `Command 90 BPM · 16ths`.
      rhythm clause drops out entirely on a drill that states no note rate. -->
 <!-- not-in-source: "Command 90 BPM · 16ths" — the same line for a drill with Reach off (ADR 0221 D6). -->
 
-The toolbar carries `List options` then `New exercise`. The search field prompts by name.
+The toolbar carries `List options` then `New exercise`. A search field above the list prompts by name.
 
 **More sections can exist than the create sheet offers.** Grouping covers every template the app has
 ever had, so a drill made under one that has since been withdrawn still lists under its own heading,
@@ -157,7 +157,7 @@ screen; one you stop by hand does not log.
      | state: fresh library with no measured loops, Practice ▸ Loops -->
 
 Every loop you have marked, across all your songs, in one list — the practice-side view of what the
-[song player](song-player.md) creates. The search field prompts `Loops and songs`.
+[song player](song-player.md) creates. A search field above the list prompts `Loops and songs`.
 
 Hold a row for the ways it can run, `Add to routine…` and **Favourite**. There is **no delete
 here**: a loop belongs to its song, and is removed from the song player.

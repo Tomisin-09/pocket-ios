@@ -86,19 +86,53 @@ final class LoopPhaseShapeTests: XCTestCase {
         XCTAssertEqual(loop.runShape.warmupHold, 1)
     }
 
-    // MARK: - D3: a hold above the shared range
+    // MARK: - D3: a loop's hold range (ADR 0226 D3)
 
-    /// Folding can land a hold above 12 passes (4 reps × a dwell of 4). A tap mustn't snap it to 12:
-    /// down walks it down, up does nothing, and once it is inside the range the range holds.
+    /// A loop holds up to 32 passes, an exercise stays at 12 intervals — and the loop's ceiling comes
+    /// with its shape, so neither host passes it in (and neither can forget to).
+    func testALoopHoldsUpToThirtyTwoPassesAndAnExerciseStaysAtTwelve() {
+        var loopShape = makeLoop().runShape
+        XCTAssertEqual(loopShape.holdCeiling, 32)
+        loopShape.dwell = 31
+        loopShape.setHold(.command, 32)
+        XCTAssertEqual(loopShape.dwell, 32, "a loop's command reaches 32 passes")
+        loopShape.setHold(.command, 33)
+        XCTAssertEqual(loopShape.dwell, 32, "and stops there")
+        loopShape.setHold(.reach, 40)
+        XCTAssertEqual(loopShape.reachHold, 32, "every phase shares the loop's ceiling")
+
+        var exerciseShape = Exercise(name: "Drill").runShape
+        XCTAssertEqual(exerciseShape.holdCeiling, 12)
+        exerciseShape.setHold(.command, 13)
+        XCTAssertEqual(exerciseShape.dwell, 12, "an exercise still stops at 12 intervals of four bars")
+    }
+
+    /// The ceiling survives a save and a re-read: it is not stored, it is what `Loop.runShape` says.
+    func testTheCeilingIsNotLostThroughASave() {
+        let loop = makeLoop()
+        var shape = loop.runShape
+        shape.dwell = 20
+        loop.applyRunShape(shape)
+        XCTAssertEqual(loop.runShape.dwell, 20)
+        XCTAssertEqual(loop.runShape.holdCeiling, RunShape.loopHoldCeiling)
+    }
+
+    /// Folding can still land a hold above 32 passes (8 reps × a dwell of 12 is 96). A tap mustn't
+    /// snap it to the ceiling: down walks it down, up does nothing, and once it is inside the range
+    /// the range holds.
     func testAHoldAboveTheRangeWalksDownAndNeverSnaps() {
-        var shape = RunShape(dwell: 16)
-        shape.setHold(.command, 17)
-        XCTAssertEqual(shape.dwell, 16, "up does nothing above the ceiling")
-        shape.setHold(.command, 15)
-        XCTAssertEqual(shape.dwell, 15, "down walks it down one")
-        shape.dwell = 12
-        shape.setHold(.command, 13)
-        XCTAssertEqual(shape.dwell, 12, "inside the range, the range holds")
+        let loop = makeLoop()
+        loop.rampRepsPerStep = 8
+        loop.rampDwellIntervals = 12
+        var shape = loop.runShape
+        XCTAssertEqual(shape.dwell, 96)
+        shape.setHold(.command, 97)
+        XCTAssertEqual(shape.dwell, 96, "up does nothing above the ceiling")
+        shape.setHold(.command, 95)
+        XCTAssertEqual(shape.dwell, 95, "down walks it down one")
+        shape.dwell = 32
+        shape.setHold(.command, 33)
+        XCTAssertEqual(shape.dwell, 32, "inside the range, the range holds")
         shape.setHold(.warmup, 0)
         XCTAssertEqual(shape.warmupHold, 1)
     }

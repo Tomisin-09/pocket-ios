@@ -2,6 +2,8 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-24
+- **Amended by:** ADR 0226 D2 — the auto name is **"M3"**, not "Marker 3"; labels already stored
+  keep their names and still count toward the numbering. Everything else here stands.
 
 ## Context
 

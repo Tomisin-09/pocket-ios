@@ -170,6 +170,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **The quick-note ✏️ is on a run screen only while it's running**, or inside a routine. Stopped,
   the **Journal** bar under the staircase writes notes too, so the screen no longer offers two ways
   to the same thing.
+- **Exercises and Loops show their search field all the time**, as Routines already did, instead
+  of hiding it until you pull the list down.
+- **New markers are named M1, M2, M3…** rather than *Marker 1*, so a label floating over the
+  waveform takes less of it. Markers you already have keep their names, and the numbering carries on
+  from them: a song holding *Marker 1* to *Marker 5* gets *M6* next.
+- **A loop's holds go up to 32 passes**, from 12. A short loop — a one-bar lick — wants more
+  repetitions than twelve. An exercise's holds still go up to 12 steps of four bars.
 
 ### Fixed
 
@@ -197,6 +204,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   progression just written, so *Add* would have added the wrong chords. Everything else set up in
   the sheet — the key, the hold, any chord swapped by hand — was lost with it. Saving a custom chord
   from inside the same sheet went down the same path. iOS 26 was unaffected.
+
+### Internal
+
+- **Landscape is a lease**, counted like *Keep screen awake* (ADR 0226 D4). Only the song player
+  rotates today, so nothing changes on screen; a second rotating screen can now be added without one
+  screen's exit locking the other back to portrait.
+- **`AddToRoutineUITests` re-taps a tap that a fast launch swallowed**, and only while the row shows
+  the tap did nothing — a second tap on a routine that took the first would take the block back out.
 
 ## [1.3] — build 7, cut 2026-09-10
 

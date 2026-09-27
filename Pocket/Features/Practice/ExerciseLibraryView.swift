@@ -193,7 +193,10 @@ struct ExerciseLibraryView: View {
         }
         .navigationTitle("Exercises")
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $searchText, prompt: "Exercises")
+        // `.always`, as Routines (ADR 0178 D8): the default hides the bar under an inline title until
+        // the list is pulled down, and differently by OS version (ADR 0226 D1).
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always),
+                    prompt: "Exercises")
         // Leading is the back button alone; sort + favourites collapse into one fixed-width
         // trailing control so the inline title sits centred and stops moving with the sort key.
         // See `LibraryOptionsMenu`.

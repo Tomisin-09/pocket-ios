@@ -3,6 +3,9 @@
 - **Status:** Accepted. Step 1 (exercises, and the pencil on both run screens) built on
   `pocket-330-phase-rows-exercises`; step 2 (loops) on `pocket-331-phase-rows-loops`. See *As built*.
 - **Date:** 2026-09-25 (`pocket-329-phase-rows`)
+- **Amended by:** ADR 0226 D3 — a **loop's** holds range over 1…32 passes, not D3's shared 1…12;
+  an exercise's stay 1…12 intervals. That closes the *Open* note under *As built*. The rest of D3
+  stands.
 - **Amends:** ADR 0045 — the four-phase profile stands, but only **command** is mandatory: the
   warm-up and the summit become optional, as the back-off already is (D2), and every phase gets a
   hold of its own where 0045 held all but command for one interval (D3). The warm-up is stored as a
@@ -310,7 +313,8 @@ open:
   down one pass at a time, + does nothing, and once it is inside 1…12 the range holds. **Open:** the
   old controls could reach 96 passes at command (12 × 8 reps), and the rows can author at most 12. A
   short loop, a one-bar lick say, may want more than 12 passes at command. If it does, the fix is a
-  loop-specific ceiling, not a return to reps per step.
+  loop-specific ceiling, not a return to reps per step. **Closed by ADR 0226 D3:** that ceiling,
+  1…32 passes, carried on the loop's `RunShape`.
 - **A loop whose song hasn't resolved** has no region to price, so D10's line states the passes alone
   (`12 passes`) rather than the formatter's `≈ 5 s` floor.
 - **The loop block preview's tempo readout** (`70% → 85%`, `reach 91%`) follows the shape: it drops
