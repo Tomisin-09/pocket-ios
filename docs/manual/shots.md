@@ -33,6 +33,7 @@ marker grammar in [README.md](README.md).
 | `journal/quick-note` | `screen` | `journal-and-practice-log` | an exercise run screen, quick note tapped |  |
 | `journal/quick-note-button` | `glyph` | `journal-and-practice-log` | — |  |
 | `journal/record-arm` | `glyph` | `journal-and-practice-log` | — |  |
+| `journal/record-take` | `screen` | `journal-and-practice-log` | seeded library, Journal, ＋ then Record a take, before recording |  |
 | `journal/take-detail` | `screen` | `journal-and-practice-log` | seeded library, Journal, a take opened |  |
 | `journal/take-moments` | `screen` | `journal-and-practice-log` | seeded library, Journal, a take opened |  |
 | `journal/take-row` | `detail` | `journal-and-practice-log` | seeded library, Journal, Takes filter, at least one take |  |
@@ -114,4 +115,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped, top of the sheet |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 
-94 shots across 19 pages.
+95 shots across 19 pages.

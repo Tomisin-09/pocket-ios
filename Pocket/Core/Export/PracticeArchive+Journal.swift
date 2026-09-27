@@ -79,6 +79,11 @@ struct RecordingRecord: Codable, Equatable, Sendable {
 
     /// The player's pin (ADR 0190) — the same optional, on the same terms, as `JournalEntryRecord`'s.
     var isPinned: Bool?
+
+    /// A take recorded against nothing (ADR 0224). **Optional**, like `JournalEntryRecord.isStandalone`:
+    /// an archive written before this decodes as `nil`, and every take in it had an owner. Without it a
+    /// restored standalone take would come back reading as an orphan — a take whose loop was deleted.
+    var isStandalone: Bool?
 }
 
 /// A note pinned to a point in a take (ADR 0175).

@@ -34,8 +34,8 @@ extension JournalTimeline {
         case loop
         case session
         case metronome
-        /// `.standalone` — a note about practice generally (ADR 0155), named in the player's words
-        /// rather than the model's.
+        /// `.standalone` — a note about practice generally (ADR 0155), or a take recorded against
+        /// nothing (ADR 0224), named in the player's words rather than the model's.
         case standalone
 
         var id: String { rawValue }
@@ -62,7 +62,8 @@ extension JournalTimeline {
         ///
         /// `nil` covers three cases, and they are `nil` for three different reasons:
         /// - an **orphaned note**, whose kind the app genuinely no longer knows (D6);
-        /// - an **ownerless take**, the take-shaped version of the same loss;
+        /// - an **orphaned take** (`.none`), the take-shaped version of the same loss — a take recorded
+        ///   against nothing on purpose is `.standalone` and buckets with the standalone notes;
         /// - a **song**-owned take. No screen records one today (a song stage has no recorder, ADR
         ///   0179 D6) and `Song` is not one of D6's five kinds; when songs gain a recorder, this is
         ///   the line that has to grow a case rather than quietly keep falling through.
@@ -92,6 +93,9 @@ extension JournalTimeline {
             switch kind {
             case .exercise: .exercise
             case .loop: .loop
+            // A take recorded against nothing sits with the notes written against nothing (ADR 0224):
+            // the filter is about what an item belongs to, not whether it is words or audio.
+            case .standalone: .standalone
             case .song, .none: nil
             }
         }

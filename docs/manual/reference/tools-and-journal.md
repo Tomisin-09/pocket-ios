@@ -55,8 +55,9 @@ Reached from `Journal` on Home.
      | alt: The Journal timeline with the All / Notes / Takes filter and day sections mixing notes and takes
      | state: seeded library, Journal, notes and a take across two days -->
 
-**Top bar.** `Journal options` — the ⋯ — then the ✏️, `Write a quick journal note`. Underneath, a
-search field prompting `Search by song, exercise, template or date`.
+**Top bar.** `Journal options` — the ⋯ — then the ＋, `Add to Journal`, which holds `Write a note`
+and `Record a take`. Underneath, a search field prompting
+`Search by song, exercise, template or date`.
 
 **`Journal options`** holds a `Sort` picker of `Newest first` / `Oldest first`.
 
@@ -74,6 +75,13 @@ search field prompting `Search by song, exercise, template or date`.
 
 Empty, the wording follows the scope you are in — `Nothing here yet`, `No notes yet` or
 `No takes yet` — and a search with no hits says `No matches`.
+
+### `Record a take`
+
+From `Add to Journal`. One round control — `Start recording`, then `Stop and save this take` while it
+runs — with the timer and the headphone cue beneath it, and a line saying the take saves straight to
+your Journal. `Done` closes it, and is unavailable while a take is recording; so is swiping the sheet
+away. A kept take is confirmed in place, and the sheet stays open for another.
 
 ### `Quick note`
 

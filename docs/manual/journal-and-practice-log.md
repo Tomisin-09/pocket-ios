@@ -18,9 +18,10 @@ strip, the three numbers under your last session.
 
 The **✏️** in the toolbar
 <!-- shot: journal/quick-note-button | role: glyph | alt: | crop: 856,188,120,120 -->
-opens **Quick note** — one field, the kind chips, **Save**. It is on the journal itself, on the
-metronome, and on an exercise or loop run screen while the run plays or inside a routine. A stopped
-run screen has its **Journal** bar instead, which writes notes too. Opening it over a run **touches
+opens **Quick note** — one field, the kind chips, **Save**. It is on the metronome, and on an
+exercise or loop run screen while the run plays or inside a routine. A stopped run screen has its
+**Journal** bar instead, which writes notes too. On the journal itself it sits under the **＋**, as
+**Write a note**. Opening it over a run **touches
 nothing**: the audio carries on, the click keeps time, and the note costs the run nothing.
 
 <!-- shot: journal/quick-note | role: screen
@@ -35,7 +36,7 @@ nothing**: the audio carries on, the click keeps time, and the note costs the ru
 
 **Where you write from is not cosmetic.** A note written on a drill is filed against that drill and
 keeps a copy of where it stood at that moment. Written from the journal, it belongs to nothing and
-keeps nothing, because there is nothing honest to keep. That is also why the journal's **✏️** offers
+keeps nothing, because there is nothing honest to keep. That is also why the journal's **＋** offers
 no picker of things to attach a note to: filing it against a drill you are not currently playing
 would snapshot where that drill stands *now*, not where it stood when the thing you are describing
 happened.
@@ -94,6 +95,21 @@ run does and ends when it does. Takes land in this same timeline alongside your 
   named, and **Rename** after.
 
 Takes are also reachable from the run screen they were made on, through its **Takes** bar.
+
+### A take that is not about a drill
+
+Some playing belongs to nothing on your list — a riff you want to keep before it goes, how new
+strings sound, a first go at a song you have not imported. Record it from the journal: **＋ ▸ Record
+a take**.
+
+<!-- shot: journal/record-take | role: screen
+     | alt: The Record a take sheet with one large red record button and the line saying the take saves straight to the journal
+     | state: seeded library, Journal, ＋ then Record a take, before recording -->
+
+Tap the red button to start and tap it again to stop — stopping is what saves the take. While it is
+recording the sheet will not close, so a stray swipe cannot end it. The take then sits in the
+timeline with no caption, because it belongs to nothing — and for the same reason as a note written
+here, there is no picker to file it under a drill.
 
 Inside a **routine**, a block records only if you set it to. Swipe the block right for **Record**, or
 open it and turn on **Record this block**; the take then starts and stops with the block, and the
@@ -198,7 +214,8 @@ because the day is part of what the entry says.
   read forwards through a stretch of work rather than backwards.
 - **Show**, the chip above the timeline, opens two lists. **What it's about** is the kinds of thing
   the journal holds: **All**, **Exercise**, **Loop**, **Session**, **Metronome** and **Just me** —
-  that last one is the notes you wrote from the journal itself, about nothing in particular.
+  that last one is the notes you wrote and the takes you recorded from the journal itself, about
+  nothing in particular.
   **Tagged** is the chips you put on your notes: **Any tag**, then **Goal**, **Breakthrough**,
   **Struggle**, **Idea**, **Note or untagged**, **Ear** and **Improv**. Tick as many as you like in
   either — see below.

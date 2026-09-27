@@ -17,6 +17,22 @@ final class ManualShotsUITests: ManualShotCase {
                 alsoServing: ["reference/journal"])
     }
 
+    /// `journal/record-take` — the Journal's ＋ ▸ *Record a take* sheet, idle (ADR 0224). The record
+    /// control is not tapped: its first tap raises the microphone prompt, which is not the figure.
+    @MainActor
+    func testJournalRecordTake() {
+        let app = launchForShoot()
+        openJournal(in: app)
+
+        let record = app.buttons["Record a take"]
+        tap(app.navigationBars.buttons["Add to Journal"], labelled: "Add to Journal",
+            revealing: record, called: "the ＋ menu")
+        tap(record, labelled: "Record a take", revealing: app.buttons["Start recording"],
+            called: "the record sheet")
+        capture(app, slug: "journal/record-take", assertingOnScreen: "Record a take",
+                alsoRequiring: ["Start recording"])
+    }
+
     /// `journal/take-row` — the Takes filter, for the row crop.
     @MainActor
     func testJournalTakes() {

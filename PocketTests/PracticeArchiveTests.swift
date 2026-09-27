@@ -212,6 +212,20 @@ final class PracticeArchiveTests: XCTestCase {
                        "The model column is a non-optional Bool, so `false` is a recorded fact")
     }
 
+    /// A standalone take (ADR 0224) exports its flag; an owned one exports `nil`, the same absence an
+    /// archive written before the flag existed carries.
+    func testTheStandaloneFlagCrossesIntoTheArchive() {
+        let standalone = Recording(fileName: "take-4.m4a", duration: 8)
+        RecordingOwner.standalone.attach(to: standalone)
+        let owned = Recording(fileName: "take-5.m4a", duration: 8)
+        owned.exercise = Exercise(name: "Spider")
+
+        let result = archive(ArchiveSource(recordings: [standalone, owned]))
+
+        XCTAssertEqual(result.takes.first { $0.uid == standalone.uid }?.isStandalone, true)
+        XCTAssertNil(result.takes.first { $0.uid == owned.uid }?.isStandalone)
+    }
+
     // MARK: - ADR 0205, the marks and the span history
 
     /// A snag nests under the **song**, which is where the store puts it: it is cascade-owned by the

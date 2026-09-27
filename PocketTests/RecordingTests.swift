@@ -13,6 +13,38 @@ final class RecordingTests: XCTestCase {
         XCTAssertEqual(take.ownerKind, .none)
     }
 
+    /// **A take recorded against nothing declares it** (ADR 0224) — the flag, not the absent owner,
+    /// because absence already means *orphaned* (ADR 0151). And it carries no caption: a standalone
+    /// take labelled with some unit's name is the exact corruption 0155 exists to prevent.
+    func testAStandaloneTakeIsFlaggedAndCaptionless() {
+        let take = Recording(fileName: "x.m4a", duration: 12)
+        RecordingOwner.standalone.attach(to: take)
+
+        XCTAssertEqual(take.isStandalone, true)
+        XCTAssertEqual(take.ownerKind, .standalone)
+        XCTAssertNil(take.ownerLabelAtTake)
+        XCTAssertNil(JournalTimeline.ownerLabel(for: .take(take)), "a standalone take drew a caption")
+        XCTAssertTrue(RecordingOwner.standalone.recordingsByRecent.isEmpty)
+    }
+
+    /// The orphan beside it stays an orphan: no flag, no owner, a surviving caption — `.none`, and
+    /// never read as standalone just because its owner is gone.
+    func testAnOrphanedTakeIsNotStandalone() {
+        let take = Recording(fileName: "x.m4a", duration: 12)
+        take.ownerLabelAtTake = "Slow Bend · Verse riff"
+        XCTAssertNil(take.isStandalone)
+        XCTAssertEqual(take.ownerKind, .none)
+    }
+
+    /// ADR 0143's rule carried over: **the relationships win**. A stray flag on an owned take cannot
+    /// file it under *Just me*.
+    func testAnOwnerOutranksTheStandaloneFlag() {
+        let take = Recording(fileName: "x.m4a", duration: 12)
+        take.isStandalone = true
+        take.exercise = Exercise(name: "Spider")
+        XCTAssertEqual(take.ownerKind, .exercise)
+    }
+
     private func makeContainer() throws -> ModelContainer {
         try ModelContainer(
             for: Song.self, Loop.self, Marker.self, JournalEntry.self, Exercise.self,
