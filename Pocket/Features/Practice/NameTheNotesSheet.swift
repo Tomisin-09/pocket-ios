@@ -1,42 +1,59 @@
 import SwiftUI
 
-/// How the player names what they heard (ADR 0225). One label type underneath, so a piece named one way
-/// and a piece named another are read the same way later.
+/// The two ways to name a tap (ADR 0227 D1): **where you played it**, or **what you heard**. One label type
+/// underneath, so a piece named one way and a piece named another are read the same way later.
 enum NamingMode: String, CaseIterable, Identifiable {
-    case note, fret, chord
+    case fret, ear
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .note: return "Note name"
         case .fret: return "Fret & string"
-        case .chord: return "Chord"
+        case .ear: return "By ear"
         }
     }
 
-    /// Where the sheet opens: the kind of the first name already given, else chords for a chord loop and
-    /// note names for everything else.
+    /// Where the sheet opens: the sheet of the first answer already given, else By ear for a chord loop
+    /// and Fret & string for everything else.
     static func opening(for labels: [PieceLabel?], loopType: LoopType) -> NamingMode {
         switch labels.compactMap({ $0 }).first {
-        case .pitchClass: return .note
         case .fretted: return .fret
-        case .chord: return .chord
-        case nil: return loopType == .chords ? .chord : .note
+        case .pitchClass, .chord: return .ear
+        case nil: return loopType == .chords ? .ear : .fret
         }
+    }
+
+    /// The By ear kind selected when the sheet opens: the first answer named by ear, else major on a chord
+    /// loop and one note on anything else.
+    static func openingKind(for labels: [PieceLabel?], loopType: LoopType) -> EarKind {
+        labels.lazy.compactMap { $0.flatMap(EarKind.init(namedAs:)) }.first
+            ?? (loopType == .chords ? .chord(suffix: "") : .note)
     }
 }
 
-/// The strings Name the notes places frets on, what to call them, and which register a bare name sounds in.
+/// The strip's arithmetic (ADR 0227 D2), apart from the view so it's unit-tested.
+enum NamingStrip {
+    /// The next tap with no answer after `index`, wrapping round to the start; `nil` when every other tap
+    /// is named. The current tap is never "next", even when it's the last gap.
+    static func nextUnnamed(after index: Int, in labels: [PieceLabel?]) -> Int? {
+        (1..<max(labels.count, 1)).lazy
+            .map { (index + $0) % labels.count }
+            .first { labels[$0] == nil }
+    }
+}
+
+/// The strings Name the notes places frets on, what to call them, and which instrument they belong to.
 struct NamingTuning {
     let openMidi: [Int]
     let label: String
     let instrument: Instrument
 }
 
-/// **Name the notes** (ADR 0225): the taps of one pass as numbered chips. Tap a chip to hear a slice of
-/// the real recording from just before it, then say what it was. **Hear it, then mine** plays the slice
-/// and then your answer, and you judge whether they match (ADR 0094 T2b). The app never says.
+/// **Name the notes** (ADR 0225, reworked by ADR 0227): the taps of one pass as a strip of numbered chips.
+/// Tap a chip to hear a slice of the real recording from just before it, then say what it was, on the
+/// neck or by ear. The player compares by playing it on their own instrument; the app never sounds an
+/// answer (0227 D8) and never says whether it's right.
 ///
 /// Opened with the loop already stopped, so a slice never plays over it. Presented from
 /// `EarTrainingView`'s body root, never from a row (memory: a `.sheet` on a List row loses its write).
@@ -53,8 +70,11 @@ struct NameTheNotesSheet: View {
     @State var mode: NamingMode
     /// The string and fret the fret picker shows before the current chip has one.
     @State var fretDraft = TabLine.Note(string: 2, fret: 5)
-    /// The chord quality the root grid applies before the current chip has one.
-    @State var chordSuffixDraft = ""
+    /// The By ear kind left selected (0227 D6): it stays from tap to tap until another kind is tapped.
+    /// An answer already named by ear uses its own (`activeKind`).
+    @State var earKind: EarKind
+    /// A By ear answer waiting on *Replace* or *Keep it*, because it would overwrite neck work (0227 D7).
+    @State var replacing: PieceLabel?
     let tuning: NamingTuning
 
     init(request: NamingRequest, player: ContinuousLoopPlayer, spelling: NoteSpelling, loopType: LoopType,
@@ -67,9 +87,10 @@ struct NameTheNotesSheet: View {
         let labels = request.taps.map(\.label)
         _labels = State(initialValue: labels)
         _mode = State(initialValue: NamingMode.opening(for: labels, loopType: loopType))
+        _earKind = State(initialValue: NamingMode.openingKind(for: labels, loopType: loopType))
         let tuner = CountTheNotesModel.tunerTuning()
         let openMidi = request.openMidi ?? tuner.openMidi
-        // A four-string piece is a bass piece, whatever the tuner says now; it sounds in bass register.
+        // A four-string piece is a bass piece, whatever the tuner says now.
         let instrument: Instrument = openMidi.count == Instrument.bass.stringCount ? .bass : .guitar
         tuning = NamingTuning(openMidi: openMidi, label: request.tuningLabel ?? tuner.label,
                               instrument: instrument)
@@ -88,11 +109,15 @@ struct NameTheNotesSheet: View {
                         ForEach(NamingMode.allCases) { Text($0.label).tag($0) }
                     }
                     .pickerStyle(.segmented)
-                    chips
-                    picker
-                    hearButtons
-                    NamingResultView(labels: labels, openMidi: tuning.openMidi, spelling: spelling,
-                                     mode: mode, tuningLabel: tuning.label)
+                    strip
+                    if let replacing { replacePrompt(replacing) }
+                    switch mode {
+                    case .fret: fretPicker
+                    case .ear: earPicker
+                    }
+                    moveButtons
+                    NamingResultView(labels: labels, active: active, openMidi: tuning.openMidi,
+                                     spelling: spelling, mode: mode, tuningLabel: tuning.label)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
@@ -114,126 +139,175 @@ struct NameTheNotesSheet: View {
         }
         .presentationDetents([.large])
         .interactiveDismissDisabled(labels != request.taps.map(\.label))
-        .onDisappear {
-            player.stopSlice()
-            ToneEngine.shared.stop()
-        }
+        .onChange(of: active) { replacing = nil }
+        .onChange(of: mode) { replacing = nil }
+        .onDisappear { player.stopSlice() }
     }
 
-    /// The noun follows the mode: a chord loop is tapped once per chord, and calls them chords.
+    /// A chord loop is tapped once per chord, and calls them chords.
+    var noun: String { loopType == .chords ? "chord" : "note" }
+
     private var subtitle: String {
         let count = request.taps.count
         let what = request.source == .saved ? "Your saved piece" : "This pass"
-        let noun = mode == .chord ? "chord" : "note"
         return "\(what) · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear just that moment."
     }
 
-    // MARK: - Chips
+    // MARK: - Strip
 
-    private var chips: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 46), spacing: 6)], spacing: 6) {
-            ForEach(request.taps.indices, id: \.self) { index in
-                chip(index)
+    /// One row of chips that scrolls sideways and keeps the current one in the middle (0227 D2), so the
+    /// picker below stays put for 7 notes or 65, and switching sheets never loses the place.
+    private var strip: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("\(noun.capitalized) \(active + 1) of \(labels.count)")
+                    .font(.futura(.footnote, weight: .bold))
+                    .monospacedDigit()
+                Spacer()
+                let unnamed = labels.filter { $0 == nil }.count
+                Text(unnamed == 0 ? "All named" : "\(unnamed) to name")
+                    .font(.futura(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(labels.indices, id: \.self) { chip($0) }
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 1)
+                }
+                .mask(stripFade)
+                .onAppear { proxy.scrollTo(active, anchor: .center) }
+                .onChange(of: active) {
+                    withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(active, anchor: .center) }
+                }
             }
         }
     }
 
+    /// The strip fades out at both ends, so a chip cut off by the edge reads as "more this way".
+    private var stripFade: some View {
+        HStack(spacing: 0) {
+            LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing).frame(width: 18)
+            Rectangle()
+            LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: 18)
+        }
+    }
+
     private func chip(_ index: Int) -> some View {
-        let name = chipText(index)
+        let shown = chipText(index)
         let isActive = index == active
         return Button {
-            active = index
-            hearSlice()
+            select(index)
         } label: {
             VStack(spacing: 0) {
                 Text("\(index + 1)")
                     .font(.futura(.caption2))
                     .monospacedDigit()
-                Text(name ?? "?")
-                    .font(.futura(.subheadline, weight: name == nil ? nil : .bold))
+                Text(shown.text ?? "?")
+                    .font(.futura(.subheadline, weight: shown.text == nil || shown.dim ? nil : .bold))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.6)
             }
             .foregroundStyle(isActive ? PocketColor.background
-                             : name == nil ? PocketColor.textSecondary : PocketColor.textPrimary)
-            .frame(maxWidth: .infinity, minHeight: 44)
+                             : shown.text == nil || shown.dim ? PocketColor.textSecondary : PocketColor.textPrimary)
+            .padding(.horizontal, 8)
+            .frame(minWidth: 46, minHeight: 44)
             .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(isActive ? PocketColor.practice : .clear))
             .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .strokeBorder(isActive ? .clear : PocketColor.surfaceBorder))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Note \(index + 1), \(name ?? "not named")")
+        .accessibilityLabel("\(noun.capitalized) \(index + 1), \(shown.text ?? "not named")")
         .accessibilityAddTraits(isActive ? .isSelected : [])
     }
 
-    /// What a chip shows: a fret as its string and fret ("B8") in fret mode, else the name.
-    private func chipText(_ index: Int) -> String? {
-        guard let label = labels[index] else { return nil }
-        if mode == .fret, case .fretted(let string, let fret) = label {
-            let names = TabLine.stringNames(openMidi: tuning.openMidi)
-            let stringName = names.indices.contains(string)
-                ? names[string].trimmingCharacters(in: .whitespaces) : "?"
-            return "\(stringName)\(fret)"
+    /// What a chip shows. On Fret & string a placed note is its string and fret ("B8"), and a name given
+    /// by ear shows dimmed: it can't be drawn there. On By ear every answer is its name, a placed note
+    /// read as the note it sounds (0227 D7).
+    private func chipText(_ index: Int) -> (text: String?, dim: Bool) {
+        guard let label = labels[index] else { return (nil, false) }
+        if mode == .fret {
+            if case .fretted(let string, let fret) = label { return (fretName(string: string, fret: fret), false) }
+            return (label.name(openMidi: tuning.openMidi, spelling: spelling), true)
         }
-        return label.name(openMidi: tuning.openMidi, spelling: spelling)
+        return (label.name(openMidi: tuning.openMidi, spelling: spelling), false)
     }
 
-    // MARK: - Hearing
+    /// A placed note as tab says it, string then fret: "B8".
+    func fretName(string: Int, fret: Int) -> String {
+        let names = TabLine.stringNames(openMidi: tuning.openMidi)
+        let stringName = names.indices.contains(string) ? names[string].trimmingCharacters(in: .whitespaces) : "?"
+        return "\(stringName)\(fret)"
+    }
 
-    private var hearButtons: some View {
+    // MARK: - Moving and hearing
+
+    /// **Hear it again** plays the real recording, the one sound this sheet makes. **Next unnamed** jumps
+    /// to the next gap and goes once every tap has an answer.
+    private var moveButtons: some View {
         HStack(spacing: 10) {
             Button("Hear it again") { hearSlice() }
                 .buttonStyle(.bordered)
-            Button("Hear it, then mine") { hearSliceThenMine() }
-                .buttonStyle(.borderedProminent)
-                .disabled(labels[active] == nil)
+            Spacer(minLength: 0)
+            if let gap = NamingStrip.nextUnnamed(after: active, in: labels) {
+                Button("Next unnamed") { select(gap) }
+                    .buttonStyle(.borderless)
+            }
+            Button("Next \(noun)") { select(active + 1) }
+                .buttonStyle(.bordered)
+                .disabled(active >= labels.count - 1)
         }
         .font(.futura(.subheadline))
         .tint(PocketColor.practice)
     }
 
+    /// Go to a chip and hear its moment.
+    func select(_ index: Int) {
+        guard labels.indices.contains(index) else { return }
+        active = index
+        hearSlice()
+    }
+
     /// The slice for the active chip: the real recording, from just before the tap.
     func hearSlice() {
-        ToneEngine.shared.stop()
         player.playSlice(at: request.taps[active].seconds)
     }
 
-    /// The slice, then the player's own answer, a beat apart. Call and response (ADR 0094 T2b): two
-    /// sounds, and the player's ear decides.
-    private func hearSliceThenMine() {
-        guard let label = labels[active] else { return }
-        let notes = label.midiNotes(openMidi: tuning.openMidi, lowestMidi: lowestMidi)
-        ToneEngine.shared.stop()
-        player.playSlice(at: request.taps[active].seconds) {
-            Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(150))
-                Self.sound(notes)
-            }
-        }
-    }
-
-    /// Sound a label the moment it's picked, so the answer is heard as it's given.
-    func soundLabel(_ label: PieceLabel) {
-        player.stopSlice()
-        ToneEngine.shared.stop()
-        Self.sound(label.midiNotes(openMidi: tuning.openMidi, lowestMidi: lowestMidi))
-    }
-
-    @MainActor private static func sound(_ notes: [Int]) {
-        guard !notes.isEmpty else { return }
-        if notes.count == 1 {
-            ToneEngine.shared.sequence(notes.map { Optional($0) }, noteDuration: 0.6)
-        } else {
-            ToneEngine.shared.sound(notes, sustain: 1.2)
-        }
-    }
-
-    /// Where a bare note name sounds: A below middle C for guitar, an octave down for bass.
-    private var lowestMidi: Int { tuning.instrument == .bass ? 45 : 57 }
-
-    /// Move to the next chip, if there is one.
+    /// Move to the next chip after an answer is saved, if there is one. Silent: the player asks to hear it.
     func advance() {
-        if active < request.taps.count - 1 { active += 1 }
+        if active < labels.count - 1 { active += 1 }
+    }
+
+    // MARK: - Replace or keep
+
+    /// Asked only when By ear would overwrite neck work (0227 D7). Every other change is one tap to redo.
+    private func replacePrompt(_ label: PieceLabel) -> some View {
+        let placed: String = {
+            guard case .fretted(let string, let fret) = labels[active] else { return "" }
+            return fretName(string: string, fret: fret)
+        }()
+        let named = label.name(openMidi: tuning.openMidi, spelling: spelling) ?? ""
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("Replace the note you placed on the neck (\(placed)) with \(named)?")
+                .font(.futura(.subheadline))
+                .foregroundStyle(PocketColor.textPrimary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 10) {
+                Button("Replace") {
+                    labels[active] = label
+                    replacing = nil
+                }
+                .buttonStyle(.borderedProminent)
+                Button("Keep it") { replacing = nil }
+                    .buttonStyle(.bordered)
+            }
+            .font(.futura(.subheadline))
+            .tint(PocketColor.practice)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(PocketColor.practice.opacity(0.12)))
     }
 }

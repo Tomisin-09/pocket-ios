@@ -1,45 +1,24 @@
 import SwiftUI
 
-// The three pickers of Name the notes (ADR 0225), split out for file length. Each picking sets the
-// active chip's label and sounds it, so the answer is heard as it's given.
+// Fret & string (ADR 0225, still on string buttons and a fret stepper until the neck lands, ADR 0227
+// D3), the buttons both sheets share, and the running answer. Split out for file length.
 extension NameTheNotesSheet {
 
-    @ViewBuilder var picker: some View {
-        switch mode {
-        case .note: notePicker
-        case .fret: fretPicker
-        case .chord: chordPicker
-        }
-    }
-
-    private var sixColumns: [GridItem] { Array(repeating: GridItem(.flexible(), spacing: 6), count: 6) }
-
-    // MARK: - Note name
-
-    /// The twelve names, C to B, spelled for the song's key where it has one (ADR 0123), else by the
-    /// player's preference. No octave: a name is what the ear hears first.
-    private var notePicker: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            pickerLabel("What did you hear?")
-            LazyVGrid(columns: sixColumns, spacing: 6) {
-                ForEach(0..<12, id: \.self) { pitchClass in
-                    pickButton(spelling.name(pitchClass: pitchClass),
-                               isOn: labels[active]?.pitchClass(openMidi: tuning.openMidi) == pitchClass
-                                   && !(labels[active]?.isChord ?? false)) {
-                        pick(.pitchClass(pitchClass))
-                        advance()
-                    }
-                }
-            }
-        }
-    }
+    var sixColumns: [GridItem] { Array(repeating: GridItem(.flexible(), spacing: 6), count: 6) }
 
     // MARK: - Fret & string
 
-    /// Strings from the tuner's instrument and tuning (ADR 0115), thinnest first like the tab, and a fret
-    /// from 0 to 22. One note per tap: no chords here, no durations, no bends (0225's stopping point).
-    private var fretPicker: some View {
+    /// Strings from the piece's tuning, thinnest first like the tab, and a fret from 0 to 22. Placing a
+    /// note over a name given by ear just replaces it: only overwriting neck work asks first (0227 D7).
+    var fretPicker: some View {
         VStack(alignment: .leading, spacing: 10) {
+            if let byEar = labels[active], !byEar.isOnTheNeck,
+               let name = byEar.name(openMidi: tuning.openMidi, spelling: spelling) {
+                Text("Named by ear as \(Text(name).bold()). It can’t be drawn here; placing a note replaces it.")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             HStack {
                 pickerLabel("String")
                 Spacer()
@@ -50,7 +29,7 @@ extension NameTheNotesSheet {
             LazyVGrid(columns: sixColumns, spacing: 6) {
                 ForEach(Array(TabLine.stringNames(openMidi: tuning.openMidi).enumerated()), id: \.offset) { item in
                     pickButton(item.element.trimmingCharacters(in: .whitespaces),
-                               isOn: currentFret?.string == item.offset) {
+                               state: currentFret?.string == item.offset ? .picked : .plain) {
                         placeFret(string: item.offset, fret: (currentFret ?? fretDraft).fret)
                     }
                 }
@@ -71,13 +50,6 @@ extension NameTheNotesSheet {
                     let base = currentFret ?? fretDraft
                     placeFret(string: base.string, fret: min(PieceLabel.maxFret, base.fret + 1))
                 }
-                Button("Next note") {
-                    advance()
-                    hearSlice()
-                }
-                .buttonStyle(.bordered)
-                .tint(PocketColor.practice)
-                .font(.futura(.subheadline))
             }
         }
     }
@@ -90,70 +62,49 @@ extension NameTheNotesSheet {
 
     private func placeFret(string: Int, fret: Int) {
         fretDraft = TabLine.Note(string: string, fret: fret)
-        pick(.fretted(string: string, fret: fret))
-    }
-
-    // MARK: - Chord
-
-    /// A root and a quality, the way a chord is heard and said ("Am7"), from the chord namer's own
-    /// vocabulary (ADR 0093). Not a grip: which shape plays it is the player's business.
-    private var chordPicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            pickerLabel("Root")
-            LazyVGrid(columns: sixColumns, spacing: 6) {
-                ForEach(0..<12, id: \.self) { root in
-                    pickButton(spelling.name(pitchClass: root), isOn: currentChord?.root == root) {
-                        pick(.chord(root: root, suffix: currentChord?.suffix ?? chordSuffixDraft))
-                    }
-                }
-            }
-            pickerLabel("Quality")
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(PieceLabel.chordQualities, id: \.suffix) { quality in
-                        pickButton(quality.suffix.isEmpty ? "maj" : quality.suffix,
-                                   isOn: (currentChord?.suffix ?? chordSuffixDraft) == quality.suffix) {
-                            chordSuffixDraft = quality.suffix
-                            if let root = currentChord?.root {
-                                pick(.chord(root: root, suffix: quality.suffix))
-                            }
-                        }
-                        .frame(minWidth: 52)
-                    }
-                }
-            }
-            HStack {
-                Spacer()
-                Button("Next chord") {
-                    advance()
-                    hearSlice()
-                }
-                .buttonStyle(.bordered)
-                .tint(PocketColor.practice)
-                .font(.futura(.subheadline))
-            }
-        }
-    }
-
-    private var currentChord: (root: Int, suffix: String)? {
-        guard case .chord(let root, let suffix) = labels[active] else { return nil }
-        return (root, suffix)
+        labels[active] = .fretted(string: string, fret: fret)
+        replacing = nil
     }
 
     // MARK: - Shared
 
-    private func pick(_ label: PieceLabel) {
-        labels[active] = label
-        soundLabel(label)
+    /// How a pick button is lit: **picked** is the answer given on this sheet; **read** is what the other
+    /// sheet's answer reads as here, outlined rather than filled, since it wasn't picked here (0227 D7).
+    enum PickState {
+        case plain, picked, read
+
+        var ink: Color {
+            switch self {
+            case .plain: return PocketColor.textPrimary
+            case .picked: return PocketColor.background
+            case .read: return PocketColor.practice
+            }
+        }
+
+        var fill: Color {
+            switch self {
+            case .plain: return PocketColor.surfaceSubtle
+            case .picked: return PocketColor.textPrimary
+            case .read: return .clear
+            }
+        }
+
+        var edge: Color {
+            switch self {
+            case .plain: return PocketColor.surfaceBorder
+            case .picked: return .clear
+            case .read: return PocketColor.practice
+            }
+        }
     }
 
-    private func pickerLabel(_ text: String) -> some View {
+    func pickerLabel(_ text: String) -> some View {
         Text(text)
             .font(.futura(.caption))
             .foregroundStyle(PocketColor.textSecondary)
     }
 
-    private func pickButton(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+    func pickButton(_ title: String, state: PickState, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.futura(.subheadline, weight: .bold))
@@ -161,20 +112,21 @@ extension NameTheNotesSheet {
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity, minHeight: 40)
                 .padding(.horizontal, 4)
-                .foregroundStyle(isOn ? PocketColor.background : PocketColor.textPrimary)
-                .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(isOn ? PocketColor.textPrimary : PocketColor.surfaceSubtle))
+                .foregroundStyle(state.ink)
+                .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(state.fill))
                 .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .strokeBorder(isOn ? .clear : PocketColor.surfaceBorder))
+                    .strokeBorder(state.edge, lineWidth: state == .read ? 2 : 1))
         }
         .buttonStyle(.plain)
-        .accessibilityAddTraits(isOn ? .isSelected : [])
+        .accessibilityAddTraits(state == .plain ? [] : .isSelected)
     }
 }
 
-/// The running answer under the pickers: the names so far, and in fret mode the tab as it builds.
+/// The running answer under the pickers: the tab as it builds on Fret & string, the names on By ear. The
+/// names scroll sideways with the current one lit, like the strip, so a long pass doesn't push the page.
 struct NamingResultView: View {
     let labels: [PieceLabel?]
+    let active: Int
     let openMidi: [Int]
     let spelling: NoteSpelling
     let mode: NamingMode
@@ -186,15 +138,9 @@ struct NamingResultView: View {
                 .font(.futura(.caption))
                 .textCase(.uppercase)
                 .foregroundStyle(PocketColor.textSecondary)
-            if mode == .fret {
-                tab
-            } else {
-                Text(names.map { $0 ?? "?" }.joined(separator: " "))
-                    .font(.futura(.title3))
-                    .foregroundStyle(PocketColor.textPrimary)
-                Text("\(names.compactMap { $0 }.count) of \(labels.count) named.")
-                    .font(.futura(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
+            switch mode {
+            case .fret: tab
+            case .ear: names
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -202,7 +148,27 @@ struct NamingResultView: View {
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(PocketColor.surfaceSubtle))
     }
 
-    private var names: [String?] { labels.map { $0?.name(openMidi: openMidi, spelling: spelling) } }
+    @ViewBuilder private var names: some View {
+        let names = labels.map { $0?.name(openMidi: openMidi, spelling: spelling) }
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(names.indices, id: \.self) { index in
+                        Text(names[index] ?? "?")
+                            .font(.futura(.title3, weight: index == active ? .bold : nil))
+                            .foregroundStyle(index == active ? PocketColor.practice
+                                             : names[index] == nil ? PocketColor.textSecondary
+                                             : PocketColor.textPrimary)
+                    }
+                }
+            }
+            .onAppear { proxy.scrollTo(active, anchor: .center) }
+            .onChange(of: active) { proxy.scrollTo(active, anchor: .center) }
+        }
+        Text("\(names.compactMap { $0 }.count) of \(labels.count) named.")
+            .font(.futura(.caption))
+            .foregroundStyle(PocketColor.textSecondary)
+    }
 
     @ViewBuilder private var tab: some View {
         let notes = labels.compactMap { label -> TabLine.Note? in

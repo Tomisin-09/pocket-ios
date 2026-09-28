@@ -46,28 +46,6 @@ enum PieceLabel: Equatable, Hashable, Sendable {
         return openMidi[string] + fret
     }
 
-    /// What **Hear it, then mine** sounds for this label. A fretted note sounds exactly where it was
-    /// placed. A bare name has no octave, so it sounds in a fixed octave starting at `lowestMidi`: A
-    /// below middle C upward for guitar, an octave down for bass. A chord sounds as a close voicing on
-    /// its root in the same register. `[]` when there is nothing to sound.
-    func midiNotes(openMidi: [Int], lowestMidi: Int) -> [Int] {
-        switch self {
-        case .pitchClass(let value):
-            return [Self.midi(pitchClass: value, atOrAbove: lowestMidi)]
-        case .fretted:
-            return midiNote(openMidi: openMidi).map { [$0] } ?? []
-        case .chord(let root, let suffix):
-            guard let quality = Self.quality(suffix: suffix) else { return [] }
-            let base = Self.midi(pitchClass: root, atOrAbove: lowestMidi - 12)
-            // A 9th spelled as interval 2 sounds as a 2nd, a cluster against the root. Every quality
-            // whose suffix names a 9 lifts it an octave; a sus2 keeps its 2.
-            let liftsNine = suffix.contains("9")
-            return quality.intervals.map { interval in
-                base + (liftsNine && interval == 2 ? 14 : interval)
-            }.sorted()
-        }
-    }
-
     /// How the label reads in a line of names, e.g. `"D♯"`, `"Am7"`. A fretted note reads as the note
     /// it sounds; `nil` only when that can't be worked out.
     func name(openMidi: [Int], spelling: NoteSpelling) -> String? {
@@ -89,16 +67,6 @@ enum PieceLabel: Equatable, Hashable, Sendable {
     /// namer's catalog lists each 9th twice (with and without its 5th), which a picker must not.
     static let chordQualities: [ChordQuality] = ChordQuality.catalog.reduce(into: []) { kept, quality in
         if !kept.contains(where: { $0.suffix == quality.suffix }) { kept.append(quality) }
-    }
-
-    /// The quality with this suffix, or `nil` for one this build doesn't know.
-    static func quality(suffix: String) -> ChordQuality? {
-        chordQualities.first { $0.suffix == suffix }
-    }
-
-    /// The lowest MIDI note at or above `floor` with this pitch class.
-    static func midi(pitchClass: Int, atOrAbove floor: Int) -> Int {
-        floor + normalised(pitchClass - floor)
     }
 
     private static func normalised(_ value: Int) -> Int { ((value % 12) + 12) % 12 }

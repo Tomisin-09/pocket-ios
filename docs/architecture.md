@@ -604,6 +604,10 @@ each note you hear, then name them. The pieces, from the audio up:
   both ends), pads silence for the stretcher's latency, and plays it once through the loop's own
   stretcher at the current tempo. It is **refused while the loop plays**. `LoopRunModel` keeps a token,
   so a slice cut short by the next one never reports finishing.
+- **Naming.** `NameTheNotesSheet` shows the pass as a strip of chips over two sheets, Fret & string
+  and By ear (ADR 0227). The slice is the only thing it sounds: it no longer touches `ToneEngine`, since
+  the synth isn't close enough to a guitar to compare against (0227 D8). By ear's tap rules
+  (`EarPick`) and kind grouping (`EarKind`) are pure, in `Core/Theory/EarKind.swift`.
 - **Storage.** `Loop.transcriptionData: Data?` (additive, Optional) holds a `PieceTranscription`:
   taps with optional `PieceLabel`s (pitch class · fret on a highest-first string · chord root +
   `ChordQuality` suffix), plus the open strings any fret was placed against. Labels are tagged JSON,

@@ -41,29 +41,6 @@ final class PieceLabelTests: XCTestCase {
         XCTAssertEqual(PieceLabel.chord(root: 9, suffix: "m").pitchClass(openMidi: []), 9)
     }
 
-    // MARK: - What "then mine" sounds
-
-    func testABareNameSoundsInTheOctaveAboveTheFloor() {
-        XCTAssertEqual(PieceLabel.pitchClass(9).midiNotes(openMidi: [], lowestMidi: 57), [57])   // A3
-        XCTAssertEqual(PieceLabel.pitchClass(8).midiNotes(openMidi: [], lowestMidi: 57), [68])   // G♯4
-        XCTAssertEqual(PieceLabel.pitchClass(0).midiNotes(openMidi: [], lowestMidi: 45), [48])   // bass C3
-    }
-
-    func testAChordSoundsAsACloseVoicing() {
-        XCTAssertEqual(PieceLabel.chord(root: 9, suffix: "m").midiNotes(openMidi: [], lowestMidi: 57), [45, 48, 52])
-    }
-
-    func testANinthIsLiftedAnOctaveButASus2IsNot() {
-        XCTAssertEqual(PieceLabel.chord(root: 0, suffix: "add9").midiNotes(openMidi: [], lowestMidi: 57),
-                       [48, 52, 55, 62])
-        XCTAssertEqual(PieceLabel.chord(root: 0, suffix: "sus2").midiNotes(openMidi: [], lowestMidi: 57),
-                       [48, 50, 55])
-    }
-
-    func testAnUnknownChordQualitySoundsNothing() {
-        XCTAssertEqual(PieceLabel.chord(root: 0, suffix: "13♯11").midiNotes(openMidi: [], lowestMidi: 57), [])
-    }
-
     func testThePickerOffersEachQualityOnce() {
         let suffixes = PieceLabel.chordQualities.map(\.suffix)
         XCTAssertEqual(suffixes.count, Set(suffixes).count)
