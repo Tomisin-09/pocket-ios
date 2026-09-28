@@ -10,7 +10,7 @@
   D1–D4, D7–D9 and the rest of D10 stand, including *never detected, never suggested*.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the
   synth withdrawn here, and D4.3, the route back) · 0093 (the chord namer that names a shape) · 0095
-  (My chords, the saved shapes the neck stamps) · 0065 (exercise templates, whose scales editor
+  (My chords, whose one-note-per-string rule the Chords switch follows) · 0065 (exercise templates, whose scales editor
   holds the draw-your-own board the neck is lifted from) · 0115/0116 (the curated tunings; strings
   highest-first) · 0123 (key-first spelling) · 0070 (never grades).
 - **Schema:** none. `Loop.transcriptionData` and `PieceTranscription` stay. The label gains optional
@@ -91,9 +91,9 @@ the running answer below sit in the same place for 7 notes or 65.
   has one moves it, and tapping a note selects it (a ring) and then, tapped again, takes it out. **One
   note per string**, the rule the My chords placer (`CustomChordSheet`) already uses, so a double-stop, a
   triad and a six-string chord are the same gesture.
-- **From My chords**: with Chords on, a row of the player's saved shapes (0095) drops a shape onto the
-  current note in one tap. The player then moves any note the recording voices differently. Guitar only
-  at first; bass has no stamps.
+- **Not from My chords** (withdrawn after the device check, see *As built*). A row of the player's
+  saved shapes (0095) that dropped a shape onto the note in one tap was built, then taken out: under the
+  neck, with the marks and the Chords hint, it cluttered the sheet. A chord is placed a note at a time.
 - **The name comes off the shape**, never off the audio: triads, chords and power chords through
   `ChordNamer.candidates` (0093), root position preferred, inversions as slash names (*Am/C*). Any other
   double-stop shows its **interval** (*a 4th*), from a new twelve-entry table; the app has degree labels
@@ -198,6 +198,9 @@ doesn't exist yet.
 **As built:** By ear's read of a placed note (and its ask before replacing one) landed in commit 1, not
 2: the string buttons and stepper still in commit 1 already placed notes, so there was neck work to
 protect from the start.
+
+**After the device check** (2026-09-28): **From My chords came out** (D4). The row of saved shapes
+under the neck cluttered the sheet, and placing a chord a note at a time is quick enough.
 
 ## Consequences
 

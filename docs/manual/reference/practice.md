@@ -194,11 +194,9 @@ got to the note from the one before (picked, a hammer-on or pull-off, or a slide
 note before is on the same string), and `Bend` and `~ Vibrato` mark the note itself. A bend changes the
 note, so a bent note reads as the note it reaches. The marks go into the tab the usual way: *7b9*, *7~*,
 *5h7*, *8/10*. Turn on `Chords` to place more than one note: one per string, as in My chords, so a
-double-stop, a triad and a full chord are the same taps, and `From My chords` drops a saved shape in
-one go. The neck names what you placed, a chord such as *Am/C* or, for two notes that aren't one, the
-interval between them. By ear has the twelve note names and,
-under them, the kinds of
-chord grouped by how many notes they hold. The kind you pick stays picked, and tapping a name saves it
+double-stop, a triad and a full chord are the same taps. The neck names what you placed, a chord such as
+*Am/C* or, for two notes that aren't one, the interval between them. By ear has the twelve note names
+and, under them, the kinds of chord grouped by how many notes they hold. The kind you pick stays picked, and tapping a name saves it
 and moves on, so a solo named by ear is one tap a note. A note placed on the neck reads on By ear as
 the note it sounds, and naming it something else there asks first. `Next unnamed` jumps to the
 next note without a name. Red Moon never plays your answer: play it on your own instrument against

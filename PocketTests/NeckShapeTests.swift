@@ -1,8 +1,7 @@
 import XCTest
 @testable import Pocket
 
-/// Chords on the neck (ADR 0227 D4): what a placed shape reads as, the one-note-per-string tap rule, and
-/// My chords' shapes dropped onto a tap.
+/// Chords on the neck (ADR 0227 D4): what a placed shape reads as, and the one-note-per-string tap rule.
 final class NeckShapeTests: XCTestCase {
 
     private let guitar = Instrument.guitar.standardTuning.engineOpenMidi   // [64, 59, 55, 50, 45, 40]
@@ -115,20 +114,5 @@ final class NeckShapeTests: XCTestCase {
         XCTAssertEqual(out.label, .fretted(string: 0, fret: 5), "the second takes it out")
         let last = NeckPlacement.tap(string: 0, fret: 5, on: out.label, ringed: 0, chords: true)
         XCTAssertEqual(last.label, out.label, "the last note stays")
-    }
-
-    // MARK: - My chords
-
-    func testASavedShapeStampsOneNotePerSoundedString() {
-        let openC: [Int?] = [0, 1, 0, 2, 3, nil]
-        XCTAssertEqual(NeckPlacement.stamp(frets: openC)?.frettedNotes.map(\.string), [0, 1, 2, 3, 4])
-        XCTAssertEqual(NeckPlacement.stamp(frets: openC)?.name(openMidi: guitar, spelling: .sharps), "C")
-        XCTAssertNil(NeckPlacement.stamp(frets: [nil, nil, nil, nil, nil, nil]))
-    }
-
-    func testAGripReadsLowestStringFirst() {
-        XCTAssertEqual(NameTheNotesSheet.gripText([0, 1, 0, 2, 3, nil]), "x32010")
-        XCTAssertEqual(NameTheNotesSheet.gripText([5, 5, 6, 7, 7, 5]), "577655")
-        XCTAssertEqual(NameTheNotesSheet.gripText([10, 10, 11, 12, 12, 10]), "10-12-12-11-10-10")
     }
 }

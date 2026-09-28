@@ -1,4 +1,3 @@
-import SwiftData
 import SwiftUI
 
 /// The two ways to name a tap (ADR 0227 D1): **where you played it**, or **what you heard**. One label type
@@ -78,8 +77,6 @@ struct NameTheNotesSheet: View {
     @State var chordsOn: Bool
     /// The string of the **ringed** note in a shape, the one bend and vibrato go on.
     @State var ringed: Int?
-    /// The player's saved shapes (My chords, ADR 0095), newest first, to drop onto a tap.
-    @Query(sort: \SavedChord.createdAt, order: .reverse) var savedChords: [SavedChord]
 
     init(request: NamingRequest, player: ContinuousLoopPlayer, spelling: NoteSpelling, loopType: LoopType,
          onDone: @escaping (NamingResult) -> Void) {

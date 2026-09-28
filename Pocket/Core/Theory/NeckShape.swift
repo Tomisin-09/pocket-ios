@@ -120,13 +120,4 @@ enum NeckPlacement {
         notes.append(FrettedNote(string: string, fret: fret))
         return Outcome(label: .fretted(notes, into: into), ringed: string)
     }
-
-    /// A saved shape (My chords, ADR 0095) dropped onto the tap: one note per sounded string, highest
-    /// first as `ChordVoicing.frets` holds them. A muted string has no note. `nil` when nothing sounds.
-    static func stamp(frets: [Int?]) -> PieceLabel? {
-        let notes = frets.enumerated().compactMap { string, fret in
-            fret.map { FrettedNote(string: string, fret: $0) }
-        }
-        return notes.isEmpty ? nil : .fretted(notes, into: nil)
-    }
 }
