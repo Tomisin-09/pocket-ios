@@ -71,6 +71,8 @@ extension JournalTimeline {
             switch item {
             case .note(let entry): bucket(forNote: entry.ownerKind)
             case .take(let take): bucket(forTake: take.ownerKind)
+            // A piece is always a loop's (ADR 0229), so *Loop* brings a loop's piece with its notes.
+            case .piece: .loop
             }
         }
 

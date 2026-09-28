@@ -8,7 +8,15 @@
   like a guitar. **D6**: a fretted label gains optional marks (bend, vibrato, a join) and a multi-note
   *shape* kind; the tuning is chosen per piece but still recorded as before. **D10**: "one note per
   tap", "no technique marks" and "tuning comes from the tuner's settings" are lifted. D5's reason, a
-  heard chord named by root and quality rather than a grip, stands, as does the rest of D10.
+  heard chord named by root and quality rather than a grip, stands, as does the rest of D10. **D7**
+  (after 0227's device check): four or more unnamed notes in a row are said as a count, *(60 unnamed)*,
+  rather than a `?` each.
+- **Amended by:** ADR 0231 (Correct the count while naming, 2026-09-28) — **D5**: Name the notes can
+  also take a tap out, or add a note the player missed by tapping it in while the stretch around it
+  plays, each with Undo. D3 stands: a tap is only ever one the player made, in song seconds.
+- **Amended by:** ADR 0229 (Pieces in the Journal, 2026-09-28) — **D7**: *Save* no longer writes a 🧩
+  line. The Journal lists the loop's piece itself, one row per loop, under a new *Pieces* scope, dated
+  by when the piece last changed. The `.transcribed` kind stays for marking a lick by hand; D8 stands.
 - **Amends:** ADR 0104 — **E3** and **E6**. E3's "no transcription store" is reversed for one case on
   purpose: a loop now carries its **piece**, structured and read by a named future reader (D8). The
   Journal stays the dated history, and free-text notes still go nowhere else. E6's "a tally … is out of
@@ -147,10 +155,14 @@ no waveform in it, on purpose** (0104 E2): you count what you hear, not the peak
 
 ### D7 — A Journal line of its own kind
 
+*Amended by 0229: Save writes no line now. The Journal shows the piece itself under Pieces, so the lines
+described here are the ones written before that change.*
+
 - Save writes, through `JournalWriter.add(to: .loop(loop), …)`, a line like *"11 notes. A C D D♯ E G A G
   E D C"*, plus *"By beat: 2 · 3 · 3 · 3."* when beats are on. Each fact is said once: names only if one
-  is named (`?` holds an unnamed note's place), and no split of a single beat. A piece of chords counts
-  "chords".
+  is named (`?` holds an unnamed note's place; since ADR 0227, four or more in a row are said as a count,
+  *"C♯ D♯ A♯ (60 unnamed)"*, because a long pass named only at the start read as a wall of `?`), and no
+  split of a single beat. A piece of chords counts "chords".
 - It is tagged with a new **`EntryKind.transcribed`** (🧩 "Transcribed", the study hue), not `.ear`.
   Ear notes are also what hum-along writes, and a reader that wants the solved loops (D8) can't tell
   the two apart without parsing prose.

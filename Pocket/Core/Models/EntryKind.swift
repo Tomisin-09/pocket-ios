@@ -17,7 +17,7 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
     case session        // a practice-session log
     case ear            // what you heard, training your ear on a loop (ADR 0104)
     case improvise      // what you played over a backing-track loop (ADR 0135)
-    case transcribed    // a piece worked out by ear and saved on its loop (ADR 0225)
+    case transcribed    // worked out by ear: a save wrote it until ADR 0229; still yours to add by hand
 
     var id: String { rawValue }
 

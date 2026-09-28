@@ -24,6 +24,9 @@ extension HomeView {
         // Move the retired click subdivision into `notesPerBeat` and bind every measured
         // command to its rhythm (ADR 0121), so no later read branches on provenance.
         ExerciseNoteRateBackfill.runIfNeeded(into: context)
+        // Date every piece saved before the Journal listed pieces (ADR 0229). Every launch: a piece
+        // restored from an older archive arrives undated too. Writes only to an undated piece.
+        PieceDateBackfill.run(into: context)
         await Task.yield()
         RoutinePresets.seedIfNeeded(into: context)
         await Task.yield()

@@ -14,6 +14,9 @@
   where the review bar's Journal is already present and the journal it opens writes too. It shows
   while running and inside a routine, which is where the review bar is gated out. Capture is still
   reachable in every state; J2–J5 stand.
+- **Amended by:** ADR 0228 — **J5a**: a loop caption on a note written in one mode (an ear or a
+  transcribed note, an improvise note) opens that mode when the loop still qualifies for it. The
+  precedence below stays as the fallback and for every other note, take and session pill.
 
 ## Context
 
@@ -85,7 +88,9 @@ path, so nothing new has to learn what a snapshot is.
   unmeasured loop has no staircase to open, and sending a caption there is exactly the mistake ADR
   0138 had to unpick. Where **no** mode qualifies (a loop whose audio no longer resolves) and for a
   **song**-owned take (songs never got a standalone run surface, ADR 0069) the caption stays plain
-  text. An affordance that can't keep its promise is worse than no affordance.
+  text. An affordance that can't keep its promise is worse than no affordance. *(Amended by 0228: a
+  note written in one mode opens that mode while the loop still qualifies; this precedence is the
+  fallback.)*
 
 - **J5b — Routes are identified by the unit's stable `uid`.** `JournalOwnerRoute` is `Hashable` on
   `uid` alone, never `persistentModelID` — a destination keyed on the latter pops itself when

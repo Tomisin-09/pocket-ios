@@ -41,29 +41,6 @@ final class PieceLabelTests: XCTestCase {
         XCTAssertEqual(PieceLabel.chord(root: 9, suffix: "m").pitchClass(openMidi: []), 9)
     }
 
-    // MARK: - What "then mine" sounds
-
-    func testABareNameSoundsInTheOctaveAboveTheFloor() {
-        XCTAssertEqual(PieceLabel.pitchClass(9).midiNotes(openMidi: [], lowestMidi: 57), [57])   // A3
-        XCTAssertEqual(PieceLabel.pitchClass(8).midiNotes(openMidi: [], lowestMidi: 57), [68])   // G♯4
-        XCTAssertEqual(PieceLabel.pitchClass(0).midiNotes(openMidi: [], lowestMidi: 45), [48])   // bass C3
-    }
-
-    func testAChordSoundsAsACloseVoicing() {
-        XCTAssertEqual(PieceLabel.chord(root: 9, suffix: "m").midiNotes(openMidi: [], lowestMidi: 57), [45, 48, 52])
-    }
-
-    func testANinthIsLiftedAnOctaveButASus2IsNot() {
-        XCTAssertEqual(PieceLabel.chord(root: 0, suffix: "add9").midiNotes(openMidi: [], lowestMidi: 57),
-                       [48, 52, 55, 62])
-        XCTAssertEqual(PieceLabel.chord(root: 0, suffix: "sus2").midiNotes(openMidi: [], lowestMidi: 57),
-                       [48, 50, 55])
-    }
-
-    func testAnUnknownChordQualitySoundsNothing() {
-        XCTAssertEqual(PieceLabel.chord(root: 0, suffix: "13♯11").midiNotes(openMidi: [], lowestMidi: 57), [])
-    }
-
     func testThePickerOffersEachQualityOnce() {
         let suffixes = PieceLabel.chordQualities.map(\.suffix)
         XCTAssertEqual(suffixes.count, Set(suffixes).count)
@@ -89,7 +66,7 @@ final class TabLineTests: XCTestCase {
     private let guitar = Instrument.guitar.standardTuning.engineOpenMidi
 
     func testATwoDigitFretWidensOnlyItsColumn() {
-        let tab = TabLine.render([.init(string: 1, fret: 5), .init(string: 1, fret: 10)], openMidi: guitar)
+        let tab = TabLine.render([.fretted(string: 1, fret: 5), .fretted(string: 1, fret: 10)], openMidi: guitar)
         XCTAssertEqual(tab, """
         e|--------|
         B|-5--10--|
@@ -101,8 +78,8 @@ final class TabLineTests: XCTestCase {
     }
 
     func testEveryLineIsTheSameWidth() throws {
-        let tab = try XCTUnwrap(TabLine.render([.init(string: 1, fret: 5), .init(string: 3, fret: 12),
-                                                .init(string: 0, fret: 0)], openMidi: guitar))
+        let tab = try XCTUnwrap(TabLine.render([.fretted(string: 1, fret: 5), .fretted(string: 3, fret: 12),
+                                                .fretted(string: 0, fret: 0)], openMidi: guitar))
         let widths = Set(tab.split(separator: "\n").map(\.count))
         XCTAssertEqual(widths.count, 1, tab)
     }
@@ -112,7 +89,7 @@ final class TabLineTests: XCTestCase {
     }
 
     func testBassHasFourLines() throws {
-        let tab = try XCTUnwrap(TabLine.render([.init(string: 3, fret: 5)],
+        let tab = try XCTUnwrap(TabLine.render([.fretted(string: 3, fret: 5)],
                                                openMidi: Instrument.bass.standardTuning.engineOpenMidi))
         XCTAssertEqual(tab.split(separator: "\n").map { String($0.prefix(2)) }, ["G|", "D|", "A|", "E|"])
         XCTAssertTrue(tab.hasSuffix("E|-5--|"), tab)
@@ -126,7 +103,7 @@ final class TabLineTests: XCTestCase {
 
     func testNothingPlacedNoTab() {
         XCTAssertNil(TabLine.render([], openMidi: guitar))
-        XCTAssertNil(TabLine.render([.init(string: 9, fret: 2)], openMidi: guitar))
+        XCTAssertNil(TabLine.render([.fretted(string: 9, fret: 2)], openMidi: guitar))
     }
 }
 
@@ -185,6 +162,28 @@ final class AudioSliceTests: XCTestCase {
         let end = try XCTUnwrap(AudioSlice.window(tap: 119.9, duration: 120))
         XCTAssertEqual(end.start + end.length, 120, accuracy: 1e-9)
         XCTAssertNil(AudioSlice.window(tap: 1, duration: 0))
+    }
+
+    func testAPhraseRunsFromJustBeforeItsFirstTapToWhereItsLastTapsSliceEnds() throws {
+        let phrase = try XCTUnwrap(AudioSlice.window(from: 30, to: 31.5, duration: 120))
+        XCTAssertEqual(phrase.start, 30 - AudioSlice.preroll, accuracy: 1e-9)
+        let last = try XCTUnwrap(AudioSlice.window(tap: 31.5, duration: 120))
+        XCTAssertEqual(phrase.start + phrase.length, last.start + last.length, accuracy: 1e-9,
+                       "it ends on the note, as the note's own slice does")
+        let one = try XCTUnwrap(AudioSlice.window(from: 30, to: 30, duration: 120))
+        XCTAssertEqual(one.length, AudioSlice.length, accuracy: 1e-9, "one tap is the plain slice")
+        let end = try XCTUnwrap(AudioSlice.window(from: 119, to: 119.9, duration: 120))
+        XCTAssertEqual(end.start + end.length, 120, accuracy: 1e-9)
+    }
+
+    func testTheSliceClockHoldsBackTheRouteAndStopsAtTheEnd() throws {
+        var reading = SliceClockReading(elapsed: 0.1, start: 30, length: 1.5, rate: 0.5, outputLatency: 0.4)
+        XCTAssertNil(AudioSlice.heardSecond(reading), "0.4 s of route at half speed hides 0.2 s of the song")
+        reading.elapsed = 0.5
+        XCTAssertEqual(try XCTUnwrap(AudioSlice.heardSecond(reading)), 30.3, accuracy: 1e-9)
+        reading.elapsed = 3
+        XCTAssertEqual(try XCTUnwrap(AudioSlice.heardSecond(reading)), 31.5, accuracy: 1e-9,
+                       "held at the end through the silence after it")
     }
 
     func testTheEnvelopeStartsAndEndsAtSilence() {

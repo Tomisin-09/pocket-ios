@@ -54,10 +54,10 @@ extension JournalTabView {
     /// difference between this and the permanent strip ADR 0176 refused.
     ///
     /// Hidden while searching (a search is a question, and this is not part of the answer — the same
-    /// reasoning the practice-log row carries) and under the **Takes** scope, where the player has
-    /// said they want recordings and this card only ever quotes writing.
+    /// reasoning the practice-log row carries) and under the **Takes** and **Pieces** scopes, where the
+    /// player has asked for something else and this card only ever quotes writing.
     @ViewBuilder var lookbackRow: some View {
-        if !searching, scope != .takes, let hit = lookback {
+        if !searching, scope == .all || scope == .notes, let hit = lookback {
             JournalLookbackCard(
                 heading: hit.reach.heading(for: JournalLookback.Period(raw: lookbackPeriod)),
                 text: hit.element.text,
@@ -209,6 +209,10 @@ extension JournalTabView {
                 .tint(PocketColor.journal)
             }
             .contextMenu { holdMenu(for: item) }
+        case .piece(let piece):
+            // No hold menu: a piece isn't pinned or deleted from the feed (ADR 0229).
+            JournalPieceRow(piece: piece, ownerLabel: JournalTimeline.ownerLabel(for: item),
+                            onOpen: openAction(for: item))
         }
     }
 }

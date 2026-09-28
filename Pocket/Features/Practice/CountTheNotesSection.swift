@@ -24,13 +24,17 @@ struct CountTheNotesSection: View {
     var body: some View {
         Section {
             readout
-            TapPad(isLive: player.isPlaying, flashToken: model.flashToken, nudgeToken: model.nudgeToken) {
+            TapPad(words: .count, isLive: player.isPlaying, flashToken: model.flashToken,
+                   nudgeToken: model.nudgeToken) {
                 model.tap(clock: player.loopClock())
             }
             .listRowSeparator(.hidden)
             PassRowsView(model: model, player: player, showsBeats: beatsOn)
             if beatsOn {
                 beatsFooter
+            }
+            if model.livePassID == nil, let pass = model.targetPass, TapTally.isLongPass(pass.count) {
+                longPassTip
             }
             actions
         } header: {
@@ -97,6 +101,20 @@ struct CountTheNotesSection: View {
         }
     }
 
+    // MARK: - A long pass
+
+    /// A long pass is a lot to name, and a lot to hold in the ear (0227, after the device check). Said
+    /// once the loop stops, never while the player is still tapping it out.
+    private var longPassTip: some View {
+        let noun = model.loop.loopType == .chords ? "chords" : "notes"
+        return Text("Loops of around \(TapTally.comfortableNotes) \(noun) are easier to transcribe. For a pass "
+                    + "this long, try a shorter loop.")
+            .font(.futura(.caption))
+            .foregroundStyle(PocketColor.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityIdentifier("count.longPassTip")
+    }
+
     // MARK: - Actions
 
     private var actions: some View {
@@ -120,75 +138,13 @@ struct CountTheNotesSection: View {
             .tint(PocketColor.practice)
             .disabled(model.targetPass == nil)
             Button("Save") {
-                model.requestSave(showingBeats: beatsOn, context: modelContext)
+                model.requestSave(context: modelContext)
             }
             .buttonStyle(.bordered)
             .tint(PocketColor.journal)
             .disabled(model.targetPass == nil)
-            .accessibilityHint("Saves this pass on the loop and writes a line to its Journal.")
+            .accessibilityHint("Saves this pass on the loop. The Journal lists it under Pieces.")
         }
         .font(.futura(.subheadline))
-    }
-}
-
-/// The tap pad. Fires on **touch-down**, not on lift: a `Button` or `onTapGesture` fires as the finger
-/// leaves the glass, which adds a lag that varies with how long each tap is held. A zero-distance drag
-/// latches on the first contact instead, the way `StepperButton` does (and it's not a `Button` at all,
-/// memory: a Button with a second gesture fires both).
-private struct TapPad: View {
-    let isLive: Bool
-    let flashToken: Int
-    let nudgeToken: Int
-    let onTap: () -> Void
-
-    @State private var isPressed = false
-    @State private var flashing = false
-    @State private var nudging = false
-
-    var body: some View {
-        RoundedRectangle(cornerRadius: 16, style: .continuous)
-            .fill(flashing ? PocketColor.practice.opacity(0.35) : PocketColor.surfaceStandard)
-            .overlay {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(PocketColor.surfaceBorder, style: StrokeStyle(lineWidth: 1.5, dash: [6, 5]))
-            }
-            .overlay {
-                VStack(spacing: 2) {
-                    Text(nudging ? "Press play first" : "Tap each note")
-                        .font(.futura(.title3))
-                        .foregroundStyle(isLive ? PocketColor.textPrimary : PocketColor.textSecondary)
-                    Text(isLive ? "Once for every note you hear" : "Counting starts once the loop plays")
-                        .font(.futura(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-            }
-            .frame(height: 118)
-            .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        guard !isPressed else { return }
-                        isPressed = true
-                        onTap()
-                    }
-                    .onEnded { _ in isPressed = false }
-            )
-            .onChange(of: flashToken) {
-                haptic(.light)
-                flashing = true
-                withAnimation(.easeOut(duration: 0.18)) { flashing = false }
-            }
-            .task(id: nudgeToken) {
-                guard nudgeToken > 0 else { return }
-                nudging = true
-                try? await Task.sleep(for: .seconds(1.1))
-                nudging = false
-            }
-            .onAppear { prepareHaptics() }
-            .accessibilityElement()
-            .accessibilityLabel("Tap once for each note you hear")
-            .accessibilityAddTraits(.isButton)
-            .accessibilityIdentifier("count.pad")
-            .accessibilityAction { onTap() }
     }
 }

@@ -1,45 +1,19 @@
 import SwiftUI
 
 /// The **placement neck** for `FretboardDrillEditor` — split into its own file so the editor stays
-/// under the file-length ceiling, alongside `+Guide.swift`. Draws a horizontally-scrollable board of
-/// frets 0…`maxFret` with the drill's placed notes on it, and maps a tap on a cell to `placeOrClear`.
-/// Holds no state of its own: everything it reads (`selectedSlot`, `pulsingCell`, the guide) lives on
-/// the editor, so the strip above and the board here stay one surface rather than two.
+/// under the file-length ceiling, alongside `+Guide.swift`. The board itself is the shared
+/// `FretNeckBoard` (ADR 0227 D3, which Name the notes also draws); this file supplies the drill's dots,
+/// and maps a tap on one to `placeOrClear`. Holds no state of its own: everything it reads
+/// (`selectedSlot`, `pulsingCell`, the guide) lives on the editor, so the strip above and the board here
+/// stay one surface rather than two.
 extension FretboardDrillEditor {
-    /// Pinned string labels on the left, then the scrollable board so any hand position is reachable
-    /// without paging a window. Selecting a placed slot scrolls its fret into view via the
-    /// `ScrollViewReader` (keyed on the fret-number row) and pulses the dot it landed on.
+    /// Selecting a placed slot scrolls its fret into view (`scrollTargetFret`) and pulses the dot it
+    /// landed on.
     var board: some View {
-        HStack(alignment: .center, spacing: 8) {
-            VStack(spacing: 4) {
-                ForEach(0..<drill.stringCount, id: \.self) { row in
-                    Text(FretboardGrid.stringName(row, of: drill.stringCount))
-                        .font(.futura(.caption2, weight: .semibold))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        .frame(height: 30)
-                }
-                Color.clear.frame(width: 1, height: 26)   // aligns labels against the inlay + number rows
-            }
-            .frame(width: 16)   // fixed gutter — matches FretboardGrid so the two boards line up
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    VStack(spacing: 4) {
-                        ForEach(0..<drill.stringCount, id: \.self) { row in
-                            HStack(spacing: 4) {
-                                ForEach(0...Self.maxFret, id: \.self) { fret in
-                                    boardCell(string: row, fret: fret)
-                                }
-                            }
-                        }
-                        inlayRow
-                        fretNumbers
-                    }
-                }
-                .onChange(of: scrollTargetFret) { _, fret in
-                    guard let fret else { return }
-                    withAnimation(.easeInOut(duration: 0.2)) { proxy.scrollTo(fret, anchor: .center) }
-                }
-            }
+        let names = (0..<drill.stringCount).map { FretboardGrid.stringName($0, of: drill.stringCount) }
+        return FretNeckBoard(stringNames: names, maxFret: Self.maxFret,
+                             scrollTarget: scrollTargetFret) { string, fret in
+            boardCell(string: string, fret: fret)
         }
     }
 
@@ -119,46 +93,5 @@ extension FretboardDrillEditor {
         if isSelected { return .clear }
         if isGuideRoot { return PocketColor.marker }
         return PocketColor.surfaceBorder.opacity(referenceActive ? 0.5 : 1)
-    }
-
-    // MARK: - Rulers
-
-    /// Neck inlays under the board — the same frets a real neck marks, read from `FretboardGrid` so the
-    /// authoring board and the practice board can't drift apart. Earns its keep at 24 frets, where
-    /// counting fret lines from the nut stops being viable.
-    var inlayRow: some View {
-        HStack(spacing: 4) {
-            ForEach(0...Self.maxFret, id: \.self) { fret in
-                Group {
-                    if FretboardGrid.doubleInlayFrets.contains(fret) {
-                        HStack(spacing: 3) { inlayDot; inlayDot }
-                    } else if FretboardGrid.singleInlayFrets.contains(fret) {
-                        inlayDot
-                    } else {
-                        Color.clear
-                    }
-                }
-                .frame(width: 30, height: 6)
-            }
-        }
-        .accessibilityHidden(true)
-    }
-
-    private var inlayDot: some View {
-        Circle().fill(PocketColor.gridLine).frame(width: 5, height: 5)
-    }
-
-    /// The fret-number ruler under the board — one label per fret across the full neck. Each carries its
-    /// fret as a scroll `.id` so the `ScrollViewReader` can bring a selected note's fret into view.
-    var fretNumbers: some View {
-        HStack(spacing: 4) {
-            ForEach(0...Self.maxFret, id: \.self) { fret in
-                Text("\(fret)")
-                    .font(.futura(.caption2))
-                    .foregroundStyle(PocketColor.textSecondary.opacity(0.7))
-                    .frame(width: 30)
-                    .id(fret)
-            }
-        }
     }
 }

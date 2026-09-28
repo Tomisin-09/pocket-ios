@@ -1,15 +1,23 @@
 # ADR 0227 — Name the notes on the neck: where you played it, or what you heard
 
-- **Status:** Accepted. Building on `pocket-338-name-the-notes-on-the-neck`.
+- **Status:** Accepted. Built on `pocket-338-name-the-notes-on-the-neck` in the four commits of the build
+  order, plus the changes after the device check (*As built*). Still owed: the device checks under
+  Consequences.
 - **Date:** 2026-09-28
 - **Amends:** ADR 0225 — **D5**: the three sheets become two (*Fret & string* and *By ear*), the
   chip grid becomes a strip, picking no longer sounds, and *Hear it, then mine* is withdrawn. **D6**: a
   placed answer gains playing marks and a multi-note *shape* kind, and the tuning is chosen per piece.
   **D10**: three lines are lifted (one note per tap, no technique marks, tuning only from the tuner).
+  **D7** (after the device check): a long run of unnamed notes in the line is said as a count.
   D1–D4, D7–D9 and the rest of D10 stand, including *never detected, never suggested*.
+- **Amended by:** ADR 0230 — **D5**: all four ways in are always shown, and a hammer-on, pull-off or
+  slide heard as one note lives inside that note, or every note of a shape moving as one, as a
+  **lead-in**. **D9**: a note gains an optional
+  `leadIn` key. **D10**: a slide **into** a note from nowhere (`/7`) is lifted; a slide out to nowhere,
+  bend releases and pre-bends stay out. The rest of D5, D9 and D10 stands.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the
   synth withdrawn here, and D4.3, the route back) · 0093 (the chord namer that names a shape) · 0095
-  (My chords, the saved shapes the neck stamps) · 0065 (exercise templates, whose scales editor
+  (My chords, whose one-note-per-string rule the Chords switch follows) · 0065 (exercise templates, whose scales editor
   holds the draw-your-own board the neck is lifted from) · 0115/0116 (the curated tunings; strings
   highest-first) · 0123 (key-first spelling) · 0070 (never grades).
 - **Schema:** none. `Loop.transcriptionData` and `PieceTranscription` stay. The label gains optional
@@ -64,6 +72,30 @@ both sheets and in the same place, so switching sheets never loses the place. Ab
 and how many are left to name. **Next unnamed** jumps to the next gap. The picker, the hear button and
 the running answer below sit in the same place for 7 notes or 65.
 
+**Play the loop from the strip** (added after the device check, see *As built*). A slice is one note, and
+a line heard a note at a time loses its shape. A play button at the head of the strip plays the loop
+itself, at *Train your ear*'s tempo and round until stopped. The chip being heard is **ringed** and the
+strip follows it; the chip being **named** doesn't move, so a tap on the neck can't land on the wrong
+note. Tapping a chip stops the loop and plays that note's slice, so a slice still never plays over the
+loop (0225's rule). What plays is the recording, never the answers (D8, D10).
+
+**Hear a phrase** (added after the second device check, see *As built*). Between one note and the whole
+loop: a tap plays the note **with the notes just before it**, ending on it, so the note is heard
+arriving from the line, and it is the sound left in the ear when the finger goes to the neck. How many is
+the player's: *Hear 3 notes* in the strip's header, from *Just the note* to eight, remembered across
+loops and launches, three by default. Near the start of a pass there are fewer before it to take. The
+phrase starts where its first note's slice would and ends where the named note's slice does, and it
+plays whatever lies between, a held note or a rest, because the count is what the player asked for and
+a cap would sometimes play fewer. Its notes are ringed as they sound, as the loop's are, and the play
+button stops it.
+
+**The neck plays along** (added after the fourth device check). While the loop or a phrase plays, on
+*Fret & string* the notes of the chip being heard glow where they were placed, popping in as each
+sounds and fading as the next takes over (only fading with Reduce Motion), so the lick is seen moving
+on the neck. It reads the same chip the strip rings, with no clock of its own. The neck doesn't scroll
+to follow: like the chip being named, the board never moves under a finger that's placing a note, so a
+note beyond the frets in view glows only on the strip. Eight is the most: past that, the whole loop is the better listen.
+
 ### D3 — The neck
 
 - **The board is the draw-your-own board** (`FretboardDrillEditor+Board`, 0065): frets 0–22, a dot per
@@ -90,9 +122,9 @@ the running answer below sit in the same place for 7 notes or 65.
   has one moves it, and tapping a note selects it (a ring) and then, tapped again, takes it out. **One
   note per string**, the rule the My chords placer (`CustomChordSheet`) already uses, so a double-stop, a
   triad and a six-string chord are the same gesture.
-- **From My chords**: with Chords on, a row of the player's saved shapes (0095) drops a shape onto the
-  current note in one tap. The player then moves any note the recording voices differently. Guitar only
-  at first; bass has no stamps.
+- **Not from My chords** (withdrawn after the device check, see *As built*). A row of the player's
+  saved shapes (0095) that dropped a shape onto the note in one tap was built, then taken out: under the
+  neck, with the marks and the Chords hint, it cluttered the sheet. A chord is placed a note at a time.
 - **The name comes off the shape**, never off the audio: triads, chords and power chords through
   `ChordNamer.candidates` (0093), root position preferred, inversions as slash names (*Am/C*). Any other
   double-stop shows its **interval** (*a 4th*), from a new twelve-entry table; the app has degree labels
@@ -111,7 +143,8 @@ The kind decides where a mark lives.
 - **A join is valid only** when the tap before is on the neck, on the same strings, with every note
   moving the same way. The direction decides which it is: up is a hammer-on or `/`, down a pull-off or
   `\`, so the control only offers the one that fits. A join that stops being valid (the note before
-  moves) is dropped.
+  moves) is dropped. *(Amended by 0230: all four ways in are always shown, and a join heard as one note
+  lives inside that note, as a lead-in.)*
 - **On a shape**, a bend and vibrato go on the ringed note; a join moves the whole shape (sliding 6ths).
 - **Drawn on the neck**: a bend as a dashed ghost where it lands, with an arrow from the note (the
   fretLIVE idea); vibrato as a wave over the note; a hammer-on or pull-off as a curve under the string
@@ -159,7 +192,7 @@ Each tap has **one** answer. The two sheets give it at two levels of detail, and
   and `into` (`legato` or `slide`, the join from the tap before; which of hammer-on or pull-off, `/` or
   `\`, is worked out from direction, never stored).
 - A new **`shape`** kind holds two to six fretted notes, each with its own `bend` and `vibrato`, and the
-  shape's `into`.
+  shape's `into`. *(Amended by 0230: a single note gains an optional `leadIn`.)*
 - **The pitch of a fretted note includes its bend.** `pitchClass(openMidi:)` and everything that reads
   it (By ear, the Journal line) see the bent note's sounding pitch.
 - **The tuning is chosen per piece** (D3) and still recorded as `openMidi` and `tuningLabel`, so nothing
@@ -176,7 +209,8 @@ Each tap has **one** answer. The two sheets give it at two levels of detail, and
 - **No free-text tab document**, and **no playing the tab back as a sequence**.
 - **Never detected, never suggested.** Every fret, mark and name is the player's.
 - **Marks with no note at one end**: slides from or to nowhere (`/7`, `7\`), bend releases (`7b9r7`)
-  and pre-bends.
+  and pre-bends. *(Amended by 0230: a slide into a note from nowhere, `/7`, is lifted. The rest stays
+  out.)*
 - **Joins between a single note and a shape**, or between shapes on different strings.
 - **Harmonics, tapping, palm muting, rakes.** The Journal text still carries them.
 - **A scale shape behind the neck.** Shown before the answer, it's a hint.
@@ -194,6 +228,45 @@ One branch, before the manual reshoot, in four commits after this record, each a
 Reading across sheets lands with whatever it reads, so no commit shows a sheet reading something that
 doesn't exist yet.
 
+**As built:** By ear's read of a placed note (and its ask before replacing one) landed in commit 1, not
+2: the string buttons and stepper still in commit 1 already placed notes, so there was neck work to
+protect from the start.
+
+**After the device check** (2026-09-28):
+- **From My chords came out** (D4). The row of saved shapes under the neck cluttered the sheet, and
+  placing a chord a note at a time is quick enough.
+- **Play the loop from the strip** (D2). Inside the sheet only the slice sounded, so the player heard
+  the note they were on and never the line around it.
+- **A long run of unnamed notes is said as a count** (0225 D7, amended). A 69-note pass with nine named
+  showed nine names and sixty `?` in *Saved on this loop* and the Journal line. Now one to three unnamed
+  notes in a row keep a `?` each, and four or more read *(60 unnamed)*. Journal lines already written
+  keep their old form.
+
+**After the second device check** (2026-09-28):
+- **Hear a phrase** (D2). The whole loop didn't help place one note in a long pass, and one note alone
+  gave no context, so a tap now plays a chosen number of notes ending on the one being named.
+- **A long pass suggests a shorter loop.** Under the pass rows, once the loop stops, a pass of more than
+  24 notes (`TapTally.longPassNotes`) reads *Loops of around 16 notes are easier to transcribe*. It's
+  advice about the setup, never a mark on the playing (0070), and well past 16, so a pass of 18 isn't
+  told anything.
+
+**After the third device check** (2026-09-28): hammer-ons and slides were hard to mark and pull-offs
+looked missing, because a quick one is heard, and tapped, as one note. That lifts part of D10, so it is
+its own record: **ADR 0230**.
+
+**After the fourth device check** (2026-09-28):
+- **The neck plays along** (D2): the heard chip's notes glow on the neck during playback.
+- **An ⓘ beside *Chords* and *Into it*** (D4, D5), the app's shared `InfoPopoverButton`, says what each
+  does in a few lines. *Into it* and its ⓘ became a title line over the four ways in, which no longer
+  fit one row beside it on the smallest phone.
+
+**After the fifth device check** (2026-09-28):
+- **One title size under the neck.** *Into it* and *Bend* are titled like *Chords*, rather than as small
+  captions beside it.
+- **Correcting the count while naming** (under the strip, D2): take a note out, or tap in one that was
+  missed while the stretch around it plays. It changes the taps and not only their names, so it is its
+  own record: **ADR 0231**.
+
 ## Consequences
 
 - **Pure and unit-tested:** the label's new keys and kind (encode, decode, and an older-shaped decode),
@@ -208,4 +281,6 @@ doesn't exist yet.
 - **The manual** (`docs/manual/reference/practice.md`, the *Name the notes* paragraph) is rewritten, and
   the Name the notes figures are owed to the reshoot: two sheets to shoot, not three.
 - **Owed on a device:** the neck's scroll inside the sheet (no fight with the sheet's own drag); tapping
-  a 24pt dot at fret 20 on a phone; the strip's centring on a 65-note pass.
+  a 24pt dot at fret 20 on a phone; the strip's centring on a 65-note pass; the ring keeping time with a
+  phrase (`SliceClockReading`, the slice's own clock, read from the player's sample time as the loop's
+  is), over Bluetooth and slowed.

@@ -96,7 +96,8 @@ final class JournalReviewTests: XCTestCase {
     /// **stored** value: renaming one silently resets every player's screen to its default on the
     /// next launch. Pinned here so that rename has to be a deliberate act.
     func testPersistedFilterRawValuesAreStable() {
-        XCTAssertEqual(JournalTimeline.Scope.allCases.map(\.rawValue), ["all", "notes", "takes"])
+        // `pieces` added by ADR 0229; the three before it keep their stored strings.
+        XCTAssertEqual(JournalTimeline.Scope.allCases.map(\.rawValue), ["all", "notes", "takes", "pieces"])
         XCTAssertEqual(JournalTimeline.SortOrder.allCases.map(\.rawValue), ["newest", "oldest"])
         XCTAssertEqual(JournalTimeline.OwnerFilter.allCases.map(\.rawValue),
                        ["exercise", "loop", "session", "metronome", "standalone"])

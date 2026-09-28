@@ -68,6 +68,9 @@ final class ContinuousLoopPlayer {
     /// they take.
     func toggle() {
         if isPlaying { stop(); return }
+        // A slice still sounding would sit ahead of the loop in the player's queue, and the loop's clock
+        // would run late by what was left of it (the naming strip plays the loop, ADR 0227 D2).
+        stopSlice()
         startTask = Task { [weak self] in
             guard let self else { return }
             await model.loadIfNeeded()
@@ -99,6 +102,7 @@ final class ContinuousLoopPlayer {
         startTask = nil
         sliceTask?.cancel()
         sliceTask = nil
+        isSlicePlaying = false
         model.stop()
     }
 
@@ -109,23 +113,41 @@ final class ContinuousLoopPlayer {
 
     private var sliceTask: Task<Void, Never>?
 
+    /// Whether a slice is sounding, so the naming strip can ring a phrase's notes as they play (ADR 0227
+    /// D2). Falls when the slice ends on its own or is cut.
+    private(set) var isSlicePlaying = false
+
     /// Play a moment of the song around `tap` (song seconds) at the adjuster's tempo, loading the audio
     /// first if this visit hasn't played it yet: a saved piece can be opened for naming before the loop
     /// has sounded. `then` fires when the slice ends on its own. A no-op while the loop plays.
     func playSlice(at tap: TimeInterval, then: (@MainActor @Sendable () -> Void)? = nil) {
+        playSlice(from: tap, to: tap, then: then)
+    }
+
+    /// Play a **phrase**, from just before the `first` tap through the moment of the `last` (ADR 0227 D2),
+    /// the way `playSlice(at:)` plays one.
+    func playSlice(from first: TimeInterval, to last: TimeInterval,
+                   then: (@MainActor @Sendable () -> Void)? = nil) {
         sliceTask?.cancel()
         sliceTask = Task { [weak self] in
             guard let self else { return }
             await model.loadIfNeeded()
             guard !Task.isCancelled, !model.loadFailed, !model.isRunning else { return }
-            model.playSlice(at: tap, percent: percent, onFinished: then)
+            isSlicePlaying = model.playSlice(from: first, to: last, percent: percent) { [weak self] in
+                self?.isSlicePlaying = false
+                then?()
+            }
         }
     }
+
+    /// The slice's clock while one plays. Read in the strip's `TimelineView` leaf only (ADR 0153).
+    func sliceClock() -> SliceClockReading? { model.sliceClock() }
 
     /// Cut a slice short.
     func stopSlice() {
         sliceTask?.cancel()
         sliceTask = nil
+        isSlicePlaying = false
         model.stopSlice()
     }
 }

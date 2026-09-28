@@ -178,14 +178,47 @@ Each has its own run screen, and each writes into the journal with its own tag.
 
 ### Count the notes
 
-`Train your ear` carries a `Count the notes` section under its play and tempo controls, for working a
-lick out by ear. While the loop plays, tap the pad once for every note you hear. Each pass through the
-loop gets its own row of dots, the one playing now on top, so you can see when your passes agree. Tap a
-row to pick that pass. `Show beats` adds the song's beat lines and a count for each beat. It stays off
-until you turn it on, and only appears once the song has a tempo and its 1.
+`Train your ear` carries a `Count the notes` section under its play and tempo controls and its
+`Note what you hear` box, for working a lick out by ear. While the loop plays, tap the pad once for every
+note you hear. Each pass through the loop gets its own row of dots, the one playing now on top, so you
+can see when your passes agree. Tap a row to pick that pass. `Show beats` adds the song's beat lines and
+a count for each beat. It stays off until you turn it on, and only appears once the song has a tempo and
+its 1. A pass of more than 24 notes gets a suggestion under the rows once the loop stops: loops of around
+16 notes are easier to transcribe, so a long lick goes easier as two or three loops.
 
-`Name the notes` lays the picked pass out as numbered notes. Tap one to hear just that moment of the
-record, then name it by `Note name`, `Fret & string` or `Chord`. `Hear it, then mine` plays the moment
-and then your answer, and you decide whether they match. `Save` keeps the pass on the loop, under
-`Saved on this loop` with a line of tab if you placed frets, and writes a *Transcribed* line to the
-loop's journal. `Edit names` reopens it. Saving another pass replaces it.
+`Name the notes` lays the picked pass out as a strip of numbered notes. Tap one to hear it with the
+notes just before it, ending on it, so you hear how the line got there; each is ringed as it plays.
+*Hear 3 notes* at the top right of the strip sets how many, from *Just the note* to eight, and Red Moon
+remembers it. To hear the notes as a line, the play button at the start of the strip plays the whole
+loop at the speed you set, ringing each note as it goes by; on Fret & string, where you placed each
+note also lights up on the neck as it plays. Tap a note to stop and hear it.
+If you find a note you didn't count, or one you counted that isn't there, you don't have to count again.
+*Missed a note?* under the strip plays from the note before the one you're on to the note after, with a
+pad: tap it once where you hear the missing note, and it goes in where you tapped, unnamed. *Take note
+12 out* removes the note you're on, and its name. `Undo` puts either back until you change something
+else.
+Then say what it was on one of two sheets (the ⓘ beside `Chords` and `Into it` explains each): `Fret & string` for where you played it, or `By ear` for what
+you heard. Fret & string is the neck: tap where you played the note. Every spot carries its note name
+faintly, and the pass's other notes stay on the neck so you can see the lick's shape. `Where did you play
+it?` sets guitar or bass and the tuning for this piece only; a new tuning keeps your frets, and a new
+instrument clears them after asking. Under the neck, `Into it` says how you got to the note: `Picked`,
+`Hammer-on`, `Pull-off` or `Slide`. A quick hammer-on or slide can sound like one note or two, so it
+goes however you tapped it. If you heard two notes and tapped twice, the join comes from the note
+before when it's on the same string, and the line under the choices names it. If you heard one note
+and tapped once, pick how it started and tap the fret it started on (the frets it can't have come from
+fade out); a slide can also come in from nowhere, `From below` or `From above`. A double-stop or chord
+that slides into place as one works the same way: tap where one of its notes started and the rest follow. `Heard as one note?`
+moves a join from the note before into the note. `Bend` and `~ Vibrato` mark the note itself. A bend
+changes the note, so a bent note reads as the note it reaches, and so does a note with a quick start.
+The marks go into the tab the usual way, the same however you tapped them: *7b9*, *7~*, *5h7*, *8/10*,
+*/10*. Turn on
+`Chords` to place more than one note: one per string, as in My chords, so a double-stop, a triad and a
+full chord are the same taps. The neck names what you placed, a chord such as *Am/C* or, for two notes
+that aren't one, the interval between them. By ear has the twelve note names and, under them, the kinds
+of chord grouped by how many notes they hold. The kind you pick stays picked, and tapping a name saves it
+and moves on, so a solo named by ear is one tap a note. A note placed on the neck reads on By ear as the
+note it sounds, and naming it something else there asks first. `Next unnamed` jumps to the next note
+without a name. Red Moon never plays your answer: play it on your own instrument against `Hear it again`,
+and you decide whether they match. `Save` keeps the pass on the loop, under `Saved on this loop` with a
+line of tab if you placed frets, and lists it in the journal under `Pieces`. `Edit names` reopens it.
+Saving another pass replaces it.

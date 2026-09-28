@@ -46,7 +46,6 @@ struct EarTrainingView: View {
     /// Count the notes (ADR 0225). Held here rather than in its section so the naming sheet and the
     /// replace prompt can sit at this body's root, never on a row.
     @State private var counting: CountTheNotesModel
-    @AppStorage(AppSettings.Key.countShowsBeats) private var showsBeats = AppSettings.countShowsBeatsDefault
 
     init(loop: Loop, player: ContinuousLoopPlayer, recorder: RecordingController,
          routineContext: RoutineRunContext?) {
@@ -71,15 +70,17 @@ struct EarTrainingView: View {
                                            bedNoun: "loop",
                                            onOpenTakes: openTakes)
                 }
+                // Straight under the loop, above Count the notes: a thought about what you heard is the
+                // quick thing, and it shouldn't sit below a long tapping and naming section.
+                JournalNoteComposer(owner: .loop(loop), kind: .ear,
+                                    header: "Note what you hear",
+                                    placeholder: "What did you hear? "
+                                        + "(e.g. starts on the b3, descending run)")
                 CountTheNotesSection(model: counting, player: player, stopLoop: stopForNaming)
                 SavedPieceSection(loop: loop, spelling: counting.spelling) {
                     stopForNaming()
                     counting.nameSaved()
                 }
-                JournalNoteComposer(owner: .loop(loop), kind: .ear,
-                                    header: "Note what you hear",
-                                    placeholder: "What did you hear? "
-                                        + "(e.g. starts on the b3, descending run)")
             }
         }
         .onAppear {
@@ -103,10 +104,11 @@ struct EarTrainingView: View {
         .confirmationDialog("Replace the saved piece?", isPresented: Bindable(counting).confirmingReplace,
                             titleVisibility: .visible) {
             Button("Replace") {
-                counting.save(showingBeats: showsBeats && counting.grid != nil, context: modelContext)
+                counting.save(context: modelContext)
             }
         } message: {
-            Text("This loop already has a saved piece. Its Journal line stays.")
+            Text("This loop already has a saved piece. The new pass takes its place, here and under Pieces "
+                 + "in the Journal.")
         }
         // On the shared core, so all three hosts get it once (ADR 0050). Humming along is exactly the
         // hands-free practice the setting exists for, and this screen had never asked.

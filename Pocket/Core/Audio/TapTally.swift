@@ -89,20 +89,57 @@ enum TapTally {
     /// `"By beat: 2 · 3 · 3 · 3."` when beats are shown. `nil` for an empty pass.
     ///
     /// Each fact is said once. Names appear only if at least one note is named, with `?` holding the
-    /// place of an unnamed one. A by-beat split of a single beat would just repeat the count, so it's
-    /// left out.
+    /// place of an unnamed one, and a long run of them said as a count (`nameList`). A by-beat split of a
+    /// single beat would just repeat the count, so it's left out.
     static func summary(count: Int, names: [String?], perBeat: [Int]?, countsChords: Bool) -> String? {
         guard count > 0 else { return nil }
         let noun = countsChords ? (count == 1 ? "chord" : "chords") : (count == 1 ? "note" : "notes")
         var text = "\(count) \(noun)."
         let named = names.contains { $0 != nil }
         if named {
-            text += " " + names.map { $0 ?? "?" }.joined(separator: " ")
+            text += " " + nameList(names)
         }
         if let perBeat, perBeat.count > 1 {
             text += (named ? ". " : " ") + "By beat: " + perBeat.map(String.init).joined(separator: " · ") + "."
         }
         return text
+    }
+
+    /// Unnamed notes in a row, from this many up, are said as a count rather than a `?` each: a long pass
+    /// named only at the start would otherwise read as a wall of question marks.
+    static let unnamedRun = 4
+
+    // MARK: - Pass length (0227, after the device check)
+
+    /// About how many notes a loop holds that's comfortable to transcribe: a phrase or two, few enough to
+    /// keep in the ear. The figure the long-pass tip gives.
+    static let comfortableNotes = 16
+    /// Past this many notes a pass gets the tip to try a shorter loop. Well past `comfortableNotes`, so a
+    /// pass of 18 isn't told off for two notes: it's advice about the setup, not a mark (ADR 0070).
+    static let longPassNotes = 24
+
+    /// Whether a pass of `count` notes is long enough to suggest a shorter loop.
+    static func isLongPass(_ count: Int) -> Bool { count > longPassNotes }
+
+    /// The names in order, a `?` holding each unnamed note's place, and a run of `unnamedRun` or more said
+    /// as how many: `"A ? D (12 unnamed) E"`.
+    static func nameList(_ names: [String?]) -> String {
+        var words: [String] = []
+        var gap = 0
+        func closeGap() {
+            words += gap >= unnamedRun ? ["(\(gap) unnamed)"] : Array(repeating: "?", count: gap)
+            gap = 0
+        }
+        for name in names {
+            guard let name else {
+                gap += 1
+                continue
+            }
+            closeGap()
+            words.append(name)
+        }
+        closeGap()
+        return words.joined(separator: " ")
     }
 }
 
@@ -153,13 +190,11 @@ struct TapPasses: Equatable {
         return id
     }
 
-    /// Name the taps of one pass, in order. Extra labels are ignored and missing ones leave taps
-    /// unnamed, so a label can never land on the wrong tap.
-    mutating func setLabels(_ labels: [PieceLabel?], forPass id: Int) {
-        guard let index = passes.firstIndex(where: { $0.id == id }) else { return }
-        for tapIndex in passes[index].taps.indices {
-            passes[index].taps[tapIndex].label = labels.indices.contains(tapIndex) ? labels[tapIndex] : nil
-        }
+    /// A pass as Name the notes hands it back: its taps named, and since ADR 0231 perhaps one taken out
+    /// or a missed one added. Kept in time order; a pass left with no taps is left as it was.
+    mutating func replaceTaps(_ taps: [PieceTranscription.Tap], forPass id: Int) {
+        guard !taps.isEmpty, let index = passes.firstIndex(where: { $0.id == id }) else { return }
+        passes[index].taps = taps.sorted { $0.seconds < $1.seconds }
     }
 
     /// Clear every pass, returning what was there so it can be put back.

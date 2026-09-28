@@ -16,6 +16,8 @@ struct NamingRequest: Identifiable, Equatable {
     /// strings even if the tuner's tuning has changed since. `nil` means use the tuner's.
     var openMidi: [Int]?
     var tuningLabel: String?
+    /// The loop's region in song seconds, so *Missed a note?* never plays past it (ADR 0231).
+    var region: ClosedRange<TimeInterval>?
 
     var id: String {
         switch source {
@@ -25,9 +27,10 @@ struct NamingRequest: Identifiable, Equatable {
     }
 }
 
-/// What the sheet hands back on Done: a label per tap, and the strings any fret was placed on.
+/// What the sheet hands back on Done: the taps, named, with any taken out or added (ADR 0231), and the
+/// strings any fret was placed on.
 struct NamingResult: Equatable {
-    let labels: [PieceLabel?]
+    let taps: [PieceTranscription.Tap]
     let openMidi: [Int]
     let tuningLabel: String
 }
@@ -37,7 +40,7 @@ struct NamingResult: Equatable {
 /// sit at the view's body root.
 ///
 /// Nothing here is saved until **Save**. The taps of a visit are scratch paper; a save copies one pass
-/// onto the loop as its piece and writes a dated line to its Journal.
+/// onto the loop as its piece, which the Journal lists under Pieces (ADR 0229).
 @MainActor
 @Observable
 final class CountTheNotesModel {
@@ -111,7 +114,10 @@ final class CountTheNotesModel {
     }
 
     /// Whether the song's spelling of accidentals comes from its key or the player's preference.
-    var spelling: NoteSpelling {
+    var spelling: NoteSpelling { Self.spelling(for: loop) }
+
+    /// The same, for a loop the Journal is showing a piece of (ADR 0229).
+    static func spelling(for loop: Loop) -> NoteSpelling {
         loop.song.flatMap { NoteSpelling.forMusicalKey($0.musicalKey) } ?? AppSettings.accidentalPreference
     }
 
@@ -156,28 +162,37 @@ final class CountTheNotesModel {
 
     func nameTarget() {
         guard let pass = targetPass else { return }
-        naming = NamingRequest(source: .pass(pass.id), taps: pass.taps)
+        naming = NamingRequest(source: .pass(pass.id), taps: pass.taps, region: region)
     }
 
     func nameSaved() {
         guard let piece = loop.transcription else { return }
         naming = NamingRequest(source: .saved, taps: piece.taps, openMidi: piece.openMidi,
-                               tuningLabel: piece.tuningLabel)
+                               tuningLabel: piece.tuningLabel, region: region)
     }
 
-    /// The sheet's Done. A pass keeps its names for this visit; the saved piece is edited in place,
-    /// which is the only way a saved piece ever changes short of saving another pass over it.
+    /// The loop's region, or `nil` for one with no length.
+    private var region: ClosedRange<TimeInterval>? {
+        loop.endSeconds > loop.startSeconds ? loop.startSeconds...loop.endSeconds : nil
+    }
+
+    /// The sheet's Done. A pass keeps its names, and any tap taken out or added, for this visit; the
+    /// saved piece is edited in place, which is the only way a saved piece ever changes short of saving
+    /// another pass over it. An edit that changed something re-dates it, so the Journal moves it to the
+    /// day it changed (ADR 0229).
     func finishNaming(_ request: NamingRequest, result: NamingResult, context: ModelContext) {
+        guard !result.taps.isEmpty else { return }
         switch request.source {
         case .pass(let number):
-            passes.setLabels(result.labels, forPass: number)
+            passes.replaceTaps(result.taps, forPass: number)
             namingTuning = (result.openMidi, result.tuningLabel)
         case .saved:
-            guard var piece = loop.transcription else { return }
-            for index in piece.taps.indices {
-                piece.taps[index].label = result.labels.indices.contains(index) ? result.labels[index] : nil
-            }
+            guard let before = loop.transcription else { return }
+            var piece = before
+            piece.taps = result.taps.sorted { $0.seconds < $1.seconds }
             stampTuning(on: &piece, openMidi: result.openMidi, label: result.tuningLabel)
+            guard piece != before else { return }
+            piece.changedAt = .now
             loop.transcription = piece
             try? context.save()
         }
@@ -186,30 +201,23 @@ final class CountTheNotesModel {
     // MARK: - Saving
 
     /// Save the target pass, asking first if it would replace a saved piece.
-    func requestSave(showingBeats: Bool, context: ModelContext) {
+    func requestSave(context: ModelContext) {
         if loop.transcription != nil {
             confirmingReplace = true
         } else {
-            save(showingBeats: showingBeats, context: context)
+            save(context: context)
         }
     }
 
-    /// Put the target pass on the loop as its piece, and write the dated line to its Journal. The line
-    /// carries the per-beat split only if beats are on screen as it's saved.
-    func save(showingBeats: Bool, context: ModelContext) {
+    /// Put the target pass on the loop as its piece, dated now. **No Journal line** (ADR 0229): the
+    /// Journal lists the piece itself under Pieces, so a line per save would only pile up stale copies.
+    func save(context: ModelContext) {
         guard let pass = targetPass, !pass.taps.isEmpty else { return }
         var piece = PieceTranscription(taps: pass.taps)
         let tuning = namingTuning ?? Self.tunerTuning()
         stampTuning(on: &piece, openMidi: tuning.openMidi, label: tuning.label)
-        let perBeat = showingBeats ? grid?.perBeat(pass.taps.map(\.seconds)) : nil
-        let named = pass.taps.compactMap(\.label)
-        let line = TapTally.summary(count: pass.count, names: piece.names(spelling: spelling),
-                                    perBeat: perBeat,
-                                    countsChords: !named.isEmpty && named.allSatisfy(\.isChord))
+        piece.changedAt = .now
         loop.transcription = piece
-        if let line {
-            JournalWriter.add(to: .loop(loop), text: line, kind: .transcribed, into: context)
-        }
         try? context.save()
         haptic(.success)
     }

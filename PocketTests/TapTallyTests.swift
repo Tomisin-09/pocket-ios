@@ -164,6 +164,15 @@ final class TapTallyTests: XCTestCase {
         XCTAssertEqual(line, "3 notes. A ? D")
     }
 
+    func testALongRunOfUnnamedNotesSaysHowMany() {
+        let names: [String?] = ["C♯", "D♯", "A♯"] + Array(repeating: nil, count: 60)
+        XCTAssertEqual(TapTally.summary(count: 63, names: names, perBeat: nil, countsChords: false),
+                       "63 notes. C♯ D♯ A♯ (60 unnamed)", "not sixty question marks")
+        XCTAssertEqual(TapTally.nameList(["A", nil, nil, nil, nil, "E"]), "A (4 unnamed) E")
+        XCTAssertEqual(TapTally.nameList(["A", nil, nil, nil, "E"]), "A ? ? ? E", "three still hold their places")
+        XCTAssertEqual(TapTally.nameList([nil, nil, nil, nil, nil, "G", nil]), "(5 unnamed) G ?")
+    }
+
     func testNoNamesNoNameList() {
         XCTAssertEqual(TapTally.summary(count: 11, names: Array(repeating: nil, count: 11), perBeat: nil,
                                         countsChords: false), "11 notes.")
@@ -243,14 +252,25 @@ final class TapPassesTests: XCTestCase {
         XCTAssertEqual(passes.passes.first?.id, 4)
     }
 
-    func testLabelsFollowTapOrderAndNeverOverrun() {
+    func testANamedPassComesBackWithItsTapsInTimeOrderAndNeverEmpty() {
         var passes = TapPasses()
         passes.beginRun()
         passes.record(tap(0, 30))
         passes.record(tap(0, 31))
-        passes.setLabels([.pitchClass(9), .pitchClass(0), .pitchClass(2)], forPass: 1)
-        XCTAssertEqual(passes.pass(id: 1)?.taps.map(\.label), [.pitchClass(9), .pitchClass(0)])
-        passes.setLabels([.pitchClass(4)], forPass: 1)
-        XCTAssertEqual(passes.pass(id: 1)?.taps.map(\.label), [.pitchClass(4), nil])
+        // Named, a tap taken out and a missed one added (ADR 0231), handed back out of order.
+        passes.replaceTaps([.init(seconds: 31, label: .pitchClass(0)), .init(seconds: 30.5),
+                            .init(seconds: 30, label: .pitchClass(9))], forPass: 1)
+        XCTAssertEqual(passes.pass(id: 1)?.taps.map(\.seconds), [30, 30.5, 31], "in time order")
+        XCTAssertEqual(passes.pass(id: 1)?.taps.map(\.label), [.pitchClass(9), nil, .pitchClass(0)])
+        passes.replaceTaps([], forPass: 1)
+        XCTAssertEqual(passes.pass(id: 1)?.count, 3, "a pass is never emptied")
+        passes.replaceTaps([.init(seconds: 30)], forPass: 7)
+        XCTAssertNil(passes.pass(id: 7), "no pass is made up")
+    }
+
+    func testALongPassIsWellPastTheComfortableLength() {
+        XCTAssertFalse(TapTally.isLongPass(TapTally.comfortableNotes))
+        XCTAssertFalse(TapTally.isLongPass(24), "a few past comfortable isn't told anything")
+        XCTAssertTrue(TapTally.isLongPass(25))
     }
 }

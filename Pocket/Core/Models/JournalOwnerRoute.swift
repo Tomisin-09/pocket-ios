@@ -15,7 +15,9 @@ enum JournalOwnerRoute: Hashable {
     case exercise(Exercise)
     /// A loop, **in the mode it qualifies for**. A loop is not one screen: an unmeasured loop has no
     /// ramp to open (ADR 0138), so the caption opens whichever mode `LoopModeAccess` allows, in the
-    /// established precedence — trainer, then ear, then improvise.
+    /// established precedence — trainer, then ear, then improvise — unless the note was written in one
+    /// mode and the loop still qualifies for it (ADR 0228): an ear or a transcribed note opens ear
+    /// training, an improvise note opens improvise.
     case loop(Loop, LoopRunMode)
     /// The **routine a session note was written about** (2026-08-06). A session entry's caption was
     /// the last dead label on the feed: its practised-unit pills already opened their units, while the
@@ -65,9 +67,12 @@ enum JournalOwnerRoute: Hashable {
                       let routine = routines.first(where: { $0.uid == uid }) else { return nil }
                 return .routine(routine)
             }
-            return route(loop: entry.loop, exercise: entry.exercise)
+            return route(loop: entry.loop, exercise: entry.exercise, writtenIn: writtenIn(entry.kind))
         case .take(let take):
             return route(loop: take.loop, exercise: take.exercise)
+        // A piece is made and edited in ear training (ADR 0225), so that's where it opens (ADR 0229).
+        case .piece(let piece):
+            return route(loop: piece.loop, exercise: nil, writtenIn: .ear)
         }
     }
 
@@ -97,9 +102,30 @@ enum JournalOwnerRoute: Hashable {
         }
     }
 
-    private static func route(loop: Loop?, exercise: Exercise?) -> JournalOwnerRoute? {
+    /// The loop mode a note of this kind is written in, for the kinds only one mode writes (ADR 0228):
+    /// ear training's notes and the pieces saved from its Count the notes, and improvise's notes. A take
+    /// and a session pill carry no mode, so they keep ADR 0142's precedence.
+    ///
+    /// **Exhaustive with no `default`**, as `LoopModeAccess.allows` is: a new kind has to say where its
+    /// caption goes before it compiles.
+    static func writtenIn(_ kind: EntryKind) -> LoopRunMode? {
+        switch kind {
+        case .ear, .transcribed: .ear
+        case .improvise: .improvise
+        case .goal, .breakthrough, .struggle, .idea, .note, .session: nil
+        }
+    }
+
+    /// The mode the note was written in when the loop still qualifies for it, else the first that it
+    /// does (ADR 0142 J5a). A mode the loop has since lost, such as improvise after the backing-track
+    /// flag came off, falls back rather than opening a screen the loop can't run.
+    private static func route(loop: Loop?, exercise: Exercise?,
+                              writtenIn written: LoopRunMode? = nil) -> JournalOwnerRoute? {
         if let exercise { return .exercise(exercise) }
-        guard let loop, let mode = LoopModeAccess.modes(for: loop).first else { return nil }
+        guard let loop else { return nil }
+        let modes = LoopModeAccess.modes(for: loop)
+        if let written, modes.contains(written) { return .loop(loop, written) }
+        guard let mode = modes.first else { return nil }
         return .loop(loop, mode)
     }
 }

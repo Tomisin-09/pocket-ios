@@ -59,13 +59,33 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Count the notes, then name them.** *Train your ear* has a new section for working a lick out by
   ear. Slow the loop down and tap the pad once for every note you hear; each time round the loop gets
   its own row of dots, so you can see when your passes agree. **Name the notes** lays one pass out as
-  numbered notes: tap one to hear just that moment of the record, then say what it was, by note name,
-  by fret and string, or as a chord. **Hear it, then mine** plays the moment and then your answer, and
-  you decide whether they match. Red Moon never does. **Save** keeps the pass on the loop as its
-  piece, shown under the section with a line of tab when you've placed frets, and writes a 🧩
-  *Transcribed* line to the loop's Journal. **Show beats** adds the song's beat lines and a per-beat
+  a strip of numbered notes: tap one to hear it with the notes just before it, ending on it (**Hear 3
+  notes** at the top of the strip sets how many, from just the note to eight, and each lights up as it
+  plays), or play the whole loop from the strip and watch each note light up as it goes by, on the
+  strip and where you placed it on the neck, then say what it was, by
+  **Fret & string** (where you played it) or **By ear** (what you heard: a note, or a chord by its root
+  and kind, with the kinds grouped by how many notes they hold). Fret & string is a neck you tap, with
+  every note named faintly and the pass's other notes showing the lick's shape, on guitar or bass in
+  any of the tuner's tunings, chosen for that piece. Mark how you played it: a bend (drawn as an arrow
+  to where it lands, and read as the note it reaches), vibrato, and a hammer-on, pull-off or slide from
+  the note before, or, when a quick one sounded like one note and you tapped once, inside the note
+  itself, a double-stop sliding in as one included, and a slide in from nowhere (ADR 0230). An ⓘ
+  beside **Chords** and **Into it** says what each does. Found a note you didn't count, or one that
+  isn't there? **Missed a note?** plays the notes either side and you tap the missing one in where you
+  hear it; **Take note out** removes one. Either can be undone, and the rest of your names stay put
+  (ADR 0231). All of it is written into the tab the usual
+  way (`7b9`, `7~`, `5h7`, `8/10`, `/10`). Turn on **Chords**
+  to place double-stops, triads and full chords, one note per string; the neck names what you placed (*Am/C*, or *a 4th*). By ear keeps the
+  kind you picked, so naming a solo
+  is one tap a note, and it asks before replacing a note you placed on the neck. Play your
+  answer on your own instrument against **Hear it again** and decide whether they match; Red Moon never
+  does, and never plays an answer back (ADR 0227). **Save** keeps the pass on the loop as its
+  piece, shown under the section with a line of tab when you've placed frets, and listed in the
+  Journal under the new **Pieces** tab: one row per loop, always the current version, that opens the
+  loop in *Train your ear* (ADR 0229). **Show beats** adds the song's beat lines and a per-beat
   count, and it stays off until you turn it on, because the lines are only as good as the song's
-  tempo and its 1 (ADR 0225).
+  tempo and its 1 (ADR 0225). A pass of more than 24 notes gets a suggestion under the rows: loops of
+  around 16 notes are easier to transcribe.
 - **Record a take that isn't about any drill.** The Journal's ✏️ is now a **＋** holding **Write a
   note** and **Record a take**. A take recorded there belongs to nothing — a riff you want to keep,
   how new strings sound — so it no longer has to be filed under whatever drill was open. One button
@@ -145,6 +165,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **A Journal note opens the loop where it was written.** Tapping the loop's name on an 👂 Ear or 🧩
+  Transcribed note opens *Train your ear*, and on a 🎸 Improv note opens *Improvise*, rather than the
+  loop's ordinary practice. Other notes open as before (ADR 0228).
+- **Train your ear puts *Note what you hear* straight under the loop**, above *Count the notes*, so a
+  quick note about what you heard is right there instead of below the tapping and the saved piece.
 - **The metronome's time signature sits under the beat dots**, not in the top bar — the same control
   and the same sheet, beside the dots it changes. The title is centred again: the top bar now holds
   the back button and the ✏️, one either side.

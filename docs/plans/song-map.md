@@ -39,7 +39,7 @@ everything a player transcribes from ADR 0225 onward is on the map the day it sh
 |---|---|---|
 | Loops (start, end, type) | `Loop` | always |
 | Each piece: taps in song seconds, and what each was named | `Loop.transcriptionData` → `PieceTranscription` | ADR 0225 |
-| Which loops are solved | `EntryKind.transcribed` Journal lines (the player's declaration) | ADR 0225 |
+| Which loops are solved | The loop's saved piece (`Loop.transcription`), plus notes tagged 🧩 *Transcribed* by hand (the player's declaration) | ADR 0225, 0229 |
 | Which markers start a section | **new:** a `Starts a section` Bool on `Marker` | the map's ADR |
 
 **Everything else is drawn**, including the plain-text export of the chart. The only schema addition the
