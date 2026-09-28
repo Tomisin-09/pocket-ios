@@ -164,6 +164,10 @@ struct MarkerRecord: Codable, Equatable, Sendable {
     var uid: UUID
     var seconds: TimeInterval
     var label: String
+    /// Whether the marker starts a section of the song map (ADR 0232 D6). **`Optional`**, because an
+    /// archive can predate it and a declaration default does not survive a missing key (ADR 0212,
+    /// 0205 D5, the reasoning on `ReferenceLinkRecord.attachmentFileName`). Absent reads as `false`.
+    var startsSection: Bool?
 }
 
 /// Where something was learned (ADR 0167) — cascade-owned by a song, loop, exercise or routine alike,

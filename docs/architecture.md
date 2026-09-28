@@ -645,6 +645,21 @@ each note you hear, then name them. The pieces, from the audio up:
   replaces; on, one note per string). The archive carries it as `LoopRecord.transcription`. `TabLine`
   draws the tab from the piece each time; no text copy is stored anywhere.
 
+**The song map reads the pieces** (ADR 0232, `Core/SongMap` + `Features/SongMap`). It stores nothing
+of its own but one Bool: `Marker.startsSection` (declaration default `false`; `MarkerRecord.startsSection`
+is **Optional** so an older archive still decodes). Everything else is drawn each time: `SongMapInput(song:)`
+copies the song into plain values (loops in seconds, their `transcription`, whether a 🧩 note is on the
+loop, the markers, and the downbeats from `BeatGrid` when the song has a grid **and** `showsGridlines`), and
+the pure `SongMapLayout.build` returns a `SongMap` of sections, rows (8 downbeats, or 16 s), lanes and
+placements. Lane assignment is a greedy interval colouring per layer, done once per song so a piece keeps
+its lane across rows; the layer comes from `PieceLabel.readsAsChord` (via `earReading`, so a shape on the
+neck that spells a chord counts), else `LoopType.chords`. The screen is a `.fullScreenCover` from
+`SongDetailsSheet`. Tapping a piece opens its tab sheet; holding it is a `.contextMenu` of the modes
+`LoopModeAccess` allows. A mode pushes `JournalOwnerDestinationView` inside the cover's own
+`NavigationStack`, after the practice screen's `pauseForNestedAudio` when the details were opened from
+there; a mode picked on the tab sheet is held until the sheet's `onDismiss`, since a push can't start
+under a presented sheet.
+
 **Each mode gates on what it needs** (ADR 0138). Both surfaces that decide which loops a player can
 reach — `LoopLibraryView` and `AddRoutineUnitSheet` — applied one test, `commandTempo != nil`, written
 for the *trainer* and inherited by every mode after it. That put ear training, the one mode you can do

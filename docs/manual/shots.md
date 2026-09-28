@@ -98,6 +98,7 @@ marker grammar in [README.md](README.md).
 | `songs/library-row` | `detail` | `songs` | seeded library, Library screen, row "Feels" |  |
 | `songs/missing-audio` | `panel` | `songs` | seeded library, a song whose file cannot be found, opened for practice |  |
 | `songs/song-edit` | `screen` | `songs` | seeded library, song "Slow Bend", edit sheet open, scrolled to Collections |  |
+| `songs/song-map` | `screen` | `songs` | seeded song with sections, counted and named pieces, map open full screen |  |
 | `subscription/paywall` | `panel` | `subscription` | an account without Pro, the paywall on screen | iPhone — cropped above the plan cards on purpose: an image carrying a price outlives
        the sentence that would have carried it, and D6 keeps prices out of this manual |
 | `subscription/settings-pro` | `panel` | `subscription` | Settings ▸ Red Moon Pro, subscribed | iPhone — subscribed is an entitlement the shoot cannot grant, and the same sign-in
@@ -115,4 +116,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped, top of the sheet |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 
-95 shots across 19 pages.
+96 shots across 19 pages.

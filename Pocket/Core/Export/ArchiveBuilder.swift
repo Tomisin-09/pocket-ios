@@ -147,7 +147,8 @@ enum ArchiveBuilder {
                 .map(loopRecord),
             markers: song.markers
                 .sorted { ($0.seconds, $0.uid.uuidString) < ($1.seconds, $1.uid.uuidString) }
-                .map { MarkerRecord(uid: $0.uid, seconds: $0.seconds, label: $0.label) },
+                .map { MarkerRecord(uid: $0.uid, seconds: $0.seconds, label: $0.label,
+                                     startsSection: $0.startsSection) },
             references: referenceRecords(song.references),
             // Song order, `uid` breaking the tie — the Snags panel's own order (ADR 0202 D2), and
             // deterministic for the same reason every other collection here is sorted.

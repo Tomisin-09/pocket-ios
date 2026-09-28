@@ -61,6 +61,7 @@ extension ArchiveRestoreWriter {
             song.markers = record.markers.map {
                 let marker = Marker(seconds: $0.seconds, label: $0.label)
                 marker.uid = $0.uid
+                marker.startsSection = $0.startsSection ?? false
                 return marker
             }
             song.references = references(record.references)

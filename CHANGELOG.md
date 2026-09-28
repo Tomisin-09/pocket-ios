@@ -56,6 +56,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Map the song.** A new row in **Song details** lays the song out, left to right, with every loop
+  you've made on it sitting where it plays: chords on one lane, notes on the lane under them, and a
+  second lane when two overlap. Each loop shows what it holds, the notes you've counted as dots and
+  the names you've given them as a line, so the song fills in as you work pieces out. Tap one to see
+  its tab; hold it to go straight to *Train your ear*, *Practice* or *Improvise*. Rows are bars when the song has a tempo and a 1, and seconds when it
+  doesn't; **Bars** switches them, along with the waveform's **Grid**. Split the song into
+  sections by switching on **Starts a section** on a marker; other markers stay as pins. Nothing is
+  scored and nothing is counted up: the map shows your pieces, never a percentage (ADR 0232).
+
 - **Count the notes, then name them.** *Train your ear* has a new section for working a lick out by
   ear. Slow the loop down and tap the pad once for every note you hear; each time round the loop gets
   its own row of dots, so you can see when your passes agree. **Name the notes** lays one pass out as

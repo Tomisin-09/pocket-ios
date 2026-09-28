@@ -127,6 +127,35 @@ song you expected. Check the audio is what you think it is afterwards.
 
 **See Help & FAQs: "My song stopped playing — what happened?"**
 
+## Mapping the song
+
+**Song details** ▸ **Map the song** lays the whole song out, left to right, with every loop you've
+made on it sitting where it plays. Chords go on one lane and notes on the lane under them, because a
+lick is played over the chords around it. When two loops overlap on the same lane, the second gets a
+lane of its own.
+
+<!-- shot: songs/song-map | role: screen
+     | alt: Map the song for Slow Bend, with Intro, Verse 1 and Chorus sections, chord loops on the Chords lane and licks on the Notes lane under them
+     | state: seeded song with sections, counted and named pieces, map open full screen -->
+
+Each loop shows what it holds, and nothing else. A dashed outline is a loop you haven't worked out
+yet. Dots are the notes you counted in **Count the notes**, and the line under the loop's name is what
+you named them, the same line the Journal shows. There is no score and no percentage: it's your
+pieces, laid out.
+
+Tap a loop to see its tab: the notes you placed on the neck, in the tuning you named them in, with the
+line of names above it. From there, **Train your ear** is where you count it and name it; the map fills
+in as you go. Hold a loop instead to skip the tab: the menu offers **View tab**, **Train your ear**,
+and **Practice** or **Improvise** when the loop can do them.
+
+When the song has a tempo and a **1**, the rows are bars, eight to a row; without them, the rows are
+seconds. **Bars** switches between the two, and it is the same switch as **Grid** on the waveform,
+so turning bars off here turns the gridlines off there.
+
+To split the song into sections, open a marker and switch on **Starts a section**. Each section
+begins a new row with its name above it, and anything before the first one sits under **Start**.
+Markers without it stay on the map as pins. Tap a section's name or a pin to open its marker.
+
 ## Next
 
 - [The loop workflow, end to end](looping.md)

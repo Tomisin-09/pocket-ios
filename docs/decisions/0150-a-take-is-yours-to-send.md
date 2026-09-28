@@ -152,6 +152,9 @@ this should wait.
 
 ## Related
 
+- ADR 0232 D12 — the song map's tab. **An *Export tab* joins this ADR's questions** rather than
+  opening its own: the song's tab holds no audio, so the speaker-bleed question doesn't arise, but the
+  composition question does. Until they're answered, the map has no share action.
 - ADR 0064 — V2 social layer boundaries (the hosting rail; stays closed)
 - ADR 0069 — practice-take recording (mic-only; the route classifier)
 - ADR 0001 — audio source local-first (the DRM wall this all sits behind)
