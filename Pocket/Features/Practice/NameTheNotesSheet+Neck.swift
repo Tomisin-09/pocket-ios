@@ -86,9 +86,7 @@ extension NameTheNotesSheet {
             : isOther ? PocketColor.textPrimary.opacity(0.18) : PocketColor.surfaceSubtle.opacity(0.5)
         // While *Into it* waits for a start, only the frets it could have come from stay bright.
         let dimmed = awaitingStart.map { request in
-            !isPlaced && !(labels[active]?.singleNote.map {
-                NeckJoin.accepts(string: string, fret: fret, asStartOf: $0, for: request)
-            } ?? false)
+            !isPlaced && !NeckJoin.accepts(string: string, fret: fret, asStartOf: notes, for: request)
         } ?? false
         return Button {
             place(string: string, fret: fret)

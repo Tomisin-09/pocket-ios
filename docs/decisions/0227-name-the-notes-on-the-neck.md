@@ -11,7 +11,8 @@
   **D7** (after the device check): a long run of unnamed notes in the line is said as a count.
   D1–D4, D7–D9 and the rest of D10 stand, including *never detected, never suggested*.
 - **Amended by:** ADR 0230 — **D5**: all four ways in are always shown, and a hammer-on, pull-off or
-  slide heard as one note lives inside that note, as a **lead-in**. **D9**: a note gains an optional
+  slide heard as one note lives inside that note, or every note of a shape moving as one, as a
+  **lead-in**. **D9**: a note gains an optional
   `leadIn` key. **D10**: a slide **into** a note from nowhere (`/7`) is lifted; a slide out to nowhere,
   bend releases and pre-bends stay out. The rest of D5, D9 and D10 stands.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the

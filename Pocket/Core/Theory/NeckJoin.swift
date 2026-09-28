@@ -73,22 +73,79 @@ enum NeckJoin {
     }
 
     /// The answers with every join that no longer fits dropped: when the note before moves, the join
-    /// into this one can stop making sense, and it goes rather than claim a hammer-on that isn't one. A
-    /// lead-in goes when it can't be played into its note any more, and from a shape: it's one note's.
-    /// A note with a lead-in has no join from the tap before as well; it was heard as one.
+    /// into this one can stop making sense, and it goes rather than claim a hammer-on that isn't one.
+    /// Lead-ins go when they can't be played (`leadInsFit`). A note with a lead-in has no join from the
+    /// tap before as well; it was heard as one.
     static func tidied(_ labels: [PieceLabel?]) -> [PieceLabel?] {
         labels.indices.map { index in
             guard case .fretted(var notes, var into) = labels[index] else { return labels[index] }
-            for position in notes.indices {
-                guard let leadIn = notes[position].leadIn else { continue }
-                if notes.count > 1 || leadIn.direction(into: notes[position].fret) == nil {
-                    notes[position].leadIn = nil
-                }
+            if notes.contains(where: { $0.leadIn != nil }), !leadInsFit(notes) {
+                for position in notes.indices { notes[position].leadIn = nil }
             }
             if notes.contains(where: { $0.leadIn != nil }) || direction(into: index, of: labels) == nil {
                 into = nil
             }
             return .fretted(notes, into: into)
+        }
+    }
+}
+
+// MARK: - Lead-ins (ADR 0230)
+
+extension NeckJoin {
+
+    /// Whether a tap's lead-ins can be played: one note's, or a shape's moving **as one** (0230 D6), the
+    /// way a hand slides a double-stop. Every note has one, with the same join, from the same side and
+    /// the same number of frets, and each can be played into its fret.
+    static func leadInsFit(_ notes: [FrettedNote]) -> Bool {
+        guard let first = notes.first?.leadIn else { return false }
+        let move = shift(of: notes[0])
+        return notes.allSatisfy { note in
+            guard let leadIn = note.leadIn, leadIn.join == first.join,
+                  leadIn.direction(into: note.fret) != nil else { return false }
+            return shift(of: note) == move
+        }
+    }
+
+    /// The notes with the lead-ins a start tapped at `string`, `fret` gives them: the note on that string
+    /// starts there, and every other note as many frets from its own. `nil` when the tap isn't on their
+    /// strings, or any start can't be played (its own fret, off the neck).
+    static func starts(string: Int, fret: Int, of notes: [FrettedNote], join: Join) -> [FrettedNote]? {
+        guard let anchor = notes.first(where: { $0.string == string }) else { return nil }
+        let frets = fret - anchor.fret
+        let started = notes.map { note in
+            var note = note
+            note.leadIn = LeadIn(from: .fret(note.fret + frets), join: join)
+            return note
+        }
+        return started.allSatisfy { $0.leadIn?.direction(into: $0.fret) != nil } ? started : nil
+    }
+
+    /// The shape's move given to the note at `index`, just moved or added, from another note that has one,
+    /// so a shape keeps sliding as one. With none to copy, the note has none.
+    static func carryingLeadIn(_ notes: [FrettedNote], to index: Int) -> [FrettedNote] {
+        var notes = notes
+        let other = notes.indices.first { $0 != index && notes[$0].leadIn != nil }
+        notes[index].leadIn = other.flatMap { source in
+            notes[source].leadIn.map { leadIn in
+                guard case .fret(let start) = leadIn.from else { return leadIn }
+                return LeadIn(from: .fret(notes[index].fret + start - notes[source].fret), join: leadIn.join)
+            }
+        }
+        return notes
+    }
+
+    /// How far, and from which side, a note's lead-in starts: what a shape's notes share.
+    private enum Shift: Equatable {
+        case frets(Int), below, above
+    }
+
+    private static func shift(of note: FrettedNote) -> Shift? {
+        switch note.leadIn?.from {
+        case .fret(let start)?: .frets(start - note.fret)
+        case .below?: .below
+        case .above?: .above
+        case nil: nil
         }
     }
 }
@@ -137,24 +194,23 @@ extension NeckJoin {
         case unavailable
     }
 
-    /// The tap before when it fits the choice, else a lead-in inside this note. A lead-in is one note's,
-    /// so a shape only joins from the tap before.
+    /// The tap before when it fits the choice, else a lead-in inside this tap, for one note or a shape
+    /// moving as one.
     static func route(_ choice: IntoChoice, into index: Int, of labels: [PieceLabel?]) -> Route {
         guard labels.indices.contains(index), let notes = labels[index]?.frettedNotes, !notes.isEmpty else {
             return .unavailable
         }
         let before = direction(into: index, of: labels)
-        let single = notes.count == 1
         switch choice {
         case .picked:
             return .clear
         case .hammerOn, .pullOff:
             let way: JoinDirection = choice == .hammerOn ? .upward : .downward
             if before == way { return .fromBefore(.legato) }
-            return single ? .inside(LeadInRequest(join: .legato, direction: way)) : .unavailable
+            return .inside(LeadInRequest(join: .legato, direction: way))
         case .slide:
             if before != nil { return .fromBefore(.slide) }
-            return single ? .inside(LeadInRequest(join: .slide, direction: nil)) : .unavailable
+            return .inside(LeadInRequest(join: .slide, direction: nil))
         }
     }
 
@@ -162,7 +218,7 @@ extension NeckJoin {
     static func holds(_ choice: IntoChoice, into index: Int, of labels: [PieceLabel?]) -> Bool {
         guard labels.indices.contains(index), case .fretted(let notes, let into) = labels[index],
               !notes.isEmpty else { return false }
-        let leadIn = notes.count == 1 ? notes[0].leadIn : nil
+        let leadIn = notes[0].leadIn
         let join = leadIn?.join ?? into
         let way = leadIn.flatMap { $0.direction(into: notes[0].fret) } ?? direction(into: index, of: labels)
         switch choice {
@@ -173,11 +229,12 @@ extension NeckJoin {
         }
     }
 
-    /// Whether a tap on the neck at `string`, `fret` can be where `note` started, for `request`: on its
-    /// string, not its fret, and on the side the join moves from.
-    static func accepts(string: Int, fret: Int, asStartOf note: FrettedNote, for request: LeadInRequest) -> Bool {
-        guard string == note.string,
-              let way = LeadIn(from: .fret(fret), join: request.join).direction(into: note.fret) else { return false }
-        return request.direction == nil || request.direction == way
+    /// Whether a tap on the neck at `string`, `fret` can be where `notes` started, for `request`: on one
+    /// of their strings, every note moving as many frets and staying on the neck (`starts`), from the side
+    /// the join moves from.
+    static func accepts(string: Int, fret: Int, asStartOf notes: [FrettedNote], for request: LeadInRequest) -> Bool {
+        guard let started = starts(string: string, fret: fret, of: notes, join: request.join) else { return false }
+        return request.direction == nil
+            || started.allSatisfy { $0.leadIn?.direction(into: $0.fret) == request.direction }
     }
 }

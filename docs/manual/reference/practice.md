@@ -200,7 +200,8 @@ instrument clears them after asking. Under the neck, `Into it` says how you got 
 goes however you tapped it. If you heard two notes and tapped twice, the join comes from the note
 before when it's on the same string, and the line under the choices names it. If you heard one note
 and tapped once, pick how it started and tap the fret it started on (the frets it can't have come from
-fade out); a slide can also come in from nowhere, `From below` or `From above`. `Heard as one note?`
+fade out); a slide can also come in from nowhere, `From below` or `From above`. A double-stop or chord
+that slides into place as one works the same way: tap where one of its notes started and the rest follow. `Heard as one note?`
 moves a join from the note before into the note. `Bend` and `~ Vibrato` mark the note itself. A bend
 changes the note, so a bent note reads as the note it reaches, and so does a note with a quick start.
 The marks go into the tab the usual way, the same however you tapped them: *7b9*, *7~*, *5h7*, *8/10*,

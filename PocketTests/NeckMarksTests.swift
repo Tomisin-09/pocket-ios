@@ -148,11 +148,24 @@ final class NeckMarksTests: XCTestCase {
         XCTAssertNil(try JSONDecoder().decode(PieceTranscription.Tap.self, from: Data(lonely.utf8)).label,
                      "a one-note shape isn't a shape")
     }
+}
 
-    // MARK: - Heard as one: a lead-in (ADR 0230)
+/// **A note heard as one** (ADR 0230): a hammer-on, pull-off or slide inside one tap, as its lead-in, for
+/// one note or a shape moving as one; and the four ways in under the neck.
+final class LeadInTests: XCTestCase {
+
+    private let guitar = Instrument.guitar.standardTuning.engineOpenMidi   // [64, 59, 55, 50, 45, 40]
+
+    private func note(_ string: Int, _ fret: Int) -> FrettedNote {
+        FrettedNote(string: string, fret: fret)
+    }
 
     private func lead(_ string: Int, _ fret: Int, from start: LeadIn.Start, _ join: Join) -> FrettedNote {
         FrettedNote(string: string, fret: fret, leadIn: LeadIn(from: start, join: join))
+    }
+
+    private func placed(_ notes: FrettedNote..., into: Join? = nil) -> PieceLabel {
+        .fretted(notes, into: into)
     }
 
     func testALeadInIsWrittenInsideItsColumn() {
@@ -189,7 +202,7 @@ final class NeckMarksTests: XCTestCase {
         XCTAssertEqual(NeckJoin.tidied([placed(lead(2, 13, from: .below, .legato))])[0], placed(note(2, 13)),
                        "a hammer-on from nowhere")
         XCTAssertEqual(NeckJoin.tidied([placed(lead(2, 13, from: .below, .slide), note(1, 14))])[0],
-                       placed(note(2, 13), note(1, 14)), "a lead-in is one note's")
+                       placed(note(2, 13), note(1, 14)), "every note of a shape moves in, or none does")
     }
 
     func testTheFourWaysIn() {
@@ -205,7 +218,8 @@ final class NeckMarksTests: XCTestCase {
                        .inside(LeadInRequest(join: .legato, direction: .upward)))
         XCTAssertEqual(NeckJoin.route(.slide, into: 1, of: apart), .inside(LeadInRequest(join: .slide, direction: nil)))
         let shape: [PieceLabel?] = [placed(note(3, 13)), placed(note(2, 13), note(1, 14))]
-        XCTAssertEqual(NeckJoin.route(.slide, into: 1, of: shape), .unavailable, "a lead-in is one note's")
+        XCTAssertEqual(NeckJoin.route(.slide, into: 1, of: shape), .inside(LeadInRequest(join: .slide, direction: nil)),
+                       "a shape slides in as one")
         XCTAssertEqual(NeckJoin.route(.hammerOn, into: 0, of: [nil]), .unavailable, "nothing placed")
     }
 
@@ -225,12 +239,12 @@ final class NeckMarksTests: XCTestCase {
     func testAStartIsOnTheNotesStringOnTheSideItMovesFrom() {
         let target = note(2, 13)
         let hammer = LeadInRequest(join: .legato, direction: .upward)
-        XCTAssertTrue(NeckJoin.accepts(string: 2, fret: 11, asStartOf: target, for: hammer))
-        XCTAssertFalse(NeckJoin.accepts(string: 2, fret: 15, asStartOf: target, for: hammer),
+        XCTAssertTrue(NeckJoin.accepts(string: 2, fret: 11, asStartOf: [target], for: hammer))
+        XCTAssertFalse(NeckJoin.accepts(string: 2, fret: 15, asStartOf: [target], for: hammer),
                        "a hammer-on starts lower")
-        XCTAssertFalse(NeckJoin.accepts(string: 3, fret: 11, asStartOf: target, for: hammer), "another string")
-        XCTAssertFalse(NeckJoin.accepts(string: 2, fret: 13, asStartOf: target, for: hammer), "its own fret")
-        XCTAssertTrue(NeckJoin.accepts(string: 2, fret: 15, asStartOf: target,
+        XCTAssertFalse(NeckJoin.accepts(string: 3, fret: 11, asStartOf: [target], for: hammer), "another string")
+        XCTAssertFalse(NeckJoin.accepts(string: 2, fret: 13, asStartOf: [target], for: hammer), "its own fret")
+        XCTAssertTrue(NeckJoin.accepts(string: 2, fret: 15, asStartOf: [target],
                                        for: LeadInRequest(join: .slide, direction: nil)), "a slide, either side")
     }
 
@@ -240,6 +254,47 @@ final class NeckMarksTests: XCTestCase {
                        placed(lead(2, 14, from: .fret(11), .legato)))
         XCTAssertEqual(NeckPlacement.tap(string: 1, fret: 14, on: start, ringed: 2, chords: false).label,
                        placed(note(1, 14)), "on another string its start means nothing")
+    }
+
+    // MARK: - A shape moving as one (ADR 0230 D6)
+
+    func testADoubleStopSlidAsOneKeepsItsLeadInsAndStacksInTheTab() throws {
+        let slid = placed(lead(2, 7, from: .fret(5), .slide), lead(1, 8, from: .fret(6), .slide))
+        XCTAssertEqual(NeckJoin.tidied([slid])[0], slid, "both notes two frets up")
+        let tab = try XCTUnwrap(TabLine.render([slid], openMidi: guitar))
+        XCTAssertTrue(tab.contains("B|-6/8--|") && tab.contains("G|-5/7--|"), tab)
+        let fromBelow = placed(lead(2, 7, from: .below, .slide), lead(1, 8, from: .below, .slide))
+        XCTAssertEqual(NeckJoin.tidied([fromBelow])[0], fromBelow)
+        let apart = placed(lead(2, 7, from: .fret(5), .slide), lead(1, 8, from: .fret(7), .slide))
+        XCTAssertEqual(NeckJoin.tidied([apart])[0], placed(note(2, 7), note(1, 8)), "not moving as one")
+        let mixed = placed(lead(2, 7, from: .fret(5), .slide), lead(1, 8, from: .fret(6), .legato))
+        XCTAssertEqual(NeckJoin.tidied([mixed])[0], placed(note(2, 7), note(1, 8)), "one slid, one hammered")
+        XCTAssertTrue(NeckJoin.holds(.slide, into: 0, of: [slid]))
+    }
+
+    func testAShapesStartIsTappedOnAnyOfItsStringsAndTheRestFollow() throws {
+        let shape = [note(2, 7), note(1, 8)]
+        let started = try XCTUnwrap(NeckJoin.starts(string: 1, fret: 6, of: shape, join: .slide))
+        XCTAssertEqual(started, [lead(2, 7, from: .fret(5), .slide), lead(1, 8, from: .fret(6), .slide)])
+        let slide = LeadInRequest(join: .slide, direction: nil)
+        XCTAssertFalse(NeckJoin.accepts(string: 3, fret: 5, asStartOf: shape, for: slide), "not one of its strings")
+        XCTAssertFalse(NeckJoin.accepts(string: 2, fret: 7, asStartOf: shape, for: slide), "its own fret")
+        XCTAssertFalse(NeckJoin.accepts(string: 1, fret: 0, asStartOf: [note(2, 1), note(1, 3)], for: slide),
+                       "the G string's note would start off the neck")
+        let hammer = LeadInRequest(join: .legato, direction: .upward)
+        XCTAssertFalse(NeckJoin.accepts(string: 2, fret: 9, asStartOf: shape, for: hammer), "a hammer-on starts lower")
+    }
+
+    func testANoteMovedOrAddedInAShapeTakesItsMove() {
+        let slid = placed(lead(2, 7, from: .fret(5), .slide), lead(1, 8, from: .fret(6), .slide))
+        XCTAssertEqual(NeckPlacement.tap(string: 1, fret: 9, on: slid, ringed: 1, chords: true).label,
+                       placed(lead(2, 7, from: .fret(5), .slide), lead(1, 9, from: .fret(7), .slide)), "moved")
+        XCTAssertEqual(NeckPlacement.tap(string: 0, fret: 7, on: slid, ringed: 1, chords: true).label,
+                       placed(lead(2, 7, from: .fret(5), .slide), lead(1, 8, from: .fret(6), .slide),
+                              lead(0, 7, from: .fret(5), .slide)), "added")
+        let alone = placed(lead(2, 13, from: .fret(11), .legato))
+        XCTAssertEqual(NeckPlacement.tap(string: 2, fret: 14, on: alone, ringed: 2, chords: true).label,
+                       placed(lead(2, 14, from: .fret(11), .legato)), "a lone note keeps the fret it started from")
     }
 
     func testALeadInRoundTripsAndOddOnesReadSafely() throws {

@@ -133,9 +133,11 @@ struct NeckMarksLayer: View {
             let ink = GraphicsContext.Shading.color(PocketColor.practice)
             let line = StrokeStyle(lineWidth: 1.75, lineCap: .round, lineJoin: .round)
             drawShapeLinks(in: context, ink: ink)
+            // A shape's lead-ins are one move: one pill, on its top string.
+            let top = notes.map(\.string).min()
             for note in notes {
                 drawNoteMarks(note, in: context, ink: ink, line: line)
-                drawLeadIn(note, in: context)
+                drawLeadIn(note, labelled: note.string == top, in: context)
             }
             if let join { drawJoin(join, in: context) }
         }
@@ -206,7 +208,7 @@ struct NeckMarksLayer: View {
 
     /// A lead-in inside the note: a ring on the fret it started from, or from nowhere a short arrow in
     /// from the side it came, and the join's curve or arrow into the note.
-    private func drawLeadIn(_ note: FrettedNote, in context: GraphicsContext) {
+    private func drawLeadIn(_ note: FrettedNote, labelled: Bool, in context: GraphicsContext) {
         guard let leadIn = note.leadIn, let way = leadIn.direction(into: note.fret) else { return }
         let end = center(note.string, note.fret)
         let start: CGPoint
@@ -217,7 +219,7 @@ struct NeckMarksLayer: View {
         } else {
             start = CGPoint(x: end.x + (way == .upward ? -1.4 : 1.4) * NeckGeometry.pitch, y: end.y)
         }
-        drawLink(way.symbol(for: leadIn.join), from: start, to: end, labelled: true, in: context)
+        drawLink(way.symbol(for: leadIn.join), from: start, to: end, labelled: labelled, in: context)
     }
 
     /// One join drawn under a string, `start` to `end`: a curve for *h* and *p*, an arrow for a slide, and
