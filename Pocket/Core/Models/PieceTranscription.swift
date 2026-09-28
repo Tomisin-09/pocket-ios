@@ -65,14 +65,6 @@ struct PieceTranscription: Codable, Equatable, Sendable {
         taps.map { $0.label?.name(openMidi: openMidi ?? [], spelling: spelling) }
     }
 
-    /// The fretted notes in tap order, for `TabLine`. Unplaced taps are skipped.
-    var frettedNotes: [TabLine.Note] {
-        taps.compactMap { tap in
-            guard case .fretted(let string, let fret) = tap.label else { return nil }
-            return TabLine.Note(string: string, fret: fret)
-        }
-    }
-
     // MARK: - Storage
 
     func encoded() -> Data? { try? JSONEncoder().encode(self) }

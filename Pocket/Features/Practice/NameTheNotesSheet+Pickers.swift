@@ -110,18 +110,15 @@ struct NamingResultView: View {
     }
 
     @ViewBuilder private var tab: some View {
-        let notes = labels.compactMap { label -> TabLine.Note? in
-            guard case .fretted(let string, let fret) = label else { return nil }
-            return TabLine.Note(string: string, fret: fret)
-        }
-        if let text = TabLine.render(notes, openMidi: openMidi) {
+        let columns = TabLine.columns(of: labels, openMidi: openMidi)
+        if let text = TabLine.render(columns: columns, openMidi: openMidi) {
             ScrollView(.horizontal, showsIndicators: false) {
                 Text(text)
                     .font(.pocketMono(.footnote))
                     .foregroundStyle(PocketColor.textPrimary)
                     .fixedSize()
             }
-            let unplaced = labels.count - notes.count
+            let unplaced = labels.count - columns.count
             if unplaced > 0 {
                 Text("\(unplaced) not placed yet.")
                     .font(.futura(.caption))

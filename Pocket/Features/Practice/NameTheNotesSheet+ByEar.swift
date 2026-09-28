@@ -13,7 +13,7 @@ extension NameTheNotesSheet {
         return VStack(alignment: .leading, spacing: 8) {
             if onTheNeck, let reading {
                 let name = Text(spelling.name(pitchClass: reading.root)).bold().foregroundStyle(PocketColor.practice)
-                Text("Read from the neck: \(name)")
+                Text("Read from the neck: \(name)\(bentFrom(current))")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             }
@@ -36,6 +36,13 @@ extension NameTheNotesSheet {
                     .padding(.top, 6)
             }
         }
+    }
+
+    /// ", G7 bent a whole step" when the placed note is bent, so the read name isn't a surprise.
+    private func bentFrom(_ label: PieceLabel?) -> String {
+        guard let note = label?.singleNote, note.bend > 0 else { return "" }
+        let size = ["", "a half step", "a whole step", "a step and a half"][min(note.bend, 3)]
+        return ", \(fretText([FrettedNote(string: note.string, fret: note.fret)])) bent \(size)"
     }
 
     /// The kind a name saves as: the current answer's own when it was named by ear, else the one left

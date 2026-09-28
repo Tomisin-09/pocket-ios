@@ -189,7 +189,11 @@ moment of the record, then say what it was on one of two sheets: `Fret & string`
 it, or `By ear` for what you heard. Fret & string is the neck: tap where you played the note. Every spot
 carries its note name faintly, and the pass's other notes stay on the neck so you can see the lick's
 shape. `Where did you play it?` sets guitar or bass and the tuning for this piece only; a new tuning
-keeps your frets, and a new instrument clears them after asking. By ear has the twelve note names and,
+keeps your frets, and a new instrument clears them after asking. Under the neck, `Into it` says how you
+got to the note from the one before (picked, a hammer-on or pull-off, or a slide, offered only when the
+note before is on the same string), and `Bend` and `~ Vibrato` mark the note itself. A bend changes the
+note, so a bent note reads as the note it reaches. The marks go into the tab the usual way: *7b9*, *7~*,
+*5h7*, *8/10*. By ear has the twelve note names and,
 under them, the kinds of
 chord grouped by how many notes they hold. The kind you pick stays picked, and tapping a name saves it
 and moves on, so a solo named by ear is one tap a note. A note placed on the neck reads on By ear as

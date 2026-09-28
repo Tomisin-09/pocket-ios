@@ -137,6 +137,11 @@ struct NameTheNotesSheet: View {
             replacing = nil
             neckTarget = Self.fret(of: labels[active]) ?? neckTarget
         }
+        .onChange(of: labels) {
+            // A join lives on the second note; when the first moves, it can stop fitting (0227 D5).
+            let tidy = NeckJoin.tidied(labels)
+            if tidy != labels { labels = tidy }
+        }
         .onChange(of: mode) {
             replacing = nil
             neckTarget = Self.fret(of: labels[active]) ?? neckTarget
@@ -178,7 +183,18 @@ struct NameTheNotesSheet: View {
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
-                        ForEach(labels.indices, id: \.self) { chip($0) }
+                        ForEach(labels.indices, id: \.self) { index in
+                            // A join sits between the two chips it joins, on the neck's sheet.
+                            if mode == .fret, let join = NeckJoin.symbol(into: index, of: labels) {
+                                Text(join)
+                                    .font(.pocketMono(.caption))
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(PocketColor.practice)
+                                    .padding(.horizontal, -3)
+                                    .accessibilityHidden(true)
+                            }
+                            chip(index)
+                        }
                     }
                     .padding(.horizontal, 18)
                     .padding(.vertical, 1)
@@ -235,23 +251,28 @@ struct NameTheNotesSheet: View {
     private func chipText(_ index: Int) -> (text: String?, dim: Bool) {
         guard let label = labels[index] else { return (nil, false) }
         if mode == .fret {
-            if case .fretted(let string, let fret) = label { return (fretName(string: string, fret: fret), false) }
+            if label.isOnTheNeck { return (fretText(label.frettedNotes), false) }
             return (label.name(openMidi: tuning.openMidi, spelling: spelling), true)
         }
         return (label.name(openMidi: tuning.openMidi, spelling: spelling), false)
     }
 
-    /// The fret an answer sits on, when it's on the neck.
+    /// The fret the neck scrolls to for an answer on it: the middle of its frets, bends included.
     nonisolated static func fret(of label: PieceLabel?) -> Int? {
-        guard case .fretted(_, let fret) = label else { return nil }
-        return fret
+        let frets = (label?.frettedNotes ?? []).map { $0.fret + $0.bend / 2 }
+        guard let low = frets.min(), let high = frets.max() else { return nil }
+        return (low + high) / 2
     }
 
-    /// A placed note as tab says it, string then fret: "B8".
-    func fretName(string: Int, fret: Int) -> String {
+    /// Notes on the neck as tab says them, string then fret then marks, lowest string first: "B8",
+    /// "G7b9~".
+    func fretText(_ notes: [FrettedNote]) -> String {
         let names = TabLine.stringNames(openMidi: tuning.openMidi)
-        let stringName = names.indices.contains(string) ? names[string].trimmingCharacters(in: .whitespaces) : "?"
-        return "\(stringName)\(fret)"
+        return notes.sorted { $0.string > $1.string }.map { note in
+            let name = names.indices.contains(note.string)
+                ? names[note.string].trimmingCharacters(in: .whitespaces) : "?"
+            return name + TabLine.cell(note)
+        }.joined(separator: "·")
     }
 
     // MARK: - Moving and hearing
@@ -296,10 +317,7 @@ struct NameTheNotesSheet: View {
 
     /// Asked only when By ear would overwrite neck work (0227 D7). Every other change is one tap to redo.
     private func replacePrompt(_ label: PieceLabel) -> some View {
-        let placed: String = {
-            guard case .fretted(let string, let fret) = labels[active] else { return "" }
-            return fretName(string: string, fret: fret)
-        }()
+        let placed = fretText(labels[active]?.frettedNotes ?? [])
         let named = label.name(openMidi: tuning.openMidi, spelling: spelling) ?? ""
         return VStack(alignment: .leading, spacing: 10) {
             Text("Replace the note you placed on the neck (\(placed)) with \(named)?")

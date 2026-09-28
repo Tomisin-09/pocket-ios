@@ -611,9 +611,14 @@ each note you hear, then name them. The pieces, from the audio up:
   the synth isn't close enough to a guitar to compare against (0227 D8). By ear's tap rules
   (`EarPick`) and kind grouping (`EarKind`) are pure, in `Core/Theory/EarKind.swift`.
 - **Storage.** `Loop.transcriptionData: Data?` (additive, Optional) holds a `PieceTranscription`:
-  taps with optional `PieceLabel`s (pitch class · fret on a highest-first string · chord root +
-  `ChordQuality` suffix), plus the open strings any fret was placed against. Labels are tagged JSON,
-  so an unknown kind decodes as an unnamed tap. The archive carries it as `LoopRecord.transcription`.
+  taps with optional `PieceLabel`s (pitch class · notes on the neck · chord root + `ChordQuality`
+  suffix), plus the open strings any fret was placed against. Labels are tagged JSON, so an unknown
+  kind decodes as an unnamed tap. Notes on the neck are `FrettedNote`s (highest-first string, fret,
+  and since ADR 0227 D9 an optional `bend` and `vibrato`) with an optional `into` join; one note is
+  written as 0225's `fret` kind with the marks as optional keys, so an older build keeps the fret and
+  drops the marks, and two or more as a `shape`, which an older build reads as unnamed. `NeckJoin`
+  holds the join rule (same strings, every note moving one way; the direction picks h/p or / \ and is
+  never stored). The archive carries it as `LoopRecord.transcription`.
   `TabLine` draws the tab from the piece each time; no text copy is stored anywhere.
 
 **Each mode gates on what it needs** (ADR 0138). Both surfaces that decide which loops a player can

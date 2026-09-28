@@ -66,7 +66,7 @@ final class TabLineTests: XCTestCase {
     private let guitar = Instrument.guitar.standardTuning.engineOpenMidi
 
     func testATwoDigitFretWidensOnlyItsColumn() {
-        let tab = TabLine.render([.init(string: 1, fret: 5), .init(string: 1, fret: 10)], openMidi: guitar)
+        let tab = TabLine.render([.fretted(string: 1, fret: 5), .fretted(string: 1, fret: 10)], openMidi: guitar)
         XCTAssertEqual(tab, """
         e|--------|
         B|-5--10--|
@@ -78,8 +78,8 @@ final class TabLineTests: XCTestCase {
     }
 
     func testEveryLineIsTheSameWidth() throws {
-        let tab = try XCTUnwrap(TabLine.render([.init(string: 1, fret: 5), .init(string: 3, fret: 12),
-                                                .init(string: 0, fret: 0)], openMidi: guitar))
+        let tab = try XCTUnwrap(TabLine.render([.fretted(string: 1, fret: 5), .fretted(string: 3, fret: 12),
+                                                .fretted(string: 0, fret: 0)], openMidi: guitar))
         let widths = Set(tab.split(separator: "\n").map(\.count))
         XCTAssertEqual(widths.count, 1, tab)
     }
@@ -89,7 +89,7 @@ final class TabLineTests: XCTestCase {
     }
 
     func testBassHasFourLines() throws {
-        let tab = try XCTUnwrap(TabLine.render([.init(string: 3, fret: 5)],
+        let tab = try XCTUnwrap(TabLine.render([.fretted(string: 3, fret: 5)],
                                                openMidi: Instrument.bass.standardTuning.engineOpenMidi))
         XCTAssertEqual(tab.split(separator: "\n").map { String($0.prefix(2)) }, ["G|", "D|", "A|", "E|"])
         XCTAssertTrue(tab.hasSuffix("E|-5--|"), tab)
@@ -103,7 +103,7 @@ final class TabLineTests: XCTestCase {
 
     func testNothingPlacedNoTab() {
         XCTAssertNil(TabLine.render([], openMidi: guitar))
-        XCTAssertNil(TabLine.render([.init(string: 9, fret: 2)], openMidi: guitar))
+        XCTAssertNil(TabLine.render([.fretted(string: 9, fret: 2)], openMidi: guitar))
     }
 }
 

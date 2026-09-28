@@ -21,9 +21,15 @@ extension NameTheNotesSheet {
                 .tint(PocketColor.practice)
                 .accessibilityLabel("Instrument and tuning, \(tuning.label)")
             }
-            FretNeckBoard(stringNames: stringNames, maxFret: PieceLabel.maxFret,
-                          scrollTarget: neckTarget) { string, fret in
+            FretNeckBoard(stringNames: stringNames, maxFret: PieceLabel.maxFret, scrollTarget: neckTarget,
+                          headroom: Self.marksHeadroom) { string, fret in
                 neckSpot(string: string, fret: fret, isOther: others.contains(Spot(string: string, fret: fret)))
+            } marks: {
+                NeckMarksLayer(notes: labels[active]?.frettedNotes ?? [],
+                               previous: active > 0 ? labels[active - 1]?.frettedNotes ?? [] : [],
+                               join: NeckJoin.symbol(into: active, of: labels),
+                               stringCount: tuning.openMidi.count, maxFret: PieceLabel.maxFret,
+                               headroom: Self.marksHeadroom)
             }
             if let byEar = labels[active], !byEar.isOnTheNeck,
                let name = byEar.name(openMidi: tuning.openMidi, spelling: spelling) {
@@ -32,8 +38,13 @@ extension NameTheNotesSheet {
                     .foregroundStyle(PocketColor.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            marksControls
+                .padding(.top, 4)
         }
     }
+
+    /// Room above the top string for a bend's arrow and a vibrato's wave.
+    private static var marksHeadroom: CGFloat { 16 }
 
     /// One place on the neck, as a set member.
     struct Spot: Hashable {
@@ -48,16 +59,16 @@ extension NameTheNotesSheet {
 
     /// Where the pass's other answers sit on the neck: drawn in ink, a map of the lick so far.
     private var otherPlacedSpots: Set<Spot> {
-        Set(labels.indices.compactMap { index -> Spot? in
-            guard index != active, case .fretted(let string, let fret) = labels[index] else { return nil }
-            return Spot(string: string, fret: fret)
+        Set(labels.indices.flatMap { index -> [Spot] in
+            guard index != active else { return [] }
+            return (labels[index]?.frettedNotes ?? []).map { Spot(string: $0.string, fret: $0.fret) }
         })
     }
 
     /// A dot with its note name, spelled for the key (ADR 0123). **A faint name is a map, not a hint:** it
     /// reads the same whatever you heard, so it can't point at the answer.
     private func neckSpot(string: Int, fret: Int, isOther: Bool) -> some View {
-        let isPlaced = labels[active] == .fretted(string: string, fret: fret)
+        let isPlaced = (labels[active]?.frettedNotes ?? []).contains { $0.string == string && $0.fret == fret }
         let name = spelling.name(pitchClass: ((tuning.openMidi[string] + fret) % 12 + 12) % 12)
         let ink: Color = isPlaced ? PocketColor.background
             : isOther ? PocketColor.textPrimary : PocketColor.textSecondary.opacity(0.55)
@@ -82,10 +93,18 @@ extension NameTheNotesSheet {
         .accessibilityAddTraits(isPlaced ? .isSelected : [])
     }
 
-    /// A tap places the note being named, replacing whatever it was. Tapping the placed note does nothing.
-    /// A name given by ear just gives way: only overwriting neck work asks first (0227 D7).
+    /// A tap places the note being named, replacing whatever it was, and **the note keeps its marks**: a
+    /// bend moved one fret is still a bend. Tapping the placed note does nothing. A name given by ear just
+    /// gives way: only overwriting neck work asks first (0227 D7). A join that no longer fits is dropped
+    /// by the sheet's tidy.
     private func place(string: Int, fret: Int) {
-        labels[active] = .fretted(string: string, fret: fret)
         replacing = nil
+        guard case .fretted(let notes, let into) = labels[active], let kept = notes.first else {
+            labels[active] = .fretted(string: string, fret: fret)
+            return
+        }
+        guard !(notes.count == 1 && kept.string == string && kept.fret == fret) else { return }
+        labels[active] = .fretted([FrettedNote(string: string, fret: fret, bend: kept.bend, vibrato: kept.vibrato)],
+                                  into: into)
     }
 }

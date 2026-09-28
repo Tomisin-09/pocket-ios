@@ -20,7 +20,7 @@ struct SavedPieceSection: View {
                         .foregroundStyle(PocketColor.textPrimary)
                         .accessibilityIdentifier("count.saved.line")
                 }
-                if let tab = TabLine.render(piece.frettedNotes, openMidi: piece.openMidi ?? []) {
+                if let tab = TabLine.render(piece.labels, openMidi: piece.openMidi ?? []) {
                     VStack(alignment: .leading, spacing: 4) {
                         ScrollView(.horizontal, showsIndicators: false) {
                             Text(tab)
