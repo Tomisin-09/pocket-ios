@@ -36,7 +36,8 @@ On the device, hammer-ons and slides were hard to mark and pull-offs looked miss
   (lower for a hammer-on, higher for a pull-off, either side for a slide, and *From below* / *From
   above* beside it). For a shape: *Tap the fret one of its notes slid from; the others move with it*. A
   join from the tap before offers *Heard as one note?* (for a shape, *Moved into place as one?*) to move
-  it inside, and a lead-in offers *Change where it started*.
+  it inside, and a lead-in offers *Change where it started*. An ⓘ beside *Into it* says all this in a
+  few lines (added after the fourth device check, 0227 *As built*).
 - **D4 — The line names the tap.** *From note 29 (G11), heard as two notes*; or why it can't: *Note 29
   (D13) is on another string*, *is on the same fret*. On the first note of a pair it says the join goes
   on the second, rather than offering a start there.

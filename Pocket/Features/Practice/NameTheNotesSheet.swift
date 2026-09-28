@@ -52,6 +52,13 @@ enum NamingStrip {
 
     // MARK: - A phrase (0227 D2, after the device check)
 
+    /// The notes on the neck of the chip being heard, which the neck lights as they sound; none while
+    /// nothing plays, or for an answer named by ear.
+    static func heardNotes(_ labels: [PieceLabel?], hearing: Int?) -> [FrettedNote] {
+        guard let hearing, labels.indices.contains(hearing) else { return [] }
+        return labels[hearing]?.frettedNotes ?? []
+    }
+
     /// How many notes a tap can play: the note alone, up to eight, about a bar of quavers. Past that the
     /// strip's play button, the whole loop, is the better listen.
     static let phraseChoices = [1, 2, 3, 4, 6, 8]

@@ -8,16 +8,20 @@ import SwiftUI
 // Split out for file length.
 extension NameTheNotesSheet {
 
+    /// *Into it* and its ⓘ on a line of their own, the four ways in under them at full width: with the ⓘ
+    /// beside them they no longer fit one row on the smallest phone.
     var intoControls: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                pickerLabel("Into it").frame(width: 44, alignment: .leading)
-                MarkSegments(options: IntoChoice.allCases.map { choice in
-                    let route = NeckJoin.route(choice, into: active, of: labels)
-                    return MarkSegments.Option(title: choice.title, isOn: isLit(choice),
-                                               isEnabled: route != .unavailable) { choose(choice, route) }
-                })
+            HStack(spacing: 2) {
+                pickerLabel("Into it")
+                InfoPopoverButton(subject: "Into it", info: NamingInfo.into)
+                    .padding(.vertical, -8)
             }
+            MarkSegments(options: IntoChoice.allCases.map { choice in
+                let route = NeckJoin.route(choice, into: active, of: labels)
+                return MarkSegments.Option(title: choice.title, isOn: isLit(choice),
+                                           isEnabled: route != .unavailable) { choose(choice, route) }
+            })
             intoLine
         }
     }
@@ -186,4 +190,20 @@ extension NameTheNotesSheet {
             .buttonStyle(.borderless)
             .padding(.vertical, 2)
     }
+}
+
+/// What the ⓘ beside *Chords* and *Into it* say (ADR 0227 D4, D5; ADR 0230), kept together so the two read
+/// as one voice.
+enum NamingInfo {
+    static let chords =
+        "One tap can hold more than one note: a double-stop, a triad or a whole chord, one note per "
+        + "string, as in My chords. Turn Chords on, then tap the other strings. Tap a note twice to take it "
+        + "out. Bend and vibrato go on the ringed note, and the neck names what you placed. A chord you "
+        + "heard but didn't play is named on By ear."
+    static let into =
+        "How you got to this note: picked, a hammer-on or pull-off (fretted from a lower or higher fret on "
+        + "the same string, without picking it), or a slide.\n\nTapped twice, heard as two notes? It "
+        + "joins from the note before. Tapped once, heard as one? Pick how it started, then tap the fret "
+        + "it came from; a slide can also come in From below or From above. A double-stop that moves as "
+        + "one works the same way. The tab reads the same however you tapped it."
 }

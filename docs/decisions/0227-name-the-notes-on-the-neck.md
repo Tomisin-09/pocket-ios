@@ -87,7 +87,14 @@ loops and launches, three by default. Near the start of a pass there are fewer b
 phrase starts where its first note's slice would and ends where the named note's slice does, and it
 plays whatever lies between, a held note or a rest, because the count is what the player asked for and
 a cap would sometimes play fewer. Its notes are ringed as they sound, as the loop's are, and the play
-button stops it. Eight is the most: past that, the whole loop is the better listen.
+button stops it.
+
+**The neck plays along** (added after the fourth device check). While the loop or a phrase plays, on
+*Fret & string* the notes of the chip being heard glow where they were placed, popping in as each
+sounds and fading as the next takes over (only fading with Reduce Motion), so the lick is seen moving
+on the neck. It reads the same chip the strip rings, with no clock of its own. The neck doesn't scroll
+to follow: like the chip being named, the board never moves under a finger that's placing a note, so a
+note beyond the frets in view glows only on the strip. Eight is the most: past that, the whole loop is the better listen.
 
 ### D3 — The neck
 
@@ -246,6 +253,12 @@ protect from the start.
 **After the third device check** (2026-09-28): hammer-ons and slides were hard to mark and pull-offs
 looked missing, because a quick one is heard, and tapped, as one note. That lifts part of D10, so it is
 its own record: **ADR 0230**.
+
+**After the fourth device check** (2026-09-28):
+- **The neck plays along** (D2): the heard chip's notes glow on the neck during playback.
+- **An ⓘ beside *Chords* and *Into it*** (D4, D5), the app's shared `InfoPopoverButton`, says what each
+  does in a few lines. *Into it* and its ⓘ became a title line over the four ways in, which no longer
+  fit one row beside it on the smallest phone.
 
 ## Consequences
 

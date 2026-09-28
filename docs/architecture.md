@@ -600,7 +600,9 @@ each note you hear, then name them. The pieces, from the audio up:
 - **The render path.** Two leaves read the clock every frame (`TimelineView`s, ADR 0153), and each
   reports only a change: `LivePassRow` tells the model when the pass changes, and the naming strip's
   `HeardChipTracker`, there only while the sheet plays the loop or a phrase (`NamingStrip.Following`),
-  says which chip is being heard (`NamingStrip.heard`).
+  says which chip is being heard (`NamingStrip.heard`). The neck lights that chip's placed notes
+  (`NamingStrip.heardNotes`, a `HeardHalo` behind each spot) from the same state, with no clock of
+  its own, and never scrolls to follow.
 - **The slice.** `playSlice(from:length:rate:)` reads 0.35 s of the file (from 80 ms before the tap)
   into a PCM buffer, applies `AudioSlice.gain` sample by sample (a 5 ms rise, a 60 ms fall, zero at
   both ends), pads silence for the stretcher's latency, and plays it once through the loop's own

@@ -190,8 +190,9 @@ its 1. A pass of more than 24 notes gets a suggestion under the rows once the lo
 notes just before it, ending on it, so you hear how the line got there; each is ringed as it plays.
 *Hear 3 notes* at the top right of the strip sets how many, from *Just the note* to eight, and Red Moon
 remembers it. To hear the notes as a line, the play button at the start of the strip plays the whole
-loop at the speed you set, ringing each note as it goes by; tap a note to stop and hear it.
-Then say what it was on one of two sheets: `Fret & string` for where you played it, or `By ear` for what
+loop at the speed you set, ringing each note as it goes by; on Fret & string, where you placed each
+note also lights up on the neck as it plays. Tap a note to stop and hear it.
+Then say what it was on one of two sheets (the ⓘ beside `Chords` and `Into it` explains each): `Fret & string` for where you played it, or `By ear` for what
 you heard. Fret & string is the neck: tap where you played the note. Every spot carries its note name
 faintly, and the pass's other notes stay on the neck so you can see the lick's shape. `Where did you play
 it?` sets guitar or bass and the tuning for this piece only; a new tuning keeps your frets, and a new

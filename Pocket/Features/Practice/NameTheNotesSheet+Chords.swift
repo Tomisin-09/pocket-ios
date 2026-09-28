@@ -7,11 +7,17 @@ extension NameTheNotesSheet {
 
     var chordsControls: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Toggle(isOn: $chordsOn) {
+            // The ⓘ sits beside the switch, never in its label (`InfoPopoverButton`).
+            HStack(spacing: 2) {
                 Text("Chords")
                     .font(.futura(.subheadline))
+                InfoPopoverButton(subject: "Chords", info: NamingInfo.chords)
+                    .padding(.vertical, -8)
+                Spacer(minLength: 8)
+                Toggle("Chords", isOn: $chordsOn)
+                    .labelsHidden()
+                    .tint(PocketColor.practice)
             }
-            .tint(PocketColor.practice)
             if chordsOn {
                 Text("Tap other strings to build a chord, one note per string, as in My chords. Tap a note "
                      + "twice to take it out. Bend and vibrato go on the ringed note.")
