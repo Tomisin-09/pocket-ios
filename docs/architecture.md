@@ -618,7 +618,9 @@ each note you hear, then name them. The pieces, from the audio up:
   written as 0225's `fret` kind with the marks as optional keys, so an older build keeps the fret and
   drops the marks, and two or more as a `shape`, which an older build reads as unnamed. `NeckJoin`
   holds the join rule (same strings, every note moving one way; the direction picks h/p or / \ and is
-  never stored). The archive carries it as `LoopRecord.transcription`.
+  never stored). `NeckShape` reads a shape through `ChordNamer` (root position first, a slash name for an
+  inversion, an upside-down power chord as a 4th) or as an interval; `NeckPlacement` holds the tap rule
+  (Chords off replaces; on, one note per string) and turns a My chords `ChordVoicing` into a shape. The archive carries it as `LoopRecord.transcription`.
   `TabLine` draws the tab from the piece each time; no text copy is stored anywhere.
 
 **Each mode gates on what it needs** (ADR 0138). Both surfaces that decide which loops a player can

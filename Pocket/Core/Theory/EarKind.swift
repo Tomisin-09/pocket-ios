@@ -65,10 +65,13 @@ struct EarReading: Equatable, Sendable {
 }
 
 extension PieceLabel {
-    /// What this answer says at the By ear level. A placed note reads as the note it sounds, so nothing is
-    /// entered twice. `nil` when there's nothing to read: a fret past the strings it was written against.
+    /// What this answer says at the By ear level. A placed note reads as the note it sounds and a shape as
+    /// the chord it spells, so nothing is entered twice. `nil` when there's nothing to read: a fret past
+    /// the strings it was written against, or a shape that spells no chord.
     func earReading(openMidi: [Int]) -> EarReading? {
         switch self {
+        case .fretted(let notes, _) where notes.count > 1:
+            return NeckShape.read(notes, openMidi: openMidi)?.chord
         case .pitchClass, .fretted:
             return pitchClass(openMidi: openMidi).map { EarReading(root: $0, kind: .note) }
         case .chord(let root, let suffix):

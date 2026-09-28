@@ -38,6 +38,13 @@ extension NameTheNotesSheet {
                     .foregroundStyle(PocketColor.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            if let shape = NeckShape.read(labels[active]?.frettedNotes ?? [], openMidi: tuning.openMidi) {
+                let name = Text(shape.name(spelling: spelling)).bold().foregroundStyle(PocketColor.practice)
+                Text("\(shape.word) · \(name)")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            chordsControls
             marksControls
                 .padding(.top, 4)
         }
@@ -68,7 +75,10 @@ extension NameTheNotesSheet {
     /// A dot with its note name, spelled for the key (ADR 0123). **A faint name is a map, not a hint:** it
     /// reads the same whatever you heard, so it can't point at the answer.
     private func neckSpot(string: Int, fret: Int, isOther: Bool) -> some View {
-        let isPlaced = (labels[active]?.frettedNotes ?? []).contains { $0.string == string && $0.fret == fret }
+        let notes = labels[active]?.frettedNotes ?? []
+        let isPlaced = notes.contains { $0.string == string && $0.fret == fret }
+        // In a shape, the ringed note is the one bend and vibrato go on.
+        let isRinged = isPlaced && notes.count > 1 && string == ringed
         let name = spelling.name(pitchClass: ((tuning.openMidi[string] + fret) % 12 + 12) % 12)
         let ink: Color = isPlaced ? PocketColor.background
             : isOther ? PocketColor.textPrimary : PocketColor.textSecondary.opacity(0.55)
@@ -85,26 +95,25 @@ extension NameTheNotesSheet {
                 .frame(width: 24, height: 24)
                 .background(Circle().fill(fill))
                 .overlay(Circle().stroke(isPlaced || isOther ? .clear : PocketColor.surfaceBorder, lineWidth: 1))
+                .overlay(Circle().inset(by: -3.5).stroke(isRinged ? PocketColor.practice : .clear, lineWidth: 1.5))
                 .frame(width: 30, height: 30)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(stringNames[string]) string, \(fret == 0 ? "open" : "fret \(fret)"), \(name)")
         .accessibilityAddTraits(isPlaced ? .isSelected : [])
+        .accessibilityHint(isRinged ? "Ringed. Tap again to take it out." : "")
     }
 
-    /// A tap places the note being named, replacing whatever it was, and **the note keeps its marks**: a
-    /// bend moved one fret is still a bend. Tapping the placed note does nothing. A name given by ear just
-    /// gives way: only overwriting neck work asks first (0227 D7). A join that no longer fits is dropped
-    /// by the sheet's tidy.
+    /// A tap on the neck, by `NeckPlacement`'s rules: with Chords off it replaces the note (which keeps its
+    /// marks), with Chords on it builds a shape one note per string. A name given by ear just gives way:
+    /// only overwriting neck work asks first (0227 D7). A join that no longer fits is dropped by the
+    /// sheet's tidy.
     private func place(string: Int, fret: Int) {
         replacing = nil
-        guard case .fretted(let notes, let into) = labels[active], let kept = notes.first else {
-            labels[active] = .fretted(string: string, fret: fret)
-            return
-        }
-        guard !(notes.count == 1 && kept.string == string && kept.fret == fret) else { return }
-        labels[active] = .fretted([FrettedNote(string: string, fret: fret, bend: kept.bend, vibrato: kept.vibrato)],
-                                  into: into)
+        let outcome = NeckPlacement.tap(string: string, fret: fret, on: labels[active], ringed: ringed,
+                                        chords: chordsOn)
+        if outcome.label != labels[active] { labels[active] = outcome.label }
+        ringed = outcome.ringed
     }
 }

@@ -43,13 +43,14 @@ enum PieceLabel: Equatable, Hashable, Sendable {
     }
 
     /// The pitch class this label names, or `nil` when there isn't one: a fret past the strings it was
-    /// written against, or a shape. A placed note answers with the note it **sounds**, its bend included
-    /// (ADR 0227 D9); a chord answers with its **root**.
+    /// written against, or a shape that spells no chord. A placed note answers with the note it
+    /// **sounds**, its bend included (ADR 0227 D9); a chord, named or placed, answers with its **root**.
     func pitchClass(openMidi: [Int]) -> Int? {
         switch self {
         case .pitchClass(let value):
             return Self.normalised(value)
-        case .fretted:
+        case .fretted(let notes, _):
+            if notes.count > 1 { return NeckShape.read(notes, openMidi: openMidi)?.chord?.root }
             return midiNote(openMidi: openMidi).map(Self.normalised)
         case .chord(let root, _):
             return Self.normalised(root)
@@ -63,11 +64,14 @@ enum PieceLabel: Equatable, Hashable, Sendable {
     }
 
     /// How the label reads in a line of names, e.g. `"D♯"`, `"Am7"`. A placed note reads as the note it
-    /// sounds; `nil` only when that can't be worked out.
+    /// sounds, and a shape as what it spells (`"Am/C"`, or `"4th"` for a double-stop that isn't a chord);
+    /// `nil` only when that can't be worked out.
     func name(openMidi: [Int], spelling: NoteSpelling) -> String? {
         switch self {
         case .chord(let root, let suffix):
             return spelling.name(pitchClass: root) + suffix
+        case .fretted(let notes, _) where notes.count > 1:
+            return NeckShape.read(notes, openMidi: openMidi)?.shortName(spelling: spelling)
         case .pitchClass, .fretted:
             return pitchClass(openMidi: openMidi).map { spelling.name(pitchClass: $0) }
         }

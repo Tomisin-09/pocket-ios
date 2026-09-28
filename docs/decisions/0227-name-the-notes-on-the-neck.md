@@ -1,6 +1,7 @@
 # ADR 0227 — Name the notes on the neck: where you played it, or what you heard
 
-- **Status:** Accepted. Building on `pocket-338-name-the-notes-on-the-neck`.
+- **Status:** Accepted. Built on `pocket-338-name-the-notes-on-the-neck` in the four commits of the build
+  order. Still owed: the device checks under Consequences.
 - **Date:** 2026-09-28
 - **Amends:** ADR 0225 — **D5**: the three sheets become two (*Fret & string* and *By ear*), the
   chip grid becomes a strip, picking no longer sounds, and *Hear it, then mine* is withdrawn. **D6**: a
@@ -193,6 +194,10 @@ One branch, before the manual reshoot, in four commits after this record, each a
 
 Reading across sheets lands with whatever it reads, so no commit shows a sheet reading something that
 doesn't exist yet.
+
+**As built:** By ear's read of a placed note (and its ask before replacing one) landed in commit 1, not
+2: the string buttons and stepper still in commit 1 already placed notes, so there was neck work to
+protect from the start.
 
 ## Consequences
 

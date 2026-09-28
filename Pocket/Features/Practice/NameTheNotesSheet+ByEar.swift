@@ -10,18 +10,22 @@ extension NameTheNotesSheet {
         // What the answer says here: named on this sheet (filled), or read off the neck (outlined).
         let reading = current?.earReading(openMidi: tuning.openMidi)
         let onTheNeck = current?.isOnTheNeck ?? false
+        let shape = NeckShape.read(current?.frettedNotes ?? [], openMidi: tuning.openMidi)
+        // A shape that spells no chord still has notes: they're outlined, loose, rather than nothing.
+        let loose = shape?.chord == nil ? shape?.pitchClasses ?? [] : []
         return VStack(alignment: .leading, spacing: 8) {
-            if onTheNeck, let reading {
-                let name = Text(spelling.name(pitchClass: reading.root)).bold().foregroundStyle(PocketColor.practice)
-                Text("Read from the neck: \(name)\(bentFrom(current))")
+            if onTheNeck, let line = readLine(current, reading: reading, shape: shape) {
+                line
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             pickerLabel("What did you hear?")
             LazyVGrid(columns: sixColumns, spacing: 6) {
                 ForEach(0..<12, id: \.self) { pitchClass in
+                    let isRead = reading?.root == pitchClass || loose.contains(pitchClass)
                     pickButton(spelling.name(pitchClass: pitchClass),
-                               state: reading?.root != pitchClass ? .plain : onTheNeck ? .read : .picked) {
+                               state: !isRead ? .plain : onTheNeck ? .read : .picked) {
                         apply(EarPick.name(pitchClass, as: activeKind, over: current, openMidi: tuning.openMidi))
                     }
                 }
@@ -31,11 +35,31 @@ extension NameTheNotesSheet {
                 ForEach(EarKind.groups.prefix(2), id: \.title) { kindRow($0, reading: reading, onTheNeck: onTheNeck) }
             }
             .padding(.top, 6)
+            Text("Any other double-stop is named on the neck, by its interval.")
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
             ForEach(EarKind.groups.dropFirst(2), id: \.title) { group in
                 kindRow(group, reading: reading, onTheNeck: onTheNeck)
                     .padding(.top, 6)
             }
         }
+    }
+
+    /// What the neck's answer reads as here (0227 D7): the note it sounds, the chord a shape spells, or,
+    /// for a shape that spells none, its interval and notes.
+    private func readLine(_ current: PieceLabel?, reading: EarReading?, shape: ShapeReading?) -> Text? {
+        let tint = PocketColor.practice
+        guard let shape else {
+            guard let reading else { return nil }
+            let name = Text(spelling.name(pitchClass: reading.root)).bold().foregroundStyle(tint)
+            return Text("Read from the neck: \(name)\(bentFrom(current))")
+        }
+        let name = Text(shape.name(spelling: spelling)).bold().foregroundStyle(tint)
+        if shape.chord != nil { return Text("Read from your \(shape.word.lowercased()) on the neck: \(name)") }
+        let names = shape.pitchClasses.map { spelling.name(pitchClass: $0) }
+        let notes = names.count > 1 ? names.dropLast().joined(separator: ", ") + " and " + names[names.count - 1]
+            : names.joined()
+        return Text("Read from the neck: a \(shape.word.lowercased()), \(name) (\(notes))")
     }
 
     /// ", G7 bent a whole step" when the placed note is bent, so the read name isn't a surprise.

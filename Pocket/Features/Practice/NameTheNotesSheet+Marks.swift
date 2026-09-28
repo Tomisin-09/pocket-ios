@@ -7,7 +7,7 @@ import SwiftUI
 extension NameTheNotesSheet {
 
     var marksControls: some View {
-        let note = labels[active]?.singleNote
+        let note = ringedNote
         let direction = NeckJoin.direction(into: active, of: labels)
         let into = currentJoin
         return VStack(alignment: .leading, spacing: 8) {
@@ -91,7 +91,10 @@ extension NameTheNotesSheet {
         case .first: return "The first note has nothing before it."
         case .previousUnnamed: return "Name the note before this one first."
         case .previousByEar: return "The note before isn’t on the neck."
-        case .otherStrings: return "Only from a note on the same string."
+        case .otherStrings:
+            let shape = (labels[active]?.frettedNotes.count ?? 0) > 1
+                || (active > 0 && (labels[active - 1]?.frettedNotes.count ?? 0) > 1)
+            return shape ? "Only from a shape on the same strings." : "Only from a note on the same string."
         case .sameFret: return "The note before is on the same fret."
         case .mixedDirections: return "Every note has to move the same way."
         }
@@ -102,10 +105,17 @@ extension NameTheNotesSheet {
         labels[active] = .fretted(notes, into: join)
     }
 
-    /// Change the marks on the note being named.
+    /// The note bend and vibrato go on: the one note, or a shape's ringed note (0227 D5).
+    private var ringedNote: FrettedNote? {
+        let notes = labels[active]?.frettedNotes ?? []
+        return notes.first { $0.string == ringed } ?? notes.last
+    }
+
+    /// Change the marks on the note being named, or on a shape's ringed note.
     private func mark(_ change: (inout FrettedNote) -> Void) {
-        guard case .fretted(var notes, let into) = labels[active], notes.count == 1 else { return }
-        change(&notes[0])
+        guard case .fretted(var notes, let into) = labels[active], !notes.isEmpty else { return }
+        let index = notes.firstIndex { $0.string == ringed } ?? notes.count - 1
+        change(&notes[index])
         labels[active] = .fretted(notes, into: into)
     }
 }
@@ -165,6 +175,7 @@ struct NeckMarksLayer: View {
         Canvas { context, _ in
             let ink = GraphicsContext.Shading.color(PocketColor.practice)
             let line = StrokeStyle(lineWidth: 1.75, lineCap: .round, lineJoin: .round)
+            drawShapeLinks(in: context, ink: ink)
             for note in notes {
                 drawNoteMarks(note, in: context, ink: ink, line: line)
             }
@@ -177,6 +188,22 @@ struct NeckMarksLayer: View {
 
     private func center(_ string: Int, _ fret: Int) -> CGPoint {
         NeckGeometry.center(string: string, fret: fret, headroom: headroom)
+    }
+
+    /// A shape's notes joined string to string, so a spread grip reads as one shape, not scattered dots.
+    private func drawShapeLinks(in context: GraphicsContext, ink: GraphicsContext.Shading) {
+        let sorted = notes.sorted { $0.string < $1.string }
+        for (upper, lower) in zip(sorted, sorted.dropFirst()) {
+            let start = center(upper.string, upper.fret)
+            let end = center(lower.string, lower.fret)
+            let length = hypot(end.x - start.x, end.y - start.y)
+            guard length > 26 else { continue }
+            let unit = CGPoint(x: (end.x - start.x) / length, y: (end.y - start.y) / length)
+            var link = Path()
+            link.move(to: CGPoint(x: start.x + unit.x * 12, y: start.y + unit.y * 12))
+            link.addLine(to: CGPoint(x: end.x - unit.x * 12, y: end.y - unit.y * 12))
+            context.stroke(link, with: ink, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+        }
     }
 
     private func drawNoteMarks(_ note: FrettedNote, in context: GraphicsContext, ink: GraphicsContext.Shading,

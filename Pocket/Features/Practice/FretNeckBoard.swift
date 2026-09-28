@@ -12,6 +12,11 @@ enum NeckGeometry {
     }
 }
 
+/// A fret as a scroll target, typed apart from every other integer id on the board.
+private struct FretAnchor: Hashable {
+    let fret: Int
+}
+
 /// The **draw-your-own neck** (ADR 0065), shared since ADR 0227 D3 lifted it out of the scales editor:
 /// string letters pinned on the left, then a board of frets 0…`maxFret` that scrolls sideways, so any hand
 /// position is reachable without paging a window, with the inlays a real neck marks and a fret-number
@@ -66,11 +71,11 @@ struct FretNeckBoard<Cell: View, Marks: View>: View {
                     }
                 }
                 .onAppear {
-                    if let scrollTarget { proxy.scrollTo(scrollTarget, anchor: .center) }
+                    if let scrollTarget { proxy.scrollTo(FretAnchor(fret: scrollTarget), anchor: .center) }
                 }
                 .onChange(of: scrollTarget) { _, fret in
                     guard let fret else { return }
-                    withAnimation(.easeInOut(duration: 0.2)) { proxy.scrollTo(fret, anchor: .center) }
+                    withAnimation(.easeInOut(duration: 0.2)) { proxy.scrollTo(FretAnchor(fret: fret), anchor: .center) }
                 }
             }
         }
@@ -102,7 +107,9 @@ struct FretNeckBoard<Cell: View, Marks: View>: View {
     }
 
     /// The fret-number ruler under the board — one label per fret across the full neck. Each carries its
-    /// fret as a scroll `.id` so the `ScrollViewReader` can bring a fret into view.
+    /// fret as a scroll `.id` so the `ScrollViewReader` can bring a fret into view. The id is a
+    /// `FretAnchor`, not the bare number: the string rows' `ForEach` ids are small integers too, and
+    /// `scrollTo(2)` found the whole G-string row and centred the board instead of fret 2.
     private var fretNumbers: some View {
         HStack(spacing: 4) {
             ForEach(0...maxFret, id: \.self) { fret in
@@ -110,7 +117,7 @@ struct FretNeckBoard<Cell: View, Marks: View>: View {
                     .font(.futura(.caption2))
                     .foregroundStyle(PocketColor.textSecondary.opacity(0.7))
                     .frame(width: 30)
-                    .id(fret)
+                    .id(FretAnchor(fret: fret))
             }
         }
     }

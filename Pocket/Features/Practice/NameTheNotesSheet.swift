@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// The two ways to name a tap (ADR 0227 D1): **where you played it**, or **what you heard**. One label type
@@ -72,6 +73,13 @@ struct NameTheNotesSheet: View {
     /// The fret the neck scrolls to: the selected chip's note, set when the chip changes rather than on
     /// every tap, so placing a note never slides the board out from under the finger.
     @State var neckTarget: Int?
+    /// **Chords** on the neck (0227 D4): one note per string, so a tap adds rather than replaces. Off by
+    /// default; on when the piece already holds a shape.
+    @State var chordsOn: Bool
+    /// The string of the **ringed** note in a shape, the one bend and vibrato go on.
+    @State var ringed: Int?
+    /// The player's saved shapes (My chords, ADR 0095), newest first, to drop onto a tap.
+    @Query(sort: \SavedChord.createdAt, order: .reverse) var savedChords: [SavedChord]
 
     init(request: NamingRequest, player: ContinuousLoopPlayer, spelling: NoteSpelling, loopType: LoopType,
          onDone: @escaping (NamingResult) -> Void) {
@@ -88,6 +96,8 @@ struct NameTheNotesSheet: View {
         _tuning = State(initialValue: NamingTuning(openMidi: request.openMidi ?? tuner.openMidi,
                                                    label: request.tuningLabel ?? tuner.label))
         _neckTarget = State(initialValue: labels.first.flatMap { Self.fret(of: $0) })
+        _chordsOn = State(initialValue: labels.contains { ($0?.frettedNotes.count ?? 0) > 1 })
+        _ringed = State(initialValue: labels.first??.frettedNotes.last?.string)
     }
 
     var body: some View {
@@ -136,6 +146,7 @@ struct NameTheNotesSheet: View {
         .onChange(of: active) {
             replacing = nil
             neckTarget = Self.fret(of: labels[active]) ?? neckTarget
+            ringed = labels[active]?.frettedNotes.last?.string
         }
         .onChange(of: labels) {
             // A join lives on the second note; when the first moves, it can stop fitting (0227 D5).
@@ -251,10 +262,16 @@ struct NameTheNotesSheet: View {
     private func chipText(_ index: Int) -> (text: String?, dim: Bool) {
         guard let label = labels[index] else { return (nil, false) }
         if mode == .fret {
+            // A chord of four notes or more is too long to spell out on a chip; its name says it.
+            if label.frettedNotes.count > 3 {
+                return (label.name(openMidi: tuning.openMidi, spelling: spelling), false)
+            }
             if label.isOnTheNeck { return (fretText(label.frettedNotes), false) }
             return (label.name(openMidi: tuning.openMidi, spelling: spelling), true)
         }
-        return (label.name(openMidi: tuning.openMidi, spelling: spelling), false)
+        // On By ear a shape that spells no chord shows its interval or notes, dimmed: nothing to name.
+        let unread = label.isOnTheNeck && label.earReading(openMidi: tuning.openMidi) == nil
+        return (label.name(openMidi: tuning.openMidi, spelling: spelling), unread)
     }
 
     /// The fret the neck scrolls to for an answer on it: the middle of its frets, bends included.
@@ -313,14 +330,19 @@ struct NameTheNotesSheet: View {
         if active < labels.count - 1 { active += 1 }
     }
 
-    // MARK: - Replace or keep
+}
+
+// MARK: - Replace or keep
+
+extension NameTheNotesSheet {
 
     /// Asked only when By ear would overwrite neck work (0227 D7). Every other change is one tap to redo.
     private func replacePrompt(_ label: PieceLabel) -> some View {
         let placed = fretText(labels[active]?.frettedNotes ?? [])
         let named = label.name(openMidi: tuning.openMidi, spelling: spelling) ?? ""
         return VStack(alignment: .leading, spacing: 10) {
-            Text("Replace the note you placed on the neck (\(placed)) with \(named)?")
+            Text("Replace the \(labels[active]?.frettedNotes.count ?? 0 > 1 ? "shape" : "note") you placed on the "
+                 + "neck (\(placed)) with \(named)?")
                 .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)

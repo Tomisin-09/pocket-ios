@@ -65,7 +65,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   every note named faintly and the pass's other notes showing the lick's shape, on guitar or bass in
   any of the tuner's tunings, chosen for that piece. Mark how you played it: a bend (drawn as an arrow
   to where it lands, and read as the note it reaches), vibrato, and a hammer-on, pull-off or slide from
-  the note before, all written into the tab the usual way (`7b9`, `7~`, `5h7`, `8/10`). By ear keeps the
+  the note before, all written into the tab the usual way (`7b9`, `7~`, `5h7`, `8/10`). Turn on **Chords**
+  to place double-stops, triads and full chords, one note per string, or drop one of **My chords** in a
+  tap; the neck names what you placed (*Am/C*, or *a 4th*). By ear keeps the
   kind you picked, so naming a solo
   is one tap a note, and it asks before replacing a note you placed on the neck. Play your
   answer on your own instrument against **Hear it again** and decide whether they match; Red Moon never
