@@ -178,11 +178,12 @@ Each has its own run screen, and each writes into the journal with its own tag.
 
 ### Count the notes
 
-`Train your ear` carries a `Count the notes` section under its play and tempo controls, for working a
-lick out by ear. While the loop plays, tap the pad once for every note you hear. Each pass through the
-loop gets its own row of dots, the one playing now on top, so you can see when your passes agree. Tap a
-row to pick that pass. `Show beats` adds the song's beat lines and a count for each beat. It stays off
-until you turn it on, and only appears once the song has a tempo and its 1.
+`Train your ear` carries a `Count the notes` section under its play and tempo controls and its
+`Note what you hear` box, for working a lick out by ear. While the loop plays, tap the pad once for every
+note you hear. Each pass through the loop gets its own row of dots, the one playing now on top, so you
+can see when your passes agree. Tap a row to pick that pass. `Show beats` adds the song's beat lines and
+a count for each beat. It stays off until you turn it on, and only appears once the song has a tempo and
+its 1.
 
 `Name the notes` lays the picked pass out as a strip of numbered notes. Tap one to hear just that moment
 of the record. To hear the notes as a line, the play button at the start of the strip plays the whole

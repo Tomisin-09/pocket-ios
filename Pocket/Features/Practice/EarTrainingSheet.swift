@@ -71,15 +71,17 @@ struct EarTrainingView: View {
                                            bedNoun: "loop",
                                            onOpenTakes: openTakes)
                 }
+                // Straight under the loop, above Count the notes: a thought about what you heard is the
+                // quick thing, and it shouldn't sit below a long tapping and naming section.
+                JournalNoteComposer(owner: .loop(loop), kind: .ear,
+                                    header: "Note what you hear",
+                                    placeholder: "What did you hear? "
+                                        + "(e.g. starts on the b3, descending run)")
                 CountTheNotesSection(model: counting, player: player, stopLoop: stopForNaming)
                 SavedPieceSection(loop: loop, spelling: counting.spelling) {
                     stopForNaming()
                     counting.nameSaved()
                 }
-                JournalNoteComposer(owner: .loop(loop), kind: .ear,
-                                    header: "Note what you hear",
-                                    placeholder: "What did you hear? "
-                                        + "(e.g. starts on the b3, descending run)")
             }
         }
         .onAppear {
