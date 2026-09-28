@@ -120,7 +120,7 @@ struct CountTheNotesSection: View {
             .tint(PocketColor.practice)
             .disabled(model.targetPass == nil)
             Button("Save") {
-                model.requestSave(showingBeats: beatsOn, context: modelContext)
+                model.requestSave(context: modelContext)
             }
             .buttonStyle(.bordered)
             .tint(PocketColor.journal)

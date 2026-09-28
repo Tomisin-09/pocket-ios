@@ -85,6 +85,9 @@ extension JournalTabView {
                 context.delete(take)
                 try? context.save()
             })
+        case .piece:
+            // A piece row has no hold menu (ADR 0229); it belongs to its loop, not to the feed.
+            return
         }
         haptic(.light)
     }
@@ -104,6 +107,7 @@ extension JournalTabView {
         switch item {
         case .note(let entry): entry.isPinned.toggle()
         case .take(let take): take.isPinned.toggle()
+        case .piece: return
         }
         try? modelContext.save()
         haptic(.light)
@@ -118,6 +122,8 @@ extension JournalTabView {
             return "this note"
         case .take(let take):
             return take.title.map { "“\($0)”" } ?? "this take"
+        case .piece:
+            return "this piece"
         }
     }
 }

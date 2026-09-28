@@ -5,9 +5,9 @@ import Foundation
 ///
 /// Why this is structured, and not a line of text in the Journal: the song map (`docs/plans/song-map.md`)
 /// lays every solved piece of a song on one board, and it needs to know **where** each note sits and
-/// **what** it is. The Journal line is the dated history; this is the current answer. Saving again
-/// replaces it. **Edit pieces, never the picture:** nothing else stores a transcription, so nothing can
-/// drift from it.
+/// **what** it is. Saving again replaces it, and the Journal shows it as one row per loop, drawn from
+/// this (ADR 0229), not a line per save. **Edit pieces, never the picture:** nothing else stores a
+/// transcription, so nothing can drift from it.
 ///
 /// **Taps are song seconds, never beats.** The beat grid can be wrong (one tempo per song, ADR 0154), and
 /// a tap stored as a beat would move every time the grid was corrected. In seconds, a correction re-divides
@@ -27,6 +27,9 @@ struct PieceTranscription: Codable, Equatable, Sendable {
     var openMidi: [Int]?
     /// How the tab's strings were described when it was written, e.g. "Guitar · Standard".
     var tuningLabel: String?
+    /// When the piece last changed: saved from a pass, or its names edited. Where it sits in the
+    /// Journal (ADR 0229). `nil` on a piece saved before that, until `PieceDateBackfill` stamps it.
+    var changedAt: Date?
 
     struct Tap: Codable, Equatable, Sendable {
         /// Where the note is, in seconds from the top of the song.
@@ -63,6 +66,14 @@ struct PieceTranscription: Codable, Equatable, Sendable {
     /// The names in tap order, `nil` where a tap is unnamed.
     func names(spelling: NoteSpelling) -> [String?] {
         taps.map { $0.label?.name(openMidi: openMidi ?? [], spelling: spelling) }
+    }
+
+    /// The piece's line, *"11 notes. A C D D♯ E"*, as *Saved on this loop* and the Journal both show
+    /// it. A piece whose every answer is a chord counts chords.
+    func summary(spelling: NoteSpelling) -> String? {
+        let named = taps.compactMap(\.label)
+        return TapTally.summary(count: count, names: names(spelling: spelling), perBeat: nil,
+                                countsChords: !named.isEmpty && named.allSatisfy(\.isChord))
     }
 
     // MARK: - Storage

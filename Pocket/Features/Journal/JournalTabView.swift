@@ -115,7 +115,9 @@ struct JournalTabView: View {
 
     /// Whether the journal holds anything at all, **before** any filter. Gates the month rail: a
     /// fresh install should not meet a filter control before it has met an entry (ADR 0207 D6).
-    var hasAnyHistory: Bool { !entries.isEmpty || !takes.isEmpty }
+    var hasAnyHistory: Bool {
+        !entries.isEmpty || !takes.isEmpty || loops.contains { $0.transcriptionData != nil }
+    }
 
     /// Whether there is anywhere to jump *to* — more than one day on the feed. Shared by the day
     /// header (ADR 0207 D7) and the ⋯ item, so the two doors to one sheet cannot disagree.
@@ -124,7 +126,7 @@ struct JournalTabView: View {
     /// The scope- then search-filtered feed, minus anything awaiting deletion. Filtering here rather
     /// than at the row is what makes `sections` and the empty state follow automatically.
     private var items: [JournalTimeline.Item] {
-        let merged = JournalTimeline.merge(entries: entries, takes: takes)
+        let merged = JournalTimeline.merge(entries: entries, takes: takes, pieces: JournalPiece.all(in: loops))
             .filter { !rowDeletion.isPending($0.id) }
         let scoped = JournalTimeline.filter(merged, scope: scope)
         let owned = JournalTimeline.filter(scoped, owner: ownerFilter)
@@ -269,6 +271,8 @@ struct JournalTabView: View {
             Text("All").tag(JournalTimeline.Scope.all)
             Text("Notes").tag(JournalTimeline.Scope.notes)
             Text("Takes").tag(JournalTimeline.Scope.takes)
+            // A loop's saved piece, one row per loop (ADR 0229).
+            Text("Pieces").tag(JournalTimeline.Scope.pieces)
         }
         .pickerStyle(.segmented)
         .padding(.horizontal, 20)

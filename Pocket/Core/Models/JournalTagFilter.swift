@@ -92,8 +92,13 @@ extension JournalTimeline {
         /// with a tag ticked is looking at a screen that can never fill, and the screen has to say so.
         func matches(_ item: Item) -> Bool {
             guard isFiltering else { return true }
-            guard case .note(let entry) = item else { return false }
-            return tags.contains(entry.kind)
+            switch item {
+            case .note(let entry): return tags.contains(entry.kind)
+            // A piece is what 🧩 *Transcribed* marks (ADR 0229), so that tag brings the pieces with the
+            // notes tagged by hand. A take carries no tag.
+            case .piece: return tags.contains(.transcribed)
+            case .take: return false
+            }
         }
 
         mutating func toggle(_ tag: EntryKind) {

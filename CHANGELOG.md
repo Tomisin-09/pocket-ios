@@ -72,8 +72,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   is one tap a note, and it asks before replacing a note you placed on the neck. Play your
   answer on your own instrument against **Hear it again** and decide whether they match; Red Moon never
   does, and never plays an answer back (ADR 0227). **Save** keeps the pass on the loop as its
-  piece, shown under the section with a line of tab when you've placed frets, and writes a 🧩
-  *Transcribed* line to the loop's Journal. **Show beats** adds the song's beat lines and a per-beat
+  piece, shown under the section with a line of tab when you've placed frets, and listed in the
+  Journal under the new **Pieces** tab: one row per loop, always the current version, that opens the
+  loop in *Train your ear* (ADR 0229). **Show beats** adds the song's beat lines and a per-beat
   count, and it stays off until you turn it on, because the lines are only as good as the song's
   tempo and its 1 (ADR 0225).
 - **Record a take that isn't about any drill.** The Journal's ✏️ is now a **＋** holding **Write a

@@ -204,5 +204,5 @@ and moves on, so a solo named by ear is one tap a note. A note placed on the nec
 note it sounds, and naming it something else there asks first. `Next unnamed` jumps to the next note
 without a name. Red Moon never plays your answer: play it on your own instrument against `Hear it again`,
 and you decide whether they match. `Save` keeps the pass on the loop, under `Saved on this loop` with a
-line of tab if you placed frets, and writes a *Transcribed* line to the loop's journal. `Edit names`
-reopens it. Saving another pass replaces it.
+line of tab if you placed frets, and lists it in the journal under `Pieces`. `Edit names` reopens it.
+Saving another pass replaces it.

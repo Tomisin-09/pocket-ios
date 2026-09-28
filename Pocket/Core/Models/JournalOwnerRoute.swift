@@ -70,6 +70,9 @@ enum JournalOwnerRoute: Hashable {
             return route(loop: entry.loop, exercise: entry.exercise, writtenIn: writtenIn(entry.kind))
         case .take(let take):
             return route(loop: take.loop, exercise: take.exercise)
+        // A piece is made and edited in ear training (ADR 0225), so that's where it opens (ADR 0229).
+        case .piece(let piece):
+            return route(loop: piece.loop, exercise: nil, writtenIn: .ear)
         }
     }
 

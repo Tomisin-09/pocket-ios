@@ -1,7 +1,8 @@
 import Foundation
 
-/// The unified, read-only **Journal space** feed: journal notes (`JournalEntry`) and audio takes
-/// (`Recording`) merged onto one newest-first timeline, across every owner (loop / exercise / song).
+/// The unified, read-only **Journal space** feed: journal notes (`JournalEntry`), audio takes
+/// (`Recording`) and saved pieces (`JournalPiece`, ADR 0229) merged onto one newest-first timeline, across
+/// every owner (loop / exercise / song).
 ///
 /// Pure and UI-free — like its sibling `JournalGrouping` — so the merge, scope filter, and
 /// owner-label logic stays unit-testable without a SwiftData container. It reads only *properties*
@@ -13,50 +14,58 @@ import Foundation
 /// D10) and the two together are more than this file has room for.
 enum JournalTimeline {
 
-    /// One item on the feed — a written **note** or an audio **take**. Both carry a date and a
-    /// polymorphic owner. `Identifiable` by the underlying model's stable `uid`.
+    /// One item on the feed — a written **note**, an audio **take**, or a loop's saved **piece** (ADR
+    /// 0229). Each carries a date and an owner. `Identifiable` by the underlying model's stable `uid`: a
+    /// piece by its loop's, since a loop holds one piece.
     enum Item: Identifiable {
         case note(JournalEntry)
         case take(Recording)
+        case piece(JournalPiece)
 
         var id: UUID {
             switch self {
             case .note(let entry): entry.uid
             case .take(let take): take.uid
+            case .piece(let piece): piece.loop.uid
             }
         }
 
-        /// When the item was written / recorded — the timeline sorts (and day-groups) on this.
+        /// When the item was written / recorded / last changed — the timeline sorts (and day-groups)
+        /// on this.
         var date: Date {
             switch self {
             case .note(let entry): entry.createdAt
             case .take(let take): take.createdAt
+            case .piece(let piece): piece.date
             }
         }
 
         var isNote: Bool { if case .note = self { true } else { false } }
         var isTake: Bool { if case .take = self { true } else { false } }
+        var isPiece: Bool { if case .piece = self { true } else { false } }
 
-        /// Whether the player has pinned this item (ADR 0190). Polymorphic like `date`, because both
-        /// models carry the column — the feed's verbs must not depend on which row you are on.
+        /// Whether the player has pinned this item (ADR 0190). Polymorphic like `date`, because notes
+        /// and takes both carry the column — the feed's verbs must not depend on which row you are on.
+        /// A piece has no pin: it is the loop's current answer, not a record to keep (ADR 0229).
         var isPinned: Bool {
             switch self {
             case .note(let entry): entry.isPinned
             case .take(let take): take.isPinned
+            case .piece: false
             }
         }
     }
 
     /// Which items the feed shows — the **medium** axis, and the one that stays in content rather
     /// than moving into the options menu (ADR 0190 D7). `all` is the default; `notes`/`takes` are the
-    /// escape valve as the aggregate grows.
+    /// escape valve as the aggregate grows, and `pieces` (ADR 0229) the loops you've transcribed.
     ///
     /// `String`-raw so it crosses `@AppStorage` (ADR 0190 D8). The raw values are the case names, and
     /// the default is a `static let` both the enum and the view's `@AppStorage` initialiser read — a
     /// declared literal is what SwiftUI actually uses for an unset key, and a second literal that
     /// drifts from its accessor is a trap this project has already paid for.
     enum Scope: String, CaseIterable {
-        case all, notes, takes
+        case all, notes, takes, pieces
 
         static let `default` = Scope.all
     }
@@ -69,9 +78,9 @@ enum JournalTimeline {
         static let `default` = SortOrder.newest
     }
 
-    /// Merge notes + takes into one **newest-first** feed.
-    static func merge(entries: [JournalEntry], takes: [Recording]) -> [Item] {
-        let items = entries.map(Item.note) + takes.map(Item.take)
+    /// Merge notes, takes and pieces into one **newest-first** feed.
+    static func merge(entries: [JournalEntry], takes: [Recording], pieces: [JournalPiece] = []) -> [Item] {
+        let items = entries.map(Item.note) + takes.map(Item.take) + pieces.map(Item.piece)
         return items.sorted { $0.date > $1.date }
     }
 
@@ -81,6 +90,7 @@ enum JournalTimeline {
         case .all: items
         case .notes: items.filter(\.isNote)
         case .takes: items.filter(\.isTake)
+        case .pieces: items.filter(\.isPiece)
         }
     }
 
@@ -154,6 +164,8 @@ enum JournalTimeline {
         case .take(let take):
             return ownerLabel(loop: take.loop, exercise: take.exercise, song: take.song)
                 ?? take.ownerLabelAtTake
+        case .piece(let piece):
+            return ownerLabel(loop: piece.loop, exercise: nil, song: nil)
         }
     }
 
@@ -163,6 +175,7 @@ enum JournalTimeline {
         switch item {
         case .note(let entry): entry.exercise?.template.displayName
         case .take(let take): take.exercise?.template.displayName
+        case .piece: nil
         }
     }
 
@@ -181,6 +194,12 @@ enum JournalTimeline {
         // A named take must be findable by its name — otherwise naming one makes it identifiable
         // everywhere except the search field that exists to find it.
         if case .take(let take) = item, let title = take.title { parts.append(title) }
+        // A piece is found by what it is, and by what it holds: its tuning and its names.
+        if case .piece(let piece) = item {
+            parts.append("piece transcribed")
+            if let tuning = piece.piece.tuningLabel { parts.append(tuning) }
+            parts.append(contentsOf: piece.piece.names(spelling: .sharps).compactMap { $0 })
+        }
         parts.append(contentsOf: practisedTitles(for: item))
         parts.append(item.date.formatted(date: .abbreviated, time: .omitted))
         parts.append(item.date.formatted(date: .long, time: .omitted))

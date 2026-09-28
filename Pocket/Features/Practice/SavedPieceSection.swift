@@ -4,8 +4,8 @@ import SwiftUI
 /// from it when any note has a fret. Drawn from the stored piece every time, never kept as text, so the
 /// tab can't be edited apart from the piece it came from (**edit pieces, never the picture**).
 ///
-/// **Edit names** reopens Name the notes on it. A new pass saved over it replaces it; the Journal keeps
-/// the dated line for each save.
+/// **Edit names** reopens Name the notes on it. A new pass saved over it replaces it, and the Journal
+/// shows the same piece under Pieces (ADR 0229).
 struct SavedPieceSection: View {
     let loop: Loop
     let spelling: NoteSpelling
@@ -14,7 +14,7 @@ struct SavedPieceSection: View {
     var body: some View {
         if let piece = loop.transcription {
             Section {
-                if let line = summary(piece) {
+                if let line = piece.summary(spelling: spelling) {
                     Text(line)
                         .font(.futura(.body))
                         .foregroundStyle(PocketColor.textPrimary)
@@ -42,16 +42,9 @@ struct SavedPieceSection: View {
             } header: {
                 Text("Saved on this loop")
             } footer: {
-                Text("Saving another pass replaces this one. Each save also writes a dated line to the loop's "
-                    + "Journal.")
+                Text("Saving another pass replaces this one. The Journal lists it under Pieces.")
                     .font(.futura(.caption))
             }
         }
-    }
-
-    private func summary(_ piece: PieceTranscription) -> String? {
-        let named = piece.taps.compactMap(\.label)
-        return TapTally.summary(count: piece.count, names: piece.names(spelling: spelling), perBeat: nil,
-                                countsChords: !named.isEmpty && named.allSatisfy(\.isChord))
     }
 }

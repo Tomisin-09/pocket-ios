@@ -61,6 +61,7 @@ extension JournalTabView {
         case .all: return "entries"
         case .notes: return "notes"
         case .takes: return "takes"
+        case .pieces: return "pieces"
         }
     }
 
@@ -78,6 +79,7 @@ extension JournalTabView {
         case .all: return "Nothing here yet"
         case .notes: return "No notes yet"
         case .takes: return "No takes yet"
+        case .pieces: return "No pieces yet"
         }
     }
 
@@ -160,6 +162,9 @@ extension JournalTabView {
             return "Jot a goal, a breakthrough or a struggle — after a run, or any time with ＋."
         case .takes:
             return "Arm recording next to Start training to capture your playing."
+        case .pieces:
+            return "Count the notes in Train your ear and save a pass. Each loop's piece shows here, and "
+                + "saving again or editing its names moves it to that day."
         }
     }
 }
