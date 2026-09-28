@@ -68,7 +68,9 @@ and `Record a take`. Underneath, a search field prompting
 - **A note** shows its kind chip, the time, the text, an owner caption, and the snapshot it kept.
 - **A take** shows a play control, its name, its length and the time, plus its owner caption.
 - **The owner caption** is a link where the thing still exists and has a screen to open; plain text
-  otherwise.
+  otherwise. A loop opens where the note was written: an Ear or Transcribed note opens `Train your ear`,
+  an Improv note opens `Improvise`, and anything else opens the loop's ordinary practice once it has a
+  command tempo.
 
 **Deleting is hold-only**, on every row. A take's hold menu leads with `Name this take`, or
 `Rename` once it has one; renaming is also a right swipe.

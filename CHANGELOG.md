@@ -155,6 +155,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **A Journal note opens the loop where it was written.** Tapping the loop's name on an 👂 Ear or 🧩
+  Transcribed note opens *Train your ear*, and on a 🎸 Improv note opens *Improvise*, rather than the
+  loop's ordinary practice. Other notes open as before (ADR 0228).
 - **Train your ear puts *Note what you hear* straight under the loop**, above *Count the notes*, so a
   quick note about what you heard is right there instead of below the tapping and the saved piece.
 - **The metronome's time signature sits under the beat dots**, not in the top bar — the same control

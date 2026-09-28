@@ -24,8 +24,8 @@ final class JournalOwnerRouteTests: XCTestCase {
         return loop
     }
 
-    private func loopNote(on loop: Loop) -> JournalTimeline.Item {
-        let entry = JournalEntry.forLoop(text: "buzzing on the B string", kind: .struggle,
+    private func loopNote(on loop: Loop, kind: EntryKind = .struggle) -> JournalTimeline.Item {
+        let entry = JournalEntry.forLoop(text: "buzzing on the B string", kind: kind,
                                          masteryAtEntry: 3, commandTempoAtEntry: 0.9)
         entry.loop = loop
         return .note(entry)
@@ -92,6 +92,34 @@ final class JournalOwnerRouteTests: XCTestCase {
         // Catalog audio is browse-only (ADR 0001) and there's no ramp to fall back on.
         let catalog = makeLoop(measured: false, source: .appleMusic)
         XCTAssertNil(JournalOwnerRoute.route(for: loopNote(on: catalog)))
+    }
+
+    // MARK: - A note written in one mode opens that mode (ADR 0228)
+
+    private func mode(of item: JournalTimeline.Item) -> LoopRunMode? {
+        guard case .loop(_, let mode)? = JournalOwnerRoute.route(for: item) else { return nil }
+        return mode
+    }
+
+    func testATranscribedOrEarNoteOpensEarTrainingEvenOnAMeasuredLoop() {
+        // The piece was saved from Count the notes, inside Train your ear; the ramp is not where it was made.
+        let loop = makeLoop(measured: true)
+        XCTAssertEqual(mode(of: loopNote(on: loop, kind: .transcribed)), .ear)
+        XCTAssertEqual(mode(of: loopNote(on: loop, kind: .ear)), .ear)
+        XCTAssertEqual(mode(of: loopNote(on: loop, kind: .note)), .trainer, "any other note keeps the precedence")
+    }
+
+    func testAnImproviseNoteOpensImproviseWhileTheLoopIsStillABackingTrack() {
+        XCTAssertEqual(mode(of: loopNote(on: makeLoop(measured: true, backing: true), kind: .improvise)), .improvise)
+        XCTAssertEqual(mode(of: loopNote(on: makeLoop(measured: true, backing: false), kind: .improvise)), .trainer,
+                       "the flag came off: fall back rather than open a mode the loop can't run")
+    }
+
+    func testAnEarNoteOnALoopThatCanNoLongerPlayFallsBackToThePrecedence() {
+        // No song, so no ear training; the ramp needs only the command tempo (ADR 0138).
+        XCTAssertEqual(mode(of: loopNote(on: makeLoop(measured: true, source: nil), kind: .transcribed)), .trainer)
+        XCTAssertNil(JournalOwnerRoute.route(for: loopNote(on: makeLoop(measured: false, source: nil),
+                                                            kind: .transcribed)), "and nowhere at all unmeasured")
     }
 
     // MARK: - Takes follow the same rules, with one owner more
