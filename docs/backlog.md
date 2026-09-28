@@ -748,6 +748,11 @@ from that.
 Designed but **not scheduled**. Chord & strum is the exercise kind that gains most; plain chord
 changes are fine as blocks.
 
+**Name the notes waits on it too** ([ADR 0227](decisions/0227-name-the-notes-on-the-neck.md) D8).
+*Hear it, then mine*, and the sound when an answer is picked, were withdrawn on 2026-09-28: next to a
+real recording the synth doesn't sound close enough for the player to judge a match. They come back
+with this, not before.
+
 ### Recording: ~32 WAVs, not every note
 
 Recording every note is hundreds of takes and `AVAudioUnitSampler` **cannot use most of them** — it

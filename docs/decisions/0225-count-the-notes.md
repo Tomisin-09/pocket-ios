@@ -2,6 +2,13 @@
 
 - **Status:** Accepted. Built on `pocket-337-count-the-notes`.
 - **Date:** 2026-09-27 (planned 2026-09-26, refined 2026-09-27)
+- **Amended by:** ADR 0227 (Name the notes on the neck, 2026-09-28). **D5**: the three sheets become two,
+  *Fret & string* (a neck you tap) and *By ear* (Chord and Note name merged); the chip grid becomes a
+  strip; picking no longer sounds, and *Hear it, then mine* is withdrawn until the tone engine sounds
+  like a guitar. **D6**: a fretted label gains optional marks (bend, vibrato, a join) and a multi-note
+  *shape* kind; the tuning is chosen per piece but still recorded as before. **D10**: "one note per
+  tap", "no technique marks" and "tuning comes from the tuner's settings" are lifted. D5's reason, a
+  heard chord named by root and quality rather than a grip, stands, as does the rest of D10.
 - **Amends:** ADR 0104 — **E3** and **E6**. E3's "no transcription store" is reversed for one case on
   purpose: a loop now carries its **piece**, structured and read by a named future reader (D8). The
   Journal stays the dated history, and free-text notes still go nowhere else. E6's "a tally … is out of
