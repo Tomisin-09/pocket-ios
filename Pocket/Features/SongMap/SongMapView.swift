@@ -7,14 +7,24 @@ import SwiftUI
 /// Nothing here is stored: the board is drawn from the loops, their pieces and the markers each time,
 /// by `SongMapLayout`, so it can't drift from them. Tapping a piece opens its tab; holding it offers the
 /// tab and the modes it can open in (D2). A section heading or a pin opens its marker, where **Starts a
-/// section** lives (D6).
+/// section** lives (D6). **Pieces | Tab** are two views of the one layout (D10): the Tab view draws the
+/// song's chart from the same pieces, and tapping one of its rows comes back here, to the pieces that
+/// drew it.
 struct SongMapView: View {
     let song: Song
     /// Pause whatever else is playing before a piece opens: the practice screen's waveform, when the
     /// map was reached from there. Ear training plays the loop itself.
     var onOpenNestedAudio: () -> Void = {}
+    /// Close the map and go to the song's waveform, where the tempo and the 1 are set (D7). `nil` where
+    /// there's no way there, and the Tab view just says what's missing.
+    var onShowWaveform: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    @State private var mode: Mode = .pieces
+    /// Pieces just reached from a row of the Tab view, drawn heavier for a moment.
+    @State private var highlighted: Set<UUID> = []
+    /// The board row to scroll to once the board is back in place of the tab.
+    @State private var scrollTarget: SongMapAnchor?
     /// The loop being opened, and in which mode. By uid, never the model (ADR 0090).
     @State private var opening: Opening?
     /// The loop whose tab is showing.
@@ -28,24 +38,45 @@ struct SongMapView: View {
         let mode: LoopRunMode
     }
 
+    enum Mode: Hashable { case pieces, tab }
+
     var body: some View {
         let map = SongMapLayout.build(SongMapInput(song: song))
         let loops = Dictionary(song.loops.map { ($0.uid, $0) }, uniquingKeysWith: { first, _ in first })
+        let tab = mode == .tab ? SongTabLayout.build(map, spelling: spelling) : nil
         NavigationStack {
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 24) {
-                    header(map)
-                    ForEach(map.sections) { section in
-                        SongMapSectionView(section: section, map: map, loops: loops,
-                                           actions: SongMapActions(view: view, open: open,
-                                                                   openMarker: openMarker))
+            ScrollViewReader { proxy in
+                ScrollView {
+                    // Not lazy: the Tab view scrolls the board to a row, which has to exist to be found.
+                    VStack(alignment: .leading, spacing: 24) {
+                        header(map, tab: tab)
+                        if let tab {
+                            SongTabView(tab: tab, openMarker: openMarker,
+                                        onShowPieces: { showPieces(of: $0, in: map) })
+                        } else {
+                            ForEach(map.sections) { section in
+                                SongMapSectionView(section: section, map: map, loops: loops,
+                                                   actions: SongMapActions(view: view, open: open,
+                                                                           openMarker: openMarker),
+                                                   highlighted: highlighted)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 32)
+                }
+                .onChange(of: scrollTarget) { _, target in
+                    guard let target else { return }
+                    // Next turn of the run loop, once the board has been laid out in the tab's place.
+                    DispatchQueue.main.async {
+                        withAnimation { proxy.scrollTo(target, anchor: .top) }
+                        scrollTarget = nil
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 32)
             }
             .background(PocketColor.background)
+            .safeAreaInset(edge: .top, spacing: 0) { modePicker }
             .navigationTitle(song.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbar }
@@ -69,11 +100,44 @@ struct SongMapView: View {
                                   })
             }
         }
+        .task(id: highlighted) {
+            guard !highlighted.isEmpty else { return }
+            do { try await Task.sleep(for: .seconds(2)) } catch { return }
+            withAnimation(.easeOut(duration: 0.4)) { highlighted = [] }
+        }
+    }
+
+    /// The song's key spells its names, as it does everywhere a piece is read (ADR 0123).
+    private var spelling: NoteSpelling {
+        NoteSpelling.forMusicalKey(song.musicalKey) ?? AppSettings.accidentalPreference
+    }
+
+    // MARK: - Pieces | Tab
+
+    /// Pinned under the title, so either view is one tap away wherever you've scrolled to (D13).
+    private var modePicker: some View {
+        Picker("View", selection: $mode) {
+            Text("Pieces").tag(Mode.pieces)
+            Text("Tab").tag(Mode.tab)
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(PocketColor.background)
+    }
+
+    /// A row of the tab, back on the board (D10): the board row it starts in, with the pieces that drew it
+    /// drawn heavier for a moment.
+    private func showPieces(of row: SongTab.Row, in map: SongMap) {
+        let boardRow = map.sections.flatMap(\.rows).last { $0.start <= row.start + SongMapLayout.tolerance }
+        highlighted = Set(row.pieces)
+        mode = .pieces
+        scrollTarget = boardRow.map { SongMapAnchor.row($0.start) }
     }
 
     // MARK: - Pieces
 
-    private func header(_ map: SongMap) -> some View {
+    private func header(_ map: SongMap, tab: SongTab?) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .center, spacing: 8) {
                 Text(facts(map))
@@ -82,11 +146,35 @@ struct SongMapView: View {
                 Spacer(minLength: 0)
                 barsChip
             }
-            Text(map.pieces.isEmpty
-                 ? "No loops yet. Every loop you make on this song appears here, where it plays."
-                 : "Each loop sits where it plays. Tap one for its tab, or hold it to work on it.")
+            Text(guidance(map, tab: tab))
                 .font(.futura(.footnote))
                 .foregroundStyle(PocketColor.textSecondary)
+            if tab != nil, !SongMapInput.hasGrid(song) { setTheOne.padding(.top, 4) }
+        }
+    }
+
+    private func guidance(_ map: SongMap, tab: SongTab?) -> String {
+        guard let tab else {
+            return map.pieces.isEmpty
+                ? "No loops yet. Every loop you make on this song appears here, where it plays."
+                : "Each loop sits where it plays. Tap one for its tab, or hold it to work on it."
+        }
+        return tab.isEmpty
+            ? "Nothing counted yet. Count a loop in Train your ear and it's drawn here, where it plays."
+            : "Drawn from your pieces, where they play. Tap a row to see the pieces that drew it."
+    }
+
+    /// Without a grid the tab is in seconds, and says so once (D7). The map has no tempo flow of its own:
+    /// this goes to the waveform, where **Set the 1** already lives, and is drawn the way it's drawn there.
+    @ViewBuilder private var setTheOne: some View {
+        let label = Label("Set the tempo and the 1 to see bars", systemImage: "1.circle")
+            .font(.futura(.footnote, weight: .medium))
+        if let onShowWaveform {
+            Button(action: onShowWaveform) { label.foregroundStyle(PocketColor.active) }
+                .buttonStyle(.plain)
+                .accessibilityHint("Closes the map and opens the song's waveform")
+        } else {
+            label.foregroundStyle(PocketColor.textSecondary)
         }
     }
 

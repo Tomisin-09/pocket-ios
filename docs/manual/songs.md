@@ -156,6 +156,24 @@ To split the song into sections, open a marker and switch on **Starts a section*
 begins a new row with its name above it, and anything before the first one sits under **Start**.
 Markers without it stay on the map as pins. Tap a section's name or a pin to open its marker.
 
+### The song's tab
+
+**Pieces | Tab** at the top turns the map into the song's tab, drawn from the same pieces, four bars
+to a row. Chord symbols sit where you tapped them. Notes you placed on the neck are tab, on their
+strings, and notes you named by ear are their names. A tap you counted but haven't named is a slash,
+so you can see the rhythm before you know the notes. A bar with nothing in it is left empty.
+
+<!-- shot: songs/song-tab | role: screen
+     | alt: The Tab view of Slow Bend, with chord symbols over the Verse and the verse riff as tab on six strings under them
+     | state: seeded song with sections, counted and named pieces, map open full screen on Tab -->
+
+There's nothing to type into the tab: it's always drawn from your pieces, so it can't disagree with
+them. To change a bar, tap its row. The map goes back to **Pieces** at that row, with the loops that
+drew it picked out for a moment, and you can work on them from there.
+
+Without a tempo and a **1**, the tab is in seconds, and **Set the tempo and the 1 to see bars** takes
+you to the song's waveform to set them.
+
 ## Next
 
 - [The loop workflow, end to end](looping.md)

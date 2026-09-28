@@ -124,9 +124,12 @@ enum SongMapLayout {
     // MARK: - Rows
 
     /// Where the rows of one section break. With a grid, every eighth downbeat from the section's start,
-    /// so a pickup before the first downbeat rides in the first row. Without one, every 16 seconds.
-    static func rowSpans(from start: TimeInterval, to end: TimeInterval,
-                         grid: SongMapInput.Grid?) -> [(start: TimeInterval, end: TimeInterval)] {
+    /// so a pickup before the first downbeat rides in the first row. Without one, every 16 seconds. The
+    /// Tab view asks for shorter rows (ADR 0232 D10).
+    static func rowSpans(from start: TimeInterval, to end: TimeInterval, grid: SongMapInput.Grid?,
+                         barsPerRow: Int = SongMapLayout.barsPerRow,
+                         secondsPerRow: TimeInterval = SongMapLayout.secondsPerRow)
+        -> [(start: TimeInterval, end: TimeInterval)] {
         let breaks: [TimeInterval]
         if let grid {
             let downbeats = grid.downbeats.filter { $0 >= start - tolerance && $0 < end - tolerance }
@@ -170,8 +173,9 @@ enum SongMapLayout {
     }
 
     /// Bar lines with their numbers, counted from the first downbeat in the song, or a time mark on every
-    /// fourth second of song time.
-    static func ticks(from start: TimeInterval, to end: TimeInterval, grid: SongMapInput.Grid?) -> [SongMap.Tick] {
+    /// fourth second of song time (every `secondsPerTick`).
+    static func ticks(from start: TimeInterval, to end: TimeInterval, grid: SongMapInput.Grid?,
+                      secondsPerTick: TimeInterval = SongMapLayout.secondsPerTick) -> [SongMap.Tick] {
         if let grid {
             return grid.downbeats.enumerated()
                 .filter { $0.element >= start - tolerance && $0.element < end - tolerance }

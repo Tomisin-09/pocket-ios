@@ -14,6 +14,8 @@ struct SongMapPieceView: View {
     let loop: Loop?
     let width: CGFloat
     let height: CGFloat
+    /// Just reached from a row of the Tab view (D10): drawn heavier, so it's the piece your eye lands on.
+    var highlighted = false
     /// Tap: the loop's tab.
     let onView: () -> Void
     /// A mode picked from the hold menu.
@@ -64,8 +66,8 @@ struct SongMapPieceView: View {
         case .empty:
             shape.stroke(tint, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
         case .handTagged, .piece:
-            shape.fill(tint.opacity(0.16))
-                .overlay(shape.stroke(tint, lineWidth: 1.5))
+            shape.fill(tint.opacity(highlighted ? 0.34 : 0.16))
+                .overlay(shape.stroke(tint, lineWidth: highlighted ? 3 : 1.5))
         }
     }
 

@@ -131,6 +131,22 @@ The idea was parked on 2026-09-27 with six questions open. They were settled in 
   section reads *as Verse 1*.
 - **Tapping a row goes to the pieces that drew it**, on the board.
 
+Settled in the build (slice 2, 2026-09-28):
+
+- **A line per lane, not one merged line.** The Tab view keeps the board's lanes, so two overlapping licks
+  are two lines of tab rather than one line claiming both. A lane with no taps in a row has no line there.
+- **In the chords layer every tap is a symbol**, a shape on the neck included: a chord chart doesn't write
+  grips. In the notes layer a tap placed on the neck is tab (`TabLine.cell`, with the join written in front,
+  `h7`), and a name given by ear sits above the strings.
+- **Nothing overprints, and nothing is snapped.** A column sits just after its tap. One that would print
+  over the one before is pushed just clear of it. A row whose taps can't all fit draws wider and scrolls
+  sideways, rather than being squeezed until the numbers overlap. Spacing is worked out in characters,
+  because tab is set in a fixed-width font.
+- **The way back is the board row the tab row starts in**, with its pieces drawn heavier for two seconds.
+  Pieces | Tab is pinned under the title, so the other view is one tap away from anywhere.
+- **The no-grid line goes to the waveform from either door** (D7). From the practice screen, closing
+  Song details is the whole trip. From the library, the song's waveform opens once Song details has closed.
+
 ### D11 — Put it together
 
 Select pieces on the board and **Put it together** makes a routine, in one of two shapes:

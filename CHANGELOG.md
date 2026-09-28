@@ -60,10 +60,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   you've made on it sitting where it plays: chords on one lane, notes on the lane under them, and a
   second lane when two overlap. Each loop shows what it holds, the notes you've counted as dots and
   the names you've given them as a line, so the song fills in as you work pieces out. Tap one to see
-  its tab; hold it to go straight to *Train your ear*, *Practice* or *Improvise*. Rows are bars when the song has a tempo and a 1, and seconds when it
-  doesn't; **Bars** switches them, along with the waveform's **Grid**. Split the song into
-  sections by switching on **Starts a section** on a marker; other markers stay as pins. Nothing is
-  scored and nothing is counted up: the map shows your pieces, never a percentage (ADR 0232).
+  its tab; hold it to go straight to *Train your ear*, *Practice* or *Improvise*. Rows are bars when
+  the song has a tempo and a 1, and seconds when it doesn't; **Bars** switches them, along with the
+  waveform's **Grid**. Split the song into sections by switching on **Starts a section** on a marker;
+  other markers stay as pins. **Pieces | Tab** turns the same map into the song's tab, drawn from your
+  pieces: chord symbols where you tapped them, tab where you placed notes on the neck, names where you
+  named them by ear, and a slash for a tap you haven't named. Tap a row of the tab to go to the pieces
+  that drew it; there's nothing to edit in the tab itself. Without a tempo, the tab says so once and
+  takes you to the waveform to set one. Nothing is scored and nothing is counted up: the map shows
+  your pieces, never a percentage (ADR 0232).
 
 - **Count the notes, then name them.** *Train your ear* has a new section for working a lick out by
   ear. Slow the loop down and tap the pad once for every note you hear; each time round the loop gets

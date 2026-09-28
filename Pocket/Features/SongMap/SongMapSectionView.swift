@@ -7,24 +7,44 @@ struct SongMapSectionView: View {
     let map: SongMap
     let loops: [UUID: Loop]
     let actions: SongMapActions
+    /// Pieces just reached from a row of the Tab view (D10), drawn heavier for a moment.
+    let highlighted: Set<UUID>
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            heading
+            SongMapSectionHeading(heading: section.heading, bars: section.bars, start: section.start,
+                                  end: section.end, openMarker: actions.openMarker)
             ForEach(section.rows) { row in
-                SongMapRowView(row: row, map: map, loops: loops, actions: actions)
+                SongMapRowView(row: row, map: map, loops: loops, actions: actions, highlighted: highlighted)
+                    .id(SongMapAnchor.row(row.start))
             }
         }
     }
+}
 
-    @ViewBuilder private var heading: some View {
-        switch section.heading {
+/// Where the Tab view scrolls the board to. Typed, so a row's start time can't be mistaken for another
+/// view's id that happens to be the same number.
+enum SongMapAnchor: Hashable {
+    case row(TimeInterval)
+}
+
+/// A section's heading, on the board and in the Tab view alike: the marker's label, which opens the
+/// marker (D6), and the bars or times it covers.
+struct SongMapSectionHeading: View {
+    let heading: SongMap.SectionHeading
+    let bars: ClosedRange<Int>?
+    let start: TimeInterval
+    let end: TimeInterval
+    let openMarker: (UUID) -> Void
+
+    var body: some View {
+        switch heading {
         case .none:
             EmptyView()
         case .start:
             headingRow(Text("Start").foregroundStyle(PocketColor.textSecondary))
         case .marker(let uid, let label):
-            headingRow(Button { actions.openMarker(uid) } label: {
+            headingRow(Button { openMarker(uid) } label: {
                 Text(label.isEmpty ? "Section" : label).foregroundStyle(PocketColor.textPrimary)
             }
             .buttonStyle(.plain)
@@ -44,10 +64,10 @@ struct SongMapSectionView: View {
 
     /// *Bars 5–12*, or *0:23–0:45* when the map is in seconds.
     private var range: String {
-        if let bars = section.bars {
+        if let bars {
             return bars.count == 1 ? "Bar \(bars.lowerBound)" : "Bars \(bars.lowerBound)–\(bars.upperBound)"
         }
-        return "\(timecode(section.start))–\(timecode(section.end))"
+        return "\(timecode(start))–\(timecode(end))"
     }
 }
 
@@ -58,6 +78,7 @@ struct SongMapRowView: View {
     let map: SongMap
     let loops: [UUID: Loop]
     let actions: SongMapActions
+    let highlighted: Set<UUID>
 
     static let labelWidth: CGFloat = 50
     /// Numbers along the top, pins along the bottom pointing into the lanes, so a pin on a bar line
@@ -146,6 +167,7 @@ struct SongMapRowView: View {
                     let start = xPos(placement.start, width), end = xPos(placement.end, width)
                     SongMapPieceView(piece: piece, placement: placement, loop: loops[placement.uid],
                                      width: max(end - start, 6), height: Self.laneHeight - 6,
+                                     highlighted: highlighted.contains(placement.uid),
                                      onView: { actions.view(placement.uid) },
                                      onOpen: { actions.open(placement.uid, $0) })
                         .offset(x: start, y: 3)

@@ -660,6 +660,18 @@ neck that spells a chord counts), else `LoopType.chords`. The screen is a `.full
 there; a mode picked on the tab sheet is held until the sheet's `onDismiss`, since a push can't start
 under a presented sheet.
 
+**The Tab view is a second reading of the same `SongMap`** (ADR 0232 D10). `SongTabLayout.build(map,
+spelling:)` cuts the board's sections into rows of 4 bars (or 8 s), reusing `SongMapLayout.rowSpans` and
+`ticks` with shorter lengths, and turns each lane's taps into columns: a chord symbol in the chords layer,
+tab cells in the notes layer when the tap was placed on the neck (`TabLine.cell`, with
+`NeckJoin.symbol` in front), otherwise the name, otherwise a slash. Spacing is pure too, in characters,
+because the tab is set in a fixed-width font. `spread` puts each column just after its time, pushes it clear
+of the one before, and draws a line back from the row's end, and `width(of:available:)` widens a row that
+can't fit. The view turns characters into points once, from the font's advance, and scrolls a widened row
+sideways. Nothing about the tab is stored, so there is nothing to keep in sync. Going from a tab row back to
+its pieces needs the board row to exist, so the board is a plain `VStack` (not lazy) with typed
+`SongMapAnchor` ids.
+
 **Each mode gates on what it needs** (ADR 0138). Both surfaces that decide which loops a player can
 reach — `LoopLibraryView` and `AddRoutineUnitSheet` — applied one test, `commandTempo != nil`, written
 for the *trainer* and inherited by every mode after it. That put ear training, the one mode you can do
