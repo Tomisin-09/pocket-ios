@@ -278,6 +278,9 @@ struct NameTheNotesSheet: View {
                 .disabled(active >= labels.count - 1)
         }
         .font(.futura(.subheadline))
+        // Three buttons are a little wider than the smallest phone; shrink them a touch rather than wrap.
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
         .tint(PocketColor.practice)
     }
 

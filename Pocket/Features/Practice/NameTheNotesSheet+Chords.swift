@@ -9,8 +9,7 @@ extension NameTheNotesSheet {
         VStack(alignment: .leading, spacing: 8) {
             // The ⓘ sits beside the switch, never in its label (`InfoPopoverButton`).
             HStack(spacing: 2) {
-                Text("Chords")
-                    .font(.futura(.subheadline))
+                rowTitle("Chords")
                 InfoPopoverButton(subject: "Chords", info: NamingInfo.chords)
                     .padding(.vertical, -8)
                 Spacer(minLength: 8)

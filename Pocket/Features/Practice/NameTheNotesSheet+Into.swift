@@ -13,7 +13,7 @@ extension NameTheNotesSheet {
     var intoControls: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 2) {
-                pickerLabel("Into it")
+                rowTitle("Into it")
                 InfoPopoverButton(subject: "Into it", info: NamingInfo.into)
                     .padding(.vertical, -8)
             }

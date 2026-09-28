@@ -43,6 +43,14 @@ extension NameTheNotesSheet {
             .foregroundStyle(PocketColor.textSecondary)
     }
 
+    /// The title of a control under the neck, *Chords*, *Into it* and *Bend*, one size so they read as
+    /// one set.
+    func rowTitle(_ text: String) -> some View {
+        Text(text)
+            .font(.futura(.subheadline))
+            .lineLimit(1)
+    }
+
     func pickButton(_ title: String, state: PickState, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)

@@ -27,7 +27,7 @@ extension NameTheNotesSheet {
 
     private func bendRow(_ note: FrettedNote?) -> some View {
         HStack(spacing: 8) {
-            pickerLabel("Bend").frame(width: 44, alignment: .leading)
+            rowTitle("Bend").fixedSize().frame(minWidth: 44, alignment: .leading)
             MarkSegments(options: FrettedNote.bends.map { bend in
                 .init(title: Self.bendTitle(bend), isOn: note?.bend == bend, isEnabled: note != nil) {
                     mark { $0.bend = bend }
