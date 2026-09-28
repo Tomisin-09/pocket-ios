@@ -41,15 +41,24 @@ enum NamingStrip {
             .map { (index + $0) % labels.count }
             .first { labels[$0] == nil }
     }
+
+    /// The chip being heard while the loop plays: the last tap at or before where the ear is now, or `nil`
+    /// in the gap before a pass's first tap. Taps are song seconds, and so is the heard clock.
+    static func heard(_ reading: LoopClockReading, taps: [TimeInterval]) -> Int? {
+        guard let now = TapTally.heardPosition(reading) else { return nil }
+        let seconds = reading.regionStart + now.within
+        return taps.lastIndex { $0 <= seconds }
+    }
 }
 
 /// **Name the notes** (ADR 0225, reworked by ADR 0227): the taps of one pass as a strip of numbered chips.
-/// Tap a chip to hear a slice of the real recording from just before it, then say what it was, on the
-/// neck or by ear. The player compares by playing it on their own instrument; the app never sounds an
-/// answer (0227 D8) and never says whether it's right.
+/// Tap a chip to hear a slice of the real recording from just before it, or play the whole loop along the
+/// strip, then say what it was, on the neck or by ear. The player compares by playing it on their own
+/// instrument; the app never sounds an answer (0227 D8) and never says whether it's right.
 ///
-/// Opened with the loop already stopped, so a slice never plays over it. Presented from
-/// `EarTrainingView`'s body root, never from a row (memory: a `.sheet` on a List row loses its write).
+/// Opened with the loop already stopped, and a chip stops the loop before its slice, so a slice never
+/// plays over it. Presented from `EarTrainingView`'s body root, never from a row (memory: a `.sheet` on
+/// a List row loses its write).
 struct NameTheNotesSheet: View {
     let request: NamingRequest
     let player: ContinuousLoopPlayer
@@ -77,6 +86,9 @@ struct NameTheNotesSheet: View {
     @State var chordsOn: Bool
     /// The string of the **ringed** note in a shape, the one bend and vibrato go on.
     @State var ringed: Int?
+    /// While the strip plays the loop, the chip being heard. Apart from `active`, so the chip being named
+    /// never moves under the player's finger.
+    @State var hearing: Int?
 
     init(request: NamingRequest, player: ContinuousLoopPlayer, spelling: NoteSpelling, loopType: LoopType,
          onDone: @escaping (NamingResult) -> Void) {
@@ -160,7 +172,7 @@ struct NameTheNotesSheet: View {
                 tuning = next
             }
         }
-        .onDisappear { player.stopSlice() }
+        .onDisappear { player.stop() }
     }
 
     /// A chord loop is tapped once per chord, and calls them chords.
@@ -169,106 +181,8 @@ struct NameTheNotesSheet: View {
     private var subtitle: String {
         let count = request.taps.count
         let what = request.source == .saved ? "Your saved piece" : "This pass"
-        return "\(what) · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear just that moment."
-    }
-
-    // MARK: - Strip
-
-    /// One row of chips that scrolls sideways and keeps the current one in the middle (0227 D2), so the
-    /// picker below stays put for 7 notes or 65, and switching sheets never loses the place.
-    private var strip: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("\(noun.capitalized) \(active + 1) of \(labels.count)")
-                    .font(.futura(.footnote, weight: .bold))
-                    .monospacedDigit()
-                Spacer()
-                let unnamed = labels.filter { $0 == nil }.count
-                Text(unnamed == 0 ? "All named" : "\(unnamed) to name")
-                    .font(.futura(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 6) {
-                        ForEach(labels.indices, id: \.self) { index in
-                            // A join sits between the two chips it joins, on the neck's sheet.
-                            if mode == .fret, let join = NeckJoin.symbol(into: index, of: labels) {
-                                Text(join)
-                                    .font(.pocketMono(.caption))
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(PocketColor.practice)
-                                    .padding(.horizontal, -3)
-                                    .accessibilityHidden(true)
-                            }
-                            chip(index)
-                        }
-                    }
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 1)
-                }
-                .mask(stripFade)
-                .onAppear { proxy.scrollTo(active, anchor: .center) }
-                .onChange(of: active) {
-                    withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(active, anchor: .center) }
-                }
-            }
-        }
-    }
-
-    /// The strip fades out at both ends, so a chip cut off by the edge reads as "more this way".
-    private var stripFade: some View {
-        HStack(spacing: 0) {
-            LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing).frame(width: 18)
-            Rectangle()
-            LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: 18)
-        }
-    }
-
-    private func chip(_ index: Int) -> some View {
-        let shown = chipText(index)
-        let isActive = index == active
-        return Button {
-            select(index)
-        } label: {
-            VStack(spacing: 0) {
-                Text("\(index + 1)")
-                    .font(.futura(.caption2))
-                    .monospacedDigit()
-                Text(shown.text ?? "?")
-                    .font(.futura(.subheadline, weight: shown.text == nil || shown.dim ? nil : .bold))
-                    .lineLimit(1)
-            }
-            .foregroundStyle(isActive ? PocketColor.background
-                             : shown.text == nil || shown.dim ? PocketColor.textSecondary : PocketColor.textPrimary)
-            .padding(.horizontal, 8)
-            .frame(minWidth: 46, minHeight: 44)
-            .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(isActive ? PocketColor.practice : .clear))
-            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(isActive ? .clear : PocketColor.surfaceBorder))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(noun.capitalized) \(index + 1), \(shown.text ?? "not named")")
-        .accessibilityAddTraits(isActive ? .isSelected : [])
-    }
-
-    /// What a chip shows. On Fret & string a placed note is its string and fret ("B8"), and a name given
-    /// by ear shows dimmed: it can't be drawn there. On By ear every answer is its name, a placed note
-    /// read as the note it sounds (0227 D7).
-    private func chipText(_ index: Int) -> (text: String?, dim: Bool) {
-        guard let label = labels[index] else { return (nil, false) }
-        if mode == .fret {
-            // A chord of four notes or more is too long to spell out on a chip; its name says it.
-            if label.frettedNotes.count > 3 {
-                return (label.name(openMidi: tuning.openMidi, spelling: spelling), false)
-            }
-            if label.isOnTheNeck { return (fretText(label.frettedNotes), false) }
-            return (label.name(openMidi: tuning.openMidi, spelling: spelling), true)
-        }
-        // On By ear a shape that spells no chord shows its interval or notes, dimmed: nothing to name.
-        let unread = label.isOnTheNeck && label.earReading(openMidi: tuning.openMidi) == nil
-        return (label.name(openMidi: tuning.openMidi, spelling: spelling), unread)
+        return "\(what) · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear just that moment, "
+            + "or play the whole loop."
     }
 
     /// The fret the neck scrolls to for an answer on it: the middle of its frets, bends included.
@@ -317,8 +231,10 @@ struct NameTheNotesSheet: View {
         hearSlice()
     }
 
-    /// The slice for the active chip: the real recording, from just before the tap.
+    /// The slice for the active chip: the real recording, from just before the tap. If the strip is playing
+    /// the loop, it stops first: a slice never plays over the loop.
     func hearSlice() {
+        if player.isPlaying { player.stop() }
         player.playSlice(at: request.taps[active].seconds)
     }
 

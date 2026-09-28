@@ -59,7 +59,8 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Count the notes, then name them.** *Train your ear* has a new section for working a lick out by
   ear. Slow the loop down and tap the pad once for every note you hear; each time round the loop gets
   its own row of dots, so you can see when your passes agree. **Name the notes** lays one pass out as
-  a strip of numbered notes: tap one to hear just that moment of the record, then say what it was, by
+  a strip of numbered notes: tap one to hear just that moment of the record, or play the whole loop
+  from the strip and watch each note light up as it goes by, then say what it was, by
   **Fret & string** (where you played it) or **By ear** (what you heard: a note, or a chord by its root
   and kind, with the kinds grouped by how many notes they hold). Fret & string is a neck you tap, with
   every note named faintly and the pass's other notes showing the lick's shape, on guitar or bass in

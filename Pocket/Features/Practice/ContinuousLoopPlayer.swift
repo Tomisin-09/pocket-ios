@@ -68,6 +68,9 @@ final class ContinuousLoopPlayer {
     /// they take.
     func toggle() {
         if isPlaying { stop(); return }
+        // A slice still sounding would sit ahead of the loop in the player's queue, and the loop's clock
+        // would run late by what was left of it (the naming strip plays the loop, ADR 0227 D2).
+        stopSlice()
         startTask = Task { [weak self] in
             guard let self else { return }
             await model.loadIfNeeded()

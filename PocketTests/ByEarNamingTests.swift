@@ -120,4 +120,23 @@ final class ByEarNamingTests: XCTestCase {
         XCTAssertNil(NamingStrip.nextUnnamed(after: 0, in: [nil]), "the current tap is never next")
         XCTAssertNil(NamingStrip.nextUnnamed(after: 1, in: [.pitchClass(1), nil]))
     }
+
+    /// Playing the loop along the strip: the chip heard is the last tap the ear has reached, pass after pass.
+    func testTheChipHeardIsTheLastTapTheEarHasReached() {
+        let taps: [TimeInterval] = [10.2, 10.5, 11.0]
+        func heard(_ elapsed: TimeInterval, rate: Double = 1, latency: TimeInterval = 0) -> Int? {
+            NamingStrip.heard(LoopClockReading(elapsed: elapsed, regionStart: 10, passLength: 2, rate: rate,
+                                               outputLatency: latency), taps: taps)
+        }
+        XCTAssertNil(heard(0.1), "before the first tap")
+        XCTAssertEqual(heard(0.25), 0, "just past a tap, that tap")
+        XCTAssertEqual(heard(0.7), 1)
+        XCTAssertEqual(heard(1.9), 2)
+        XCTAssertNil(heard(2.1), "the next pass starts before its first tap again")
+        XCTAssertEqual(heard(2.6), 1)
+        XCTAssertEqual(heard(0.6), 1)
+        XCTAssertEqual(heard(0.6, rate: 0.5, latency: 0.4), 0, "the ear is 0.2 s of song behind the render")
+        XCTAssertNil(NamingStrip.heard(LoopClockReading(elapsed: 1, regionStart: 10, passLength: 0, rate: 1,
+                                                        outputLatency: 0), taps: taps), "no loop, no chip")
+    }
 }

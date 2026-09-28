@@ -1,7 +1,8 @@
 # ADR 0227 — Name the notes on the neck: where you played it, or what you heard
 
 - **Status:** Accepted. Built on `pocket-338-name-the-notes-on-the-neck` in the four commits of the build
-  order. Still owed: the device checks under Consequences.
+  order, plus two after the first device check (*As built*). Still owed: the device checks under
+  Consequences.
 - **Date:** 2026-09-28
 - **Amends:** ADR 0225 — **D5**: the three sheets become two (*Fret & string* and *By ear*), the
   chip grid becomes a strip, picking no longer sounds, and *Hear it, then mine* is withdrawn. **D6**: a
@@ -64,6 +65,13 @@ The chips run in **one row that scrolls sideways** and keeps the current note in
 both sheets and in the same place, so switching sheets never loses the place. Above it: *Note 5 of 65*
 and how many are left to name. **Next unnamed** jumps to the next gap. The picker, the hear button and
 the running answer below sit in the same place for 7 notes or 65.
+
+**Play the loop from the strip** (added after the device check, see *As built*). A slice is one note, and
+a line heard a note at a time loses its shape. A play button at the head of the strip plays the loop
+itself, at *Train your ear*'s tempo and round until stopped. The chip being heard is **ringed** and the
+strip follows it; the chip being **named** doesn't move, so a tap on the neck can't land on the wrong
+note. Tapping a chip stops the loop and plays that note's slice, so a slice still never plays over the
+loop (0225's rule). What plays is the recording, never the answers (D8, D10).
 
 ### D3 — The neck
 
@@ -199,8 +207,11 @@ doesn't exist yet.
 2: the string buttons and stepper still in commit 1 already placed notes, so there was neck work to
 protect from the start.
 
-**After the device check** (2026-09-28): **From My chords came out** (D4). The row of saved shapes
-under the neck cluttered the sheet, and placing a chord a note at a time is quick enough.
+**After the device check** (2026-09-28), two more commits:
+5. **From My chords came out** (D4). The row of saved shapes under the neck cluttered the sheet, and
+   placing a chord a note at a time is quick enough.
+6. **Play the loop from the strip** (D2). Inside the sheet only the slice sounded, so the player heard
+   the note they were on and never the line around it.
 
 ## Consequences
 
