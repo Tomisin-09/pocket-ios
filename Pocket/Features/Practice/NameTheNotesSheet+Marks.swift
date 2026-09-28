@@ -1,30 +1,14 @@
 import SwiftUI
 
 // The five playing marks (ADR 0227 D5), under the neck. A bend changes the note and vibrato colours it, so
-// both live on the note; hammer-on, pull-off and slide join two notes, so they live on the second, as
-// *Into it*. The direction decides which join it is, so the control only offers the one that fits. Split
-// out for file length.
+// both live on the note; hammer-on, pull-off and slide are *Into it* (`+Into`): a join from the tap before,
+// or a lead-in inside the note when the two were heard as one. Split out for file length.
 extension NameTheNotesSheet {
 
     var marksControls: some View {
         let note = ringedNote
-        let direction = NeckJoin.direction(into: active, of: labels)
-        let into = currentJoin
         return VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                pickerLabel("Into it").frame(width: 44, alignment: .leading)
-                MarkSegments(options: [
-                    .init(title: "Picked", isOn: note != nil && into == nil, isEnabled: note != nil) { setInto(nil) },
-                    .init(title: direction?.legatoName ?? "Hammer-on", isOn: into == .legato,
-                          isEnabled: direction != nil) { setInto(.legato) },
-                    .init(title: "Slide", isOn: into == .slide, isEnabled: direction != nil) { setInto(.slide) }
-                ])
-            }
-            if let hint = joinHint {
-                Text(hint)
-                    .font(.futura(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
+            intoControls
             // Vibrato sits beside the bends when the row has room for both, and under them when it doesn't.
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 8) {
@@ -72,37 +56,9 @@ extension NameTheNotesSheet {
         .accessibilityAddTraits(note?.vibrato == true ? .isSelected : [])
     }
 
-    /// The join stored on the note being named, fitting or not.
-    private var currentJoin: Join? {
-        guard case .fretted(_, let into) = labels[active] else { return nil }
-        return into
-    }
-
     /// What a bend button says: *None*, *½*, *Whole*, *1½* (steps).
     nonisolated static func bendTitle(_ semitones: Int) -> String {
         ["None", "½", "Whole", "1½"][min(max(semitones, 0), 3)]
-    }
-
-    /// Why *Into it* is off, said plainly, or `nil` when a join can go here.
-    private var joinHint: String? {
-        switch NeckJoin.blocker(into: active, of: labels) {
-        case nil: return nil
-        case .notPlaced: return "Place the note first."
-        case .first: return "The first note has nothing before it."
-        case .previousUnnamed: return "Name the note before this one first."
-        case .previousByEar: return "The note before isn’t on the neck."
-        case .otherStrings:
-            let shape = (labels[active]?.frettedNotes.count ?? 0) > 1
-                || (active > 0 && (labels[active - 1]?.frettedNotes.count ?? 0) > 1)
-            return shape ? "Only from a shape on the same strings." : "Only from a note on the same string."
-        case .sameFret: return "The note before is on the same fret."
-        case .mixedDirections: return "Every note has to move the same way."
-        }
-    }
-
-    private func setInto(_ join: Join?) {
-        guard case .fretted(let notes, _) = labels[active] else { return }
-        labels[active] = .fretted(notes, into: join)
     }
 
     /// The note bend and vibrato go on: the one note, or a shape's ringed note (0227 D5).
@@ -121,7 +77,7 @@ extension NameTheNotesSheet {
 }
 
 /// A row of small segments where each can be off on its own, which `Picker(.segmented)` can't do: *Into it*
-/// offers only the join that fits.
+/// offers only the ways in that fit.
 struct MarkSegments: View {
     struct Option {
         let title: String
@@ -160,7 +116,8 @@ struct MarkSegments: View {
 
 /// The note being named's marks, drawn on the neck (ADR 0227 D5): a bend as an arrow to a dashed ghost
 /// where it lands (the fretLIVE idea), vibrato as a wave over the note, a hammer-on or pull-off as a curve
-/// under the string marked *h* or *p*, a slide as an arrow marked `/` or `\`. Only the current note's.
+/// under the string marked *h* or *p*, a slide as an arrow marked `/` or `\`. A lead-in draws the same
+/// curve or arrow from a ring where it started, or, from nowhere, a short arrow in. Only the current note's.
 struct NeckMarksLayer: View {
     let notes: [FrettedNote]
     /// The tap before's notes, where a join starts.
@@ -178,8 +135,9 @@ struct NeckMarksLayer: View {
             drawShapeLinks(in: context, ink: ink)
             for note in notes {
                 drawNoteMarks(note, in: context, ink: ink, line: line)
+                drawLeadIn(note, in: context)
             }
-            if let join { drawJoin(join, in: context, ink: ink, line: line) }
+            if let join { drawJoin(join, in: context) }
         }
         .frame(width: CGFloat(maxFret + 1) * NeckGeometry.pitch,
                height: headroom + CGFloat(stringCount) * NeckGeometry.pitch + 20)
@@ -238,30 +196,53 @@ struct NeckMarksLayer: View {
         }
     }
 
-    private func drawJoin(_ join: String, in context: GraphicsContext, ink: GraphicsContext.Shading,
-                          line: StrokeStyle) {
+    private func drawJoin(_ join: String, in context: GraphicsContext) {
         for (position, note) in notes.sorted(by: { $0.string < $1.string }).enumerated() {
             guard let before = previous.first(where: { $0.string == note.string }) else { continue }
-            let start = center(note.string, before.fret)
-            let end = center(note.string, note.fret)
-            let middle = (start.x + end.x) / 2
-            if join == "h" || join == "p" {
-                var curve = Path()
-                curve.move(to: CGPoint(x: start.x, y: start.y + 13))
-                curve.addQuadCurve(to: CGPoint(x: end.x, y: end.y + 13), control: CGPoint(x: middle, y: end.y + 29))
-                context.stroke(curve, with: ink, style: line)
-                if position == 0 { pill(join, at: CGPoint(x: middle, y: end.y + 21), in: context) }
-            } else {
-                let way: CGFloat = end.x > start.x ? 1 : -1
-                let tail = CGPoint(x: start.x + way * 6, y: end.y + 17)
-                let tip = CGPoint(x: end.x - way * 9, y: end.y + 17)
-                var arrow = Path()
-                arrow.move(to: tail)
-                arrow.addLine(to: tip)
-                context.stroke(arrow, with: ink, style: line)
-                context.fill(arrowhead(at: tip, from: tail), with: ink)
-                if position == 0 { pill(join, at: CGPoint(x: middle, y: end.y + 17), in: context) }
-            }
+            drawLink(join, from: center(note.string, before.fret), to: center(note.string, note.fret),
+                     labelled: position == 0, in: context)
+        }
+    }
+
+    /// A lead-in inside the note: a ring on the fret it started from, or from nowhere a short arrow in
+    /// from the side it came, and the join's curve or arrow into the note.
+    private func drawLeadIn(_ note: FrettedNote, in context: GraphicsContext) {
+        guard let leadIn = note.leadIn, let way = leadIn.direction(into: note.fret) else { return }
+        let end = center(note.string, note.fret)
+        let start: CGPoint
+        if case .fret(let fret) = leadIn.from {
+            start = center(note.string, fret)
+            context.stroke(Path(ellipseIn: CGRect(x: start.x - 12, y: start.y - 12, width: 24, height: 24)),
+                           with: .color(PocketColor.practice), lineWidth: 1.5)
+        } else {
+            start = CGPoint(x: end.x + (way == .upward ? -1.4 : 1.4) * NeckGeometry.pitch, y: end.y)
+        }
+        drawLink(way.symbol(for: leadIn.join), from: start, to: end, labelled: true, in: context)
+    }
+
+    /// One join drawn under a string, `start` to `end`: a curve for *h* and *p*, an arrow for a slide, and
+    /// the mark in a pill when `labelled` (once per shape).
+    private func drawLink(_ join: String, from start: CGPoint, to end: CGPoint, labelled: Bool,
+                          in context: GraphicsContext) {
+        let ink = GraphicsContext.Shading.color(PocketColor.practice)
+        let line = StrokeStyle(lineWidth: 1.75, lineCap: .round, lineJoin: .round)
+        let middle = (start.x + end.x) / 2
+        if join == "h" || join == "p" {
+            var curve = Path()
+            curve.move(to: CGPoint(x: start.x, y: start.y + 13))
+            curve.addQuadCurve(to: CGPoint(x: end.x, y: end.y + 13), control: CGPoint(x: middle, y: end.y + 29))
+            context.stroke(curve, with: ink, style: line)
+            if labelled { pill(join, at: CGPoint(x: middle, y: end.y + 21), in: context) }
+        } else {
+            let way: CGFloat = end.x > start.x ? 1 : -1
+            let tail = CGPoint(x: start.x + way * 6, y: end.y + 17)
+            let tip = CGPoint(x: end.x - way * 9, y: end.y + 17)
+            var arrow = Path()
+            arrow.move(to: tail)
+            arrow.addLine(to: tip)
+            context.stroke(arrow, with: ink, style: line)
+            context.fill(arrowhead(at: tip, from: tail), with: ink)
+            if labelled { pill(join, at: CGPoint(x: middle, y: end.y + 17), in: context) }
         }
     }
 

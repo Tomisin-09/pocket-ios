@@ -90,10 +90,11 @@ enum NeckPlacement {
         let ringed: Int
     }
 
-    /// With **Chords** off a tap replaces the note, and the note keeps its marks; tapping the placed note
-    /// changes nothing. With Chords on, one note per string: a tap on an empty string adds a note, on a
-    /// string with one moves it, and on a note rings it, then, tapped again, takes it out (unless it's the
-    /// last). A join is kept, for the sheet's tidy to drop if it no longer fits.
+    /// With **Chords** off a tap replaces the note, and the note keeps its marks, its lead-in too while it
+    /// stays on its string; tapping the placed note changes nothing. With Chords on, one note per string:
+    /// a tap on an empty string adds a note, on a string with one moves it, and on a note rings it, then,
+    /// tapped again, takes it out (unless it's the last). A join is kept, for the sheet's tidy to drop if
+    /// it no longer fits.
     static func tap(string: Int, fret: Int, on current: PieceLabel?, ringed: Int?, chords: Bool) -> Outcome {
         guard case .fretted(var notes, let into) = current, !notes.isEmpty else {
             return Outcome(label: .fretted(string: string, fret: fret), ringed: string)
@@ -105,7 +106,9 @@ enum NeckPlacement {
             }
             let kept = notes[ring]
             return Outcome(label: .fretted([FrettedNote(string: string, fret: fret, bend: kept.bend,
-                                                        vibrato: kept.vibrato)], into: into),
+                                                        vibrato: kept.vibrato,
+                                                        leadIn: kept.string == string ? kept.leadIn : nil)],
+                                           into: into),
                            ringed: string)
         }
         if let onString = notes.firstIndex(where: { $0.string == string }) {

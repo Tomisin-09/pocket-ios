@@ -195,10 +195,16 @@ Then say what it was on one of two sheets: `Fret & string` for where you played 
 you heard. Fret & string is the neck: tap where you played the note. Every spot carries its note name
 faintly, and the pass's other notes stay on the neck so you can see the lick's shape. `Where did you play
 it?` sets guitar or bass and the tuning for this piece only; a new tuning keeps your frets, and a new
-instrument clears them after asking. Under the neck, `Into it` says how you got to the note from the one
-before (picked, a hammer-on or pull-off, or a slide, offered only when the note before is on the same
-string), and `Bend` and `~ Vibrato` mark the note itself. A bend changes the note, so a bent note reads
-as the note it reaches. The marks go into the tab the usual way: *7b9*, *7~*, *5h7*, *8/10*. Turn on
+instrument clears them after asking. Under the neck, `Into it` says how you got to the note: `Picked`,
+`Hammer-on`, `Pull-off` or `Slide`. A quick hammer-on or slide can sound like one note or two, so it
+goes however you tapped it. If you heard two notes and tapped twice, the join comes from the note
+before when it's on the same string, and the line under the choices names it. If you heard one note
+and tapped once, pick how it started and tap the fret it started on (the frets it can't have come from
+fade out); a slide can also come in from nowhere, `From below` or `From above`. `Heard as one note?`
+moves a join from the note before into the note. `Bend` and `~ Vibrato` mark the note itself. A bend
+changes the note, so a bent note reads as the note it reaches, and so does a note with a quick start.
+The marks go into the tab the usual way, the same however you tapped them: *7b9*, *7~*, *5h7*, *8/10*,
+*/10*. Turn on
 `Chords` to place more than one note: one per string, as in My chords, so a double-stop, a triad and a
 full chord are the same taps. The neck names what you placed, a chord such as *Am/C* or, for two notes
 that aren't one, the interval between them. By ear has the twelve note names and, under them, the kinds

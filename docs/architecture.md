@@ -625,8 +625,9 @@ each note you hear, then name them. The pieces, from the audio up:
   changing *Edit names*; the Journal's *Pieces* rows sit on that day, and `PieceDateBackfill` dates older
   pieces from their 🧩 line at launch). Save writes no Journal line. Labels are tagged JSON, so an unknown
   kind decodes as an unnamed tap. Notes on the neck are `FrettedNote`s (highest-first string, fret, and
-  since ADR 0227 D9 an optional `bend` and `vibrato`) with an optional `into` join; one note is written
-  as 0225's `fret` kind with the marks as optional keys, so an older build keeps the fret and drops the
+  since ADR 0227 D9 an optional `bend` and `vibrato`, and since ADR 0230 an optional `leadIn`: a start
+  fret or from below/above, and its join, for a note heard as one) with an optional `into` join; one
+  note is written as 0225's `fret` kind with the marks as optional keys, so an older build keeps the fret and drops the
   marks, and two or more as a `shape`, which an older build reads as unnamed. `NeckJoin` holds the join
   rule (same strings, every note moving one way; the direction picks h/p or / \ and is never stored).
   `NeckShape` reads a shape through `ChordNamer` (root position first, a slash name for an inversion, an

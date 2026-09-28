@@ -93,7 +93,8 @@ enum PieceLabel: Equatable, Hashable, Sendable {
 }
 
 /// One note on the neck, with the marks that live **on** the note (ADR 0227 D5): a bend changes the note
-/// (the sounding pitch moves, so without it a bent note has no right fret), and vibrato colours it.
+/// (the sounding pitch moves, so without it a bent note has no right fret), vibrato colours it, and a
+/// lead-in is a quick start heard as part of it.
 struct FrettedNote: Equatable, Hashable, Sendable {
     /// Highest-first: 0 is the thinnest string.
     var string: Int
@@ -101,6 +102,9 @@ struct FrettedNote: Equatable, Hashable, Sendable {
     /// Semitones the note is bent up: 0 none, then ½, whole and 1½ steps.
     var bend: Int = 0
     var vibrato = false
+    /// A grace note hammered, pulled or slid into this one, or a slide in from nowhere, when the player
+    /// heard the two as one note and tapped once. Only on a single note (`NeckJoin.tidied`).
+    var leadIn: LeadIn?
 
     /// The bends the neck offers, in semitones.
     static let bends = 0...3
@@ -116,6 +120,35 @@ struct FrettedNote: Equatable, Hashable, Sendable {
 /// disagree with the frets.
 enum Join: String, Codable, Sendable, CaseIterable {
     case legato, slide
+}
+
+/// A quick start **inside** one tap (ADR 0230). A hammer-on, pull-off or slide played fast is heard as one
+/// note, and the player taps once, so there is no tap before to join from. It lives on the note, as a bend
+/// does: one tap that moves between two pitches, read as the note it lands on. The tab is the same either
+/// way (`11h13`); only the count says how it was heard.
+struct LeadIn: Equatable, Hashable, Sendable {
+    /// Where it started.
+    enum Start: Equatable, Hashable, Sendable {
+        /// A fret on the same string: a grace note.
+        case fret(Int)
+        /// A slide in **from nowhere**, from somewhere lower or higher with no fret to say: `/13`, `\13`.
+        case below, above
+    }
+
+    var from: Start
+    var join: Join
+
+    /// Which way it moves into a note at `fret`, or `nil` when it can't be played: a start on the same
+    /// fret or off the neck, or a hammer-on from nowhere.
+    func direction(into fret: Int) -> JoinDirection? {
+        switch from {
+        case .fret(let start):
+            guard (0...PieceLabel.maxFret).contains(start), start != fret else { return nil }
+            return start < fret ? .upward : .downward
+        case .below: return join == .slide ? .upward : nil
+        case .above: return join == .slide ? .downward : nil
+        }
+    }
 }
 
 // MARK: - Coding
@@ -184,11 +217,11 @@ extension PieceLabel: Codable {
     }
 }
 
-/// A note's keys: `string` and `fret` always, `bend` and `vibrato` only when set, so an unmarked note is
-/// written exactly as 0225 wrote it.
+/// A note's keys: `string` and `fret` always, `bend`, `vibrato` and `leadIn` only when set, so an unmarked
+/// note is written exactly as 0225 wrote it.
 extension FrettedNote: Codable {
     private enum CodingKeys: String, CodingKey {
-        case string, fret, bend, vibrato
+        case string, fret, bend, vibrato, leadIn
     }
 
     init(from decoder: Decoder) throws {
@@ -198,6 +231,9 @@ extension FrettedNote: Codable {
         let bend = try container.decodeIfPresent(Int.self, forKey: .bend) ?? 0
         self.bend = Self.bends.contains(bend) ? bend : 0
         vibrato = try container.decodeIfPresent(Bool.self, forKey: .vibrato) ?? false
+        // A lead-in this build can't read, or one that can't be played into this fret, reads as none.
+        let leadIn = (try? container.decodeIfPresent(LeadIn.self, forKey: .leadIn)) ?? nil
+        self.leadIn = leadIn?.direction(into: fret) == nil ? nil : leadIn
     }
 
     func encode(to encoder: Encoder) throws {
@@ -206,5 +242,41 @@ extension FrettedNote: Codable {
         try container.encode(fret, forKey: .fret)
         if bend != 0 { try container.encode(bend, forKey: .bend) }
         if vibrato { try container.encode(vibrato, forKey: .vibrato) }
+        try container.encodeIfPresent(leadIn, forKey: .leadIn)
+    }
+}
+
+/// `{"from": 11, "join": "legato"}`, or `{"from": "below", "join": "slide"}` for a slide in from nowhere.
+extension LeadIn: Codable {
+    private enum CodingKeys: String, CodingKey {
+        case from, join
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        guard let join = Join(rawValue: try container.decode(String.self, forKey: .join)) else {
+            throw DecodingError.dataCorruptedError(forKey: .join, in: container, debugDescription: "Unknown join.")
+        }
+        self.join = join
+        if let fret = try? container.decode(Int.self, forKey: .from) {
+            from = .fret(fret)
+        } else {
+            switch try container.decode(String.self, forKey: .from) {
+            case "below": from = .below
+            case "above": from = .above
+            default: throw DecodingError.dataCorruptedError(forKey: .from, in: container,
+                                                            debugDescription: "Unknown start.")
+            }
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch from {
+        case .fret(let fret): try container.encode(fret, forKey: .from)
+        case .below: try container.encode("below", forKey: .from)
+        case .above: try container.encode("above", forKey: .from)
+        }
+        try container.encode(join.rawValue, forKey: .join)
     }
 }

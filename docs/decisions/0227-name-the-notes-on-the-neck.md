@@ -10,6 +10,10 @@
   **D10**: three lines are lifted (one note per tap, no technique marks, tuning only from the tuner).
   **D7** (after the device check): a long run of unnamed notes in the line is said as a count.
   D1–D4, D7–D9 and the rest of D10 stand, including *never detected, never suggested*.
+- **Amended by:** ADR 0230 — **D5**: all four ways in are always shown, and a hammer-on, pull-off or
+  slide heard as one note lives inside that note, as a **lead-in**. **D9**: a note gains an optional
+  `leadIn` key. **D10**: a slide **into** a note from nowhere (`/7`) is lifted; a slide out to nowhere,
+  bend releases and pre-bends stay out. The rest of D5, D9 and D10 stands.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the
   synth withdrawn here, and D4.3, the route back) · 0093 (the chord namer that names a shape) · 0095
   (My chords, whose one-note-per-string rule the Chords switch follows) · 0065 (exercise templates, whose scales editor
@@ -131,7 +135,8 @@ The kind decides where a mark lives.
 - **A join is valid only** when the tap before is on the neck, on the same strings, with every note
   moving the same way. The direction decides which it is: up is a hammer-on or `/`, down a pull-off or
   `\`, so the control only offers the one that fits. A join that stops being valid (the note before
-  moves) is dropped.
+  moves) is dropped. *(Amended by 0230: all four ways in are always shown, and a join heard as one note
+  lives inside that note, as a lead-in.)*
 - **On a shape**, a bend and vibrato go on the ringed note; a join moves the whole shape (sliding 6ths).
 - **Drawn on the neck**: a bend as a dashed ghost where it lands, with an arrow from the note (the
   fretLIVE idea); vibrato as a wave over the note; a hammer-on or pull-off as a curve under the string
@@ -179,7 +184,7 @@ Each tap has **one** answer. The two sheets give it at two levels of detail, and
   and `into` (`legato` or `slide`, the join from the tap before; which of hammer-on or pull-off, `/` or
   `\`, is worked out from direction, never stored).
 - A new **`shape`** kind holds two to six fretted notes, each with its own `bend` and `vibrato`, and the
-  shape's `into`.
+  shape's `into`. *(Amended by 0230: a single note gains an optional `leadIn`.)*
 - **The pitch of a fretted note includes its bend.** `pitchClass(openMidi:)` and everything that reads
   it (By ear, the Journal line) see the bent note's sounding pitch.
 - **The tuning is chosen per piece** (D3) and still recorded as `openMidi` and `tuningLabel`, so nothing
@@ -196,7 +201,8 @@ Each tap has **one** answer. The two sheets give it at two levels of detail, and
 - **No free-text tab document**, and **no playing the tab back as a sequence**.
 - **Never detected, never suggested.** Every fret, mark and name is the player's.
 - **Marks with no note at one end**: slides from or to nowhere (`/7`, `7\`), bend releases (`7b9r7`)
-  and pre-bends.
+  and pre-bends. *(Amended by 0230: a slide into a note from nowhere, `/7`, is lifted. The rest stays
+  out.)*
 - **Joins between a single note and a shape**, or between shapes on different strings.
 - **Harmonics, tapping, palm muting, rakes.** The Journal text still carries them.
 - **A scale shape behind the neck.** Shown before the answer, it's a hint.
@@ -235,6 +241,10 @@ protect from the start.
   24 notes (`TapTally.longPassNotes`) reads *Loops of around 16 notes are easier to transcribe*. It's
   advice about the setup, never a mark on the playing (0070), and well past 16, so a pass of 18 isn't
   told anything.
+
+**After the third device check** (2026-09-28): hammer-ons and slides were hard to mark and pull-offs
+looked missing, because a quick one is heard, and tapped, as one note. That lifts part of D10, so it is
+its own record: **ADR 0230**.
 
 ## Consequences
 

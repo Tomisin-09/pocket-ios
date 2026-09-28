@@ -84,6 +84,12 @@ extension NameTheNotesSheet {
             : isOther ? PocketColor.textPrimary : PocketColor.textSecondary.opacity(0.55)
         let fill: Color = isPlaced ? PocketColor.practice
             : isOther ? PocketColor.textPrimary.opacity(0.18) : PocketColor.surfaceSubtle.opacity(0.5)
+        // While *Into it* waits for a start, only the frets it could have come from stay bright.
+        let dimmed = awaitingStart.map { request in
+            !isPlaced && !(labels[active]?.singleNote.map {
+                NeckJoin.accepts(string: string, fret: fret, asStartOf: $0, for: request)
+            } ?? false)
+        } ?? false
         return Button {
             place(string: string, fret: fret)
         } label: {
@@ -96,6 +102,7 @@ extension NameTheNotesSheet {
                 .background(Circle().fill(fill))
                 .overlay(Circle().stroke(isPlaced || isOther ? .clear : PocketColor.surfaceBorder, lineWidth: 1))
                 .overlay(Circle().inset(by: -3.5).stroke(isRinged ? PocketColor.practice : .clear, lineWidth: 1.5))
+                .opacity(dimmed ? 0.3 : 1)
                 .frame(width: 30, height: 30)
                 .contentShape(Rectangle())
         }
@@ -108,8 +115,12 @@ extension NameTheNotesSheet {
     /// A tap on the neck, by `NeckPlacement`'s rules: with Chords off it replaces the note (which keeps its
     /// marks), with Chords on it builds a shape one note per string. A name given by ear just gives way:
     /// only overwriting neck work asks first (0227 D7). A join that no longer fits is dropped by the
-    /// sheet's tidy.
+    /// sheet's tidy. While *Into it* waits for where a note started, the tap says that instead.
     private func place(string: Int, fret: Int) {
+        if let awaitingStart {
+            takeStart(string: string, fret: fret, for: awaitingStart)
+            return
+        }
         replacing = nil
         let outcome = NeckPlacement.tap(string: string, fret: fret, on: labels[active], ringed: ringed,
                                         chords: chordsOn)

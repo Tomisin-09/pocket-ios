@@ -8,8 +8,10 @@ import Foundation
 ///
 /// A column per tap, in order, with no durations: the timing lives in the dots. Since ADR 0227 D5 the
 /// marks are written the usual way: `7b9` a bend, `7~` vibrato, and a join between two columns as `h`,
-/// `p`, `/` or `\`. A shape stacks in one column. It is always **drawn from the piece**, never stored, so
-/// it can't be edited apart from it.
+/// `p`, `/` or `\`. A note heard as one with its lead-in keeps the join inside its column (`11h13`, and
+/// `/13` for a slide in from nowhere), so the tab reads the same however it was counted. A shape stacks
+/// in one column. It is always **drawn from the piece**, never stored, so it can't be edited apart from
+/// it.
 ///
 /// Pure and SwiftUI-free (AGENTS.md).
 enum TabLine {
@@ -61,9 +63,20 @@ enum TabLine {
         return lines.map { $0 + "--|" }.joined(separator: "\n")
     }
 
-    /// A note as tab writes it: the fret, then `b` and the fret it bends to, then `~` for vibrato.
+    /// A note as tab writes it: any lead-in (`11h`, `/`), the fret, then `b` and the fret it bends to,
+    /// then `~` for vibrato.
     static func cell(_ note: FrettedNote) -> String {
-        "\(note.fret)" + (note.bend > 0 ? "b\(note.fret + note.bend)" : "") + (note.vibrato ? "~" : "")
+        leadIn(note) + "\(note.fret)" + (note.bend > 0 ? "b\(note.fret + note.bend)" : "")
+            + (note.vibrato ? "~" : "")
+    }
+
+    /// A lead-in as tab writes it before the fret: its start and the join's mark (`11h`, `13p`, `11/`), or
+    /// the slide's mark alone for a slide in from nowhere (`/`, `\`).
+    private static func leadIn(_ note: FrettedNote) -> String {
+        guard let leadIn = note.leadIn, let direction = leadIn.direction(into: note.fret) else { return "" }
+        let mark = direction.symbol(for: leadIn.join)
+        guard case .fret(let start) = leadIn.from else { return mark }
+        return "\(start)" + mark
     }
 
     /// The string names down the left edge, thinnest first and padded to one width so the bars line up.

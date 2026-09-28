@@ -118,6 +118,8 @@ struct NameTheNotesSheet: View {
     @State var chordsOn: Bool
     /// The string of the **ringed** note in a shape, the one bend and vibrato go on.
     @State var ringed: Int?
+    /// *Into it* waiting for the neck to say where the note started (0227 D5, a lead-in).
+    @State var awaitingStart: LeadInRequest?
     /// While the strip plays the loop or a phrase, the chip being heard. Apart from `active`, so the chip
     /// being named never moves under the player's finger.
     @State var hearing: Int?
@@ -191,6 +193,7 @@ struct NameTheNotesSheet: View {
         .interactiveDismissDisabled(labels != request.taps.map(\.label))
         .onChange(of: active) {
             replacing = nil
+            awaitingStart = nil
             neckTarget = Self.fret(of: labels[active]) ?? neckTarget
             ringed = labels[active]?.frettedNotes.last?.string
         }
@@ -201,6 +204,7 @@ struct NameTheNotesSheet: View {
         }
         .onChange(of: mode) {
             replacing = nil
+            awaitingStart = nil
             neckTarget = Self.fret(of: labels[active]) ?? neckTarget
         }
         .sheet(isPresented: $showingInstrument) {
