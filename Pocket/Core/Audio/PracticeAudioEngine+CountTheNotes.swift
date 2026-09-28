@@ -21,12 +21,28 @@ extension PracticeAudioEngine {
     func loopClock() -> LoopClockReading? {
         guard isPlaying, loopBufferFrames > 0, currentLoopSegment() != nil, sampleRate > 0 else { return nil }
         let elapsedFrames = max(0, Double(currentSampleTime() - loopBaseSampleTime))
-        let session = AVAudioSession.sharedInstance()
         return LoopClockReading(elapsed: heard(elapsedFrames / sampleRate),
                                 regionStart: Double(loopAnchorFrame) / sampleRate,
                                 passLength: Double(loopBufferFrames) / sampleRate,
                                 rate: stretcher.rate,
-                                outputLatency: session.outputLatency + session.ioBufferDuration)
+                                outputLatency: routeLatency)
+    }
+
+    /// Wall-clock seconds from a rendered buffer to the ear: the route's latency plus one IO buffer.
+    private var routeLatency: TimeInterval {
+        let session = AVAudioSession.sharedInstance()
+        return session.outputLatency + session.ioBufferDuration
+    }
+
+    /// The clock of the slice playing now, which starts at `start` in the song and plays `length` of it
+    /// (ADR 0227 D2: the strip rings a phrase's notes). `nil` while the loop plays or nothing does. A
+    /// slice stops the player before it starts, which sets the player's sample time back to zero, so
+    /// the samples played so far are the slice's own.
+    func sliceClock(start: TimeInterval, length: TimeInterval) -> SliceClockReading? {
+        guard !isPlaying, player.isPlaying, sampleRate > 0 else { return nil }
+        return SliceClockReading(elapsed: heard(Double(max(0, currentSampleTime())) / sampleRate),
+                                 start: start, length: length, rate: stretcher.rate,
+                                 outputLatency: routeLatency)
     }
 
     // MARK: - A slice of the song

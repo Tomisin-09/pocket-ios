@@ -59,8 +59,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Count the notes, then name them.** *Train your ear* has a new section for working a lick out by
   ear. Slow the loop down and tap the pad once for every note you hear; each time round the loop gets
   its own row of dots, so you can see when your passes agree. **Name the notes** lays one pass out as
-  a strip of numbered notes: tap one to hear just that moment of the record, or play the whole loop
-  from the strip and watch each note light up as it goes by, then say what it was, by
+  a strip of numbered notes: tap one to hear it with the notes just before it, ending on it (**Hear 3
+  notes** at the top of the strip sets how many, from just the note to eight, and each lights up as it
+  plays), or play the whole loop from the strip and watch each note light up as it goes by, then say
+  what it was, by
   **Fret & string** (where you played it) or **By ear** (what you heard: a note, or a chord by its root
   and kind, with the kinds grouped by how many notes they hold). Fret & string is a neck you tap, with
   every note named faintly and the pass's other notes showing the lick's shape, on guitar or bass in
@@ -76,7 +78,8 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   Journal under the new **Pieces** tab: one row per loop, always the current version, that opens the
   loop in *Train your ear* (ADR 0229). **Show beats** adds the song's beat lines and a per-beat
   count, and it stays off until you turn it on, because the lines are only as good as the song's
-  tempo and its 1 (ADR 0225).
+  tempo and its 1 (ADR 0225). A pass of more than 24 notes gets a suggestion under the rows: loops of
+  around 16 notes are easier to transcribe.
 - **Record a take that isn't about any drill.** The Journal's ✏️ is now a **＋** holding **Write a
   note** and **Record a take**. A take recorded there belongs to nothing — a riff you want to keep,
   how new strings sound — so it no longer has to be filed under whatever drill was open. One button

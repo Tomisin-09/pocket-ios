@@ -166,26 +166,41 @@ final class LoopRunModel {
 
     /// Bumped by every slice and every stop, so only the newest slice's end is reported.
     private var sliceToken = 0
+    /// The stretch of the song the newest slice plays, for its clock; `nil` once it has ended or been cut.
+    private var sliceWindow: (start: TimeInterval, length: TimeInterval)?
 
-    /// Play a moment of the song around `tap` (song seconds) at `percent`, once. Only while stopped: the
-    /// naming sheet stops the loop first, and a slice never plays over it. `onFinished` fires when this
-    /// slice ends on its own, and not if a newer slice or a stop cut it short.
-    func playSlice(at tap: TimeInterval, percent: Int,
-                   onFinished: (@MainActor @Sendable () -> Void)? = nil) {
+    /// Play the song from just before `first` through the moment of `last` (song seconds) at `percent`,
+    /// once: one tap's slice when they're the same, a phrase ending on `last` when not (ADR 0227 D2).
+    /// Only while stopped: the naming sheet stops the loop first, and a slice never plays over it.
+    /// `onFinished` fires when this slice ends on its own, and not if a newer slice or a stop cut it short.
+    /// Returns whether it started.
+    @discardableResult
+    func playSlice(from first: TimeInterval, to last: TimeInterval, percent: Int,
+                   onFinished: (@MainActor @Sendable () -> Void)? = nil) -> Bool {
         guard transport == .stopped, loaded, !loadFailed,
-              let window = AudioSlice.window(tap: tap, duration: engine.duration) else { return }
+              let window = AudioSlice.window(from: first, to: last, duration: engine.duration) else { return false }
         sliceToken += 1
         let token = sliceToken
-        engine.playSlice(from: window.start, length: window.length,
-                         rate: Self.rate(forPercent: percent)) { [weak self] in
+        let started = engine.playSlice(from: window.start, length: window.length,
+                                       rate: Self.rate(forPercent: percent)) { [weak self] in
             guard let self, token == self.sliceToken else { return }
+            sliceWindow = nil
             onFinished?()
         }
+        sliceWindow = started ? window : nil
+        return started
+    }
+
+    /// The slice's clock while one plays, for the strip's ring. Read in a `TimelineView` leaf, never in
+    /// a body (ADR 0153).
+    func sliceClock() -> SliceClockReading? {
+        sliceWindow.flatMap { engine.sliceClock(start: $0.start, length: $0.length) }
     }
 
     /// Cut a slice short. Never touches a playing loop.
     func stopSlice() {
         sliceToken += 1
+        sliceWindow = nil
         engine.stopSlice()
     }
 

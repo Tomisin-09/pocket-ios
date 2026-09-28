@@ -109,6 +109,18 @@ enum TapTally {
     /// named only at the start would otherwise read as a wall of question marks.
     static let unnamedRun = 4
 
+    // MARK: - Pass length (0227, after the device check)
+
+    /// About how many notes a loop holds that's comfortable to transcribe: a phrase or two, few enough to
+    /// keep in the ear. The figure the long-pass tip gives.
+    static let comfortableNotes = 16
+    /// Past this many notes a pass gets the tip to try a shorter loop. Well past `comfortableNotes`, so a
+    /// pass of 18 isn't told off for two notes: it's advice about the setup, not a mark (ADR 0070).
+    static let longPassNotes = 24
+
+    /// Whether a pass of `count` notes is long enough to suggest a shorter loop.
+    static func isLongPass(_ count: Int) -> Bool { count > longPassNotes }
+
     /// The names in order, a `?` holding each unnamed note's place, and a run of `unnamedRun` or more said
     /// as how many: `"A ? D (12 unnamed) E"`.
     static func nameList(_ names: [String?]) -> String {

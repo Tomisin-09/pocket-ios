@@ -1,12 +1,12 @@
 import SwiftUI
 
-// The **strip** (ADR 0227 D2): the pass as one row of chips, and the button that plays the whole loop
-// along it. Split out for type length.
+// The **strip** (ADR 0227 D2): the pass as one row of chips, the button that plays the whole loop along
+// it, and how many notes a tap plays. Split out for type length.
 extension NameTheNotesSheet {
 
     /// One row of chips that scrolls sideways and keeps the current one in the middle (0227 D2), so the
     /// picker below stays put for 7 notes or 65, and switching sheets never loses the place. While the loop
-    /// plays, the strip follows the chip being heard, and comes back to the current one when it stops.
+    /// or a phrase plays, the strip follows the chip being heard, and comes back to the current one after.
     var strip: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
@@ -14,11 +14,14 @@ extension NameTheNotesSheet {
                 Text("\(noun.capitalized) \(active + 1) of \(labels.count)")
                     .font(.futura(.footnote, weight: .bold))
                     .monospacedDigit()
-                Spacer()
+                    .lineLimit(1)
                 let unnamed = labels.filter { $0 == nil }.count
                 Text(unnamed == 0 ? "All named" : "\(unnamed) to name")
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
+                    .lineLimit(1)
+                Spacer(minLength: 4)
+                phraseMenu
             }
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -45,43 +48,68 @@ extension NameTheNotesSheet {
                     withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(active, anchor: .center) }
                 }
                 // Follow the loop, but not back to the current chip in the gap before a pass's first tap:
-                // the strip would jump there and back once a pass.
+                // the strip would jump there and back once a pass. The loop keeps the heard chip in the
+                // middle; a phrase moves the strip only as far as it must, so a short one doesn't swing it.
                 .onChange(of: hearing) {
                     guard let hearing else { return }
-                    withAnimation(.easeOut(duration: 0.2)) { proxy.scrollTo(hearing, anchor: .center) }
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        proxy.scrollTo(hearing, anchor: following == .loop ? .center : nil)
+                    }
                 }
-                .onChange(of: player.isPlaying) { _, playing in
-                    guard !playing else { return }
+                .onChange(of: following) { _, now in
+                    guard now == .nothing else { return }
                     hearing = nil
                     withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(active, anchor: .center) }
                 }
             }
         }
-        .background {
-            if player.isPlaying {
-                HeardChipTracker(player: player, taps: request.taps.map(\.seconds)) { hearing = $0 }
+        .background { tracker }
+    }
+
+    /// What the ring follows now (`NamingStrip.Following`).
+    var following: NamingStrip.Following {
+        .now(loopPlaying: player.isPlaying, slicePlaying: player.isSlicePlaying, phrase: sounding)
+    }
+
+    /// The one leaf that reads a clock, there only while the ring has something to follow.
+    @ViewBuilder private var tracker: some View {
+        let taps = request.taps.map(\.seconds)
+        switch following {
+        case .loop:
+            HeardChipTracker { player.loopClock().flatMap { NamingStrip.heard($0, taps: taps) } } report: {
+                hearing = $0
             }
+        case .phrase(let phrase):
+            HeardChipTracker {
+                player.sliceClock().flatMap { NamingStrip.heard($0, phrase: phrase, taps: taps) }
+            } report: {
+                hearing = $0
+            }
+        case .nothing:
+            EmptyView()
         }
     }
 
     /// **Play the loop** (0227 D2, added after the device check): the loop itself, the way *Train your
     /// ear* plays it, at its tempo and round until stopped, so the notes can be heard as a line and not
-    /// only one at a time. Tapping a chip stops it and plays just that note.
+    /// only one at a time. Tapping a chip stops it and plays that chip's moment. While a phrase plays it
+    /// stops the phrase, since eight notes slowed down can run for seconds.
     private var playButton: some View {
-        Button {
-            player.toggle()
+        let playing = following != .nothing
+        return Button {
+            if case .phrase = following { player.stopSlice() } else { player.toggle() }
         } label: {
             ZStack {
                 Circle()
-                    .fill(player.isPlaying ? PocketColor.practice : PocketColor.practice.opacity(0.14))
+                    .fill(playing ? PocketColor.practice : PocketColor.practice.opacity(0.14))
                 if player.isLoading {
                     ProgressView()
                         .controlSize(.mini)
                 } else {
-                    Image(systemName: player.isPlaying ? "stop.fill" : "play.fill")
+                    Image(systemName: playing ? "stop.fill" : "play.fill")
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(player.isPlaying ? PocketColor.background : PocketColor.practice)
-                        .offset(x: player.isPlaying ? 0 : 1)   // optical-centre the play triangle
+                        .foregroundStyle(playing ? PocketColor.background : PocketColor.practice)
+                        .offset(x: playing ? 0 : 1)   // optical-centre the play triangle
                 }
             }
             .frame(width: 30, height: 30)
@@ -92,8 +120,39 @@ extension NameTheNotesSheet {
         .padding(.vertical, -7)
         .padding(.leading, -7)
         .disabled(player.isUnavailable)
-        .accessibilityLabel(player.isPlaying ? "Stop the loop" : "Play the loop")
+        .accessibilityLabel(player.isPlaying ? "Stop the loop" : playing ? "Stop" : "Play the loop")
         .accessibilityIdentifier("naming.playLoop")
+    }
+
+    /// **How many notes a tap plays** (0227 D2, after the device check): the note alone, or the note and
+    /// the ones before it, so it's heard arriving from the line rather than cut out of it. Always ending on
+    /// the chip being named, which is the sound left in the ear when the finger goes to the neck.
+    private var phraseMenu: some View {
+        Menu {
+            Section("Ending on the \(noun) you're naming") {
+                Picker("Notes to hear", selection: $phraseNotes) {
+                    ForEach(NamingStrip.phraseChoices, id: \.self) { count in
+                        Text(count == 1 ? "Just the \(noun)" : "\(count) \(noun)s").tag(count)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Text("Hear \(phraseNotes) \(noun)\(phraseNotes == 1 ? "" : "s")")
+                    .lineLimit(1)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 9, weight: .semibold))
+            }
+            .font(.futura(.caption, weight: .semibold))
+            .foregroundStyle(PocketColor.practice)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .padding(.vertical, -7)
+        .fixedSize()
+        .accessibilityLabel("Notes to hear")
+        .accessibilityValue("\(phraseNotes), ending on the \(noun) you're naming")
+        .accessibilityIdentifier("naming.phraseLength")
     }
 
     /// The strip fades out at both ends, so a chip cut off by the edge reads as "more this way".
@@ -161,18 +220,18 @@ extension NameTheNotesSheet {
     }
 }
 
-/// While the strip's loop plays, which chip is being heard. **The one view in the sheet that reads the
-/// clock** (ADR 0153): it redraws on its own, 30 times a second, and reports only when the chip changes.
+/// While the strip's loop or a phrase plays, which chip is being heard. **The one view in the sheet that
+/// reads a clock** (ADR 0153): it redraws on its own, 30 times a second, and reports only when the chip
+/// changes.
 private struct HeardChipTracker: View {
-    let player: ContinuousLoopPlayer
-    let taps: [TimeInterval]
-    let onChange: (Int?) -> Void
+    let read: @MainActor () -> Int?
+    let report: (Int?) -> Void
 
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30)) { _ in
-            let heard = player.loopClock().flatMap { NamingStrip.heard($0, taps: taps) }
+            let heard = read()
             Color.clear
-                .onChange(of: heard, initial: true) { _, now in onChange(now) }
+                .onChange(of: heard, initial: true) { _, now in report(now) }
         }
         .accessibilityHidden(true)
     }

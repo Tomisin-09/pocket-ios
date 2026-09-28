@@ -32,6 +32,9 @@ struct CountTheNotesSection: View {
             if beatsOn {
                 beatsFooter
             }
+            if model.livePassID == nil, let pass = model.targetPass, TapTally.isLongPass(pass.count) {
+                longPassTip
+            }
             actions
         } header: {
             Text("Count the notes")
@@ -97,6 +100,20 @@ struct CountTheNotesSection: View {
         }
     }
 
+    // MARK: - A long pass
+
+    /// A long pass is a lot to name, and a lot to hold in the ear (0227, after the device check). Said
+    /// once the loop stops, never while the player is still tapping it out.
+    private var longPassTip: some View {
+        let noun = model.loop.loopType == .chords ? "chords" : "notes"
+        return Text("Loops of around \(TapTally.comfortableNotes) \(noun) are easier to transcribe. For a pass "
+                    + "this long, try a shorter loop.")
+            .font(.futura(.caption))
+            .foregroundStyle(PocketColor.textSecondary)
+            .fixedSize(horizontal: false, vertical: true)
+            .accessibilityIdentifier("count.longPassTip")
+    }
+
     // MARK: - Actions
 
     private var actions: some View {
@@ -125,7 +142,7 @@ struct CountTheNotesSection: View {
             .buttonStyle(.bordered)
             .tint(PocketColor.journal)
             .disabled(model.targetPass == nil)
-            .accessibilityHint("Saves this pass on the loop and writes a line to its Journal.")
+            .accessibilityHint("Saves this pass on the loop. The Journal lists it under Pieces.")
         }
         .font(.futura(.subheadline))
     }

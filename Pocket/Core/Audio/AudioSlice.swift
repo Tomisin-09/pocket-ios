@@ -22,10 +22,27 @@ enum AudioSlice {
     /// The stretch of the song to play for a tap at `tap` seconds, clamped to the song. `nil` when the
     /// song has no length.
     static func window(tap: TimeInterval, duration: TimeInterval) -> (start: TimeInterval, length: TimeInterval)? {
+        window(from: tap, to: tap, duration: duration)
+    }
+
+    /// The stretch for a **phrase** (ADR 0227 D2): from just before its `first` tap to where the `last`
+    /// tap's own slice ends, so a phrase ends on its note exactly as that note's slice does. One tap is
+    /// the plain slice.
+    static func window(from first: TimeInterval, to last: TimeInterval,
+                       duration: TimeInterval) -> (start: TimeInterval, length: TimeInterval)? {
         guard duration > 0 else { return nil }
-        let start = min(max(0, tap - preroll), duration)
-        let length = min(Self.length, duration - start)
-        return length > 0 ? (start, length) : nil
+        let start = min(max(0, first - preroll), duration)
+        let end = min(max(start, last - preroll) + length, duration)
+        return end > start ? (start, end - start) : nil
+    }
+
+    /// The song second the ear is hearing while a slice plays, or `nil` before its first sound has
+    /// reached the ear. Held at the slice's end through the silence padded after it.
+    static func heardSecond(_ reading: SliceClockReading) -> TimeInterval? {
+        // Wall-clock latency hides less of the song when it's slowed, as on the loop (`TapTally`).
+        let heard = reading.elapsed - reading.outputLatency * reading.rate
+        guard heard >= 0 else { return nil }
+        return reading.start + min(heard, reading.length)
     }
 
     /// The gain for one frame of a slice `frameCount` frames long: a linear rise over the first
@@ -38,4 +55,20 @@ enum AudioSlice {
         let fall = fadeOutFrames > 0 ? Float(frameCount - 1 - frame) / Float(fadeOutFrames) : 1
         return min(1, rise, fall)
     }
+}
+
+/// A slice's clock (ADR 0227 D2), read so the naming strip can ring each note of a phrase as it sounds.
+/// The slice's counterpart of `LoopClockReading`: one pass, played once, so nothing wraps.
+struct SliceClockReading: Equatable, Sendable {
+    /// Source seconds of the slice played so far, already pulled back through the time-stretcher's
+    /// latency (ADR 0140 §3), as the loop's clock is.
+    var elapsed: TimeInterval
+    /// Where the slice starts in the song, in seconds.
+    var start: TimeInterval
+    /// How much of the song it plays, in source seconds.
+    var length: TimeInterval
+    /// Playback rate, × of original.
+    var rate: Double
+    /// Wall-clock seconds from a rendered buffer to the ear.
+    var outputLatency: TimeInterval
 }

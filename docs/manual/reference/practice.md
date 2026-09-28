@@ -183,11 +183,14 @@ Each has its own run screen, and each writes into the journal with its own tag.
 note you hear. Each pass through the loop gets its own row of dots, the one playing now on top, so you
 can see when your passes agree. Tap a row to pick that pass. `Show beats` adds the song's beat lines and
 a count for each beat. It stays off until you turn it on, and only appears once the song has a tempo and
-its 1.
+its 1. A pass of more than 24 notes gets a suggestion under the rows once the loop stops: loops of around
+16 notes are easier to transcribe, so a long lick goes easier as two or three loops.
 
-`Name the notes` lays the picked pass out as a strip of numbered notes. Tap one to hear just that moment
-of the record. To hear the notes as a line, the play button at the start of the strip plays the whole
-loop at the speed you set, ringing each note as it goes by; tap a note to stop and hear just that one.
+`Name the notes` lays the picked pass out as a strip of numbered notes. Tap one to hear it with the
+notes just before it, ending on it, so you hear how the line got there; each is ringed as it plays.
+*Hear 3 notes* at the top right of the strip sets how many, from *Just the note* to eight, and Red Moon
+remembers it. To hear the notes as a line, the play button at the start of the strip plays the whole
+loop at the speed you set, ringing each note as it goes by; tap a note to stop and hear it.
 Then say what it was on one of two sheets: `Fret & string` for where you played it, or `By ear` for what
 you heard. Fret & string is the neck: tap where you played the note. Every spot carries its note name
 faintly, and the pass's other notes stay on the neck so you can see the lick's shape. `Where did you play

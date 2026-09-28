@@ -139,4 +139,38 @@ final class ByEarNamingTests: XCTestCase {
         XCTAssertNil(NamingStrip.heard(LoopClockReading(elapsed: 1, regionStart: 10, passLength: 0, rate: 1,
                                                         outputLatency: 0), taps: taps), "no loop, no chip")
     }
+
+    // MARK: - A phrase (0227 D2, after the device check)
+
+    func testAPhraseEndsOnTheNoteAndTakesWhatThereIsBeforeIt() {
+        XCTAssertEqual(NamingStrip.phrase(endingAt: 5, notes: 3), 3...5)
+        XCTAssertEqual(NamingStrip.phrase(endingAt: 1, notes: 3), 0...1, "near the start, fewer before it")
+        XCTAssertEqual(NamingStrip.phrase(endingAt: 4, notes: 1), 4...4, "just the note")
+        XCTAssertEqual(NamingStrip.phrase(endingAt: 4, notes: 0), 4...4, "never less than the note")
+    }
+
+    /// The phrase's slice starts just before its first tap, which is after the tap before the phrase: that
+    /// moment isn't the earlier chip's, and the ring never lands outside the phrase.
+    func testThePhraseRingStaysInsideThePhrase() {
+        let taps: [TimeInterval] = [10.0, 10.2, 10.5, 11.0]
+        let start = 10.2 - AudioSlice.preroll
+        func heard(_ elapsed: TimeInterval) -> Int? {
+            NamingStrip.heard(SliceClockReading(elapsed: elapsed, start: start, length: 11.0 + 0.27 - start,
+                                                rate: 1, outputLatency: 0), phrase: 1...3, taps: taps)
+        }
+        XCTAssertNil(heard(0.05), "in the lead-in, before the phrase's first tap")
+        XCTAssertEqual(heard(0.1), 1)
+        XCTAssertEqual(heard(0.5), 2)
+        XCTAssertEqual(heard(5), 3, "held on the note being named once it has sounded")
+    }
+
+    func testTheRingFollowsTheLoopOrAPhraseButNotOneNote() {
+        typealias Following = NamingStrip.Following
+        XCTAssertEqual(Following.now(loopPlaying: true, slicePlaying: false, phrase: 2...4), .loop)
+        XCTAssertEqual(Following.now(loopPlaying: false, slicePlaying: true, phrase: 2...4), .phrase(2...4))
+        XCTAssertEqual(Following.now(loopPlaying: false, slicePlaying: true, phrase: 4...4), .nothing,
+                       "one note is the chip already selected")
+        XCTAssertEqual(Following.now(loopPlaying: false, slicePlaying: false, phrase: 2...4), .nothing,
+                       "the phrase has finished")
+    }
 }

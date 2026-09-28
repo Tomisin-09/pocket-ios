@@ -164,6 +164,28 @@ final class AudioSliceTests: XCTestCase {
         XCTAssertNil(AudioSlice.window(tap: 1, duration: 0))
     }
 
+    func testAPhraseRunsFromJustBeforeItsFirstTapToWhereItsLastTapsSliceEnds() throws {
+        let phrase = try XCTUnwrap(AudioSlice.window(from: 30, to: 31.5, duration: 120))
+        XCTAssertEqual(phrase.start, 30 - AudioSlice.preroll, accuracy: 1e-9)
+        let last = try XCTUnwrap(AudioSlice.window(tap: 31.5, duration: 120))
+        XCTAssertEqual(phrase.start + phrase.length, last.start + last.length, accuracy: 1e-9,
+                       "it ends on the note, as the note's own slice does")
+        let one = try XCTUnwrap(AudioSlice.window(from: 30, to: 30, duration: 120))
+        XCTAssertEqual(one.length, AudioSlice.length, accuracy: 1e-9, "one tap is the plain slice")
+        let end = try XCTUnwrap(AudioSlice.window(from: 119, to: 119.9, duration: 120))
+        XCTAssertEqual(end.start + end.length, 120, accuracy: 1e-9)
+    }
+
+    func testTheSliceClockHoldsBackTheRouteAndStopsAtTheEnd() throws {
+        var reading = SliceClockReading(elapsed: 0.1, start: 30, length: 1.5, rate: 0.5, outputLatency: 0.4)
+        XCTAssertNil(AudioSlice.heardSecond(reading), "0.4 s of route at half speed hides 0.2 s of the song")
+        reading.elapsed = 0.5
+        XCTAssertEqual(try XCTUnwrap(AudioSlice.heardSecond(reading)), 30.3, accuracy: 1e-9)
+        reading.elapsed = 3
+        XCTAssertEqual(try XCTUnwrap(AudioSlice.heardSecond(reading)), 31.5, accuracy: 1e-9,
+                       "held at the end through the silence after it")
+    }
+
     func testTheEnvelopeStartsAndEndsAtSilence() {
         let count = 1000
         XCTAssertEqual(AudioSlice.gain(frame: 0, frameCount: count, fadeInFrames: 10, fadeOutFrames: 100), 0)

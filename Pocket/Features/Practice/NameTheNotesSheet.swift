@@ -49,12 +49,44 @@ enum NamingStrip {
         let seconds = reading.regionStart + now.within
         return taps.lastIndex { $0 <= seconds }
     }
+
+    // MARK: - A phrase (0227 D2, after the device check)
+
+    /// How many notes a tap can play: the note alone, up to eight, about a bar of quavers. Past that the
+    /// strip's play button, the whole loop, is the better listen.
+    static let phraseChoices = [1, 2, 3, 4, 6, 8]
+
+    /// The taps a phrase ending on `index` plays: up to `notes` of them, `index` the last. Near the start
+    /// of the pass there are fewer before it to take.
+    static func phrase(endingAt index: Int, notes: Int) -> ClosedRange<Int> {
+        max(0, index - max(1, notes) + 1)...index
+    }
+
+    /// The chip being heard while a phrase plays: the last of its taps the ear has reached, or `nil` before
+    /// the first. Never a chip outside the phrase, though the slice starts just before its first tap.
+    static func heard(_ reading: SliceClockReading, phrase: ClosedRange<Int>, taps: [TimeInterval]) -> Int? {
+        guard let second = AudioSlice.heardSecond(reading) else { return nil }
+        return phrase.last { taps.indices.contains($0) && taps[$0] <= second }
+    }
+
+    /// What the strip's ring follows: the loop, a phrase of more than one note, or nothing. A single note
+    /// is the chip already selected, so it isn't ringed.
+    enum Following: Equatable {
+        case nothing, loop, phrase(ClosedRange<Int>)
+
+        static func now(loopPlaying: Bool, slicePlaying: Bool, phrase: ClosedRange<Int>?) -> Following {
+            if loopPlaying { return .loop }
+            if slicePlaying, let phrase, phrase.count > 1 { return .phrase(phrase) }
+            return .nothing
+        }
+    }
 }
 
 /// **Name the notes** (ADR 0225, reworked by ADR 0227): the taps of one pass as a strip of numbered chips.
-/// Tap a chip to hear a slice of the real recording from just before it, or play the whole loop along the
-/// strip, then say what it was, on the neck or by ear. The player compares by playing it on their own
-/// instrument; the app never sounds an answer (0227 D8) and never says whether it's right.
+/// Tap a chip to hear a slice of the real recording ending on it (the note alone, or with the notes before
+/// it), or play the whole loop along the strip, then say what it was, on the neck or by ear. The player
+/// compares by playing it on their own instrument; the app never sounds an answer (0227 D8) and never says
+/// whether it's right.
 ///
 /// Opened with the loop already stopped, and a chip stops the loop before its slice, so a slice never
 /// plays over it. Presented from `EarTrainingView`'s body root, never from a row (memory: a `.sheet` on
@@ -86,9 +118,14 @@ struct NameTheNotesSheet: View {
     @State var chordsOn: Bool
     /// The string of the **ringed** note in a shape, the one bend and vibrato go on.
     @State var ringed: Int?
-    /// While the strip plays the loop, the chip being heard. Apart from `active`, so the chip being named
-    /// never moves under the player's finger.
+    /// While the strip plays the loop or a phrase, the chip being heard. Apart from `active`, so the chip
+    /// being named never moves under the player's finger.
     @State var hearing: Int?
+    /// How many notes a tap plays, ending on the one being named (0227 D2): *Hear 3 notes* in the strip's
+    /// header.
+    @AppStorage(AppSettings.Key.namingPhraseNotes) var phraseNotes = AppSettings.namingPhraseNotesDefault
+    /// The taps of the phrase last played, which the ring follows while it sounds.
+    @State var sounding: ClosedRange<Int>?
 
     init(request: NamingRequest, player: ContinuousLoopPlayer, spelling: NoteSpelling, loopType: LoopType,
          onDone: @escaping (NamingResult) -> Void) {
@@ -181,8 +218,17 @@ struct NameTheNotesSheet: View {
     private var subtitle: String {
         let count = request.taps.count
         let what = request.source == .saved ? "Your saved piece" : "This pass"
-        return "\(what) · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear just that moment, "
+        return "\(what) · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear \(tapPlays), "
             + "or play the whole loop."
+    }
+
+    /// What a tap plays, in the subtitle's words, so the header's *Hear 3 notes* is said in full once.
+    private var tapPlays: String {
+        switch max(1, phraseNotes) - 1 {
+        case 0: "just that moment"
+        case 1: "it with the \(noun) before it"
+        case let before: "it with the \(before) \(noun)s before it"
+        }
     }
 
     /// The fret the neck scrolls to for an answer on it: the middle of its frets, bends included.
@@ -231,11 +277,14 @@ struct NameTheNotesSheet: View {
         hearSlice()
     }
 
-    /// The slice for the active chip: the real recording, from just before the tap. If the strip is playing
-    /// the loop, it stops first: a slice never plays over the loop.
+    /// The active chip's moment: the real recording, from just before the first tap of its phrase through
+    /// the chip's own, so it ends on the note being named. If the strip is playing the loop, it stops
+    /// first: a slice never plays over the loop.
     func hearSlice() {
         if player.isPlaying { player.stop() }
-        player.playSlice(at: request.taps[active].seconds)
+        let phrase = NamingStrip.phrase(endingAt: active, notes: phraseNotes)
+        sounding = phrase
+        player.playSlice(from: request.taps[phrase.lowerBound].seconds, to: request.taps[active].seconds)
     }
 
     /// Move to the next chip after an answer is saved, if there is one. Silent: the player asks to hear it.

@@ -262,4 +262,10 @@ final class TapPassesTests: XCTestCase {
         passes.setLabels([.pitchClass(4)], forPass: 1)
         XCTAssertEqual(passes.pass(id: 1)?.taps.map(\.label), [.pitchClass(4), nil])
     }
+
+    func testALongPassIsWellPastTheComfortableLength() {
+        XCTAssertFalse(TapTally.isLongPass(TapTally.comfortableNotes))
+        XCTAssertFalse(TapTally.isLongPass(24), "a few past comfortable isn't told anything")
+        XCTAssertTrue(TapTally.isLongPass(25))
+    }
 }

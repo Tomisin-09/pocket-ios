@@ -599,8 +599,8 @@ each note you hear, then name them. The pieces, from the audio up:
   taps are seconds, a 0154 anchor re-divides the same taps with nothing rewritten.
 - **The render path.** Two leaves read the clock every frame (`TimelineView`s, ADR 0153), and each
   reports only a change: `LivePassRow` tells the model when the pass changes, and the naming strip's
-  `HeardChipTracker`, there only while the sheet plays the loop, says which chip is being heard
-  (`NamingStrip.heard`).
+  `HeardChipTracker`, there only while the sheet plays the loop or a phrase (`NamingStrip.Following`),
+  says which chip is being heard (`NamingStrip.heard`).
 - **The slice.** `playSlice(from:length:rate:)` reads 0.35 s of the file (from 80 ms before the tap)
   into a PCM buffer, applies `AudioSlice.gain` sample by sample (a 5 ms rise, a 60 ms fall, zero at
   both ends), pads silence for the stretcher's latency, and plays it once through the loop's own
@@ -608,6 +608,11 @@ each note you hear, then name them. The pieces, from the audio up:
   naming strip plays the loop stops the loop first, and `ContinuousLoopPlayer.toggle()` cuts a slice
   before the loop starts, since a slice left in the player's queue would make the loop's clock late.
   `LoopRunModel` keeps a token, so a slice cut short by the next one never reports finishing.
+  **A phrase** (0227 D2) is one slice spanning several taps: `AudioSlice.window(from:to:)` runs from
+  the first tap's preroll to where the last tap's own slice ends, and `NamingStrip.phrase` picks the
+  taps from the remembered `AppSettings.Key.namingPhraseNotes`. While it plays, the strip reads the
+  slice's own clock (`sliceClock`): the player's sample time, which the stop before every slice sets
+  back to zero, through the stretcher's latency and the route's, held at the slice's end.
 - **Naming.** `NameTheNotesSheet` shows the pass as a strip of chips over two sheets, Fret & string
   and By ear (ADR 0227). Fret & string is `FretNeckBoard`, the draw-your-own board lifted out of
   `FretboardDrillEditor` so both draw one grid with their own dots; the piece's instrument and tuning

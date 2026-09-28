@@ -1,8 +1,8 @@
 # ADR 0227 — Name the notes on the neck: where you played it, or what you heard
 
 - **Status:** Accepted. Built on `pocket-338-name-the-notes-on-the-neck` in the four commits of the build
-  order, plus three changes after the first device check (*As built*). Still owed: the device checks
-  under Consequences.
+  order, plus the changes after the device check (*As built*). Still owed: the device checks under
+  Consequences.
 - **Date:** 2026-09-28
 - **Amends:** ADR 0225 — **D5**: the three sheets become two (*Fret & string* and *By ear*), the
   chip grid becomes a strip, picking no longer sounds, and *Hear it, then mine* is withdrawn. **D6**: a
@@ -73,6 +73,16 @@ itself, at *Train your ear*'s tempo and round until stopped. The chip being hear
 strip follows it; the chip being **named** doesn't move, so a tap on the neck can't land on the wrong
 note. Tapping a chip stops the loop and plays that note's slice, so a slice still never plays over the
 loop (0225's rule). What plays is the recording, never the answers (D8, D10).
+
+**Hear a phrase** (added after the second device check, see *As built*). Between one note and the whole
+loop: a tap plays the note **with the notes just before it**, ending on it, so the note is heard
+arriving from the line, and it is the sound left in the ear when the finger goes to the neck. How many is
+the player's: *Hear 3 notes* in the strip's header, from *Just the note* to eight, remembered across
+loops and launches, three by default. Near the start of a pass there are fewer before it to take. The
+phrase starts where its first note's slice would and ends where the named note's slice does, and it
+plays whatever lies between, a held note or a rest, because the count is what the player asked for and
+a cap would sometimes play fewer. Its notes are ringed as they sound, as the loop's are, and the play
+button stops it. Eight is the most: past that, the whole loop is the better listen.
 
 ### D3 — The neck
 
@@ -218,6 +228,14 @@ protect from the start.
   notes in a row keep a `?` each, and four or more read *(60 unnamed)*. Journal lines already written
   keep their old form.
 
+**After the second device check** (2026-09-28):
+- **Hear a phrase** (D2). The whole loop didn't help place one note in a long pass, and one note alone
+  gave no context, so a tap now plays a chosen number of notes ending on the one being named.
+- **A long pass suggests a shorter loop.** Under the pass rows, once the loop stops, a pass of more than
+  24 notes (`TapTally.longPassNotes`) reads *Loops of around 16 notes are easier to transcribe*. It's
+  advice about the setup, never a mark on the playing (0070), and well past 16, so a pass of 18 isn't
+  told anything.
+
 ## Consequences
 
 - **Pure and unit-tested:** the label's new keys and kind (encode, decode, and an older-shaped decode),
@@ -232,4 +250,6 @@ protect from the start.
 - **The manual** (`docs/manual/reference/practice.md`, the *Name the notes* paragraph) is rewritten, and
   the Name the notes figures are owed to the reshoot: two sheets to shoot, not three.
 - **Owed on a device:** the neck's scroll inside the sheet (no fight with the sheet's own drag); tapping
-  a 24pt dot at fret 20 on a phone; the strip's centring on a 65-note pass.
+  a 24pt dot at fret 20 on a phone; the strip's centring on a 65-note pass; the ring keeping time with a
+  phrase (`SliceClockReading`, the slice's own clock, read from the player's sample time as the loop's
+  is), over Bluetooth and slowed.
