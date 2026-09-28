@@ -186,10 +186,14 @@ until you turn it on, and only appears once the song has a tempo and its 1.
 
 `Name the notes` lays the picked pass out as a strip of numbered notes. Tap one to hear just that
 moment of the record, then say what it was on one of two sheets: `Fret & string` for where you played
-it, or `By ear` for what you heard. By ear has the twelve note names and, under them, the kinds of
+it, or `By ear` for what you heard. Fret & string is the neck: tap where you played the note. Every spot
+carries its note name faintly, and the pass's other notes stay on the neck so you can see the lick's
+shape. `Where did you play it?` sets guitar or bass and the tuning for this piece only; a new tuning
+keeps your frets, and a new instrument clears them after asking. By ear has the twelve note names and,
+under them, the kinds of
 chord grouped by how many notes they hold. The kind you pick stays picked, and tapping a name saves it
-and moves on, so a solo named by ear is one tap a note. A note placed by fret and string reads on By
-ear as the note it sounds, and naming it something else there asks first. `Next unnamed` jumps to the
+and moves on, so a solo named by ear is one tap a note. A note placed on the neck reads on By ear as
+the note it sounds, and naming it something else there asks first. `Next unnamed` jumps to the
 next note without a name. Red Moon never plays your answer: play it on your own instrument against
 `Hear it again`, and you decide whether they match. `Save` keeps the pass on the loop, under
 `Saved on this loop` with a line of tab if you placed frets, and writes a *Transcribed* line to the

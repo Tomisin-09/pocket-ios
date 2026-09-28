@@ -1,70 +1,9 @@
 import SwiftUI
 
-// Fret & string (ADR 0225, still on string buttons and a fret stepper until the neck lands, ADR 0227
-// D3), the buttons both sheets share, and the running answer. Split out for file length.
+// The buttons both sheets share, and the running answer under them. Split out for file length.
 extension NameTheNotesSheet {
 
     var sixColumns: [GridItem] { Array(repeating: GridItem(.flexible(), spacing: 6), count: 6) }
-
-    // MARK: - Fret & string
-
-    /// Strings from the piece's tuning, thinnest first like the tab, and a fret from 0 to 22. Placing a
-    /// note over a name given by ear just replaces it: only overwriting neck work asks first (0227 D7).
-    var fretPicker: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if let byEar = labels[active], !byEar.isOnTheNeck,
-               let name = byEar.name(openMidi: tuning.openMidi, spelling: spelling) {
-                Text("Named by ear as \(Text(name).bold()). It can’t be drawn here; placing a note replaces it.")
-                    .font(.futura(.footnote))
-                    .foregroundStyle(PocketColor.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            HStack {
-                pickerLabel("String")
-                Spacer()
-                Text(tuning.label)
-                    .font(.futura(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-            LazyVGrid(columns: sixColumns, spacing: 6) {
-                ForEach(Array(TabLine.stringNames(openMidi: tuning.openMidi).enumerated()), id: \.offset) { item in
-                    pickButton(item.element.trimmingCharacters(in: .whitespaces),
-                               state: currentFret?.string == item.offset ? .picked : .plain) {
-                        placeFret(string: item.offset, fret: (currentFret ?? fretDraft).fret)
-                    }
-                }
-            }
-            HStack(spacing: 12) {
-                pickerLabel("Fret")
-                Spacer()
-                StepperButton(symbol: "minus", label: "Lower fret", tint: PocketColor.practice) {
-                    let base = currentFret ?? fretDraft
-                    placeFret(string: base.string, fret: max(0, base.fret - 1))
-                }
-                Text("\((currentFret ?? fretDraft).fret)")
-                    .font(.pocketMono(.title3))
-                    .monospacedDigit()
-                    .frame(minWidth: 36)
-                    .accessibilityLabel("Fret \((currentFret ?? fretDraft).fret)")
-                StepperButton(symbol: "plus", label: "Higher fret", tint: PocketColor.practice) {
-                    let base = currentFret ?? fretDraft
-                    placeFret(string: base.string, fret: min(PieceLabel.maxFret, base.fret + 1))
-                }
-            }
-        }
-    }
-
-    /// The active chip's fret, if it has one.
-    private var currentFret: TabLine.Note? {
-        guard case .fretted(let string, let fret) = labels[active] else { return nil }
-        return TabLine.Note(string: string, fret: fret)
-    }
-
-    private func placeFret(string: Int, fret: Int) {
-        fretDraft = TabLine.Note(string: string, fret: fret)
-        labels[active] = .fretted(string: string, fret: fret)
-        replacing = nil
-    }
 
     // MARK: - Shared
 
@@ -189,7 +128,7 @@ struct NamingResultView: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
         } else {
-            Text("Pick a string and a fret for each note.")
+            Text("Tap the neck to place each note.")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }

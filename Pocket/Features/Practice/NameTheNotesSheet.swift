@@ -43,13 +43,6 @@ enum NamingStrip {
     }
 }
 
-/// The strings Name the notes places frets on, what to call them, and which instrument they belong to.
-struct NamingTuning {
-    let openMidi: [Int]
-    let label: String
-    let instrument: Instrument
-}
-
 /// **Name the notes** (ADR 0225, reworked by ADR 0227): the taps of one pass as a strip of numbered chips.
 /// Tap a chip to hear a slice of the real recording from just before it, then say what it was, on the
 /// neck or by ear. The player compares by playing it on their own instrument; the app never sounds an
@@ -68,14 +61,17 @@ struct NameTheNotesSheet: View {
     @State var labels: [PieceLabel?]
     @State var active = 0
     @State var mode: NamingMode
-    /// The string and fret the fret picker shows before the current chip has one.
-    @State var fretDraft = TabLine.Note(string: 2, fret: 5)
     /// The By ear kind left selected (0227 D6): it stays from tap to tap until another kind is tapped.
     /// An answer already named by ear uses its own (`activeKind`).
     @State var earKind: EarKind
     /// A By ear answer waiting on *Replace* or *Keep it*, because it would overwrite neck work (0227 D7).
     @State var replacing: PieceLabel?
-    let tuning: NamingTuning
+    /// This piece's instrument and tuning (0227 D3), changed from the *Where did you play it?* row.
+    @State var tuning: NamingTuning
+    @State var showingInstrument = false
+    /// The fret the neck scrolls to: the selected chip's note, set when the chip changes rather than on
+    /// every tap, so placing a note never slides the board out from under the finger.
+    @State var neckTarget: Int?
 
     init(request: NamingRequest, player: ContinuousLoopPlayer, spelling: NoteSpelling, loopType: LoopType,
          onDone: @escaping (NamingResult) -> Void) {
@@ -89,11 +85,9 @@ struct NameTheNotesSheet: View {
         _mode = State(initialValue: NamingMode.opening(for: labels, loopType: loopType))
         _earKind = State(initialValue: NamingMode.openingKind(for: labels, loopType: loopType))
         let tuner = CountTheNotesModel.tunerTuning()
-        let openMidi = request.openMidi ?? tuner.openMidi
-        // A four-string piece is a bass piece, whatever the tuner says now.
-        let instrument: Instrument = openMidi.count == Instrument.bass.stringCount ? .bass : .guitar
-        tuning = NamingTuning(openMidi: openMidi, label: request.tuningLabel ?? tuner.label,
-                              instrument: instrument)
+        _tuning = State(initialValue: NamingTuning(openMidi: request.openMidi ?? tuner.openMidi,
+                                                   label: request.tuningLabel ?? tuner.label))
+        _neckTarget = State(initialValue: labels.first.flatMap { Self.fret(of: $0) })
     }
 
     var body: some View {
@@ -112,7 +106,7 @@ struct NameTheNotesSheet: View {
                     strip
                     if let replacing { replacePrompt(replacing) }
                     switch mode {
-                    case .fret: fretPicker
+                    case .fret: neckPicker
                     case .ear: earPicker
                     }
                     moveButtons
@@ -139,8 +133,20 @@ struct NameTheNotesSheet: View {
         }
         .presentationDetents([.large])
         .interactiveDismissDisabled(labels != request.taps.map(\.label))
-        .onChange(of: active) { replacing = nil }
-        .onChange(of: mode) { replacing = nil }
+        .onChange(of: active) {
+            replacing = nil
+            neckTarget = Self.fret(of: labels[active]) ?? neckTarget
+        }
+        .onChange(of: mode) {
+            replacing = nil
+            neckTarget = Self.fret(of: labels[active]) ?? neckTarget
+        }
+        .sheet(isPresented: $showingInstrument) {
+            NamingInstrumentSheet(current: tuning, placed: NamingTuning.placed(in: labels)) { next in
+                labels = tuning.carrying(labels, to: next)
+                tuning = next
+            }
+        }
         .onDisappear { player.stopSlice() }
     }
 
@@ -233,6 +239,12 @@ struct NameTheNotesSheet: View {
             return (label.name(openMidi: tuning.openMidi, spelling: spelling), true)
         }
         return (label.name(openMidi: tuning.openMidi, spelling: spelling), false)
+    }
+
+    /// The fret an answer sits on, when it's on the neck.
+    nonisolated static func fret(of label: PieceLabel?) -> Int? {
+        guard case .fretted(_, let fret) = label else { return nil }
+        return fret
     }
 
     /// A placed note as tab says it, string then fret: "B8".

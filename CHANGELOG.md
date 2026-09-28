@@ -61,8 +61,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   its own row of dots, so you can see when your passes agree. **Name the notes** lays one pass out as
   a strip of numbered notes: tap one to hear just that moment of the record, then say what it was, by
   **Fret & string** (where you played it) or **By ear** (what you heard: a note, or a chord by its root
-  and kind, with the kinds grouped by how many notes they hold). By ear keeps the kind you picked, so
-  naming a solo is one tap a note, and it asks before replacing a note you placed by fret. Play your
+  and kind, with the kinds grouped by how many notes they hold). Fret & string is a neck you tap, with
+  every note named faintly and the pass's other notes showing the lick's shape, on guitar or bass in
+  any of the tuner's tunings, chosen for that piece. By ear keeps the kind you picked, so naming a solo
+  is one tap a note, and it asks before replacing a note you placed on the neck. Play your
   answer on your own instrument against **Hear it again** and decide whether they match; Red Moon never
   does, and never plays an answer back (ADR 0227). **Save** keeps the pass on the loop as its
   piece, shown under the section with a line of tab when you've placed frets, and writes a 🧩
