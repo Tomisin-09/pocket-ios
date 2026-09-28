@@ -73,15 +73,15 @@ extension NameTheNotesSheet {
 
     /// The one leaf that reads a clock, there only while the ring has something to follow.
     @ViewBuilder private var tracker: some View {
-        let taps = request.taps.map(\.seconds)
+        let seconds = taps.map(\.seconds)
         switch following {
         case .loop:
-            HeardChipTracker { player.loopClock().flatMap { NamingStrip.heard($0, taps: taps) } } report: {
+            HeardChipTracker { player.loopClock().flatMap { NamingStrip.heard($0, taps: seconds) } } report: {
                 hearing = $0
             }
         case .phrase(let phrase):
             HeardChipTracker {
-                player.sliceClock().flatMap { NamingStrip.heard($0, phrase: phrase, taps: taps) }
+                player.sliceClock().flatMap { NamingStrip.heard($0, phrase: phrase, taps: seconds) }
             } report: {
                 hearing = $0
             }

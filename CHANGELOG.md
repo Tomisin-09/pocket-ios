@@ -70,7 +70,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   to where it lands, and read as the note it reaches), vibrato, and a hammer-on, pull-off or slide from
   the note before, or, when a quick one sounded like one note and you tapped once, inside the note
   itself, a double-stop sliding in as one included, and a slide in from nowhere (ADR 0230). An ⓘ
-  beside **Chords** and **Into it** says what each does. All of it is written into the tab the usual
+  beside **Chords** and **Into it** says what each does. Found a note you didn't count, or one that
+  isn't there? **Missed a note?** plays the notes either side and you tap the missing one in where you
+  hear it; **Take note out** removes one. Either can be undone, and the rest of your names stay put
+  (ADR 0231). All of it is written into the tab the usual
   way (`7b9`, `7~`, `5h7`, `8/10`, `/10`). Turn on **Chords**
   to place double-stops, triads and full chords, one note per string; the neck names what you placed (*Am/C*, or *a 4th*). By ear keeps the
   kind you picked, so naming a solo

@@ -11,6 +11,9 @@
   heard chord named by root and quality rather than a grip, stands, as does the rest of D10. **D7**
   (after 0227's device check): four or more unnamed notes in a row are said as a count, *(60 unnamed)*,
   rather than a `?` each.
+- **Amended by:** ADR 0231 (Correct the count while naming, 2026-09-28) — **D5**: Name the notes can
+  also take a tap out, or add a note the player missed by tapping it in while the stretch around it
+  plays, each with Undo. D3 stands: a tap is only ever one the player made, in song seconds.
 - **Amended by:** ADR 0229 (Pieces in the Journal, 2026-09-28) — **D7**: *Save* no longer writes a 🧩
   line. The Journal lists the loop's piece itself, one row per loop, under a new *Pieces* scope, dated
   by when the piece last changed. The `.transcribed` kind stays for marking a lick by hand; D8 stands.

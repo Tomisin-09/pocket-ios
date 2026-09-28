@@ -63,7 +63,8 @@ On the device, hammer-ons and slides were hard to mark and pull-offs looked miss
 ## Alternatives rejected
 
 - **Split the tap into two.** It rewrites what was heard to fit the tab, and the tap is the one record
-  0225 promises never to second-guess. Adding and removing taps is a separate question.
+  0225 promises never to second-guess. Adding and removing taps is a separate question, answered by
+  0231: the player can now add or take out a tap, but the app never splits one.
 - **Work it out from tap timing.** Two taps close together could be a fast picked run or a hammer-on;
   only the player knows, and nothing is detected (0225).
 - **Keep one button that turns into Pull-off.** It hid the mark it was meant to offer.

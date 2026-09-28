@@ -621,6 +621,13 @@ each note you hear, then name them. The pieces, from the audio up:
   (`NamingTuning`, chosen in `NamingInstrumentSheet`) are its own, never the tuner's. The slice is the only thing it sounds: it no longer touches `ToneEngine`, since
   the synth isn't close enough to a guitar to compare against (0227 D8). By ear's tap rules
   (`EarPick`) and kind grouping (`EarKind`) are pure, in `Core/Theory/EarKind.swift`.
+  **Correcting the count** (ADR 0231): the sheet owns the pass's `taps`, and `labels` is a view of their
+  names, so a tap can be taken out or a missed one added without the pickers knowing. A missed note is
+  tapped on the shared `TapPad` (moved out of `CountTheNotesSection`) while the stretch around the chip
+  plays; its second is the slice clock's heard second (`AudioSlice.heardSecond`), so it lands where a
+  count would have put it. The stretch, the insert, the removal and the join tidy are pure
+  (`PassCorrection`, in `Core/Audio`). Done hands the taps back (`NamingResult.taps`), and a pass takes
+  them through `TapPasses.replaceTaps`.
 - **Storage.** `Loop.transcriptionData: Data?` (additive, Optional) holds a `PieceTranscription`: taps
   with optional `PieceLabel`s (pitch class · notes on the neck · chord root + `ChordQuality` suffix),
   plus the open strings any fret was placed against and, since ADR 0229, `changedAt` (set by a save or a

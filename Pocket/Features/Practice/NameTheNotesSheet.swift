@@ -106,7 +106,8 @@ struct NameTheNotesSheet: View {
     let onDone: (NamingResult) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State var labels: [PieceLabel?]
+    /// The pass being named: its taps, and since ADR 0231 any taken out or tapped in. Handed back on Done.
+    @State var taps: [PieceTranscription.Tap]
     @State var active = 0
     @State var mode: NamingMode
     /// The By ear kind left selected (0227 D6): it stays from tap to tap until another kind is tapped.
@@ -135,6 +136,12 @@ struct NameTheNotesSheet: View {
     @AppStorage(AppSettings.Key.namingPhraseNotes) var phraseNotes = AppSettings.namingPhraseNotesDefault
     /// The taps of the phrase last played, which the ring follows while it sounds.
     @State var sounding: ClosedRange<Int>?
+    /// *Missed a note?* is open: the stretch around the chip plays, and the pad waits for one tap (0231).
+    @State var addingNote = false
+    /// The last correction, for **Undo** while nothing has changed since.
+    @State var undo: PassCorrection.Undo?
+    /// Bumped when the pad is tapped with nothing playing, to say why nothing was added.
+    @State var missedNudge = 0
 
     init(request: NamingRequest, player: ContinuousLoopPlayer, spelling: NoteSpelling, loopType: LoopType,
          onDone: @escaping (NamingResult) -> Void) {
@@ -144,7 +151,7 @@ struct NameTheNotesSheet: View {
         self.loopType = loopType
         self.onDone = onDone
         let labels = request.taps.map(\.label)
-        _labels = State(initialValue: labels)
+        _taps = State(initialValue: request.taps)
         _mode = State(initialValue: NamingMode.opening(for: labels, loopType: loopType))
         _earKind = State(initialValue: NamingMode.openingKind(for: labels, loopType: loopType))
         let tuner = CountTheNotesModel.tunerTuning()
@@ -169,6 +176,7 @@ struct NameTheNotesSheet: View {
                     }
                     .pickerStyle(.segmented)
                     strip
+                    correctionControls
                     if let replacing { replacePrompt(replacing) }
                     switch mode {
                     case .fret: neckPicker
@@ -189,7 +197,7 @@ struct NameTheNotesSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        onDone(NamingResult(labels: labels, openMidi: tuning.openMidi, tuningLabel: tuning.label))
+                        onDone(NamingResult(taps: taps, openMidi: tuning.openMidi, tuningLabel: tuning.label))
                         dismiss()
                     }
                     .fontWeight(.semibold)
@@ -197,13 +205,8 @@ struct NameTheNotesSheet: View {
             }
         }
         .presentationDetents([.large])
-        .interactiveDismissDisabled(labels != request.taps.map(\.label))
-        .onChange(of: active) {
-            replacing = nil
-            awaitingStart = nil
-            neckTarget = Self.fret(of: labels[active]) ?? neckTarget
-            ringed = labels[active]?.frettedNotes.last?.string
-        }
+        .interactiveDismissDisabled(taps != request.taps)
+        .onChange(of: active) { chipChanged() }
         .onChange(of: labels) {
             // A join lives on the second note; when the first moves, it can stop fitting (0227 D5).
             let tidy = NeckJoin.tidied(labels)
@@ -223,11 +226,33 @@ struct NameTheNotesSheet: View {
         .onDisappear { player.stop() }
     }
 
+    /// Each tap's answer, in order: the names in `taps`, read and written by every picker.
+    var labels: [PieceLabel?] {
+        get { taps.map(\.label) }
+        nonmutating set {
+            var named = taps
+            for index in named.indices {
+                named[index].label = newValue.indices.contains(index) ? newValue[index] : nil
+            }
+            taps = named
+        }
+    }
+
+    /// Everything that follows the chip being named, when it changes or a correction moves the pass
+    /// under it.
+    func chipChanged() {
+        replacing = nil
+        awaitingStart = nil
+        addingNote = false
+        neckTarget = Self.fret(of: labels[active]) ?? neckTarget
+        ringed = labels[active]?.frettedNotes.last?.string
+    }
+
     /// A chord loop is tapped once per chord, and calls them chords.
     var noun: String { loopType == .chords ? "chord" : "note" }
 
     private var subtitle: String {
-        let count = request.taps.count
+        let count = taps.count
         let what = request.source == .saved ? "Your saved piece" : "This pass"
         return "\(what) · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear \(tapPlays), "
             + "or play the whole loop."
@@ -298,7 +323,7 @@ struct NameTheNotesSheet: View {
         if player.isPlaying { player.stop() }
         let phrase = NamingStrip.phrase(endingAt: active, notes: phraseNotes)
         sounding = phrase
-        player.playSlice(from: request.taps[phrase.lowerBound].seconds, to: request.taps[active].seconds)
+        player.playSlice(from: taps[phrase.lowerBound].seconds, to: taps[active].seconds)
     }
 
     /// Move to the next chip after an answer is saved, if there is one. Silent: the player asks to hear it.

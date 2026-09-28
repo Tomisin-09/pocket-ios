@@ -16,6 +16,8 @@ struct NamingRequest: Identifiable, Equatable {
     /// strings even if the tuner's tuning has changed since. `nil` means use the tuner's.
     var openMidi: [Int]?
     var tuningLabel: String?
+    /// The loop's region in song seconds, so *Missed a note?* never plays past it (ADR 0231).
+    var region: ClosedRange<TimeInterval>?
 
     var id: String {
         switch source {
@@ -25,9 +27,10 @@ struct NamingRequest: Identifiable, Equatable {
     }
 }
 
-/// What the sheet hands back on Done: a label per tap, and the strings any fret was placed on.
+/// What the sheet hands back on Done: the taps, named, with any taken out or added (ADR 0231), and the
+/// strings any fret was placed on.
 struct NamingResult: Equatable {
-    let labels: [PieceLabel?]
+    let taps: [PieceTranscription.Tap]
     let openMidi: [Int]
     let tuningLabel: String
 }
@@ -159,29 +162,34 @@ final class CountTheNotesModel {
 
     func nameTarget() {
         guard let pass = targetPass else { return }
-        naming = NamingRequest(source: .pass(pass.id), taps: pass.taps)
+        naming = NamingRequest(source: .pass(pass.id), taps: pass.taps, region: region)
     }
 
     func nameSaved() {
         guard let piece = loop.transcription else { return }
         naming = NamingRequest(source: .saved, taps: piece.taps, openMidi: piece.openMidi,
-                               tuningLabel: piece.tuningLabel)
+                               tuningLabel: piece.tuningLabel, region: region)
     }
 
-    /// The sheet's Done. A pass keeps its names for this visit; the saved piece is edited in place,
-    /// which is the only way a saved piece ever changes short of saving another pass over it. An edit
-    /// that changed something re-dates it, so the Journal moves it to the day it changed (ADR 0229).
+    /// The loop's region, or `nil` for one with no length.
+    private var region: ClosedRange<TimeInterval>? {
+        loop.endSeconds > loop.startSeconds ? loop.startSeconds...loop.endSeconds : nil
+    }
+
+    /// The sheet's Done. A pass keeps its names, and any tap taken out or added, for this visit; the
+    /// saved piece is edited in place, which is the only way a saved piece ever changes short of saving
+    /// another pass over it. An edit that changed something re-dates it, so the Journal moves it to the
+    /// day it changed (ADR 0229).
     func finishNaming(_ request: NamingRequest, result: NamingResult, context: ModelContext) {
+        guard !result.taps.isEmpty else { return }
         switch request.source {
         case .pass(let number):
-            passes.setLabels(result.labels, forPass: number)
+            passes.replaceTaps(result.taps, forPass: number)
             namingTuning = (result.openMidi, result.tuningLabel)
         case .saved:
             guard let before = loop.transcription else { return }
             var piece = before
-            for index in piece.taps.indices {
-                piece.taps[index].label = result.labels.indices.contains(index) ? result.labels[index] : nil
-            }
+            piece.taps = result.taps.sorted { $0.seconds < $1.seconds }
             stampTuning(on: &piece, openMidi: result.openMidi, label: result.tuningLabel)
             guard piece != before else { return }
             piece.changedAt = .now

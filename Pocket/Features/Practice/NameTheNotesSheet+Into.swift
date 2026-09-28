@@ -176,14 +176,14 @@ extension NameTheNotesSheet {
         return (title, { awaitingStart = LeadInRequest(join: into, direction: way) })
     }
 
-    private func hint(_ text: String) -> some View {
+    func hint(_ text: String) -> some View {
         Text(text)
             .font(.futura(.caption))
             .foregroundStyle(PocketColor.textSecondary)
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    private func link(_ title: String, action: @escaping () -> Void) -> some View {
+    func link(_ title: String, action: @escaping () -> Void) -> some View {
         Button(title, action: action)
             .font(.futura(.caption, weight: .semibold))
             .tint(PocketColor.practice)

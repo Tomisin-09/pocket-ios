@@ -192,6 +192,11 @@ notes just before it, ending on it, so you hear how the line got there; each is 
 remembers it. To hear the notes as a line, the play button at the start of the strip plays the whole
 loop at the speed you set, ringing each note as it goes by; on Fret & string, where you placed each
 note also lights up on the neck as it plays. Tap a note to stop and hear it.
+If you find a note you didn't count, or one you counted that isn't there, you don't have to count again.
+*Missed a note?* under the strip plays from the note before the one you're on to the note after, with a
+pad: tap it once where you hear the missing note, and it goes in where you tapped, unnamed. *Take note
+12 out* removes the note you're on, and its name. `Undo` puts either back until you change something
+else.
 Then say what it was on one of two sheets (the ⓘ beside `Chords` and `Into it` explains each): `Fret & string` for where you played it, or `By ear` for what
 you heard. Fret & string is the neck: tap where you played the note. Every spot carries its note name
 faintly, and the pass's other notes stay on the neck so you can see the lick's shape. `Where did you play

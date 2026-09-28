@@ -260,6 +260,13 @@ its own record: **ADR 0230**.
   does in a few lines. *Into it* and its ⓘ became a title line over the four ways in, which no longer
   fit one row beside it on the smallest phone.
 
+**After the fifth device check** (2026-09-28):
+- **One title size under the neck.** *Into it* and *Bend* are titled like *Chords*, rather than as small
+  captions beside it.
+- **Correcting the count while naming** (under the strip, D2): take a note out, or tap in one that was
+  missed while the stretch around it plays. It changes the taps and not only their names, so it is its
+  own record: **ADR 0231**.
+
 ## Consequences
 
 - **Pure and unit-tested:** the label's new keys and kind (encode, decode, and an older-shaped decode),
