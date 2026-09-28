@@ -164,6 +164,15 @@ final class TapTallyTests: XCTestCase {
         XCTAssertEqual(line, "3 notes. A ? D")
     }
 
+    func testALongRunOfUnnamedNotesSaysHowMany() {
+        let names: [String?] = ["C♯", "D♯", "A♯"] + Array(repeating: nil, count: 60)
+        XCTAssertEqual(TapTally.summary(count: 63, names: names, perBeat: nil, countsChords: false),
+                       "63 notes. C♯ D♯ A♯ (60 unnamed)", "not sixty question marks")
+        XCTAssertEqual(TapTally.nameList(["A", nil, nil, nil, nil, "E"]), "A (4 unnamed) E")
+        XCTAssertEqual(TapTally.nameList(["A", nil, nil, nil, "E"]), "A ? ? ? E", "three still hold their places")
+        XCTAssertEqual(TapTally.nameList([nil, nil, nil, nil, nil, "G", nil]), "(5 unnamed) G ?")
+    }
+
     func testNoNamesNoNameList() {
         XCTAssertEqual(TapTally.summary(count: 11, names: Array(repeating: nil, count: 11), perBeat: nil,
                                         countsChords: false), "11 notes.")

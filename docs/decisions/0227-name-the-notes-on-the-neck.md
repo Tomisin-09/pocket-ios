@@ -1,13 +1,14 @@
 # ADR 0227 — Name the notes on the neck: where you played it, or what you heard
 
 - **Status:** Accepted. Built on `pocket-338-name-the-notes-on-the-neck` in the four commits of the build
-  order, plus two after the first device check (*As built*). Still owed: the device checks under
-  Consequences.
+  order, plus three changes after the first device check (*As built*). Still owed: the device checks
+  under Consequences.
 - **Date:** 2026-09-28
 - **Amends:** ADR 0225 — **D5**: the three sheets become two (*Fret & string* and *By ear*), the
   chip grid becomes a strip, picking no longer sounds, and *Hear it, then mine* is withdrawn. **D6**: a
   placed answer gains playing marks and a multi-note *shape* kind, and the tuning is chosen per piece.
   **D10**: three lines are lifted (one note per tap, no technique marks, tuning only from the tuner).
+  **D7** (after the device check): a long run of unnamed notes in the line is said as a count.
   D1–D4, D7–D9 and the rest of D10 stand, including *never detected, never suggested*.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the
   synth withdrawn here, and D4.3, the route back) · 0093 (the chord namer that names a shape) · 0095
@@ -207,11 +208,15 @@ doesn't exist yet.
 2: the string buttons and stepper still in commit 1 already placed notes, so there was neck work to
 protect from the start.
 
-**After the device check** (2026-09-28), two more commits:
-5. **From My chords came out** (D4). The row of saved shapes under the neck cluttered the sheet, and
-   placing a chord a note at a time is quick enough.
-6. **Play the loop from the strip** (D2). Inside the sheet only the slice sounded, so the player heard
-   the note they were on and never the line around it.
+**After the device check** (2026-09-28):
+- **From My chords came out** (D4). The row of saved shapes under the neck cluttered the sheet, and
+  placing a chord a note at a time is quick enough.
+- **Play the loop from the strip** (D2). Inside the sheet only the slice sounded, so the player heard
+  the note they were on and never the line around it.
+- **A long run of unnamed notes is said as a count** (0225 D7, amended). A 69-note pass with nine named
+  showed nine names and sixty `?` in *Saved on this loop* and the Journal line. Now one to three unnamed
+  notes in a row keep a `?` each, and four or more read *(60 unnamed)*. Journal lines already written
+  keep their old form.
 
 ## Consequences
 

@@ -89,20 +89,45 @@ enum TapTally {
     /// `"By beat: 2 · 3 · 3 · 3."` when beats are shown. `nil` for an empty pass.
     ///
     /// Each fact is said once. Names appear only if at least one note is named, with `?` holding the
-    /// place of an unnamed one. A by-beat split of a single beat would just repeat the count, so it's
-    /// left out.
+    /// place of an unnamed one, and a long run of them said as a count (`nameList`). A by-beat split of a
+    /// single beat would just repeat the count, so it's left out.
     static func summary(count: Int, names: [String?], perBeat: [Int]?, countsChords: Bool) -> String? {
         guard count > 0 else { return nil }
         let noun = countsChords ? (count == 1 ? "chord" : "chords") : (count == 1 ? "note" : "notes")
         var text = "\(count) \(noun)."
         let named = names.contains { $0 != nil }
         if named {
-            text += " " + names.map { $0 ?? "?" }.joined(separator: " ")
+            text += " " + nameList(names)
         }
         if let perBeat, perBeat.count > 1 {
             text += (named ? ". " : " ") + "By beat: " + perBeat.map(String.init).joined(separator: " · ") + "."
         }
         return text
+    }
+
+    /// Unnamed notes in a row, from this many up, are said as a count rather than a `?` each: a long pass
+    /// named only at the start would otherwise read as a wall of question marks.
+    static let unnamedRun = 4
+
+    /// The names in order, a `?` holding each unnamed note's place, and a run of `unnamedRun` or more said
+    /// as how many: `"A ? D (12 unnamed) E"`.
+    static func nameList(_ names: [String?]) -> String {
+        var words: [String] = []
+        var gap = 0
+        func closeGap() {
+            words += gap >= unnamedRun ? ["(\(gap) unnamed)"] : Array(repeating: "?", count: gap)
+            gap = 0
+        }
+        for name in names {
+            guard let name else {
+                gap += 1
+                continue
+            }
+            closeGap()
+            words.append(name)
+        }
+        closeGap()
+        return words.joined(separator: " ")
     }
 }
 
