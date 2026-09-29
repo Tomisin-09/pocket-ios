@@ -182,8 +182,8 @@ yours to change: changing it, or the piece it came from, leaves the other as it 
 stay the same, use **Repeats** or **Same as** instead.
 
 After you make a loop or copy a piece, **Undo** at the bottom of the map takes back what was just made,
-and only that. It stays until you do something else. The map never deletes a loop: to delete one, use the
-waveform.
+and only that. It goes after a few seconds, or as soon as you do something else. The map never deletes a
+loop: to delete one, use the waveform.
 
 ### The song's tab
 
