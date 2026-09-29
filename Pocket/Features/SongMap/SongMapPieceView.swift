@@ -20,6 +20,8 @@ struct SongMapPieceView: View {
     let onView: () -> Void
     /// A mode picked from the hold menu.
     let onOpen: (LoopRunMode) -> Void
+    /// The hold menu's *Repeats to the end of the section* (D14), or `nil` where it isn't offered.
+    var repeats: SongMapRepeatToggle?
 
     /// Narrower than this, a piece shows its frame and dots but no words.
     private static let textWidth: CGFloat = 34
@@ -38,17 +40,12 @@ struct SongMapPieceView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .contextMenu { menu }
+        .contextMenu {
+            SongMapPieceMenu(modes: modes, repeats: repeats, onView: onView, onOpen: onOpen)
+        }
         .accessibilityLabel("\(piece.name), \(SongMapStyle.name(piece.layer).lowercased())")
         .accessibilityValue(spokenContent)
         .accessibilityHint("Opens its tab")
-    }
-
-    @ViewBuilder private var menu: some View {
-        Button(action: onView) { Label("View tab", systemImage: "music.note.list") }
-        ForEach(modes) { mode in
-            Button { onOpen(mode) } label: { Label(mode.label, systemImage: mode.symbolName) }
-        }
     }
 
     // MARK: - Drawing
@@ -121,5 +118,48 @@ struct SongMapPieceView: View {
         case .handTagged: return "Tagged transcribed in a note"
         case .piece: return line ?? "Counted"
         }
+    }
+}
+
+/// A piece's hold menu (ADR 0232 D2), on the piece and on its repeats alike: *View tab*, the modes it can
+/// open in, and, when there's room after it, *Repeats to the end of the section* (D14).
+struct SongMapPieceMenu: View {
+    let modes: [LoopRunMode]
+    let repeats: SongMapRepeatToggle?
+    let onView: () -> Void
+    let onOpen: (LoopRunMode) -> Void
+
+    var body: some View {
+        Button(action: onView) { Label("View tab", systemImage: "music.note.list") }
+        ForEach(modes) { mode in
+            Button { onOpen(mode) } label: { Label(mode.label, systemImage: mode.symbolName) }
+        }
+        if let repeats {
+            Divider()
+            // A button, not a `Toggle`: a `Binding` wants a `@Sendable` setter, and this one writes the model.
+            // The checkmark says it's on, as a menu's toggle would.
+            Button { repeats.set(!repeats.isOn) } label: {
+                Label(repeats.title, systemImage: repeats.isOn ? "checkmark" : "repeat")
+            }
+        }
+    }
+}
+
+/// *Repeats to the end of the section* (D14): one progression, worked out once, that the section plays
+/// over and over. The player's word, never detected, and drawn as a label, never as copies.
+struct SongMapRepeatToggle {
+    let isOn: Bool
+    /// *…of the section*, or *…of the song* when it has none.
+    let title: String
+    let set: (Bool) -> Void
+
+    /// Offered when there's room after the piece for it to repeat, and always once it's on, so it can be
+    /// switched off again wherever the section's edge has moved to.
+    init?(piece: SongMap.Piece, inSections: Bool, set: @escaping (UUID, Bool) -> Void) {
+        guard piece.canRepeat || piece.repeatsDeclared else { return nil }
+        isOn = piece.repeatsDeclared
+        title = inSections ? "Repeats to the end of the section" : "Repeats to the end of the song"
+        let uid = piece.uid
+        self.set = { set(uid, $0) }
     }
 }

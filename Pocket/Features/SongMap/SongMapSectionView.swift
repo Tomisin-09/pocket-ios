@@ -13,29 +13,35 @@ struct SongMapSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             SongMapSectionHeading(heading: section.heading, bars: section.bars, start: section.start,
-                                  end: section.end, openMarker: actions.openMarker)
+                                  end: section.end, sameAs: section.sameAs, openMarker: actions.openMarker,
+                                  showSection: actions.showSection)
             ForEach(section.rows) { row in
                 SongMapRowView(row: row, map: map, loops: loops, actions: actions, highlighted: highlighted)
                     .id(SongMapAnchor.row(row.start))
             }
         }
+        .id(SongMapAnchor.section(section.start))
     }
 }
 
-/// Where the Tab view scrolls the board to. Typed, so a row's start time can't be mistaken for another
-/// view's id that happens to be the same number.
+/// Where the Tab view scrolls the board to, and where *as Verse 1* goes. Typed, so a row's start time
+/// can't be mistaken for another view's id that happens to be the same number.
 enum SongMapAnchor: Hashable {
     case row(TimeInterval)
+    case section(TimeInterval)
 }
 
 /// A section's heading, on the board and in the Tab view alike: the marker's label, which opens the
-/// marker (D6), and the bars or times it covers.
+/// marker (D6), *as Verse 1* when it repeats an earlier section (D8), and the bars or times it covers.
 struct SongMapSectionHeading: View {
     let heading: SongMap.SectionHeading
     let bars: ClosedRange<Int>?
     let start: TimeInterval
     let end: TimeInterval
+    let sameAs: SongMap.SectionRef?
     let openMarker: (UUID) -> Void
+    /// Go to the section this one repeats.
+    let showSection: (TimeInterval) -> Void
 
     var body: some View {
         switch heading {
@@ -53,13 +59,28 @@ struct SongMapSectionHeading: View {
     }
 
     private func headingRow(_ title: some View) -> some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
             title.font(.futura(.headline))
+            if let sameAs { repeatLink(sameAs) }
             Spacer(minLength: 8)
             Text(range)
                 .font(.pocketMono(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
+    }
+
+    /// *as Verse 1*: a chart's way of writing a repeat, drawn as a label rather than copied pieces (D8).
+    private func repeatLink(_ sameAs: SongMap.SectionRef) -> some View {
+        let name = sameAs.label.isEmpty ? "Section" : sameAs.label
+        return Button { showSection(sameAs.start) } label: {
+            Label("as \(name)", systemImage: "repeat")
+                .font(.futura(.subheadline))
+                .foregroundStyle(PocketColor.textSecondary)
+                .lineLimit(1)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Same as \(name)")
+        .accessibilityHint("Goes to \(name)")
     }
 
     /// *Bars 5–12*, or *0:23–0:45* when the map is in seconds.
@@ -162,6 +183,19 @@ struct SongMapRowView: View {
                     .frame(width: 1, height: Self.laneHeight - 8)
                     .offset(x: xPos(tick.time, width), y: 4)
             }
+            ForEach(lane.gaps) { gap in
+                gapView(gap, width: width)
+            }
+            ForEach(lane.bands) { band in
+                if let piece = map.pieces[band.uid] {
+                    let start = xPos(band.start, width), end = xPos(band.end, width)
+                    SongMapBandView(band: band, piece: piece, width: max(end - start, 6),
+                                    height: Self.laneHeight - 6, modes: modes(band.uid),
+                                    repeats: repeatToggle(piece),
+                                    onView: { actions.view(band.uid) }, onOpen: { actions.open(band.uid, $0) })
+                        .offset(x: start, y: 3)
+                }
+            }
             ForEach(lane.placements) { placement in
                 if let piece = map.pieces[placement.uid] {
                     let start = xPos(placement.start, width), end = xPos(placement.end, width)
@@ -169,12 +203,45 @@ struct SongMapRowView: View {
                                      width: max(end - start, 6), height: Self.laneHeight - 6,
                                      highlighted: highlighted.contains(placement.uid),
                                      onView: { actions.view(placement.uid) },
-                                     onOpen: { actions.open(placement.uid, $0) })
+                                     onOpen: { actions.open(placement.uid, $0) },
+                                     repeats: repeatToggle(piece))
                         .offset(x: start, y: 3)
                 }
             }
         }
         .frame(width: width, height: Self.laneHeight, alignment: .topLeading)
+    }
+
+    private func modes(_ uid: UUID) -> [LoopRunMode] {
+        loops[uid].map(SongMapPieceSheet.modes(for:)) ?? []
+    }
+
+    private func repeatToggle(_ piece: SongMap.Piece) -> SongMapRepeatToggle? {
+        SongMapRepeatToggle(piece: piece, inSections: map.hasSections, set: actions.setRepeats)
+    }
+
+    /// A stretch of the lane with nothing on it (D9): tapping it offers *Make a piece here*. A faint + marks
+    /// where it starts, so an empty board says what it's for.
+    private func gapView(_ gap: SongMap.Gap, width: CGFloat) -> some View {
+        let from = max(gap.start, row.start), upTo = min(gap.end, row.end)
+        let start = xPos(from, width), span = max(xPos(upTo, width) - start, 0)
+        return Button { actions.makePiece(gap) } label: {
+            ZStack(alignment: .leading) {
+                Color.clear
+                if gap.start >= row.start - SongMapLayout.tolerance, span >= 30 {
+                    Image(systemName: "plus")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(PocketColor.textSecondary.opacity(0.6))
+                        .padding(.leading, 8)
+                }
+            }
+            .frame(width: span, height: Self.laneHeight)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .offset(x: start)
+        .accessibilityLabel("No \(gap.layer.name.lowercased()) piece here")
+        .accessibilityHint("Offers to make a piece here")
     }
 
     private func xPos(_ time: TimeInterval, _ width: CGFloat) -> CGFloat {

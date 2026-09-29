@@ -139,11 +139,40 @@ struct SongTabRowView: View {
             } else {
                 barLines(points, top: 2, height: Self.wordsHeight - 4)
             }
+            ForEach(Array(line.repeats.enumerated()), id: \.offset) { _, mark in
+                repeatLabel(mark, points: points, tint: tint)
+            }
             ForEach(Array(zip(line.columns, positions).enumerated()), id: \.offset) { _, pair in
                 mark(pair.0.mark, at: CGFloat(pair.1) * characterWidth, staffTop: staffTop, tint: tint)
             }
         }
         .frame(width: points, height: Self.height(of: line), alignment: .topLeading)
+    }
+
+    /// Where a loop repeats (D14): *↻ Verse changes ×4* across the stretch, with a light rule under it for
+    /// how far it runs. The count is said once, where the repeats begin; a later row says only what.
+    private func repeatLabel(_ mark: SongTab.RepeatMark, points: CGFloat, tint: Color) -> some View {
+        let start = x(mark.start, points) + characterWidth * CGFloat(SongTabLayout.lead)
+        let width = max(x(mark.end, points) - start - characterWidth / 2, 0)
+        let text = mark.continues ? mark.name : "\(mark.name) ×\(mark.passes)"
+        return ZStack(alignment: .bottomLeading) {
+            Rectangle().fill(tint.opacity(0.35)).frame(width: width, height: 1)
+            // The board's symbol, not a ↻ character: the fixed-width font draws that small and low.
+            HStack(spacing: 4) {
+                Image(systemName: "repeat").font(.caption2.weight(.semibold))
+                Text(text).font(.pocketMono(.caption).weight(.semibold))
+            }
+            .foregroundStyle(tint.opacity(0.8))
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .frame(maxHeight: .infinity)
+            .padding(.trailing, 3)
+            // Breaks the bar lines behind the words, top to bottom, as the tab's numbers break its strings.
+            .background(PocketColor.background)
+            .frame(width: width, height: Self.wordsHeight - 2, alignment: .leading)
+        }
+        .frame(width: width, height: Self.wordsHeight, alignment: .bottomLeading)
+        .offset(x: start)
     }
 
     @ViewBuilder private func mark(_ mark: SongTab.Mark, at xPos: CGFloat, staffTop: CGFloat,
@@ -195,7 +224,11 @@ struct SongTabRowView: View {
             : (bars.count == 1 ? "Bar \(bars[0])" : "Bars \(bars[0]) to \(bars[bars.count - 1])")
         guard !row.lines.isEmpty else { return "\(span). Nothing counted here." }
         let lines = row.lines.map { line in
-            "\(SongMapStyle.name(line.layer)): " + line.columns.map { $0.name ?? "unnamed" }.joined(separator: ", ")
+            let taps = line.columns.map { $0.name ?? "unnamed" }
+            let repeats = line.repeats.map {
+                $0.continues ? "\($0.name) repeating" : "\($0.name) repeats, \($0.passes) times in all"
+            }
+            return "\(SongMapStyle.name(line.layer)): " + (taps + repeats).joined(separator: ", ")
         }
         return ([span] + lines).joined(separator: ". ")
     }

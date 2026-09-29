@@ -646,8 +646,10 @@ each note you hear, then name them. The pieces, from the audio up:
   draws the tab from the piece each time; no text copy is stored anywhere.
 
 **The song map reads the pieces** (ADR 0232, `Core/SongMap` + `Features/SongMap`). It stores nothing
-of its own but one Bool: `Marker.startsSection` (declaration default `false`; `MarkerRecord.startsSection`
-is **Optional** so an older archive still decodes). Everything else is drawn each time: `SongMapInput(song:)`
+of its own but three declarations: `Marker.startsSection` and `Loop.repeatsToSectionEnd` (declaration
+defaults `false`) and `Marker.sameAsUID` (Optional), each **Optional** in `MarkerRecord`/`LoopRecord` so an
+older archive still decodes. Which songs have been offered *Use your markers as sections?* is UI state, in
+`UserDefaults`, not the store. Everything else is drawn each time: `SongMapInput(song:)`
 copies the song into plain values (loops in seconds, their `transcription`, whether a 🧩 note is on the
 loop, the markers, and the downbeats from `BeatGrid` when the song has a grid **and** `showsGridlines`), and
 the pure `SongMapLayout.build` returns a `SongMap` of sections, rows (8 downbeats, or 16 s), lanes and
@@ -658,7 +660,12 @@ neck that spells a chord counts), else `LoopType.chords`. The screen is a `.full
 `LoopModeAccess` allows. A mode pushes `JournalOwnerDestinationView` inside the cover's own
 `NavigationStack`, after the practice screen's `pauseForNestedAudio` when the details were opened from
 there; a mode picked on the tab sheet is held until the sheet's `onDismiss`, since a push can't start
-under a presented sheet.
+under a presented sheet. `build` cuts the sections **before** placing pieces, because a repeating loop
+(D14) needs its section's end: its repeats extend the interval it holds in the lane colouring, so a later
+piece in that layer takes the next lane. A section's *same as* (D8) follows `sameAsUID` only to strictly
+earlier section markers, which is what guarantees the chain ends. Gaps (D9) are the complement of each
+layer's covered intervals (pieces and repeats) within the section, or within each row when there are no
+sections, carried whole on every row they cross so the view can offer the same stretch from any of them.
 
 **The Tab view is a second reading of the same `SongMap`** (ADR 0232 D10). `SongTabLayout.build(map,
 spelling:)` cuts the board's sections into rows of 4 bars (or 8 s), reusing `SongMapLayout.rowSpans` and

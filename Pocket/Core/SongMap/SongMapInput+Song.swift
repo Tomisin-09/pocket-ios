@@ -12,13 +12,14 @@ extension SongMapInput {
                   grid: Self.grid(for: song),
                   markers: song.markers.map {
                       MarkerInput(uid: $0.uid, seconds: $0.seconds, label: $0.label,
-                                  startsSection: $0.startsSection)
+                                  startsSection: $0.startsSection, sameAsUID: $0.sameAsUID)
                   },
                   loops: song.loops.map { loop in
                       LoopInput(uid: loop.uid, name: loop.name.isEmpty ? "Loop" : loop.name,
                                 start: loop.start * duration, end: loop.end * duration,
                                 type: loop.loopType, piece: loop.transcription,
-                                handTagged: loop.journal.contains { $0.kind == .transcribed })
+                                handTagged: loop.journal.contains { $0.kind == .transcribed },
+                                repeatsToSectionEnd: loop.repeatsToSectionEnd)
                   })
     }
 

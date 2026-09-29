@@ -28,7 +28,7 @@ enum SongTabLayout {
                                               barsPerRow: barsPerRow, secondsPerRow: secondsPerRow)
                 .map { row(from: $0.start, to: $0.end, grid: map.grid, pieces: pieces, spelling: spelling) }
             return SongTab.Section(heading: section.heading, start: section.start, end: section.end,
-                                   bars: section.bars, rows: rows)
+                                   bars: section.bars, rows: rows, sameAs: section.sameAs)
         }
         return SongTab(scale: map.scale, sections: sections)
     }
@@ -37,10 +37,12 @@ enum SongTabLayout {
                     pieces: [SongMap.Piece], spelling: NoteSpelling) -> SongTab.Row {
         let fullRow = grid.map { $0.barSeconds * Double(barsPerRow) } ?? secondsPerRow
         let lines = lines(from: start, to: end, pieces: pieces, spelling: spelling)
-        // The pieces that drew it, in the order their first taps come.
+        // The pieces that drew it, in the order their first taps (or their repeats) come.
+        let marks = lines.flatMap(\.columns).map { (time: $0.time, piece: $0.piece) }
+            + lines.flatMap(\.repeats).map { (time: $0.start, piece: $0.piece) }
         var drew: [UUID] = []
-        for column in lines.flatMap(\.columns).sorted(by: { $0.time < $1.time }) where !drew.contains(column.piece) {
-            drew.append(column.piece)
+        for mark in marks.sorted(by: { $0.time < $1.time }) where !drew.contains(mark.piece) {
+            drew.append(mark.piece)
         }
         return SongTab.Row(start: start, end: end, widthFraction: min(1, max(0, (end - start) / fullRow)),
                            ticks: SongMapLayout.ticks(from: start, to: end, grid: grid, secondsPerTick: secondsPerTick),
@@ -54,7 +56,7 @@ enum SongTabLayout {
     static func lines(from start: TimeInterval, to end: TimeInterval, pieces: [SongMap.Piece],
                       spelling: NoteSpelling) -> [SongTab.Line] {
         SongMap.Layer.allCases.flatMap { layer -> [SongTab.Line] in
-            let here = pieces.filter { $0.layer == layer && $0.start < end && $0.end > start }
+            let here = pieces.filter { $0.layer == layer && $0.start < end && $0.reach > start }
             return Set(here.map(\.lane)).sorted().compactMap { lane in
                 line(layer: layer, lane: lane, pieces: here.filter { $0.lane == lane },
                      during: start..<end, spelling: spelling)
@@ -68,6 +70,7 @@ enum SongTabLayout {
                      during row: Range<TimeInterval>, spelling: NoteSpelling) -> SongTab.Line? {
         var columns: [SongTab.Column] = []
         var staff: [Int] = []
+        let repeats = pieces.compactMap { repeatMark($0, during: row) }
         for piece in pieces {
             guard case .piece(let transcription) = piece.content else { continue }
             let from = max(piece.start, row.lowerBound), upTo = min(piece.end, row.upperBound)
@@ -81,10 +84,20 @@ enum SongTabLayout {
                 columns.append(column)
             }
         }
-        guard !columns.isEmpty else { return nil }
+        guard !columns.isEmpty || !repeats.isEmpty else { return nil }
         return SongTab.Line(layer: layer, lane: lane,
                             strings: staff.isEmpty ? [] : TabLine.stringNames(openMidi: staff),
-                            columns: columns.sorted { $0.time < $1.time })
+                            columns: columns.sorted { $0.time < $1.time }, repeats: repeats)
+    }
+
+    /// A loop's repeats in a row's stretch (D14), as a label: the chart writes the progression once and
+    /// says it repeats, so its taps are never drawn again.
+    static func repeatMark(_ piece: SongMap.Piece, during row: Range<TimeInterval>) -> SongTab.RepeatMark? {
+        guard let repeats = piece.repeats else { return nil }
+        let from = max(piece.end, row.lowerBound), upTo = min(repeats.end, row.upperBound)
+        guard upTo - from > SongMapLayout.tolerance else { return nil }
+        return SongTab.RepeatMark(piece: piece.uid, name: piece.name, start: from, end: upTo,
+                                  passes: repeats.passes, continues: from > piece.end + SongMapLayout.tolerance)
     }
 
     /// One tap as the tab draws it. In the chords layer it's the chord's symbol, however it was named

@@ -156,6 +156,22 @@ To split the song into sections, open a marker and switch on **Starts a section*
 begins a new row with its name above it, and anything before the first one sits under **Start**.
 Markers without it stay on the map as pins. Tap a section's name or a pin to open its marker.
 
+If the song has markers but no sections yet, the map asks once: **Use your markers as sections?**
+**Choose sections** lists your markers, with the ones named like a part of a song (*Intro*, *Verse 2*,
+*Chorus*…) already ticked, and **Use** makes the ticked ones sections. Nothing changes until you tap it.
+
+When a section comes round again, open its marker and pick the earlier one under **Same as**. *Verse 2*
+then reads *as Verse 1*; tap that to go to Verse 1. Anything you work out inside Verse 2 still shows,
+because a variation is worth seeing.
+
+When a section is one progression played over and over, work it out once, then hold its loop and choose
+**Repeats to the end of the section**. A lighter band runs on to the end of the section, marked with how
+many times the loop plays. It's never copied, so when you change the loop, the repeats change with it.
+
+Tap **+** in an empty stretch of a lane to make a loop that fills it exactly, from the loop before to the
+loop after, named after its section and lane (*Chorus chords*). Without sections, it fills the stretch
+in that row.
+
 ### The song's tab
 
 **Pieces | Tab** at the top turns the map into the song's tab, drawn from the same pieces, four bars
@@ -166,6 +182,10 @@ so you can see the rhythm before you know the notes. A bar with nothing in it is
 <!-- shot: songs/song-tab | role: screen
      | alt: The Tab view of Slow Bend, with chord symbols over the Verse and the verse riff as tab on six strings under them
      | state: seeded song with sections, counted and named pieces, map open full screen on Tab -->
+
+A section you marked as the same as an earlier one is written as a chart writes it, its name and *as
+Verse 1*, unless you've worked something out inside it. A loop that repeats is written once, then
+*↻ Verse changes ×4* across the bars it repeats over.
 
 There's nothing to type into the tab: it's always drawn from your pieces, so it can't disagree with
 them. To change a bar, tap its row. The map goes back to **Pieces** at that row, with the loops that

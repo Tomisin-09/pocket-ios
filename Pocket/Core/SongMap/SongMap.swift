@@ -2,7 +2,8 @@ import Foundation
 
 /// A song's **map** (ADR 0232): its loops laid out as pieces on a board, section by section and row by
 /// row, in lanes by layer. Everything here is **drawn**, never stored. The only things the map reads that
-/// a player sets are the loops, their pieces (ADR 0225), and which markers start a section (D6).
+/// a player sets are the loops, their pieces (ADR 0225), which markers start a section (D6) and repeat an
+/// earlier one (D8), and which loops repeat to the end of their section (D14).
 ///
 /// Built from plain values by `SongMapLayout`, pure and SwiftUI-free (AGENTS.md), so where a piece sits,
 /// which lane it takes and where a row breaks are unit-tested rather than trusted to a screenshot.
@@ -15,6 +16,14 @@ struct SongMap: Equatable, Sendable {
     enum Layer: Int, CaseIterable, Comparable, Sendable {
         case chords, notes
         static func < (lhs: Layer, rhs: Layer) -> Bool { lhs.rawValue < rhs.rawValue }
+
+        /// What the lane is called on the board, and what a piece made in it is named after (D9).
+        var name: String {
+            switch self {
+            case .chords: "Chords"
+            case .notes: "Notes"
+            }
+        }
     }
 
     let scale: Scale
@@ -30,6 +39,10 @@ struct SongMap: Equatable, Sendable {
         grid.flatMap { SongMapLayout.barRange(from: piece.start, to: piece.end, in: $0) }
     }
 
+    /// True when a marker starts a section: without one, the song is one strip, and a repeat runs to the
+    /// song's end rather than a section's (D14).
+    var hasSections: Bool { sections.contains { $0.heading != .none } }
+
     /// A stretch of the song from one section marker to the next (D6).
     struct Section: Equatable, Identifiable, Sendable {
         let heading: SectionHeading
@@ -38,7 +51,17 @@ struct SongMap: Equatable, Sendable {
         let rows: [Row]
         /// The first and last bar numbers the section touches, in bars scale.
         let bars: ClosedRange<Int>?
+        /// The earlier section this one repeats, *as Verse 1* (D8): the first of a chain. `nil` reads plain.
+        var sameAs: SectionRef?
         var id: TimeInterval { start }
+    }
+
+    /// A section named by another: where *as Verse 1* points.
+    struct SectionRef: Equatable, Sendable {
+        let uid: UUID
+        let label: String
+        /// Where the named section starts on the board, to go to it.
+        let start: TimeInterval
     }
 
     /// What heads a section.
@@ -90,7 +113,37 @@ struct SongMap: Equatable, Sendable {
         /// 0 for the layer's first lane; higher when pieces in the layer overlap.
         let index: Int
         let placements: [Placement]
+        /// The parts of repeats that fall in this lane and row (D14).
+        var bands: [Band] = []
+        /// The stretches of this layer with nothing on them, where a piece can be made (D9). On the
+        /// layer's first lane only, and whole: a gap crossing rows is the same gap in each.
+        var gaps: [Gap] = []
         var id: String { "\(layer.rawValue)-\(index)" }
+    }
+
+    /// The part of one loop's repeats that falls in one row (D14): drawn lighter than the piece, from its
+    /// end to its section's end, and never as copies.
+    struct Band: Equatable, Identifiable, Sendable {
+        let uid: UUID
+        let start: TimeInterval
+        let end: TimeInterval
+        /// The repeats began in an earlier row, or carry on into a later one.
+        let continuesBefore: Bool
+        let continuesAfter: Bool
+        /// How many times the loop plays, counting the one worked out.
+        let passes: Int
+        var id: UUID { uid }
+    }
+
+    /// A stretch of one layer with no piece and no repeat on it (D9), bounded by its section, or by its row
+    /// when the song has no sections. *Make a piece here* fills it exactly.
+    struct Gap: Equatable, Identifiable, Sendable {
+        let layer: Layer
+        let start: TimeInterval
+        let end: TimeInterval
+        /// What a piece made here is called: *Chorus chords*, or *Chords, bars 9–12* outside a section.
+        let name: String
+        var id: String { "\(layer.rawValue)-\(start)" }
     }
 
     /// The part of one piece that falls in one row.
@@ -115,6 +168,26 @@ struct SongMap: Equatable, Sendable {
         let layer: Layer
         let lane: Int
         let content: Content
+        /// Where the section it sits in ends, or the song when there are none: as far as it can repeat.
+        var sectionEnd: TimeInterval
+        /// The player said it repeats to the end of its section (D14), whether or not there's room.
+        var repeatsDeclared = false
+        /// Its repeats, when declared and there's room for them.
+        var repeats: Repeat?
+
+        /// Where it stops holding its lane: the end of its repeats, or its own end.
+        var reach: TimeInterval { repeats?.end ?? end }
+
+        /// Room after it for at least half a pass more, so *Repeats to the end of the section* has
+        /// something to draw.
+        var canRepeat: Bool { sectionEnd - end >= (end - start) / 2 }
+    }
+
+    /// A loop's repeats (D14): from its end to the end of its section.
+    struct Repeat: Equatable, Sendable {
+        let end: TimeInterval
+        /// How many times the loop plays, counting the one worked out, to the nearest whole pass.
+        let passes: Int
     }
 
     /// What a loop holds (D4). Drawn as it is, never as a status.
@@ -148,6 +221,8 @@ struct SongMapInput: Equatable, Sendable {
         var seconds: TimeInterval
         var label: String
         var startsSection: Bool
+        /// The earlier section's marker this one repeats (D8).
+        var sameAsUID: UUID?
     }
 
     struct LoopInput: Equatable, Sendable {
@@ -158,5 +233,7 @@ struct SongMapInput: Equatable, Sendable {
         var type: LoopType
         var piece: PieceTranscription?
         var handTagged: Bool
+        /// It repeats to the end of its section (D14).
+        var repeatsToSectionEnd = false
     }
 }

@@ -20,7 +20,14 @@ struct SongTab: Equatable, Sendable {
         let end: TimeInterval
         let bars: ClosedRange<Int>?
         let rows: [Row]
+        /// The earlier section this one repeats (D8). It reads *as Verse 1*.
+        var sameAs: SongMap.SectionRef?
         var id: TimeInterval { start }
+
+        /// A section that repeats another and has nothing of its own is written as a chart writes it:
+        /// its heading and *as Verse 1*, with no empty rows under it. One with pieces of its own draws them,
+        /// because a variation beats "same as" (D8).
+        var showsRows: Bool { sameAs == nil || rows.contains { !$0.lines.isEmpty } }
     }
 
     /// One line of the chart: 4 bars, or 8 seconds.
@@ -51,11 +58,26 @@ struct SongTab: Equatable, Sendable {
         /// names and slashes.
         let strings: [String]
         let columns: [Column]
+        /// Where a loop in this lane repeats across the row (D14): a label, never the taps again.
+        var repeats: [RepeatMark] = []
         var id: String { "\(layer.rawValue)-\(lane)" }
 
         var isTab: Bool { !strings.isEmpty }
-        /// A tab line with names or slashes as well carries them in a row above the strings.
-        var hasWordsAboveTab: Bool { isTab && columns.contains { !$0.mark.isFrets } }
+        /// A tab line with names, slashes or a repeat as well carries them in a row above the strings.
+        var hasWordsAboveTab: Bool { isTab && (columns.contains { !$0.mark.isFrets } || !repeats.isEmpty) }
+    }
+
+    /// The part of a loop's repeats that falls in one row (D14).
+    struct RepeatMark: Equatable, Sendable {
+        let piece: UUID
+        /// The loop's name, which the label repeats.
+        let name: String
+        let start: TimeInterval
+        let end: TimeInterval
+        /// How many times the loop plays, counting the one worked out.
+        let passes: Int
+        /// The repeats began in an earlier row: the label says what, and leaves the count to the first.
+        let continues: Bool
     }
 
     /// One tap, drawn at its time.

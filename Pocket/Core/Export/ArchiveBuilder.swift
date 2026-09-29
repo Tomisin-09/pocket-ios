@@ -148,7 +148,7 @@ enum ArchiveBuilder {
             markers: song.markers
                 .sorted { ($0.seconds, $0.uid.uuidString) < ($1.seconds, $1.uid.uuidString) }
                 .map { MarkerRecord(uid: $0.uid, seconds: $0.seconds, label: $0.label,
-                                     startsSection: $0.startsSection) },
+                                     startsSection: $0.startsSection, sameAsUID: $0.sameAsUID) },
             references: referenceRecords(song.references),
             // Song order, `uid` breaking the tie — the Snags panel's own order (ADR 0202 D2), and
             // deterministic for the same reason every other collection here is sorted.
@@ -201,6 +201,7 @@ enum ArchiveBuilder {
             colorIndex: loop.colorIndex,
             customColorHex: loop.customColorHex,
             transcription: loop.transcription,
+            repeatsToSectionEnd: loop.repeatsToSectionEnd,
             references: referenceRecords(loop.references),
             // Oldest first — the order a history is read in, and the order `LoopSpanSection` walks
             // back down. `uid` breaks a tie between two edits saved in the same instant.

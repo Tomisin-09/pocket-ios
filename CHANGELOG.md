@@ -69,6 +69,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   that drew it; there's nothing to edit in the tab itself. Without a tempo, the tab says so once and
   takes you to the waveform to set one. Nothing is scored and nothing is counted up: the map shows
   your pieces, never a percentage (ADR 0232).
+  A song with markers and no sections is offered, once, **Use your markers as sections?**, with the
+  markers named like a song's parts already ticked. A marker that starts a section can be **Same as**
+  an earlier one, so *Verse 2* reads *as Verse 1*, and the Tab view writes it that way. Hold a loop for
+  **Repeats to the end of the section**: one progression worked out once is drawn repeating to the end
+  of its section, marked with how many times it plays, and written once in the tab. Tap **+** in an
+  empty stretch of a lane to make a loop that fills it exactly.
 
 - **Count the notes, then name them.** *Train your ear* has a new section for working a lick out by
   ear. Slow the loop down and tap the pad once for every note you hear; each time round the loop gets

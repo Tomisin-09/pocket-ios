@@ -14,6 +14,8 @@ struct SongMapPieceSheet: View {
     let place: String
     /// Open the loop in one of its modes. The map closes this sheet first.
     let onOpen: (LoopRunMode) -> Void
+    /// Whether the song has sections, so a repeat says what it runs to the end of (ADR 0232 D14).
+    var inSections = true
 
     @Environment(\.dismiss) private var dismiss
 
@@ -33,6 +35,12 @@ struct SongMapPieceSheet: View {
                         .font(.futura(.subheadline))
                         .foregroundStyle(SongMapStyle.tint(piece.layer))
                     content
+                    if let repeats = piece.repeats {
+                        Label("Repeats to the end of the \(inSections ? "section" : "song"), "
+                              + "\(repeats.passes) times in all.", systemImage: "repeat")
+                            .font(.futura(.footnote))
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
                 }
                 actions
             }

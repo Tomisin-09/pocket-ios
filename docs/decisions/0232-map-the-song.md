@@ -8,8 +8,9 @@
   (the per-song gridlines switch) · 0135 (a loop as a backing track) · 0150 and 0161 (export, not
   hosting; the practice file carries no song titles) · 0070 and 0225 D9 (no completion score) · 0092 §A4
   and 0225 D10 (never detected, never suggested).
-- **Schema:** two additive fields on `Marker`: `startsSection` (D6, slice 1) and `sameAsUID` (D8,
-  slice 3). Both are Optional or defaulted, and both are optional in the archive's `MarkerRecord`.
+- **Schema:** three additive fields: `Marker.startsSection` (D6, slice 1), `Marker.sameAsUID` (D8,
+  slice 3) and `Loop.repeatsToSectionEnd` (D14, slice 3). Each is Optional or defaulted, and each is
+  optional in the archive's `MarkerRecord` or `LoopRecord`.
 - **Design history:** `docs/plans/song-map.md` (parked 2026-09-27, promoted to this ADR) and the
   mockup at https://claude.ai/artifact/B9cjgdgZDxNfy6J2R5uqPU.
 
@@ -104,6 +105,19 @@ The idea was parked on 2026-09-27 with six questions open. They were settled in 
   until the player confirms. Detecting sections from the audio would break the same line as detecting
   notes (0225 D10): next to the player's own map, an estimate becomes a quiz.
 
+Settled in the build (slice 3, 2026-09-29):
+
+- **The offer is a card at the top of the map**, on a song that has markers and no section. *Choose
+  sections* opens the list, and *Use* switches on **Starts a section** for the ticked markers. *Cancel*
+  changes nothing and leaves the card. *Not now* puts it away.
+- **"Once" means answered once, either way.** Using the markers or *Not now* records the song (by its
+  `sourceID`) on the device, and the card doesn't come back, even if every section is later switched
+  off. It's kept in `AppSettings`, not on the song: it's where the screen has got to, not the player's
+  music, so a backup doesn't carry it and a restored song may be offered again, once.
+- **A label reads as a section when any whole word of it is a section word** (`SectionWords`):
+  *Verse 2*, *Chorus x2* and *Guitar solo* are ticked; *Breakdown* and *Tricky bend* are not.
+  *Pre-chorus* is folded to one word first.
+
 ### D8 — "Same as", at section level
 
 - **`Marker.sameAsUID`**, an optional UUID naming an earlier section's marker: *Verse 2, as Verse 1*. The
@@ -115,12 +129,37 @@ The idea was parked on 2026-09-27 with six questions open. They were settled in 
   1) reads as the first. If the named marker is deleted or stops starting a section, the section reads
   plain.
 
+Settled in the build (slice 3, 2026-09-29):
+
+- **The marker sheet's *Same as*** is a picker under **Starts a section**, shown only while the switch is
+  on and there's an earlier section to pick. A marker saved with the switch off lets go of its *same as*.
+  A section it names that has since moved later, or stopped starting one, shows as *None*.
+- **On the board, the heading reads *↻ as Verse 1***, and tapping it goes to Verse 1. The section's own
+  rows are drawn as usual, so *Make a piece here* still works inside it.
+- **In the Tab view, a "same as" section with nothing of its own is its heading alone**: no empty rows
+  under *as Verse 1*, as a chart writes it. One with a piece of its own draws its rows.
+- A chain broken part way reads as its last good link: Verse 3 as Verse 2, when Verse 2 names a marker
+  that's gone.
+
 ### D9 — Make a piece here
 
 - **Tapping a gap in a lane offers *Make a piece here*.** It makes a loop that fills the gap exactly,
   from the neighbour before to the neighbour after, bounded by the section.
 - The loop is named after its section and lane (*Chorus chords*, *Chorus notes*), typed *Chords* in the
   chords lane, and renamed like any loop.
+
+Settled in the build (slice 3, 2026-09-29):
+
+- **A gap is a stretch of the layer with no piece and no repeat (D14) on it**, whichever lane they're
+  in. It's offered on the layer's first lane, with a faint **+** where it starts, and a stretch shorter
+  than a second isn't offered: that's the sliver between two loops whose edges nearly meet.
+- **Without sections, a gap is bounded by the row tapped**, not the whole song. A song with no sections
+  would otherwise offer one loop the length of the song. (Found on Tomisin's own song, which had none.)
+- **Outside a named section, the loop is named by where it is**: *Chords, bars 9–12*, or its times in
+  seconds scale. That covers *Start* and an unnamed section too. A name the song already has gets a
+  number (*Verse chords 2*).
+- **The offer is a confirmation**, saying where the loop will go. The new loop plays at full speed and is
+  drawn heavier for a moment so you can see where it landed. It's an empty piece until it's counted.
 
 ### D10 — The Tab view is drawn, never authored
 
@@ -179,6 +218,29 @@ ADR doesn't change what's free.
   name. A guitarist looks for *tab*, and a song whose pieces are all chords still reads as its tab.
 - *Piece it together* was the runner-up. It sits too close to *Put it together*, the map's own action.
 
+### D14 — A loop that repeats to the end of its section
+
+*Added 2026-09-28, while agreeing slice 3.* Tomisin asked: what if the song is one progression looped
+over and over? D8 repeats a whole section. This repeats one loop within a section.
+
+- **`Loop.repeatsToSectionEnd`**, a Bool defaulting to `false`: one progression, worked out once, that
+  its section plays over and over. The player's declaration, set from the piece's hold menu as **Repeats to
+  the end of the section** (*…of the song* when the song has no sections). **Never detected, and never
+  copies**: copies would draw as pieces worked out that weren't, and a change to the first wouldn't carry
+  to them (D10: edit pieces, never the picture).
+- **Its section is the one holding the loop's middle**, so a loop dragged to start a beat early still
+  belongs to the section it plays in. Without sections, it repeats to the song's end.
+- **On the board, a lighter band runs from the loop's end to its section's end**, marked **↻ ×N**. N counts
+  the passes including the one worked out, to the nearest whole pass. The band still runs to the section's
+  end, because that's what the player said. Tapping it opens the loop's tab, and holding it gives the
+  loop's menu.
+- **Offered only with room for half a pass more**, so there's something to draw. Once on, it stays in the
+  menu, as a checked item, so it can be switched off wherever the section's edge has moved to.
+- **The repeats hold their lane.** A piece worked out later in the section (a turnaround, a variation)
+  takes the next lane down rather than being drawn over them, and the stretch they cover isn't a gap (D9).
+- **In the Tab view the taps are written once**, and the stretch the loop repeats over reads **↻ Verse
+  changes ×8**, with the count said once, where the repeats begin. It's a chart's repeat sign, in words.
+
 ## Build order
 
 1. **The board.** `Marker.startsSection` with its switch and archive field; `SongMapLayout` (pure:
@@ -188,7 +250,7 @@ ADR doesn't change what's free.
    modes it can open in.
 2. **The Tab view** (D10), including the no-grid line (D7).
 3. **The unprepared song and repeats**: *Use your markers as sections?* (D7), *Make a piece here* (D9),
-   and `Marker.sameAsUID` (D8).
+   `Marker.sameAsUID` (D8), and `Loop.repeatsToSectionEnd` (D14).
 4. **Put it together** (D11).
 5. **The Journal's Pieces scope, grouped by song** (D1).
 
@@ -207,11 +269,13 @@ Anything past this needs a new ADR:
 
 ## Consequences
 
-- **A second schema addition** is taken up (D8) beyond the one the design note planned. Both are
-  additive under ADR 0189's criteria, and both must be **optional in the archive** (`decodeIfPresent`): a
-  Codable default does not survive a missing key, and an archive made before this would fail to restore
-  as a whole.
+- **Two schema additions beyond the one the design note planned** are taken up: D8's and D14's. All
+  three are additive under ADR 0189's criteria, and all three must be **optional in the archive**
+  (`decodeIfPresent`): a Codable default does not survive a missing key, and an archive made before this
+  would fail to restore as a whole.
+- **One thing is kept on the device, not in the backup**: which songs have been offered *Use your
+  markers as sections?* (D7).
 - **The gridlines switch now governs two surfaces** (D5). Its help text and the manual say so.
 - **The map is the reader 0225 D8 named**, so the structured piece now has one.
-- **Manual:** Song details gains a row, the marker sheet gains a switch, and there's a new screen
-  (`docs/manual/songs.md`, `looping.md`).
+- **Manual:** Song details gains a row, the marker sheet gains a switch and a *Same as* picker, and
+  there's a new screen (`docs/manual/songs.md`, `looping.md`).

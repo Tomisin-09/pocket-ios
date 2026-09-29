@@ -18,9 +18,11 @@ enum SongMapPreview {
                         ref: SongRef(id: "sample", source: .localFile, bookmark: nil))
         song.downbeatSeconds = 0
 
-        let markers = [section(bar(1), "Intro"), section(bar(5), "Verse 1"),
+        let verse = section(bar(5), "Verse 1"), verseAgain = section(bar(21), "Verse 2")
+        verseAgain.sameAsUID = verse.uid
+        let markers = [section(bar(1), "Intro"), verse,
                        Marker(seconds: bar(9), label: "Tricky bend"),
-                       section(bar(13), "Chorus"), section(bar(21), "Verse 2"), section(bar(29), "Outro")]
+                       section(bar(13), "Chorus"), verseAgain, section(bar(29), "Outro")]
 
         let verseChords = ["Gm7", "C7", "Gm7", "Gm7", "C7", "C7", "Gm7", "D7"].enumerated().map { index, name in
             PieceTranscription.Tap(seconds: bar(5 + Double(index)), label: chord(name))
@@ -33,8 +35,9 @@ enum SongMapPreview {
         let counted = (0..<9).map { PieceTranscription.Tap(seconds: bar(13) + Double($0) * 0.6) }
 
         let loops = [
-            loop("Intro changes", from: bar(1), to: bar(5), duration: duration, type: .chords,
-                 piece: PieceTranscription(taps: (0..<4).map { .init(seconds: bar(1 + Double($0))) })),
+            loop("Intro changes", from: bar(1), to: bar(3), duration: duration, type: .chords,
+                 piece: PieceTranscription(taps: [.init(seconds: bar(1), label: chord("Gm7")),
+                                                  .init(seconds: bar(2), label: chord("C7"))])),
             loop("Verse changes", from: bar(5), to: bar(13), duration: duration, type: .chords,
                  piece: PieceTranscription(taps: verseChords)),
             loop("Verse riff", from: bar(9), to: bar(11), duration: duration, type: .riff,
@@ -47,6 +50,8 @@ enum SongMapPreview {
         let tagged = JournalEntry(text: "Worked it out on paper.", kind: .transcribed,
                                   masteryAtEntry: nil, commandTempoAtEntry: nil)
         loops[5].journal = [tagged]
+        // One progression, worked out once, that the intro plays twice (ADR 0232 D14).
+        loops[0].repeatsToSectionEnd = true
 
         song.loops = loops
         song.markers = markers

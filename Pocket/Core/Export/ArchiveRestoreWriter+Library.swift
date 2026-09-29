@@ -62,6 +62,7 @@ extension ArchiveRestoreWriter {
                 let marker = Marker(seconds: $0.seconds, label: $0.label)
                 marker.uid = $0.uid
                 marker.startsSection = $0.startsSection ?? false
+                marker.sameAsUID = $0.sameAsUID
                 return marker
             }
             song.references = references(record.references)
@@ -128,6 +129,7 @@ extension ArchiveRestoreWriter {
         made.colorIndex = record.colorIndex
         made.customColorHex = record.customColorHex
         made.transcription = record.transcription   // the player's own piece (ADR 0225); absent reads as none
+        made.repeatsToSectionEnd = record.repeatsToSectionEnd ?? false
         made.references = references(record.references)
         made.spanChanges = record.spanChanges.map { made in
             let change = LoopSpanChange(changedAt: made.changedAt,

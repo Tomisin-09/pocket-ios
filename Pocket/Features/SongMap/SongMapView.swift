@@ -20,6 +20,7 @@ struct SongMapView: View {
     var onShowWaveform: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var mode: Mode = .pieces
     /// Pieces just reached from a row of the Tab view, drawn heavier for a moment.
     @State private var highlighted: Set<UUID> = []
@@ -32,6 +33,11 @@ struct SongMapView: View {
     /// A mode picked on the tab sheet, opened once the sheet has gone: a push can't start under a sheet.
     @State private var openAfterSheet: Opening?
     @State private var editingMarker: StableRef<Marker>?
+    /// The gap *Make a piece here* is being offered for (D9).
+    @State private var makingPiece: SongMap.Gap?
+    /// *Use your markers as sections?* (D7): the list is open, or the offer was just answered here.
+    @State private var choosingSections = false
+    @State private var sectionOfferAnswered = false
 
     struct Opening: Equatable {
         let uid: UUID
@@ -41,7 +47,8 @@ struct SongMapView: View {
     enum Mode: Hashable { case pieces, tab }
 
     var body: some View {
-        let map = SongMapLayout.build(SongMapInput(song: song))
+        let input = SongMapInput(song: song)
+        let map = SongMapLayout.build(input)
         let loops = Dictionary(song.loops.map { ($0.uid, $0) }, uniquingKeysWith: { first, _ in first })
         let tab = mode == .tab ? SongTabLayout.build(map, spelling: spelling) : nil
         NavigationStack {
@@ -50,14 +57,21 @@ struct SongMapView: View {
                     // Not lazy: the Tab view scrolls the board to a row, which has to exist to be found.
                     VStack(alignment: .leading, spacing: 24) {
                         header(map, tab: tab)
+                        if offersSections(input) {
+                            SongMapSectionOffer(onChoose: { choosingSections = true },
+                                                onNotNow: answerSectionOffer)
+                        }
                         if let tab {
-                            SongTabView(tab: tab, openMarker: openMarker,
+                            SongTabView(tab: tab, openMarker: openMarker, showSection: showSection,
                                         onShowPieces: { showPieces(of: $0, in: map) })
                         } else {
                             ForEach(map.sections) { section in
                                 SongMapSectionView(section: section, map: map, loops: loops,
                                                    actions: SongMapActions(view: view, open: open,
-                                                                           openMarker: openMarker),
+                                                                           openMarker: openMarker,
+                                                                           showSection: showSection,
+                                                                           setRepeats: setRepeats,
+                                                                           makePiece: { makingPiece = $0 }),
                                                    highlighted: highlighted)
                             }
                         }
@@ -91,13 +105,24 @@ struct SongMapView: View {
         .sheet(item: $editingMarker) { ref in
             MarkerEditSheet(marker: ref.value, onDelete: nil)
         }
+        .sheet(isPresented: $choosingSections) {
+            SongMapSectionsSheet(markers: song.markers, duration: song.duration, onUse: answerSectionOffer)
+        }
+        .confirmationDialog(makingPiece?.name ?? "", isPresented: Binding(get: { makingPiece != nil },
+                                                                          set: { if !$0 { makingPiece = nil } }),
+                            titleVisibility: .visible, presenting: makingPiece) { gap in
+            Button("Make a piece here") { make(gap) }
+        } message: { gap in
+            Text("A new loop \(span(of: gap, in: map)), on the \(gap.layer.name) lane. Count it in Train "
+                 + "your ear and it fills in here.")
+        }
         .sheet(item: $viewing, onDismiss: openPicked) { ref in
             if let piece = map.pieces[ref.value.uid] {
                 SongMapPieceSheet(loop: ref.value, piece: piece, place: place(of: piece, in: map),
                                   onOpen: { mode in
                                       openAfterSheet = Opening(uid: ref.value.uid, mode: mode)
                                       viewing = nil
-                                  })
+                                  }, inSections: map.hasSections)
             }
         }
         .task(id: highlighted) {
@@ -156,8 +181,10 @@ struct SongMapView: View {
     private func guidance(_ map: SongMap, tab: SongTab?) -> String {
         guard let tab else {
             return map.pieces.isEmpty
-                ? "No loops yet. Every loop you make on this song appears here, where it plays."
-                : "Each loop sits where it plays. Tap one for its tab, or hold it to work on it."
+                ? "No loops yet. Tap + in a lane to make one there. Every loop on this song appears here, "
+                    + "where it plays."
+                : "Each loop sits where it plays. Tap one for its tab, hold it to work on it, or tap + to "
+                    + "make one in a gap."
         }
         return tab.isEmpty
             ? "Nothing counted yet. Count a loop in Train your ear and it's drawn here, where it plays."
@@ -238,39 +265,59 @@ struct SongMapView: View {
         }
     }
 
+    // MARK: - Sections and repeats
+
+    /// *as Verse 1*: to the section it names, on whichever view is showing.
+    private func showSection(_ start: TimeInterval) {
+        scrollTarget = .section(start)
+    }
+
+    /// *Repeats to the end of the section* (D14), from a piece's hold menu.
+    private func setRepeats(_ uid: UUID, _ isOn: Bool) {
+        song.loops.first { $0.uid == uid }?.repeatsToSectionEnd = isOn
+    }
+
+    /// Offered once per song (D7): it has markers, none of them starts a section, and the offer hasn't
+    /// been answered.
+    private func offersSections(_ input: SongMapInput) -> Bool {
+        !sectionOfferAnswered && SectionWords.shouldOffer(input.markers, duration: input.duration)
+            && !AppSettings.sectionOfferMade(for: song.sourceID)
+    }
+
+    /// *Not now*, or the markers used: either way it's been answered, and isn't offered again.
+    private func answerSectionOffer() {
+        AppSettings.recordSectionOffer(for: song.sourceID)
+        withAnimation { sectionOfferAnswered = true }
+    }
+
+    /// *Make a piece here* (D9): a loop that fills the gap exactly, named after its section and lane and
+    /// typed *Chords* on the chords lane, so it lands where it was asked for. It's drawn heavier for a
+    /// moment, so you can see where it went.
+    private func make(_ gap: SongMap.Gap) {
+        guard song.duration > 0 else { return }
+        let loop = Loop(name: SongMapLayout.unusedName(gap.name, among: song.loops.map(\.name)),
+                        start: gap.start / song.duration, end: gap.end / song.duration, speed: 1, repeats: 4)
+        if gap.layer == .chords { loop.loopType = .chords }
+        modelContext.insert(loop)
+        Analytics.send(.loopCreated)
+        loop.song = song
+        highlighted = [loop.uid]
+    }
+
+    /// *from bar 9 to bar 12*, or *from 0:32 to 0:48* in seconds scale.
+    private func span(of gap: SongMap.Gap, in map: SongMap) -> String {
+        if let grid = map.grid, let bars = SongMapLayout.barRange(from: gap.start, to: gap.end, in: grid) {
+            return bars.count == 1 ? "in bar \(bars.lowerBound)"
+                : "from bar \(bars.lowerBound) to bar \(bars.upperBound)"
+        }
+        return "from \(timecode(gap.start)) to \(timecode(gap.end))"
+    }
+
     // MARK: - Toolbar
 
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
             Button("Done") { dismiss() }
-        }
-    }
-}
-
-/// What the board's controls do, handed down to every row rather than three closures apiece.
-struct SongMapActions {
-    /// Tap a piece: its tab.
-    let view: (UUID) -> Void
-    /// A mode picked from a piece's hold menu.
-    let open: (UUID, LoopRunMode) -> Void
-    /// Tap a section heading or a pin.
-    let openMarker: (UUID) -> Void
-}
-
-/// The colours of the two layers (ADR 0232 D2): Indigo for chords, Teal for notes. Lane colours only,
-/// never a status (D4).
-enum SongMapStyle {
-    static func tint(_ layer: SongMap.Layer) -> Color {
-        switch layer {
-        case .chords: PocketColor.toolkit
-        case .notes: PocketColor.practice
-        }
-    }
-
-    static func name(_ layer: SongMap.Layer) -> String {
-        switch layer {
-        case .chords: "Chords"
-        case .notes: "Notes"
         }
     }
 }

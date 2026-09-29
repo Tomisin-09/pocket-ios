@@ -144,7 +144,8 @@ Marker labels can float over the timeline as the playhead approaches them; that 
 player's settings.
 
 The same sheet has **Starts a section**. Switch it on and the song's map begins a new section at
-that marker. See [Mapping the song](songs.md#mapping-the-song).
+that marker; with it on, **Same as** marks the section as a repeat of an earlier one. See
+[Mapping the song](songs.md#mapping-the-song).
 
 ## Describing a loop
 
