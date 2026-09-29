@@ -58,6 +58,7 @@ final class SongMapArchiveTests: XCTestCase {
         let verse = UUID()
         var loop = ArchiveFixture.loop(uid: UUID())
         loop.repeatsToSectionEnd = true
+        loop.repeatsTo = "song"
         let written = archive(loop: loop, markers: [
             MarkerRecord(uid: verse, seconds: 8, label: "Verse 1", startsSection: true),
             MarkerRecord(uid: UUID(), seconds: 40, label: "Verse 2", startsSection: true, sameAsUID: verse)
@@ -65,6 +66,7 @@ final class SongMapArchiveTests: XCTestCase {
         let read = try XCTUnwrap(ArchiveBuilder.decode(ArchiveBuilder.encode(written)).songs.first)
         XCTAssertEqual(read.markers.last?.sameAsUID, verse)
         XCTAssertEqual(read.loops.first?.repeatsToSectionEnd, true)
+        XCTAssertEqual(read.loops.first?.repeatsTo, "song")
     }
 
     func testAFileFromBeforeSlice3StillDecodes() throws {
@@ -73,9 +75,11 @@ final class SongMapArchiveTests: XCTestCase {
         let text = try XCTUnwrap(String(bytes: data, encoding: .utf8))
         XCTAssertFalse(text.contains("sameAsUID"))
         XCTAssertFalse(text.contains("repeatsToSectionEnd"))
+        XCTAssertFalse(text.contains("\"repeatsTo\""), "nor slice 3b's reach (D15)")
         let song = try XCTUnwrap(ArchiveBuilder.decode(data).songs.first)
         XCTAssertNil(song.markers.first?.sameAsUID)
         XCTAssertNil(song.loops.first?.repeatsToSectionEnd)
+        XCTAssertNil(song.loops.first?.repeatsTo)
         XCTAssertEqual(song.loops.first?.name, "Turnaround", "the missing keys took nothing else")
     }
 
@@ -84,6 +88,7 @@ final class SongMapArchiveTests: XCTestCase {
         let verse = UUID(), again = UUID(), repeating = UUID(), plain = UUID()
         var looped = ArchiveFixture.loop(uid: repeating)
         looped.repeatsToSectionEnd = true
+        looped.repeatsTo = again.uuidString
         var written = archive(markers: [MarkerRecord(uid: verse, seconds: 8, label: "Verse 1", startsSection: true),
                                         MarkerRecord(uid: again, seconds: 40, label: "Verse 2", startsSection: true,
                                                      sameAsUID: verse)])
@@ -93,12 +98,17 @@ final class SongMapArchiveTests: XCTestCase {
         XCTAssertEqual(song.markers.first { $0.uid == again }?.sameAsUID, verse)
         XCTAssertNil(song.markers.first { $0.uid == verse }?.sameAsUID)
         XCTAssertEqual(song.loops.first { $0.uid == repeating }?.repeatsToSectionEnd, true)
+        XCTAssertEqual(song.loops.first { $0.uid == repeating }?.repeatsTo, again.uuidString)
         XCTAssertEqual(song.loops.first { $0.uid == plain }?.repeatsToSectionEnd, false)
+        let plainLoop = try XCTUnwrap(song.loops.first { $0.uid == plain })
+        XCTAssertNil(plainLoop.repeatsTo)
     }
 
     @MainActor
     func testALoopRepeatsNoFurtherUntilThePlayerSaysSo() {
-        XCTAssertFalse(Loop(name: "Vamp", start: 0, end: 0.1, speed: 1, repeats: 4).repeatsToSectionEnd)
+        let loop = Loop(name: "Vamp", start: 0, end: 0.1, speed: 1, repeats: 4)
+        XCTAssertFalse(loop.repeatsToSectionEnd)
+        XCTAssertNil(loop.repeatsTo, "its own section's end, D14's reach")
         XCTAssertNil(Marker(seconds: 8, label: "Verse 2").sameAsUID)
     }
 }

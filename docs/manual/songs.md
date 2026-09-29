@@ -167,10 +167,23 @@ because a variation is worth seeing.
 When a section is one progression played over and over, work it out once, then hold its loop and choose
 **Repeats to the end of the section**. A lighter band runs on to the end of the section, marked with how
 many times the loop plays. It's never copied, so when you change the loop, the repeats change with it.
+When the song has more sections after it, the hold menu has **Repeats** instead, where the loop can also
+run on **Through** a later section or **To the end of the song**, and **Doesn't repeat** switches it off.
 
 Tap **+** in an empty stretch of a lane to make a loop that fills it exactly, from the loop before to the
 loop after, named after its section and lane (*Chorus chords*). Without sections, it fills the stretch
-in that row.
+in that row. If you've already counted a piece on that lane, you can start from it instead: **Copy
+Verse changes here** makes the loop with those notes or chords already written across it.
+
+To put a piece you've counted somewhere else, hold it and choose **Copy to…**, also on its tab. Tick the
+sections it goes in (the rows, when the song has no sections), or **Choose bars** for a run of bars. Each
+gets a loop of its own with the piece written across it again and again, keeping to the bar. A copy is
+yours to change: changing it, or the piece it came from, leaves the other as it is. If you want them to
+stay the same, use **Repeats** or **Same as** instead.
+
+After you make a loop or copy a piece, **Undo** at the bottom of the map takes back what was just made,
+and only that. It stays until you do something else. The map never deletes a loop: to delete one, use the
+waveform.
 
 ### The song's tab
 

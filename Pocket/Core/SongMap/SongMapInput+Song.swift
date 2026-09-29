@@ -19,7 +19,8 @@ extension SongMapInput {
                                 start: loop.start * duration, end: loop.end * duration,
                                 type: loop.loopType, piece: loop.transcription,
                                 handTagged: loop.journal.contains { $0.kind == .transcribed },
-                                repeatsToSectionEnd: loop.repeatsToSectionEnd)
+                                repeatsToSectionEnd: loop.repeatsToSectionEnd,
+                                repeatsTo: SongMap.RepeatsTo(stored: loop.repeatsTo))
                   })
     }
 

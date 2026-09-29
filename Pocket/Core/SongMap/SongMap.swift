@@ -172,22 +172,81 @@ struct SongMap: Equatable, Sendable {
         var sectionEnd: TimeInterval
         /// The player said it repeats to the end of its section (D14), whether or not there's room.
         var repeatsDeclared = false
+        /// How far the player said it repeats (D15), as it reads now: a section named that's gone, or that
+        /// no longer ends later than its own, reads as its own section.
+        var repeatsTo: RepeatsTo = .sectionEnd
         /// Its repeats, when declared and there's room for them.
         var repeats: Repeat?
 
         /// Where it stops holding its lane: the end of its repeats, or its own end.
         var reach: TimeInterval { repeats?.end ?? end }
 
-        /// Room after it for at least half a pass more, so *Repeats to the end of the section* has
-        /// something to draw.
-        var canRepeat: Bool { sectionEnd - end >= (end - start) / 2 }
+        /// It holds a counted piece, so there's something for *Copy to…* to write (D16).
+        var canCopy: Bool {
+            if case .piece(let counted) = content { return !counted.taps.isEmpty }
+            return false
+        }
     }
 
-    /// A loop's repeats (D14): from its end to the end of its section.
+    /// A loop's repeats (D14): from its end to the end of its section, or as far as the player said (D15).
     struct Repeat: Equatable, Sendable {
         let end: TimeInterval
         /// How many times the loop plays, counting the one worked out, to the nearest whole pass.
         let passes: Int
+    }
+
+    /// How far a loop's repeats run (D15). Stored on the loop as `stored`, a String, never as this enum
+    /// (ADR 0189): a build that doesn't know a value reads it as the loop's own section.
+    enum RepeatsTo: Hashable, Sendable {
+        /// To the end of the section it sits in (D14).
+        case sectionEnd
+        /// On through a later section, to that section's end: by the marker that starts it.
+        case through(UUID)
+        /// To the end of the song.
+        case songEnd
+
+        init(stored: String?) {
+            switch stored {
+            case "song": self = .songEnd
+            case let text?: self = UUID(uuidString: text).map(RepeatsTo.through) ?? .sectionEnd
+            case nil: self = .sectionEnd
+            }
+        }
+
+        /// What `Loop.repeatsTo` keeps: `nil` for its own section, so a loop that never chose reads as
+        /// D14's.
+        var stored: String? {
+            switch self {
+            case .sectionEnd: nil
+            case .through(let uid): uid.uuidString
+            case .songEnd: "song"
+            }
+        }
+    }
+
+    /// One way a piece's repeats can run, as its hold menu offers it (D15).
+    struct RepeatChoice: Equatable, Sendable {
+        let to: RepeatsTo
+        /// *To the end of the section*, *Through Chorus*, *To the end of the song*.
+        let title: String
+        /// How many times the loop would play, counting the one worked out.
+        let passes: Int
+
+        /// The title as a sentence: *Repeats to the end of the section*, *Repeats through Chorus*.
+        var phrase: String { "Repeats " + title.prefix(1).lowercased() + title.dropFirst() }
+    }
+
+    /// How far a piece's repeats can run from where it is (D15), nearest first.
+    func repeatChoices(for piece: Piece) -> [RepeatChoice] {
+        SongMapLayout.repeatChoices(for: piece, in: self)
+    }
+
+    /// *Repeats through Chorus, 6 times in all.*, for the piece's tab sheet. `nil` when it isn't drawn
+    /// repeating.
+    func repeatLine(for piece: Piece) -> String? {
+        guard let repeats = piece.repeats,
+              let choice = repeatChoices(for: piece).first(where: { $0.to == piece.repeatsTo }) else { return nil }
+        return "\(choice.phrase), \(repeats.passes) times in all."
     }
 
     /// What a loop holds (D4). Drawn as it is, never as a status.
@@ -233,7 +292,9 @@ struct SongMapInput: Equatable, Sendable {
         var type: LoopType
         var piece: PieceTranscription?
         var handTagged: Bool
-        /// It repeats to the end of its section (D14).
+        /// It repeats to the end of its section (D14)…
         var repeatsToSectionEnd = false
+        /// …or as far as this, when it repeats at all (D15).
+        var repeatsTo: SongMap.RepeatsTo = .sectionEnd
     }
 }

@@ -47,8 +47,9 @@ struct MarkerEditSheet: View {
                     if startsSection, !earlierSections.isEmpty { sameAsPicker }
                 } footer: {
                     Text(startsSection && !earlierSections.isEmpty
-                         ? "Sections head the rows of Map the song, in Song details. Same as writes this section "
-                           + "as a repeat of an earlier one, the way a chart does."
+                         ? "Sections head the rows of Map the song, in Song details. Same as is for a section "
+                           + "that plays like an earlier one, as Verse 2 often plays like Verse 1. The map heads "
+                           + "it as Verse 1, so there's nothing to work out twice."
                          : "Sections head the rows of Map the song, in Song details. Other markers stay as pins.")
                 }
                 if let onDelete {

@@ -10,6 +10,9 @@ import SwiftUI
 /// section** lives (D6). **Pieces | Tab** are two views of the one layout (D10): the Tab view draws the
 /// song's chart from the same pieces, and tapping one of its rows comes back here, to the pieces that
 /// drew it.
+///
+/// **It adds, and never deletes** (D17). A piece made in a gap, or copied (D16), can be taken back with
+/// Undo while it's new; a loop made on the waveform can't be removed from here.
 struct SongMapView: View {
     let song: Song
     /// Pause whatever else is playing before a piece opens: the practice screen's waveform, when the
@@ -20,12 +23,12 @@ struct SongMapView: View {
     var onShowWaveform: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.modelContext) var modelContext
     @State private var mode: Mode = .pieces
     /// Pieces just reached from a row of the Tab view, drawn heavier for a moment.
-    @State private var highlighted: Set<UUID> = []
+    @State var highlighted: Set<UUID> = []
     /// The board row to scroll to once the board is back in place of the tab.
-    @State private var scrollTarget: SongMapAnchor?
+    @State var scrollTarget: SongMapAnchor?
     /// The loop being opened, and in which mode. By uid, never the model (ADR 0090).
     @State private var opening: Opening?
     /// The loop whose tab is showing.
@@ -34,14 +37,31 @@ struct SongMapView: View {
     @State private var openAfterSheet: Opening?
     @State private var editingMarker: StableRef<Marker>?
     /// The gap *Make a piece here* is being offered for (D9).
-    @State private var makingPiece: SongMap.Gap?
+    @State var makingPiece: SongMap.Gap?
     /// *Use your markers as sections?* (D7): the list is open, or the offer was just answered here.
     @State private var choosingSections = false
-    @State private var sectionOfferAnswered = false
+    @State var sectionOfferAnswered = false
+    /// The piece *Copy to…* is finding places for (D16). By uid, never the model (ADR 0090).
+    @State var copying: CopySource?
+    /// *Copy to…* picked on the tab sheet, opened once the sheet has gone.
+    @State private var copyAfterSheet: UUID?
+    /// What the map just made, which Undo takes back (D17), until the player does something else.
+    @State var made: Made?
 
     struct Opening: Equatable {
         let uid: UUID
         let mode: LoopRunMode
+    }
+
+    struct CopySource: Identifiable {
+        let uid: UUID
+        var id: UUID { uid }
+    }
+
+    struct Made: Equatable {
+        let id = UUID()
+        let message: String
+        let uids: Set<UUID>
     }
 
     enum Mode: Hashable { case pieces, tab }
@@ -71,7 +91,8 @@ struct SongMapView: View {
                                                                            openMarker: openMarker,
                                                                            showSection: showSection,
                                                                            setRepeats: setRepeats,
-                                                                           makePiece: { makingPiece = $0 }),
+                                                                           makePiece: offerPiece,
+                                                                           copy: startCopy),
                                                    highlighted: highlighted)
                             }
                         }
@@ -90,6 +111,7 @@ struct SongMapView: View {
                 }
             }
             .background(PocketColor.background)
+            .overlay(alignment: .bottom) { undoBar }
             .safeAreaInset(edge: .top, spacing: 0) { modePicker }
             .navigationTitle(song.title)
             .navigationBarTitleDisplayMode(.inline)
@@ -112,9 +134,17 @@ struct SongMapView: View {
                                                                           set: { if !$0 { makingPiece = nil } }),
                             titleVisibility: .visible, presenting: makingPiece) { gap in
             Button("Make a piece here") { make(gap) }
+            // Or start from a piece already counted on this lane (D16).
+            ForEach(SongMapCopy.sources(for: gap, in: map), id: \.uid) { source in
+                Button("Copy \(source.name) here") {
+                    copy(source.uid, into: [SongMapCopy.target(for: gap)], grid: map.grid)
+                }
+            }
         } message: { gap in
-            Text("A new loop \(span(of: gap, in: map)), on the \(gap.layer.name) lane. Count it in Train "
-                 + "your ear and it fills in here.")
+            Text("A new loop \(span(of: gap, in: map)), on the \(gap.layer.name) lane. "
+                 + (SongMapCopy.sources(for: gap, in: map).isEmpty
+                    ? "Count it in Train your ear and it fills in here."
+                    : "Count it in Train your ear, or start from a copy of a piece you've counted."))
         }
         .sheet(item: $viewing, onDismiss: openPicked) { ref in
             if let piece = map.pieces[ref.value.uid] {
@@ -122,13 +152,27 @@ struct SongMapView: View {
                                   onOpen: { mode in
                                       openAfterSheet = Opening(uid: ref.value.uid, mode: mode)
                                       viewing = nil
-                                  }, inSections: map.hasSections)
+                                  }, repeatLine: map.repeatLine(for: piece),
+                                  onCopy: piece.canCopy ? {
+                                      copyAfterSheet = ref.value.uid
+                                      viewing = nil
+                                  } : nil)
+            }
+        }
+        .sheet(item: $copying) { source in
+            if let piece = map.pieces[source.uid] {
+                SongMapCopySheet(piece: piece, map: map) { copy(source.uid, into: $0, grid: map.grid) }
             }
         }
         .task(id: highlighted) {
             guard !highlighted.isEmpty else { return }
             do { try await Task.sleep(for: .seconds(2)) } catch { return }
             withAnimation(.easeOut(duration: 0.4)) { highlighted = [] }
+        }
+        .task(id: made?.id) {
+            guard made != nil else { return }
+            do { try await Task.sleep(for: .seconds(6)) } catch { return }
+            withAnimation(.easeOut(duration: 0.2)) { made = nil }
         }
     }
 
@@ -205,49 +249,33 @@ struct SongMapView: View {
         }
     }
 
-    /// The artist, and what the rows are measured in.
-    private func facts(_ map: SongMap) -> String {
-        var parts = [song.artist].filter { !$0.isEmpty }
-        switch map.scale {
-        case .bars:
-            if let bpm = song.bpm { parts.append("\(bpm) BPM") }
-            parts.append("\(song.beatsPerBar)/\(song.noteValue)")
-        case .seconds:
-            parts.append(SongMapInput.hasGrid(song) ? "In seconds, bars hidden" : "In seconds, no tempo set")
-        }
-        return parts.joined(separator: " · ")
-    }
-
     private func view(_ uid: UUID) {
         guard let loop = song.loops.first(where: { $0.uid == uid }) else { return }
+        made = nil
         viewing = StableRef(value: loop)
     }
 
     private func open(_ uid: UUID, in mode: LoopRunMode) {
         guard let loop = song.loops.first(where: { $0.uid == uid }), LoopModeAccess.allows(mode, loop) else { return }
+        made = nil
         onOpenNestedAudio()
         opening = Opening(uid: uid, mode: mode)
     }
 
+    /// A mode or *Copy to…* picked on the tab sheet, once the sheet has gone.
     private func openPicked() {
+        if let uid = copyAfterSheet {
+            copyAfterSheet = nil
+            copying = CopySource(uid: uid)
+        }
         guard let picked = openAfterSheet else { return }
         openAfterSheet = nil
         open(picked.uid, in: picked.mode)
     }
 
-    /// *Notes · Bars 9–11*, or *Notes · 0:23–0:45* in seconds scale.
-    private func place(of piece: SongMap.Piece, in map: SongMap) -> String {
-        let span: String
-        if let bars = map.bars(of: piece) {
-            span = bars.count == 1 ? "Bar \(bars.lowerBound)" : "Bars \(bars.lowerBound)–\(bars.upperBound)"
-        } else {
-            span = "\(timecode(piece.start))–\(timecode(piece.end))"
-        }
-        return "\(SongMapStyle.name(piece.layer)) · \(span)"
-    }
-
     private func openMarker(_ uid: UUID) {
         guard let marker = song.markers.first(where: { $0.uid == uid }) else { return }
+        made = nil
         editingMarker = StableRef(value: marker)
     }
 
@@ -263,54 +291,6 @@ struct SongMapView: View {
             })
             .accessibilityLabel(song.showsGridlines ? "Show seconds" : "Show bars")
         }
-    }
-
-    // MARK: - Sections and repeats
-
-    /// *as Verse 1*: to the section it names, on whichever view is showing.
-    private func showSection(_ start: TimeInterval) {
-        scrollTarget = .section(start)
-    }
-
-    /// *Repeats to the end of the section* (D14), from a piece's hold menu.
-    private func setRepeats(_ uid: UUID, _ isOn: Bool) {
-        song.loops.first { $0.uid == uid }?.repeatsToSectionEnd = isOn
-    }
-
-    /// Offered once per song (D7): it has markers, none of them starts a section, and the offer hasn't
-    /// been answered.
-    private func offersSections(_ input: SongMapInput) -> Bool {
-        !sectionOfferAnswered && SectionWords.shouldOffer(input.markers, duration: input.duration)
-            && !AppSettings.sectionOfferMade(for: song.sourceID)
-    }
-
-    /// *Not now*, or the markers used: either way it's been answered, and isn't offered again.
-    private func answerSectionOffer() {
-        AppSettings.recordSectionOffer(for: song.sourceID)
-        withAnimation { sectionOfferAnswered = true }
-    }
-
-    /// *Make a piece here* (D9): a loop that fills the gap exactly, named after its section and lane and
-    /// typed *Chords* on the chords lane, so it lands where it was asked for. It's drawn heavier for a
-    /// moment, so you can see where it went.
-    private func make(_ gap: SongMap.Gap) {
-        guard song.duration > 0 else { return }
-        let loop = Loop(name: SongMapLayout.unusedName(gap.name, among: song.loops.map(\.name)),
-                        start: gap.start / song.duration, end: gap.end / song.duration, speed: 1, repeats: 4)
-        if gap.layer == .chords { loop.loopType = .chords }
-        modelContext.insert(loop)
-        Analytics.send(.loopCreated)
-        loop.song = song
-        highlighted = [loop.uid]
-    }
-
-    /// *from bar 9 to bar 12*, or *from 0:32 to 0:48* in seconds scale.
-    private func span(of gap: SongMap.Gap, in map: SongMap) -> String {
-        if let grid = map.grid, let bars = SongMapLayout.barRange(from: gap.start, to: gap.end, in: grid) {
-            return bars.count == 1 ? "in bar \(bars.lowerBound)"
-                : "from bar \(bars.lowerBound) to bar \(bars.upperBound)"
-        }
-        return "from \(timecode(gap.start)) to \(timecode(gap.end))"
     }
 
     // MARK: - Toolbar

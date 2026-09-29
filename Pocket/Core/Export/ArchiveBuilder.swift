@@ -201,7 +201,8 @@ enum ArchiveBuilder {
             colorIndex: loop.colorIndex,
             customColorHex: loop.customColorHex,
             transcription: loop.transcription,
-            repeatsToSectionEnd: loop.repeatsToSectionEnd,
+            // The switch and its reach on one line: one declaration (ADR 0232 D14, D15).
+            repeatsToSectionEnd: loop.repeatsToSectionEnd, repeatsTo: loop.repeatsTo,
             references: referenceRecords(loop.references),
             // Oldest first — the order a history is read in, and the order `LoopSpanSection` walks
             // back down. `uid` breaks a tie between two edits saved in the same instant.

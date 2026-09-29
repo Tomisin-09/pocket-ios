@@ -121,6 +121,8 @@ struct LoopRecord: Codable, Equatable, Sendable {
     /// Whether the loop repeats to the end of its section on the song map (ADR 0232 D14). **`Optional`**,
     /// for `MarkerRecord.startsSection`'s reason: absent reads as `false`.
     var repeatsToSectionEnd: Bool?
+    /// How far those repeats run (D15), as `Loop.repeatsTo` stores it. `Optional`: absent is its section.
+    var repeatsTo: String?
 
     var references: [ReferenceLinkRecord]
     /// Every recorded edit to this loop's span (ADR 0205). Nests, because `Loop.spanChanges` is

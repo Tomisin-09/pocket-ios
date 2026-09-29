@@ -8,9 +8,9 @@
   (the per-song gridlines switch) · 0135 (a loop as a backing track) · 0150 and 0161 (export, not
   hosting; the practice file carries no song titles) · 0070 and 0225 D9 (no completion score) · 0092 §A4
   and 0225 D10 (never detected, never suggested).
-- **Schema:** three additive fields: `Marker.startsSection` (D6, slice 1), `Marker.sameAsUID` (D8,
-  slice 3) and `Loop.repeatsToSectionEnd` (D14, slice 3). Each is Optional or defaulted, and each is
-  optional in the archive's `MarkerRecord` or `LoopRecord`.
+- **Schema:** four additive fields: `Marker.startsSection` (D6, slice 1), `Marker.sameAsUID` (D8,
+  slice 3), `Loop.repeatsToSectionEnd` (D14, slice 3) and `Loop.repeatsTo` (D15, slice 3b, a String).
+  Each is Optional or defaulted, and each is optional in the archive's `MarkerRecord` or `LoopRecord`.
 - **Design history:** `docs/plans/song-map.md` (parked 2026-09-27, promoted to this ADR) and the
   mockup at https://claude.ai/artifact/B9cjgdgZDxNfy6J2R5uqPU.
 
@@ -241,6 +241,67 @@ over and over? D8 repeats a whole section. This repeats one loop within a sectio
 - **In the Tab view the taps are written once**, and the stretch the loop repeats over reads **↻ Verse
   changes ×8**, with the count said once, where the repeats begin. It's a chart's repeat sign, in words.
 
+*Slice 3b (2026-09-29):* repeats can now run past their section (D15). "Never copies" still holds for
+repeats; copying is a separate act the player asks for (D16).
+
+### D15 — How far a repeat runs
+
+*Added 2026-09-29, from Tomisin's device test.* On their song, the intro's chords repeat to the end of the
+song, and D14 could only take them to the end of the intro.
+
+- **`Loop.repeatsTo`**, an optional String read only while `repeatsToSectionEnd` is on: `nil` for the
+  loop's own section (D14's reach, so every loop saved before this reads as it did), `"song"`, or the uid
+  of the marker starting a later section it repeats on through. A String, never the enum
+  (`SongMap.RepeatsTo`), per ADR 0189. `repeatsToSectionEnd` stays the switch: removing or renaming it
+  would be the unsafe kind of migration.
+- **The hold menu offers each reach that has room for half a pass more**, nearest first: *To the end of
+  the section*, *Through* each later section but the last, and *To the end of the song*. There's one
+  item, as in D14, when there's only one way, and a *Repeats* menu with *Doesn't repeat* when there are
+  several. Two sections with one name are told apart by where they start (*Through Chorus, bar 21*). A
+  loop that fills its section can still repeat on through the next.
+- **A reach reads as what it reaches now.** A section that's gone, or that no longer ends after the
+  loop's own, reads as its own section. Through the last section is the end of the song.
+- **The band runs across section headings**, holding its lane all the way, and the stretch it covers
+  isn't a gap (D9). The Tab view names it in each row it crosses. The tab sheet says how far: *Repeats
+  through Chorus, 6 times in all*.
+
+### D16 — Copy a piece
+
+*Added 2026-09-29, from the same test.* Tomisin asked to use a counted piece, chords or notes, for another
+section or run of bars, rather than counting the same changes again.
+
+- **Copying is the player's act, never suggested.** *Copy to…* is on a counted piece's hold menu and its
+  tab sheet. It lists the song's sections, or the board's rows when it has none, and **Choose bars** when
+  the map has bars. Tap **+** in a gap and, beside *Make a piece here*, each piece counted on that lane
+  offers *Copy X here*.
+- **Each place gets a loop of its own**, the length of the place, named as *Make a piece here* names one
+  (*Chorus chords*), typed as its source, at full speed. Its piece is the source's taps written across it
+  pass after pass from where it starts, each tap as far into a pass as it was into the loop. With bars, a
+  pass is the loop's length to the nearest whole bar, so passes keep to the bar though the loop was drawn a
+  hair long or short. Only one pass's taps are written each time, so a tap is never written twice. Nothing
+  is snapped. The tuning comes with it.
+- **A copy is not a link.** Change the first and the copies stay as they were. That's D14's reason for
+  never copying repeats, and it stands for repeats. Copying is for when the notes should be written out
+  where they play: to practise that section on its own, or to change a bar of it. The sheet says so.
+- **A place with a piece already on that lane says so** (*Already has Verse chords*), and the copy takes
+  a lane of its own beside it. Nothing is written over.
+- **A copy is a piece in the Journal** like any other (ADR 0229), because it is one.
+
+### D17 — The map adds; it never deletes
+
+*Added 2026-09-29.* Tomisin first asked to delete a loop from the map, then chose Undo instead, so the
+loops made on the waveform are protected.
+
+- **What the map makes, Undo takes back**: *Made Chorus chords · Undo* after *Make a piece here*, and
+  *Made 3 copies of Verse changes · Undo* after a copy, which takes back all of them. Undo removes those
+  loops and nothing else.
+- **The Undo lasts until the player does something else**: opens a piece, a marker or a gap, or sets a
+  repeat. Otherwise it goes after six seconds. A loop opened and counted is no longer new, and isn't
+  removed from here.
+- **No delete on the map.** Deleting a loop stays on the waveform, where the loop is drawn and its
+  delete has an Undo of its own (ADR 0019). No practice-screen seam is needed, since the map never
+  removes a loop the waveform might be holding.
+
 ## Build order
 
 1. **The board.** `Marker.startsSection` with its switch and archive field; `SongMapLayout` (pure:
@@ -251,6 +312,8 @@ over and over? D8 repeats a whole section. This repeats one loop within a sectio
 2. **The Tab view** (D10), including the no-grid line (D7).
 3. **The unprepared song and repeats**: *Use your markers as sections?* (D7), *Make a piece here* (D9),
    `Marker.sameAsUID` (D8), and `Loop.repeatsToSectionEnd` (D14).
+   **3b. Reach, copies and Undo**, from the first device test: how far a repeat runs (D15), *Copy to…*
+   and *Copy X here* (D16), and Undo for what the map makes (D17).
 4. **Put it together** (D11).
 5. **The Journal's Pieces scope, grouped by song** (D1).
 
@@ -269,13 +332,19 @@ Anything past this needs a new ADR:
 
 ## Consequences
 
-- **Two schema additions beyond the one the design note planned** are taken up: D8's and D14's. All
-  three are additive under ADR 0189's criteria, and all three must be **optional in the archive**
+- **Three schema additions beyond the one the design note planned** are taken up: D8's, D14's and D15's.
+  All four are additive under ADR 0189's criteria, and all four must be **optional in the archive**
   (`decodeIfPresent`): a Codable default does not survive a missing key, and an archive made before this
   would fail to restore as a whole.
 - **One thing is kept on the device, not in the backup**: which songs have been offered *Use your
   markers as sections?* (D7).
 - **The gridlines switch now governs two surfaces** (D5). Its help text and the manual say so.
 - **The map is the reader 0225 D8 named**, so the structured piece now has one.
+- **The map now writes pieces as well as reading them** (D16). A copy is written once, from a piece the
+  player counted, and is theirs to change from then on; nothing keeps it in step with its source.
+- **A loop's edges, stored as fractions of the song, read back a hair off** a section's start. The board and the Tab view
+  now decide what a row holds within `SongMapLayout.tolerance`, so a copy ending where the next section
+  starts doesn't draw a sliver there. Found in a slice 3b render.
 - **Manual:** Song details gains a row, the marker sheet gains a switch and a *Same as* picker, and
-  there's a new screen (`docs/manual/songs.md`, `looping.md`).
+  there's a new screen (`docs/manual/songs.md`, `looping.md`). Slice 3b adds *Repeats*, *Copy to…* and
+  Undo to the map's section of `songs.md`.

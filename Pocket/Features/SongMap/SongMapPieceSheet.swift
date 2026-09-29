@@ -14,8 +14,10 @@ struct SongMapPieceSheet: View {
     let place: String
     /// Open the loop in one of its modes. The map closes this sheet first.
     let onOpen: (LoopRunMode) -> Void
-    /// Whether the song has sections, so a repeat says what it runs to the end of (ADR 0232 D14).
-    var inSections = true
+    /// *Repeats through Chorus, 6 times in all.* (ADR 0232 D14, D15), or `nil` when it doesn't repeat.
+    var repeatLine: String?
+    /// *Copy to…* (D16), or `nil` for a loop with nothing counted to copy. The map closes this sheet first.
+    var onCopy: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -35,9 +37,8 @@ struct SongMapPieceSheet: View {
                         .font(.futura(.subheadline))
                         .foregroundStyle(SongMapStyle.tint(piece.layer))
                     content
-                    if let repeats = piece.repeats {
-                        Label("Repeats to the end of the \(inSections ? "section" : "song"), "
-                              + "\(repeats.passes) times in all.", systemImage: "repeat")
+                    if let repeatLine {
+                        Label(repeatLine, systemImage: "repeat")
                             .font(.futura(.footnote))
                             .foregroundStyle(PocketColor.textSecondary)
                     }
@@ -106,6 +107,12 @@ struct SongMapPieceSheet: View {
             ForEach(modes) { mode in
                 Button { onOpen(mode) } label: {
                     Label(mode.label, systemImage: mode.symbolName)
+                        .foregroundStyle(PocketColor.practice)
+                }
+            }
+            if let onCopy {
+                Button(action: onCopy) {
+                    Label("Copy to…", systemImage: "square.on.square")
                         .foregroundStyle(PocketColor.practice)
                 }
             }

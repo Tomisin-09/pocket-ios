@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// A piece's repeats on the board (ADR 0232 D14), or the part of them in one row: a band lighter than the
-/// piece, from its end to its section's end, with *↻ ×4* where it starts. It's a label for what the
+/// A piece's repeats on the board (ADR 0232 D14, D15), or the part of them in one row: a band lighter than
+/// the piece, from its end as far as the player said it repeats, with *↻ ×4* where it starts. It's a label for what the
 /// player said, never copies of the piece, so there are no dots and no line here: those are the piece's.
 ///
 /// Tapping it opens the piece's tab and holding it gives the piece's menu, since it's the same loop.
@@ -10,10 +10,9 @@ struct SongMapBandView: View {
     let piece: SongMap.Piece
     let width: CGFloat
     let height: CGFloat
-    let modes: [LoopRunMode]
-    let repeats: SongMapRepeatToggle?
     let onView: () -> Void
-    let onOpen: (LoopRunMode) -> Void
+    /// The piece's own hold menu.
+    let menu: SongMapPieceMenu
 
     private var tint: Color { SongMapStyle.tint(piece.layer) }
 
@@ -36,9 +35,7 @@ struct SongMapBandView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .contextMenu {
-            SongMapPieceMenu(modes: modes, repeats: repeats, onView: onView, onOpen: onOpen)
-        }
+        .contextMenu { menu }
         .accessibilityLabel("\(piece.name), repeating")
         .accessibilityValue("\(band.passes) times in all")
         .accessibilityHint("Opens its tab")

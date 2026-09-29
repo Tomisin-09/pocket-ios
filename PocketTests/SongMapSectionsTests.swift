@@ -16,10 +16,10 @@ class SongMapSlice3Case: XCTestCase {
     }
 
     func loop(_ start: TimeInterval, _ end: TimeInterval, type: LoopType = .chords,
-              piece: PieceTranscription? = nil, repeats: Bool = false,
-              uid: UUID = UUID()) -> SongMapInput.LoopInput {
-        .init(uid: uid, name: "Changes", start: start, end: end, type: type, piece: piece, handTagged: false,
-              repeatsToSectionEnd: repeats)
+              piece: PieceTranscription? = nil, repeats: Bool = false, to reach: SongMap.RepeatsTo = .sectionEnd,
+              name: String = "Changes", uid: UUID = UUID()) -> SongMapInput.LoopInput {
+        .init(uid: uid, name: name, start: start, end: end, type: type, piece: piece, handTagged: false,
+              repeatsToSectionEnd: repeats, repeatsTo: reach)
     }
 
     func build(duration: TimeInterval = 64, grid: SongMapInput.Grid? = nil,
@@ -93,22 +93,24 @@ final class SongMapSectionsTests: SongMapSlice3Case {
         XCTAssertEqual(map.pieces[uid]?.repeats, SongMap.Repeat(end: 40, passes: 5), "32 s over 6 s is 5.33")
     }
 
-    func testHalfAPassOfRoomIsEnoughAndLessIsNot() {
+    func testHalfAPassOfRoomIsEnoughAndLessIsNot() throws {
         let enough = UUID(), tooLittle = UUID()
         let map = build(markers: verseAndChorus(), loops: [loop(8, 24, repeats: true, uid: enough)])
         XCTAssertEqual(map.pieces[enough]?.repeats, SongMap.Repeat(end: 40, passes: 2))
         let tight = build(markers: verseAndChorus(), loops: [loop(8, 38, repeats: true, uid: tooLittle)])
         let piece = tight.pieces[tooLittle]
         XCTAssertNil(piece?.repeats, "2 s of room after a 30 s loop is nothing to draw")
-        XCTAssertEqual(piece?.canRepeat, false)
         XCTAssertEqual(piece?.repeatsDeclared, true, "the switch stays on, so it can be switched off")
+        XCTAssertEqual(try tight.repeatChoices(for: XCTUnwrap(piece)).map(\.to), [.songEnd],
+                       "no room in its section, but 24 s more in the song")
     }
 
-    func testALoopNotDeclaredToRepeatDoesntButCanBeOffered() {
+    func testALoopNotDeclaredToRepeatDoesntButCanBeOffered() throws {
         let uid = UUID()
         let map = build(markers: verseAndChorus(), loops: [loop(8, 16, uid: uid)])
         XCTAssertNil(map.pieces[uid]?.repeats)
-        XCTAssertEqual(map.pieces[uid]?.canRepeat, true)
+        XCTAssertEqual(try map.repeatChoices(for: XCTUnwrap(map.pieces[uid])).first,
+                       SongMap.RepeatChoice(to: .sectionEnd, title: "To the end of the section", passes: 4))
         XCTAssertEqual(map.pieces[uid]?.sectionEnd, 40)
     }
 

@@ -75,6 +75,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   **Repeats to the end of the section**: one progression worked out once is drawn repeating to the end
   of its section, marked with how many times it plays, and written once in the tab. Tap **+** in an
   empty stretch of a lane to make a loop that fills it exactly.
+  A repeat can also run on **Through** a later section or **To the end of the song**, from the hold
+  menu's **Repeats**. **Copy to…**, on a counted piece's hold menu and its tab, writes the piece across
+  the sections you tick, or a run of bars you choose, each as a loop of its own that you can then change;
+  **+** in a gap can start from a copy of a piece you've counted on that lane. Whatever the map makes,
+  **Undo** takes back straight away. The map never deletes a loop: that stays on the waveform. The marker
+  sheet now says in plainer words what **Same as** is for.
 
 - **Count the notes, then name them.** *Train your ear* has a new section for working a lick out by
   ear. Slow the loop down and tap the pad once for every note you hear; each time round the loop gets

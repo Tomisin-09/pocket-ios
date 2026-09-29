@@ -18,16 +18,13 @@ struct SongMapPieceView: View {
     var highlighted = false
     /// Tap: the loop's tab.
     let onView: () -> Void
-    /// A mode picked from the hold menu.
-    let onOpen: (LoopRunMode) -> Void
-    /// The hold menu's *Repeats to the end of the section* (D14), or `nil` where it isn't offered.
-    var repeats: SongMapRepeatToggle?
+    /// Hold: the piece's menu.
+    let menu: SongMapPieceMenu
 
     /// Narrower than this, a piece shows its frame and dots but no words.
     private static let textWidth: CGFloat = 34
 
     private var tint: Color { SongMapStyle.tint(piece.layer) }
-    private var modes: [LoopRunMode] { loop.map(SongMapPieceSheet.modes(for:)) ?? [] }
 
     var body: some View {
         Button(action: onView) {
@@ -40,9 +37,7 @@ struct SongMapPieceView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .contextMenu {
-            SongMapPieceMenu(modes: modes, repeats: repeats, onView: onView, onOpen: onOpen)
-        }
+        .contextMenu { menu }
         .accessibilityLabel("\(piece.name), \(SongMapStyle.name(piece.layer).lowercased())")
         .accessibilityValue(spokenContent)
         .accessibilityHint("Opens its tab")
@@ -122,10 +117,12 @@ struct SongMapPieceView: View {
 }
 
 /// A piece's hold menu (ADR 0232 D2), on the piece and on its repeats alike: *View tab*, the modes it can
-/// open in, and, when there's room after it, *Repeats to the end of the section* (D14).
+/// open in, how far it repeats (D14, D15), and *Copy to…* once it holds a counted piece (D16).
 struct SongMapPieceMenu: View {
     let modes: [LoopRunMode]
-    let repeats: SongMapRepeatToggle?
+    let repeats: SongMapRepeatOptions?
+    /// *Copy to…*, or `nil` for a loop with nothing counted to copy.
+    let onCopy: (() -> Void)?
     let onView: () -> Void
     let onOpen: (LoopRunMode) -> Void
 
@@ -134,31 +131,67 @@ struct SongMapPieceMenu: View {
         ForEach(modes) { mode in
             Button { onOpen(mode) } label: { Label(mode.label, systemImage: mode.symbolName) }
         }
-        if let repeats {
-            Divider()
-            // A button, not a `Toggle`: a `Binding` wants a `@Sendable` setter, and this one writes the model.
-            // The checkmark says it's on, as a menu's toggle would.
-            Button { repeats.set(!repeats.isOn) } label: {
-                Label(repeats.title, systemImage: repeats.isOn ? "checkmark" : "repeat")
+        if repeats != nil || onCopy != nil { Divider() }
+        if let repeats { repeatItems(repeats) }
+        if let onCopy {
+            Button(action: onCopy) { Label("Copy to…", systemImage: "square.on.square") }
+        }
+    }
+
+    /// One item when there's one way to repeat, else a menu of them. Buttons, not a `Toggle` or a `Picker`:
+    /// a `Binding` wants a `@Sendable` setter, and this one writes the model. The checkmark says which is
+    /// on, as a menu's toggle would.
+    @ViewBuilder private func repeatItems(_ repeats: SongMapRepeatOptions) -> some View {
+        if repeats.usesMenu {
+            Menu {
+                Button { repeats.set(nil) } label: { checked("Doesn't repeat", repeats.current == nil) }
+                ForEach(repeats.choices, id: \.to) { choice in
+                    Button { repeats.set(choice.to) } label: {
+                        checked(choice.title, repeats.current == choice.to)
+                    }
+                }
+            } label: {
+                Label("Repeats", systemImage: "repeat")
+            }
+        } else {
+            Button { repeats.set(repeats.current == nil ? repeats.choices.first?.to ?? .sectionEnd : nil) } label: {
+                Label(repeats.title, systemImage: repeats.current == nil ? "repeat" : "checkmark")
             }
         }
     }
+
+    @ViewBuilder private func checked(_ title: String, _ isOn: Bool) -> some View {
+        if isOn { Label(title, systemImage: "checkmark") } else { Text(title) }
+    }
 }
 
-/// *Repeats to the end of the section* (D14): one progression, worked out once, that the section plays
-/// over and over. The player's word, never detected, and drawn as a label, never as copies.
-struct SongMapRepeatToggle {
-    let isOn: Bool
-    /// *…of the section*, or *…of the song* when it has none.
+/// How far a piece repeats (D14, D15): one progression, worked out once, that the song plays over and
+/// over. The player's word, never detected, and drawn as a band, never as copies.
+struct SongMapRepeatOptions {
+    /// Where its repeats can run to, nearest first.
+    let choices: [SongMap.RepeatChoice]
+    /// How far it repeats now, or `nil` when it doesn't.
+    let current: SongMap.RepeatsTo?
+    /// The item's title when there's one way to repeat: *Repeats to the end of the section*.
     let title: String
-    let set: (Bool) -> Void
+    let set: (SongMap.RepeatsTo?) -> Void
+
+    /// More than one way to repeat, or one that isn't the way it's set to: a single ticked item would then
+    /// claim a reach it isn't drawn with.
+    var usesMenu: Bool {
+        guard let current, !choices.isEmpty else { return choices.count > 1 }
+        return choices.count > 1 || !choices.contains { $0.to == current }
+    }
 
     /// Offered when there's room after the piece for it to repeat, and always once it's on, so it can be
     /// switched off again wherever the section's edge has moved to.
-    init?(piece: SongMap.Piece, inSections: Bool, set: @escaping (UUID, Bool) -> Void) {
-        guard piece.canRepeat || piece.repeatsDeclared else { return nil }
-        isOn = piece.repeatsDeclared
-        title = inSections ? "Repeats to the end of the section" : "Repeats to the end of the song"
+    init?(piece: SongMap.Piece, in map: SongMap, set: @escaping (UUID, SongMap.RepeatsTo?) -> Void) {
+        let choices = map.repeatChoices(for: piece)
+        guard !choices.isEmpty || piece.repeatsDeclared else { return nil }
+        self.choices = choices
+        current = piece.repeatsDeclared ? piece.repeatsTo : nil
+        title = choices.first?.phrase
+            ?? (map.hasSections ? "Repeats to the end of the section" : "Repeats to the end of the song")
         let uid = piece.uid
         self.set = { set(uid, $0) }
     }

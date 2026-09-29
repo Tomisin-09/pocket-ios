@@ -56,7 +56,11 @@ enum SongTabLayout {
     static func lines(from start: TimeInterval, to end: TimeInterval, pieces: [SongMap.Piece],
                       spelling: NoteSpelling) -> [SongTab.Line] {
         SongMap.Layer.allCases.flatMap { layer -> [SongTab.Line] in
-            let here = pieces.filter { $0.layer == layer && $0.start < end && $0.reach > start }
+            // Within the board's tolerance, so the two views agree on which pieces a row holds.
+            let tolerance = SongMapLayout.tolerance
+            let here = pieces.filter {
+                $0.layer == layer && $0.start < end - tolerance && $0.reach > start + tolerance
+            }
             return Set(here.map(\.lane)).sorted().compactMap { lane in
                 line(layer: layer, lane: lane, pieces: here.filter { $0.lane == lane },
                      during: start..<end, spelling: spelling)

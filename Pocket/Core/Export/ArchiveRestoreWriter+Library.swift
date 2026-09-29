@@ -130,6 +130,7 @@ extension ArchiveRestoreWriter {
         made.customColorHex = record.customColorHex
         made.transcription = record.transcription   // the player's own piece (ADR 0225); absent reads as none
         made.repeatsToSectionEnd = record.repeatsToSectionEnd ?? false
+        made.repeatsTo = record.repeatsTo
         made.references = references(record.references)
         made.spanChanges = record.spanChanges.map { made in
             let change = LoopSpanChange(changedAt: made.changedAt,

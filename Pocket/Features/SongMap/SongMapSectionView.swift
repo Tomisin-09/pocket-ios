@@ -190,9 +190,8 @@ struct SongMapRowView: View {
                 if let piece = map.pieces[band.uid] {
                     let start = xPos(band.start, width), end = xPos(band.end, width)
                     SongMapBandView(band: band, piece: piece, width: max(end - start, 6),
-                                    height: Self.laneHeight - 6, modes: modes(band.uid),
-                                    repeats: repeatToggle(piece),
-                                    onView: { actions.view(band.uid) }, onOpen: { actions.open(band.uid, $0) })
+                                    height: Self.laneHeight - 6, onView: { actions.view(band.uid) },
+                                    menu: menu(piece))
                         .offset(x: start, y: 3)
                 }
             }
@@ -202,9 +201,7 @@ struct SongMapRowView: View {
                     SongMapPieceView(piece: piece, placement: placement, loop: loops[placement.uid],
                                      width: max(end - start, 6), height: Self.laneHeight - 6,
                                      highlighted: highlighted.contains(placement.uid),
-                                     onView: { actions.view(placement.uid) },
-                                     onOpen: { actions.open(placement.uid, $0) },
-                                     repeats: repeatToggle(piece))
+                                     onView: { actions.view(placement.uid) }, menu: menu(piece))
                         .offset(x: start, y: 3)
                 }
             }
@@ -212,16 +209,17 @@ struct SongMapRowView: View {
         .frame(width: width, height: Self.laneHeight, alignment: .topLeading)
     }
 
-    private func modes(_ uid: UUID) -> [LoopRunMode] {
-        loops[uid].map(SongMapPieceSheet.modes(for:)) ?? []
+    /// A piece's hold menu, the same on the piece and on its repeats.
+    private func menu(_ piece: SongMap.Piece) -> SongMapPieceMenu {
+        let uid = piece.uid
+        return SongMapPieceMenu(modes: loops[uid].map(SongMapPieceSheet.modes(for:)) ?? [],
+                                repeats: SongMapRepeatOptions(piece: piece, in: map, set: actions.setRepeats),
+                                onCopy: piece.canCopy ? { actions.copy(uid) } : nil,
+                                onView: { actions.view(uid) }, onOpen: { actions.open(uid, $0) })
     }
 
-    private func repeatToggle(_ piece: SongMap.Piece) -> SongMapRepeatToggle? {
-        SongMapRepeatToggle(piece: piece, inSections: map.hasSections, set: actions.setRepeats)
-    }
-
-    /// A stretch of the lane with nothing on it (D9): tapping it offers *Make a piece here*. A faint + marks
-    /// where it starts, so an empty board says what it's for.
+    /// A stretch of the lane with nothing on it (D9): tapping it offers *Make a piece here*, or a copy of one
+    /// already counted (D16). A faint + marks where it starts, so an empty board says what it's for.
     private func gapView(_ gap: SongMap.Gap, width: CGFloat) -> some View {
         let from = max(gap.start, row.start), upTo = min(gap.end, row.end)
         let start = xPos(from, width), span = max(xPos(upTo, width) - start, 0)

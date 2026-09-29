@@ -66,8 +66,8 @@ enum SongMapLayout {
 
     /// Every loop with a length inside the song, each given the lowest lane of its layer that is free
     /// where it starts. Assigned once for the whole song, so a piece keeps its lane from row to row. A
-    /// loop's repeats hold its lane to the end of its section (D14), so a piece worked out later in that
-    /// section takes the next lane down rather than being drawn over them.
+    /// loop's repeats hold its lane as far as they run (D14, D15), so a piece worked out under them takes
+    /// the next lane down rather than being drawn over them.
     static func placePieces(_ loops: [SongMapInput.LoopInput], duration: TimeInterval,
                             spans: [Span] = []) -> [SongMap.Piece] {
         struct Clamped { let loop: SongMapInput.LoopInput, start: TimeInterval, end: TimeInterval }
@@ -86,8 +86,9 @@ enum SongMapLayout {
         return ordered.map { item in
             let layer = layer(of: item.loop)
             let bound = sectionEnd(from: item.start, to: item.end, spans: spans, duration: duration)
+            let runs = repeatEnd(item.loop.repeatsTo, sectionEnd: bound, spans: spans, duration: duration)
             let repeating = item.loop.repeatsToSectionEnd
-                ? repeats(from: item.start, to: item.end, sectionEnd: bound) : nil
+                ? repeats(from: item.start, to: item.end, sectionEnd: runs.end) : nil
             let reach = repeating?.end ?? item.end
             var ends = laneEnds[layer, default: []]
             let lane = ends.firstIndex { $0 <= item.start + tolerance } ?? ends.count
@@ -96,38 +97,8 @@ enum SongMapLayout {
             return SongMap.Piece(uid: item.loop.uid, name: item.loop.name, start: item.start, end: item.end,
                                  layer: layer, lane: lane, content: content(of: item.loop),
                                  sectionEnd: bound, repeatsDeclared: item.loop.repeatsToSectionEnd,
-                                 repeats: repeating)
+                                 repeatsTo: runs.to, repeats: repeating)
         }
-    }
-
-    // MARK: - Repeats (D14)
-
-    /// Where the section a loop sits in ends: the one holding its middle, so a loop that starts a beat
-    /// early still belongs to the section it plays in. The song's end when there are no sections.
-    static func sectionEnd(from start: TimeInterval, to end: TimeInterval, spans: [Span],
-                           duration: TimeInterval) -> TimeInterval {
-        let middle = (start + end) / 2
-        return spans.first { $0.start <= middle && middle < $0.end }?.end ?? duration
-    }
-
-    /// A loop's repeats, from its end to its section's end, when there's room for at least half a pass
-    /// more (`SongMap.Piece.canRepeat`). The count is to the nearest whole pass; the band still runs to
-    /// the section's end, because that's what the player said.
-    static func repeats(from start: TimeInterval, to end: TimeInterval,
-                        sectionEnd: TimeInterval) -> SongMap.Repeat? {
-        let length = end - start
-        guard length > tolerance, sectionEnd - end >= length / 2 else { return nil }
-        return SongMap.Repeat(end: sectionEnd, passes: Int(((sectionEnd - start) / length).rounded()))
-    }
-
-    /// The part of a loop's repeats that falls in a row.
-    static func band(_ piece: SongMap.Piece, from start: TimeInterval, to end: TimeInterval) -> SongMap.Band? {
-        guard let repeats = piece.repeats else { return nil }
-        let from = max(piece.end, start), upTo = min(repeats.end, end)
-        guard upTo - from > tolerance else { return nil }
-        return SongMap.Band(uid: piece.uid, start: from, end: upTo,
-                            continuesBefore: from > piece.end + tolerance,
-                            continuesAfter: repeats.end > end + tolerance, passes: repeats.passes)
     }
 
     // MARK: - Gaps (D9)
@@ -137,7 +108,9 @@ enum SongMapLayout {
     static func gaps(from start: TimeInterval, to end: TimeInterval, pieces: [SongMap.Piece],
                      heading: SongMap.SectionHeading, grid: SongMapInput.Grid?) -> [SongMap.Gap] {
         SongMap.Layer.allCases.flatMap { layer -> [SongMap.Gap] in
-            let covered = pieces.filter { $0.layer == layer && $0.start < end && $0.reach > start }
+            let covered = pieces.filter {
+                $0.layer == layer && $0.start < end - tolerance && $0.reach > start + tolerance
+            }
                 .map { (from: max($0.start, start), upTo: min($0.reach, end)) }
                 .sorted { $0.from < $1.from }
             var uncovered: [(start: TimeInterval, end: TimeInterval)] = []
@@ -268,7 +241,11 @@ enum SongMapLayout {
         let (start, end) = span
         let fullRow = grid.map { $0.barSeconds * Double(barsPerRow) } ?? secondsPerRow
         let lanes = SongMap.Layer.allCases.flatMap { layer -> [SongMap.Lane] in
-            let here = pieces.filter { $0.layer == layer && $0.start < end && $0.reach > start }
+            // Within `tolerance`, not exactly: a loop's edges are stored as fractions of the song, so one
+            // ending where a section starts reads back a hair past it, and would draw as a sliver there.
+            let here = pieces.filter {
+                $0.layer == layer && $0.start < end - tolerance && $0.reach > start + tolerance
+            }
             let laneCount = (here.map(\.lane).max() ?? 0) + 1
             let layerGaps = gaps.filter {
                 $0.layer == layer && $0.start < end - tolerance && $0.end > start + tolerance
@@ -276,7 +253,7 @@ enum SongMapLayout {
             return (0..<laneCount).map { index in
                 // Past its own end, a piece is here only for its repeats.
                 let inLane = here.filter { $0.lane == index }
-                let placed = inLane.filter { $0.end > start }.map { place($0, from: start, to: end) }
+                let placed = inLane.filter { $0.end > start + tolerance }.map { place($0, from: start, to: end) }
                 return SongMap.Lane(layer: layer, index: index, placements: placed,
                                     bands: inLane.compactMap { band($0, from: start, to: end) },
                                     gaps: index == 0 ? layerGaps : [])

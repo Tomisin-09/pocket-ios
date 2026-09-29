@@ -646,9 +646,10 @@ each note you hear, then name them. The pieces, from the audio up:
   draws the tab from the piece each time; no text copy is stored anywhere.
 
 **The song map reads the pieces** (ADR 0232, `Core/SongMap` + `Features/SongMap`). It stores nothing
-of its own but three declarations: `Marker.startsSection` and `Loop.repeatsToSectionEnd` (declaration
-defaults `false`) and `Marker.sameAsUID` (Optional), each **Optional** in `MarkerRecord`/`LoopRecord` so an
-older archive still decodes. Which songs have been offered *Use your markers as sections?* is UI state, in
+of its own but four declarations: `Marker.startsSection` and `Loop.repeatsToSectionEnd` (declaration
+defaults `false`), `Marker.sameAsUID` (Optional) and `Loop.repeatsTo` (an Optional String, never the
+`SongMap.RepeatsTo` enum, ADR 0189), each **Optional** in `MarkerRecord`/`LoopRecord` so an older archive
+still decodes. Which songs have been offered *Use your markers as sections?* is UI state, in
 `UserDefaults`, not the store. Everything else is drawn each time: `SongMapInput(song:)`
 copies the song into plain values (loops in seconds, their `transcription`, whether a 🧩 note is on the
 loop, the markers, and the downbeats from `BeatGrid` when the song has a grid **and** `showsGridlines`), and
@@ -666,6 +667,19 @@ piece in that layer takes the next lane. A section's *same as* (D8) follows `sam
 earlier section markers, which is what guarantees the chain ends. Gaps (D9) are the complement of each
 layer's covered intervals (pieces and repeats) within the section, or within each row when there are no
 sections, carried whole on every row they cross so the view can offer the same stretch from any of them.
+A repeat's end (D15) is resolved in `SongMapLayout+Repeats.swift`: its own section's end, a later
+section's, or the song's, normalised so a vanished or earlier section reads as its own.
+
+**The map writes loops, but only its own** (D16, D17). Every write goes through `SongMapWriter`
+(`@MainActor`): *Make a piece here*, copies, how far a loop repeats, and Undo. A copy's piece is computed
+by the pure `SongMapCopy`: the source's taps from one pass (its length to the nearest whole bar, with a
+grid) written across the target from its start, pass after pass, a new `PieceTranscription` with the
+source's tuning. Undo removes only the uids the last action made: it takes them off `song.loops` before
+`context.delete`, because an unsaved delete leaves the loop in the relationship (seen in a mutation run of
+`SongMapWriterTests`), and the next drawing reads every loop's fields. Nothing on the map deletes any other loop, so it
+needs no seam into the practice screen's model. Rows decide which pieces they hold within
+`SongMapLayout.tolerance`: loop edges are stored as fractions of the song, and one ending at a section's
+start reads back a hair past it.
 
 **The Tab view is a second reading of the same `SongMap`** (ADR 0232 D10). `SongTabLayout.build(map,
 spelling:)` cuts the board's sections into rows of 4 bars (or 8 s), reusing `SongMapLayout.rowSpans` and

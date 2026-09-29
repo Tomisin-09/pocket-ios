@@ -10,10 +10,12 @@ struct SongMapActions {
     let openMarker: (UUID) -> Void
     /// Tap *as Verse 1*: go to the section it names (ADR 0232 D8).
     let showSection: (TimeInterval) -> Void
-    /// *Repeats to the end of the section*, switched from a piece's hold menu (D14).
-    let setRepeats: (UUID, Bool) -> Void
+    /// How far a piece repeats, from its hold menu (D14, D15): `nil` when it doesn't.
+    let setRepeats: (UUID, SongMap.RepeatsTo?) -> Void
     /// Tap a gap in a lane: offer *Make a piece here* (D9).
     let makePiece: (SongMap.Gap) -> Void
+    /// *Copy to…*, from a piece's hold menu (D16).
+    let copy: (UUID) -> Void
 }
 
 /// The colours of the two layers (ADR 0232 D2): Indigo for chords, Teal for notes. Lane colours only,

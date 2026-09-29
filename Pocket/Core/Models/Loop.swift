@@ -124,6 +124,9 @@ final class Loop {
     /// hold menu, never detected, and never copied into other loops. Not `repeats`, which counts passes in
     /// a run. Declaration default, so the migration is additive (CoreData 134110 rule).
     var repeatsToSectionEnd: Bool = false
+    /// How far those repeats run (D15), read only while `repeatsToSectionEnd` is on: `nil` for its own
+    /// section's end, else `SongMap.RepeatsTo.stored`. A String, never the enum (ADR 0189).
+    var repeatsTo: String?
 
     // Automator (ADR 0013): the per-loop speed ramp. Defaults on the *declarations* so
     // SwiftData lightweight migration fills them for loops saved before this — see the
