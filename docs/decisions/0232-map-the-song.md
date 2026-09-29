@@ -238,8 +238,9 @@ over and over? D8 repeats a whole section. This repeats one loop within a sectio
   menu, as a checked item, so it can be switched off wherever the section's edge has moved to.
 - **The repeats hold their lane.** A piece worked out later in the section (a turnaround, a variation)
   takes the next lane down rather than being drawn over them, and the stretch they cover isn't a gap (D9).
-- **In the Tab view the taps are written once**, and the stretch the loop repeats over reads **↻ Verse
-  changes ×8**, with the count said once, where the repeats begin. It's a chart's repeat sign, in words.
+- ~~**In the Tab view the taps are written once**, and the stretch the loop repeats over reads **↻ Verse
+  changes ×8**, with the count said once, where the repeats begin. It's a chart's repeat sign, in words.~~
+  *Replaced by D18 (slice 3b): the tab writes every pass out, with **↻ ×8** where the repeats begin.*
 
 *Slice 3b (2026-09-29):* repeats can now run past their section (D15). "Never copies" still holds for
 repeats; copying is a separate act the player asks for (D16).
@@ -262,8 +263,8 @@ song, and D14 could only take them to the end of the intro.
 - **A reach reads as what it reaches now.** A section that's gone, or that no longer ends after the
   loop's own, reads as its own section. Through the last section is the end of the song.
 - **The band runs across section headings**, holding its lane all the way, and the stretch it covers
-  isn't a gap (D9). The Tab view names it in each row it crosses. The tab sheet says how far: *Repeats
-  through Chorus, 6 times in all*.
+  isn't a gap (D9). The Tab view writes it out in each row it crosses (D18). The tab sheet says how far:
+  *Repeats through Chorus, 6 times in all*.
 
 ### D16 — Copy a piece
 
@@ -302,6 +303,24 @@ loops made on the waveform are protected.
   delete has an Undo of its own (ADR 0019). No practice-screen seam is needed, since the map never
   removes a loop the waveform might be holding.
 
+### D18 — The tab writes a repeat out
+
+*Added 2026-09-29, from the second device test.* Replaces D14's last bullet. With the intro's chords
+repeating to the end of the song, every row of Verse 1 read *↻ Chords* and nothing else. Tomisin: "a user
+doesn't gain anything by just seeing the name". The tab is for reading what plays in each bar, and a
+label sends the reader back to the intro to find out.
+
+- **Every pass is written out**, each tap as far into its pass as it is into the loop, for as long as
+  the repeats run. A last pass cut short by the section's end is written as far as it gets.
+- **Drawn, never copied** (D10). Each pass is drawn from the one piece, every time, so a change to it
+  changes every pass. Nothing is stored, and D14's reason for never copying repeats still stands.
+- **↻ ×8 where the repeats begin**, in front of the tap it shares a time with. It's the count, said once,
+  and the sign that these bars are the same loop. Tapping any of them goes to that loop on the board.
+- **The board keeps its band.** The board shows pieces and where they sit; the tab shows the song.
+- **A tap on a loop's start is written though the start reads back a hair after it.** A copy's first
+  tap sits exactly on its start (D16), and a start stored as a fraction of the song can read back a
+  hair late, so the tab reads the start within `SongMapLayout.tolerance`. Found while building this.
+
 ## Build order
 
 1. **The board.** `Marker.startsSection` with its switch and archive field; `SongMapLayout` (pure:
@@ -313,7 +332,8 @@ loops made on the waveform are protected.
 3. **The unprepared song and repeats**: *Use your markers as sections?* (D7), *Make a piece here* (D9),
    `Marker.sameAsUID` (D8), and `Loop.repeatsToSectionEnd` (D14).
    **3b. Reach, copies and Undo**, from the first device test: how far a repeat runs (D15), *Copy to…*
-   and *Copy X here* (D16), and Undo for what the map makes (D17).
+   and *Copy X here* (D16), and Undo for what the map makes (D17). From the second, the tab writes a
+   repeat out (D18).
 4. **Put it together** (D11).
 5. **The Journal's Pieces scope, grouped by song** (D1).
 

@@ -685,7 +685,10 @@ start reads back a hair past it.
 spelling:)` cuts the board's sections into rows of 4 bars (or 8 s), reusing `SongMapLayout.rowSpans` and
 `ticks` with shorter lengths, and turns each lane's taps into columns: a chord symbol in the chords layer,
 tab cells in the notes layer when the tap was placed on the neck (`TabLine.cell`, with
-`NeckJoin.symbol` in front), otherwise the name, otherwise a slash. Spacing is pure too, in characters,
+`NeckJoin.symbol` in front), otherwise the name, otherwise a slash. A loop that repeats is written out on
+every pass by `sounds(of:in:during:)`, each tap again at one loop length's step, with a `.repeats` column
+(↻ ×N) in front of the first repeated tap (D18). A pass landing on a row's start by arithmetic is kept to one
+row by `epsilon`, and the loop's start is read within `SongMapLayout.tolerance`. Spacing is pure too, in characters,
 because the tab is set in a fixed-width font. `spread` puts each column just after its time, pushes it clear
 of the one before, and draws a line back from the row's end, and `width(of:available:)` widens a row that
 can't fit. The view turns characters into points once, from the font's advance, and scrolls a widened row

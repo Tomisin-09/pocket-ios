@@ -50,7 +50,7 @@ struct SongTab: Equatable, Sendable {
         }
     }
 
-    /// One lane's taps in one row.
+    /// One lane's taps in one row. A loop that repeats has its taps written again on every pass (D18).
     struct Line: Equatable, Identifiable, Sendable {
         let layer: SongMap.Layer
         let lane: Int
@@ -58,34 +58,19 @@ struct SongTab: Equatable, Sendable {
         /// names and slashes.
         let strings: [String]
         let columns: [Column]
-        /// Where a loop in this lane repeats across the row (D14): a label, never the taps again.
-        var repeats: [RepeatMark] = []
         var id: String { "\(layer.rawValue)-\(lane)" }
 
         var isTab: Bool { !strings.isEmpty }
-        /// A tab line with names, slashes or a repeat as well carries them in a row above the strings.
-        var hasWordsAboveTab: Bool { isTab && (columns.contains { !$0.mark.isFrets } || !repeats.isEmpty) }
+        /// A tab line with names, slashes or a repeat sign as well carries them in a row above the strings.
+        var hasWordsAboveTab: Bool { isTab && columns.contains { !$0.mark.isFrets } }
     }
 
-    /// The part of a loop's repeats that falls in one row (D14).
-    struct RepeatMark: Equatable, Sendable {
-        let piece: UUID
-        /// The loop's name, which the label repeats.
-        let name: String
-        let start: TimeInterval
-        let end: TimeInterval
-        /// How many times the loop plays, counting the one worked out.
-        let passes: Int
-        /// The repeats began in an earlier row: the label says what, and leaves the count to the first.
-        let continues: Bool
-    }
-
-    /// One tap, drawn at its time.
+    /// One tap, or the sign where a loop's repeats begin, drawn at its time.
     struct Column: Equatable, Sendable {
         let time: TimeInterval
         let piece: UUID
         let mark: Mark
-        /// What the tap was named, for VoiceOver. `nil` when it wasn't.
+        /// What VoiceOver reads for it: the tap's name, or what repeats. `nil` for a tap that wasn't named.
         let name: String?
 
         /// How many characters wide it draws.
@@ -94,7 +79,14 @@ struct SongTab: Equatable, Sendable {
             case .name(let name): max(name.count, 1)
             case .slash: 1
             case .frets(let cells): cells.map(\.text.count).max() ?? 1
+            // The count, and room for the board's repeat symbol in front of it.
+            case .repeats(let passes): "×\(passes)".count + 3
             }
+        }
+
+        /// The same tap, where a later pass of its loop plays it (D18).
+        func moved(to time: TimeInterval) -> Column {
+            Column(time: time, piece: piece, mark: mark, name: name)
         }
     }
 
@@ -105,6 +97,8 @@ struct SongTab: Equatable, Sendable {
         case slash
         /// Notes on the neck, a cell per string, as tab writes them (`TabLine.cell`).
         case frets([FretCell])
+        /// Where a loop's repeats begin (D14): *↻ ×8*, counting the pass worked out.
+        case repeats(Int)
 
         var isFrets: Bool {
             if case .frets = self { return true }

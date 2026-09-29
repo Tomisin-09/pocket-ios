@@ -73,8 +73,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   markers named like a song's parts already ticked. A marker that starts a section can be **Same as**
   an earlier one, so *Verse 2* reads *as Verse 1*, and the Tab view writes it that way. Hold a loop for
   **Repeats to the end of the section**: one progression worked out once is drawn repeating to the end
-  of its section, marked with how many times it plays, and written once in the tab. Tap **+** in an
-  empty stretch of a lane to make a loop that fills it exactly.
+  of its section, marked with how many times it plays, and written out in the tab on every pass, so its
+  chords read in every bar they play in. Tap **+** in an empty stretch of a lane to make a loop that
+  fills it exactly.
   A repeat can also run on **Through** a later section or **To the end of the song**, from the hold
   menu's **Repeats**. **Copy to…**, on a counted piece's hold menu and its tab, writes the piece across
   the sections you tick, or a run of bars you choose, each as a loop of its own that you can then change;

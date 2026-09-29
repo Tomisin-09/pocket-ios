@@ -197,8 +197,9 @@ so you can see the rhythm before you know the notes. A bar with nothing in it is
      | state: seeded song with sections, counted and named pieces, map open full screen on Tab -->
 
 A section you marked as the same as an earlier one is written as a chart writes it, its name and *as
-Verse 1*, unless you've worked something out inside it. A loop that repeats is written once, then
-*↻ Verse changes ×4* across the bars it repeats over.
+Verse 1*, unless you've worked something out inside it. A loop that repeats is written out every time it
+plays, so you can read its chords or notes in every bar they're in, with *↻ ×4* where the repeats begin.
+Each time is drawn from the one loop, so when you change the loop, all of them change with it.
 
 There's nothing to type into the tab: it's always drawn from your pieces, so it can't disagree with
 them. To change a bar, tap its row. The map goes back to **Pieces** at that row, with the loops that

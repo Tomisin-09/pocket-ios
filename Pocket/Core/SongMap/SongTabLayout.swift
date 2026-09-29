@@ -37,12 +37,10 @@ enum SongTabLayout {
                     pieces: [SongMap.Piece], spelling: NoteSpelling) -> SongTab.Row {
         let fullRow = grid.map { $0.barSeconds * Double(barsPerRow) } ?? secondsPerRow
         let lines = lines(from: start, to: end, pieces: pieces, spelling: spelling)
-        // The pieces that drew it, in the order their first taps (or their repeats) come.
-        let marks = lines.flatMap(\.columns).map { (time: $0.time, piece: $0.piece) }
-            + lines.flatMap(\.repeats).map { (time: $0.start, piece: $0.piece) }
+        // The pieces that drew it, in the order their first taps come. A pass of a repeat is its loop's.
         var drew: [UUID] = []
-        for mark in marks.sorted(by: { $0.time < $1.time }) where !drew.contains(mark.piece) {
-            drew.append(mark.piece)
+        for column in lines.flatMap(\.columns).sorted(by: { $0.time < $1.time }) where !drew.contains(column.piece) {
+            drew.append(column.piece)
         }
         return SongTab.Row(start: start, end: end, widthFraction: min(1, max(0, (end - start) / fullRow)),
                            ticks: SongMapLayout.ticks(from: start, to: end, grid: grid, secondsPerTick: secondsPerTick),
@@ -69,39 +67,63 @@ enum SongTabLayout {
     }
 
     /// One lane's taps in a row's stretch of the song. It's tab when any of them was placed on the neck, on
-    /// the strings of the piece with the most of them.
+    /// the strings of the piece with the most of them. A loop that repeats is written out on every pass
+    /// (D18), with *↻ ×8* where its repeats begin.
     static func line(layer: SongMap.Layer, lane: Int, pieces: [SongMap.Piece],
                      during row: Range<TimeInterval>, spelling: NoteSpelling) -> SongTab.Line? {
         var columns: [SongTab.Column] = []
         var staff: [Int] = []
-        let repeats = pieces.compactMap { repeatMark($0, during: row) }
         for piece in pieces {
             guard case .piece(let transcription) = piece.content else { continue }
-            let from = max(piece.start, row.lowerBound), upTo = min(piece.end, row.upperBound)
-            for index in transcription.taps.indices {
-                let seconds = transcription.taps[index].seconds
-                guard seconds >= from, seconds < upTo else { continue }
-                let column = column(index, of: transcription, piece: piece.uid, layer: layer, spelling: spelling)
+            for sound in sounds(of: transcription, in: piece, during: row) {
+                let column = column(sound.index, of: transcription, piece: piece.uid, layer: layer,
+                                    spelling: spelling)
                 if column.mark.isFrets, let openMidi = transcription.openMidi, openMidi.count > staff.count {
                     staff = openMidi
                 }
-                columns.append(column)
+                columns.append(column.moved(to: sound.time))
             }
         }
-        guard !columns.isEmpty || !repeats.isEmpty else { return nil }
+        columns.sort { $0.time < $1.time }
+        // A sign goes in front of the tap it shares a time with, so it reads before the pass it begins.
+        for sign in pieces.compactMap({ repeatSign($0, during: row) }) {
+            columns.insert(sign, at: columns.firstIndex { $0.time >= sign.time - epsilon } ?? columns.endIndex)
+        }
+        guard !columns.isEmpty else { return nil }
         return SongTab.Line(layer: layer, lane: lane,
-                            strings: staff.isEmpty ? [] : TabLine.stringNames(openMidi: staff),
-                            columns: columns.sorted { $0.time < $1.time }, repeats: repeats)
+                            strings: staff.isEmpty ? [] : TabLine.stringNames(openMidi: staff), columns: columns)
     }
 
-    /// A loop's repeats in a row's stretch (D14), as a label: the chart writes the progression once and
-    /// says it repeats, so its taps are never drawn again.
-    static func repeatMark(_ piece: SongMap.Piece, during row: Range<TimeInterval>) -> SongTab.RepeatMark? {
-        guard let repeats = piece.repeats else { return nil }
-        let from = max(piece.end, row.lowerBound), upTo = min(repeats.end, row.upperBound)
-        guard upTo - from > SongMapLayout.tolerance else { return nil }
-        return SongTab.RepeatMark(piece: piece.uid, name: piece.name, start: from, end: upTo,
-                                  passes: repeats.passes, continues: from > piece.end + SongMapLayout.tolerance)
+    /// How far a hair before a row's start still counts as in it. A pass lands on a row's start by
+    /// arithmetic, and a hair either side of it must still land in one row, not both or neither.
+    static let epsilon: TimeInterval = 0.000_001
+
+    /// When a piece's taps sound in a row: each tap inside the loop, then again on every pass while it
+    /// repeats (D18), up to where the repeats end. Only a tap inside the loop plays, so only those repeat.
+    /// The loop's start is read within the board's tolerance: its edges read back a hair off, and a copy's
+    /// first tap sits exactly on it (D16).
+    static func sounds(of transcription: PieceTranscription, in piece: SongMap.Piece,
+                       during row: Range<TimeInterval>) -> [(index: Int, time: TimeInterval)] {
+        let length = piece.end - piece.start
+        let from = row.lowerBound - epsilon
+        let upTo = min(row.upperBound, piece.repeats?.end ?? piece.end) - epsilon
+        return transcription.taps.indices.flatMap { index -> [(index: Int, time: TimeInterval)] in
+            let seconds = transcription.taps[index].seconds
+            guard seconds > piece.start - SongMapLayout.tolerance, seconds < piece.end else { return [] }
+            // `repeats` is only there when a pass has length (`SongMapLayout.repeats`).
+            let passes = piece.repeats == nil ? 1 : Int(((upTo - seconds) / length).rounded(.up))
+            return (0..<max(passes, 1)).map { seconds + Double($0) * length }
+                .filter { $0 >= from && $0 < upTo }
+                .map { (index: index, time: $0) }
+        }
+    }
+
+    /// Where a loop's repeats begin (D14), when that's in this row: *↻ ×8*, the count said once.
+    static func repeatSign(_ piece: SongMap.Piece, during row: Range<TimeInterval>) -> SongTab.Column? {
+        guard let repeats = piece.repeats,
+              piece.end >= row.lowerBound - epsilon, piece.end < row.upperBound - epsilon else { return nil }
+        return SongTab.Column(time: piece.end, piece: piece.uid, mark: .repeats(repeats.passes),
+                              name: "\(piece.name) repeats, \(repeats.passes) times in all")
     }
 
     /// One tap as the tab draws it. In the chords layer it's the chord's symbol, however it was named

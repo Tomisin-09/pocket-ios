@@ -311,25 +311,50 @@ final class SongMapGapsTests: SongMapSlice3Case {
         SongTabLayout.build(build(grid: grid(), markers: markers, loops: loops), spelling: .flats)
     }
 
-    func testTheTabWritesARepeatedLoopOnceAndLabelsWhereItRepeats() throws {
+    private var gmToC: PieceTranscription {
+        PieceTranscription(taps: [.init(seconds: 8, label: .chord(root: 7, suffix: "m7")),
+                                  .init(seconds: 10, label: .chord(root: 0, suffix: "7"))])
+    }
+
+    func testTheTabWritesARepeatedLoopOutOnEveryPass() throws {
         let uid = UUID()
-        let changes = PieceTranscription(taps: [.init(seconds: 8, label: .chord(root: 7, suffix: "m7")),
-                                                .init(seconds: 10, label: .chord(root: 0, suffix: "7"))])
-        let sections = tab(markers: verseAndChorus(), loops: [loop(8, 12, piece: changes, repeats: true, uid: uid)])
+        let sections = tab(markers: verseAndChorus(), loops: [loop(8, 12, piece: gmToC, repeats: true, uid: uid)])
             .sections
         let rows = try XCTUnwrap(sections.first { $0.start == 8 }).rows
         XCTAssertEqual(rows.map(\.start), [8, 16, 24, 32])
-        XCTAssertEqual(rows[0].lines.first?.columns.map(\.name), ["Gm7", "C7"])
-        let first = SongTab.RepeatMark(piece: uid, name: "Changes", start: 12, end: 16, passes: 8, continues: false)
-        XCTAssertEqual(rows[0].lines.first?.repeats, [first])
-        XCTAssertEqual(rows[1].lines.first?.columns, [], "never the taps again")
-        XCTAssertEqual(rows[1].lines.first?.repeats.map(\.continues), [true])
+        let first = try XCTUnwrap(rows[0].lines.first?.columns)
+        XCTAssertEqual(first.map(\.name), ["Gm7", "C7", "Changes repeats, 8 times in all", "Gm7", "C7"],
+                       "the sign goes in front of the pass it begins")
+        XCTAssertEqual(first.map(\.time), [8, 10, 12, 12, 14])
+        XCTAssertEqual(first[2].mark, .repeats(8))
+        XCTAssertEqual(rows[1].lines.first?.columns.map(\.time), [16, 18, 20, 22],
+                       "a pass landing on a row's start is in that row, once, and the count isn't said again")
+        XCTAssertEqual(rows[3].lines.first?.columns.map(\.name), ["Gm7", "C7", "Gm7", "C7"])
         XCTAssertEqual(rows[3].pieces, [uid], "a row of repeats goes back to the piece")
         XCTAssertFalse(sections.first { $0.start == 40 }?.rows.contains { !$0.lines.isEmpty } ?? true,
                        "the chorus is a new section, so the repeats stop")
     }
 
-    func testARepeatedTabLineCarriesItsLabelAboveTheStrings() throws {
+    func testTheLastPassIsWrittenOnlyAsFarAsTheRepeatsRun() throws {
+        let three = PieceTranscription(taps: gmToC.taps + [.init(seconds: 12, label: .chord(root: 5, suffix: ""))])
+        let rows = try XCTUnwrap(tab(markers: verseAndChorus(), loops: [loop(8, 14, piece: three, repeats: true)])
+            .sections.first { $0.start == 8 }).rows
+        // 32 seconds of a 6-second loop: 5 passes to the nearest, and a third of a sixth.
+        XCTAssertEqual(rows[0].lines.first?.columns.first { $0.mark == .repeats(5) }?.time, 14)
+        XCTAssertEqual(rows[3].lines.first?.columns.map(\.time), [32, 34, 36, 38])
+        XCTAssertEqual(rows[3].lines.first?.columns.map(\.name), ["Gm7", "C7", "F", "Gm7"],
+                       "the sixth pass's C7 would be at 40, where the chorus starts")
+    }
+
+    func testATapOnTheLoopsStartIsWrittenThoughTheStartReadsBackAHairLate() throws {
+        // A copy's first tap sits exactly on its start (D16), and a start stored as a fraction of the
+        // song can read back a hair after it.
+        let rows = try XCTUnwrap(tab(markers: verseAndChorus(), loops: [loop(8.000_000_1, 12, piece: gmToC)])
+            .sections.first { $0.start == 8 }).rows
+        XCTAssertEqual(rows[0].lines.first?.columns.map(\.name), ["Gm7", "C7"])
+    }
+
+    func testARepeatedTabLineCarriesItsSignAboveTheStrings() throws {
         let riff = PieceTranscription(taps: [.init(seconds: 8.5, label: .fretted(string: 1, fret: 5))],
                                       openMidi: standard)
         let line = try XCTUnwrap(tab(markers: verseAndChorus(), loops: [loop(8, 12, type: .riff, piece: riff,
@@ -337,6 +362,8 @@ final class SongMapGapsTests: SongMapSlice3Case {
             .sections.first { $0.start == 8 }?.rows[0].lines.first)
         XCTAssertTrue(line.isTab)
         XCTAssertTrue(line.hasWordsAboveTab)
+        XCTAssertEqual(line.columns.map(\.time), [8.5, 12, 12.5], "the riff again, on its string")
+        XCTAssertEqual(line.columns.map(\.mark.isFrets), [true, false, true])
     }
 
     func testASameAsSectionWithNothingOfItsOwnIsWrittenAsItsHeadingAlone() {
