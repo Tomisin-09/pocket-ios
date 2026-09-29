@@ -4,9 +4,9 @@ import SwiftUI
 /// song's chart and tab. There is nothing to edit here. To change a bar, re-solve its piece (0225 D10),
 /// so tapping a row goes back to the board, to the pieces that drew it.
 ///
-/// A section that repeats an earlier one and has nothing of its own reads as a chart writes it, its
-/// heading and *as Verse 1* with no empty rows under it (D8). A loop that repeats to the end of its section
-/// is written once and labelled where it repeats (D14).
+/// A section that repeats an earlier one has that one's bars written out under *as Verse 1* (D19), and a
+/// loop that repeats is written out on every pass, with *↻ ×8* where the repeats begin (D18): the tab is
+/// read to play from, so it shows what plays rather than naming it.
 struct SongTabView: View {
     let tab: SongTab
     /// Tap a section heading: its marker.

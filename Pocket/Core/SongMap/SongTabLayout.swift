@@ -24,9 +24,13 @@ enum SongTabLayout {
             $0.start == $1.start ? $0.uid.uuidString < $1.uid.uuidString : $0.start < $1.start
         }
         let sections = map.sections.map { section in
+            let echo = echo(of: section, in: map, pieces: pieces)
             let rows = SongMapLayout.rowSpans(from: section.start, to: section.end, grid: map.grid,
                                               barsPerRow: barsPerRow, secondsPerRow: secondsPerRow)
-                .map { row(from: $0.start, to: $0.end, grid: map.grid, pieces: pieces, spelling: spelling) }
+                .map { span -> SongTab.Row in
+                    let own = row(from: span.start, to: span.end, grid: map.grid, pieces: pieces, spelling: spelling)
+                    return echo.map { writing($0, into: own, spelling: spelling) } ?? own
+                }
             return SongTab.Section(heading: section.heading, start: section.start, end: section.end,
                                    bars: section.bars, rows: rows, sameAs: section.sameAs)
         }
@@ -37,14 +41,18 @@ enum SongTabLayout {
                     pieces: [SongMap.Piece], spelling: NoteSpelling) -> SongTab.Row {
         let fullRow = grid.map { $0.barSeconds * Double(barsPerRow) } ?? secondsPerRow
         let lines = lines(from: start, to: end, pieces: pieces, spelling: spelling)
-        // The pieces that drew it, in the order their first taps come. A pass of a repeat is its loop's.
+        return SongTab.Row(start: start, end: end, widthFraction: min(1, max(0, (end - start) / fullRow)),
+                           ticks: SongMapLayout.ticks(from: start, to: end, grid: grid, secondsPerTick: secondsPerTick),
+                           lines: lines, pieces: drew(lines))
+    }
+
+    /// The pieces that drew some lines, in the order their first taps come. A pass of a repeat is its loop's.
+    static func drew(_ lines: [SongTab.Line]) -> [UUID] {
         var drew: [UUID] = []
         for column in lines.flatMap(\.columns).sorted(by: { $0.time < $1.time }) where !drew.contains(column.piece) {
             drew.append(column.piece)
         }
-        return SongTab.Row(start: start, end: end, widthFraction: min(1, max(0, (end - start) / fullRow)),
-                           ticks: SongMapLayout.ticks(from: start, to: end, grid: grid, secondsPerTick: secondsPerTick),
-                           lines: lines, pieces: drew)
+        return drew
     }
 
     // MARK: - Lines

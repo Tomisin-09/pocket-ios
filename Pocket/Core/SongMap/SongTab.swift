@@ -24,9 +24,9 @@ struct SongTab: Equatable, Sendable {
         var sameAs: SongMap.SectionRef?
         var id: TimeInterval { start }
 
-        /// A section that repeats another and has nothing of its own is written as a chart writes it:
-        /// its heading and *as Verse 1*, with no empty rows under it. One with pieces of its own draws them,
-        /// because a variation beats "same as" (D8).
+        /// A section that repeats another has that one's bars written out in it (D19), and its own pieces
+        /// as well, because a variation beats "same as" (D8). With nothing to write, from either, it's its
+        /// heading and *as Verse 1* alone, with no empty rows under it.
         var showsRows: Bool { sameAs == nil || rows.contains { !$0.lines.isEmpty } }
     }
 
@@ -41,6 +41,9 @@ struct SongTab: Equatable, Sendable {
         let lines: [Line]
         /// The pieces that drew the row, earliest first: where tapping it goes on the board.
         let pieces: [UUID]
+        /// Where those pieces are on the board when all the row draws is written out from the section it's
+        /// the same as (D19): that section's matching stretch. `nil` when it goes to its own stretch.
+        var sourceStart: TimeInterval?
         var id: TimeInterval { start }
 
         /// Where `time` falls across the row, 0 at its start and 1 at its end.
@@ -58,7 +61,10 @@ struct SongTab: Equatable, Sendable {
         /// names and slashes.
         let strings: [String]
         let columns: [Column]
-        var id: String { "\(layer.rawValue)-\(lane)" }
+        /// Written out from the section this one is the same as (D19), not a piece of its own here. Its lane
+        /// is the one it has there.
+        var isSameAs = false
+        var id: String { "\(layer.rawValue)-\(lane)\(isSameAs ? "-as" : "")" }
 
         var isTab: Bool { !strings.isEmpty }
         /// A tab line with names, slashes or a repeat sign as well carries them in a row above the strings.

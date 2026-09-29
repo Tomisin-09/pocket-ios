@@ -71,7 +71,8 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   your pieces, never a percentage (ADR 0232).
   A song with markers and no sections is offered, once, **Use your markers as sections?**, with the
   markers named like a song's parts already ticked. A marker that starts a section can be **Same as**
-  an earlier one, so *Verse 2* reads *as Verse 1*, and the Tab view writes it that way. Hold a loop for
+  an earlier one, so *Verse 2* reads *as Verse 1*, and the Tab view writes Verse 1's chords and notes
+  out under it, bar for bar, so a second chorus reads where it plays. Hold a loop for
   **Repeats to the end of the section**: one progression worked out once is drawn repeating to the end
   of its section, marked with how many times it plays, and written out in the tab on every pass, so its
   chords read in every bar they play in. Tap **+** in an empty stretch of a lane to make a loop that

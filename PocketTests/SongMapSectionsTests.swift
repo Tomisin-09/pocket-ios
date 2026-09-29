@@ -366,12 +366,12 @@ final class SongMapGapsTests: SongMapSlice3Case {
         XCTAssertEqual(line.columns.map(\.mark.isFrets), [true, false, true])
     }
 
-    func testASameAsSectionWithNothingOfItsOwnIsWrittenAsItsHeadingAlone() {
+    func testASameAsSectionWithNothingToWriteIsItsHeadingAlone() {
         let first = UUID()
         let markers = [marker(8, "Verse 1", uid: first), marker(40, "Verse 2", sameAs: first)]
         let bare = tab(markers: markers, loops: [])
         XCTAssertEqual(bare.sections.map(\.showsRows), [true, true, false],
-                       "Start and Verse 1 draw their rows, empty or not; Verse 2 is written as Verse 1")
+                       "Start and Verse 1 draw their rows, empty or not; Verse 2 has nothing to write from Verse 1")
         let counted = PieceTranscription(taps: [.init(seconds: 57)])
         let varied = tab(markers: markers, loops: [loop(56, 60, piece: counted)])
         XCTAssertEqual(varied.sections.last?.showsRows, true, "a variation beats same as")

@@ -664,7 +664,11 @@ there; a mode picked on the tab sheet is held until the sheet's `onDismiss`, sin
 under a presented sheet. `build` cuts the sections **before** placing pieces, because a repeating loop
 (D14) needs its section's end: its repeats extend the interval it holds in the lane colouring, so a later
 piece in that layer takes the next lane. A section's *same as* (D8) follows `sameAsUID` only to strictly
-earlier section markers, which is what guarantees the chain ends. Gaps (D9) are the complement of each
+earlier section markers, which is what guarantees the chain ends. In the Tab view (D19), `SongTabLayout+SameAs.swift` writes
+the earlier section's rows into it: `echo` picks its pieces, less a repeat that plays on into this section
+(it draws there as itself), `shift` moves them from the downbeat nearest one start to the one nearest the
+other, and `writing(_:into:spelling:)` clips each row to the earlier section and adds the lines, flagged
+`isSameAs`, with `sourceStart` so a tap goes to where the pieces are. Gaps (D9) are the complement of each
 layer's covered intervals (pieces and repeats) within the section, or within each row when there are no
 sections, carried whole on every row they cross so the view can offer the same stretch from any of them.
 A repeat's end (D15) is resolved in `SongMapLayout+Repeats.swift`: its own section's end, a later

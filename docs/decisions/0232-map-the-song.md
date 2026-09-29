@@ -136,8 +136,10 @@ Settled in the build (slice 3, 2026-09-29):
   A section it names that has since moved later, or stopped starting one, shows as *None*.
 - **On the board, the heading reads *↻ as Verse 1***, and tapping it goes to Verse 1. The section's own
   rows are drawn as usual, so *Make a piece here* still works inside it.
-- **In the Tab view, a "same as" section with nothing of its own is its heading alone**: no empty rows
-  under *as Verse 1*, as a chart writes it. One with a piece of its own draws its rows.
+- ~~**In the Tab view, a "same as" section with nothing of its own is its heading alone**: no empty rows
+  under *as Verse 1*, as a chart writes it. One with a piece of its own draws its rows.~~ *Replaced by
+  D19 (slice 3b): the tab writes the earlier section's bars out under the heading. With nothing to
+  write, it's still the heading alone.*
 - A chain broken part way reads as its last good link: Verse 3 as Verse 2, when Verse 2 names a marker
   that's gone.
 
@@ -321,6 +323,29 @@ label sends the reader back to the intro to find out.
   tap sits exactly on its start (D16), and a start stored as a fraction of the song can read back a
   hair late, so the tab reads the start within `SongMapLayout.tolerance`. Found while building this.
 
+### D19 — The tab writes a "same as" section out
+
+*Added 2026-09-30.* Replaces D8's Tab view bullet, for the reason D18 gives. Verse 2 *as Verse 1* was
+written as a chart writes it, the heading alone, which sent the reader back up to Verse 1 for its chords.
+Tomisin chose the other way when shown both.
+
+- **The earlier section's bars are written out under *as Verse 1***, bar for bar: its pieces, their
+  repeats and ↻ signs included, each on a line of its own. With bars, they're moved on from the 1 nearest
+  the earlier section's start to the 1 nearest this one's, so a marker set a hair off the 1 doesn't move
+  every chord. Without bars, they move marker to marker.
+- **As far as either section runs.** A shorter section gets as much as fits. A longer one has empty bars
+  after the earlier one runs out, and only the earlier section's own stretch is written: a loop that plays
+  on from it into the next section brings nothing from there.
+- **Drawn, never copied** (D10). It's drawn from the earlier section's pieces every time, so changing
+  Verse 1 changes Verse 2. *Copy to…* (D16) is still how to get a copy that can be changed on its own.
+- **A variation still shows** (D8). The section's own pieces draw on their own lines, under the written
+  lines of their layer. A repeat that plays on through both sections draws in this one as itself, and
+  isn't written a second time.
+- **Tapping a written row goes to the earlier section on the board**, where its pieces are. A row with a
+  piece of its own goes to its own stretch.
+- **The board is unchanged.** It still heads the section *↻ as Verse 1* over its own rows, where a
+  variation is made.
+
 ## Build order
 
 1. **The board.** `Marker.startsSection` with its switch and archive field; `SongMapLayout` (pure:
@@ -333,7 +358,7 @@ label sends the reader back to the intro to find out.
    `Marker.sameAsUID` (D8), and `Loop.repeatsToSectionEnd` (D14).
    **3b. Reach, copies and Undo**, from the first device test: how far a repeat runs (D15), *Copy to…*
    and *Copy X here* (D16), and Undo for what the map makes (D17). From the second, the tab writes a
-   repeat out (D18).
+   repeat out (D18), and a "same as" section too (D19).
 4. **Put it together** (D11).
 5. **The Journal's Pieces scope, grouped by song** (D1).
 

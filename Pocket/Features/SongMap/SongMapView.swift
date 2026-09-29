@@ -198,7 +198,9 @@ struct SongMapView: View {
     /// A row of the tab, back on the board (D10): the board row it starts in, with the pieces that drew it
     /// drawn heavier for a moment.
     private func showPieces(of row: SongTab.Row, in map: SongMap) {
-        let boardRow = map.sections.flatMap(\.rows).last { $0.start <= row.start + SongMapLayout.tolerance }
+        // A row written out from the section it's the same as goes to that section, where its pieces are (D19).
+        let start = row.sourceStart ?? row.start
+        let boardRow = map.sections.flatMap(\.rows).last { $0.start <= start + SongMapLayout.tolerance }
         highlighted = Set(row.pieces)
         mode = .pieces
         scrollTarget = boardRow.map { SongMapAnchor.row($0.start) }

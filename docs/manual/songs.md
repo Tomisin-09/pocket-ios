@@ -196,8 +196,12 @@ so you can see the rhythm before you know the notes. A bar with nothing in it is
      | alt: The Tab view of Slow Bend, with chord symbols over the Verse and the verse riff as tab on six strings under them
      | state: seeded song with sections, counted and named pieces, map open full screen on Tab -->
 
-A section you marked as the same as an earlier one is written as a chart writes it, its name and *as
-Verse 1*, unless you've worked something out inside it. A loop that repeats is written out every time it
+A section you marked as the same as an earlier one has the earlier one's bars written out under its
+heading, *as Verse 1*, so a second chorus reads its chords where it plays. They're drawn from the earlier
+section, so changing Verse 1 changes Verse 2 with it. Anything you've worked out inside Verse 2 is written
+as well, on its own line. Tapping a written bar takes you to Verse 1 on the map, where its loops are.
+
+A loop that repeats is written out every time it
 plays, so you can read its chords or notes in every bar they're in, with *↻ ×4* where the repeats begin.
 Each time is drawn from the one loop, so when you change the loop, all of them change with it.
 
