@@ -224,6 +224,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **The neck shows the notes around the one you're naming.** The three before it are filled and the
   three after it ringed, fading the further they are, and each carries its note number, so a lick reads
   in order on the neck even where it comes back to the same fret (ADR 0234).
+- **The neck plays along the way you played it.** While the strip plays the loop or a phrase, a picked
+  note pops in, a bend glides to where it lands, vibrato shakes, a hammer-on or pull-off lights where it
+  started and snaps across, and a slide travels along the string. With Reduce Motion each only fades in
+  (ADR 0234).
 - **A Journal note opens the loop where it was written.** Tapping the loop's name on an 👂 Ear or 🧩
   Transcribed note opens *Train your ear*, and on a 🎸 Improv note opens *Improvise*, rather than the
   loop's ordinary practice. Other notes open as before (ADR 0228).

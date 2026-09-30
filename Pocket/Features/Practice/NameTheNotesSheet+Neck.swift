@@ -8,7 +8,6 @@ extension NameTheNotesSheet {
 
     var neckPicker: some View {
         let neighbours = NeckNeighbours.marks(labels, active: active)
-        let heard = Set(NamingStrip.heardNotes(labels, hearing: hearing).map { Spot(string: $0.string, fret: $0.fret) })
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 pickerLabel("Where did you play it?")
@@ -24,8 +23,7 @@ extension NameTheNotesSheet {
             }
             FretNeckBoard(stringNames: stringNames, maxFret: PieceLabel.maxFret, scrollTarget: neckTarget,
                           headroom: Self.marksHeadroom) { string, fret in
-                neckSpot(string: string, fret: fret, mark: neighbours[NeckSpot(string: string, fret: fret)],
-                         isHeard: heard.contains(Spot(string: string, fret: fret)))
+                neckSpot(string: string, fret: fret, mark: neighbours[NeckSpot(string: string, fret: fret)])
             } marks: {
                 // The marks are drawn on the note they go on, which after a placement is the one just placed.
                 NeckMarksLayer(notes: labels[marked]?.frettedNotes ?? [],
@@ -33,6 +31,10 @@ extension NameTheNotesSheet {
                                join: NeckJoin.symbol(into: marked, of: labels),
                                stringCount: tuning.openMidi.count, maxFret: PieceLabel.maxFret,
                                headroom: Self.marksHeadroom)
+            } beneath: {
+                // While the loop or a phrase plays, the note being heard glows, moving the way it was played.
+                HeardGlows(motions: hearing.map { HaloMotion.motions(into: $0, of: labels) } ?? [], token: hearing,
+                           headroom: Self.marksHeadroom)
             }
             if let byEar = labels[active], !byEar.isOnTheNeck,
                let name = byEar.name(openMidi: tuning.openMidi, spelling: spelling) {
@@ -56,12 +58,6 @@ extension NameTheNotesSheet {
     /// Room above the top string for a bend's arrow and a vibrato's wave.
     private static var marksHeadroom: CGFloat { 16 }
 
-    /// One place on the neck, as a set member.
-    struct Spot: Hashable {
-        let string: Int
-        let fret: Int
-    }
-
     /// The strings' names down the left edge, thinnest first, as the tab names them.
     private var stringNames: [String] {
         TabLine.stringNames(openMidi: tuning.openMidi).map { $0.trimmingCharacters(in: .whitespaces) }
@@ -70,7 +66,7 @@ extension NameTheNotesSheet {
     /// A dot with its note name, spelled for the key (ADR 0123). **A faint name is a map, not a hint:** it
     /// reads the same whatever you heard, so it can't point at the answer. A placed note is drawn by where
     /// it sits in the pass from the note being named (`NeckNeighbours`).
-    private func neckSpot(string: Int, fret: Int, mark: NeckNeighbours.Mark?, isHeard: Bool) -> some View {
+    private func neckSpot(string: Int, fret: Int, mark: NeckNeighbours.Mark?) -> some View {
         let isPlaced = mark?.tier == .current
         // In a shape, the ringed note is the one bend and vibrato go on.
         let markedNotes = labels[marked]?.frettedNotes ?? []
@@ -93,7 +89,6 @@ extension NameTheNotesSheet {
                 .foregroundStyle(style.ink)
                 .frame(width: 24, height: 24)
                 .background(Circle().fill(style.fill))
-                .background(HeardHalo(isHeard: isHeard))
                 .overlay(Circle().inset(by: style.ringWidth / 2).stroke(style.ring, lineWidth: style.ringWidth))
                 .overlay(Circle().inset(by: -3.5).stroke(isRinged ? PocketColor.practice : .clear, lineWidth: 1.5))
                 .overlay(alignment: .topTrailing) {
@@ -213,26 +208,6 @@ private struct NeighbourNumber: View {
             .background(Capsule().fill(PocketColor.background))
             .overlay(Capsule().stroke(PocketColor.practice, lineWidth: 1))
             .offset(x: 6, y: -5)
-            .accessibilityHidden(true)
-    }
-}
-
-/// The glow behind a spot while its note sounds (ADR 0227 D2): the strip's ring, on the neck. It pops in
-/// as the note plays and fades as the next one takes over, so the lick is seen moving under the fingers;
-/// with Reduce Motion it only fades. The neck never scrolls to follow it, so the board can't move under
-/// a finger that's naming.
-private struct HeardHalo: View {
-    let isHeard: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        Circle()
-            .fill(PocketColor.practice.opacity(0.4))
-            .padding(-5)
-            .scaleEffect(isHeard || reduceMotion ? 1 : 0.6)
-            .opacity(isHeard ? 1 : 0)
-            .animation(isHeard ? .easeOut(duration: 0.16) : .easeIn(duration: 0.3), value: isHeard)
-            .allowsHitTesting(false)
             .accessibilityHidden(true)
     }
 }

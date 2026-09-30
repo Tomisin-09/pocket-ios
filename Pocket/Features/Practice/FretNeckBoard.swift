@@ -28,7 +28,9 @@ private struct FretAnchor: Hashable {
 ///
 /// `marks` draws over the dots, in the board's own coordinates (`NeckGeometry.center`), for the playing
 /// marks Name the notes shows (ADR 0227 D5). `headroom` is the space above the top string they need.
-struct FretNeckBoard<Cell: View, Marks: View>: View {
+/// `beneath` draws under them, in the same coordinates, for the glow that moves between spots as a note is
+/// heard (ADR 0234 D5): a bend gliding to where it lands can't be drawn behind one dot.
+struct FretNeckBoard<Cell: View, Marks: View, Beneath: View>: View {
     /// One name per string, thinnest first, the order the rows are drawn in.
     let stringNames: [String]
     let maxFret: Int
@@ -36,6 +38,7 @@ struct FretNeckBoard<Cell: View, Marks: View>: View {
     var headroom: CGFloat = 0
     @ViewBuilder let cell: (_ string: Int, _ fret: Int) -> Cell
     @ViewBuilder let marks: () -> Marks
+    @ViewBuilder let beneath: () -> Beneath
 
     var body: some View {
         HStack(alignment: .center, spacing: 8) {
@@ -63,6 +66,9 @@ struct FretNeckBoard<Cell: View, Marks: View>: View {
                             }
                         }
                         .padding(.top, headroom)
+                        .background(alignment: .topLeading) {
+                            beneath().allowsHitTesting(false)
+                        }
                         .overlay(alignment: .topLeading) {
                             marks().allowsHitTesting(false)
                         }
@@ -123,11 +129,11 @@ struct FretNeckBoard<Cell: View, Marks: View>: View {
     }
 }
 
-extension FretNeckBoard where Marks == EmptyView {
-    /// A board with nothing drawn over its dots, as the exercise editor uses it.
+extension FretNeckBoard where Marks == EmptyView, Beneath == EmptyView {
+    /// A board with nothing drawn over or under its dots, as the exercise editor uses it.
     init(stringNames: [String], maxFret: Int, scrollTarget: Int?,
          @ViewBuilder cell: @escaping (_ string: Int, _ fret: Int) -> Cell) {
         self.init(stringNames: stringNames, maxFret: maxFret, scrollTarget: scrollTarget, headroom: 0,
-                  cell: cell, marks: { EmptyView() })
+                  cell: cell, marks: { EmptyView() }, beneath: { EmptyView() })
     }
 }
