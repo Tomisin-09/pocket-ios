@@ -101,18 +101,33 @@ final class NameTheNotesUITests: UITestCase {
     /// screen, and a sheet opens at half height, where `swipeUp()` lands on the sheet's top edge rather
     /// than its rows: so the drag starts low on the screen, inside the sheet. The Count the notes pad takes
     /// a drag as its own, so the start alternates between two heights further apart than the pad is tall.
+    /// Each drag holds at its end, so the Form stops where it was left instead of coasting on.
     @MainActor
     private func reveal(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
         _ = element.waitForExistence(timeout: 2)
         for attempt in 0..<12 {
-            if element.exists && element.isHittable { return true }
+            if inReach(element, in: app) { return true }
             let start = attempt.isMultiple(of: 2) ? 0.85 : 0.55
             app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: start))
                 .press(forDuration: 0.05,
-                       thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: start - 0.4)))
+                       thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: start - 0.4)),
+                       withVelocity: .default, thenHoldForDuration: 0.3)
         }
-        return element.exists && element.isHittable
+        return inReach(element, in: app)
     }
+
+    /// Whole on screen and clear of the home indicator. `isHittable` alone isn't enough: iOS 18 calls a
+    /// button hittable with 11 points of it showing at the foot of the screen, and the tap there goes to
+    /// the system, so *Name the notes* never opened on CI while it did on iOS 26.
+    @MainActor
+    private func inReach(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
+        guard element.exists, element.isHittable else { return false }
+        let window = app.windows.firstMatch.frame
+        return element.frame.minY >= window.minY && element.frame.maxY <= window.maxY - homeIndicatorClearance
+    }
+
+    /// The strip at the foot of the screen a touch can't reach an app through.
+    private let homeIndicatorClearance: CGFloat = 40
 
     @MainActor
     private func attach(_ app: XCUIApplication, named name: String) {
