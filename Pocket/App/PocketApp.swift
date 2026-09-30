@@ -119,6 +119,7 @@ struct PocketApp: App {
                               Exercise.self, Routine.self, RoutineItem.self, Goal.self,
                               LongTermGoal.self, Recording.self, TakeNote.self, SavedChord.self, Profile.self,
                               PracticeRun.self, ReferenceLink.self, LoopSpanChange.self,
-                              Snag.self, PracticeFolder.self, CustomSkill.self, SavedProgression.self])
+                              Snag.self, PracticeFolder.self, CustomSkill.self, SavedProgression.self,
+                              WrittenTab.self])
     }
 }

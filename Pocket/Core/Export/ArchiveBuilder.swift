@@ -26,6 +26,8 @@ struct ArchiveSource {
     var customSkills: [CustomSkill] = []
     /// The progressions the player wrote (ADR 0218 D10).
     var savedProgressions: [SavedProgression] = []
+    /// The tabs the player wrote on the neck (ADR 0235 D8).
+    var writtenTabs: [WrittenTab] = []
 }
 
 /// Turns the live store into a `PracticeArchive` (ADR 0181).
@@ -93,7 +95,10 @@ enum ArchiveBuilder {
                 .map { CustomSkillRecord(uid: $0.uid, name: $0.name, info: $0.info, dateAdded: $0.dateAdded) },
             savedProgressions: source.savedProgressions
                 .sorted { ($0.name, $0.uid.uuidString) < ($1.name, $1.uid.uuidString) }
-                .map(savedProgressionRecord)
+                .map(savedProgressionRecord),
+            writtenTabs: source.writtenTabs
+                .sorted { ($0.createdAt, $0.uid.uuidString) < ($1.createdAt, $1.uid.uuidString) }
+                .map(writtenTabRecord)
         )
     }
 

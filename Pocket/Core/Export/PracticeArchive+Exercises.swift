@@ -114,6 +114,18 @@ struct SavedProgressionRecord: Codable, Equatable, Sendable {
     var payload: JSONValue?
 }
 
+/// A tab the player wrote on the neck (ADR 0235 D8).
+struct WrittenTabRecord: Codable, Equatable, Sendable {
+    var uid: UUID
+    var title: String
+    var createdAt: Date
+    var changedAt: Date
+
+    /// `WrittenTab.tabData` (the notes, bar lines, sections and strings) decoded and nested, exactly as
+    /// stored, so a newer build's kinds of note survive a round trip through an older one.
+    var payload: JSONValue?
+}
+
 extension Exercise {
     /// Land a record's phase shape (ADR 0221) on a drill hydrated from it — the one mapping both
     /// doors use, a restore and a received file, so the two can't read the same file differently.

@@ -14,6 +14,7 @@ struct RestoreExistingKeys: Sendable, Equatable {
     var exerciseUIDs: Set<UUID> = []
     var savedChordUIDs: Set<UUID> = []
     var savedProgressionUIDs: Set<UUID> = []
+    var writtenTabUIDs: Set<UUID> = []
     var routineUIDs: Set<UUID> = []
     var goalUIDs: Set<UUID> = []
     var longTermGoalUIDs: Set<UUID> = []
@@ -52,7 +53,7 @@ struct RestorePlan: Sendable, Equatable {
     /// Their names are the app's own words for these things, not the model type names: a player has
     /// a *practice log*, not `PracticeRun`s (ADR 0176 renamed that screen, and the copy follows it).
     enum Kind: String, Sendable, CaseIterable, Identifiable {
-        case songs, exercises, savedChords, savedProgressions, routines
+        case songs, exercises, savedChords, savedProgressions, writtenTabs, routines
         case goals, longTermGoals, practiceLog, journal, takes
 
         var id: String { rawValue }
@@ -63,6 +64,7 @@ struct RestorePlan: Sendable, Equatable {
             case .exercises: return "Exercises"
             case .savedChords: return "Saved chords"
             case .savedProgressions: return "Saved progressions"
+            case .writtenTabs: return "Written tabs"
             case .routines: return "Routines"
             case .goals: return "Goals"
             case .longTermGoals: return "Long-term goals"
@@ -137,6 +139,7 @@ extension RestorePlan {
             line(.savedChords, keys: archive.savedChords.map(\.uid), existing: existing.savedChordUIDs),
             line(.savedProgressions, keys: (archive.savedProgressions ?? []).map(\.uid),
                  existing: existing.savedProgressionUIDs),
+            line(.writtenTabs, keys: (archive.writtenTabs ?? []).map(\.uid), existing: existing.writtenTabUIDs),
             line(.routines, keys: archive.routines.map(\.uid), existing: existing.routineUIDs),
             line(.goals, keys: archive.goals.map(\.uid), existing: existing.goalUIDs),
             line(.longTermGoals, keys: archive.longTermGoals.map(\.uid), existing: existing.longTermGoalUIDs),

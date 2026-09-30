@@ -61,6 +61,7 @@ struct RestoredLibrary {
     var exercises: [Exercise] = []
     var savedChords: [SavedChord] = []
     var savedProgressions: [SavedProgression] = []
+    var writtenTabs: [WrittenTab] = []
     var routines: [(routine: Routine, items: [RoutineItem])] = []
     var goals: [Goal] = []
     var longTermGoals: [LongTermGoal] = []
@@ -87,8 +88,9 @@ struct RestoredLibrary {
 
     /// How many rows this will add, by kind — asserted against the plan the player was shown.
     var rowCount: Int {
-        songs.count + exercises.count + savedChords.count + savedProgressions.count + routines.count + goals.count
-            + longTermGoals.count + runs.count + journal.count + takes.count + (profile == nil ? 0 : 1)
+        songs.count + exercises.count + savedChords.count + savedProgressions.count + writtenTabs.count
+            + routines.count + goals.count + longTermGoals.count + runs.count + journal.count + takes.count
+            + (profile == nil ? 0 : 1)
     }
 
     /// Write the graph into `context`, in the one order that works.
@@ -121,6 +123,7 @@ struct RestoredLibrary {
         }
         savedChords.forEach(context.insert)
         savedProgressions.forEach(context.insert)
+        writtenTabs.forEach(context.insert)
         for (routine, items) in routines {
             let references = routine.references
             context.insert(routine)
@@ -173,6 +176,7 @@ enum ArchiveRestoreWriter {
         keys.exerciseUIDs = Set(((try? context.fetch(FetchDescriptor<Exercise>())) ?? []).map(\.uid))
         keys.savedChordUIDs = Set(((try? context.fetch(FetchDescriptor<SavedChord>())) ?? []).map(\.uid))
         keys.savedProgressionUIDs = Set(((try? context.fetch(FetchDescriptor<SavedProgression>())) ?? []).map(\.uid))
+        keys.writtenTabUIDs = Set(((try? context.fetch(FetchDescriptor<WrittenTab>())) ?? []).map(\.uid))
         keys.routineUIDs = Set(((try? context.fetch(FetchDescriptor<Routine>())) ?? []).map(\.uid))
         keys.goalUIDs = Set(((try? context.fetch(FetchDescriptor<Goal>())) ?? []).map(\.uid))
         keys.longTermGoalUIDs = Set(((try? context.fetch(FetchDescriptor<LongTermGoal>())) ?? []).map(\.uid))
@@ -219,6 +223,7 @@ enum ArchiveRestoreWriter {
         addExercises(archive.exercises, existing: existing, into: &landing, resolver: &resolver)
         addSavedChords(archive.savedChords, existing: existing, into: &landing)
         addSavedProgressions(archive.savedProgressions ?? [], existing: existing, into: &landing)
+        addWrittenTabs(archive.writtenTabs ?? [], existing: existing, into: &landing)
         addRoutines(archive.routines, existing: existing, into: &landing, resolver: resolver)
         addGoals(archive, existing: existing, into: &landing, resolver: resolver)
         addRuns(archive.practiceRuns, existing: existing, into: &landing)

@@ -76,6 +76,14 @@ extension ArchiveBuilder {
                                payload: JSONValue.decoding(progression.stepsData))
     }
 
+    static func writtenTabRecord(_ tab: WrittenTab) -> WrittenTabRecord {
+        WrittenTabRecord(uid: tab.uid,
+                         title: tab.title,
+                         createdAt: tab.createdAt,
+                         changedAt: tab.changedAt,
+                         payload: JSONValue.decoding(tab.tabData))
+    }
+
     // MARK: - Routines
 
     static func routineRecord(_ routine: Routine) -> RoutineRecord {

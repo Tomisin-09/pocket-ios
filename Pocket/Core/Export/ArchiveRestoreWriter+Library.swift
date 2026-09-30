@@ -261,6 +261,22 @@ extension ArchiveRestoreWriter {
         }
     }
 
+    /// Written tabs (ADR 0235 D8), on the saved progressions' rule: the notes are the whole of the row, so
+    /// one whose payload won't read as a tab is skipped rather than landed empty. A note of a kind this
+    /// build can't read still lands, as an unnamed note (`WrittenTabPayload`).
+    static func addWrittenTabs(_ records: [WrittenTabRecord],
+                               existing: RestoreExistingKeys,
+                               into landing: inout RestoredLibrary) {
+        var seen = Set<UUID>()
+        for record in records where !existing.writtenTabUIDs.contains(record.uid) {
+            guard seen.insert(record.uid).inserted else { continue }
+            guard let payload = record.payload, let data = try? JSONEncoder().encode(payload),
+                  WrittenTabPayload.decoded(from: data) != nil else { continue }
+            landing.writtenTabs.append(WrittenTab(uid: record.uid, title: record.title, createdAt: record.createdAt,
+                                                  changedAt: record.changedAt, tabData: data))
+        }
+    }
+
     /// Reference links, with their uids and their attachment names intact.
     ///
     /// **D7's leaf-name rewrite does not apply on this door, and the reason is worth stating.** D7
