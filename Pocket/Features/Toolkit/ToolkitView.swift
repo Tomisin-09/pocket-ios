@@ -23,56 +23,23 @@ struct ToolkitView: View {
     @Query private var savedChords: [SavedChord]
     /// The same count for My Progressions (ADR 0218).
     @Query private var savedProgressions: [SavedProgression]
+    /// And for My tabs (ADR 0235).
+    @Query private var writtenTabs: [WrittenTab]
 
     var body: some View {
         ScrollView {
             VStack(spacing: 10) {
-                NavigationLink { MyChordsView() } label: {
-                    ToolkitSectionRow(icon: "square.grid.2x2",
-                                      title: "My chords",
-                                      subtitle: "Your saved voicings",
-                                      trailing: savedCountLabel)
+                // One list, `ToolkitSection`, which the Home tile beside Toolkit offers too (ADR 0235 D6).
+                ForEach(ToolkitSection.allCases) { section in
+                    NavigationLink { ToolkitDestination(section: section) } label: {
+                        ToolkitSectionRow(icon: section.info.icon,
+                                          title: section.info.title,
+                                          subtitle: section.info.subtitle,
+                                          trailing: trailing(for: section))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(spokenLabel(for: section))
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("My chords, \(savedCountLabel)")
-
-                NavigationLink { MyProgressionsView() } label: {
-                    ToolkitSectionRow(icon: "list.bullet",
-                                      title: "My progressions",
-                                      subtitle: "Progressions you've written",
-                                      trailing: progressionCountLabel)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("My progressions, \(progressionCountLabel)")
-
-                NavigationLink { TunerView() } label: {
-                    ToolkitSectionRow(icon: "tuningfork",
-                                      title: "Tuner",
-                                      subtitle: "Tune by ear or mic",
-                                      trailing: "Free")
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Tuner, tune by ear or mic")
-
-                NavigationLink { GlossaryView() } label: {
-                    ToolkitSectionRow(icon: "text.book.closed",
-                                      title: "Glossary",
-                                      subtitle: "Chord, scale & theory terms",
-                                      trailing: "\(GlossaryTerm.all.count)")
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Glossary, chord, scale and theory terms")
-
-                NavigationLink { FAQView() } label: {
-                    ToolkitSectionRow(icon: "questionmark.circle",
-                                      title: "Help & FAQs",
-                                      subtitle: "How Red Moon works",
-                                      trailing: "\(FAQEntry.all.count)")
-                }
-                .buttonStyle(.plain)
-                // Spelled "and" rather than "&": the label is read aloud, and it's the prefix the
-                // Toolkit UI test matches on.
-                .accessibilityLabel("Help and FAQs, how Red Moon works")
             }
             .padding(20)
             // Cap to a readable column at regular width (iPad / landscape); no-op at compact
@@ -86,15 +53,29 @@ struct ToolkitView: View {
         .tint(PocketColor.toolkit)
     }
 
-    /// "12 saved" / "1 saved" / "None yet" — a count-aware trailing state for the My Chords row.
-    private var savedCountLabel: String {
-        savedChords.isEmpty ? "None yet"
-                            : "\(savedChords.count) saved"
+    /// What sits at a row's end: how many the player has made, or the tool's own state.
+    private func trailing(for section: ToolkitSection) -> String {
+        switch section {
+        case .myChords: savedCountLabel(savedChords.count)
+        case .myProgressions: savedCountLabel(savedProgressions.count)
+        case .myTabs: savedCountLabel(writtenTabs.count)
+        case .tuner: "Free"
+        case .glossary: "\(GlossaryTerm.all.count)"
+        case .help: "\(FAQEntry.all.count)"
+        }
     }
 
-    /// The same, for My Progressions.
-    private var progressionCountLabel: String {
-        savedProgressions.isEmpty ? "None yet" : "\(savedProgressions.count) saved"
+    /// The three things you make say their count; the tools say what they are.
+    private func spokenLabel(for section: ToolkitSection) -> String {
+        switch section {
+        case .myChords, .myProgressions, .myTabs: "\(section.info.title), \(trailing(for: section))"
+        case .tuner, .glossary, .help: section.info.spoken
+        }
+    }
+
+    /// "12 saved" / "1 saved" / "None yet" — a count-aware trailing state.
+    private func savedCountLabel(_ count: Int) -> String {
+        count == 0 ? "None yet" : "\(count) saved"
     }
 }
 
@@ -144,6 +125,6 @@ struct ToolkitSectionRow: View {
 
 #Preview("Toolkit") {
     NavigationStack { ToolkitView() }
-        .modelContainer(for: [SavedChord.self, SavedProgression.self], inMemory: true)
+        .modelContainer(for: [SavedChord.self, SavedProgression.self, WrittenTab.self], inMemory: true)
         .preferredColorScheme(.dark)
 }

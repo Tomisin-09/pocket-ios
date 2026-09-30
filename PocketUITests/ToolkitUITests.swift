@@ -41,6 +41,8 @@ final class ToolkitUITests: UITestCase {
         // prefix matches; a UI test is the only thing that catches the row being unwired.
         XCTAssertTrue(firstElement(in: app, labelStartingWith: "Help and FAQs").exists,
                       "Help & FAQs section missing in Toolkit")
+        // My tabs (ADR 0235) — tabs written on the neck, after My progressions. `MyTabsUITests` drives it.
+        XCTAssertTrue(firstElement(in: app, labelStartingWith: "My tabs,").exists, "My tabs section missing in Toolkit")
         // My progressions (ADR 0218) — the management home for written progressions, beside My chords.
         let myProgressionsRow = firstElement(in: app, labelStartingWith: "My progressions")
         XCTAssertTrue(myProgressionsRow.exists, "My progressions section missing in Toolkit")

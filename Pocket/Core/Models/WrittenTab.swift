@@ -117,3 +117,28 @@ private struct LenientLabel: Decodable {
         label = container.decodeNil() ? nil : try? container.decode(PieceLabel.self)
     }
 }
+
+// MARK: - In the list
+
+extension WrittenTabPayload {
+    /// The line under a tab's title in My tabs: *30 notes · 3 sections · Guitar · Standard*.
+    var summary: String {
+        let notes = labels.count
+        guard notes > 0 else { return "No notes yet" }
+        var parts = ["\(notes) note\(notes == 1 ? "" : "s")"]
+        let sections = content.sections.filter { $0.start < notes }.count
+        if sections > 0 { parts.append("\(sections) section\(sections == 1 ? "" : "s")") }
+        if let tuningLabel { parts.append(tuningLabel) }
+        return parts.joined(separator: " · ")
+    }
+}
+
+extension WrittenTab {
+    /// When it last changed, as the Journal says a day: *Today*, *Yesterday*, or the date.
+    static func day(_ date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+        if calendar.isDate(date, inSameDayAs: now) { return "Today" }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
+           calendar.isDate(date, inSameDayAs: yesterday) { return "Yesterday" }
+        return date.formatted(date: .abbreviated, time: .omitted)
+    }
+}

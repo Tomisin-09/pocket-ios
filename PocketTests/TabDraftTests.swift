@@ -67,6 +67,17 @@ final class TabDraftTests: XCTestCase {
         XCTAssertEqual(writing.content.bars, [4], "the bar line moves along with its note")
     }
 
+    func testTheHereInFrontOfANoteLightsWhereItIs() {
+        var writing = draft(4)
+        writing.insertBefore(2)
+        writing.chordsOn = true
+        writing.place(string: 1, fret: 5)
+        XCTAssertEqual(writing.selected, 2, "Chords keeps the strip on the shape")
+        writing.lightSlot()
+        XCTAssertNil(writing.selected)
+        XCTAssertEqual(writing.slot, 3, "still in front of the note it was before")
+    }
+
     // MARK: - Picking a note
 
     func testPickingANoteSendsTheHereBackToTheEnd() {
@@ -194,6 +205,17 @@ final class TabDraftTests: XCTestCase {
         writing.restore(try XCTUnwrap(history.undo(from: writing.step)))
         XCTAssertEqual(writing.content.bars, [])
         XCTAssertNil(writing.selected, "back at the + at the end, not on the last note")
+    }
+
+    func testANewInstrumentIsAStepEvenWithNoNotesChanged() {
+        let before = TabStep(content: TabContent(), active: 0, openMidi: [64, 59, 55, 50, 45, 40],
+                             tuningLabel: "Guitar · Standard")
+        var after = before
+        after.openMidi = [43, 38, 33, 28]
+        XCTAssertTrue(before.changes(after), "undo has to bring the strings back")
+        after = before
+        after.tuningLabel = "Renamed"
+        XCTAssertFalse(before.changes(after), "the strings are what count, not what they're called")
     }
 
     func testMovingAroundIsNoStep() {

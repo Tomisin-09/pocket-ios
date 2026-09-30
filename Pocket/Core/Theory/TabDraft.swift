@@ -32,6 +32,7 @@ struct TabDraft: Equatable, Sendable {
     }
 
     var count: Int { content.count }
+    var isEmpty: Bool { content.labels.isEmpty }
 
     /// Where *Bar line* and *Section* act: the lit chip, the + or the note picked.
     var position: Int { selected ?? slot }
@@ -134,6 +135,14 @@ struct TabDraft: Equatable, Sendable {
         ringed = marked.flatMap { content.labels[$0]?.frettedNotes.last?.string }
     }
 
+    /// The + lit where it is: in front of a note after *Insert before*, when a shape written there with
+    /// *Chords* on had the strip on it.
+    mutating func lightSlot() {
+        selected = nil
+        marked = slot == count ? content.labels.indices.last : nil
+        awaitingStart = nil
+    }
+
     /// *Insert before N*: the + in front of note N, lit. Each tap adds one more there.
     mutating func insertBefore(_ note: Int) {
         guard content.labels.indices.contains(note) else { return }
@@ -191,13 +200,17 @@ struct TabDraft: Equatable, Sendable {
 }
 
 /// One step of the writer's history: the whole content (notes, bar lines, sections), so a heading taken off
-/// comes back with its notes as one step, and where the writer was.
+/// comes back with its notes as one step; the strings, since a new instrument clears the frets and undoing
+/// it has to bring the strings back with them; and where the writer was.
 struct TabStep: EditStep {
     var content: TabContent
     /// The note picked, or the note count for the + at the end.
     var active: Int
+    /// The strings, set by the writer, which holds them (`TabDraft` doesn't).
+    var openMidi: [Int] = []
+    var tuningLabel = ""
 
-    func changes(_ other: TabStep) -> Bool { content != other.content }
+    func changes(_ other: TabStep) -> Bool { content != other.content || openMidi != other.openMidi }
 
     /// The first note that differs, so what changed is in front of the player; where it was when only a bar
     /// line or a heading did, the + at the end included.

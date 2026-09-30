@@ -1,7 +1,7 @@
 # The Toolkit
 
-The reference shelf: a tuner, the chord shapes you have saved, the progressions you have written, a
-glossary of the words, and the help catalogue. Nothing here practises anything or keeps score — it is the stuff you reach for *around*
+The reference shelf: a tuner, the chord shapes you have saved, the progressions and tabs you have
+written, a glossary of the words, and the help catalogue. Nothing here practises anything or keeps score — it is the stuff you reach for *around*
 playing.
 
 <!-- faq-entries: 20 -->
@@ -10,7 +10,7 @@ The whole Toolkit is **free forever**. There is no lock anywhere in it, on purpo
 whether Red Moon is for them — or someone whose subscription has lapsed — can still tune up, read
 what the app does, and get in touch.
 
-Reach it from **Toolkit** on Home. Five sections:
+Reach it from **Toolkit** on Home. Six sections:
 
 <!-- shot: toolkit/hub | role: screen
      | alt: The Toolkit hub listing My chords, Tuner, Glossary and Help & FAQs, each with its purpose and a count or state
@@ -20,12 +20,13 @@ Reach it from **Toolkit** on Home. Five sections:
 |---|---|
 | **My chords** | Your saved voicings |
 | **My progressions** | Progressions you've written |
+| **My tabs** | Tabs you write on the neck |
 | **Tuner** | Tune by ear or mic |
 | **Glossary** | Chord, scale & theory terms |
 | **Help & FAQs** | How Red Moon works |
 
 Each row carries its own count or state on the right — how many terms and answers there are, how many
-chords or progressions you have saved (**None yet** until you save one) — so the shelf tells you what is on it before
+chords, progressions or tabs you have saved (**None yet** until you save one) — so the shelf tells you what is on it before
 you open anything. The tuner's says **Free**, which is the app stating the rule for the whole shelf.
 
 ## Tuner
@@ -114,6 +115,42 @@ copied in.
 This is the **management** home for progressions, as My chords is for chords. The *Use a progression*
 sheet inside an exercise lists them under **Your progressions** to insert, but editing and deleting
 happen here.
+
+## My tabs
+
+The tabs you have written on the neck, the one you changed last at the top. Each row shows the title,
+when it last changed, and how many notes and sections it has, on which instrument.
+
+- **+** in the toolbar writes a new tab. Empty, the screen says **No tabs yet** and offers **Write a
+  tab**.
+- Tap a tab to read it: the tab drawn section by section, with **Edit** to write more.
+- Hold a row, or swipe it, to **Rename** or **Delete** it. A delete can be undone from the toast.
+
+A written tab belongs to no song, and nothing plays it: there is no recording behind it. It isn't in
+the Journal. It travels in the whole-library export and comes back with a restore, and there is no way
+to share one on its own.
+
+### Writing a tab
+
+The writer is the same neck as Name the notes, in the Toolkit's colour.
+
+- Name it at the top, or leave it: an unnamed tab is called *Untitled tab*.
+- The strip shows your notes as chips, with a **+** where the next one goes. **Tap the neck** and the
+  note fills the **+**, which moves on. Nothing plays.
+- Bend, vibrato, hammer-ons, pull-offs and slides go on the note you just placed, as they do in Name
+  the notes. Turn on **Chords** to put a double-stop or a chord on one chip, a note per string.
+- **Tap a note** to change it. The line under the strip then offers **Insert before** it, after which
+  each tap adds a note there, and **Take** it **out**. Tap another note, or **Back to the end**, to go
+  back to writing at the end.
+- **Bar line** puts a bar line before the lit chip, or takes it away. **Section** starts a section
+  there: pick *Intro*, *Verse*, *Chorus* or another, or type a name. Tap a heading in the strip to
+  rename it, or **Take the heading off**; its bar line stays.
+- **↶** and **↷** undo and redo everything since you opened it, bar lines and sections included.
+- **The tab so far** draws it under the neck as you go. It saves as you go, and **Done** goes back.
+- A new instrument asks first, since it clears the frets. **↶** brings them back.
+
+A tab with sections is drawn a section at a time, each under its heading, with its bar lines, and rows
+that keep whole bars together.
 
 ## Glossary
 
