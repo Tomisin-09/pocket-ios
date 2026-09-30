@@ -41,7 +41,10 @@ jobs:
     name: Lint · Build · Test
     needs: scope
     runs-on: ${{ needs.scope.outputs.docs_only == 'true' && 'ubuntu-latest' || 'macos-15' }}
-    timeout-minutes: 30
+    # A backstop for a hung run, not a budget. Was 30 from the scaffold; by 2026-09-30 a green run took
+    # 25–29 minutes (about 11 building, 16 in UI tests), so one slow runner or one retry cancels the
+    # job before it can report (pocket-341's first run was cut off 26 s after its last test).
+    timeout-minutes: 45
     steps:
       - name: Docs-only change
         if: needs.scope.outputs.docs_only == 'true'

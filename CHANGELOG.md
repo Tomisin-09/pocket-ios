@@ -331,6 +331,8 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **CI's job gets 45 minutes, up from 30.** A green run was taking 25–29 minutes, so one slow runner or one
+  retry cancelled it before it could report. The limit is a backstop for a hung run, not a budget.
 - **Name the notes' neck is shared with the tab writer** (ADR 0235 D9). Its rules moved into a pure
   `NeckEditing` (17 tests pinning what it did) and its view into `NeckNoteEditor`; the undo history became
   a generic `EditHistory`, and a piece's drawing reads its notes without their seconds (`PieceNotes`).
