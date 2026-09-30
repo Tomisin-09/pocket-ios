@@ -234,6 +234,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   note it caught on. Leave a line on a snag for when you come back: it saves to the loop's Journal
   straight away, and shows under the strip on that note. *Saved on this loop* lists the piece's snags,
   and a snag's line in the Journal names its note and opens *Name the notes* there (ADR 0234).
+- **A saved piece reads as tab, not a wall of names.** *Saved on this loop* opens with one line — "98
+  notes · Guitar · Standard · 6 unnamed" — then the tab in rows that fit the screen, each saying which
+  notes it holds, instead of one line that ran off the side. A name given by ear or a chord sits above
+  the strings where it falls, an unnamed note is a dot, and four or more unnamed in a row are counted.
+  A piece named only by ear is its names in fours. The Journal's Pieces rows show just that first line
+  until you tap *See the notes*; the song map's tab sheet draws the same, and a hold still copies the
+  tab (ADR 0234).
 - **A Journal note opens the loop where it was written.** Tapping the loop's name on an 👂 Ear or 🧩
   Transcribed note opens *Train your ear*, and on a 🎸 Improv note opens *Improvise*, rather than the
   loop's ordinary practice. Other notes open as before (ADR 0228).

@@ -4,9 +4,9 @@ import SwiftUI
 /// its piece every time, and the ways to work on it. Reading is the light action, so it's the tap; working
 /// on it is one more.
 ///
-/// The tab is `TabLine`'s, the same one *Saved on this loop* and the Journal's Pieces rows draw, so the
-/// three can't disagree (**edit pieces, never the picture**, 0225 D10). A name given by ear has no fret,
-/// so it lives in the piece's line rather than the tab.
+/// The piece is `PieceDrawing`, the same one *Saved on this loop* and the Journal's Pieces rows draw, so the
+/// three can't disagree (**edit pieces, never the picture**, 0225 D10; ADR 0234 D8). A name given by ear
+/// has no fret, so it sits above the strings in its column.
 struct SongMapPieceSheet: View {
     let loop: Loop
     let piece: SongMap.Piece
@@ -77,27 +77,10 @@ struct SongMapPieceSheet: View {
                 .foregroundStyle(PocketColor.textPrimary)
             hint("Count it in Train your ear to see it here.")
         case .piece(let transcription):
-            if let line = transcription.summary(spelling: spelling) {
-                Text(line)
-                    .font(.futura(.body))
-                    .foregroundStyle(PocketColor.textPrimary)
-            }
-            if let tab = TabLine.render(transcription.labels, openMidi: transcription.openMidi ?? []) {
-                VStack(alignment: .leading, spacing: 4) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        Text(tab)
-                            .font(.pocketMono(.footnote))
-                            .foregroundStyle(PocketColor.textPrimary)
-                            .fixedSize()
-                            .textSelection(.enabled)
-                    }
-                    if let tuning = transcription.tuningLabel {
-                        Text(tuning)
-                            .font(.futura(.caption))
-                            .foregroundStyle(PocketColor.textSecondary)
-                    }
-                }
-            } else if piece.layer == .notes {
+            // The same drawing as Saved on this loop (ADR 0234 D8). The tab could be selected as text here,
+            // so it keeps a way to copy it.
+            PieceDrawing(piece: transcription, spelling: spelling, copyable: true)
+            if !transcription.hasFrettedLabels, piece.layer == .notes {
                 hint("Name the notes on the neck in Train your ear and their tab appears here.")
             }
         }

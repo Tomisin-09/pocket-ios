@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// The loop's **saved piece** (ADR 0225), under Count the notes: its count and names, and the tab drawn
-/// from it when any note has a fret. Drawn from the stored piece every time, never kept as text, so the
-/// tab can't be edited apart from the piece it came from (**edit pieces, never the picture**).
+/// The loop's **saved piece** (ADR 0225), under Count the notes, drawn for reading (`PieceDrawing`, ADR
+/// 0234 D8): its count, then its tab in rows that fit, with names given by ear above them. Drawn from the
+/// stored piece every time, never kept as text, so the tab can't be edited apart from the piece it came
+/// from (**edit pieces, never the picture**).
 ///
 /// **Name the notes** opens on it, the only way in since ADR 0234 D1: a pass is saved first and named
 /// here, so names can't be left on scratch paper. A new pass saved over it keeps it as an earlier version
