@@ -20,6 +20,9 @@
 - **Amended by:** ADR 0233 (Versions of a piece, 2026-09-30) — **D6**: *Save* over a saved piece no
   longer replaces it after a prompt. The new pass is the piece in use and the one before is kept as an
   earlier version, which **Versions** can use again or delete. The rest of D6 stands.
+- **Amended by:** ADR 0234 (Naming from real use, 2026-09-30) — **D5**: *Name the notes* opens on the
+  saved piece only, so a pass is saved first and named there, and *Hear it again* goes, since a chip
+  tap does the same. The rest of D5 stands.
 - **Amends:** ADR 0104 — **E3** and **E6**. E3's "no transcription store" is reversed for one case on
   purpose: a loop now carries its **piece**, structured and read by a named future reader (D8). The
   Journal stays the dated history, and free-text notes still go nowhere else. E6's "a tally … is out of

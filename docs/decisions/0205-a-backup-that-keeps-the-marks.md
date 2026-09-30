@@ -10,6 +10,9 @@
   absent-tolerant, and the rule D5 states is extended to cover scalars, which it had no mechanism
   for. D5's named-overload discipline for collections stands exactly as written, as does everything
   else here; only D5's closing paragraph ("left as it is … parked in `docs/backlog.md`") is overtaken.
+- **Amended by:** ADR 0234 (Naming from real use, 2026-09-30) — **D1**: `SnagRecord` gains an optional
+  `markedWhileNaming`, and `JournalEntryRecord` an optional `snagUID`, both landed by restore. D4
+  stands.
 - **Relates to:** ADR 0199 (the span history), ADR 0200 (the mark), ADR 0152 (relinking, which is why
   `songDuration` travels), ADR 0148 (why bookmarks do not)
 - **Schema:** none in the store. The **archive format** gains two additive optional collections; see

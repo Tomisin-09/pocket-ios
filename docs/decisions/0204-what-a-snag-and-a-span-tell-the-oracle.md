@@ -7,6 +7,10 @@
   the new fields; the output-side guarantees (D7, D8, D11, D12) are untouched.
 - **Amends:** ADR 0199 — the span history now has its first reader outside the app (D2). The
   record, the cascade and the `SpanHistory` rules are unchanged.
+- **Amended by:** ADR 0234 (Naming from real use, 2026-09-30) — **D1**: a snag inside a loop may be a
+  note the player was stuck naming, not a stumble (`Snag.markedWhileNaming`). Nothing reads the field
+  yet and the builder still sends every snag in the span, so a returning Oracle reads it before
+  treating a snag as a stumble.
 - **Relates to:** ADR 0200 (the mark), ADR 0203 (the position rule this inherits), ADR 0070 (never
   grading), ADR 0092 (the AI charter), ADR 0121 (why a tempo never travels without its rate)
 - **Schema:** none. No model, no new stored field — this reads what 0199 and 0200 already store.

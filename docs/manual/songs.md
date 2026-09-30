@@ -141,11 +141,11 @@ lane of its own. Every song you've worked pieces out on has the same button in t
 
 Each loop shows what it holds, and nothing else. A dashed outline is a loop you haven't worked out
 yet. Dots are the notes you counted in **Count the notes**, and the line under the loop's name is what
-you named them, the same line the Journal shows. There is no score and no percentage: it's your
-pieces, laid out.
+you named them. There is no score and no percentage: it's your pieces, laid out.
 
-Tap a loop to see its tab: the notes you placed on the neck, in the tuning you named them in, with the
-line of names above it. From there, **Train your ear** is where you count it and name it; the map fills
+Tap a loop to see its tab: the notes you placed on the neck, in the tuning you named them in, in rows
+that fit the screen, with any name you gave by ear above the strings where it falls. Hold the tab to
+copy it. From there, **Train your ear** is where you count it and name it; the map fills
 in as you go. Saving a new count over one keeps the one before, and **Versions** on the tab lists them
 all, the one in use first: **Use this version** swaps another in, and the map and its tab follow. The one
 it replaces is kept, so you can always go back. Hold a loop instead to skip the tab: the menu offers **View tab**, **Train your ear**,

@@ -600,9 +600,12 @@ each note you hear, then name them. The pieces, from the audio up:
 - **The render path.** Two leaves read the clock every frame (`TimelineView`s, ADR 0153), and each
   reports only a change: `LivePassRow` tells the model when the pass changes, and the naming strip's
   `HeardChipTracker`, there only while the sheet plays the loop or a phrase (`NamingStrip.Following`),
-  says which chip is being heard (`NamingStrip.heard`). The neck lights that chip's placed notes
-  (`NamingStrip.heardNotes`, a `HeardHalo` behind each spot) from the same state, with no clock of
-  its own, and never scrolls to follow.
+  says which chip is being heard (`NamingStrip.heard`). The neck lights that chip's placed notes from
+  the same state, with no clock of its own, and never scrolls to follow. Since ADR 0234 D5 the glow
+  moves the way the note was played: the pure `HaloMotion` (`Core/Theory`) reads the note and the one
+  before it (a lead-in or join first, then a bend, then vibrato, else a pop), and `HeardGlows` animates
+  it with `keyframeAnimator` in `FretNeckBoard`'s `beneath` slot, under the dots; Reduce Motion fades
+  only.
 - **The slice.** `playSlice(from:length:rate:)` reads 0.35 s of the file (from 80 ms before the tap)
   into a PCM buffer, applies `AudioSlice.gain` sample by sample (a 5 ms rise, a 60 ms fall, zero at
   both ends), pads silence for the stretcher's latency, and plays it once through the loop's own
@@ -615,8 +618,9 @@ each note you hear, then name them. The pieces, from the audio up:
   taps from the remembered `AppSettings.Key.namingPhraseNotes`. While it plays, the strip reads the
   slice's own clock (`sliceClock`): the player's sample time, which the stop before every slice sets
   back to zero, through the stretcher's latency and the route's, held at the slice's end.
-- **Naming.** `NameTheNotesSheet` shows the pass as a strip of chips over two sheets, Fret & string
-  and By ear (ADR 0227). Fret & string is `FretNeckBoard`, the draw-your-own board lifted out of
+- **Naming.** `NameTheNotesSheet` shows the loop's **saved piece** as a strip of chips over two
+  sheets, Fret & string and By ear (ADR 0227). Since ADR 0234 D1 a pass is saved before it's named, so
+  the saved piece is the only thing a `NamingRequest` carries. Fret & string is `FretNeckBoard`, the draw-your-own board lifted out of
   `FretboardDrillEditor` so both draw one grid with their own dots; the piece's instrument and tuning
   (`NamingTuning`, chosen in `NamingInstrumentSheet`) are its own, never the tuner's. The slice is the only thing it sounds: it no longer touches `ToneEngine`, since
   the synth isn't close enough to a guitar to compare against (0227 D8). By ear's tap rules
@@ -626,8 +630,17 @@ each note you hear, then name them. The pieces, from the audio up:
   tapped on the shared `TapPad` (moved out of `CountTheNotesSection`) while the stretch around the chip
   plays; its second is the slice clock's heard second (`AudioSlice.heardSecond`), so it lands where a
   count would have put it. The stretch, the insert, the removal and the join tidy are pure
-  (`PassCorrection`, in `Core/Audio`). Done hands the taps back (`NamingResult.taps`), and a pass takes
-  them through `TapPasses.replaceTaps`.
+  (`PassCorrection`, in `Core/Audio`). Done hands the taps back (`NamingResult.taps`), and the saved
+  piece takes them in place.
+  **Since ADR 0234**:
+  - Placing a note moves on silently, and the marks follow the note just placed (`NamingCursor`,
+    `Core/Theory`); only a chip tap plays.
+  - The neck ranks the three notes either side of the current one (`NeckNeighbours`: filled before,
+    ringed after, numbered, the nearer winning a shared spot).
+  - Every change to the taps or tuning goes through one `commit`, which tidies the joins and records a
+    step in `NamingHistory` (`Core/Audio`, up to 100), so ↶ ↷ and ⌘Z / ⇧⌘Z / ⌘Y undo whole changes.
+  - Holding a chip toggles a `Snag` on its note (`NameTheNotesSheet+Snags`). It's saved at once and
+    kept outside the history.
 - **Storage.** `Loop.transcriptionData: Data?` (additive, Optional) holds a `PieceTranscription`: taps
   with optional `PieceLabel`s (pitch class · notes on the neck · chord root + `ChordQuality` suffix),
   plus the open strings any fret was placed against and, since ADR 0229, `changedAt` (set by a save or a
@@ -648,7 +661,12 @@ each note you hear, then name them. The pieces, from the audio up:
   `NeckShape` reads a shape through `ChordNamer` (root position first, a slash name for an inversion, an
   upside-down power chord as a 4th) or as an interval; `NeckPlacement` holds the tap rule (Chords off
   replaces; on, one note per string). The archive carries it as `LoopRecord.transcription`. `TabLine`
-  draws the tab from the piece each time; no text copy is stored anywhere.
+  draws the tab from the piece each time; no text copy is stored anywhere. For reading (ADR 0234 D8),
+  the pure `PieceStaff` lays a piece out: columns with what the strings can't say above them, rows that
+  fit a width in characters without splitting a column, and a by-ear piece as names in fours.
+  `PieceDrawing` draws it in *Saved on this loop*, Versions, the map's piece sheet and the Journal's
+  Pieces row, where it folds to its count. It measures its width on an empty greedy line, never on the
+  rows, because a flexible frame reports a wider child's width and would feed back.
 
 **The song map reads the pieces** (ADR 0232, `Core/SongMap` + `Features/SongMap`). It stores nothing
 of its own but four declarations: `Marker.startsSection` and `Loop.repeatsToSectionEnd` (declaration
@@ -1563,6 +1581,16 @@ empty, because that line was Home's only word about adding a first song.
   `PracticeRun.unitUID` shape (ADR 0117) — because deleting a loop must not delete the record of
   what happened while you played it, and it is never filtered in a `#Predicate` (the
   optional-relationship freeze), so a bare `UUID?` is honest about how it is read.
+
+  Since ADR 0234 D7 a snag can also be made on a note while naming, by holding its chip. It's the same
+  model, with `markedWhileNaming: Bool?` (additive, Optional, a plain Bool rather than an enum) set, so
+  a stuck note can be told from a stumble. Nothing reads it yet; the Oracle's context builder still
+  sends every snag in a span (0204 D1). `SnagOnPiece` puts any snag on the nearest tap within a second,
+  and `Loop.snagsOnPiece` gives a piece its snags in order. A snag's optional line is an ordinary 👂
+  Ear `JournalEntry` on the loop, tied by `JournalEntry.snagUID: UUID?`, a loose copy like `loopUID`.
+  Deleting the snag leaves the line as a plain note. `SongMapInput`'s `handTagged` ignores a line tied
+  to a snag, and `JournalOwnerRoute.naming` opens *Name the notes* at its note. The archive carries both
+  fields as Optionals (`SnagRecord`, `JournalEntryRecord`).
 
   What separates it from `Marker` is cost and scope, and that difference *is* the feature: a marker
   is a named landmark you stop to write, a snag is anonymous and costs one tap, which is the only

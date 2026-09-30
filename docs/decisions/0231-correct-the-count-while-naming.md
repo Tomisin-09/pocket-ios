@@ -5,6 +5,9 @@
 - **Amends:** ADR 0225 — **D5**: *Name the notes* names a pass's taps, and can now also take a tap out
   or add a note the player missed, tapped in against the recording. The rest of D5 stands, and so does
   D3: every tap is still one the player made, in song seconds.
+- **Amended by:** ADR 0234 (Naming from real use, 2026-09-30) — **D3**: each correction is one step of
+  the sheet's undo history, and its inline Undo takes that step back while the pass is as the
+  correction left it. The rest stands.
 - **Relates to:** 0227 (the strip, D2, that the corrections sit under; joins, D5) · 0230 (which left
   adding and removing taps as a separate question) · 0070 (never grades).
 

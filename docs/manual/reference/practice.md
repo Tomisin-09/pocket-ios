@@ -194,15 +194,22 @@ notes just before it, ending on it, so you hear how the line got there; each is 
 *Hear 3 notes* at the top right of the strip sets how many, from *Just the note* to eight, and Red Moon
 remembers it. To hear the notes as a line, the play button at the start of the strip plays the whole
 loop at the speed you set, ringing each note as it goes by; on Fret & string, where you placed each
-note also lights up on the neck as it plays. Tap a note to stop and hear it.
+note also lights up on the neck as it plays, moving the way you played it: a bend glides up to where it
+lands, vibrato shakes, a hammer-on or pull-off lights where it started and snaps across, and a slide
+travels along the string. With Reduce Motion each only fades in. Tap a note to stop and hear it.
 If you find a note you didn't count, or one you counted that isn't there, you don't have to count again.
 *Missed a note?* under the strip plays from the note before the one you're on to the note after, with a
 pad: tap it once where you hear the missing note, and it goes in where you tapped, unnamed. *Take note
 12 out* removes the note you're on, and its name. `Undo` puts either back until you change something
 else.
 Then say what it was on one of two sheets (the ⓘ beside `Chords` and `Into it` explains each): `Fret & string` for where you played it, or `By ear` for what
-you heard. Fret & string is the neck: tap where you played the note. Every spot carries its note name
-faintly, and the pass's other notes stay on the neck so you can see the lick's shape. `Where did you play
+you heard. Fret & string is the neck: tap where you played the note, and it moves straight on to the
+next one without playing anything; only tapping a note in the strip plays. The marks below stay on the
+note you just placed, and the line above them says which, until you place the next. With `Chords` on it
+stays put, since a chord is several taps. Every spot carries its note name faintly. The three notes
+before the one you're naming are filled and the three after it ringed, fading the further they are, each
+with its number, so a lick reads in order even where it comes back to the same fret; the rest of the
+pass sits faintly behind them. `Where did you play
 it?` sets guitar or bass and the tuning for this piece only; a new tuning keeps your frets, and a new
 instrument clears them after asking. Under the neck, `Into it` says how you got to the note: `Picked`,
 `Hammer-on`, `Pull-off` or `Slide`. A quick hammer-on or slide can sound like one note or two, so it
@@ -221,7 +228,21 @@ that aren't one, the interval between them. By ear has the twelve note names and
 of chord grouped by how many notes they hold. The kind you pick stays picked, and tapping a name saves it
 and moves on, so a solo named by ear is one tap a note. A note placed on the neck reads on By ear as the
 note it sounds, and naming it something else there asks first. `Next unnamed` jumps to the next note
-without a name. Red Moon never plays your answer: play it on your own instrument against `Hear it again`,
-and you decide whether they match. `Done` writes the names onto the saved piece, which shows a line of
-tab once you've placed frets and is listed in the journal under `Pieces`. Saving another pass keeps this
-one as an earlier version.
+without a name, and ↶ and ↷ beside it undo and redo any change made on this visit: a fret, a mark, a
+name, a note taken out or tapped in, a new tuning. With a keyboard, ⌘Z, ⇧⌘Z and ⌘Y work too. Red Moon
+never plays your answer: tap the note in the strip, play it on your own instrument, and you decide
+whether they match.
+
+Hold a note in the strip to **snag** it, somewhere you're stuck, and hold it again to take the snag off;
+a hold never plays the note. It's the same crimson snag you make on the practice screen while you play,
+so it shows on the waveform and in the `Snags` panel too, and a snag made while playing shows here on
+the note it's nearest. Under the strip, `Add a line` leaves yourself a line about it for when you come
+back. It saves to the loop's journal straight away, and `Next snag` goes to the next one.
+
+`Done` writes the names onto the saved piece. Under `Saved on this loop` it reads as one line (*98 notes
+· Guitar · Standard · 6 unnamed*), then its tab in rows that fit the screen, each saying which notes it
+holds. A name you gave by ear, or a chord, sits above the strings where it falls; an unnamed note is a
+dot, and four or more unnamed in a row are counted. A piece named only by ear is its names, in fours.
+`Snags on this piece` lists where you got stuck, with your lines, and tapping one opens `Name the notes`
+on that note. The piece is listed in the journal under `Pieces`. Saving another pass keeps this one as
+an earlier version.
