@@ -13,12 +13,24 @@ struct PieceNotes: Equatable, Sendable {
     var openMidi: [Int]?
     /// How the strings were described when it was written, e.g. "Guitar · Standard".
     var tuningLabel: String?
+    /// A written tab's bar lines and sections (ADR 0235 D4), between its notes. A loop's piece has neither.
+    var bars: [Int]
+    var sections: [TabSection]
 
-    init(labels: [PieceLabel?], openMidi: [Int]? = nil, tuningLabel: String? = nil) {
+    init(labels: [PieceLabel?], openMidi: [Int]? = nil, tuningLabel: String? = nil, bars: [Int] = [],
+         sections: [TabSection] = []) {
         self.labels = labels
         self.openMidi = openMidi
         self.tuningLabel = tuningLabel
+        self.bars = bars
+        self.sections = sections
     }
+
+    /// Whether it has bar lines or sections to draw, which only a written tab can.
+    var hasStructure: Bool { !bars.isEmpty || !sections.isEmpty }
+
+    /// The sections with a note in them: a heading waiting for the next note written isn't one yet.
+    var sectionsWithNotes: [TabSection] { sections.filter { $0.start < count } }
 
     var count: Int { labels.count }
     var hasFrettedLabels: Bool {

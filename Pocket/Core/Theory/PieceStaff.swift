@@ -28,6 +28,12 @@ enum PieceStaff {
         let cells: [Cell]
         /// Nothing named here (`·`, a count, or `?` for an answer that can't be read): drawn quieter.
         var isQuiet = false
+        /// A written tab's bar line (ADR 0235 D4), before note `note`: a column with nothing in it but the
+        /// line, so a row is still one run of columns.
+        var isBar = false
+
+        /// Unique in a row: a bar line shares its note with the column after it.
+        var id: Int { isBar ? -(note + 1) : note }
 
         /// Its width in characters: its widest cell or word.
         var width: Int { max(1, above?.count ?? 0, cells.map(\.text.count).max() ?? 0) }
