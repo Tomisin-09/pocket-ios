@@ -8,6 +8,12 @@
   subtitles gone, and §1's rule that a destination's accessibility label is the UI-test contract.
   The hidden tile still sets the Learn row's height, so reopening the door moves nothing else; the
   arithmetic below that says *six* is the arithmetic of the tiles drawn, not of the doors that open.
+- **Amended by:** ADR 0235 (Write a tab, 2026-09-30) — **D1**: six reachable tiles again, and two
+  share a hue on purpose: the tile beside Toolkit is the player's own, opens a Toolkit tool, and wears
+  Toolkit's indigo. The glyph and name tell the two apart. **D3**: that tile carries a second caption,
+  *Hold to change*, until it has been changed once; like the empty library's, it is an instruction
+  that goes once followed. D2 and D6 stand: the tile's spoken label is its tool's row, and it lives in
+  `HomeView+Map.swift`.
 - **Relates to:** **reverses ADR 0102**'s rejection of a tile grid, on the stated grounds that it
   was decided at four cards. Keeps everything else 0102 established — the three titled sections, and
   §1's rule that a destination's accessibility label is the UI-test contract. Spends the height on
