@@ -5,9 +5,10 @@
 - **Amends:** ADR 0211 — **D3**: the half beside Toolkit is the player's own tile (D6), no longer the
   Oracle's tile drawn hidden. The alternative refused there, *another destination in the empty slot*,
   is taken in a different shape: not a new destination, but a second way into a Toolkit tool the
-  player picks. **D6**: a reopened door now draws the Oracle on a row of its own (D7) instead of
-  unhiding a tile. D1, D2, D4, D5 and D7 stand: the Oracle stays unreachable, and its launch argument
-  and its negative test are unchanged.
+  player picks. **D6**: deleting `learnRow`'s condition is no longer the whole of reopening the door,
+  since the half it would unhide is the player's tile now; where the Oracle goes is left for when it's
+  picked up again (D7). D1, D2, D4, D5 and D7 stand: the Oracle stays unreachable, and its launch
+  argument, its test door and its negative test are unchanged.
 - **Amends:** ADR 0197 — **D1**: six reachable tiles again, and two of them share a hue. The player's
   tile wears Toolkit's indigo, since it opens a Toolkit tool; the glyph and name tell the two apart.
   **D3**: a second tile carries a caption, *Hold to change*. It is also an instruction, and it goes
@@ -19,7 +20,7 @@
   tab. The rest of D10 stands, and a written tab takes the same marks with the same limits.
 - **Relates to:** 0193 D4 (the two ways into a Home choice, reused, not changed) · 0163 (a hold beside
   a Settings row that stays findable) · 0162 (Settings ▸ Practice, which gains a card) · 0187 (the
-  Oracle, whose return D7 places) · 0232 D10 and D12 (the map's tab stays drawn from pieces; no share
+  Oracle, left out: D7) · 0232 D10 and D12 (the map's tab stays drawn from pieces; no share
   or export; never imported) · 0150 (the legal review sharing waits on) · 0234 (the neck, the undo
   history and the drawn piece, reused) · 0229 (the Journal's Pieces, which written tabs stay out of) ·
   0218 (`SavedProgression`, the pattern the new entity follows) · 0181 and 0188 (the archive and
@@ -136,7 +137,7 @@ other defaults stand.
   progressions, Tuner, Glossary, Help & FAQs. It takes the chosen tool's **name and icon**, so it always
   says where it goes, and its spoken label is that row's, *My tabs, tabs you write on the neck*.
 - **Two ways to change it**, as Jump back in has (0193 D4):
-  - **hold the tile**: a menu, *This tile opens*, with the six;
+  - **hold the tile**: a menu of the six, with no heading, as Jump back in has;
   - **Settings ▸ Practice**, a card of its own, *Beside Toolkit*, footed *The tile beside Toolkit on
     Home opens the tool you pick here. You can also hold the tile to change it.*
 
@@ -149,12 +150,12 @@ other defaults stand.
 - **It is a link with a context menu, never a button with a hold**, which fires both.
 - It lives in `HomeView+Map.swift` with the other tiles (0197 D6).
 
-### D7 — A returning Oracle gets a place of its own
+### D7 — The Oracle is out of scope
 
-The Oracle only adds: if it is ever the thing a player pays for, it can't arrive by taking back a door
-the player chose. **It never takes the tile back.** If its door reopens, it draws on a row of its own in Learn. Until then nothing about it
-changes: `-oracleDoor` still needs `-uiTesting`, and the negative test still fails if a player can
-reach it.
+This record decides nothing about the Red Moon Oracle, including where it goes if its door reopens:
+that is decided when the Oracle is picked up again. Its code is untouched, and so is its test-only
+door, which still draws the Learn row as before, Oracle and Toolkit, with no player's tile.
+`-oracleDoor` still needs `-uiTesting`, and the negative test still fails if a player can reach it.
 
 ### D8 — Kept on the device and in the backup, nowhere else
 
@@ -191,7 +192,7 @@ and drift. Making the sheet generic would mean faking a player. So:
 - Share, copy and export (D8).
 - The Journal, and Map the song. A written tab has no song time to sit on.
 - *By ear*, snags and *Next unnamed* in the writer (D3).
-- The Oracle on the tile (D7).
+- The Oracle, and where it would go if it came back (D7).
 
 ## Build order
 
@@ -208,7 +209,7 @@ On `pocket-341-write-a-tab`, each commit able to stand alone:
 9. `TabDraft`.
 10. `WrittenTab`, the archive and restore.
 11. `ToolkitSection`, My tabs and the writer.
-12. The Home tile, its setting, and the Oracle's own row.
+12. The Home tile and its setting.
 13. Docs.
 
 ## Consequences

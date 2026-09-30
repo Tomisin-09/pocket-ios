@@ -27,7 +27,8 @@
   D23 and was still rejected on reading it. `docs/backlog.md` holds the research deliverable that
   reopens it (0211 D6), and S2–S5 are untouched and still unstarted.
   Since 0235 (Write a tab, 2026-09-30) the half beside Toolkit is the player's own tile, so the
-  Oracle's tile is no longer drawn there, hidden; a reopened door draws it on a row of its own.
+  Oracle's tile is no longer drawn there, hidden. Where it goes if the door reopens is left open
+  (0235 D7).
 - **Amended by:** ADR 0204 — **D6 gains an eighth rule (R8)**: a snag crosses as a position,
   never as a count or a rate. `OracleContext.Unit` gains `snags`, `droppedSnags` and `spans`
   (0204 D1, D2), and marks and spans are exempt from D6 R4's free-text budget (0204 D4). D6's
