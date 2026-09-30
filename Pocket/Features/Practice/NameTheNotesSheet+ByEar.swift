@@ -26,7 +26,8 @@ extension NameTheNotesSheet {
                     let isRead = reading?.root == pitchClass || loose.contains(pitchClass)
                     pickButton(spelling.name(pitchClass: pitchClass),
                                state: !isRead ? .plain : onTheNeck ? .read : .picked) {
-                        apply(EarPick.name(pitchClass, as: activeKind, over: current, openMidi: tuning.openMidi))
+                        apply(EarPick.name(pitchClass, as: activeKind, over: current, openMidi: tuning.openMidi),
+                              advancesOnReplace: true)
                     }
                 }
             }
@@ -83,7 +84,8 @@ extension NameTheNotesSheet {
                 ForEach(group.kinds, id: \.self) { kind in
                     pickButton(kind.title, state: kindState(kind, reading: reading, onTheNeck: onTheNeck)) {
                         earKind = kind
-                        apply(EarPick.kind(kind, over: labels[active], openMidi: tuning.openMidi))
+                        apply(EarPick.kind(kind, over: labels[active], openMidi: tuning.openMidi),
+                              advancesOnReplace: false)
                     }
                     .frame(minWidth: 52)
                 }
@@ -102,8 +104,9 @@ extension NameTheNotesSheet {
         return onTheNeck && reading?.kind == kind ? .read : .plain
     }
 
-    /// Carry out a By ear tap: save (and maybe move on), or ask before overwriting neck work.
-    private func apply(_ pick: EarPick) {
+    /// Carry out a By ear tap: save (and maybe move on), or ask before overwriting neck work. A name that
+    /// had to ask still moves on once replaced, as it would have without asking.
+    private func apply(_ pick: EarPick, advancesOnReplace: Bool) {
         replacing = nil
         switch pick {
         case .save(let label, let advance):
@@ -111,6 +114,7 @@ extension NameTheNotesSheet {
             if advance { self.advance() }
         case .askToReplace(let label):
             replacing = label
+            replacingAdvances = advancesOnReplace
         case .none:
             break
         }

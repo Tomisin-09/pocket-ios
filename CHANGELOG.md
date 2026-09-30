@@ -213,6 +213,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   now opens from the saved piece under *Saved on this loop*, so names are never left on a pass that
   **Clear** would throw away. A small **▶** beside *Show beats* starts and stops the loop, so you can
   count without scrolling back up to the big button (ADR 0234).
+- **Naming on the neck moves on by itself.** In *Name the notes*, placing a note on *Fret & string* goes
+  straight to the next one, silently: only tapping a note in the strip plays anything, so a long *Hear 8
+  notes* no longer plays every time you move. *Into it*, *Bend* and *Vibrato* stay on the note you just
+  placed (its chip is outlined, and the line above them names it) until you place the next. *Hear it
+  again* and *Next note* are gone, since a tap on a note and placing it do both (ADR 0234).
+- **Undo and redo in Name the notes.** ↶ and ↷ sit where those buttons were, beside *Next unnamed*, and
+  take back any change made on the visit: a fret, a mark, a name, a note taken out or tapped in, a new
+  tuning. With a keyboard, ⌘Z, ⇧⌘Z and ⌘Y work too (ADR 0234).
 - **A Journal note opens the loop where it was written.** Tapping the loop's name on an 👂 Ear or 🧩
   Transcribed note opens *Train your ear*, and on a 🎸 Improv note opens *Improvise*, rather than the
   loop's ordinary practice. Other notes open as before (ADR 0228).

@@ -2,8 +2,8 @@ import SwiftUI
 
 // **Correcting the count** (ADR 0231), under the strip: take the chip's tap out, or add a note that was
 // missed by tapping it on the pad while the stretch around the chip plays. A miscount found while naming no
-// longer means counting again. Every correction can be undone until the next change. Split out for file
-// length.
+// longer means counting again. Each correction is one step of the sheet's history (ADR 0234 D6), with an
+// Undo beside what it did until the next change. Split out for file length.
 extension NameTheNotesSheet {
 
     /// The two corrections, and under them what the last one did with **Undo**, so a second stray tap can
@@ -24,7 +24,7 @@ extension NameTheNotesSheet {
                 if let undo, undo.isCurrent(for: taps) {
                     HStack(spacing: 18) {
                         hint(undo.said)
-                        link("Undo") { undoCorrection(undo) }
+                        link("Undo") { undoLast() }
                             .accessibilityIdentifier("naming.undoCorrection")
                     }
                 }
@@ -80,22 +80,17 @@ extension NameTheNotesSheet {
                 said: "Took \(noun) \(active + 1) out.")
     }
 
-    /// Apply a correction, tidied first so a join it breaks is gone before Undo remembers the result.
+    /// Apply a correction as one step of the history, tidied first (`commit`) so a join it breaks goes in
+    /// the same step. The line under it says what it did, with Undo, while nothing has changed since.
     private func correct(to corrected: [PieceTranscription.Tap], selecting index: Int, said: String) {
-        let tidy = PassCorrection.tidied(corrected)
-        undo = PassCorrection.Undo(before: taps, after: tidy, selected: active, said: said)
+        let before = taps
+        let selected = active
         // The ring's taps have moved under it.
         sounding = nil
-        taps = tidy
+        commit(taps: corrected)
+        undo = PassCorrection.Undo(before: before, after: taps, selected: selected, said: said)
+        placedNote = nil
         active = index
-        chipChanged()
-    }
-
-    private func undoCorrection(_ undo: PassCorrection.Undo) {
-        self.undo = nil
-        sounding = nil
-        taps = undo.before
-        active = undo.selected
         chipChanged()
     }
 }

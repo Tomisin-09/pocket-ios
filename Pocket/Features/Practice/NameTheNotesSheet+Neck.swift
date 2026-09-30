@@ -27,9 +27,10 @@ extension NameTheNotesSheet {
                 let spot = Spot(string: string, fret: fret)
                 neckSpot(string: string, fret: fret, isOther: others.contains(spot), isHeard: heard.contains(spot))
             } marks: {
-                NeckMarksLayer(notes: labels[active]?.frettedNotes ?? [],
-                               previous: active > 0 ? labels[active - 1]?.frettedNotes ?? [] : [],
-                               join: NeckJoin.symbol(into: active, of: labels),
+                // The marks are drawn on the note they go on, which after a placement is the one just placed.
+                NeckMarksLayer(notes: labels[marked]?.frettedNotes ?? [],
+                               previous: marked > 0 ? labels[marked - 1]?.frettedNotes ?? [] : [],
+                               join: NeckJoin.symbol(into: marked, of: labels),
                                stringCount: tuning.openMidi.count, maxFret: PieceLabel.maxFret,
                                headroom: Self.marksHeadroom)
             }
@@ -80,7 +81,9 @@ extension NameTheNotesSheet {
         let notes = labels[active]?.frettedNotes ?? []
         let isPlaced = notes.contains { $0.string == string && $0.fret == fret }
         // In a shape, the ringed note is the one bend and vibrato go on.
-        let isRinged = isPlaced && notes.count > 1 && string == ringed
+        let markedNotes = labels[marked]?.frettedNotes ?? []
+        let isRinged = markedNotes.count > 1 && string == ringed
+            && markedNotes.contains { $0.string == string && $0.fret == fret }
         let name = spelling.name(pitchClass: ((tuning.openMidi[string] + fret) % 12 + 12) % 12)
         let ink: Color = isPlaced ? PocketColor.background
             : isOther ? PocketColor.textPrimary : PocketColor.textSecondary.opacity(0.55)
@@ -88,7 +91,8 @@ extension NameTheNotesSheet {
             : isOther ? PocketColor.textPrimary.opacity(0.18) : PocketColor.surfaceSubtle.opacity(0.5)
         // While *Into it* waits for a start, only the frets it could have come from stay bright.
         let dimmed = awaitingStart.map { request in
-            !isPlaced && !NeckJoin.accepts(string: string, fret: fret, asStartOf: notes, for: request)
+            !markedNotes.contains { $0.string == string && $0.fret == fret }
+                && !NeckJoin.accepts(string: string, fret: fret, asStartOf: markedNotes, for: request)
         } ?? false
         return Button {
             place(string: string, fret: fret)
@@ -117,6 +121,11 @@ extension NameTheNotesSheet {
     /// marks), with Chords on it builds a shape one note per string. A name given by ear just gives way:
     /// only overwriting neck work asks first (0227 D7). A join that no longer fits is dropped by the
     /// sheet's tidy. While *Into it* waits for where a note started, the tap says that instead.
+    ///
+    /// With Chords off, **placing a note moves on to the next**, silently (ADR 0234 D3): the strip was a
+    /// second tap per note, and moving by tapping a chip played it, which with *Hear 8 notes* was eight
+    /// notes every time. The marks stay on the note just placed until the next one is (`placedNote`), and
+    /// the board stays put. Tapping the note already there confirms it and moves on.
     private func place(string: Int, fret: Int) {
         if let awaitingStart {
             takeStart(string: string, fret: fret, for: awaitingStart)
@@ -127,6 +136,11 @@ extension NameTheNotesSheet {
                                         chords: chordsOn)
         if outcome.label != labels[active] { labels[active] = outcome.label }
         ringed = outcome.ringed
+        guard outcome.label.isOnTheNeck else { return }
+        let move = NamingCursor.afterPlacing(at: active, count: labels.count, chords: chordsOn)
+        // Where it doesn't move on (Chords on, the last note), the marks are the note's own again.
+        placedNote = move.marked
+        if move.active != active { active = move.active }
     }
 }
 

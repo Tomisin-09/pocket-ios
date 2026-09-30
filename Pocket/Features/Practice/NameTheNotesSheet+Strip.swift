@@ -167,6 +167,14 @@ extension NameTheNotesSheet {
                 .fill(isActive ? PocketColor.practice : .clear))
             .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .strokeBorder(isActive ? .clear : PocketColor.surfaceBorder))
+            // The note just placed, which the marks are still on while the strip has moved past it (ADR
+            // 0234 D3): outlined in dashes, the way a bend's landing is drawn on the neck.
+            .overlay {
+                if index == placedNote {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .strokeBorder(PocketColor.practice, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                }
+            }
             // The chip being heard while the loop plays: a ring just outside, so it reads on the filled
             // current chip as well as on the rest.
             .overlay {

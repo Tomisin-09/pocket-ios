@@ -8,6 +8,7 @@ extension NameTheNotesSheet {
     var marksControls: some View {
         let note = ringedNote
         return VStack(alignment: .leading, spacing: 8) {
+            if let placedNote { markedLine(placedNote) }
             intoControls
             // Vibrato sits beside the bends when the row has room for both, and under them when it doesn't.
             ViewThatFits(in: .horizontal) {
@@ -61,18 +62,35 @@ extension NameTheNotesSheet {
         ["None", "½", "Whole", "1½"][min(max(semitones, 0), 3)]
     }
 
-    /// The note bend and vibrato go on: the one note, or a shape's ringed note (0227 D5).
+    /// Which note the marks are on, while the strip has moved past it (ADR 0234 D3): "Note 12 · G7, until
+    /// you place 13". Said only then; otherwise the strip's own *Note 12 of 16* says it.
+    private func markedLine(_ index: Int) -> some View {
+        let placed = fretText(labels[index]?.frettedNotes ?? [])
+        return HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text("\(noun.capitalized) \(index + 1) · \(placed)")
+                .font(.futura(.footnote, weight: .bold))
+                .monospacedDigit()
+            Text("until you place \(active + 1)")
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Marks go on \(noun) \(index + 1), \(placed), until you place \(noun) \(active + 1)")
+    }
+
+    /// The note bend and vibrato go on: the one note, or a shape's ringed note (0227 D5). After a note is
+    /// placed and the strip moves on, that's still the note just placed (ADR 0234 D3).
     private var ringedNote: FrettedNote? {
-        let notes = labels[active]?.frettedNotes ?? []
+        let notes = labels[marked]?.frettedNotes ?? []
         return notes.first { $0.string == ringed } ?? notes.last
     }
 
-    /// Change the marks on the note being named, or on a shape's ringed note.
+    /// Change the marks on the marked note, or on a shape's ringed note.
     private func mark(_ change: (inout FrettedNote) -> Void) {
-        guard case .fretted(var notes, let into) = labels[active], !notes.isEmpty else { return }
+        guard case .fretted(var notes, let into) = labels[marked], !notes.isEmpty else { return }
         let index = notes.firstIndex { $0.string == ringed } ?? notes.count - 1
         change(&notes[index])
-        labels[active] = .fretted(notes, into: into)
+        labels[marked] = .fretted(notes, into: into)
     }
 }
 
