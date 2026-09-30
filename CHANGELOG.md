@@ -90,9 +90,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   sheet now says in plainer words what **Same as** is for.
   **Put it together…**, on a piece's hold menu, makes a routine from pieces you pick on the map. Chords
   that follow one another, or notes that do, are practised in a row: each on its own, then joined to the
-  ones before it. A line with the chords under it is practised on its own, then played over the chords as
-  a backing. It asks how fast you can play any piece with no command tempo yet, and opens the routine for
-  you to look over before you save it. Of two loops that start together, the shorter now sits on the
+  ones before it. A line with chords under the whole of it is practised on its own, then played over the
+  chords as a backing. It asks how fast you can play any piece with no command tempo yet, and how fast
+  the backing should play, starting it with the line, then opens the routine for you to look over before
+  you save it. Of two loops that start together, the shorter now sits on the
   first lane, so the pieces stay above the loop that joins them.
 
 - **Count the notes, then name them.** *Train your ear* has a new section for working a lick out by

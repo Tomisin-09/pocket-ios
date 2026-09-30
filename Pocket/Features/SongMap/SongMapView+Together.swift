@@ -15,7 +15,7 @@ extension SongMapView {
     struct TogetherAsk: Identifiable {
         let id = UUID()
         let plan: SongMapTogether.Plan
-        let rows: [SongMapCommandSheet.Row]
+        let answers: SongMapCommandSheet.Answers
     }
 
     /// The routine being reviewed, and the joined loops made for it.
@@ -56,20 +56,15 @@ extension SongMapView {
 
     // MARK: - Putting it together
 
-    /// Ask for any command tempo the Practice blocks need first (ADR 0138), then begin.
+    /// Ask for any command tempo the Practice blocks or the backing need first (ADR 0138), then begin.
     func putTogether(_ reading: SongMapTogether.Reading, in map: SongMap) {
         guard let shape = reading.shape else { return }
         let plan = SongMapTogether.plan(shape, in: map, songTitle: song.title,
                                         existingNames: song.loops.map(\.name))
-        let unmeasured = plan.practised.compactMap { uid in
-            song.loops.first { $0.uid == uid && $0.commandTempo == nil }
-        }
-        guard !unmeasured.isEmpty else { return begin(plan, commands: [:]) }
-        askingCommands = TogetherAsk(plan: plan, rows: unmeasured.map { loop in
-            SongMapCommandSheet.Row(uid: loop.uid, name: loop.name.isEmpty ? "Loop" : loop.name,
-                                    place: map.pieces[loop.uid].map { place(of: $0, in: map) } ?? "",
-                                    percent: SongMapCommandSheet.seed(speed: loop.speed))
-        })
+        guard let answers = SongMapCommandSheet.Answers(asking: plan, loops: song.loops, place: { uid in
+            map.pieces[uid].map { place(of: $0, in: map) } ?? ""
+        }) else { return begin(plan, commands: [:]) }
+        askingCommands = TogetherAsk(plan: plan, answers: answers)
     }
 
     /// The command tempos were given: begin once the sheet has gone, since a push can't start under it.

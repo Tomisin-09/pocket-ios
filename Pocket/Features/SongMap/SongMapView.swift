@@ -176,7 +176,7 @@ struct SongMapView: View {
             }
         }
         .sheet(item: $askingCommands, onDismiss: beginAfterAsking) { ask in
-            SongMapCommandSheet(rows: ask.rows) { commands in
+            SongMapCommandSheet(answers: ask.answers) { commands in
                 beginAfterSheet = TogetherBegin(plan: ask.plan, commands: commands)
                 askingCommands = nil
             }

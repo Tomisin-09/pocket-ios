@@ -9,9 +9,10 @@ import Foundation
 /// exactly what breaks silently. `SongMapWriter` makes the joined loops and the routine from a `Plan`.
 enum SongMapTogether {
 
-    /// How far a piece in a row may start before the one ahead of it ends: a loop drawn a hair long still
-    /// counts as next to its neighbour.
-    static let overlapAllowed: TimeInterval = 1
+    /// How far out a loop can be drawn and still count: a piece in a row may start this far before the one
+    /// ahead of it ends, and chords may start this far into the line they play under, or stop this far short
+    /// of its end.
+    static let leeway: TimeInterval = 1
 
     enum Shape: Equatable, Sendable {
         /// Pieces on one layer, in the order they play.
@@ -27,14 +28,14 @@ enum SongMapTogether {
         case tooFew
         /// Pieces on one layer, but two overlap, or one sits inside another.
         case overlapping
-        /// A line, and a chords piece that doesn't play under it.
+        /// A line, and a chords piece that doesn't play under all of it.
         case notUnder
         /// Three or more pieces, across both layers.
         case mixed
     }
 
     /// The shape `selected` makes on `map`. It follows from what's selected, so there's nothing to choose:
-    /// pieces on one layer are in a row, and one piece on each layer is a line over its chords.
+    /// pieces on one layer are in a row, and one piece on each layer is a line over the chords under it.
     static func read(_ selected: Set<UUID>, in map: SongMap) -> Reading {
         let pieces = selected.compactMap { map.pieces[$0] }.sorted(by: playsFirst)
         guard pieces.count >= 2 else { return .tooFew }
@@ -46,18 +47,19 @@ enum SongMapTogether {
         return plays(chords, under: line) ? .shape(.lineOverChords(line: line.uid, chords: chords.uid)) : .notUnder
     }
 
-    /// Each starts and ends later than the one before, and starts no more than `overlapAllowed` before it
-    /// ends. A gap between them is fine: the joined stretches play it.
+    /// Each starts and ends later than the one before, and starts no more than `leeway` before it ends. A
+    /// gap between them is fine: the joined stretches play it.
     private static func followOn(_ pieces: [SongMap.Piece]) -> Bool {
         zip(pieces, pieces.dropFirst()).allSatisfy { before, next in
             next.start > before.start + SongMapLayout.tolerance && next.end > before.end + SongMapLayout.tolerance
-                && next.start >= before.end - overlapAllowed
+                && next.start >= before.end - leeway
         }
     }
 
-    /// The chords, with their repeats, play under some of the line.
+    /// The chords, with their repeats, play under the whole line, give or take `leeway` at either end. The
+    /// backing goes round the chords, so a line that carries on past them would land on the wrong ones.
     private static func plays(_ chords: SongMap.Piece, under line: SongMap.Piece) -> Bool {
-        min(chords.reach, line.end) - max(chords.start, line.start) > SongMapLayout.tolerance
+        chords.start <= line.start + leeway && chords.reach >= line.end - leeway
     }
 
     private static func playsFirst(_ lhs: SongMap.Piece, _ rhs: SongMap.Piece) -> Bool {
@@ -170,7 +172,7 @@ enum SongMapTogether {
                 + "\(map.pieces[chords]?.name ?? "its chords") as a backing."
         case .tooFew: return "Tap the next piece in the row, or the chords under a line."
         case .overlapping: return "Pieces in a row can't overlap."
-        case .notUnder: return "The chords have to play under the line."
+        case .notUnder: return "The chords have to play under the whole line."
         case .mixed: return "Pick chords or notes to put in a row, or one line and the chords under it."
         }
     }

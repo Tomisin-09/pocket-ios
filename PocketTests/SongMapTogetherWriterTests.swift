@@ -132,4 +132,63 @@ final class SongMapTogetherWriterTests: XCTestCase {
         XCTAssertEqual(routine.orderedItems.map(\.kind), [.focused, .play])
         XCTAssertEqual(routine.orderedItems.map(\.order), [0, 1])
     }
+
+    // MARK: - The tempo question
+
+    private func lineOverChords(_ line: Loop, _ chords: Loop) -> SongMapTogether.Plan {
+        SongMapTogether.plan(.lineOverChords(line: line.uid, chords: chords.uid),
+                             in: SongMapLayout.build(SongMapInput(song: song)), songTitle: song.title,
+                             existingNames: [])
+    }
+
+    private func asking(_ plan: SongMapTogether.Plan) -> SongMapCommandSheet.Answers? {
+        SongMapCommandSheet.Answers(asking: plan, loops: song.loops, place: { _ in "" })
+    }
+
+    func testTheBackingIsAskedForStartingWithTheLine() throws {
+        let chords = loop("Intro chords", 0, 8, type: .chords)
+        let line = loop("Intro lick", 2, 4, type: .lick, speed: 0.7)
+        let answers = try XCTUnwrap(asking(lineOverChords(line, chords)))
+        XCTAssertEqual(answers.rows.map(\.uid), [line.uid])
+        XCTAssertEqual(answers.rows.map(\.percent), [70])
+        XCTAssertEqual(answers.backing?.uid, chords.uid)
+        XCTAssertEqual(answers.backing?.percent, 70, "no faster than the line")
+        XCTAssertEqual(answers.follows, line.uid)
+    }
+
+    func testTheBackingMovesWithTheLineUntilItsSetOnItsOwn() throws {
+        let chords = loop("Intro chords", 0, 8, type: .chords)
+        let line = loop("Intro lick", 2, 4, type: .lick)
+        var answers = try XCTUnwrap(asking(lineOverChords(line, chords)))
+        answers.set(80, for: line.uid)
+        XCTAssertEqual(answers.percent(chords.uid), 80)
+        answers.set(90, for: chords.uid)
+        answers.set(60, for: line.uid)
+        XCTAssertEqual(answers.percent(chords.uid), 90, "set on its own, it stays")
+        XCTAssertEqual(answers.commands, [line.uid: 0.6, chords.uid: 0.9], "both are saved")
+    }
+
+    func testAMeasuredLineStartsTheBackingAtItsCommandTempo() throws {
+        let chords = loop("Intro chords", 0, 8, type: .chords)
+        let line = loop("Intro lick", 2, 4, type: .lick, speed: 0.6, command: 0.85)
+        let answers = try XCTUnwrap(asking(lineOverChords(line, chords)), "the backing is still asked for")
+        XCTAssertEqual(answers.rows, [])
+        XCTAssertEqual(answers.backing?.percent, 85)
+        XCTAssertNil(answers.follows)
+    }
+
+    func testOnlyWhatsMissingIsAskedFor() throws {
+        let chords = loop("Intro chords", 0, 8, type: .chords, command: 1)
+        let line = loop("Intro lick", 2, 4, type: .lick)
+        let justTheLine = try XCTUnwrap(asking(lineOverChords(line, chords)))
+        XCTAssertEqual(justTheLine.rows.map(\.uid), [line.uid])
+        XCTAssertNil(justTheLine.backing, "a backing with a command tempo keeps it")
+        line.commandTempo = 0.9
+        XCTAssertNil(asking(lineOverChords(line, chords)), "nothing missing, nothing asked")
+        let first = loop("A", 8, 12, command: 1)
+        let second = loop("B", 12, 16)
+        let row = try XCTUnwrap(asking(inARow([first, second])))
+        XCTAssertEqual(row.rows.map(\.uid), [second.uid])
+        XCTAssertNil(row.backing)
+    }
 }

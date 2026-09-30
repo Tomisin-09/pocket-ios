@@ -214,9 +214,9 @@ ask for a missing command tempo, make the joined stretches as loops, and switch 
     overlapping it by a second at most, so a loop drawn a hair long still counts. A gap between them is
     allowed, and the joined stretches play it.
   - **A line over its chords**: one piece on each layer, with the chords piece, or its repeats, playing
-    under some of the line.
-  - Anything else says why: pieces in a row can't overlap; the chords have to play under the line; pick
-    pieces on one layer, or a line and its chords.
+    under the whole line, give or take a second at either end.
+  - Anything else says why: pieces in a row can't overlap; the chords have to play under the whole line;
+    pick pieces on one layer, or a line and its chords.
 - **In a row runs A, B, A to B, C, A to C…**: each piece, then the stretch from the first piece to it, each
   a Practice block with the speed ramp. The stretches are loops Put it together makes, from the first
   piece's start to the last one's end, named *Verse notes to Verse notes 2* and typed as the pieces are.
@@ -225,11 +225,16 @@ ask for a missing command tempo, make the joined stretches as loops, and switch 
 - **A line over its chords runs the line, then the chords as a backing**: the line as a Practice block,
   then the chord loop as an Improvise block (ADR 0135). **The chord loop's Backing track switch is turned
   on**, because choosing this shape says that's what it's for. The backing is the record at those bars,
-  the original line included: it's playing along in context, not a clean track.
+  the original line included: it's playing along in context, not a clean track. A short vamp going round
+  under a longer line brings the line's opening round with it, a limit of backing with the record.
 - **A Practice block needs a command tempo (ADR 0138), so Put it together asks once** for any piece that
   has none: *How fast can you play these now?*, one row per piece in 5% steps, each starting where the loop
   edit sheet's **Set** would. The answer is saved on the loop, as if set there. A joined loop starts at
   the slowest of its parts' command tempos, and the slowest of their speeds.
+- **A backing with no command tempo is asked for too**: *How fast should the backing play?*, starting at
+  the line's command tempo, or moving with the line's row until it's set on its own. The Improvise block
+  opens at the backing's command tempo, else the record's speed (ADR 0135), and the answer is saved on
+  the chord loop as its command tempo, as the line's is.
 - **The routine opens for review**, as *Build a routine for this song* does (ADR 0111), and nothing lands
   in Routines until **Save**. It's named after the song and the pieces (*Slow Bend: Intro lick over
   Intro chords*), and each block runs at its loop's own length, as a block added by hand does.
@@ -250,6 +255,11 @@ Settled in the build (slice 4, 2026-09-30):
   the song until the map is opened again. Made on the map, they're drawn straight away, and Undo can take
   them back.
 - **Cancelling the tempo question goes back to the picked pieces**, still picked.
+- **The chords have to play under the whole line, and the backing is asked for** (after the build,
+  2026-09-30). Tomisin agreed both on going over the backing. The first rule asked only that the chords
+  play under *some* of the line, which let through chords stopping partway, with the rest of the line
+  landing on the wrong ones as the backing went round. And only the line was asked for, so a line
+  practised up to 80% was followed by a backing opening at the record's speed.
 
 ### D12 — Export, not hosting, and not yet
 

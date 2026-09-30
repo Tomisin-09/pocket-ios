@@ -91,6 +91,16 @@ final class SongMapTogetherTests: SongMapSlice3Case {
         XCTAssertEqual(read([line, chords], [loop(8, 16, uid: chords), notes(16, 18, uid: line)]), .notUnder)
     }
 
+    func testTheChordsHaveToPlayUnderTheWholeLineGiveOrTakeASecond() {
+        let (chords, line) = (UUID(), UUID())
+        XCTAssertEqual(read([line, chords], [loop(8, 16, uid: chords), notes(12, 20, uid: line)]), .notUnder,
+                       "the line carries on past the chords")
+        XCTAssertEqual(read([line, chords], [loop(10, 16, uid: chords), notes(8, 14, uid: line)]), .notUnder,
+                       "the line starts before the chords")
+        XCTAssertEqual(read([line, chords], [loop(8, 16, uid: chords), notes(7.5, 16.5, uid: line)]),
+                       .shape(.lineOverChords(line: line, chords: chords)), "a loop drawn a hair out still counts")
+    }
+
     func testThreePiecesAcrossBothLayersAreMixed() {
         let (chords, first, second) = (UUID(), UUID(), UUID())
         let loops = [loop(8, 16, uid: chords), notes(8, 12, uid: first), notes(12, 16, uid: second)]
@@ -177,6 +187,6 @@ final class SongMapTogetherTests: SongMapSlice3Case {
         XCTAssertEqual(said(.shape(.lineOverChords(line: line, chords: chords))),
                        "Intro lick on its own, then over Intro chords as a backing.")
         XCTAssertEqual(said(.overlapping), "Pieces in a row can't overlap.")
-        XCTAssertEqual(said(.notUnder), "The chords have to play under the line.")
+        XCTAssertEqual(said(.notUnder), "The chords have to play under the whole line.")
     }
 }
