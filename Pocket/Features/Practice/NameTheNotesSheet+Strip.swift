@@ -96,31 +96,12 @@ extension NameTheNotesSheet {
     /// stops the phrase, since eight notes slowed down can run for seconds.
     private var playButton: some View {
         let playing = following != .nothing
-        return Button {
+        return LoopPlayButton(isOn: playing, isLoading: player.isLoading, isDisabled: player.isUnavailable,
+                              label: player.isPlaying ? "Stop the loop" : playing ? "Stop" : "Play the loop") {
             if case .phrase = following { player.stopSlice() } else { player.toggle() }
-        } label: {
-            ZStack {
-                Circle()
-                    .fill(playing ? PocketColor.practice : PocketColor.practice.opacity(0.14))
-                if player.isLoading {
-                    ProgressView()
-                        .controlSize(.mini)
-                } else {
-                    Image(systemName: playing ? "stop.fill" : "play.fill")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(playing ? PocketColor.background : PocketColor.practice)
-                        .offset(x: playing ? 0 : 1)   // optical-centre the play triangle
-                }
-            }
-            .frame(width: 30, height: 30)
-            .frame(width: 44, height: 44)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
         .padding(.vertical, -7)
         .padding(.leading, -7)
-        .disabled(player.isUnavailable)
-        .accessibilityLabel(player.isPlaying ? "Stop the loop" : playing ? "Stop" : "Play the loop")
         .accessibilityIdentifier("naming.playLoop")
     }
 

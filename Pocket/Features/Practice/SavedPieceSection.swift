@@ -4,7 +4,8 @@ import SwiftUI
 /// from it when any note has a fret. Drawn from the stored piece every time, never kept as text, so the
 /// tab can't be edited apart from the piece it came from (**edit pieces, never the picture**).
 ///
-/// **Edit names** reopens Name the notes on it. A new pass saved over it keeps it as an earlier version
+/// **Name the notes** opens on it, the only way in since ADR 0234 D1: a pass is saved first and named
+/// here, so names can't be left on scratch paper. A new pass saved over it keeps it as an earlier version
 /// (ADR 0233), and **Versions** appears to use one again. The Journal shows the one in use under Pieces
 /// (ADR 0229).
 struct SavedPieceSection: View {
@@ -18,9 +19,11 @@ struct SavedPieceSection: View {
         if let piece = loop.transcription {
             Section {
                 PieceDrawing(piece: piece, spelling: spelling)
-                Button("Edit names", action: onEdit)
+                Button("Name the notes", action: onEdit)
                     .font(.futura(.subheadline))
-                    .foregroundStyle(PocketColor.practice)
+                    .buttonStyle(.bordered)
+                    .tint(PocketColor.practice)
+                    .accessibilityIdentifier("count.saved.name")
                 let kept = loop.keptTranscriptions.count
                 if kept > 0 {
                     PieceVersionsRow(count: kept + 1, action: onVersions)

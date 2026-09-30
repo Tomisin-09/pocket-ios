@@ -1,16 +1,11 @@
 import SwiftData
 import SwiftUI
 
-/// What the **Name the notes** sheet is naming (ADR 0225): one pass tapped this visit, or the piece
-/// already saved on the loop. `Identifiable` so it drives a `.sheet(item:)` at `EarTrainingView`'s body
-/// root.
+/// What the **Name the notes** sheet is naming: the piece saved on the loop. Since ADR 0234 D1 that's the
+/// only thing it names. A pass is saved first, so names are never left on scratch paper that Clear or the
+/// twelve-pass cap can throw away. `Identifiable` so it drives a `.sheet(item:)` at `EarTrainingView`'s
+/// body root.
 struct NamingRequest: Identifiable, Equatable {
-    enum Source: Equatable {
-        case pass(Int)
-        case saved
-    }
-
-    let source: Source
     let taps: [PieceTranscription.Tap]
     /// The strings a saved piece's frets were placed on, so editing it reads them against the same
     /// strings even if the tuner's tuning has changed since. `nil` means use the tuner's.
@@ -19,12 +14,7 @@ struct NamingRequest: Identifiable, Equatable {
     /// The loop's region in song seconds, so *Missed a note?* never plays past it (ADR 0231).
     var region: ClosedRange<TimeInterval>?
 
-    var id: String {
-        switch source {
-        case .pass(let number): return "pass-\(number)"
-        case .saved: return "saved"
-        }
-    }
+    var id: String { "saved" }
 }
 
 /// What the sheet hands back on Done: the taps, named, with any taken out or added (ADR 0231), and the
@@ -40,7 +30,8 @@ struct NamingResult: Equatable {
 /// sit at the view's body root.
 ///
 /// Nothing here is saved until **Save**. The taps of a visit are scratch paper; a save copies one pass
-/// onto the loop as its piece, which the Journal lists under Pieces (ADR 0229).
+/// onto the loop as its piece, which the Journal lists under Pieces (ADR 0229). Naming starts from there,
+/// never from a pass (ADR 0234 D1).
 @MainActor
 @Observable
 final class CountTheNotesModel {
@@ -57,8 +48,6 @@ final class CountTheNotesModel {
     private(set) var cleared: [TapPasses.Pass]?
     /// The sheet's subject while it's open.
     var naming: NamingRequest?
-    /// The strings the most recent naming placed frets on, used when that pass is saved.
-    private var namingTuning: (openMidi: [Int], label: String)?
     /// Briefly true after a tap, to flash the pad.
     private(set) var flashToken = 0
     /// Briefly true after a tap on the pad while stopped, to say why nothing counted.
@@ -94,7 +83,7 @@ final class CountTheNotesModel {
         return ((seconds - regionStart) / regionLength).clamped(to: 0...1)
     }
 
-    /// The pass that Name the notes, Save and the readout act on: the picked row if it still exists and
+    /// The pass that Save and the readout act on: the picked row if it still exists and
     /// isn't the one playing, else the newest finished pass.
     var targetPass: TapPasses.Pass? {
         if let selectedPassID, selectedPassID != livePassID, let picked = passes.pass(id: selectedPassID) {
@@ -158,15 +147,11 @@ final class CountTheNotesModel {
 
     // MARK: - Naming
 
-    func nameTarget() {
-        guard let pass = targetPass else { return }
-        naming = NamingRequest(source: .pass(pass.id), taps: pass.taps, region: region)
-    }
-
+    /// Open Name the notes on the piece in use. There's nothing to name until a pass is saved.
     func nameSaved() {
         guard let piece = loop.transcription else { return }
-        naming = NamingRequest(source: .saved, taps: piece.taps, openMidi: piece.openMidi,
-                               tuningLabel: piece.tuningLabel, region: region)
+        naming = NamingRequest(taps: piece.taps, openMidi: piece.openMidi, tuningLabel: piece.tuningLabel,
+                               region: region)
     }
 
     /// The loop's region, or `nil` for one with no length.
@@ -174,38 +159,30 @@ final class CountTheNotesModel {
         loop.endSeconds > loop.startSeconds ? loop.startSeconds...loop.endSeconds : nil
     }
 
-    /// The sheet's Done. A pass keeps its names, and any tap taken out or added, for this visit; the
-    /// saved piece is edited in place, which is the only way a saved piece ever changes short of saving
-    /// another pass over it. An edit that changed something re-dates it, so the Journal moves it to the
-    /// day it changed (ADR 0229).
+    /// The sheet's Done. The piece in use is edited in place, which is the only way a saved piece ever
+    /// changes short of saving another pass over it. An edit that changed something re-dates it, so the
+    /// Journal moves it to the day it changed (ADR 0229).
     func finishNaming(_ request: NamingRequest, result: NamingResult, context: ModelContext) {
-        guard !result.taps.isEmpty else { return }
-        switch request.source {
-        case .pass(let number):
-            passes.replaceTaps(result.taps, forPass: number)
-            namingTuning = (result.openMidi, result.tuningLabel)
-        case .saved:
-            guard let before = loop.transcription else { return }
-            var piece = before
-            piece.taps = result.taps.sorted { $0.seconds < $1.seconds }
-            stampTuning(on: &piece, openMidi: result.openMidi, label: result.tuningLabel)
-            guard piece != before else { return }
-            piece.changedAt = .now
-            loop.transcription = piece
-            try? context.save()
-        }
+        guard !result.taps.isEmpty, let before = loop.transcription else { return }
+        var piece = before
+        piece.taps = result.taps.sorted { $0.seconds < $1.seconds }
+        stampTuning(on: &piece, openMidi: result.openMidi, label: result.tuningLabel)
+        guard piece != before else { return }
+        piece.changedAt = .now
+        loop.transcription = piece
+        try? context.save()
     }
 
     // MARK: - Saving
 
-    /// Put the target pass on the loop as its piece, dated now. A piece already there is kept as an
-    /// earlier version (ADR 0233 D3), so nothing is lost and nothing needs asking. **No Journal line** (ADR
-    /// 0229): the Journal lists the piece in use under Pieces, so a line per save would only pile up copies.
+    /// Put the target pass on the loop as its piece, dated now, with nothing named yet: naming starts
+    /// from the saved piece (ADR 0234 D1), so there are no frets to record a tuning for. A piece already
+    /// there is kept as an earlier version (ADR 0233 D3), so nothing is lost and nothing needs asking. **No
+    /// Journal line** (ADR 0229): the Journal lists the piece in use under Pieces, so a line per save would
+    /// only pile up copies.
     func save(context: ModelContext) {
         guard let pass = targetPass, !pass.taps.isEmpty else { return }
-        var piece = PieceTranscription(taps: pass.taps)
-        let tuning = namingTuning ?? Self.tunerTuning()
-        stampTuning(on: &piece, openMidi: tuning.openMidi, label: tuning.label)
+        var piece = PieceTranscription(taps: pass.taps.map { PieceTranscription.Tap(seconds: $0.seconds) })
         piece.changedAt = .now
         loop.pieceVersions.save(piece)
         try? context.save()

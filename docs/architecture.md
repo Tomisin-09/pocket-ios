@@ -631,7 +631,7 @@ each note you hear, then name them. The pieces, from the audio up:
 - **Storage.** `Loop.transcriptionData: Data?` (additive, Optional) holds a `PieceTranscription`: taps
   with optional `PieceLabel`s (pitch class · notes on the neck · chord root + `ChordQuality` suffix),
   plus the open strings any fret was placed against and, since ADR 0229, `changedAt` (set by a save or a
-  changing *Edit names*; the Journal's piece rows sit on that day under *All* (under *Pieces* they're
+  changing *Name the notes*; the Journal's piece rows sit on that day under *All* (under *Pieces* they're
   grouped by song, ADR 0232 D20), and `PieceDateBackfill` dates older
   pieces from their 🧩 line at launch). Save writes no Journal line. Since ADR 0233, a piece saved over
   isn't lost: `Loop.keptTranscriptionsData` (additive, Optional) holds its earlier versions, newest

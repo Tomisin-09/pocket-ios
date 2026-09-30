@@ -253,8 +253,7 @@ struct NameTheNotesSheet: View {
 
     private var subtitle: String {
         let count = taps.count
-        let what = request.source == .saved ? "Your saved piece" : "This pass"
-        return "\(what) · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear \(tapPlays), "
+        return "Your saved piece · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear \(tapPlays), "
             + "or play the whole loop."
     }
 

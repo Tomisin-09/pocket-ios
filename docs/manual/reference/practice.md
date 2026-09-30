@@ -179,14 +179,17 @@ Each has its own run screen, and each writes into the journal with its own tag.
 ### Count the notes
 
 `Train your ear` carries a `Count the notes` section under its play and tempo controls and its
-`Note what you hear` box, for working a lick out by ear. While the loop plays, tap the pad once for every
-note you hear. Each pass through the loop gets its own row of dots, the one playing now on top, so you
+`Note what you hear` box, for working a lick out by ear. The small play button beside `Show beats` starts
+and stops the same loop as the big one, so you don't have to scroll back up. While the loop plays, tap the
+pad once for every note you hear. Each pass through the loop gets its own row of dots, the one playing now on top, so you
 can see when your passes agree. Tap a row to pick that pass. `Show beats` adds the song's beat lines and
 a count for each beat. It stays off until you turn it on, and only appears once the song has a tempo and
 its 1. A pass of more than 24 notes gets a suggestion under the rows once the loop stops: loops of around
 16 notes are easier to transcribe, so a long lick goes easier as two or three loops.
 
-`Name the notes` lays the picked pass out as a strip of numbered notes. Tap one to hear it with the
+Pick the pass you trust and `Save` it. It goes on the loop under `Saved on this loop`, and naming starts
+from there: nothing is named on a pass, because `Clear` would throw the names away with it.
+`Name the notes` lays the saved piece out as a strip of numbered notes. Tap one to hear it with the
 notes just before it, ending on it, so you hear how the line got there; each is ringed as it plays.
 *Hear 3 notes* at the top right of the strip sets how many, from *Just the note* to eight, and Red Moon
 remembers it. To hear the notes as a line, the play button at the start of the strip plays the whole
@@ -219,6 +222,6 @@ of chord grouped by how many notes they hold. The kind you pick stays picked, an
 and moves on, so a solo named by ear is one tap a note. A note placed on the neck reads on By ear as the
 note it sounds, and naming it something else there asks first. `Next unnamed` jumps to the next note
 without a name. Red Moon never plays your answer: play it on your own instrument against `Hear it again`,
-and you decide whether they match. `Save` keeps the pass on the loop, under `Saved on this loop` with a
-line of tab if you placed frets, and lists it in the journal under `Pieces`. `Edit names` reopens it.
-Saving another pass replaces it.
+and you decide whether they match. `Done` writes the names onto the saved piece, which shows a line of
+tab once you've placed frets and is listed in the journal under `Pieces`. Saving another pass keeps this
+one as an earlier version.

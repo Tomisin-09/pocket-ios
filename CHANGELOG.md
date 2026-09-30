@@ -209,6 +209,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Save a pass, then name it.** *Count the notes* ends with **Clear** and **Save**; **Name the notes**
+  now opens from the saved piece under *Saved on this loop*, so names are never left on a pass that
+  **Clear** would throw away. A small **▶** beside *Show beats* starts and stops the loop, so you can
+  count without scrolling back up to the big button (ADR 0234).
 - **A Journal note opens the loop where it was written.** Tapping the loop's name on an 👂 Ear or 🧩
   Transcribed note opens *Train your ear*, and on a 🎸 Improv note opens *Improvise*, rather than the
   loop's ordinary practice. Other notes open as before (ADR 0228).

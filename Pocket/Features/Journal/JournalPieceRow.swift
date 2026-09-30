@@ -4,7 +4,7 @@ import SwiftUI
 /// a fret, and the loop it belongs to. One row per loop, drawn from the piece every time, so it is always
 /// the current version and never a copy that could be edited apart from it.
 ///
-/// Tapping it opens the loop in *Train your ear*, where the piece was made and where **Edit names** lives.
+/// Tapping it opens the loop in *Train your ear*, where the piece was made and where **Name the notes** opens on it.
 /// No hold menu: a piece isn't pinned or deleted from here, and it has no text of its own to edit.
 struct JournalPieceRow: View {
     let piece: JournalPiece

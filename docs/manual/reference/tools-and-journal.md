@@ -70,7 +70,7 @@ and `Record a take`. Underneath, a search field prompting
 - **A piece** is a loop's saved transcription from `Count the notes`: 🧩 Piece, the time it last
   changed, its count and names, its tab, and the loop. There is one per loop, always the current
   version; saving again or editing its names moves it to that day. Tap it to open the loop in
-  `Train your ear`, where `Edit names` is. It has no hold menu.
+  `Train your ear`, where `Name the notes` is. It has no hold menu.
 - **The owner caption** is a link where the thing still exists and has a screen to open; plain text
   otherwise. A loop opens where the note was written: an Ear or Transcribed note opens `Train your ear`,
   an Improv note opens `Improvise`, and anything else opens the loop's ordinary practice once it has a

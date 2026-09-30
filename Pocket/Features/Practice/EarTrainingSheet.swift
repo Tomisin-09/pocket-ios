@@ -18,7 +18,7 @@ import SwiftUI
 /// the sibling ramp-less mode: only the copy and the note's `EntryKind` differ between them.
 ///
 /// **Count the notes** (ADR 0225) is the one section ear training has and improvise doesn't: tap along
-/// to count a lick, then name what you heard, saved on the loop as its piece. Its state lives here so
+/// to count a lick, save the pass as the loop's piece, then name what you heard (ADR 0234 D1). Its state lives here so
 /// its sheet and prompt can hang off this body's root.
 ///
 /// **Takes are on here too** (2026-08-06). The original exclusion reasoned that nothing is *played*
@@ -78,7 +78,9 @@ struct EarTrainingView: View {
                                     header: "Note what you hear",
                                     placeholder: "What did you hear? "
                                         + "(e.g. starts on the b3, descending run)")
-                CountTheNotesSection(model: counting, player: player, stopLoop: stopForNaming)
+                CountTheNotesSection(model: counting, player: player) {
+                    LoopTransport.toggle(player, recorder: recorder, onStopped: finishTake)
+                }
                 SavedPieceSection(loop: loop, spelling: counting.spelling, onEdit: {
                     stopForNaming()
                     counting.nameSaved()
