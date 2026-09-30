@@ -221,6 +221,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Undo and redo in Name the notes.** ↶ and ↷ sit where those buttons were, beside *Next unnamed*, and
   take back any change made on the visit: a fret, a mark, a name, a note taken out or tapped in, a new
   tuning. With a keyboard, ⌘Z, ⇧⌘Z and ⌘Y work too (ADR 0234).
+- **The neck shows the notes around the one you're naming.** The three before it are filled and the
+  three after it ringed, fading the further they are, and each carries its note number, so a lick reads
+  in order on the neck even where it comes back to the same fret (ADR 0234).
 - **A Journal note opens the loop where it was written.** Tapping the loop's name on an 👂 Ear or 🧩
   Transcribed note opens *Train your ear*, and on a 🎸 Improv note opens *Improvise*, rather than the
   loop's ordinary practice. Other notes open as before (ADR 0228).
