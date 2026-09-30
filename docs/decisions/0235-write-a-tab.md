@@ -1,6 +1,7 @@
 # ADR 0235 — Write a tab: notes placed on the neck, kept in My tabs, and a Home tile that's yours
 
-- **Status:** Accepted. Building on `pocket-341-write-a-tab`, one commit per step of the build order.
+- **Status:** Accepted. Built on `pocket-341-write-a-tab`, one commit per step of the build order. Still owed:
+  the device check and the reshoot (Consequences).
 - **Date:** 2026-09-30 (notes 2026-09-29; one design round 2026-09-30)
 - **Amends:** ADR 0211 — **D3**: the half beside Toolkit is the player's own tile (D6), no longer the
   Oracle's tile drawn hidden. The alternative refused there, *another destination in the empty slot*,
@@ -215,12 +216,12 @@ On `pocket-341-write-a-tab`, each commit able to stand alone:
 ## Consequences
 
 - **Manual:** `toolkit.md` and `reference/tools-and-journal.md` gain My tabs and the writer;
-  `home-and-library.md`, `getting-started.md`, `reference/settings.md` and `gestures.md` gain the tile,
-  its hold and its setting.
+  `home-and-library.md`, `getting-started.md`, `reference/settings.md`, `gestures.md` and `subscription.md`
+  gain the tile, its hold and its setting.
 - **Reshoot owed:** the Toolkit hub, Home, and new figures for My tabs, the writer and a drawn tab, shot
   once with the other owed figures.
 - **Device check owed:** the tile's hold menu; placing, inserting and taking out; bar lines and
   sections; a drawn tab at phone width; and a store with real data upgrading.
-- **Schema:** checked as an upgrade on the simulator (the old build with data, then this one over it)
-  before merge.
+- **Schema:** checked as an upgrade on the simulator (main's build made the store, then this one opened
+  it: same store, a `ZWRITTENTAB` table with its five columns, and the app ran).
 - `design-brief.md` loses *six destinations, six hues*: two tiles now share one on purpose.
