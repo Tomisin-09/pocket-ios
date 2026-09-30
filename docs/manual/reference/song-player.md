@@ -138,6 +138,9 @@ The rows stay in song order rather than being grouped by loop, so two marks a be
 together even when you made them under different loops. A snag whose loop you have since deleted
 keeps its place and simply shows no loop name.
 
+A note you snagged in `Name the notes`, somewhere you were stuck working a lick out, is listed here too,
+in its place in the song.
+
 There is nothing else to a snag — no name, no colour, no rating — so there is no edit sheet, no
 holding a row, and no selection mode. It starts collapsed.
 

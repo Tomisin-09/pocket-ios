@@ -177,8 +177,11 @@ enum JournalWriter {
     /// Add a dated entry to the owner's journal, **snapshotting the owner's context** at the
     /// moment of writing (copied, not referenced, so it stays truthful as the unit improves).
     /// Text is trimmed; an all-whitespace entry is ignored. Returns whether an entry was added.
+    ///
+    /// `snagUID` makes a loop note **the line of a snag** (ADR 0234 D7): written from a snag on a note in
+    /// Name the notes, and shown there when the player comes back to that note.
     @discardableResult
-    static func add(to owner: JournalOwner, text: String, kind: EntryKind,
+    static func add(to owner: JournalOwner, text: String, kind: EntryKind, snagUID: UUID? = nil,
                     into context: ModelContext) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return false }
@@ -189,6 +192,7 @@ enum JournalWriter {
                                              commandTempoAtEntry: loop.commandTempo)
             context.insert(entry)
             entry.loop = loop
+            entry.snagUID = snagUID
             // Snapshot the caption beside the relationship (ADR 0151): the link nullifies when the
             // loop is deleted, and an unattributed note is a worse record than none.
             entry.ownerLabelAtEntry = JournalTimeline.ownerLabel(loop: loop, exercise: nil, song: nil)

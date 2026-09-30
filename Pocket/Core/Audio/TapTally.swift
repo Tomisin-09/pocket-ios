@@ -190,13 +190,6 @@ struct TapPasses: Equatable {
         return id
     }
 
-    /// A pass as Name the notes hands it back: its taps named, and since ADR 0231 perhaps one taken out
-    /// or a missed one added. Kept in time order; a pass left with no taps is left as it was.
-    mutating func replaceTaps(_ taps: [PieceTranscription.Tap], forPass id: Int) {
-        guard !taps.isEmpty, let index = passes.firstIndex(where: { $0.id == id }) else { return }
-        passes[index].taps = taps.sorted { $0.seconds < $1.seconds }
-    }
-
     /// Clear every pass, returning what was there so it can be put back.
     mutating func clear() -> [Pass] {
         defer { passes = [] }

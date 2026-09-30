@@ -2,7 +2,7 @@ import SwiftData
 import XCTest
 @testable import Pocket
 
-/// Name the notes' Done, back in the count (ADR 0231): a pass, or the saved piece, takes the taps the sheet
+/// Name the notes and the count (ADR 0231, 0234): only a saved piece is named, it takes the taps the sheet
 /// hands back, a note added or taken out included, and the request carries the loop's region.
 @MainActor
 final class CountTheNotesNamingTests: XCTestCase {
@@ -19,20 +19,27 @@ final class CountTheNotesNamingTests: XCTestCase {
         return ModelContext(container)
     }
 
-    func testAPassTakesTheTapsTheSheetHandsBack() throws {
-        let model = CountTheNotesModel(loop: makeLoop())
+    /// Save first, then name (ADR 0234 D1): a pass has nothing to name until it's saved, and it's saved with
+    /// no names and so no tuning. Naming then opens on the saved piece, bounded by the loop's region.
+    func testAPassIsSavedUnnamedAndNamingOpensOnlyOnTheSavedPiece() throws {
+        let loop = makeLoop()
+        let model = CountTheNotesModel(loop: loop)
         model.loopStarted()
         for elapsed in [0.5, 1.0] {
             model.tap(clock: LoopClockReading(elapsed: elapsed, regionStart: 10, passLength: 10, rate: 1,
                                               outputLatency: 0))
         }
-        model.nameTarget()
+        model.nameSaved()
+        XCTAssertNil(model.naming, "nothing is saved yet, so there is nothing to name")
+        model.save(context: try makeContext())
+        let piece = try XCTUnwrap(loop.transcription)
+        XCTAssertEqual(piece.taps.map(\.seconds), [10.5, 11])
+        XCTAssertTrue(piece.labels.allSatisfy { $0 == nil }, "saved with nothing named")
+        XCTAssertNil(piece.openMidi, "no frets, so no tuning recorded")
+        model.nameSaved()
         let request = try XCTUnwrap(model.naming)
+        XCTAssertEqual(request.taps, piece.taps)
         XCTAssertEqual(request.region, 10...20, "the loop's region, which bounds the stretch")
-        let added = PassCorrection.adding(10.75, to: request.taps).taps
-        model.finishNaming(request, result: NamingResult(taps: added, openMidi: [], tuningLabel: ""),
-                           context: try makeContext())
-        XCTAssertEqual(model.targetPass?.taps.map(\.seconds), [10.5, 10.75, 11], "the note tapped in is kept")
     }
 
     func testASavedPieceTakesTheTapsAndIsRedated() throws {

@@ -267,7 +267,7 @@ struct JournalTabView: View {
                 isPro: isPro,
                 isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug))
             else { return presentPaywall(.routine(.edit)) }
-        case .loop:
+        case .loop, .naming:
             break
         }
         openingOwner = route

@@ -20,6 +20,9 @@
   (0206 D1). Its D2 records that the rest of this ADR's "not built" list — multi-select and a bulk
   clear — was built and **removed before merge**, so it stays unbuilt deliberately rather than
   by omission.
+- **Amended by:** ADR 0234 (Naming from real use, 2026-09-30) — **D6**: a snag can also be made on a
+  note while naming a piece, by holding its chip, and records `markedWhileNaming`. It is still a point
+  on the song with a loose loop id, and the tighten offer reads it like any other.
 - **Relates to:** ADR 0199 (the half-second floor, which this composes with and depends on),
   ADR 0192 (the transport grammar whose D2 argument this finishes), ADR 0041 (the A/B span the
   accept path lands in), ADR 0070 (never grading — the line this feature runs along),

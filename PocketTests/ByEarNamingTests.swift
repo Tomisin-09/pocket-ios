@@ -164,16 +164,6 @@ final class ByEarNamingTests: XCTestCase {
         XCTAssertEqual(heard(5), 3, "held on the note being named once it has sounded")
     }
 
-    func testTheNeckLightsTheNotesOfTheChipBeingHeard() {
-        let doubleStop = [FrettedNote(string: 2, fret: 7), FrettedNote(string: 1, fret: 8)]
-        let labels: [PieceLabel?] = [.fretted(string: 2, fret: 7), .pitchClass(3), nil, .fretted(doubleStop, into: nil)]
-        XCTAssertEqual(NamingStrip.heardNotes(labels, hearing: 0), [FrettedNote(string: 2, fret: 7)])
-        XCTAssertEqual(NamingStrip.heardNotes(labels, hearing: 3), doubleStop, "a double-stop lights both")
-        XCTAssertTrue(NamingStrip.heardNotes(labels, hearing: 1).isEmpty, "named by ear: nowhere on the neck")
-        XCTAssertTrue(NamingStrip.heardNotes(labels, hearing: nil).isEmpty, "nothing playing")
-        XCTAssertTrue(NamingStrip.heardNotes(labels, hearing: 9).isEmpty)
-    }
-
     func testTheRingFollowsTheLoopOrAPhraseButNotOneNote() {
         typealias Following = NamingStrip.Following
         XCTAssertEqual(Following.now(loopPlaying: true, slicePlaying: false, phrase: 2...4), .loop)

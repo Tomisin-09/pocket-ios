@@ -2,7 +2,8 @@ import SwiftData
 import SwiftUI
 
 /// **Count the notes** (ADR 0225), a section of Train your ear: tap once for each note you hear while
-/// the loop plays, one row of dots per pass, and **Name the notes** to say what each one was.
+/// the loop plays, one row of dots per pass, and **Save** the pass you trust. Naming what each note was
+/// starts from the saved piece, under *Saved on this loop* (ADR 0234 D1), never from a pass.
 ///
 /// It serves the planner's `ear.transcribe` (ADR 0139) the way a player actually learns a lick: count
 /// it, then work out what the notes are. It stays on the ear side of ADR 0070 because the player asks
@@ -12,8 +13,9 @@ import SwiftUI
 struct CountTheNotesSection: View {
     let model: CountTheNotesModel
     let player: ContinuousLoopPlayer
-    /// Stops the loop the way the host stops it (a take finalised first), before naming opens.
-    let stopLoop: () -> Void
+    /// Starts or stops the loop the way the big button does (`LoopTransport`), for the small ▶ beside
+    /// *Show beats* (ADR 0234 D2): an armed take starts with it and a take in progress finishes first.
+    let togglePlay: () -> Void
 
     @Environment(\.modelContext) private var modelContext
     @AppStorage(AppSettings.Key.countShowsBeats) private var showsBeats = AppSettings.countShowsBeatsDefault
@@ -48,7 +50,7 @@ struct CountTheNotesSection: View {
     // MARK: - Readout
 
     private var readout: some View {
-        HStack(alignment: .lastTextBaseline) {
+        HStack(alignment: .center) {
             HStack(alignment: .lastTextBaseline, spacing: 8) {
                 Text(countText)
                     .font(.futura(size: 44))
@@ -61,6 +63,11 @@ struct CountTheNotesSection: View {
             }
             .accessibilityElement(children: .combine)
             Spacer(minLength: 8)
+            // The loop, from where the counting is (ADR 0234 D2): the big button is a scroll above.
+            LoopPlayButton(isOn: player.isPlaying, isLoading: player.isLoading, isDisabled: player.isUnavailable,
+                           label: player.isPlaying ? "Stop the loop" : "Play the loop", action: togglePlay)
+                .padding(.vertical, -7)
+                .accessibilityIdentifier("count.playLoop")
             if model.grid != nil {
                 Toggle("Show beats", isOn: $showsBeats)
                     .font(.futura(.footnote))
@@ -130,13 +137,8 @@ struct CountTheNotesSection: View {
                     .disabled(model.passes.passes.isEmpty)
             }
             Spacer(minLength: 0)
-            Button("Name the notes") {
-                stopLoop()
-                model.nameTarget()
-            }
-            .buttonStyle(.bordered)
-            .tint(PocketColor.practice)
-            .disabled(model.targetPass == nil)
+            // No *Name the notes* here (ADR 0234 D1): a pass is saved first, then named from *Saved on this
+            // loop*, so names are never left on a pass that Clear or the twelve-pass cap can throw away.
             Button("Save") {
                 model.save(context: modelContext)
             }

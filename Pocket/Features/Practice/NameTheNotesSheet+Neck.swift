@@ -1,14 +1,13 @@
 import SwiftUI
 
 // **Fret & string** on the neck (ADR 0227 D3): where you played it. The draw-your-own board with every
-// spot carrying its note name faintly, the note being named bold on the practice tint, and the pass's
-// other placed notes in ink, so the lick's shape is on the neck as well as in the tab. Split out for
-// file length.
+// spot carrying its note name faintly, the note being named bold on the practice tint, the three notes
+// before it filled and the three after it ringed, each numbered (ADR 0234 D4), and the pass's other placed
+// notes in ink, so the lick's shape is on the neck as well as in the tab. Split out for file length.
 extension NameTheNotesSheet {
 
     var neckPicker: some View {
-        let others = otherPlacedSpots
-        let heard = Set(NamingStrip.heardNotes(labels, hearing: hearing).map { Spot(string: $0.string, fret: $0.fret) })
+        let neighbours = NeckNeighbours.marks(labels, active: active)
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 pickerLabel("Where did you play it?")
@@ -24,14 +23,18 @@ extension NameTheNotesSheet {
             }
             FretNeckBoard(stringNames: stringNames, maxFret: PieceLabel.maxFret, scrollTarget: neckTarget,
                           headroom: Self.marksHeadroom) { string, fret in
-                let spot = Spot(string: string, fret: fret)
-                neckSpot(string: string, fret: fret, isOther: others.contains(spot), isHeard: heard.contains(spot))
+                neckSpot(string: string, fret: fret, mark: neighbours[NeckSpot(string: string, fret: fret)])
             } marks: {
-                NeckMarksLayer(notes: labels[active]?.frettedNotes ?? [],
-                               previous: active > 0 ? labels[active - 1]?.frettedNotes ?? [] : [],
-                               join: NeckJoin.symbol(into: active, of: labels),
+                // The marks are drawn on the note they go on, which after a placement is the one just placed.
+                NeckMarksLayer(notes: labels[marked]?.frettedNotes ?? [],
+                               previous: marked > 0 ? labels[marked - 1]?.frettedNotes ?? [] : [],
+                               join: NeckJoin.symbol(into: marked, of: labels),
                                stringCount: tuning.openMidi.count, maxFret: PieceLabel.maxFret,
                                headroom: Self.marksHeadroom)
+            } beneath: {
+                // While the loop or a phrase plays, the note being heard glows, moving the way it was played.
+                HeardGlows(motions: hearing.map { HaloMotion.motions(into: $0, of: labels) } ?? [], token: hearing,
+                           headroom: Self.marksHeadroom)
             }
             if let byEar = labels[active], !byEar.isOnTheNeck,
                let name = byEar.name(openMidi: tuning.openMidi, spelling: spelling) {
@@ -55,60 +58,49 @@ extension NameTheNotesSheet {
     /// Room above the top string for a bend's arrow and a vibrato's wave.
     private static var marksHeadroom: CGFloat { 16 }
 
-    /// One place on the neck, as a set member.
-    struct Spot: Hashable {
-        let string: Int
-        let fret: Int
-    }
-
     /// The strings' names down the left edge, thinnest first, as the tab names them.
     private var stringNames: [String] {
         TabLine.stringNames(openMidi: tuning.openMidi).map { $0.trimmingCharacters(in: .whitespaces) }
     }
 
-    /// Where the pass's other answers sit on the neck: drawn in ink, a map of the lick so far.
-    private var otherPlacedSpots: Set<Spot> {
-        Set(labels.indices.flatMap { index -> [Spot] in
-            guard index != active else { return [] }
-            return (labels[index]?.frettedNotes ?? []).map { Spot(string: $0.string, fret: $0.fret) }
-        })
-    }
-
     /// A dot with its note name, spelled for the key (ADR 0123). **A faint name is a map, not a hint:** it
-    /// reads the same whatever you heard, so it can't point at the answer.
-    private func neckSpot(string: Int, fret: Int, isOther: Bool, isHeard: Bool) -> some View {
-        let notes = labels[active]?.frettedNotes ?? []
-        let isPlaced = notes.contains { $0.string == string && $0.fret == fret }
+    /// reads the same whatever you heard, so it can't point at the answer. A placed note is drawn by where
+    /// it sits in the pass from the note being named (`NeckNeighbours`).
+    private func neckSpot(string: Int, fret: Int, mark: NeckNeighbours.Mark?) -> some View {
+        let isPlaced = mark?.tier == .current
         // In a shape, the ringed note is the one bend and vibrato go on.
-        let isRinged = isPlaced && notes.count > 1 && string == ringed
+        let markedNotes = labels[marked]?.frettedNotes ?? []
+        let isRinged = markedNotes.count > 1 && string == ringed
+            && markedNotes.contains { $0.string == string && $0.fret == fret }
         let name = spelling.name(pitchClass: ((tuning.openMidi[string] + fret) % 12 + 12) % 12)
-        let ink: Color = isPlaced ? PocketColor.background
-            : isOther ? PocketColor.textPrimary : PocketColor.textSecondary.opacity(0.55)
-        let fill: Color = isPlaced ? PocketColor.practice
-            : isOther ? PocketColor.textPrimary.opacity(0.18) : PocketColor.surfaceSubtle.opacity(0.5)
+        let style = SpotStyle(mark?.tier)
         // While *Into it* waits for a start, only the frets it could have come from stay bright.
         let dimmed = awaitingStart.map { request in
-            !isPlaced && !NeckJoin.accepts(string: string, fret: fret, asStartOf: notes, for: request)
+            !markedNotes.contains { $0.string == string && $0.fret == fret }
+                && !NeckJoin.accepts(string: string, fret: fret, asStartOf: markedNotes, for: request)
         } ?? false
         return Button {
             place(string: string, fret: fret)
         } label: {
             Text(name)
-                .font(.futura(size: isPlaced ? 10 : 9, weight: isPlaced || isOther ? .bold : .regular))
+                .font(.futura(size: isPlaced ? 10 : 9, weight: mark == nil ? .regular : .bold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-                .foregroundStyle(ink)
+                .foregroundStyle(style.ink)
                 .frame(width: 24, height: 24)
-                .background(Circle().fill(fill))
-                .background(HeardHalo(isHeard: isHeard))
-                .overlay(Circle().stroke(isPlaced || isOther ? .clear : PocketColor.surfaceBorder, lineWidth: 1))
+                .background(Circle().fill(style.fill))
+                .overlay(Circle().inset(by: style.ringWidth / 2).stroke(style.ring, lineWidth: style.ringWidth))
                 .overlay(Circle().inset(by: -3.5).stroke(isRinged ? PocketColor.practice : .clear, lineWidth: 1.5))
+                .overlay(alignment: .topTrailing) {
+                    if let mark, style.numbered { NeighbourNumber(note: mark.note + 1) }
+                }
                 .opacity(dimmed ? 0.3 : 1)
                 .frame(width: 30, height: 30)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(stringNames[string]) string, \(fret == 0 ? "open" : "fret \(fret)"), \(name)")
+        .accessibilityLabel("\(stringNames[string]) string, \(fret == 0 ? "open" : "fret \(fret)"), \(name)"
+                            + Self.neighbourWords(mark, noun: noun))
         .accessibilityAddTraits(isPlaced ? .isSelected : [])
         .accessibilityHint(isRinged ? "Ringed. Tap again to take it out." : "")
     }
@@ -117,6 +109,11 @@ extension NameTheNotesSheet {
     /// marks), with Chords on it builds a shape one note per string. A name given by ear just gives way:
     /// only overwriting neck work asks first (0227 D7). A join that no longer fits is dropped by the
     /// sheet's tidy. While *Into it* waits for where a note started, the tap says that instead.
+    ///
+    /// With Chords off, **placing a note moves on to the next**, silently (ADR 0234 D3): the strip was a
+    /// second tap per note, and moving by tapping a chip played it, which with *Hear 8 notes* was eight
+    /// notes every time. The marks stay on the note just placed until the next one is (`placedNote`), and
+    /// the board stays put. Tapping the note already there confirms it and moves on.
     private func place(string: Int, fret: Int) {
         if let awaitingStart {
             takeStart(string: string, fret: fret, for: awaitingStart)
@@ -127,25 +124,90 @@ extension NameTheNotesSheet {
                                         chords: chordsOn)
         if outcome.label != labels[active] { labels[active] = outcome.label }
         ringed = outcome.ringed
+        guard outcome.label.isOnTheNeck else { return }
+        let move = NamingCursor.afterPlacing(at: active, count: labels.count, chords: chordsOn)
+        // Where it doesn't move on (Chords on, the last note), the marks are the note's own again.
+        placedNote = move.marked
+        if move.active != active { active = move.active }
     }
 }
 
-/// The glow behind a spot while its note sounds (ADR 0227 D2): the strip's ring, on the neck. It pops in
-/// as the note plays and fades as the next one takes over, so the lick is seen moving under the fingers;
-/// with Reduce Motion it only fades. The neck never scrolls to follow it, so the board can't move under
-/// a finger that's naming.
-private struct HeardHalo: View {
-    let isHeard: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+// MARK: - The notes around the one being named (ADR 0234 D4)
+
+extension NameTheNotesSheet {
+    /// Where a placed note sits from the one being named, said after the spot: ", note 11, 1 before".
+    nonisolated static func neighbourWords(_ mark: NeckNeighbours.Mark?, noun: String) -> String {
+        guard let mark else { return "" }
+        let note = "\(noun) \(mark.note + 1)"
+        switch mark.tier {
+        case .before(let steps): return ", \(note), \(steps) before"
+        case .after(let steps): return ", \(note), \(steps) after"
+        case .current: return ", this \(noun)"
+        case .other: return ", \(note)"
+        }
+    }
+}
+
+/// How a spot is drawn for its tier. The note being named is solid; the three before are **filled** and
+/// the three after **ringed**, both fading with distance, so they differ in shape as well as colour and
+/// read with colour filters on; any other placed note is in ink (0227 D3); an empty spot is faint.
+private struct SpotStyle {
+    let fill: Color
+    let ink: Color
+    let ring: Color
+    let ringWidth: CGFloat
+    /// Neighbours carry their note number, so the line reads in order where it crosses itself.
+    let numbered: Bool
+
+    private static let fades: [Double] = [0.64, 0.38, 0.2]
+    private static let rings: [Double] = [0.95, 0.6, 0.32]
+
+    init(_ tier: NeckNeighbours.Tier?) {
+        switch tier {
+        case .current?:
+            self.init(fill: PocketColor.practice, ink: PocketColor.background, ring: .clear, ringWidth: 1,
+                      numbered: false)
+        case .before(let steps)?:
+            let fade = Self.fades[min(max(steps, 1), 3) - 1]
+            self.init(fill: PocketColor.practice.opacity(fade),
+                      ink: steps == 1 ? PocketColor.background : PocketColor.textPrimary,
+                      ring: .clear, ringWidth: 1, numbered: true)
+        case .after(let steps)?:
+            self.init(fill: .clear, ink: PocketColor.practice,
+                      ring: PocketColor.practice.opacity(Self.rings[min(max(steps, 1), 3) - 1]), ringWidth: 2,
+                      numbered: true)
+        case .other?:
+            self.init(fill: PocketColor.textPrimary.opacity(0.18), ink: PocketColor.textPrimary, ring: .clear,
+                      ringWidth: 1, numbered: false)
+        case nil:
+            self.init(fill: PocketColor.surfaceSubtle.opacity(0.5), ink: PocketColor.textSecondary.opacity(0.55),
+                      ring: PocketColor.surfaceBorder, ringWidth: 1, numbered: false)
+        }
+    }
+
+    private init(fill: Color, ink: Color, ring: Color, ringWidth: CGFloat, numbered: Bool) {
+        self.fill = fill
+        self.ink = ink
+        self.ring = ring
+        self.ringWidth = ringWidth
+        self.numbered = numbered
+    }
+}
+
+/// A neighbour's note number, tucked on its top right corner.
+private struct NeighbourNumber: View {
+    let note: Int
 
     var body: some View {
-        Circle()
-            .fill(PocketColor.practice.opacity(0.4))
-            .padding(-5)
-            .scaleEffect(isHeard || reduceMotion ? 1 : 0.6)
-            .opacity(isHeard ? 1 : 0)
-            .animation(isHeard ? .easeOut(duration: 0.16) : .easeIn(duration: 0.3), value: isHeard)
-            .allowsHitTesting(false)
+        Text("\(note)")
+            .font(.futura(size: 8, weight: .bold))
+            .monospacedDigit()
+            .foregroundStyle(PocketColor.practice)
+            .padding(.horizontal, 3)
+            .frame(minWidth: 14, minHeight: 13)
+            .background(Capsule().fill(PocketColor.background))
+            .overlay(Capsule().stroke(PocketColor.practice, lineWidth: 1))
+            .offset(x: 6, y: -5)
             .accessibilityHidden(true)
     }
 }

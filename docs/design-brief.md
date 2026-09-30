@@ -195,6 +195,10 @@ Elsewhere, don't reach for a literal hex in views; go through
   appearing on the second tap, the creation sheet sliding in from below.
 - Timing should feel deliberate. Provide a **Reduce Motion** fallback (e.g.
   cross-fade instead of slide; instant fill instead of radial sweep).
+- **Motion that stands for playing moves the way it was played** (ADR 0234 D5). On the naming neck, a
+  bend glides to where it lands, vibrato shakes, a hammer-on or pull-off lights where it started and
+  snaps across, and a slide travels along the string; a picked note pops. It is drawn under the dots and
+  never moves the board, and with Reduce Motion it only fades.
 
 ### 3.4 Component conventions
 
@@ -238,6 +242,13 @@ Elsewhere, don't reach for a literal hex in views; go through
   bind the field. The trigger is a height increase while focused — never a keystroke, which would
   make the view shiver.
 - Numbers that respond to input (BPM, speed) update **live**.
+- **Order that has to read without colour is drawn in shape, and numbered** (ADR 0234 D4). The naming
+  neck fills the three notes before the current one and rings the three after it, fading with distance,
+  and each carries its note number, so *Differentiate Without Color* holds and a lick that comes back to
+  a fret still reads in order.
+- **A long structured thing on a feed folds to one line** (ADR 0234 D8): a Journal piece is *98 notes ·
+  Guitar · Standard · 6 unnamed* until *See the notes*. Where it's the subject of the screen (*Saved on
+  this loop*) it's drawn in full, as tab in rows that fit, never a line that scrolls sideways.
 - **A control that changes a stored value shows the move, not just the destination** — `100 → 94`,
   the old value dimmed. A lone new number only means something to someone who remembers what it was,
   and on the post-run settle offer that is precisely what's being reconsidered.

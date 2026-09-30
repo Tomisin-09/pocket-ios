@@ -23,6 +23,7 @@ extension NameTheNotesSheet {
                 Spacer(minLength: 4)
                 phraseMenu
             }
+            let snagged = Set(pieceSnags.compactMap(\.note))
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
@@ -36,11 +37,13 @@ extension NameTheNotesSheet {
                                     .padding(.horizontal, -3)
                                     .accessibilityHidden(true)
                             }
-                            chip(index)
+                            chip(index, snagged: snagged.contains(index))
                         }
                     }
                     .padding(.horizontal, 18)
-                    .padding(.vertical, 4)   // room for the ring on the chip being heard
+                    // Room for the ring on the chip being heard, and above for a snag's mark (ADR 0234 D7).
+                    .padding(.top, 9)
+                    .padding(.bottom, 4)
                 }
                 .mask(stripFade)
                 .onAppear { proxy.scrollTo(active, anchor: .center) }
@@ -96,31 +99,12 @@ extension NameTheNotesSheet {
     /// stops the phrase, since eight notes slowed down can run for seconds.
     private var playButton: some View {
         let playing = following != .nothing
-        return Button {
+        return LoopPlayButton(isOn: playing, isLoading: player.isLoading, isDisabled: player.isUnavailable,
+                              label: player.isPlaying ? "Stop the loop" : playing ? "Stop" : "Play the loop") {
             if case .phrase = following { player.stopSlice() } else { player.toggle() }
-        } label: {
-            ZStack {
-                Circle()
-                    .fill(playing ? PocketColor.practice : PocketColor.practice.opacity(0.14))
-                if player.isLoading {
-                    ProgressView()
-                        .controlSize(.mini)
-                } else {
-                    Image(systemName: playing ? "stop.fill" : "play.fill")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(playing ? PocketColor.background : PocketColor.practice)
-                        .offset(x: playing ? 0 : 1)   // optical-centre the play triangle
-                }
-            }
-            .frame(width: 30, height: 30)
-            .frame(width: 44, height: 44)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
         .padding(.vertical, -7)
         .padding(.leading, -7)
-        .disabled(player.isUnavailable)
-        .accessibilityLabel(player.isPlaying ? "Stop the loop" : playing ? "Stop" : "Play the loop")
         .accessibilityIdentifier("naming.playLoop")
     }
 
@@ -164,41 +148,64 @@ extension NameTheNotesSheet {
         }
     }
 
-    private func chip(_ index: Int) -> some View {
+    /// A chip. **A tap plays it; a hold snags it** (ADR 0234 D7). They're separate gestures on a plain
+    /// shape, never a `Button` with a hold added: a Button fires its tap on the hold's release too, so a
+    /// snag would also play the note. VoiceOver can't find a hold, so snagging is a named action.
+    private func chip(_ index: Int, snagged: Bool) -> some View {
         let shown = chipText(index)
         let isActive = index == active
-        return Button {
-            select(index)
-        } label: {
-            VStack(spacing: 0) {
-                Text("\(index + 1)")
-                    .font(.futura(.caption2))
-                    .monospacedDigit()
-                Text(shown.text ?? "?")
-                    .font(.futura(.subheadline, weight: shown.text == nil || shown.dim ? nil : .bold))
-                    .lineLimit(1)
-            }
-            .foregroundStyle(isActive ? PocketColor.background
-                             : shown.text == nil || shown.dim ? PocketColor.textSecondary : PocketColor.textPrimary)
-            .padding(.horizontal, 8)
-            .frame(minWidth: 46, minHeight: 44)
-            .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(isActive ? PocketColor.practice : .clear))
-            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .strokeBorder(isActive ? .clear : PocketColor.surfaceBorder))
-            // The chip being heard while the loop plays: a ring just outside, so it reads on the filled
-            // current chip as well as on the rest.
-            .overlay {
-                if index == hearing {
-                    RoundedRectangle(cornerRadius: 13, style: .continuous)
-                        .strokeBorder(PocketColor.practice, lineWidth: 2)
-                        .padding(-3)
-                }
+        return VStack(spacing: 0) {
+            Text("\(index + 1)")
+                .font(.futura(.caption2))
+                .monospacedDigit()
+            Text(shown.text ?? "?")
+                .font(.futura(.subheadline, weight: shown.text == nil || shown.dim ? nil : .bold))
+                .lineLimit(1)
+        }
+        .foregroundStyle(isActive ? PocketColor.background
+                         : shown.text == nil || shown.dim ? PocketColor.textSecondary : PocketColor.textPrimary)
+        .padding(.horizontal, 8)
+        .frame(minWidth: 46, minHeight: 44)
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .fill(isActive ? PocketColor.practice : .clear))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .strokeBorder(isActive ? .clear : PocketColor.surfaceBorder))
+        // The note just placed, which the marks are still on while the strip has moved past it (ADR
+        // 0234 D3): outlined in dashes, the way a bend's landing is drawn on the neck.
+        .overlay {
+            if index == placedNote {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(PocketColor.practice, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
             }
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(noun.capitalized) \(index + 1), \(shown.text ?? "not named")")
-        .accessibilityAddTraits(isActive ? .isSelected : [])
+        // The chip being heard while the loop plays: a ring just outside, so it reads on the filled
+        // current chip as well as on the rest.
+        .overlay {
+            if index == hearing {
+                RoundedRectangle(cornerRadius: 13, style: .continuous)
+                    .strokeBorder(PocketColor.practice, lineWidth: 2)
+                    .padding(-3)
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if snagged {
+                snagGlyph
+                    .frame(width: 16, height: 16)
+                    .background(Circle().fill(PocketColor.background))
+                    .offset(x: 5, y: -6)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { select(index) }
+        // 0.4 s, the house hold (the loop row, panel headers, the speed bar).
+        .onLongPressGesture(minimumDuration: 0.4) { toggleSnag(on: index) }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(noun.capitalized) \(index + 1), \(shown.text ?? "not named")"
+                            + (snagged ? ", snagged" : ""))
+        .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : .isButton)
+        .accessibilityAction { select(index) }
+        .accessibilityAction(named: snagged ? "Take the snag off" : "Snag this \(noun)") { toggleSnag(on: index) }
+        .accessibilityIdentifier("naming.chip.\(index)")
     }
 
     /// What a chip shows. On Fret & string a placed note is its string and fret ("B8"), and a name given

@@ -110,6 +110,13 @@ final class JournalEntry {
     /// CoreData 134110 mandatory-attribute rule.
     var routineUID: UUID?
 
+    /// The `uid` of the **snag** this note is the line of (ADR 0234 D7): written from a snag on a note in
+    /// *Name the notes*, so the words come back when the player does. A **loose copy**, not a
+    /// relationship, like `routineUID`: deleting the snag must not delete what was written about it, and
+    /// a note whose snag is gone simply reads as an ordinary note on its loop. `nil` for every other
+    /// note. Additive optional with no declaration default (CoreData 134110).
+    var snagUID: UUID?
+
     /// The routine's name at write time — a session entry's owner caption. Snapshotted rather than
     /// looked up through `routineUID`, so a renamed or deleted routine still labels its entries
     /// truthfully (ADR 0038). `nil` for a unit-owned entry.

@@ -82,7 +82,7 @@ final class JournalPieceTests: XCTestCase {
         guard case .loop(_, let mode)? = JournalOwnerRoute.route(for: item) else {
             return XCTFail("a piece opens its loop")
         }
-        XCTAssertEqual(mode, .ear, "where it was made and where Edit names is")
+        XCTAssertEqual(mode, .ear, "where it was made and where Name the notes opens")
     }
 
     // MARK: - Dating the pieces saved before

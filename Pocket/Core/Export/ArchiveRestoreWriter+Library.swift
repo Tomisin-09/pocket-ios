@@ -73,7 +73,8 @@ extension ArchiveRestoreWriter {
                 let snag = Snag(markedAt: made.markedAt,
                                 seconds: made.seconds,
                                 speed: made.speed,
-                                loopUID: made.loopUID)
+                                loopUID: made.loopUID,
+                                markedWhileNaming: made.markedWhileNaming)
                 snag.uid = made.uid
                 return snag
             }

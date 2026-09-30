@@ -122,19 +122,10 @@ struct ContinuousLoopControls: View {
 
     private var playButton: some View {
         Button {
-            haptic(.light)
-            if player.isPlaying {
-                // Finish the take before the bed stops, not after: the engine releases the shared
-                // session on stop, and a take finalised on the far side of that reads a duration of
-                // zero and gets discarded as an accidental tap.
-                onStopped()
-                player.toggle()
-            } else {
-                // Before playback, never after (ADR 0069 slice 2): the `.playAndRecord` flip is
-                // inaudible only while nothing is sounding.
-                recorder?.beginArmedTake()
-                player.toggle()
-            }
+            // A take finishes before the bed stops and begins before it starts (`LoopTransport`): a take
+            // finalised after the stop reads a duration of zero and is discarded as an accidental tap, and
+            // the `.playAndRecord` flip is inaudible only while nothing is sounding.
+            LoopTransport.toggle(player, recorder: recorder, onStopped: onStopped)
         } label: {
             ZStack {
                 Circle()

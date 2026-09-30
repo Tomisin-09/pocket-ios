@@ -52,13 +52,6 @@ enum NamingStrip {
 
     // MARK: - A phrase (0227 D2, after the device check)
 
-    /// The notes on the neck of the chip being heard, which the neck lights as they sound; none while
-    /// nothing plays, or for an answer named by ear.
-    static func heardNotes(_ labels: [PieceLabel?], hearing: Int?) -> [FrettedNote] {
-        guard let hearing, labels.indices.contains(hearing) else { return [] }
-        return labels[hearing]?.frettedNotes ?? []
-    }
-
     /// How many notes a tap can play: the note alone, up to eight, about a bar of quavers. Past that the
     /// strip's play button, the whole loop, is the better listen.
     static let phraseChoices = [1, 2, 3, 4, 6, 8]
@@ -100,12 +93,15 @@ enum NamingStrip {
 /// a List row loses its write).
 struct NameTheNotesSheet: View {
     let request: NamingRequest
+    /// The loop whose piece this is: its song holds the snags a hold makes (ADR 0234 D7), and its Journal
+    /// their lines.
+    let loop: Loop
     let player: ContinuousLoopPlayer
     let spelling: NoteSpelling
-    let loopType: LoopType
     let onDone: (NamingResult) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) var modelContext
     /// The pass being named: its taps, and since ADR 0231 any taken out or tapped in. Handed back on Done.
     @State var taps: [PieceTranscription.Tap]
     @State var active = 0
@@ -115,6 +111,8 @@ struct NameTheNotesSheet: View {
     @State var earKind: EarKind
     /// A By ear answer waiting on *Replace* or *Keep it*, because it would overwrite neck work (0227 D7).
     @State var replacing: PieceLabel?
+    /// Whether that answer moves on once replaced: a name does, a kind doesn't (0227 D6).
+    @State var replacingAdvances = false
     /// This piece's instrument and tuning (0227 D3), changed from the *Where did you play it?* row.
     @State var tuning: NamingTuning
     @State var showingInstrument = false
@@ -138,28 +136,39 @@ struct NameTheNotesSheet: View {
     @State var sounding: ClosedRange<Int>?
     /// *Missed a note?* is open: the stretch around the chip plays, and the pad waits for one tap (0231).
     @State var addingNote = false
-    /// The last correction, for **Undo** while nothing has changed since.
+    /// What the last correction did, said under it with **Undo** while nothing has changed since.
     @State var undo: PassCorrection.Undo?
+    /// Every change made on this visit, for ↶ and ↷ (ADR 0234 D6).
+    @State var history = NamingHistory()
+    /// The line being written on the current note's snag, while it is (ADR 0234 D7).
+    @State var lineDraft: String?
+    /// The note just placed on the neck, while the strip has moved on past it (ADR 0234 D3): the marks
+    /// stay on it until the next note is placed or a chip is picked. `nil` whenever the marks go with the
+    /// strip.
+    @State var placedNote: Int?
     /// Bumped when the pad is tapped with nothing playing, to say why nothing was added.
     @State var missedNudge = 0
 
-    init(request: NamingRequest, player: ContinuousLoopPlayer, spelling: NoteSpelling, loopType: LoopType,
+    init(request: NamingRequest, loop: Loop, player: ContinuousLoopPlayer, spelling: NoteSpelling,
          onDone: @escaping (NamingResult) -> Void) {
         self.request = request
+        self.loop = loop
         self.player = player
         self.spelling = spelling
-        self.loopType = loopType
         self.onDone = onDone
+        let loopType = loop.loopType
         let labels = request.taps.map(\.label)
         _taps = State(initialValue: request.taps)
+        let start = request.taps.indices.contains(request.startAt) ? request.startAt : 0
+        _active = State(initialValue: start)
         _mode = State(initialValue: NamingMode.opening(for: labels, loopType: loopType))
         _earKind = State(initialValue: NamingMode.openingKind(for: labels, loopType: loopType))
         let tuner = CountTheNotesModel.tunerTuning()
         _tuning = State(initialValue: NamingTuning(openMidi: request.openMidi ?? tuner.openMidi,
                                                    label: request.tuningLabel ?? tuner.label))
-        _neckTarget = State(initialValue: labels.first.flatMap { Self.fret(of: $0) })
+        _neckTarget = State(initialValue: labels.indices.contains(start) ? Self.fret(of: labels[start]) : nil)
         _chordsOn = State(initialValue: labels.contains { ($0?.frettedNotes.count ?? 0) > 1 })
-        _ringed = State(initialValue: labels.first??.frettedNotes.last?.string)
+        _ringed = State(initialValue: labels.indices.contains(start) ? labels[start]?.frettedNotes.last?.string : nil)
     }
 
     var body: some View {
@@ -176,6 +185,7 @@ struct NameTheNotesSheet: View {
                     }
                     .pickerStyle(.segmented)
                     strip
+                    snagLine
                     correctionControls
                     if let replacing { replacePrompt(replacing) }
                     switch mode {
@@ -207,11 +217,6 @@ struct NameTheNotesSheet: View {
         .presentationDetents([.large])
         .interactiveDismissDisabled(taps != request.taps)
         .onChange(of: active) { chipChanged() }
-        .onChange(of: labels) {
-            // A join lives on the second note; when the first moves, it can stop fitting (0227 D5).
-            let tidy = NeckJoin.tidied(labels)
-            if tidy != labels { labels = tidy }
-        }
         .onChange(of: mode) {
             replacing = nil
             awaitingStart = nil
@@ -219,42 +224,43 @@ struct NameTheNotesSheet: View {
         }
         .sheet(isPresented: $showingInstrument) {
             NamingInstrumentSheet(current: tuning, placed: NamingTuning.placed(in: labels)) { next in
-                labels = tuning.carrying(labels, to: next)
-                tuning = next
+                // One step for undo: the strings and whatever they did to the frets go back together.
+                commit(labeled: tuning.carrying(labels, to: next), tuning: next)
             }
         }
         .onDisappear { player.stop() }
     }
 
-    /// Each tap's answer, in order: the names in `taps`, read and written by every picker.
+    /// Each tap's answer, in order: the names in `taps`, read by every picker and written through
+    /// `commit`, so every change is tidied and can be undone (ADR 0234 D6).
     var labels: [PieceLabel?] {
         get { taps.map(\.label) }
-        nonmutating set {
-            var named = taps
-            for index in named.indices {
-                named[index].label = newValue.indices.contains(index) ? newValue[index] : nil
-            }
-            taps = named
-        }
+        nonmutating set { commit(labeled: newValue) }
     }
 
+    /// The note the marks go on: the one just placed while the strip has moved past it, else the one
+    /// being named (ADR 0234 D3).
+    var marked: Int { placedNote.flatMap { labels.indices.contains($0) ? $0 : nil } ?? active }
+
     /// Everything that follows the chip being named, when it changes or a correction moves the pass
-    /// under it.
+    /// under it. A move made by placing a note leaves the board where it is, so it never slides under the
+    /// finger that placed it (0227 D2); any other move brings the note into view.
     func chipChanged() {
         replacing = nil
         awaitingStart = nil
         addingNote = false
-        neckTarget = Self.fret(of: labels[active]) ?? neckTarget
-        ringed = labels[active]?.frettedNotes.last?.string
+        if placedNote == nil { neckTarget = Self.fret(of: labels[active]) ?? neckTarget }
+        ringed = labels[marked]?.frettedNotes.last?.string
     }
 
     /// A chord loop is tapped once per chord, and calls them chords.
     var noun: String { loopType == .chords ? "chord" : "note" }
 
+    var loopType: LoopType { loop.loopType }
+
     private var subtitle: String {
         let count = taps.count
-        let what = request.source == .saved ? "Your saved piece" : "This pass"
-        return "\(what) · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear \(tapPlays), "
+        return "Your saved piece · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear \(tapPlays), "
             + "or play the whole loop."
     }
 
@@ -285,33 +291,13 @@ struct NameTheNotesSheet: View {
         }.joined(separator: "·")
     }
 
-    // MARK: - Moving and hearing
+    // MARK: - Hearing
 
-    /// **Hear it again** plays the real recording, the one sound this sheet makes. **Next unnamed** jumps
-    /// to the next gap and goes once every tap has an answer.
-    private var moveButtons: some View {
-        HStack(spacing: 10) {
-            Button("Hear it again") { hearSlice() }
-                .buttonStyle(.bordered)
-            Spacer(minLength: 0)
-            if let gap = NamingStrip.nextUnnamed(after: active, in: labels) {
-                Button("Next unnamed") { select(gap) }
-                    .buttonStyle(.borderless)
-            }
-            Button("Next \(noun)") { select(active + 1) }
-                .buttonStyle(.bordered)
-                .disabled(active >= labels.count - 1)
-        }
-        .font(.futura(.subheadline))
-        // Three buttons are a little wider than the smallest phone; shrink them a touch rather than wrap.
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
-        .tint(PocketColor.practice)
-    }
-
-    /// Go to a chip and hear its moment.
+    /// Go to a chip and hear its moment. Tapping a chip is the one way a note is heard on its own (ADR 0234
+    /// D3): moving on, by placing a note or *Next unnamed*, is silent.
     func select(_ index: Int) {
         guard labels.indices.contains(index) else { return }
+        placedNote = nil
         active = index
         hearSlice()
     }
@@ -326,8 +312,10 @@ struct NameTheNotesSheet: View {
         player.playSlice(from: taps[phrase.lowerBound].seconds, to: taps[active].seconds)
     }
 
-    /// Move to the next chip after an answer is saved, if there is one. Silent: the player asks to hear it.
+    /// Move to the next chip after a name is saved on By ear, if there is one. Silent: the player asks to
+    /// hear it. By ear has no marks, so nothing stays behind.
     func advance() {
+        placedNote = nil
         if active < labels.count - 1 { active += 1 }
     }
 
@@ -351,6 +339,8 @@ extension NameTheNotesSheet {
                 Button("Replace") {
                     labels[active] = label
                     replacing = nil
+                    // As the name would have, had it not asked first (0227 D6).
+                    if replacingAdvances { advance() }
                 }
                 .buttonStyle(.borderedProminent)
                 Button("Keep it") { replacing = nil }

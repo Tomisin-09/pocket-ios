@@ -15,6 +15,11 @@
   **lead-in**. **D9**: a note gains an optional
   `leadIn` key. **D10**: a slide **into** a note from nowhere (`/7`) is lifted; a slide out to nowhere,
   bend releases and pre-bends stay out. The rest of D5, D9 and D10 stands.
+- **Amended by:** ADR 0234 (Naming from real use, 2026-09-30) — **D2**: the strip's bottom row is ↶ ↷ ·
+  *Next unnamed*, *Next note* goes, and the glow moves the way the note was played. **D3**: placing a
+  note moves on, silently, the marks follow the note just placed, and the three notes either side are
+  drawn filled and ringed, numbered. **D8**: *Hear it again* goes; a chip tap plays the recording. The
+  rest stands.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the
   synth withdrawn here, and D4.3, the route back) · 0093 (the chord namer that names a shape) · 0095
   (My chords, whose one-note-per-string rule the Chords switch follows) · 0065 (exercise templates, whose scales editor

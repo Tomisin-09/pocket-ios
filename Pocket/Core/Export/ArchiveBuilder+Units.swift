@@ -175,7 +175,8 @@ extension ArchiveBuilder {
             metronomeNoteValueAtEntry: entry.metronomeNoteValueAtEntry,
             metronomeSubdivisionRaw: entry.metronomeSubdivisionRaw,
             metronomeWithdrawalRaw: entry.metronomeWithdrawalRaw,
-            isPinned: entry.isPinned
+            isPinned: entry.isPinned,
+            snagUID: entry.snagUID
         )
     }
 

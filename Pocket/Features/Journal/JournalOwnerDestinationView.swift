@@ -24,6 +24,8 @@ struct JournalOwnerDestinationView: View {
             case .ear: EarTrainingScreen(loop: loop)
             case .improvise: ImproviseScreen(loop: loop)
             }
+        case .naming(let loop, let note):
+            EarTrainingScreen(loop: loop, namingAt: note)
         case .routine(let routine):
             RoutineDetailView(container: modelContext.container, existing: routine)
         }

@@ -209,6 +209,38 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Save a pass, then name it.** *Count the notes* ends with **Clear** and **Save**; **Name the notes**
+  now opens from the saved piece under *Saved on this loop*, so names are never left on a pass that
+  **Clear** would throw away. A small **▶** beside *Show beats* starts and stops the loop, so you can
+  count without scrolling back up to the big button (ADR 0234).
+- **Naming on the neck moves on by itself.** In *Name the notes*, placing a note on *Fret & string* goes
+  straight to the next one, silently: only tapping a note in the strip plays anything, so a long *Hear 8
+  notes* no longer plays every time you move. *Into it*, *Bend* and *Vibrato* stay on the note you just
+  placed (its chip is outlined, and the line above them names it) until you place the next. *Hear it
+  again* and *Next note* are gone, since a tap on a note and placing it do both (ADR 0234).
+- **Undo and redo in Name the notes.** ↶ and ↷ sit where those buttons were, beside *Next unnamed*, and
+  take back any change made on the visit: a fret, a mark, a name, a note taken out or tapped in, a new
+  tuning. With a keyboard, ⌘Z, ⇧⌘Z and ⌘Y work too (ADR 0234).
+- **The neck shows the notes around the one you're naming.** The three before it are filled and the
+  three after it ringed, fading the further they are, and each carries its note number, so a lick reads
+  in order on the neck even where it comes back to the same fret (ADR 0234).
+- **The neck plays along the way you played it.** While the strip plays the loop or a phrase, a picked
+  note pops in, a bend glides to where it lands, vibrato shakes, a hammer-on or pull-off lights where it
+  started and snaps across, and a slide travels along the string. With Reduce Motion each only fades in
+  (ADR 0234).
+- **Snag a note you're stuck on.** In *Name the notes*, hold a note in the strip to snag it, and hold
+  again to take it off; a hold never plays it. It's the same crimson snag the practice screen makes
+  while you play, so each shows in both places, and a stumble you snagged while playing sits on the
+  note it caught on. Leave a line on a snag for when you come back: it saves to the loop's Journal
+  straight away, and shows under the strip on that note. *Saved on this loop* lists the piece's snags,
+  and a snag's line in the Journal names its note and opens *Name the notes* there (ADR 0234).
+- **A saved piece reads as tab, not a wall of names.** *Saved on this loop* opens with one line — "98
+  notes · Guitar · Standard · 6 unnamed" — then the tab in rows that fit the screen, each saying which
+  notes it holds, instead of one line that ran off the side. A name given by ear or a chord sits above
+  the strings where it falls, an unnamed note is a dot, and four or more unnamed in a row are counted.
+  A piece named only by ear is its names in fours. The Journal's Pieces rows show just that first line
+  until you tap *See the notes*; the song map's tab sheet draws the same, and a hold still copies the
+  tab (ADR 0234).
 - **A Journal note opens the loop where it was written.** Tapping the loop's name on an 👂 Ear or 🧩
   Transcribed note opens *Train your ear*, and on a 🎸 Improv note opens *Improvise*, rather than the
   loop's ordinary practice. Other notes open as before (ADR 0228).

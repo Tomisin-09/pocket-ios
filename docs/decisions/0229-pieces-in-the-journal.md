@@ -11,6 +11,9 @@
   row per loop, and the row is the version in use. ADR 0232 (Map the song, D20, 2026-09-30) — **D2**:
   under the **Pieces** scope a piece sits under its song, in song order, with the day it last changed on
   the row; *All* still puts it on that day. The song's heading opens the map.
+- **Amended by:** ADR 0234 (Naming from real use, 2026-09-30) — **D1**: the row folds to one line, its
+  count, and *See the notes* opens the piece in place. **D4**: only the loop's caption opens *Train
+  your ear*. D2, D3 and D5 stand.
 - **Relates to:** 0100 (the Journal space) · 0190 D7 (the scope control, the medium axis) · 0228 (a
   transcribed note opens ear training, which the piece row follows) · `docs/plans/song-map.md` (the
   map's "which loops are solved").

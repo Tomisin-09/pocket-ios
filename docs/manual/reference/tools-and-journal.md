@@ -68,13 +68,16 @@ and `Record a take`. Underneath, a search field prompting
 - **A note** shows its kind chip, the time, the text, an owner caption, and the snapshot it kept.
 - **A take** shows a play control, its name, its length and the time, plus its owner caption.
 - **A piece** is a loop's saved transcription from `Count the notes`: 🧩 Piece, the time it last
-  changed, its count and names, its tab, and the loop. There is one per loop, always the current
-  version; saving again or editing its names moves it to that day. Tap it to open the loop in
-  `Train your ear`, where `Edit names` is. It has no hold menu.
+  changed, one line saying how many notes it has and how many are unnamed, and the loop. *See the
+  notes* opens its tab, or its names if it was named by ear, in place, and *Hide the notes* folds it
+  again. There is one per loop, always the current version; saving again or editing its names moves it
+  to that day. Tap the loop to open it in `Train your ear`, where `Name the notes` is. It has no hold
+  menu.
 - **The owner caption** is a link where the thing still exists and has a screen to open; plain text
   otherwise. A loop opens where the note was written: an Ear or Transcribed note opens `Train your ear`,
   an Improv note opens `Improvise`, and anything else opens the loop's ordinary practice once it has a
-  command tempo.
+  command tempo. A line left on a snag in `Name the notes` names its note (*Intro lick · note 23*) and
+  opens `Name the notes` there.
 
 **Deleting is hold-only**, on every row. A take's hold menu leads with `Name this take`, or
 `Rename` once it has one; renaming is also a right swipe.
