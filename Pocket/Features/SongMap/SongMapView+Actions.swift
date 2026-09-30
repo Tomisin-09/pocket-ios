@@ -92,6 +92,20 @@ extension SongMapView {
 
     // MARK: - Words
 
+    /// What the board or the tab is for, under the song's facts.
+    func guidance(_ map: SongMap, tab: SongTab?) -> String {
+        guard let tab else {
+            return map.pieces.isEmpty
+                ? "No loops yet. Tap + in a lane to make one there. Every loop on this song appears here, "
+                    + "where it plays."
+                : "Each loop sits where it plays. Tap one for its tab, hold it to work on it, or tap + to "
+                    + "make one in a gap."
+        }
+        return tab.isEmpty
+            ? "Nothing counted yet. Count a loop in Train your ear and it's drawn here, where it plays."
+            : "Drawn from your pieces, where they play. Tap a row to see the pieces that drew it."
+    }
+
     /// The artist, and what the rows are measured in.
     func facts(_ map: SongMap) -> String {
         var parts = [song.artist].filter { !$0.isEmpty }

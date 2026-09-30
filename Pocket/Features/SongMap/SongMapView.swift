@@ -12,7 +12,8 @@ import SwiftUI
 /// drew it.
 ///
 /// **It adds, and never deletes** (D17). A piece made in a gap, or copied (D16), can be taken back with
-/// Undo while it's new; a loop made on the waveform can't be removed from here.
+/// Undo while it's new; a loop made on the waveform can't be removed from here. **Put it together** (D11)
+/// picks pieces to make a routine of, opened for review (`SongMapView+Together`).
 struct SongMapView: View {
     let song: Song
     /// Pause whatever else is playing before a piece opens: the practice screen's waveform, when the
@@ -47,6 +48,16 @@ struct SongMapView: View {
     @State private var copyAfterSheet: UUID?
     /// What the map just made, which Undo takes back (D17), until the player does something else.
     @State var made: Made?
+    /// Picking pieces to put together (D11): the ones picked, or `nil` when not picking.
+    @State var selection: Set<UUID>?
+    /// The command tempos Put it together is asking for (D11).
+    @State var askingCommands: TogetherAsk?
+    /// What was asked, begun once the sheet has gone.
+    @State var beginAfterSheet: TogetherBegin?
+    /// The routine Put it together made, open for review (D11).
+    @State var reviewing: TogetherReview?
+    @Environment(\.isPro) var isPro
+    @Environment(\.presentPaywall) var presentPaywall
 
     struct Opening: Equatable {
         let uid: UUID
@@ -92,8 +103,10 @@ struct SongMapView: View {
                                                                            showSection: showSection,
                                                                            setRepeats: setRepeats,
                                                                            makePiece: offerPiece,
-                                                                           copy: startCopy),
-                                                   highlighted: highlighted)
+                                                                           copy: startCopy,
+                                                                           putTogether: startTogether,
+                                                                           toggle: toggleSelected),
+                                                   highlighted: highlighted, selected: selection)
                             }
                         }
                     }
@@ -112,6 +125,7 @@ struct SongMapView: View {
             }
             .background(PocketColor.background)
             .overlay(alignment: .bottom) { undoBar }
+            .safeAreaInset(edge: .bottom, spacing: 0) { pickingBar(map) }
             .safeAreaInset(edge: .top, spacing: 0) { modePicker }
             .navigationTitle(song.title)
             .navigationBarTitleDisplayMode(.inline)
@@ -122,6 +136,8 @@ struct SongMapView: View {
                     JournalOwnerDestinationView(route: .loop(loop, opening.mode))
                 }
             }
+            .navigationDestination(isPresented: Binding(get: { reviewing != nil },
+                                                        set: { if !$0 { finishReview() } })) { togetherReview }
         }
         // At the root, never on a row: a presentation raised from a row can lose its write (iOS 18).
         .sheet(item: $editingMarker) { ref in
@@ -159,6 +175,13 @@ struct SongMapView: View {
                                   } : nil)
             }
         }
+        .sheet(item: $askingCommands, onDismiss: beginAfterAsking) { ask in
+            SongMapCommandSheet(rows: ask.rows) { commands in
+                beginAfterSheet = TogetherBegin(plan: ask.plan, commands: commands)
+                askingCommands = nil
+            }
+        }
+        .onChange(of: mode) { selection = nil }
         .sheet(item: $copying) { source in
             if let piece = map.pieces[source.uid] {
                 SongMapCopySheet(piece: piece, map: map) { copy(source.uid, into: $0, grid: map.grid) }
@@ -222,19 +245,6 @@ struct SongMapView: View {
                 .foregroundStyle(PocketColor.textSecondary)
             if tab != nil, !SongMapInput.hasGrid(song) { setTheOne.padding(.top, 4) }
         }
-    }
-
-    private func guidance(_ map: SongMap, tab: SongTab?) -> String {
-        guard let tab else {
-            return map.pieces.isEmpty
-                ? "No loops yet. Tap + in a lane to make one there. Every loop on this song appears here, "
-                    + "where it plays."
-                : "Each loop sits where it plays. Tap one for its tab, hold it to work on it, or tap + to "
-                    + "make one in a gap."
-        }
-        return tab.isEmpty
-            ? "Nothing counted yet. Count a loop in Train your ear and it's drawn here, where it plays."
-            : "Drawn from your pieces, where they play. Tap a row to see the pieces that drew it."
     }
 
     /// Without a grid the tab is in seconds, and says so once (D7). The map has no tempo flow of its own:

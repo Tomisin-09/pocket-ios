@@ -89,6 +89,10 @@ a routine that already has it says *already in it*. A loop asks whether it goes 
 **Ear** or **Improv** when it can be more than one. **New routine…** makes one with it as the first
 block. To put it anywhere but the end, open the routine and drag it.
 
+**Or from a song's map.** On **Map the song**, hold a piece and choose **Put it together…** to make a
+routine of it and its neighbours, or of a line and the chords under it. See
+[Mapping the song](songs.md#mapping-the-song).
+
 ### Rests
 
 **Insert rest** does two different things. **Tap** it and a rest goes on the end, which is what you

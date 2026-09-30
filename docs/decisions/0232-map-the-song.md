@@ -8,7 +8,8 @@
   (the per-song gridlines switch) · 0135 (a loop as a backing track) · 0150 and 0161 (export, not
   hosting; the practice file carries no song titles) · 0070 and 0225 D9 (no completion score) · 0092 §A4
   and 0225 D10 (never detected, never suggested) · 0233 (the map reads a piece's version in use, and its tab sheet
-  opens **Versions**).
+  opens **Versions**) · 0111 (a routine made for you is reviewed before it's kept) · 0138 (a Practice block
+  needs a command tempo).
 - **Schema:** four additive fields: `Marker.startsSection` (D6, slice 1), `Marker.sameAsUID` (D8,
   slice 3), `Loop.repeatsToSectionEnd` (D14, slice 3) and `Loop.repeatsTo` (D15, slice 3b, a String).
   Each is Optional or defaulted, and each is optional in the archive's `MarkerRecord` or `LoopRecord`.
@@ -200,6 +201,56 @@ Select pieces on the board and **Put it together** makes a routine, in one of tw
 The routine builder's own rules (0127) apply, and the routine is whatever a routine is at the time: this
 ADR doesn't change what's free.
 
+Settled before the build (slice 4, 2026-09-30). Tomisin agreed the three open questions as suggested:
+ask for a missing command tempo, make the joined stretches as loops, and switch on the backing.
+
+- **Selecting starts from a piece.** Its hold menu has **Put it together…**, which starts a selection
+  with that piece in it. While selecting, tapping a piece or its repeats adds or removes that loop, and
+  nothing else on the board responds. A bar along the bottom says what the selection makes, or why it
+  can't be put together, with **Put it together** and **Cancel**. The board has no header to hold (0125's
+  way in), and a nav bar button would change width between *Select* and *Cancel* (0126).
+- **The shape follows from what's selected**, so there's nothing to choose:
+  - **In a row**: two or more pieces on one layer, each starting and ending later than the one before,
+    overlapping it by a second at most, so a loop drawn a hair long still counts. A gap between them is
+    allowed, and the joined stretches play it.
+  - **A line over its chords**: one piece on each layer, with the chords piece, or its repeats, playing
+    under some of the line.
+  - Anything else says why: pieces in a row can't overlap; the chords have to play under the line; pick
+    pieces on one layer, or a line and its chords.
+- **In a row runs A, B, A to B, C, A to C…**: each piece, then the stretch from the first piece to it, each
+  a Practice block with the speed ramp. The stretches are loops Put it together makes, from the first
+  piece's start to the last one's end, named *Verse notes to Verse notes 2* and typed as the pieces are.
+  **A joined loop holds no piece of its own.** Its parts hold the notes, and a copy would write them twice
+  in the tab (D10). It sits on the map on a lane of its own, under the pieces it joins.
+- **A line over its chords runs the line, then the chords as a backing**: the line as a Practice block,
+  then the chord loop as an Improvise block (ADR 0135). **The chord loop's Backing track switch is turned
+  on**, because choosing this shape says that's what it's for. The backing is the record at those bars,
+  the original line included: it's playing along in context, not a clean track.
+- **A Practice block needs a command tempo (ADR 0138), so Put it together asks once** for any piece that
+  has none: *How fast can you play these now?*, one row per piece in 5% steps, each starting where the loop
+  edit sheet's **Set** would. The answer is saved on the loop, as if set there. A joined loop starts at
+  the slowest of its parts' command tempos, and the slowest of their speeds.
+- **The routine opens for review**, as *Build a routine for this song* does (ADR 0111), and nothing lands
+  in Routines until **Save**. It's named after the song and the pieces (*Slow Bend: Intro lick over
+  Intro chords*), and each block runs at its loop's own length, as a block added by hand does.
+- **Undo (D17) takes back the joined loops**, which are made when Put it together is tapped. Back on the
+  map, *Made Verse notes to Verse notes 2 · Undo* offers it while no saved routine uses them. Once a
+  saved routine does, they're its blocks, and there's no Undo. The command tempos and the backing
+  switch stay either way: they're what the player said about their loops.
+- **Behind Routines' own gate** (ADR 0144), the one *Build a routine for this song* uses.
+
+Settled in the build (slice 4, 2026-09-30):
+
+- **Of two loops that start together, the shorter now takes the first lane.** Slice 1 gave it to the
+  longer, for no reason beyond laying the same loops out the same way each time. A joined loop starts
+  with its first part and is longer, so under that rule it pushed the pieces it joins down a lane (found
+  in a render). A board with two loops starting together has them the other way round from now on.
+- **The joined loops are made in the map's own context, when Put it together is tapped.** The review
+  builds its routine in a context of its own, and a loop saved there doesn't reach the map's copy of
+  the song until the map is opened again. Made on the map, they're drawn straight away, and Undo can take
+  them back.
+- **Cancelling the tempo question goes back to the picked pieces**, still picked.
+
 ### D12 — Export, not hosting, and not yet
 
 - **No share action on the map.** The pieces already travel in the whole-archive export (ADR 0181), so
@@ -360,7 +411,8 @@ Tomisin chose the other way when shown both.
    **3b. Reach, copies and Undo**, from the first device test: how far a repeat runs (D15), *Copy to…*
    and *Copy X here* (D16), and Undo for what the map makes (D17). From the second, the tab writes a
    repeat out (D18), and a "same as" section too (D19).
-4. **Put it together** (D11).
+4. **Put it together** (D11): selecting on the board, the two shapes, the command tempo it asks for,
+   the joined loops and their Undo, and the routine opened for review.
 5. **The Journal's Pieces scope, grouped by song** (D1).
 
 Each slice ships on its own: slice 1 is useful without the Tab view, since a song's loops laid out by

@@ -689,6 +689,17 @@ needs no seam into the practice screen's model. Rows decide which pieces they ho
 `SongMapLayout.tolerance`: loop edges are stored as fractions of the song, and one ending at a section's
 start reads back a hair past it.
 
+**Put it together makes loops on the map and a routine in the review's sandbox** (D11). The pure
+`SongMapTogether` reads the picked pieces as a shape and plans the blocks and the joined stretches.
+`SongMapWriter.prepare` writes the command tempos asked for, the backing switch and the joined loops **in
+the map's own context**, and saves. That split is forced: a loop saved from another `ModelContext` reaches
+the store, but not the relationship array of a `Song` the map already holds (seen in a unit test: a fresh
+fetch returned the loop while `song.loops` didn't, even after a run-loop turn). The routine itself is
+built by `RoutineDetailView(container:provisional:)` in its own sandbox, which fetches the saved loops, so
+backing out keeps no routine. That init's `build` closure can run again whenever the parent redraws, as a
+view's init can, so it writes nothing outside the context it's handed. Whether Undo is still offered is
+a fresh `RoutineItem` fetch, for the same reason.
+
 **The Tab view is a second reading of the same `SongMap`** (ADR 0232 D10). `SongTabLayout.build(map,
 spelling:)` cuts the board's sections into rows of 4 bars (or 8 s), reusing `SongMapLayout.rowSpans` and
 `ticks` with shorter lengths, and turns each lane's taps into columns: a chord symbol in the chords layer,

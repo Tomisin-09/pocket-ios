@@ -212,11 +212,13 @@ final class SongMapLayoutTests: XCTestCase {
         XCTAssertEqual(pieces.map(\.lane), [0, 0], "a lick over its chords doesn't overlap them")
     }
 
-    func testTheLongerOfTwoStartingTogetherTakesTheLowerLane() {
-        let short = UUID(), long = UUID()
-        let pieces = SongMapLayout.placePieces([loop(0, 4, uid: short), loop(0, 12, uid: long)], duration: 64)
-        XCTAssertEqual(pieces.first { $0.uid == long }?.lane, 0)
-        XCTAssertEqual(pieces.first { $0.uid == short }?.lane, 1)
+    func testTheShorterOfTwoStartingTogetherTakesTheFirstLane() {
+        let short = UUID(), long = UUID(), next = UUID()
+        let pieces = SongMapLayout.placePieces([loop(0, 12, uid: long), loop(0, 4, uid: short),
+                                                loop(4, 8, uid: next)], duration: 64)
+        XCTAssertEqual(pieces.first { $0.uid == short }?.lane, 0)
+        XCTAssertEqual(pieces.first { $0.uid == long }?.lane, 1, "a loop joining pieces sits under them (D11)")
+        XCTAssertEqual(pieces.first { $0.uid == next }?.lane, 0, "and the next piece keeps to the first lane")
     }
 
     func testEveryRowHasAChordsAndANotesLaneAndExtraLanesOnlyWhereNeeded() {

@@ -75,11 +75,12 @@ enum SongMapLayout {
             let start = min(max(loop.start, 0), duration), end = min(max(loop.end, 0), duration)
             return end - start > tolerance ? Clamped(loop: loop, start: start, end: end) : nil
         }
-        // Earliest first; the longer of two that start together takes the lower lane; the uid breaks a
-        // tie, so the same loops always lay out the same way.
+        // Earliest first; the shorter of two that start together takes the first lane, so the parts of a
+        // stretch sit above the loop that joins them (D11); the uid breaks a tie, so the same loops always
+        // lay out the same way.
         let ordered = clamped.sorted {
             if abs($0.start - $1.start) > tolerance { return $0.start < $1.start }
-            if abs($0.end - $1.end) > tolerance { return $0.end > $1.end }
+            if abs($0.end - $1.end) > tolerance { return $0.end < $1.end }
             return $0.loop.uid.uuidString < $1.loop.uid.uuidString
         }
         var laneEnds: [SongMap.Layer: [TimeInterval]] = [:]

@@ -9,14 +9,18 @@ struct SongMapSectionView: View {
     let actions: SongMapActions
     /// Pieces just reached from a row of the Tab view (D10), drawn heavier for a moment.
     let highlighted: Set<UUID>
+    /// The pieces picked to put together (D11), while picking. `nil` otherwise.
+    var selected: Set<UUID>?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             SongMapSectionHeading(heading: section.heading, bars: section.bars, start: section.start,
                                   end: section.end, sameAs: section.sameAs, openMarker: actions.openMarker,
                                   showSection: actions.showSection)
+                .disabled(selected != nil)
             ForEach(section.rows) { row in
-                SongMapRowView(row: row, map: map, loops: loops, actions: actions, highlighted: highlighted)
+                SongMapRowView(row: row, map: map, loops: loops, actions: actions, highlighted: highlighted,
+                               selected: selected)
                     .id(SongMapAnchor.row(row.start))
             }
         }
@@ -100,6 +104,9 @@ struct SongMapRowView: View {
     let loops: [UUID: Loop]
     let actions: SongMapActions
     let highlighted: Set<UUID>
+    /// The pieces picked to put together (D11), while picking: only pieces and their repeats answer a tap
+    /// then. `nil` otherwise.
+    var selected: Set<UUID>?
 
     static let labelWidth: CGFloat = 50
     /// Numbers along the top, pins along the bottom pointing into the lanes, so a pin on a bar line
@@ -164,6 +171,7 @@ struct SongMapRowView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .disabled(selected != nil)
                 .offset(x: xPos(pin.time, width) - 14)
                 .accessibilityLabel("Marker, \(pin.label)")
                 .accessibilityHint("Opens the marker")
@@ -190,8 +198,8 @@ struct SongMapRowView: View {
                 if let piece = map.pieces[band.uid] {
                     let start = xPos(band.start, width), end = xPos(band.end, width)
                     SongMapBandView(band: band, piece: piece, width: max(end - start, 6),
-                                    height: Self.laneHeight - 6, onView: { actions.view(band.uid) },
-                                    menu: menu(piece))
+                                    height: Self.laneHeight - 6, selected: selected?.contains(band.uid),
+                                    onView: { tap(band.uid) }, menu: menu(piece))
                         .offset(x: start, y: 3)
                 }
             }
@@ -201,12 +209,18 @@ struct SongMapRowView: View {
                     SongMapPieceView(piece: piece, placement: placement, loop: loops[placement.uid],
                                      width: max(end - start, 6), height: Self.laneHeight - 6,
                                      highlighted: highlighted.contains(placement.uid),
-                                     onView: { actions.view(placement.uid) }, menu: menu(piece))
+                                     selected: selected?.contains(placement.uid),
+                                     onView: { tap(placement.uid) }, menu: menu(piece))
                         .offset(x: start, y: 3)
                 }
             }
         }
         .frame(width: width, height: Self.laneHeight, alignment: .topLeading)
+    }
+
+    /// A tap on a piece or its repeats: its tab, or picking it while pieces are being put together (D11).
+    private func tap(_ uid: UUID) {
+        if selected == nil { actions.view(uid) } else { actions.toggle(uid) }
     }
 
     /// A piece's hold menu, the same on the piece and on its repeats.
@@ -215,6 +229,7 @@ struct SongMapRowView: View {
         return SongMapPieceMenu(modes: loops[uid].map(SongMapPieceSheet.modes(for:)) ?? [],
                                 repeats: SongMapRepeatOptions(piece: piece, in: map, set: actions.setRepeats),
                                 onCopy: piece.canCopy ? { actions.copy(uid) } : nil,
+                                onPutTogether: { actions.putTogether(uid) },
                                 onView: { actions.view(uid) }, onOpen: { actions.open(uid, $0) })
     }
 
@@ -237,6 +252,7 @@ struct SongMapRowView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(selected != nil)
         .offset(x: start)
         .accessibilityLabel("No \(gap.layer.name.lowercased()) piece here")
         .accessibilityHint("Offers to make a piece here")

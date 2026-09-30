@@ -187,6 +187,18 @@ After you make a loop or copy a piece, **Undo** at the bottom of the map takes b
 and only that. It goes after a few seconds, or as soon as you do something else. The map never deletes a
 loop: to delete one, use the waveform.
 
+To practise pieces together, hold one and choose **Put it together…**, then tap the others you want. A
+bar along the bottom says what they make, or why they can't be put together. Chords that follow one
+another, or notes that do, are practised in a row: each on its own, then joined to the ones before it.
+Two halves of a riff become the first half, the second half, then both. A line with the chords under it
+is practised on its own, then played over the chords, which go round as a backing. That switches the
+chords' loop to a backing track.
+
+**Put it together** asks how fast you can play any piece that has no command tempo yet, then opens the
+routine for you to look over. Nothing lands in your routines until you tap **Save**. The joined stretches
+are loops of their own, drawn under the pieces they join. If you go back to the map without saving the
+routine, **Undo** takes them back.
+
 ### The song's tab
 
 **Pieces | Tab** at the top turns the map into the song's tab, drawn from the same pieces, four bars

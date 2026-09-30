@@ -10,6 +10,9 @@ struct SongMapBandView: View {
     let piece: SongMap.Piece
     let width: CGFloat
     let height: CGFloat
+    /// While pieces are being put together (D11), whether its loop is picked: a tap picks it or lets it go,
+    /// and there's no hold menu. `nil` otherwise.
+    var selected: Bool?
     let onView: () -> Void
     /// The piece's own hold menu.
     let menu: SongMapPieceMenu
@@ -19,8 +22,9 @@ struct SongMapBandView: View {
     var body: some View {
         Button(action: onView) {
             ZStack(alignment: .leading) {
-                shape.fill(tint.opacity(0.07))
-                    .overlay(shape.stroke(tint.opacity(0.4), lineWidth: 1))
+                let picked = selected == true
+                shape.fill(tint.opacity(picked ? 0.2 : 0.07))
+                    .overlay(shape.stroke(tint.opacity(picked ? 1 : 0.4), lineWidth: picked ? 2 : 1))
                 if width >= 26 {
                     HStack(spacing: 3) {
                         Image(systemName: "repeat")
@@ -35,10 +39,11 @@ struct SongMapBandView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .contextMenu { menu }
+        .contextMenu { if selected == nil { menu } }
         .accessibilityLabel("\(piece.name), repeating")
         .accessibilityValue("\(band.passes) times in all")
-        .accessibilityHint("Opens its tab")
+        .accessibilityHint(selected == nil ? "Opens its tab" : "Picks its loop to put together, or lets it go")
+        .accessibilityAddTraits(selected == true ? .isSelected : [])
     }
 
     /// Square on the left, where it carries on from the piece or from the row before; rounded on the

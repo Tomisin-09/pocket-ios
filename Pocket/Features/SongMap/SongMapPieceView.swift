@@ -16,7 +16,10 @@ struct SongMapPieceView: View {
     let height: CGFloat
     /// Just reached from a row of the Tab view (D10): drawn heavier, so it's the piece your eye lands on.
     var highlighted = false
-    /// Tap: the loop's tab.
+    /// While pieces are being picked to put together (D11), whether this one is: a tap then picks it or
+    /// lets it go, and there's no hold menu. `nil` otherwise.
+    var selected: Bool?
+    /// Tap: the loop's tab, or picking it while pieces are being put together.
     let onView: () -> Void
     /// Hold: the piece's menu.
     let menu: SongMapPieceMenu
@@ -30,18 +33,35 @@ struct SongMapPieceView: View {
         Button(action: onView) {
             ZStack(alignment: .topLeading) {
                 frame
-                if width >= Self.textWidth { words.padding(.horizontal, 5).padding(.top, 3) }
+                if width >= Self.textWidth {
+                    words.padding(.leading, 5).padding(.trailing, selected == nil ? 5 : 20).padding(.top, 3)
+                }
                 dots
+                if let selected, width >= Self.textWidth { tick(selected) }
             }
             .frame(width: width, height: height, alignment: .topLeading)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .contextMenu { menu }
+        .contextMenu { if selected == nil { menu } }
         .accessibilityLabel("\(piece.name), \(SongMapStyle.name(piece.layer).lowercased())")
         .accessibilityValue(spokenContent)
-        .accessibilityHint("Opens its tab")
+        .accessibilityHint(selected == nil ? "Opens its tab" : "Picks it to put together, or lets it go")
+        .accessibilityAddTraits(selected == true ? .isSelected : [])
     }
+
+    /// Picked or not, in the corner, while pieces are being put together (D11).
+    private func tick(_ isOn: Bool) -> some View {
+        Image(systemName: isOn ? "checkmark.circle.fill" : "circle")
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(isOn ? tint : PocketColor.textSecondary)
+            .background(Circle().fill(PocketColor.background).padding(1))
+            .frame(width: width - 4, height: height - 4, alignment: .topTrailing)
+            .accessibilityHidden(true)
+    }
+
+    /// Drawn heavier when reached from the tab, or picked to put together.
+    private var emphasised: Bool { highlighted || selected == true }
 
     // MARK: - Drawing
 
@@ -56,10 +76,10 @@ struct SongMapPieceView: View {
     @ViewBuilder private var frame: some View {
         switch piece.content {
         case .empty:
-            shape.stroke(tint, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+            shape.stroke(tint, style: StrokeStyle(lineWidth: emphasised ? 3 : 1.5, dash: [4, 3]))
         case .handTagged, .piece:
-            shape.fill(tint.opacity(highlighted ? 0.34 : 0.16))
-                .overlay(shape.stroke(tint, lineWidth: highlighted ? 3 : 1.5))
+            shape.fill(tint.opacity(emphasised ? 0.34 : 0.16))
+                .overlay(shape.stroke(tint, lineWidth: emphasised ? 3 : 1.5))
         }
     }
 
@@ -117,12 +137,15 @@ struct SongMapPieceView: View {
 }
 
 /// A piece's hold menu (ADR 0232 D2), on the piece and on its repeats alike: *View tab*, the modes it can
-/// open in, how far it repeats (D14, D15), and *Copy to…* once it holds a counted piece (D16).
+/// open in, how far it repeats (D14, D15), *Copy to…* once it holds a counted piece (D16), and *Put it
+/// together…* (D11).
 struct SongMapPieceMenu: View {
     let modes: [LoopRunMode]
     let repeats: SongMapRepeatOptions?
     /// *Copy to…*, or `nil` for a loop with nothing counted to copy.
     let onCopy: (() -> Void)?
+    /// *Put it together…* (D11): pick this piece and others to make a routine of.
+    let onPutTogether: () -> Void
     let onView: () -> Void
     let onOpen: (LoopRunMode) -> Void
 
@@ -131,11 +154,12 @@ struct SongMapPieceMenu: View {
         ForEach(modes) { mode in
             Button { onOpen(mode) } label: { Label(mode.label, systemImage: mode.symbolName) }
         }
-        if repeats != nil || onCopy != nil { Divider() }
+        Divider()
         if let repeats { repeatItems(repeats) }
         if let onCopy {
             Button(action: onCopy) { Label("Copy to…", systemImage: "square.on.square") }
         }
+        Button(action: onPutTogether) { Label("Put it together…", systemImage: "square.stack.3d.up") }
     }
 
     /// One item when there's one way to repeat, else a menu of them. Buttons, not a `Toggle` or a `Picker`:

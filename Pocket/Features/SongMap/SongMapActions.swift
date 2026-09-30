@@ -16,6 +16,10 @@ struct SongMapActions {
     let makePiece: (SongMap.Gap) -> Void
     /// *Copy to…*, from a piece's hold menu (D16).
     let copy: (UUID) -> Void
+    /// *Put it together…*, from a piece's hold menu (D11): start picking pieces, with this one picked.
+    let putTogether: (UUID) -> Void
+    /// While picking: pick a piece, or let it go.
+    let toggle: (UUID) -> Void
 }
 
 /// The colours of the two layers (ADR 0232 D2): Indigo for chords, Teal for notes. Lane colours only,
