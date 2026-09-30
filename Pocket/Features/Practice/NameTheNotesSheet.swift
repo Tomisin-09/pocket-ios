@@ -104,7 +104,10 @@ struct NameTheNotesSheet: View {
     @Environment(\.modelContext) var modelContext
     /// The pass being named: its taps, and since ADR 0231 any taken out or tapped in. Handed back on Done.
     @State var taps: [PieceTranscription.Tap]
-    @State var active = 0
+    /// Where the neck is: the note being named, the note the marks are on, the ringed string, *Chords*
+    /// and *Into it* waiting for a start. One value, so its rules are `NeckEditing`'s (ADR 0235 D9); the
+    /// sheet reads it by the old names (`+Neck`).
+    @State var cursor: NeckCursor
     @State var mode: NamingMode
     /// The By ear kind left selected (0227 D6): it stays from tap to tap until another kind is tapped.
     /// An answer already named by ear uses its own (`activeKind`).
@@ -119,13 +122,6 @@ struct NameTheNotesSheet: View {
     /// The fret the neck scrolls to: the selected chip's note, set when the chip changes rather than on
     /// every tap, so placing a note never slides the board out from under the finger.
     @State var neckTarget: Int?
-    /// **Chords** on the neck (0227 D4): one note per string, so a tap adds rather than replaces. Off by
-    /// default; on when the piece already holds a shape.
-    @State var chordsOn: Bool
-    /// The string of the **ringed** note in a shape, the one bend and vibrato go on.
-    @State var ringed: Int?
-    /// *Into it* waiting for the neck to say where the note started (0227 D5, a lead-in).
-    @State var awaitingStart: LeadInRequest?
     /// While the strip plays the loop or a phrase, the chip being heard. Apart from `active`, so the chip
     /// being named never moves under the player's finger.
     @State var hearing: Int?
@@ -142,10 +138,6 @@ struct NameTheNotesSheet: View {
     @State var history = NamingHistory()
     /// The line being written on the current note's snag, while it is (ADR 0234 D7).
     @State var lineDraft: String?
-    /// The note just placed on the neck, while the strip has moved on past it (ADR 0234 D3): the marks
-    /// stay on it until the next note is placed or a chip is picked. `nil` whenever the marks go with the
-    /// strip.
-    @State var placedNote: Int?
     /// Bumped when the pad is tapped with nothing playing, to say why nothing was added.
     @State var missedNudge = 0
 
@@ -160,15 +152,17 @@ struct NameTheNotesSheet: View {
         let labels = request.taps.map(\.label)
         _taps = State(initialValue: request.taps)
         let start = request.taps.indices.contains(request.startAt) ? request.startAt : 0
-        _active = State(initialValue: start)
         _mode = State(initialValue: NamingMode.opening(for: labels, loopType: loopType))
         _earKind = State(initialValue: NamingMode.openingKind(for: labels, loopType: loopType))
         let tuner = CountTheNotesModel.tunerTuning()
         _tuning = State(initialValue: NamingTuning(openMidi: request.openMidi ?? tuner.openMidi,
                                                    label: request.tuningLabel ?? tuner.label))
         _neckTarget = State(initialValue: labels.indices.contains(start) ? Self.fret(of: labels[start]) : nil)
-        _chordsOn = State(initialValue: labels.contains { ($0?.frettedNotes.count ?? 0) > 1 })
-        _ringed = State(initialValue: labels.indices.contains(start) ? labels[start]?.frettedNotes.last?.string : nil)
+        // Chords starts on when the piece already holds a shape.
+        _cursor = State(initialValue: NeckCursor(
+            active: start,
+            ringed: labels.indices.contains(start) ? labels[start]?.frettedNotes.last?.string : nil,
+            chordsOn: labels.contains { ($0?.frettedNotes.count ?? 0) > 1 }))
     }
 
     var body: some View {
@@ -240,7 +234,7 @@ struct NameTheNotesSheet: View {
 
     /// The note the marks go on: the one just placed while the strip has moved past it, else the one
     /// being named (ADR 0234 D3).
-    var marked: Int { placedNote.flatMap { labels.indices.contains($0) ? $0 : nil } ?? active }
+    var marked: Int { cursor.marked(count: labels.count) }
 
     /// Everything that follows the chip being named, when it changes or a correction moves the pass
     /// under it. A move made by placing a note leaves the board where it is, so it never slides under the

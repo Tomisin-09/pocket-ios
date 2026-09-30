@@ -80,17 +80,12 @@ extension NameTheNotesSheet {
 
     /// The note bend and vibrato go on: the one note, or a shape's ringed note (0227 D5). After a note is
     /// placed and the strip moves on, that's still the note just placed (ADR 0234 D3).
-    private var ringedNote: FrettedNote? {
-        let notes = labels[marked]?.frettedNotes ?? []
-        return notes.first { $0.string == ringed } ?? notes.last
-    }
+    private var ringedNote: FrettedNote? { NeckEditing.ringedNote(labels: labels, cursor: cursor) }
 
     /// Change the marks on the marked note, or on a shape's ringed note.
     private func mark(_ change: (inout FrettedNote) -> Void) {
-        guard case .fretted(var notes, let into) = labels[marked], !notes.isEmpty else { return }
-        let index = notes.firstIndex { $0.string == ringed } ?? notes.count - 1
-        change(&notes[index])
-        labels[marked] = .fretted(notes, into: into)
+        let next = NeckEditing.mark(change, labels: labels, cursor: cursor)
+        if next != labels { labels = next }
     }
 }
 

@@ -20,7 +20,9 @@ extension NameTheNotesSheet {
             MarkSegments(options: IntoChoice.allCases.map { choice in
                 let route = NeckJoin.route(choice, into: marked, of: labels)
                 return MarkSegments.Option(title: choice.title, isOn: isLit(choice),
-                                           isEnabled: route != .unavailable) { choose(choice, route) }
+                                           isEnabled: route != .unavailable) {
+                    apply(NeckEditing.choose(choice, labels: labels, cursor: cursor))
+                }
             })
             intoLine
         }
@@ -32,44 +34,6 @@ extension NameTheNotesSheet {
         return NeckJoin.holds(choice, into: marked, of: labels)
     }
 
-    /// Join from the tap before when it fits, else ask the neck for where the note started. Tapping the
-    /// choice already held changes nothing, so it can't swap a lead-in for the tap before by surprise.
-    private func choose(_ choice: IntoChoice, _ route: NeckJoin.Route) {
-        let waiting = awaitingStart != nil
-        awaitingStart = nil
-        guard waiting || choice == .picked || !NeckJoin.holds(choice, into: marked, of: labels) else { return }
-        switch route {
-        case .clear: setInto(nil)
-        case .fromBefore(let join): setInto(join)
-        case .inside(let request): awaitingStart = request
-        case .unavailable: break
-        }
-    }
-
-    /// Join from the tap before, or pick it: either way no lead-in. Never both (ADR 0230 D6).
-    private func setInto(_ join: Join?) {
-        guard case .fretted(var notes, _) = labels[marked] else { return }
-        for position in notes.indices { notes[position].leadIn = nil }
-        labels[marked] = .fretted(notes, into: join)
-    }
-
-    /// A tap on the neck while *Into it* waits for a start: where the lead-in began, when it can be, and in
-    /// a shape every other note as many frets away. A tap on one of the tap's own notes gives up; any
-    /// other is left alone, since the dimmed dots say where to tap.
-    func takeStart(string: Int, fret: Int, for request: LeadInRequest) {
-        guard case .fretted(let notes, _) = labels[marked], !notes.isEmpty else {
-            awaitingStart = nil
-            return
-        }
-        if NeckJoin.accepts(string: string, fret: fret, asStartOf: notes, for: request),
-           let started = NeckJoin.starts(string: string, fret: fret, of: notes, join: request.join) {
-            labels[marked] = .fretted(started, into: nil)
-            awaitingStart = nil
-        } else if notes.contains(where: { $0.string == string && $0.fret == fret }) {
-            awaitingStart = nil
-        }
-    }
-
     // MARK: - The line under it
 
     @ViewBuilder private var intoLine: some View {
@@ -77,8 +41,8 @@ extension NameTheNotesSheet {
             hint(startPrompt(request, notes))
             HStack(spacing: 18) {
                 if request.join == .slide {
-                    link("From below") { slideIn(from: .below) }
-                    link("From above") { slideIn(from: .above) }
+                    link("From below") { apply(NeckEditing.slideIn(from: .below, labels: labels, cursor: cursor)) }
+                    link("From above") { apply(NeckEditing.slideIn(from: .above, labels: labels, cursor: cursor)) }
                 }
                 link("Cancel") { awaitingStart = nil }
             }
@@ -86,14 +50,6 @@ extension NameTheNotesSheet {
             if let line = intoText { hint(line) }
             if let offer = intoOffer { link(offer.title, action: offer.action) }
         }
-    }
-
-    /// A slide in from nowhere, for every note of the tap.
-    private func slideIn(from start: LeadIn.Start) {
-        guard case .fretted(var notes, _) = labels[marked] else { return }
-        for position in notes.indices { notes[position].leadIn = LeadIn(from: start, join: .slide) }
-        labels[marked] = .fretted(notes, into: nil)
-        awaitingStart = nil
     }
 
     /// Where to tap for the start: on the note's own string, or for a shape on any of its strings, the

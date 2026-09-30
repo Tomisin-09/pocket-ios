@@ -115,20 +115,40 @@ extension NameTheNotesSheet {
     /// notes every time. The marks stay on the note just placed until the next one is (`placedNote`), and
     /// the board stays put. Tapping the note already there confirms it and moves on.
     private func place(string: Int, fret: Int) {
-        if let awaitingStart {
-            takeStart(string: string, fret: fret, for: awaitingStart)
-            return
-        }
-        replacing = nil
-        let outcome = NeckPlacement.tap(string: string, fret: fret, on: labels[active], ringed: ringed,
-                                        chords: chordsOn)
-        if outcome.label != labels[active] { labels[active] = outcome.label }
-        ringed = outcome.ringed
-        guard outcome.label.isOnTheNeck else { return }
-        let move = NamingCursor.afterPlacing(at: active, count: labels.count, chords: chordsOn)
-        // Where it doesn't move on (Chords on, the last note), the marks are the note's own again.
-        placedNote = move.marked
-        if move.active != active { active = move.active }
+        if awaitingStart == nil { replacing = nil }
+        apply(NeckEditing.place(string: string, fret: fret, labels: labels, cursor: cursor))
+    }
+
+    /// Write what a rule gave back: the answers as one step of the history (only when they changed), then
+    /// where the neck is.
+    func apply(_ edit: NeckEditing.Edit) {
+        if edit.labels != labels { labels = edit.labels }
+        cursor = edit.cursor
+    }
+}
+
+// MARK: - The cursor, by the names the sheet has always used
+
+extension NameTheNotesSheet {
+    var active: Int {
+        get { cursor.active }
+        nonmutating set { cursor.active = newValue }
+    }
+    var placedNote: Int? {
+        get { cursor.placedNote }
+        nonmutating set { cursor.placedNote = newValue }
+    }
+    var ringed: Int? {
+        get { cursor.ringed }
+        nonmutating set { cursor.ringed = newValue }
+    }
+    var chordsOn: Bool {
+        get { cursor.chordsOn }
+        nonmutating set { cursor.chordsOn = newValue }
+    }
+    var awaitingStart: LeadInRequest? {
+        get { cursor.awaitingStart }
+        nonmutating set { cursor.awaitingStart = newValue }
     }
 }
 

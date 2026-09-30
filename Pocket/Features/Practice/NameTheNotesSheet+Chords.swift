@@ -13,7 +13,7 @@ extension NameTheNotesSheet {
                 InfoPopoverButton(subject: "Chords", info: NamingInfo.chords)
                     .padding(.vertical, -8)
                 Spacer(minLength: 8)
-                Toggle("Chords", isOn: $chordsOn)
+                Toggle("Chords", isOn: $cursor.chordsOn)
                     .labelsHidden()
                     .tint(PocketColor.practice)
             }
