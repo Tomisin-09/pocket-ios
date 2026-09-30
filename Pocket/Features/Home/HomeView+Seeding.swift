@@ -36,6 +36,8 @@ extension HomeView {
         // Strictly after the library seed: the seeded journal and take hang off the loops and
         // exercises it creates, and an entry with no owner renders as a different thing (ADR 0143).
         PracticeHistorySeed.seedIfNeeded(into: context)
+        // Put in or taken out on every UI-test launch, so the store the next test finds is known.
+        NamingPieceSeed.apply(to: context)
         #endif
         seedingComplete = true
     }
