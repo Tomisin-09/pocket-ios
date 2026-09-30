@@ -1,6 +1,6 @@
 # ADR 0232 — Map the song: a song's loops laid out as pieces, and the tab drawn from them
 
-- **Status:** Accepted. Building on `pocket-339-map-the-song`, in the slices of the build order.
+- **Status:** Accepted. Built on `pocket-339-map-the-song`, in the five slices of the build order.
 - **Date:** 2026-09-28
 - **Relates to:** 0225 D8 (the piece is stored structured because this is its reader) · 0227 D7 (one
   answer per tap, read one way: what makes a label a chord) · 0229 (the Journal's Pieces scope, and
@@ -10,6 +10,8 @@
   and 0225 D10 (never detected, never suggested) · 0233 (the map reads a piece's version in use, and its tab sheet
   opens **Versions**) · 0111 (a routine made for you is reviewed before it's kept) · 0138 (a Practice block
   needs a command tempo).
+- **Amends:** ADR 0229 D2 — under the **Pieces** scope a piece sits under its song, not on the day it
+  last changed (D20). *All* keeps the day, and D1's one row per loop stands.
 - **Schema:** four additive fields: `Marker.startsSection` (D6, slice 1), `Marker.sameAsUID` (D8,
   slice 3), `Loop.repeatsToSectionEnd` (D14, slice 3) and `Loop.repeatsTo` (D15, slice 3b, a String).
   Each is Optional or defaulted, and each is optional in the archive's `MarkerRecord` or `LoopRecord`.
@@ -408,6 +410,31 @@ Tomisin chose the other way when shown both.
 - **The board is unchanged.** It still heads the section *↻ as Verse 1* over its own rows, where a
   variation is made.
 
+### D20 — The Journal's Pieces, by song
+
+*Added 2026-09-30, slice 5.* D1 made the Journal's Pieces scope the map's way in from outside the song,
+in place of a list in the Toolkit. This is how the scope carries it.
+
+- **Under *Pieces*, the feed is grouped by song, not by day.** A section per song, headed by its title
+  and artist with **Map the song** beside them, which opens the map full screen as Song details does. The
+  heading stays pinned while its pieces scroll, as a day's does, so the way in stays in reach.
+- **Songs run by when their newest piece changed**, so the song being worked on is at the top. *⋯ ▸ Sort*
+  turns that round, as it does the days.
+- **Within a song, pieces run in song order**, by where each loop starts, the shorter first when two
+  start together (as the lanes break that tie). It's the order the map lays them out in and the song
+  plays in, and it doesn't change with the sort.
+- **Each row says the day it last changed**, where under a day's heading it says the time. Its caption is
+  the loop alone, because the song is the heading. Tapping either still opens the loop in *Train your
+  ear* (0229 D4).
+- ***All* keeps each piece on its day** (0229 D2). Only the Pieces scope changes.
+- **No months and no *Jump to…* under *Pieces*:** there are no day sections to land on. The *Show* chip
+  stays, because it states the filter in force (0190 D8), and search still narrows the list.
+- **A piece whose loop has no song** comes last, under *No song*, with no map to open.
+- **The map is opened by its first piece's loop.** `Song` has no `uid`, and a `persistentModelID` can
+  change under a save (0090), so the song is reached through a loop that has one.
+- **No way to the waveform from here.** Without a tempo, the Tab view says what's missing rather than
+  offering *Set the tempo and the 1* (D7), as it does wherever `onShowWaveform` is `nil`.
+
 ## Build order
 
 1. **The board.** `Marker.startsSection` with its switch and archive field; `SongMapLayout` (pure:
@@ -423,7 +450,7 @@ Tomisin chose the other way when shown both.
    repeat out (D18), and a "same as" section too (D19).
 4. **Put it together** (D11): selecting on the board, the two shapes, the command tempo it asks for,
    the joined loops and their Undo, and the routine opened for review.
-5. **The Journal's Pieces scope, grouped by song** (D1).
+5. **The Journal's Pieces scope, grouped by song** (D1, D20).
 
 Each slice ships on its own: slice 1 is useful without the Tab view, since a song's loops laid out by
 section, with what each holds, is already more than any screen shows today.

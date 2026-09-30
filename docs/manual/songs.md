@@ -132,7 +132,8 @@ song you expected. Check the audio is what you think it is afterwards.
 **Song details** ▸ **Map the song** lays the whole song out, left to right, with every loop you've
 made on it sitting where it plays. Chords go on one lane and notes on the lane under them, because a
 lick is played over the chords around it. When two loops overlap on the same lane, the second gets a
-lane of its own.
+lane of its own. Every song you've worked pieces out on has the same button in the Journal, under
+**Pieces**, beside the song's name.
 
 <!-- shot: songs/song-map | role: screen
      | alt: Map the song for Slow Bend, with Intro, Verse 1 and Chorus sections, chord loops on the Chords lane and licks on the Notes lane under them

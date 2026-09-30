@@ -11,6 +11,9 @@ struct JournalPieceRow: View {
     let ownerLabel: String?
     /// Open the loop in ear training; `nil` when it can't play there (its song's audio is gone).
     let onOpen: (() -> Void)?
+    /// When it last changed, as the header shows it: the time under a day's heading, or the day under a
+    /// song's (ADR 0232 D20). `nil` means the time.
+    var stamp: String?
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -41,7 +44,7 @@ struct JournalPieceRow: View {
         .padding(.vertical, 6)
     }
 
-    /// 🧩 *Piece* and the time it last changed, laid out as a note's kind and time are.
+    /// 🧩 *Piece* and when it last changed, laid out as a note's kind and time are.
     private var header: some View {
         HStack(spacing: 6) {
             Text(EntryKind.transcribed.emoji)
@@ -51,7 +54,7 @@ struct JournalPieceRow: View {
                 .font(.futura(.caption, weight: .semibold))
                 .foregroundStyle(KindChip.tint(for: .transcribed))
             Spacer(minLength: 0)
-            Text(piece.date.formatted(date: .omitted, time: .shortened))
+            Text(stamp ?? piece.date.formatted(date: .omitted, time: .shortened))
                 .font(.pocketMono(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
