@@ -208,7 +208,13 @@ because the day is part of what the entry says.
 ## Finding something again
 
 - The **All · Notes · Takes · Pieces** control at the top narrows the feed to one of them. **Pieces**
-  are the loops you've transcribed with Count the notes, one row per loop, always the current version.
+  are the loops you've transcribed with Count the notes, one row per loop, showing the version in use.
+  Saving a new count keeps the one before; **Versions**, under *Saved on this loop* in Train your ear,
+  can use it again or delete it.
+- **Pieces** is grouped by song rather than by day. Each song has a heading with **Map the song**
+  beside it, which lays that song's pieces out where they play. Its pieces are listed in the order they
+  play, each with the day it last changed, and the song you changed most recently comes first. Under
+  **All**, a piece sits on the day it last changed, like everything else.
 - **Search** matches song, exercise, template and date — so *Slow Bend*, *Legato* or a month name
   all work.
 - **⋯ ▸ Sort** flips the whole feed between **Newest first** and **Oldest first**, which is how you
@@ -222,7 +228,8 @@ because the day is part of what the entry says.
   either — see below.
 - **⋯ ▸ Pinned only** shows just what you have pinned.
 - **The months** beside that chip are the months your journal actually has something in — tap one to
-  go there. A month with nothing in it is simply not listed.
+  go there. A month with nothing in it is simply not listed. **Pieces** has no months, and no
+  **Jump to…**, because it's grouped by song.
 - **Jump to…** opens a month you can read: tap the day header at the top of the feed, or use
   **⋯ ▸ Jump to…** — see below.
 - Days are grouped under **Today**, **Yesterday** and then dated headers, under the month they fall

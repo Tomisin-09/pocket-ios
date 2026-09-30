@@ -112,6 +112,9 @@ struct JournalTabView: View {
     /// resting state is wherever the player left it, and a persisted scroll target would fight that
     /// every time a filter changed the sections underneath it.
     @State var scrollTarget: Date?
+    /// The song being mapped from the Pieces scope (ADR 0232 D20), by the uid of its first piece's loop:
+    /// `Song` has no `uid` of its own to present it by (ADR 0090).
+    @State var mappingFrom: StableRef<Loop>?
 
     /// Whether the journal holds anything at all, **before** any filter. Gates the month rail: a
     /// fresh install should not meet a filter control before it has met an entry (ADR 0207 D6).
@@ -124,8 +127,9 @@ struct JournalTabView: View {
     var canJump: Bool { visibleDays.count > 1 }
 
     /// The scope- then search-filtered feed, minus anything awaiting deletion. Filtering here rather
-    /// than at the row is what makes `sections` and the empty state follow automatically.
-    private var items: [JournalTimeline.Item] {
+    /// than at the row is what makes `sections` and the empty state follow automatically. Not
+    /// `private`: the Pieces scope groups it by song in `JournalTabView+PiecesBySong.swift`.
+    var items: [JournalTimeline.Item] {
         let merged = JournalTimeline.merge(entries: entries, takes: takes, pieces: JournalPiece.all(in: loops))
             .filter { !rowDeletion.isPending($0.id) }
         let scoped = JournalTimeline.filter(merged, scope: scope)
@@ -214,6 +218,11 @@ struct JournalTabView: View {
         // The two Show facets — owner kind and tag (ADR 0190 D5, D10; ADR 0207 D11) — in the same
         // file.
         .sheet(isPresented: $choosingKinds) { showSheet }
+        // Full screen, as from Song details: the board is wide (ADR 0232 D1). No way to the waveform
+        // from here, so the Tab view just says what's missing.
+        .fullScreenCover(item: $mappingFrom) { ref in
+            if let song = ref.value.song { SongMapView(song: song) }
+        }
         .onDisappear { player.stop() }
     }
 

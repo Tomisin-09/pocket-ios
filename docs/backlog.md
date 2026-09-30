@@ -34,6 +34,9 @@ is the deliverable ADR 0165 defines.
 
 ## The song map — a whole song as a jigsaw of its loops (parked 2026-09-27, ADR 0225)
 
+**Taken up 2026-09-28 as ADR 0232, *Map the song*, building on `pocket-339-map-the-song`.** The entry
+below is kept as it was parked.
+
 Each transcribed loop is a solved piece; the player's own chart of the song is the finished picture,
 drawn from the pieces and never edited apart from them. Parked on purpose as a future update for
 existing players. **The design note is `docs/plans/song-map.md`**: what's decided, what's open (where

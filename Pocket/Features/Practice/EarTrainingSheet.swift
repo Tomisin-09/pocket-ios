@@ -43,8 +43,10 @@ struct EarTrainingView: View {
     /// sheet and a routine's ear block, and `.onAppear` re-fires on a return.
     @State private var reportedOpen = false
     @State private var showingTakes = false
-    /// Count the notes (ADR 0225). Held here rather than in its section so the naming sheet and the
-    /// replace prompt can sit at this body's root, never on a row.
+    /// The saved piece's **Versions** (ADR 0233), presented from this body's root, never from a row.
+    @State private var showingVersions = false
+    /// Count the notes (ADR 0225). Held here rather than in its section so the naming sheet can sit at this
+    /// body's root, never on a row.
     @State private var counting: CountTheNotesModel
 
     init(loop: Loop, player: ContinuousLoopPlayer, recorder: RecordingController,
@@ -77,10 +79,10 @@ struct EarTrainingView: View {
                                     placeholder: "What did you hear? "
                                         + "(e.g. starts on the b3, descending run)")
                 CountTheNotesSection(model: counting, player: player, stopLoop: stopForNaming)
-                SavedPieceSection(loop: loop, spelling: counting.spelling) {
+                SavedPieceSection(loop: loop, spelling: counting.spelling, onEdit: {
                     stopForNaming()
                     counting.nameSaved()
-                }
+                }, onVersions: { showingVersions = true })
             }
         }
         .onAppear {
@@ -95,20 +97,14 @@ struct EarTrainingView: View {
         .sheet(isPresented: $showingTakes) {
             TakesSheet(owner: .loop(loop), onDelete: deleteTake)
         }
+        .sheet(isPresented: $showingVersions) {
+            PieceVersionsSheet(loop: loop, spelling: counting.spelling)
+        }
         .sheet(item: Bindable(counting).naming, onDismiss: player.stop) { request in
             NameTheNotesSheet(request: request, player: player, spelling: counting.spelling,
                               loopType: loop.loopType) { result in
                 counting.finishNaming(request, result: result, context: modelContext)
             }
-        }
-        .confirmationDialog("Replace the saved piece?", isPresented: Bindable(counting).confirmingReplace,
-                            titleVisibility: .visible) {
-            Button("Replace") {
-                counting.save(context: modelContext)
-            }
-        } message: {
-            Text("This loop already has a saved piece. The new pass takes its place, here and under Pieces "
-                 + "in the Journal.")
         }
         // On the shared core, so all three hosts get it once (ADR 0050). Humming along is exactly the
         // hands-free practice the setting exists for, and this screen had never asked.

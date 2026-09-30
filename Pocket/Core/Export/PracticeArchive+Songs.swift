@@ -118,6 +118,14 @@ struct LoopRecord: Codable, Equatable, Sendable {
     /// structure it is, not as the `Data` the store keeps, so the file stays readable (ADR 0188).
     /// `Optional` for `ExerciseRecord.folders`' reason: a file from before 0225 has no key.
     var transcription: PieceTranscription?
+    /// The piece's earlier versions (ADR 0233), newest first, as structure for the same reason. `Optional`:
+    /// a file from before them has no key, and a loop with none writes none.
+    var keptTranscriptions: [PieceTranscription]?
+    /// Whether the loop repeats to the end of its section on the song map (ADR 0232 D14). **`Optional`**,
+    /// for `MarkerRecord.startsSection`'s reason: absent reads as `false`.
+    var repeatsToSectionEnd: Bool?
+    /// How far those repeats run (D15), as `Loop.repeatsTo` stores it. `Optional`: absent is its section.
+    var repeatsTo: String?
 
     var references: [ReferenceLinkRecord]
     /// Every recorded edit to this loop's span (ADR 0205). Nests, because `Loop.spanChanges` is
@@ -164,6 +172,12 @@ struct MarkerRecord: Codable, Equatable, Sendable {
     var uid: UUID
     var seconds: TimeInterval
     var label: String
+    /// Whether the marker starts a section of the song map (ADR 0232 D6). **`Optional`**, because an
+    /// archive can predate it and a declaration default does not survive a missing key (ADR 0212,
+    /// 0205 D5, the reasoning on `ReferenceLinkRecord.attachmentFileName`). Absent reads as `false`.
+    var startsSection: Bool?
+    /// The earlier section's marker this one repeats (ADR 0232 D8). Optional for the reason above.
+    var sameAsUID: UUID?
 }
 
 /// Where something was learned (ADR 0167) — cascade-owned by a song, loop, exercise or routine alike,

@@ -57,8 +57,6 @@ final class CountTheNotesModel {
     private(set) var cleared: [TapPasses.Pass]?
     /// The sheet's subject while it's open.
     var naming: NamingRequest?
-    /// Set while asking whether a save may replace the loop's saved piece.
-    var confirmingReplace = false
     /// The strings the most recent naming placed frets on, used when that pass is saved.
     private var namingTuning: (openMidi: [Int], label: String)?
     /// Briefly true after a tap, to flash the pad.
@@ -200,24 +198,16 @@ final class CountTheNotesModel {
 
     // MARK: - Saving
 
-    /// Save the target pass, asking first if it would replace a saved piece.
-    func requestSave(context: ModelContext) {
-        if loop.transcription != nil {
-            confirmingReplace = true
-        } else {
-            save(context: context)
-        }
-    }
-
-    /// Put the target pass on the loop as its piece, dated now. **No Journal line** (ADR 0229): the
-    /// Journal lists the piece itself under Pieces, so a line per save would only pile up stale copies.
+    /// Put the target pass on the loop as its piece, dated now. A piece already there is kept as an
+    /// earlier version (ADR 0233 D3), so nothing is lost and nothing needs asking. **No Journal line** (ADR
+    /// 0229): the Journal lists the piece in use under Pieces, so a line per save would only pile up copies.
     func save(context: ModelContext) {
         guard let pass = targetPass, !pass.taps.isEmpty else { return }
         var piece = PieceTranscription(taps: pass.taps)
         let tuning = namingTuning ?? Self.tunerTuning()
         stampTuning(on: &piece, openMidi: tuning.openMidi, label: tuning.label)
         piece.changedAt = .now
-        loop.transcription = piece
+        loop.pieceVersions.save(piece)
         try? context.save()
         haptic(.success)
     }

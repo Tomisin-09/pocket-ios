@@ -17,10 +17,19 @@ struct SongDetailsSheet: View {
     /// straight through `SongRelinker`. The practice screen passes its own, because it has the file
     /// open and has to stop and reload the engine around the replacement.
     private let replaceAudio: ((URL) async throws -> SongRelinker.Outcome)?
+    /// Pause the practice screen's waveform before the song map opens a piece in ear training (ADR 0232),
+    /// which plays the loop itself. A no-op from the library, where nothing else is playing.
+    let onOpenNestedAudio: () -> Void
+    /// Close this sheet and show the song's waveform, for the song map's *Set the tempo and the 1* (ADR
+    /// 0232 D7). The practice screen just closes the sheet; the library closes it and opens the song.
+    let onShowWaveform: (() -> Void)?
 
-    init(song: Song, replaceAudio: ((URL) async throws -> SongRelinker.Outcome)? = nil) {
+    init(song: Song, replaceAudio: ((URL) async throws -> SongRelinker.Outcome)? = nil,
+         onOpenNestedAudio: @escaping () -> Void = {}, onShowWaveform: (() -> Void)? = nil) {
         self.song = song
         self.replaceAudio = replaceAudio
+        self.onOpenNestedAudio = onOpenNestedAudio
+        self.onShowWaveform = onShowWaveform
     }
 
     @Environment(\.dismiss) private var dismiss
@@ -41,6 +50,10 @@ struct SongDetailsSheet: View {
     /// the app already knows this exercise is *for* this song, so reading it here and then making
     /// you go and find it in the exercise library is a fact it declines to act on.
     @State var openingExercise: Exercise?
+    /// **Map the song** (ADR 0232 D1), open full screen over this sheet.
+    @State var mappingSong = false
+    /// The map asked for the waveform: once it has closed, this sheet goes too.
+    @State private var showWaveformAfterMap = false
     @State private var editing = false
     // Inline notes editing: a local draft committed on Update, so the read view only
     // changes when you explicitly save (not keystroke-by-keystroke).
@@ -66,6 +79,7 @@ struct SongDetailsSheet: View {
                     // notes/journal feature (ADR 0038). Always shown so they're discoverable.
                     notesSection
                     detailsSection
+                    mapSection
                     // Which file this song plays, and the way to change it (ADR 0152) — the
                     // relink door that doesn't depend on the audio being broken.
                     SongAudioSection(song: song, replace: replace)
@@ -78,6 +92,19 @@ struct SongDetailsSheet: View {
             }
             .navigationTitle("Song details")
             .navigationBarTitleDisplayMode(.inline)
+            // Full screen, not pushed inside this sheet: the board is wide, and on iPad a sheet is a narrow
+            // card (ADR 0232 D1). At the `NavigationStack`, never on the row inside the `Form`.
+            .fullScreenCover(isPresented: $mappingSong, onDismiss: {
+                guard showWaveformAfterMap else { return }
+                showWaveformAfterMap = false
+                onShowWaveform?()
+            }, content: {
+                SongMapView(song: song, onOpenNestedAudio: onOpenNestedAudio,
+                            onShowWaveform: onShowWaveform == nil ? nil : {
+                                showWaveformAfterMap = true
+                                mappingSong = false
+                            })
+            })
             .sheet(isPresented: $showingExercisePicker) {
                 LinkPickerSheet(
                     title: "Link exercises",

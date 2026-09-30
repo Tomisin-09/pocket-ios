@@ -177,8 +177,10 @@ struct WaveformPracticeView: View {
             // has this song's file open, and `SongFileStore.adopt` replaces those bytes in place.
             // `relinkAudio` stops the engine and reloads around the swap; the plain path would
             // leave a live `AVAudioFile` reading a file that no longer exists.
-            SongDetailsSheet(song: model.song,
-                             replaceAudio: { try await model.relinkAudio(to: $0) })
+            SongDetailsSheet(song: model.song, replaceAudio: { try await model.relinkAudio(to: $0) },
+                             onOpenNestedAudio: model.pauseForNestedAudio,
+                             // The waveform is underneath: closing the sheet is the whole trip (ADR 0232 D7).
+                             onShowWaveform: { model.showingSongDetails = false })
         }
         // The player's own settings, from holding *Loop controls* on the status line (ADR 0163) — the
         // same screen Settings ▸ Song player opens, so the two can't drift.

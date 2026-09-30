@@ -10,6 +10,8 @@ import SwiftUI
 /// `.pocketRowActions`.
 struct UndoToastView: View {
     let message: String
+    /// What Undo does, for VoiceOver. The song map's Undo takes back what it made (ADR 0232 D17).
+    var hint = "Restores the deleted item"
     let onUndo: () -> Void
 
     var body: some View {
@@ -25,7 +27,7 @@ struct UndoToastView: View {
                     .foregroundStyle(PocketColor.active)
             }
             .buttonStyle(.plain)
-            .accessibilityHint("Restores the deleted item")
+            .accessibilityHint(hint)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

@@ -631,8 +631,13 @@ each note you hear, then name them. The pieces, from the audio up:
 - **Storage.** `Loop.transcriptionData: Data?` (additive, Optional) holds a `PieceTranscription`: taps
   with optional `PieceLabel`s (pitch class · notes on the neck · chord root + `ChordQuality` suffix),
   plus the open strings any fret was placed against and, since ADR 0229, `changedAt` (set by a save or a
-  changing *Edit names*; the Journal's *Pieces* rows sit on that day, and `PieceDateBackfill` dates older
-  pieces from their 🧩 line at launch). Save writes no Journal line. Labels are tagged JSON, so an unknown
+  changing *Edit names*; the Journal's piece rows sit on that day under *All* (under *Pieces* they're
+  grouped by song, ADR 0232 D20), and `PieceDateBackfill` dates older
+  pieces from their 🧩 line at launch). Save writes no Journal line. Since ADR 0233, a piece saved over
+  isn't lost: `Loop.keptTranscriptionsData` (additive, Optional) holds its earlier versions, newest
+  first, and the pure `PieceVersions` owns the rules (save keeps the one in use, *use* swaps and keeps it,
+  *delete* removes an earlier one only). `transcriptionData` still means the piece in use, so no reader
+  changed and an older build or archive reads the right piece. Labels are tagged JSON, so an unknown
   kind decodes as an unnamed tap. Notes on the neck are `FrettedNote`s (highest-first string, fret, and
   since ADR 0227 D9 an optional `bend` and `vibrato`, and since ADR 0230 an optional `leadIn`: a start
   fret or from below/above, and its join, for a note heard as one, on every note of a shape moving as
@@ -644,6 +649,72 @@ each note you hear, then name them. The pieces, from the audio up:
   upside-down power chord as a 4th) or as an interval; `NeckPlacement` holds the tap rule (Chords off
   replaces; on, one note per string). The archive carries it as `LoopRecord.transcription`. `TabLine`
   draws the tab from the piece each time; no text copy is stored anywhere.
+
+**The song map reads the pieces** (ADR 0232, `Core/SongMap` + `Features/SongMap`). It stores nothing
+of its own but four declarations: `Marker.startsSection` and `Loop.repeatsToSectionEnd` (declaration
+defaults `false`), `Marker.sameAsUID` (Optional) and `Loop.repeatsTo` (an Optional String, never the
+`SongMap.RepeatsTo` enum, ADR 0189), each **Optional** in `MarkerRecord`/`LoopRecord` so an older archive
+still decodes. Which songs have been offered *Use your markers as sections?* is UI state, in
+`UserDefaults`, not the store. Everything else is drawn each time: `SongMapInput(song:)`
+copies the song into plain values (loops in seconds, their `transcription`, whether a 🧩 note is on the
+loop, the markers, and the downbeats from `BeatGrid` when the song has a grid **and** `showsGridlines`), and
+the pure `SongMapLayout.build` returns a `SongMap` of sections, rows (8 downbeats, or 16 s), lanes and
+placements. Lane assignment is a greedy interval colouring per layer, done once per song so a piece keeps
+its lane across rows; the layer comes from `PieceLabel.readsAsChord` (via `earReading`, so a shape on the
+neck that spells a chord counts), else `LoopType.chords`. The screen is a `.fullScreenCover` from
+`SongDetailsSheet`. Tapping a piece opens its tab sheet; holding it is a `.contextMenu` of the modes
+`LoopModeAccess` allows. A mode pushes `JournalOwnerDestinationView` inside the cover's own
+`NavigationStack`, after the practice screen's `pauseForNestedAudio` when the details were opened from
+there; a mode picked on the tab sheet is held until the sheet's `onDismiss`, since a push can't start
+under a presented sheet. `build` cuts the sections **before** placing pieces, because a repeating loop
+(D14) needs its section's end: its repeats extend the interval it holds in the lane colouring, so a later
+piece in that layer takes the next lane. A section's *same as* (D8) follows `sameAsUID` only to strictly
+earlier section markers, which is what guarantees the chain ends. In the Tab view (D19), `SongTabLayout+SameAs.swift` writes
+the earlier section's rows into it: `echo` picks its pieces, less a repeat that plays on into this section
+(it draws there as itself), `shift` moves them from the downbeat nearest one start to the one nearest the
+other, and `writing(_:into:spelling:)` clips each row to the earlier section and adds the lines, flagged
+`isSameAs`, with `sourceStart` so a tap goes to where the pieces are. Gaps (D9) are the complement of each
+layer's covered intervals (pieces and repeats) within the section, or within each row when there are no
+sections, carried whole on every row they cross so the view can offer the same stretch from any of them.
+A repeat's end (D15) is resolved in `SongMapLayout+Repeats.swift`: its own section's end, a later
+section's, or the song's, normalised so a vanished or earlier section reads as its own.
+
+**The map writes loops, but only its own** (D16, D17). Every write goes through `SongMapWriter`
+(`@MainActor`): *Make a piece here*, copies, how far a loop repeats, and Undo. A copy's piece is computed
+by the pure `SongMapCopy`: the source's taps from one pass (its length to the nearest whole bar, with a
+grid) written across the target from its start, pass after pass, a new `PieceTranscription` with the
+source's tuning. Undo removes only the uids the last action made: it takes them off `song.loops` before
+`context.delete`, because an unsaved delete leaves the loop in the relationship (seen in a mutation run of
+`SongMapWriterTests`), and the next drawing reads every loop's fields. Nothing on the map deletes any other loop, so it
+needs no seam into the practice screen's model. Rows decide which pieces they hold within
+`SongMapLayout.tolerance`: loop edges are stored as fractions of the song, and one ending at a section's
+start reads back a hair past it.
+
+**Put it together makes loops on the map and a routine in the review's sandbox** (D11). The pure
+`SongMapTogether` reads the picked pieces as a shape and plans the blocks and the joined stretches.
+`SongMapWriter.prepare` writes the command tempos asked for, the backing switch and the joined loops **in
+the map's own context**, and saves. That split is forced: a loop saved from another `ModelContext` reaches
+the store, but not the relationship array of a `Song` the map already holds (seen in a unit test: a fresh
+fetch returned the loop while `song.loops` didn't, even after a run-loop turn). The routine itself is
+built by `RoutineDetailView(container:provisional:)` in its own sandbox, which fetches the saved loops, so
+backing out keeps no routine. That init's `build` closure can run again whenever the parent redraws, as a
+view's init can, so it writes nothing outside the context it's handed. Whether Undo is still offered is
+a fresh `RoutineItem` fetch, for the same reason.
+
+**The Tab view is a second reading of the same `SongMap`** (ADR 0232 D10). `SongTabLayout.build(map,
+spelling:)` cuts the board's sections into rows of 4 bars (or 8 s), reusing `SongMapLayout.rowSpans` and
+`ticks` with shorter lengths, and turns each lane's taps into columns: a chord symbol in the chords layer,
+tab cells in the notes layer when the tap was placed on the neck (`TabLine.cell`, with
+`NeckJoin.symbol` in front), otherwise the name, otherwise a slash. A loop that repeats is written out on
+every pass by `sounds(of:in:during:)`, each tap again at one loop length's step, with a `.repeats` column
+(↻ ×N) in front of the first repeated tap (D18). A pass landing on a row's start by arithmetic is kept to one
+row by `epsilon`, and the loop's start is read within `SongMapLayout.tolerance`. Spacing is pure too, in characters,
+because the tab is set in a fixed-width font. `spread` puts each column just after its time, pushes it clear
+of the one before, and draws a line back from the row's end, and `width(of:available:)` widens a row that
+can't fit. The view turns characters into points once, from the font's advance, and scrolls a widened row
+sideways. Nothing about the tab is stored, so there is nothing to keep in sync. Going from a tab row back to
+its pieces needs the board row to exist, so the board is a plain `VStack` (not lazy) with typed
+`SongMapAnchor` ids.
 
 **Each mode gates on what it needs** (ADR 0138). Both surfaces that decide which loops a player can
 reach — `LoopLibraryView` and `AddRoutineUnitSheet` — applied one test, `commandTempo != nil`, written

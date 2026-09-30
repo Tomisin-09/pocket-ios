@@ -82,15 +82,19 @@ extension JournalTabView {
         ScrollViewReader { proxy in
             List {
                 lookbackRow
-                ForEach(Array(sections.enumerated()), id: \.element.day) { index, section in
-                    Section {
-                        ForEach(section.entries) { item in
-                            row(item).listRowBackground(PocketColor.background)
+                if groupsBySong {
+                    songSections
+                } else {
+                    ForEach(Array(sections.enumerated()), id: \.element.day) { index, section in
+                        Section {
+                            ForEach(section.entries) { item in
+                                row(item).listRowBackground(PocketColor.background)
+                            }
+                        } header: {
+                            sectionHeader(section.day, startsMonth: startsNewMonth(at: index))
                         }
-                    } header: {
-                        sectionHeader(section.day, startsMonth: startsNewMonth(at: index))
+                        .id(section.day)
                     }
-                    .id(section.day)
                 }
             }
             .listStyle(.plain)
@@ -108,8 +112,9 @@ extension JournalTabView {
     /// The days the feed is currently showing — what a jump can land on, and what the month rail and
     /// the month grid are both built from. Read from `sections` rather than from every entry: you can
     /// only jump to a day that is on screen, so offering days the filters have removed would be
-    /// offering a dead end.
-    var visibleDays: [Date] { sections.map(\.day) }
+    /// offering a dead end. None under **Pieces**, which is grouped by song (ADR 0232 D20), so its rail
+    /// offers no months and **Jump to…** goes.
+    var visibleDays: [Date] { groupsBySong ? [] : sections.map(\.day) }
 
     /// Whether this section opens a month the one above it was not in. `true` for the first section,
     /// which is what puts a month label at the top of the feed rather than leaving the first month

@@ -147,7 +147,8 @@ enum ArchiveBuilder {
                 .map(loopRecord),
             markers: song.markers
                 .sorted { ($0.seconds, $0.uid.uuidString) < ($1.seconds, $1.uid.uuidString) }
-                .map { MarkerRecord(uid: $0.uid, seconds: $0.seconds, label: $0.label) },
+                .map { MarkerRecord(uid: $0.uid, seconds: $0.seconds, label: $0.label,
+                                     startsSection: $0.startsSection, sameAsUID: $0.sameAsUID) },
             references: referenceRecords(song.references),
             // Song order, `uid` breaking the tie — the Snags panel's own order (ADR 0202 D2), and
             // deterministic for the same reason every other collection here is sorted.
@@ -159,6 +160,13 @@ enum ArchiveBuilder {
                                   speed: $0.speed,
                                   loopUID: $0.loopUID) }
         )
+    }
+
+    /// A loop's earlier versions for the file (ADR 0233): `nil` when it has none, so the key only appears
+    /// on a loop that has some.
+    static func keptTranscriptions(of loop: Loop) -> [PieceTranscription]? {
+        let kept = loop.keptTranscriptions
+        return kept.isEmpty ? nil : kept
     }
 
     static func loopRecord(_ loop: Loop) -> LoopRecord {
@@ -199,7 +207,10 @@ enum ArchiveBuilder {
             rampBackoffHold: loop.rampBackoffHold,
             colorIndex: loop.colorIndex,
             customColorHex: loop.customColorHex,
-            transcription: loop.transcription,
+            // The piece in use and its earlier versions, none written as none (ADR 0225, 0233).
+            transcription: loop.transcription, keptTranscriptions: keptTranscriptions(of: loop),
+            // The switch and its reach on one line: one declaration (ADR 0232 D14, D15).
+            repeatsToSectionEnd: loop.repeatsToSectionEnd, repeatsTo: loop.repeatsTo,
             references: referenceRecords(loop.references),
             // Oldest first — the order a history is read in, and the order `LoopSpanSection` walks
             // back down. `uid` breaks a tie between two edits saved in the same instant.

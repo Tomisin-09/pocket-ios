@@ -1,6 +1,7 @@
 # The song map — parked design note
 
-**Status:** parked 2026-09-27, for a future update aimed at existing players. Not an ADR, not scheduled.
+**Status:** parked 2026-09-27; **promoted to ADR 0232 (`docs/decisions/0232-map-the-song.md`) on 2026-09-28**, when
+the six open questions below were settled. The ADR is the record. This note is kept as the design history.
 **Mockup:** https://claude.ai/artifact/B9cjgdgZDxNfy6J2R5uqPU
 **Depends on:** ADR 0225 (Count the notes), which already stores everything the map reads.
 
@@ -46,7 +47,7 @@ everything a player transcribes from ADR 0225 onward is on the map the day it sh
 map needs is the marker switch (plus a section-level "same as", if that's taken up). Loops are fractions
 of the song and taps are seconds, so the board needs no other data.
 
-## Still open
+## Still open (settled 2026-09-28, see ADR 0232 D1, D7, D8, D4, D12 and D13)
 
 - **Where it lives.** A secondary view off the song, or the song's new home. Either way, keep the iPad's
   second column in mind (Directions 2026-09, iPad B).

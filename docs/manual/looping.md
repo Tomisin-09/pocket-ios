@@ -143,6 +143,11 @@ time, and tap the row to jump there.
 Marker labels can float over the timeline as the playhead approaches them; that is a switch in the
 player's settings.
 
+The same sheet has **Starts a section**. Switch it on and the song's map begins a new section at
+that marker. With it on, **Same as** is for a section that plays like an earlier one, as Verse 2 often
+plays like Verse 1: the map heads it *as Verse 1*, so there's nothing to work out twice. See
+[Mapping the song](songs.md#mapping-the-song).
+
 ## Describing a loop
 
 Hold a loop's row to open **Edit loop**. It carries:

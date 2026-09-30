@@ -138,12 +138,13 @@ struct CountTheNotesSection: View {
             .tint(PocketColor.practice)
             .disabled(model.targetPass == nil)
             Button("Save") {
-                model.requestSave(context: modelContext)
+                model.save(context: modelContext)
             }
             .buttonStyle(.bordered)
             .tint(PocketColor.journal)
             .disabled(model.targetPass == nil)
-            .accessibilityHint("Saves this pass on the loop. The Journal lists it under Pieces.")
+            .accessibilityHint("Saves this pass on the loop, keeping any piece already there as an earlier "
+                               + "version. The Journal lists it under Pieces.")
         }
         .font(.futura(.subheadline))
     }

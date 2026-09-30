@@ -56,6 +56,50 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Versions of a piece.** Saving a new count over a loop's piece no longer replaces it: the old one is
+  kept as an earlier version, and *Replace the saved piece?* is gone. **Versions**, under *Saved on this
+  loop* in Train your ear and on a loop's tab in Map the song, lists them with the one in use first.
+  **Use this version** swaps one back in, keeping the one it replaces, and **Delete** removes an earlier
+  one. The map, its tab and the Journal's Pieces show the version in use.
+- **Map the song.** A new row in **Song details** lays the song out, left to right, with every loop
+  you've made on it sitting where it plays: chords on one lane, notes on the lane under them, and a
+  second lane when two overlap. Each loop shows what it holds, the notes you've counted as dots and
+  the names you've given them as a line, so the song fills in as you work pieces out. Tap one to see
+  its tab; hold it to go straight to *Train your ear*, *Practice* or *Improvise*. Rows are bars when
+  the song has a tempo and a 1, and seconds when it doesn't; **Bars** switches them, along with the
+  waveform's **Grid**. Split the song into sections by switching on **Starts a section** on a marker;
+  other markers stay as pins. **Pieces | Tab** turns the same map into the song's tab, drawn from your
+  pieces: chord symbols where you tapped them, tab where you placed notes on the neck, names where you
+  named them by ear, and a slash for a tap you haven't named. Tap a row of the tab to go to the pieces
+  that drew it; there's nothing to edit in the tab itself. Without a tempo, the tab says so once and
+  takes you to the waveform to set one. Nothing is scored and nothing is counted up: the map shows
+  your pieces, never a percentage (ADR 0232).
+  A song with markers and no sections is offered, once, **Use your markers as sections?**, with the
+  markers named like a song's parts already ticked. A marker that starts a section can be **Same as**
+  an earlier one, so *Verse 2* reads *as Verse 1*, and the Tab view writes Verse 1's chords and notes
+  out under it, bar for bar, so a second chorus reads where it plays. Hold a loop for
+  **Repeats to the end of the section**: one progression worked out once is drawn repeating to the end
+  of its section, marked with how many times it plays, and written out in the tab on every pass, so its
+  chords read in every bar they play in. Tap **+** in an empty stretch of a lane to make a loop that
+  fills it exactly.
+  A repeat can also run on **Through** a later section or **To the end of the song**, from the hold
+  menu's **Repeats**. **Copy to…**, on a counted piece's hold menu and its tab, writes the piece across
+  the sections you tick, or a run of bars you choose, each as a loop of its own that you can then change;
+  **+** in a gap can start from a copy of a piece you've counted on that lane. Whatever the map makes,
+  **Undo** takes back straight away. The map never deletes a loop: that stays on the waveform. The marker
+  sheet now says in plainer words what **Same as** is for.
+  **Put it together…**, on a piece's hold menu, makes a routine from pieces you pick on the map. Chords
+  that follow one another, or notes that do, are practised in a row: each on its own, then joined to the
+  ones before it. A line with chords under the whole of it is practised on its own, then played over the
+  chords as a backing. It asks how fast you can play any piece with no command tempo yet, and how fast
+  the backing should play, starting it with the line, then opens the routine for you to look over before
+  you save it. Of two loops that start together, the shorter now sits on the
+  first lane, so the pieces stay above the loop that joins them.
+  The Journal's **Pieces** now lists your pieces by song instead of by day, in the order they play,
+  under a heading for each song with **Map the song** beside it, so you can reach any song's map from
+  the Journal. The song you changed most recently is at the top, and each piece says the day it last
+  changed. **All** still shows each piece on its day.
+
 - **Count the notes, then name them.** *Train your ear* has a new section for working a lick out by
   ear. Slow the loop down and tap the pad once for every note you hear; each time round the loop gets
   its own row of dots, so you can see when your passes agree. **Name the notes** lays one pass out as

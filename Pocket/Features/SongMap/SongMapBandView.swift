@@ -1,0 +1,56 @@
+import SwiftUI
+
+/// A piece's repeats on the board (ADR 0232 D14, D15), or the part of them in one row: a band lighter than
+/// the piece, from its end as far as the player said it repeats, with *↻ ×4* where it starts. It's a label for what the
+/// player said, never copies of the piece, so there are no dots and no line here: those are the piece's.
+///
+/// Tapping it opens the piece's tab and holding it gives the piece's menu, since it's the same loop.
+struct SongMapBandView: View {
+    let band: SongMap.Band
+    let piece: SongMap.Piece
+    let width: CGFloat
+    let height: CGFloat
+    /// While pieces are being put together (D11), whether its loop is picked: a tap picks it or lets it go,
+    /// and there's no hold menu. `nil` otherwise.
+    var selected: Bool?
+    let onView: () -> Void
+    /// The piece's own hold menu.
+    let menu: SongMapPieceMenu
+
+    private var tint: Color { SongMapStyle.tint(piece.layer) }
+
+    var body: some View {
+        Button(action: onView) {
+            ZStack(alignment: .leading) {
+                let picked = selected == true
+                shape.fill(tint.opacity(picked ? 0.2 : 0.07))
+                    .overlay(shape.stroke(tint.opacity(picked ? 1 : 0.4), lineWidth: picked ? 2 : 1))
+                if width >= 26 {
+                    HStack(spacing: 3) {
+                        Image(systemName: "repeat")
+                        if !band.continuesBefore, width >= 48 { Text("×\(band.passes)") }
+                    }
+                    .font(.futura(.caption2, weight: .medium))
+                    .foregroundStyle(tint)
+                    .padding(.horizontal, 6)
+                }
+            }
+            .frame(width: width, height: height)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .contextMenu { if selected == nil { menu } }
+        .accessibilityLabel("\(piece.name), repeating")
+        .accessibilityValue("\(band.passes) times in all")
+        .accessibilityHint(selected == nil ? "Opens its tab" : "Picks its loop to put together, or lets it go")
+        .accessibilityAddTraits(selected == true ? .isSelected : [])
+    }
+
+    /// Square on the left, where it carries on from the piece or from the row before; rounded on the
+    /// right only where the repeats end.
+    private var shape: UnevenRoundedRectangle {
+        let after: CGFloat = band.continuesAfter ? 0 : 6
+        return UnevenRoundedRectangle(topLeadingRadius: 0, bottomLeadingRadius: 0,
+                                      bottomTrailingRadius: after, topTrailingRadius: after)
+    }
+}

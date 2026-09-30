@@ -6,6 +6,11 @@
   The Journal lists the loop's piece itself, one row per loop, under a new **Pieces** scope. The
   `.transcribed` kind stays, in the tag picker, for a lick worked out by hand, which D7 also provided
   for. D8 stands: the piece on the loop is still what the song map reads.
+- **Amended by:** ADR 0233 (Versions of a piece, 2026-09-30) — the Consequences' "earlier counts are
+  no longer kept anywhere": a piece saved over is kept on its loop as an earlier version. D1 stands: one
+  row per loop, and the row is the version in use. ADR 0232 (Map the song, D20, 2026-09-30) — **D2**:
+  under the **Pieces** scope a piece sits under its song, in song order, with the day it last changed on
+  the row; *All* still puts it on that day. The song's heading opens the map.
 - **Relates to:** 0100 (the Journal space) · 0190 D7 (the scope control, the medium axis) · 0228 (a
   transcribed note opens ear training, which the piece row follows) · `docs/plans/song-map.md` (the
   map's "which loops are solved").
@@ -53,7 +58,8 @@ editing any other entry. Both come from what the line is.
 ## Consequences
 
 - **The dated trail of saves goes.** A piece is replaced on save, so earlier counts are no longer kept
-  anywhere; the practice log still records the time spent in ear training.
+  anywhere; the practice log still records the time spent in ear training. *Amended by 0233: a piece
+  saved over is kept on the loop as an earlier version, with its own date.*
 - **The song map reads the pieces**, plus notes tagged 🧩 by hand, for which loops are solved, not the
   save lines (`docs/plans/song-map.md`, updated).
 - **The Pieces scope is a cross-song list of everything transcribed**, which is what the map's Toolkit

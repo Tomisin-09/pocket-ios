@@ -23,6 +23,9 @@ struct LibraryView: View {
     @State private var importModel = SongImportModel()
     @State var editingSong: Song?
     @State var detailsSong: Song?
+    /// The song whose waveform opens once its details sheet has closed: the song map's *Set the tempo and
+    /// the 1* (ADR 0232 D7). A push can't start under a sheet.
+    @State private var waveformAfterDetails: Song?
     /// The song a single-file import just created — pushed to its waveform ("open on create").
     @State private var openingSong: Song?
     /// The collection to build a practice session from (ADR 0118) — set by the filtered-Library
@@ -115,11 +118,19 @@ struct LibraryView: View {
         // from Library so its link authoring doesn't require the waveform title-hold detour. Same
         // Bool-binding presentation as Edit, for the same ADR-0090 identity-flip reason above.
         .sheet(isPresented: Binding(get: { detailsSong != nil },
-                                    set: { if !$0 { detailsSong = nil } })) {
-            if let song = detailsSong {
-                SongDetailsSheet(song: song)
-            }
-        }
+                                    set: { if !$0 { detailsSong = nil } }),
+               onDismiss: {
+                   guard let song = waveformAfterDetails else { return }
+                   waveformAfterDetails = nil
+                   openingSong = song
+               }, content: {
+                   if let song = detailsSong {
+                       SongDetailsSheet(song: song, onShowWaveform: {
+                           waveformAfterDetails = song
+                           detailsSong = nil
+                       })
+                   }
+               })
         // Build-a-session configurator (ADR 0118), reached from the filtered-collection banner.
         // Same Bool-binding presentation as the sheets above (`sessionCollection` is a String, not a
         // stable-id @Model, so a Bool binding is the natural fit).

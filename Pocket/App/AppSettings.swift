@@ -120,6 +120,8 @@ enum AppSettings {
         /// Home's resume-card preference (ADR 0193). Read from a second place
         /// (`resetJumpBackInPreference`), so it is named here for the same reason the four above are.
         static let jumpBackIn = "jumpBackIn"
+        /// The songs already offered *Use your markers as sections?* (ADR 0232 D7), in `AppSettings+SongMap`.
+        static let songMapSectionOffers = "songMapSectionOffers"
         #if DEBUG
         /// DEBUG-only A/B for ADR 0140 §3. Never read in Release, which always compensates.
         static let compensateStretchLatency = "compensateStretchLatency"

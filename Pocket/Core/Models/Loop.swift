@@ -119,6 +119,15 @@ final class Loop {
     /// this app has no appetite for.
     var isBackingTrack: Bool = false
 
+    /// The loop **repeats to the end of its section** on the song map (ADR 0232 D14): one progression,
+    /// worked out once, that the section plays over and over. The player's declaration, set from the map's
+    /// hold menu, never detected, and never copied into other loops. Not `repeats`, which counts passes in
+    /// a run. Declaration default, so the migration is additive (CoreData 134110 rule).
+    var repeatsToSectionEnd: Bool = false
+    /// How far those repeats run (D15), read only while `repeatsToSectionEnd` is on: `nil` for its own
+    /// section's end, else `SongMap.RepeatsTo.stored`. A String, never the enum (ADR 0189).
+    var repeatsTo: String?
+
     // Automator (ADR 0013): the per-loop speed ramp. Defaults on the *declarations* so
     // SwiftData lightweight migration fills them for loops saved before this — see the
     // ADR 0012 migration note (init-only defaults fail with CoreData 134110). The loop's
@@ -179,6 +188,9 @@ final class Loop {
     /// The loop's piece (ADR 0225): an encoded `PieceTranscription`, read through `transcription`.
     /// `Data`, so no custom enum is stored on the model; Optional, so the migration is additive.
     var transcriptionData: Data?
+    /// The piece's earlier versions (ADR 0233): an encoded `[PieceTranscription]`, newest first, read
+    /// through `keptTranscriptions`. `transcriptionData` stays the one in use. Optional, so additive.
+    var keptTranscriptionsData: Data?
 
     /// The loop's practice journal — dated, context-snapshotting entries (ADR 0038).
     /// **Nullified, not cascaded** (ADR 0151): deleting the loop leaves the notes written about it,
