@@ -20,6 +20,8 @@ struct SongMapPieceSheet: View {
     var onCopy: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    /// The piece's **Versions** (ADR 0233 D4): the map is where you see what each reading does to the song.
+    @State private var showingVersions = false
 
     private var modes: [LoopRunMode] { SongMapPieceSheet.modes(for: loop) }
     private var spelling: NoteSpelling { CountTheNotesModel.spelling(for: loop) }
@@ -42,6 +44,10 @@ struct SongMapPieceSheet: View {
                             .font(.futura(.footnote))
                             .foregroundStyle(PocketColor.textSecondary)
                     }
+                    let kept = loop.keptTranscriptions.count
+                    if kept > 0 {
+                        PieceVersionsRow(count: kept + 1) { showingVersions = true }
+                    }
                 }
                 actions
             }
@@ -54,6 +60,9 @@ struct SongMapPieceSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
+        .sheet(isPresented: $showingVersions) {
+            PieceVersionsSheet(loop: loop, spelling: spelling)
+        }
     }
 
     // MARK: - What it holds

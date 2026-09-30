@@ -188,6 +188,9 @@ final class Loop {
     /// The loop's piece (ADR 0225): an encoded `PieceTranscription`, read through `transcription`.
     /// `Data`, so no custom enum is stored on the model; Optional, so the migration is additive.
     var transcriptionData: Data?
+    /// The piece's earlier versions (ADR 0233): an encoded `[PieceTranscription]`, newest first, read
+    /// through `keptTranscriptions`. `transcriptionData` stays the one in use. Optional, so additive.
+    var keptTranscriptionsData: Data?
 
     /// The loop's practice journal — dated, context-snapshotting entries (ADR 0038).
     /// **Nullified, not cascaded** (ADR 0151): deleting the loop leaves the notes written about it,

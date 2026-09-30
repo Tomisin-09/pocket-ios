@@ -17,6 +17,9 @@
 - **Amended by:** ADR 0229 (Pieces in the Journal, 2026-09-28) — **D7**: *Save* no longer writes a 🧩
   line. The Journal lists the loop's piece itself, one row per loop, under a new *Pieces* scope, dated
   by when the piece last changed. The `.transcribed` kind stays for marking a lick by hand; D8 stands.
+- **Amended by:** ADR 0233 (Versions of a piece, 2026-09-30) — **D6**: *Save* over a saved piece no
+  longer replaces it after a prompt. The new pass is the piece in use and the one before is kept as an
+  earlier version, which **Versions** can use again or delete. The rest of D6 stands.
 - **Amends:** ADR 0104 — **E3** and **E6**. E3's "no transcription store" is reversed for one case on
   purpose: a loop now carries its **piece**, structured and read by a named future reader (D8). The
   Journal stays the dated history, and free-text notes still go nowhere else. E6's "a tally … is out of
@@ -145,7 +148,8 @@ no waveform in it, on purpose** (0104 E2): you count what you hear, not the peak
   **unnamed tap**, not a failed piece. Every field past `taps` is Optional, so an older build reads a
   newer piece and ignores what it doesn't know.
 - **Save** puts the picked pass on the loop and **replaces** any piece already there, after a prompt.
-  The dated history lives in the Journal lines (D7).
+  The dated history lives in the Journal lines (D7). *Amended by 0233: the piece saved over is kept as
+  an earlier version, with no prompt.*
 - **Saved on this loop**, a section under the count, shows the piece: its line of names, and the tab
   when any note has a fret. **Edit names** reopens Name the notes on the saved piece, and Done writes the
   edit back. **Edit pieces, never the picture.**

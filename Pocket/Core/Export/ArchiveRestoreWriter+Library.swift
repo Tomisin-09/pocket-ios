@@ -129,6 +129,7 @@ extension ArchiveRestoreWriter {
         made.colorIndex = record.colorIndex
         made.customColorHex = record.customColorHex
         made.transcription = record.transcription   // the player's own piece (ADR 0225); absent reads as none
+        made.keptTranscriptions = record.keptTranscriptions ?? []   // its earlier versions (ADR 0233)
         made.repeatsToSectionEnd = record.repeatsToSectionEnd ?? false
         made.repeatsTo = record.repeatsTo
         made.references = references(record.references)

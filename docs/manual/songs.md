@@ -145,7 +145,9 @@ pieces, laid out.
 
 Tap a loop to see its tab: the notes you placed on the neck, in the tuning you named them in, with the
 line of names above it. From there, **Train your ear** is where you count it and name it; the map fills
-in as you go. Hold a loop instead to skip the tab: the menu offers **View tab**, **Train your ear**,
+in as you go. Saving a new count over one keeps the one before, and **Versions** on the tab lists them
+all, the one in use first: **Use this version** swaps another in, and the map and its tab follow. The one
+it replaces is kept, so you can always go back. Hold a loop instead to skip the tab: the menu offers **View tab**, **Train your ear**,
 and **Practice** or **Improvise** when the loop can do them.
 
 When the song has a tempo and a **1**, the rows are bars, eight to a row; without them, the rows are

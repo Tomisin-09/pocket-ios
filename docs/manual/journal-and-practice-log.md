@@ -208,7 +208,9 @@ because the day is part of what the entry says.
 ## Finding something again
 
 - The **All · Notes · Takes · Pieces** control at the top narrows the feed to one of them. **Pieces**
-  are the loops you've transcribed with Count the notes, one row per loop, always the current version.
+  are the loops you've transcribed with Count the notes, one row per loop, showing the version in use.
+  Saving a new count keeps the one before; **Versions**, under *Saved on this loop* in Train your ear,
+  can use it again or delete it.
 - **Search** matches song, exercise, template and date — so *Slow Bend*, *Legato* or a month name
   all work.
 - **⋯ ▸ Sort** flips the whole feed between **Newest first** and **Oldest first**, which is how you

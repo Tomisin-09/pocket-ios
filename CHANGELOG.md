@@ -56,6 +56,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Versions of a piece.** Saving a new count over a loop's piece no longer replaces it: the old one is
+  kept as an earlier version, and *Replace the saved piece?* is gone. **Versions**, under *Saved on this
+  loop* in Train your ear and on a loop's tab in Map the song, lists them with the one in use first.
+  **Use this version** swaps one back in, keeping the one it replaces, and **Delete** removes an earlier
+  one. The map, its tab and the Journal's Pieces show the version in use.
 - **Map the song.** A new row in **Song details** lays the song out, left to right, with every loop
   you've made on it sitting where it plays: chords on one lane, notes on the lane under them, and a
   second lane when two overlap. Each loop shows what it holds, the notes you've counted as dots and

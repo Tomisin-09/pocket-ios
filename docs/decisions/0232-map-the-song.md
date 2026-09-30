@@ -7,7 +7,8 @@
   which loops count as solved) · 0011 (markers) · 0022/0154 (the beat grid, one tempo per song) · 0051
   (the per-song gridlines switch) · 0135 (a loop as a backing track) · 0150 and 0161 (export, not
   hosting; the practice file carries no song titles) · 0070 and 0225 D9 (no completion score) · 0092 §A4
-  and 0225 D10 (never detected, never suggested).
+  and 0225 D10 (never detected, never suggested) · 0233 (the map reads a piece's version in use, and its tab sheet
+  opens **Versions**).
 - **Schema:** four additive fields: `Marker.startsSection` (D6, slice 1), `Marker.sameAsUID` (D8,
   slice 3), `Loop.repeatsToSectionEnd` (D14, slice 3) and `Loop.repeatsTo` (D15, slice 3b, a String).
   Each is Optional or defaulted, and each is optional in the archive's `MarkerRecord` or `LoopRecord`.

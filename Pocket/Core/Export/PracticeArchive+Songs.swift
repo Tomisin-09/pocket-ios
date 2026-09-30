@@ -118,6 +118,9 @@ struct LoopRecord: Codable, Equatable, Sendable {
     /// structure it is, not as the `Data` the store keeps, so the file stays readable (ADR 0188).
     /// `Optional` for `ExerciseRecord.folders`' reason: a file from before 0225 has no key.
     var transcription: PieceTranscription?
+    /// The piece's earlier versions (ADR 0233), newest first, as structure for the same reason. `Optional`:
+    /// a file from before them has no key, and a loop with none writes none.
+    var keptTranscriptions: [PieceTranscription]?
     /// Whether the loop repeats to the end of its section on the song map (ADR 0232 D14). **`Optional`**,
     /// for `MarkerRecord.startsSection`'s reason: absent reads as `false`.
     var repeatsToSectionEnd: Bool?
