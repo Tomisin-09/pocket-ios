@@ -47,6 +47,10 @@ struct JournalEntryRecord: Codable, Equatable, Sendable {
     /// No `schemaVersion` bump. `SchemaVersionGate` exists to refuse a file from a **newer** app; an
     /// added optional field is the shape old and new readers already agree about.
     var isPinned: Bool?
+
+    /// The snag this note is the line of (ADR 0234 D7), a loose id like `routineUID`. **Optional**: an
+    /// archive written before it decodes as `nil`, an ordinary note.
+    var snagUID: UUID?
 }
 
 /// A practice take, and the moments pinned inside it.

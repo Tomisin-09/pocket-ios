@@ -11,7 +11,8 @@ import SwiftUI
 struct SavedPieceSection: View {
     let loop: Loop
     let spelling: NoteSpelling
-    let onEdit: () -> Void
+    /// Open Name the notes on the piece, at a note (0-based): the first, or a snag's (ADR 0234 D7).
+    let onEdit: (Int) -> Void
     /// Open **Versions** (ADR 0233 D4). Offered once there's an earlier version.
     let onVersions: () -> Void
 
@@ -19,7 +20,9 @@ struct SavedPieceSection: View {
         if let piece = loop.transcription {
             Section {
                 PieceDrawing(piece: piece, spelling: spelling)
-                Button("Name the notes", action: onEdit)
+                let snags = loop.snagsOnPiece
+                if !snags.isEmpty { snagRows(snags) }
+                Button("Name the notes") { onEdit(0) }
                     .font(.futura(.subheadline))
                     .buttonStyle(.bordered)
                     .tint(PocketColor.practice)
@@ -37,5 +40,48 @@ struct SavedPieceSection: View {
                     .font(.futura(.caption))
             }
         }
+    }
+
+    /// **Snags on this piece** (ADR 0234 D7): where the player got stuck, each with the line they left, so
+    /// coming back to a half-named lick starts from the note that stopped them. A snag made while playing
+    /// the loop is here too, on the note it caught on. Tapping one opens Name the notes on it.
+    private func snagRows(_ snags: [PieceSnag]) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Snags on this piece")
+                .font(.futura(.footnote, weight: .semibold))
+                .foregroundStyle(PocketColor.textSecondary)
+            ForEach(snags, id: \.snag.uid) { placed in
+                Button {
+                    if let note = placed.note { onEdit(note) }
+                } label: {
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        SnagCatch()
+                            .stroke(PocketColor.oracle, style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+                            .frame(width: 16, height: 16)
+                            .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 4 }
+                            .accessibilityHidden(true)
+                        Text(Self.words(for: placed, line: loop.line(forSnag: placed.snag.uid)?.text))
+                            .font(.futura(.subheadline))
+                            .foregroundStyle(PocketColor.textPrimary)
+                            .multilineTextAlignment(.leading)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .disabled(placed.note == nil)
+            }
+        }
+        .accessibilityIdentifier("count.saved.snags")
+    }
+
+    /// "Note 12 · the line", or, with no line, what kind of snag it is. A snag too far from any note says
+    /// when it is instead.
+    nonisolated static func words(for placed: PieceSnag, line: String?) -> String {
+        let place = placed.note.map { "Note \($0 + 1)" }
+            ?? "At \(String(format: "%.1f", placed.snag.seconds)) s"
+        let what = line ?? (placed.snag.markedWhileNaming == true ? "no line yet" : "snagged while playing")
+        return "\(place) · \(what)"
     }
 }

@@ -158,8 +158,12 @@ enum JournalTimeline {
                 // "metronome" a search term, since `searchHaystack` folds this in.
                 return "Metronome"
             case .exercise, .loop, .orphan:
-                return ownerLabel(loop: entry.loop, exercise: entry.exercise, song: nil)
+                let label = ownerLabel(loop: entry.loop, exercise: entry.exercise, song: nil)
                     ?? entry.ownerLabelAtEntry
+                // A snag's line names the note it's about (ADR 0234 D7): "Slow Bend · Intro lick · note 12".
+                guard let label, let snag = entry.snagUID,
+                      let note = entry.loop?.pieceNote(forSnag: snag) else { return label }
+                return "\(label) · note \(note + 1)"
             }
         case .take(let take):
             return ownerLabel(loop: take.loop, exercise: take.exercise, song: take.song)

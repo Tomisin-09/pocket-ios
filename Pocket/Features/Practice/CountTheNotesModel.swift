@@ -13,6 +13,8 @@ struct NamingRequest: Identifiable, Equatable {
     var tuningLabel: String?
     /// The loop's region in song seconds, so *Missed a note?* never plays past it (ADR 0231).
     var region: ClosedRange<TimeInterval>?
+    /// The note it opens on, 0-based: the first, or the one a snag is on (ADR 0234 D7).
+    var startAt = 0
 
     var id: String { "saved" }
 }
@@ -147,11 +149,12 @@ final class CountTheNotesModel {
 
     // MARK: - Naming
 
-    /// Open Name the notes on the piece in use. There's nothing to name until a pass is saved.
-    func nameSaved() {
+    /// Open Name the notes on the piece in use, at `note` if it's one of its taps. There's nothing to name
+    /// until a pass is saved.
+    func nameSaved(at note: Int = 0) {
         guard let piece = loop.transcription else { return }
         naming = NamingRequest(taps: piece.taps, openMidi: piece.openMidi, tuningLabel: piece.tuningLabel,
-                               region: region)
+                               region: region, startAt: piece.taps.indices.contains(note) ? note : 0)
     }
 
     /// The loop's region, or `nil` for one with no length.

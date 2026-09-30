@@ -228,6 +228,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   note pops in, a bend glides to where it lands, vibrato shakes, a hammer-on or pull-off lights where it
   started and snaps across, and a slide travels along the string. With Reduce Motion each only fades in
   (ADR 0234).
+- **Snag a note you're stuck on.** In *Name the notes*, hold a note in the strip to snag it, and hold
+  again to take it off; a hold never plays it. It's the same crimson snag the practice screen makes
+  while you play, so each shows in both places, and a stumble you snagged while playing sits on the
+  note it caught on. Leave a line on a snag for when you come back: it saves to the loop's Journal
+  straight away, and shows under the strip on that note. *Saved on this loop* lists the piece's snags,
+  and a snag's line in the Journal names its note and opens *Name the notes* there (ADR 0234).
 - **A Journal note opens the loop where it was written.** Tapping the loop's name on an 👂 Ear or 🧩
   Transcribed note opens *Train your ear*, and on a 🎸 Improv note opens *Improvise*, rather than the
   loop's ordinary practice. Other notes open as before (ADR 0228).

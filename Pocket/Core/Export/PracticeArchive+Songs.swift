@@ -148,6 +148,9 @@ struct SnagRecord: Codable, Equatable, Sendable {
     var seconds: TimeInterval
     var speed: Double?
     var loopUID: UUID?
+    /// Made on a note while naming (ADR 0234 D7). **Optional**, so an archive written before it decodes
+    /// as `nil`: a snag made while playing, which every snag then was.
+    var markedWhileNaming: Bool?
 }
 
 /// One recorded edit to a loop's span (ADR 0199).

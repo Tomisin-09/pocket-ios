@@ -158,7 +158,8 @@ enum ArchiveBuilder {
                                   markedAt: $0.markedAt,
                                   seconds: $0.seconds,
                                   speed: $0.speed,
-                                  loopUID: $0.loopUID) }
+                                  loopUID: $0.loopUID,
+                                  markedWhileNaming: $0.markedWhileNaming) }
         )
     }
 

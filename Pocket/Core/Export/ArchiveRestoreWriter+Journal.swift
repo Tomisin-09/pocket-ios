@@ -56,6 +56,7 @@ extension ArchiveRestoreWriter {
             // `Bool` with a declaration default (ADR 0190), and an archive written before pins
             // existed carries `nil`, which means unpinned rather than unknown.
             entry.isPinned = record.isPinned ?? false
+            entry.snagUID = record.snagUID
             landing.journal.append(entry)
         }
     }

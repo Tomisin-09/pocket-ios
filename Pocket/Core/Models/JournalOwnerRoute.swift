@@ -19,6 +19,10 @@ enum JournalOwnerRoute: Hashable {
     /// mode and the loop still qualifies for it (ADR 0228): an ear or a transcribed note opens ear
     /// training, an improvise note opens improvise.
     case loop(Loop, LoopRunMode)
+    /// A loop's piece, open in Name the notes at a note (ADR 0234 D7): where a line written on a snag
+    /// leads, so the words and the note they're about come back together. Train your ear, with the
+    /// naming sheet already up on the snag's note.
+    case naming(Loop, note: Int)
     /// The **routine a session note was written about** (2026-08-06). A session entry's caption was
     /// the last dead label on the feed: its practised-unit pills already opened their units, while the
     /// routine name above them — the thing the sitting actually *was* — went nowhere.
@@ -28,7 +32,7 @@ enum JournalOwnerRoute: Hashable {
     var uid: UUID {
         switch self {
         case .exercise(let exercise): exercise.uid
-        case .loop(let loop, _): loop.uid
+        case .loop(let loop, _), .naming(let loop, _): loop.uid
         case .routine(let routine): routine.uid
         }
     }
@@ -67,7 +71,14 @@ enum JournalOwnerRoute: Hashable {
                       let routine = routines.first(where: { $0.uid == uid }) else { return nil }
                 return .routine(routine)
             }
-            return route(loop: entry.loop, exercise: entry.exercise, writtenIn: writtenIn(entry.kind))
+            let route = route(loop: entry.loop, exercise: entry.exercise, writtenIn: writtenIn(entry.kind))
+            // A snag's line opens on its note, when the snag still falls on one and the loop can open in
+            // ear training; otherwise it's an ordinary note on the loop.
+            if case .loop(let loop, .ear)? = route, let snag = entry.snagUID,
+               let note = loop.pieceNote(forSnag: snag) {
+                return .naming(loop, note: note)
+            }
+            return route
         case .take(let take):
             return route(loop: take.loop, exercise: take.exercise)
         // A piece is made and edited in ear training (ADR 0225), so that's where it opens (ADR 0229).

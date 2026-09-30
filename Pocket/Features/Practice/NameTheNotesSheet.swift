@@ -93,12 +93,15 @@ enum NamingStrip {
 /// a List row loses its write).
 struct NameTheNotesSheet: View {
     let request: NamingRequest
+    /// The loop whose piece this is: its song holds the snags a hold makes (ADR 0234 D7), and its Journal
+    /// their lines.
+    let loop: Loop
     let player: ContinuousLoopPlayer
     let spelling: NoteSpelling
-    let loopType: LoopType
     let onDone: (NamingResult) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) var modelContext
     /// The pass being named: its taps, and since ADR 0231 any taken out or tapped in. Handed back on Done.
     @State var taps: [PieceTranscription.Tap]
     @State var active = 0
@@ -137,6 +140,8 @@ struct NameTheNotesSheet: View {
     @State var undo: PassCorrection.Undo?
     /// Every change made on this visit, for ↶ and ↷ (ADR 0234 D6).
     @State var history = NamingHistory()
+    /// The line being written on the current note's snag, while it is (ADR 0234 D7).
+    @State var lineDraft: String?
     /// The note just placed on the neck, while the strip has moved on past it (ADR 0234 D3): the marks
     /// stay on it until the next note is placed or a chip is picked. `nil` whenever the marks go with the
     /// strip.
@@ -144,23 +149,26 @@ struct NameTheNotesSheet: View {
     /// Bumped when the pad is tapped with nothing playing, to say why nothing was added.
     @State var missedNudge = 0
 
-    init(request: NamingRequest, player: ContinuousLoopPlayer, spelling: NoteSpelling, loopType: LoopType,
+    init(request: NamingRequest, loop: Loop, player: ContinuousLoopPlayer, spelling: NoteSpelling,
          onDone: @escaping (NamingResult) -> Void) {
         self.request = request
+        self.loop = loop
         self.player = player
         self.spelling = spelling
-        self.loopType = loopType
         self.onDone = onDone
+        let loopType = loop.loopType
         let labels = request.taps.map(\.label)
         _taps = State(initialValue: request.taps)
+        let start = request.taps.indices.contains(request.startAt) ? request.startAt : 0
+        _active = State(initialValue: start)
         _mode = State(initialValue: NamingMode.opening(for: labels, loopType: loopType))
         _earKind = State(initialValue: NamingMode.openingKind(for: labels, loopType: loopType))
         let tuner = CountTheNotesModel.tunerTuning()
         _tuning = State(initialValue: NamingTuning(openMidi: request.openMidi ?? tuner.openMidi,
                                                    label: request.tuningLabel ?? tuner.label))
-        _neckTarget = State(initialValue: labels.first.flatMap { Self.fret(of: $0) })
+        _neckTarget = State(initialValue: labels.indices.contains(start) ? Self.fret(of: labels[start]) : nil)
         _chordsOn = State(initialValue: labels.contains { ($0?.frettedNotes.count ?? 0) > 1 })
-        _ringed = State(initialValue: labels.first??.frettedNotes.last?.string)
+        _ringed = State(initialValue: labels.indices.contains(start) ? labels[start]?.frettedNotes.last?.string : nil)
     }
 
     var body: some View {
@@ -177,6 +185,7 @@ struct NameTheNotesSheet: View {
                     }
                     .pickerStyle(.segmented)
                     strip
+                    snagLine
                     correctionControls
                     if let replacing { replacePrompt(replacing) }
                     switch mode {
@@ -246,6 +255,8 @@ struct NameTheNotesSheet: View {
 
     /// A chord loop is tapped once per chord, and calls them chords.
     var noun: String { loopType == .chords ? "chord" : "note" }
+
+    var loopType: LoopType { loop.loopType }
 
     private var subtitle: String {
         let count = taps.count

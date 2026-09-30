@@ -38,13 +38,23 @@ final class Snag {
     /// snag was marked with no loop armed.
     var loopUID: UUID?
 
+    /// `true` when it was made on a note in *Name the notes* (ADR 0234 D7): a place the player got stuck
+    /// working the lick out, rather than one they fluffed playing it. Both are the same mark on the same
+    /// song, and everything today reads them alike; this is recorded for a reader that must not (a
+    /// returning Oracle reads snags as stumbles, ADR 0204), because it can't be worked out afterwards.
+    /// `nil` for a snag made while playing, and for every snag made before this. Additive, Optional, and
+    /// a plain `Bool`, never a custom enum (the 0036 crash), so it's a lightweight migration (ADR 0189).
+    var markedWhileNaming: Bool?
+
     var song: Song?
 
-    init(markedAt: Date = .now, seconds: TimeInterval, speed: Double? = nil, loopUID: UUID? = nil) {
+    init(markedAt: Date = .now, seconds: TimeInterval, speed: Double? = nil, loopUID: UUID? = nil,
+         markedWhileNaming: Bool? = nil) {
         self.uid = UUID()
         self.markedAt = markedAt
         self.seconds = seconds
         self.speed = speed
         self.loopUID = loopUID
+        self.markedWhileNaming = markedWhileNaming
     }
 }

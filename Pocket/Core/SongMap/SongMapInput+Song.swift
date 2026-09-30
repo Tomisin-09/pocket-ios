@@ -18,7 +18,9 @@ extension SongMapInput {
                       LoopInput(uid: loop.uid, name: loop.name.isEmpty ? "Loop" : loop.name,
                                 start: loop.start * duration, end: loop.end * duration,
                                 type: loop.loopType, piece: loop.transcription,
-                                handTagged: loop.journal.contains { $0.kind == .transcribed },
+                                // A snag's line is about a note that stopped the player, never a
+                                // declaration the loop is solved, whatever it's tagged (ADR 0234 D7).
+                                handTagged: loop.journal.contains { $0.kind == .transcribed && $0.snagUID == nil },
                                 repeatsToSectionEnd: loop.repeatsToSectionEnd,
                                 repeatsTo: SongMap.RepeatsTo(stored: loop.repeatsTo))
                   })

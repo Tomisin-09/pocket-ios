@@ -38,7 +38,11 @@ struct EarTrainingView: View {
     /// Deliberately **not defaulted**: it decides which seam logs the run (`RampLessRunLog`), and a
     /// host that could quietly omit it is exactly how the standalone hosts came to log nothing.
     let routineContext: RoutineRunContext?
+    /// The note to open Name the notes at on arrival, once (ADR 0234 D7); `nil` opens nothing.
+    var namingAt: Int?
     @Environment(\.modelContext) private var modelContext
+    /// Latch for `namingAt`: a return from the sheet re-fires `.onAppear`.
+    @State private var openedNaming = false
     /// Latch for the tool-opened event (ADR 0120) — this view is embedded by both the loop-settings
     /// sheet and a routine's ear block, and `.onAppear` re-fires on a return.
     @State private var reportedOpen = false
@@ -50,11 +54,12 @@ struct EarTrainingView: View {
     @State private var counting: CountTheNotesModel
 
     init(loop: Loop, player: ContinuousLoopPlayer, recorder: RecordingController,
-         routineContext: RoutineRunContext?) {
+         routineContext: RoutineRunContext?, namingAt: Int? = nil) {
         self.loop = loop
         self.player = player
         self.recorder = recorder
         self.routineContext = routineContext
+        self.namingAt = namingAt
         _counting = State(initialValue: CountTheNotesModel(loop: loop))
     }
 
@@ -81,13 +86,17 @@ struct EarTrainingView: View {
                 CountTheNotesSection(model: counting, player: player) {
                     LoopTransport.toggle(player, recorder: recorder, onStopped: finishTake)
                 }
-                SavedPieceSection(loop: loop, spelling: counting.spelling, onEdit: {
+                SavedPieceSection(loop: loop, spelling: counting.spelling, onEdit: { note in
                     stopForNaming()
-                    counting.nameSaved()
+                    counting.nameSaved(at: note)
                 }, onVersions: { showingVersions = true })
             }
         }
         .onAppear {
+            if let namingAt, !openedNaming {
+                openedNaming = true
+                counting.nameSaved(at: namingAt)
+            }
             guard !reportedOpen else { return }
             reportedOpen = true
             Analytics.send(.toolOpened(tool: .earTraining))
@@ -103,8 +112,7 @@ struct EarTrainingView: View {
             PieceVersionsSheet(loop: loop, spelling: counting.spelling)
         }
         .sheet(item: Bindable(counting).naming, onDismiss: player.stop) { request in
-            NameTheNotesSheet(request: request, player: player, spelling: counting.spelling,
-                              loopType: loop.loopType) { result in
+            NameTheNotesSheet(request: request, loop: loop, player: player, spelling: counting.spelling) { result in
                 counting.finishNaming(request, result: result, context: modelContext)
             }
         }
@@ -191,17 +199,21 @@ struct EarTrainingSheet: View {
 /// a pushed screen already has a back button.
 struct EarTrainingScreen: View {
     let loop: Loop
+    /// Open Name the notes at this note once the screen is up: a snag's line in the Journal leads here
+    /// (ADR 0234 D7).
+    var namingAt: Int?
     @State private var player: ContinuousLoopPlayer
     @State private var recorder = RecordingController()
 
-    init(loop: Loop) {
+    init(loop: Loop, namingAt: Int? = nil) {
         self.loop = loop
+        self.namingAt = namingAt
         _player = State(initialValue: ContinuousLoopPlayer(loop: loop))
     }
 
     var body: some View {
         EarTrainingView(loop: loop, player: player, recorder: recorder,
-                        routineContext: nil)
+                        routineContext: nil, namingAt: namingAt)
             .navigationTitle(LoopRunMode.ear.label)
             .navigationBarTitleDisplayMode(.inline)
     }
