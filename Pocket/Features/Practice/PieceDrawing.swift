@@ -9,15 +9,27 @@ import UIKit
 /// in fours. It replaces the line of names that ran to a wall on a long piece and the one line of tab that
 /// ran off the side.
 ///
-/// Drawn from the piece every time, never kept as text (**edit pieces, never the picture**).
+/// Drawn from the piece every time, never kept as text (**edit pieces, never the picture**). It reads the
+/// notes alone, never their seconds, so a tab written on the neck (ADR 0235) draws the same way.
 struct PieceDrawing: View {
-    let piece: PieceTranscription
+    let piece: PieceNotes
     let spelling: NoteSpelling
     /// Folded to its line until *See the notes* is tapped: the Journal's Pieces rows, so the feed stays a
     /// feed (ADR 0234 D8, after the second design round).
     var folds = false
     /// *Copy tab* on a hold: the map's piece sheet, where the tab could be selected as text before.
     var copyable = false
+
+    init(notes: PieceNotes, spelling: NoteSpelling, folds: Bool = false, copyable: Bool = false) {
+        self.piece = notes
+        self.spelling = spelling
+        self.folds = folds
+        self.copyable = copyable
+    }
+
+    init(piece: PieceTranscription, spelling: NoteSpelling, folds: Bool = false, copyable: Bool = false) {
+        self.init(notes: piece.notes, spelling: spelling, folds: folds, copyable: copyable)
+    }
 
     @State private var isOpen = false
     @State private var width: CGFloat = 0

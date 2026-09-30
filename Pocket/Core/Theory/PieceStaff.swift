@@ -48,8 +48,13 @@ enum PieceStaff {
 
     /// The columns of a piece, in tap order.
     static func columns(of piece: PieceTranscription, spelling: NoteSpelling) -> [Column] {
-        let labels = piece.labels
-        let openMidi = piece.openMidi ?? []
+        columns(of: piece.notes, spelling: spelling)
+    }
+
+    /// The columns of a piece's notes, in order (ADR 0235 D9: a written tab has no seconds).
+    static func columns(of notes: PieceNotes, spelling: NoteSpelling) -> [Column] {
+        let labels = notes.labels
+        let openMidi = notes.openMidi ?? []
         var columns: [Column] = []
         var index = 0
         while index < labels.count {
@@ -101,7 +106,11 @@ enum PieceStaff {
 
     /// A piece with nothing on the neck: its names in fours, unnamed as `–`, each with its number.
     static func groups(of piece: PieceTranscription, spelling: NoteSpelling) -> [[(note: Int, name: String?)]] {
-        let names = piece.names(spelling: spelling)
+        groups(of: piece.notes, spelling: spelling)
+    }
+
+    static func groups(of notes: PieceNotes, spelling: NoteSpelling) -> [[(note: Int, name: String?)]] {
+        let names = notes.names(spelling: spelling)
         return stride(from: 0, to: names.count, by: 4).map { start in
             (start..<min(start + 4, names.count)).map { (note: $0, name: names[$0]) }
         }
@@ -109,12 +118,14 @@ enum PieceStaff {
 
     /// The line over a piece: "98 notes · Guitar · Standard · 6 unnamed", or "8 chords", or "16 notes ·
     /// none named yet".
-    static func meta(of piece: PieceTranscription) -> String {
-        let named = piece.labels.compactMap { $0 }
+    static func meta(of piece: PieceTranscription) -> String { meta(of: piece.notes) }
+
+    static func meta(of notes: PieceNotes) -> String {
+        let named = notes.labels.compactMap { $0 }
         let noun = !named.isEmpty && named.allSatisfy(\.isChord) ? "chord" : "note"
-        var parts = ["\(piece.count) \(noun)\(piece.count == 1 ? "" : "s")"]
-        if piece.hasFrettedLabels, let tuning = piece.tuningLabel { parts.append(tuning) }
-        let unnamed = piece.count - named.count
+        var parts = ["\(notes.count) \(noun)\(notes.count == 1 ? "" : "s")"]
+        if notes.hasFrettedLabels, let tuning = notes.tuningLabel { parts.append(tuning) }
+        let unnamed = notes.count - named.count
         if named.isEmpty {
             parts.append("none named yet")
         } else if unnamed > 0 {
