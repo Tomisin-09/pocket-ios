@@ -13,8 +13,9 @@ final class SongMapWriterTests: XCTestCase {
     /// A loop made on the waveform: the verse's first four bars, counted.
     private var verse: Loop!
 
-    override func setUp() async throws {
-        try await super.setUp()
+    /// The store and song each test starts from, built in the test rather than in `setUp`: the class is
+    /// `@MainActor` and `XCTestCase.setUp` is not, which CI's Swift 6 compiler refuses.
+    private func prepare() throws {
         container = try ModelContainer(for: Song.self, Loop.self,
                                        configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         context = ModelContext(container)
@@ -28,19 +29,12 @@ final class SongMapWriterTests: XCTestCase {
         verse.song = song
     }
 
-    override func tearDown() async throws {
-        verse = nil
-        song = nil
-        context = nil
-        container = nil
-        try await super.tearDown()
-    }
-
     private func target(_ start: TimeInterval, _ end: TimeInterval, _ name: String) -> SongMapCopy.Target {
         SongMapCopy.Target(start: start, end: end, title: name, place: nil, name: name, alongside: [])
     }
 
     func testUndoTakesBackWhatTheMapMadeAndNothingElse() throws {
+        try prepare()
         let gap = SongMap.Gap(layer: .chords, start: 40, end: 52, name: "Bridge chords")
         let made = try XCTUnwrap(SongMapWriter.make(gap, in: song, context: context))
         let copies = SongMapWriter.copy(verse, into: [target(24, 40, "Chorus chords"), target(52, 64, "Outro chords")],
@@ -56,6 +50,7 @@ final class SongMapWriterTests: XCTestCase {
     }
 
     func testUndoAfterOneMadePieceLeavesTheWaveformsLoop() throws {
+        try prepare()
         let gap = SongMap.Gap(layer: .notes, start: 40, end: 52, name: "Bridge notes")
         let made = try XCTUnwrap(SongMapWriter.make(gap, in: song, context: context))
         SongMapWriter.takeBack([made.uid], from: song, context: context)
@@ -63,6 +58,7 @@ final class SongMapWriterTests: XCTestCase {
     }
 
     func testAMadePieceFillsItsGapAndIsTypedByItsLane() throws {
+        try prepare()
         let chords = try XCTUnwrap(SongMapWriter.make(SongMap.Gap(layer: .chords, start: 40, end: 52,
                                                                    name: "Bridge chords"), in: song, context: context))
         XCTAssertEqual(chords.start * 64, 40, accuracy: 1e-9)
@@ -75,6 +71,7 @@ final class SongMapWriterTests: XCTestCase {
     }
 
     func testACopyIsTypedAsItsSourceAndHoldsThePieceWrittenAcrossIt() throws {
+        try prepare()
         let copy = try XCTUnwrap(SongMapWriter.copy(verse, into: [target(24, 40, "Chorus chords")], grid: nil,
                                                     in: song, context: context).first)
         XCTAssertEqual(copy.name, "Chorus chords")
@@ -85,7 +82,8 @@ final class SongMapWriterTests: XCTestCase {
         XCTAssertEqual(verse.transcription?.taps.map(\.seconds), [8.25, 12.25], "the source is untouched")
     }
 
-    func testRepeatsSetTheSwitchAndHowFarAndClearBoth() {
+    func testRepeatsSetTheSwitchAndHowFarAndClearBoth() throws {
+        try prepare()
         let chorus = UUID()
         SongMapWriter.setRepeats(verse.uid, .through(chorus), in: song)
         XCTAssertTrue(verse.repeatsToSectionEnd)

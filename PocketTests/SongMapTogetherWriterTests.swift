@@ -11,20 +11,14 @@ final class SongMapTogetherWriterTests: XCTestCase {
     private var context: ModelContext!
     private var song: Song!
 
-    override func setUp() async throws {
-        try await super.setUp()
+    /// The store and song each test starts from, built in the test rather than in `setUp`: the class is
+    /// `@MainActor` and `XCTestCase.setUp` is not, which CI's Swift 6 compiler refuses.
+    private func prepare() throws {
         container = try ModelContainer(for: Song.self, Loop.self, Routine.self, RoutineItem.self,
                                        configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         context = ModelContext(container)
         song = Song(title: "Slow Bend", duration: 64, ref: SongRef(id: "s1", source: .localFile, bookmark: nil))
         context.insert(song)
-    }
-
-    override func tearDown() async throws {
-        song = nil
-        context = nil
-        container = nil
-        try await super.tearDown()
     }
 
     @discardableResult
@@ -44,6 +38,7 @@ final class SongMapTogetherWriterTests: XCTestCase {
     }
 
     func testTheJoinedLoopRunsFromTheFirstPartToTheLastAtTheSlowestOfThem() throws {
+        try prepare()
         let first = loop("Verse riff", 8, 12, speed: 0.9, command: 0.8)
         let second = loop("Verse riff 2", 12, 16, type: .lick, speed: 1)
         let joined = SongMapWriter.prepare(inARow([first, second]), commands: [second.uid: 0.7], in: song,
@@ -62,6 +57,7 @@ final class SongMapTogetherWriterTests: XCTestCase {
     }
 
     func testAJoinedStretchOfChordsIsTypedToStayOnTheChordsLane() throws {
+        try prepare()
         let first = loop("Verse chords", 8, 16, type: .chords, command: 1)
         let second = loop("Verse chords 2", 16, 24, type: .chords, command: 1)
         let made = try XCTUnwrap(SongMapWriter.prepare(inARow([first, second]), commands: [:], in: song,
@@ -73,7 +69,8 @@ final class SongMapTogetherWriterTests: XCTestCase {
         XCTAssertEqual(joinedRiffs.loopType, .riff, "parts of one type keep it")
     }
 
-    func testALineOverItsChordsSwitchesTheBackingOn() {
+    func testALineOverItsChordsSwitchesTheBackingOn() throws {
+        try prepare()
         let chords = loop("Intro chords", 0, 8, type: .chords)
         let line = loop("Intro lick", 2, 4, type: .lick)
         let plan = SongMapTogether.plan(.lineOverChords(line: line.uid, chords: chords.uid),
@@ -88,6 +85,7 @@ final class SongMapTogetherWriterTests: XCTestCase {
     }
 
     func testTheRoutineLandsOnlyWhenTheReviewSavesItAndThenTheJoinedLoopsAreItsBlocks() throws {
+        try prepare()
         let first = loop("A", 8, 12, command: 1)
         let second = loop("B", 12, 16, command: 1)
         let plan = inARow([first, second])
@@ -118,6 +116,7 @@ final class SongMapTogetherWriterTests: XCTestCase {
     }
 
     func testTheBackingRunsAsAnImproviseBlock() throws {
+        try prepare()
         let chords = loop("Intro chords", 0, 8, type: .chords)
         let line = loop("Intro lick", 2, 4, type: .lick, command: 0.8)
         let runs = [SongMapTogether.Run(uid: line.uid, mode: .trainer),
@@ -146,6 +145,7 @@ final class SongMapTogetherWriterTests: XCTestCase {
     }
 
     func testTheBackingIsAskedForStartingWithTheLine() throws {
+        try prepare()
         let chords = loop("Intro chords", 0, 8, type: .chords)
         let line = loop("Intro lick", 2, 4, type: .lick, speed: 0.7)
         let answers = try XCTUnwrap(asking(lineOverChords(line, chords)))
@@ -157,6 +157,7 @@ final class SongMapTogetherWriterTests: XCTestCase {
     }
 
     func testTheBackingMovesWithTheLineUntilItsSetOnItsOwn() throws {
+        try prepare()
         let chords = loop("Intro chords", 0, 8, type: .chords)
         let line = loop("Intro lick", 2, 4, type: .lick)
         var answers = try XCTUnwrap(asking(lineOverChords(line, chords)))
@@ -169,6 +170,7 @@ final class SongMapTogetherWriterTests: XCTestCase {
     }
 
     func testAMeasuredLineStartsTheBackingAtItsCommandTempo() throws {
+        try prepare()
         let chords = loop("Intro chords", 0, 8, type: .chords)
         let line = loop("Intro lick", 2, 4, type: .lick, speed: 0.6, command: 0.85)
         let answers = try XCTUnwrap(asking(lineOverChords(line, chords)), "the backing is still asked for")
@@ -178,6 +180,7 @@ final class SongMapTogetherWriterTests: XCTestCase {
     }
 
     func testOnlyWhatsMissingIsAskedFor() throws {
+        try prepare()
         let chords = loop("Intro chords", 0, 8, type: .chords, command: 1)
         let line = loop("Intro lick", 2, 4, type: .lick)
         let justTheLine = try XCTUnwrap(asking(lineOverChords(line, chords)))
