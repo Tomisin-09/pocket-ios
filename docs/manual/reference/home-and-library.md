@@ -35,13 +35,20 @@ measures this week against the last one. **Tap it** for the
 three scales. The strip is not there at all until you have practised something — and neither,
 therefore, is the way in.
 
-**The five destinations** are tiles, two to a row, under three headings. Each is a glyph and a name
-in its own colour, and the colour is how you find it again — nothing else on Home is that hue.
+**The destinations** are tiles, two to a row, under three headings. Each is a glyph and a name in its
+own colour, and the colour is how you find it again. The one exception is on purpose: the tile beside
+Toolkit wears the Toolkit's indigo, because whatever it opens is a Toolkit tool.
 
 - **`Practice`** opens the [Practice hub](practice.md); **`Metronome`** beside it opens over the
   whole screen.
 - **`Your stuff`** holds **`Song library`** and **`Journal`**.
-- **`Learn`** holds **`Toolkit`**, on its own.
+- **`Learn`** holds **`Toolkit`** and, beside it, **a tile of your own**.
+
+**The tile beside Toolkit** opens one of the Toolkit's tools: **`My tabs`** until you change it. It
+takes that tool's name and glyph, so it always says where it goes. **Hold it** and pick another
+from the menu: `My chords`, `My progressions`, `Tuner`, `Glossary` or `Help & FAQs`. The same choice
+is in [Settings ▸ Practice](settings.md#practice) under `Beside Toolkit`. Until you have changed it
+once, it carries `Hold to change` under its name.
 
 The tiles carry no description. VoiceOver still reads one — *Practice, your exercises and training
 runs* — so nothing was lost from the spoken screen. Before you have added a song, the `Song library`
@@ -49,7 +56,8 @@ tile carries one line of its own, `Add a song to get started`, and loses it once
 
 **`Recent routines`** is a horizontal rail of routines you have played, each showing its block count.
 
-Of those, only Journal and Toolkit are outside Red Moon Pro. The rest draw a padlock without it.
+Of those, only Journal, Toolkit and the tile beside it are outside Red Moon Pro. The rest draw a
+padlock without it.
 
 ### The first run
 

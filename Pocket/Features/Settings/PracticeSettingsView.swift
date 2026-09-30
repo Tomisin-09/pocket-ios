@@ -46,6 +46,8 @@ struct PracticeSettingsView: View {
             // Which unit Home's resume card offers (ADR 0193) — here rather than on an eleventh
             // Settings destination, for the reason the section itself gives.
             JumpBackInSection()
+            // What the tile beside Toolkit opens (ADR 0235 D6), the second of its two doors.
+            HomeToolSection()
 
             // A starting point for new reminders, and a list of the ones that exist (ADR 0186 D12).
             // The reminder itself is set on the routine (ADR 0163) — nothing here fires anything,

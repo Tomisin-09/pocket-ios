@@ -30,9 +30,9 @@ final class PocketLaunchUITests: UITestCase {
     /// every other suite matches it.
     ///
     /// **`Red Moon Oracle` was removed from this list on purpose** (ADR 0211), not lost: its tile is
-    /// drawn `.hidden()` while the register is unsettled, and a hidden view is out of the
-    /// accessibility tree, so VoiceOver reaches five destinations here. The label itself is
-    /// unchanged and still asserted — by `OracleUITests`, which opens the door first.
+    /// not drawn while the register is unsettled, and the half of the Learn row it held hidden is the
+    /// player's tile (ADR 0235), listed above. The label itself is unchanged and still asserted — by
+    /// `OracleUITests`, which opens the door first.
     @MainActor
     func testHomeMapCarriesEverySpokenLabel() throws {
         let app = launchApp()
@@ -40,7 +40,9 @@ final class PocketLaunchUITests: UITestCase {
         for label in ["Practice, your exercises and training runs",
                       "Metronome, standalone click and tempo trainer",
                       "Journal, your notes and practice takes",
-                      "Toolkit, tuner, your chords and a glossary"] {
+                      "Toolkit, tuner, your chords and a glossary",
+                      // The tile beside Toolkit, as a launch resets it (ADR 0235 D6): the My tabs row's label.
+                      "My tabs, tabs you write on the neck"] {
             XCTAssertTrue(app.buttons[label].waitForExistence(timeout: Self.uiTimeout), """
                 no home tile labelled '\(label)'. Since ADR 0197 the tiles draw a glyph and a name \
                 only, so this label is the whole of what VoiceOver gets and what every other UI \

@@ -65,6 +65,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   bar lines. Nothing plays, and it saves as you go. A tab opens to be read, with **Edit**; hold or swipe
   one in the list to rename or delete it. Written tabs aren't in the Journal, and they travel in the
   whole-library export and restore.
+- **A Home tile that's yours.** The empty space beside **Toolkit** on Home is now a tile that opens a
+  Toolkit tool: **My tabs** until you change it. Hold it and pick another, or choose in **Settings ▸
+  Practice ▸ Beside Toolkit**; it takes that tool's name and glyph. *Hold to change* sits under its name
+  until you've changed it once.
 - **Versions of a piece.** Saving a new count over a loop's piece no longer replaces it: the old one is
   kept as an earlier version, and *Replace the saved piece?* is gone. **Versions**, under *Saved on this
   loop* in Train your ear and on a loop's tab in Map the song, lists them with the one in use first.
