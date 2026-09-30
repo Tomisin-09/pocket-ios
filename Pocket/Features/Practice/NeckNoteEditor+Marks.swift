@@ -48,7 +48,7 @@ extension NeckNoteEditor {
                 .frame(minHeight: 32)
                 .foregroundStyle(note?.vibrato == true ? PocketColor.background : PocketColor.textPrimary)
                 .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(note?.vibrato == true ? PocketColor.practice : .clear))
+                    .fill(note?.vibrato == true ? accent : .clear))
                 .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
                     .strokeBorder(note?.vibrato == true ? .clear : PocketColor.surfaceBorder))
         }

@@ -11,10 +11,11 @@ enum NamingControls {
             .fixedSize(horizontal: false, vertical: true)
     }
 
-    static func link(_ title: String, action: @escaping () -> Void) -> some View {
+    static func link(_ title: String, tint: Color = PocketColor.practice,
+                     action: @escaping () -> Void) -> some View {
         Button(title, action: action)
             .font(.futura(.caption, weight: .semibold))
-            .tint(PocketColor.practice)
+            .tint(tint)
             .buttonStyle(.borderless)
             .padding(.vertical, 2)
     }

@@ -13,10 +13,11 @@ struct NeckMarksLayer: View {
     let stringCount: Int
     let maxFret: Int
     let headroom: CGFloat
+    @Environment(\.neckAccent) private var accent
 
     var body: some View {
         Canvas { context, _ in
-            let ink = GraphicsContext.Shading.color(PocketColor.practice)
+            let ink = GraphicsContext.Shading.color(accent)
             let line = StrokeStyle(lineWidth: 1.75, lineCap: .round, lineJoin: .round)
             drawShapeLinks(in: context, ink: ink)
             // A shape's lead-ins are one move: one pill, on its top string.
@@ -101,7 +102,7 @@ struct NeckMarksLayer: View {
         if case .fret(let fret) = leadIn.from {
             start = center(note.string, fret)
             context.stroke(Path(ellipseIn: CGRect(x: start.x - 12, y: start.y - 12, width: 24, height: 24)),
-                           with: .color(PocketColor.practice), lineWidth: 1.5)
+                           with: .color(accent), lineWidth: 1.5)
         } else {
             start = CGPoint(x: end.x + (way == .upward ? -1.4 : 1.4) * NeckGeometry.pitch, y: end.y)
         }
@@ -112,7 +113,7 @@ struct NeckMarksLayer: View {
     /// the mark in a pill when `labelled` (once per shape).
     private func drawLink(_ join: String, from start: CGPoint, to end: CGPoint, labelled: Bool,
                           in context: GraphicsContext) {
-        let ink = GraphicsContext.Shading.color(PocketColor.practice)
+        let ink = GraphicsContext.Shading.color(accent)
         let line = StrokeStyle(lineWidth: 1.75, lineCap: .round, lineJoin: .round)
         let middle = (start.x + end.x) / 2
         if join == "h" || join == "p" {
@@ -150,8 +151,8 @@ struct NeckMarksLayer: View {
     private func pill(_ text: String, at point: CGPoint, in context: GraphicsContext) {
         let box = CGRect(x: point.x - 6.5, y: point.y - 6.5, width: 13, height: 13)
         context.fill(Path(ellipseIn: box), with: .color(PocketColor.background))
-        context.stroke(Path(ellipseIn: box), with: .color(PocketColor.practice), lineWidth: 1)
+        context.stroke(Path(ellipseIn: box), with: .color(accent), lineWidth: 1)
         context.draw(Text(text).font(.system(size: 9, weight: .bold, design: .monospaced))
-            .foregroundStyle(PocketColor.practice), at: point)
+            .foregroundStyle(accent), at: point)
     }
 }

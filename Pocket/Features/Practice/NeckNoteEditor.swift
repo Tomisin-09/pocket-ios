@@ -31,6 +31,8 @@ struct NeckNoteEditor: View {
     let onPlace: (_ string: Int, _ fret: Int) -> Void
     /// *Where did you play it?* tapped: the owner opens its instrument sheet.
     let onInstrument: () -> Void
+    /// Name the notes' practice teal, unless the owner sets another (`neckAccent`).
+    @Environment(\.neckAccent) var accent
 
     var body: some View {
         let neighbours = NeckNeighbours.marks(labels, active: active)
@@ -44,7 +46,7 @@ struct NeckNoteEditor: View {
                     Text("\(tuning.label) \(Image(systemName: "chevron.right"))")
                         .font(.futura(.caption))
                 }
-                .tint(PocketColor.practice)
+                .tint(accent)
                 .accessibilityLabel("Instrument and tuning, \(tuning.label)")
             }
             FretNeckBoard(stringNames: stringNames, maxFret: PieceLabel.maxFret, scrollTarget: scrollTarget,
@@ -70,7 +72,7 @@ struct NeckNoteEditor: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let shape = NeckShape.read(labels[active]?.frettedNotes ?? [], openMidi: tuning.openMidi) {
-                let name = Text(shape.name(spelling: spelling)).bold().foregroundStyle(PocketColor.practice)
+                let name = Text(shape.name(spelling: spelling)).bold().foregroundStyle(accent)
                 Text("\(shape.word) · \(name)")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
@@ -99,7 +101,7 @@ struct NeckNoteEditor: View {
         let isRinged = markedNotes.count > 1 && string == ringed
             && markedNotes.contains { $0.string == string && $0.fret == fret }
         let name = spelling.name(pitchClass: ((tuning.openMidi[string] + fret) % 12 + 12) % 12)
-        let style = SpotStyle(mark?.tier)
+        let style = SpotStyle(mark?.tier, accent: accent)
         // While *Into it* waits for a start, only the frets it could have come from stay bright.
         let dimmed = awaitingStart.map { request in
             !markedNotes.contains { $0.string == string && $0.fret == fret }
@@ -116,7 +118,7 @@ struct NeckNoteEditor: View {
                 .frame(width: 24, height: 24)
                 .background(Circle().fill(style.fill))
                 .overlay(Circle().inset(by: style.ringWidth / 2).stroke(style.ring, lineWidth: style.ringWidth))
-                .overlay(Circle().inset(by: -3.5).stroke(isRinged ? PocketColor.practice : .clear, lineWidth: 1.5))
+                .overlay(Circle().inset(by: -3.5).stroke(isRinged ? accent : .clear, lineWidth: 1.5))
                 .overlay(alignment: .topTrailing) {
                     if let mark, style.numbered { NeighbourNumber(note: mark.note + 1) }
                 }
@@ -152,7 +154,7 @@ struct NeckNoteEditor: View {
                 Spacer(minLength: 8)
                 Toggle("Chords", isOn: $cursor.chordsOn)
                     .labelsHidden()
-                    .tint(PocketColor.practice)
+                    .tint(accent)
             }
             if chordsOn {
                 Text("Tap other strings to build a chord, one note per string, as in My chords. Tap a note "
@@ -195,7 +197,9 @@ extension NeckNoteEditor {
 
     func pickerLabel(_ text: String) -> some View { NamingControls.pickerLabel(text) }
     func hint(_ text: String) -> some View { NamingControls.hint(text) }
-    func link(_ title: String, action: @escaping () -> Void) -> some View { NamingControls.link(title, action: action) }
+    func link(_ title: String, action: @escaping () -> Void) -> some View {
+        NamingControls.link(title, tint: accent, action: action)
+    }
 
     /// The title of a control under the neck, *Chords*, *Into it* and *Bend*, one size so they read as
     /// one set.
@@ -249,19 +253,19 @@ private struct SpotStyle {
     private static let fades: [Double] = [0.64, 0.38, 0.2]
     private static let rings: [Double] = [0.95, 0.6, 0.32]
 
-    init(_ tier: NeckNeighbours.Tier?) {
+    init(_ tier: NeckNeighbours.Tier?, accent: Color) {
         switch tier {
         case .current?:
-            self.init(fill: PocketColor.practice, ink: PocketColor.background, ring: .clear, ringWidth: 1,
+            self.init(fill: accent, ink: PocketColor.background, ring: .clear, ringWidth: 1,
                       numbered: false)
         case .before(let steps)?:
             let fade = Self.fades[min(max(steps, 1), 3) - 1]
-            self.init(fill: PocketColor.practice.opacity(fade),
+            self.init(fill: accent.opacity(fade),
                       ink: steps == 1 ? PocketColor.background : PocketColor.textPrimary,
                       ring: .clear, ringWidth: 1, numbered: true)
         case .after(let steps)?:
-            self.init(fill: .clear, ink: PocketColor.practice,
-                      ring: PocketColor.practice.opacity(Self.rings[min(max(steps, 1), 3) - 1]), ringWidth: 2,
+            self.init(fill: .clear, ink: accent,
+                      ring: accent.opacity(Self.rings[min(max(steps, 1), 3) - 1]), ringWidth: 2,
                       numbered: true)
         case .other?:
             self.init(fill: PocketColor.textPrimary.opacity(0.18), ink: PocketColor.textPrimary, ring: .clear,
@@ -284,17 +288,33 @@ private struct SpotStyle {
 /// A neighbour's note number, tucked on its top right corner.
 private struct NeighbourNumber: View {
     let note: Int
+    @Environment(\.neckAccent) private var accent
 
     var body: some View {
         Text("\(note)")
             .font(.futura(size: 8, weight: .bold))
             .monospacedDigit()
-            .foregroundStyle(PocketColor.practice)
+            .foregroundStyle(accent)
             .padding(.horizontal, 3)
             .frame(minWidth: 14, minHeight: 13)
             .background(Capsule().fill(PocketColor.background))
-            .overlay(Capsule().stroke(PocketColor.practice, lineWidth: 1))
+            .overlay(Capsule().stroke(accent, lineWidth: 1))
             .offset(x: 6, y: -5)
             .accessibilityHidden(true)
+    }
+}
+
+// MARK: - The accent (ADR 0235 D3)
+
+private struct NeckAccentKey: EnvironmentKey {
+    static let defaultValue: Color = PocketColor.practice
+}
+
+extension EnvironmentValues {
+    /// The neck editor's colour: the current spot, the neighbours, the marks and the switches. Name the
+    /// notes' practice teal by default; the tab writer sets Toolkit's indigo, where it lives.
+    var neckAccent: Color {
+        get { self[NeckAccentKey.self] }
+        set { self[NeckAccentKey.self] = newValue }
     }
 }
