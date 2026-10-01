@@ -60,6 +60,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   **Export take…** hands the recording to the share sheet: into a DAW, to your teacher, or into Files.
   It goes as the file it is, named for what it was recorded against and the day, like
   *Slow Bend · Chorus · 1 Oct 2026.m4a*.
+- **Export a song's audio.** **Song details** ▸ **Audio** ▸ **Export audio file only…** sends the file
+  the song plays, as you imported it, for a DAW or another device. Your loops, markers and pieces stay
+  in Red Moon.
 - **Write a tab.** A sixth Toolkit row, **My tabs**, keeps tabs you write yourself, one note at a time on
   the neck: the same neck as *Name the notes*, in the Toolkit's indigo. Tap the neck and the note goes in
   at the **+**, which moves on; bends, vibrato, hammer-ons, pull-offs and slides go on the note you just

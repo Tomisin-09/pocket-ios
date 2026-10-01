@@ -127,6 +127,12 @@ song you expected. Check the audio is what you think it is afterwards.
 
 **See Help & FAQs: "My song stopped playing — what happened?"**
 
+## Taking a song somewhere else
+
+**Song details** ▸ **Audio** ▸ **Export audio file only…** opens the share sheet on the song's audio
+file, as you imported it: into a DAW, to another device, or into Files. Only the audio goes. Your
+loops, markers, pieces and practice history stay in Red Moon.
+
 ## Mapping the song
 
 **Song details** ▸ **Map the song** lays the whole song out, left to right, with every loop you've

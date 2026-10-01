@@ -96,8 +96,10 @@ sheet the take's file as it is: no re-encode, and a trimmed take sends what the 
 copy Red Moon keeps (0148) in the format it was imported in, named for the song: `Slow Bend.mp3`.
 Only the audio leaves. This is the DAW door: a DAW can't read loops.
 
-A song whose audio is missing has no row. An older song still linked to a file outside the app
-(0148's bookmarks) exports that file, copied into `tmp/` first and read from the copy.
+Only the copy Red Moon keeps exports. A song whose audio is missing has no row, and neither does an
+older song still linked to a file outside the app (0148's bookmarks): it gets a copy of its own the
+first time it plays, and exporting through the bookmark would mean holding its security scope open
+until the share sheet had read the file, which nothing can promise.
 
 ### D4 — Send a song, with its loops and markers
 

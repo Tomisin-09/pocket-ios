@@ -2231,6 +2231,12 @@ true (ADR 0150 §118-121).
   system never says when a share has finished reading one. One representation each for MPEG-4 audio,
   MP3, WAV and AIFF, so a receiver that takes only one of them matches, then plain audio for the rest.
   `ExportTakeMenuItem` is the one view all three take menus use.
+  A song's audio (S2) is the same `ExportedAudioFile`, from `Song.exportedAudioFile()`: **only the copy
+  Red Moon keeps**, never a legacy bookmark, whose security scope nothing could hold open until the
+  share sheet read the file. Its row is in Song details, and **a `ShareLink` in a row of that sheet's
+  `Form` never presents**, the trap `ReferenceLinkEditing` records for its editors. So rows go through
+  `SharePresenter` (`Pocket/UI/`): stage on the tap (a hard link, instant), then present
+  `UIActivityViewController` from the top-most controller. Menus keep `ShareLink`.
 
 ## Storage (Core/Storage, ADR 0182)
 

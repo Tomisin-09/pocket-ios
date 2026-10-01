@@ -11,6 +11,10 @@ import XCTest
 /// date in it is the seed's, and the seed's date is yesterday's.
 final class ExportUITests: UITestCase {
 
+    /// The share sheet waits on a system service that runs out of process before it appears: about two
+    /// seconds on a warm simulator, and past `uiTimeout` on a cold one.
+    private let shareSheetTimeout: TimeInterval = 30
+
     /// Hold the seeded take in the Journal, then **Export take…**, and the share sheet opens on a file.
     @MainActor
     func testATakeInTheJournalExportsFromItsHoldMenu() throws {
@@ -22,7 +26,7 @@ final class ExportUITests: UITestCase {
         XCTAssertTrue(export.waitForExistence(timeout: Self.uiTimeout), "the take's hold menu has no Export take…")
         export.tap()
 
-        assertShareSheetOpens(on: ".m4a", in: app)
+        assertShareSheetOpens(showing: NSPredicate(format: "label ENDSWITH %@", ".m4a"), in: app)
     }
 
     /// The take's own screen (ADR 0174) offers the same item in its **Take actions** menu.
@@ -41,10 +45,68 @@ final class ExportUITests: UITestCase {
         XCTAssertTrue(export.waitForExistence(timeout: Self.uiTimeout), "Take actions has no Export take…")
         export.tap()
 
-        assertShareSheetOpens(on: ".m4a", in: app)
+        assertShareSheetOpens(showing: NSPredicate(format: "label ENDSWITH %@", ".m4a"), in: app)
+    }
+
+    /// Song details › Audio offers **Export audio file only…** for a song Red Moon holds a copy of, and
+    /// it reaches the share sheet. The starter track is that song: it ships in the app, is the author's
+    /// own recording, and arrives by one tap on a fresh install (ADR 0219).
+    @MainActor
+    func testASongsAudioExportsFromSongDetails() throws {
+        let app = launchApp()
+
+        // Adopt the starter track if it isn't in the library yet. On a simulator that already holds
+        // it, the card still opens it (`HomeFeed.shouldOfferStarterTrack`).
+        let card = app.buttons["Binta by Jack Trader, a song to start on"]
+        XCTAssertTrue(card.waitForExistence(timeout: Self.uiTimeout),
+                      "No Start here card on Home — does this simulator's store already hold songs?")
+        let title = app.buttons["Binta, Jack Trader"]
+        XCTAssertTrue(tap(card, until: title, in: app) || title.waitForExistence(timeout: Self.uiTimeout),
+                      "the starter track didn't open")
+
+        // Holding the title on the practice screen opens Song details: the door one hold from where a
+        // song is heard (`SongAudioSection`).
+        title.press(forDuration: 1.0)
+
+        let export = app.buttons["Export audio file only…"]
+        XCTAssertTrue(reveal(export, in: app), "Song details › Audio has no Export audio file only…")
+        export.tap()
+
+        // A file URL's sheet names it without its extension, so this is the song's title.
+        assertShareSheetOpens(showing: NSPredicate(format: "label == %@", "Binta"), in: app)
     }
 
     // MARK: - Steps
+
+    /// Swipe until `element` exists and sits **wholly clear of the bottom edge**. A `List` in a sheet
+    /// builds its rows lazily, so a row below the fold doesn't exist yet and `scrollIntoView` (which
+    /// needs it to) can't reach it. And `isHittable` alone is not enough: a row peeking out by a sliver
+    /// at the home indicator reports hittable, and the tap goes to the system instead.
+    @MainActor
+    private func reveal(_ element: XCUIElement, in app: XCUIApplication, maxSwipes: Int = 6) -> Bool {
+        let floor = app.windows.firstMatch.frame.maxY - 100
+        for _ in 0..<maxSwipes {
+            if element.waitForExistence(timeout: 2), element.isHittable, element.frame.maxY < floor {
+                return settled(element)
+            }
+            app.swipeUp()
+        }
+        return element.exists && element.isHittable && element.frame.maxY < floor && settled(element)
+    }
+
+    /// Wait until `element` stops moving. A list still coasting from a swipe takes the next tap as
+    /// "stop scrolling", so a tap on a row mid-glide never reaches the row.
+    @MainActor
+    private func settled(_ element: XCUIElement) -> Bool {
+        var last = element.frame
+        for _ in 0..<10 {
+            usleep(300_000)
+            let now = element.frame
+            if now == last { return true }
+            last = now
+        }
+        return false
+    }
 
     /// Home → Journal → the seeded take's row, scrolled into reach.
     @MainActor
@@ -61,13 +123,14 @@ final class ExportUITests: UITestCase {
         return take
     }
 
+    /// The share sheet is up, and something in it is labelled as `name` describes: the file the
+    /// export staged, as the sheet's header names it.
     @MainActor
-    private func assertShareSheetOpens(on fileExtension: String, in app: XCUIApplication) {
-        XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: Self.uiTimeout),
-                      "Export take… did not open the share sheet")
-        let named = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label ENDSWITH %@", fileExtension)).firstMatch
+    private func assertShareSheetOpens(showing name: NSPredicate, in app: XCUIApplication) {
+        let sheet = app.otherElements["ActivityListView"]
+        XCTAssertTrue(sheet.waitForExistence(timeout: shareSheetTimeout), "the export did not open the share sheet")
+        let named = sheet.descendants(matching: .any).matching(name).firstMatch
         XCTAssertTrue(named.waitForExistence(timeout: Self.uiTimeout),
-                      "the share sheet opened, but not on a \(fileExtension) file")
+                      "the share sheet opened, but not on the file expected (\(name.predicateFormat))")
     }
 }
