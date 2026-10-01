@@ -154,4 +154,35 @@ final class ReviewPromptTests: XCTestCase {
         XCTAssertEqual(askIfDue(ask: { asks += 1 }), .ask)
         XCTAssertEqual(asks, 1)
     }
+
+    // MARK: - The Developer readout
+
+    /// The readout must read the **same record** the ask writes, or a device check proves nothing:
+    /// `requestReview()` returns no answer, so this record is the only thing a person can look at.
+    @MainActor
+    func testTheReadoutShowsTheRecordTheAskWrote() {
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        func readout() -> ReviewPrompt.DebugState {
+            ReviewPrompt.debugState(sittingCount: 5, version: "1.3", now: now, defaults: defaults)
+        }
+        XCTAssertNil(readout().lastAsk)
+        XCTAssertEqual(readout().outcome, .ask)
+
+        askIfDue(version: "1.3", now: now)
+        XCTAssertEqual(readout().lastAsk, ReviewPromptPlan.Ask(askedAt: now, version: "1.3"))
+        XCTAssertEqual(readout().outcome, .hold(.askedUnderThisVersion))
+
+        ReviewPrompt.resetForTesting(in: defaults)
+        XCTAssertNil(readout().lastAsk, "Reset must clear what the readout reads")
+        XCTAssertEqual(readout().outcome, .ask)
+    }
+
+    @MainActor
+    func testTheReadoutCountsWithTheSameThresholdAsTheAsk() {
+        let state = ReviewPrompt.debugState(sittingCount: ReviewPromptPlan.sittingsBeforeAsking - 1,
+                                            version: "1.3",
+                                            defaults: defaults)
+        XCTAssertEqual(state.sittings, ReviewPromptPlan.sittingsBeforeAsking - 1)
+        XCTAssertEqual(state.outcome, .hold(.tooFewSittings))
+    }
 }

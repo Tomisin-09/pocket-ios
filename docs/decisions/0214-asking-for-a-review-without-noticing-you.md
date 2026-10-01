@@ -262,7 +262,10 @@ see.
 **The prompt never appears on a TestFlight build.** Anyone verifying there will see nothing and
 conclude wrongly. Verification is a Simulator or a debug device build, and `Settings ▸ Developer ▸
 Reset review ask` is there so it can be exercised more than once — noting that iOS's own budget sits
-on top of ours and may still decline.
+on top of ours and may still decline. Above it, the same section shows what the dialog cannot: the
+sittings counted, the last ask recorded (date and version), and what the next settled Home return
+would decide. Since the system call returns nothing, a record that appears there after a return to
+Home is the only evidence that our half ran.
 
 **The numeric App Store ID** is not derivable from the bundle id and is recorded nowhere else in
 this repo — `fastlane/Appfile` carries only `app_identifier`. It shipped on the 318 branch as a

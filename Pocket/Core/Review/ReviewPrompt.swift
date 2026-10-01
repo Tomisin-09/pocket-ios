@@ -90,5 +90,30 @@ enum ReviewPrompt {
     static func resetForTesting(in defaults: UserDefaults = .standard) {
         defaults.removeObject(forKey: storageKey)
     }
+
+    /// What Settings ▸ Developer shows: the stored record, and what the plan would decide from it
+    /// on a settled Home return. `requestReview` never reports back, so on a device the record
+    /// appearing here after a return to Home is the only proof that our half ran.
+    struct DebugState {
+        let sittings: Int
+        let lastAsk: ReviewPromptPlan.Ask?
+        let outcome: ReviewPromptPlan.Outcome
+    }
+
+    /// Decided with `screenIsSettled: true` — the readout answers "would the next Home return ask?",
+    /// and the one gate a Settings screen cannot see is whether that return will be calm.
+    static func debugState(sittingCount: Int,
+                           version: String = currentVersion,
+                           now: Date = .now,
+                           defaults: UserDefaults = .standard) -> DebugState {
+        let last = lastAsk(in: defaults)
+        return DebugState(sittings: sittingCount,
+                          lastAsk: last,
+                          outcome: ReviewPromptPlan.decide(screenIsSettled: true,
+                                                           sittingCount: sittingCount,
+                                                           lastAsk: last,
+                                                           currentVersion: version,
+                                                           now: now))
+    }
     #endif
 }
