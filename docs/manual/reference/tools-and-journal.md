@@ -178,7 +178,8 @@ Swipe a row to delete it. Empty, it reads `No progressions yet`.
 ### `My tabs`
 
 A list of written tabs, the one changed last first, each row its title, when it changed, and its notes,
-sections and instrument, with **+** (`New tab`) in the toolbar. Tap one to read it, with `Edit`. Hold or
+sections and instrument, with **+** (`New tab`) in the toolbar. Tap one to read it, with `Edit` and
+`Export tab` (`Plain text` or `PDF`) in the toolbar. Hold or
 swipe a row for `Rename` and `Delete`; a delete has an undo toast. Empty, it reads `No tabs yet` and
 offers `Write a tab`.
 

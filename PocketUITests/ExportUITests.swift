@@ -76,7 +76,90 @@ final class ExportUITests: UITestCase {
         assertShareSheetOpens(showing: NSPredicate(format: "label == %@", "Binta"), in: app)
     }
 
+    /// A tab written in My tabs exports as plain text from its reading screen (ADR 0236 D9).
+    @MainActor
+    func testAWrittenTabExportsAsPlainText() throws {
+        let app = launchApp()
+        let toolkit = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Toolkit,")).firstMatch
+        XCTAssertTrue(toolkit.waitForExistence(timeout: Self.uiTimeout), "no Toolkit on Home")
+        XCTAssertTrue(tap(toolkit, until: app.navigationBars["Toolkit"], in: app), "the Toolkit didn't open")
+        let myTabs = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "My tabs,")).firstMatch
+        XCTAssertTrue(myTabs.waitForExistence(timeout: Self.uiTimeout), "no My tabs row")
+        myTabs.tap()
+
+        app.navigationBars["My tabs"].buttons["New tab"].tap()
+        let spot = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "B string, fret 3,")).firstMatch
+        XCTAssertTrue(spot.waitForExistence(timeout: Self.uiTimeout), "the writer didn't open")
+        spot.tap()
+        app.navigationBars["New tab"].buttons["Done"].tap()
+
+        let written = app.cells.element(boundBy: 0)
+        XCTAssertTrue(written.waitForExistence(timeout: Self.uiTimeout), "the tab wasn't kept")
+        written.tap()
+        tapToolbarMenu(app.buttons["Export tab"], in: app)
+        let text = app.buttons["Plain text"]
+        XCTAssertTrue(text.waitForExistence(timeout: Self.uiTimeout), "Export has no Plain text")
+        text.tap()
+
+        assertShareSheetOpens(showing: NSPredicate(format: "label ENDSWITH %@", ".txt"), in: app)
+        leaveNoTabBehind(in: app)
+    }
+
+    /// A song's tab exports as a PDF from Map the song's Tab view (ADR 0236 D9). The seeded song's Verse
+    /// riff has a piece, so its tab has something to draw.
+    @MainActor
+    func testASongsTabExportsAsAPDFFromMapTheSong() throws {
+        let app = launchApp(extraArguments: [UITestHooks.namingPieceArgument])
+        let library = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Song library,")).firstMatch
+        XCTAssertTrue(library.waitForExistence(timeout: Self.uiTimeout), "no Song library on Home")
+        XCTAssertTrue(tap(library, until: app.navigationBars["Library"], in: app), "the library didn't open")
+        let song = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Naming test")).firstMatch
+        XCTAssertTrue(song.waitForExistence(timeout: Self.uiTimeout), "the seeded song isn't in the library")
+        XCTAssertTrue(scrollIntoView(song, in: app), "the seeded song isn't reachable")
+        song.tap()
+
+        let title = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Naming test,")).firstMatch
+        XCTAssertTrue(title.waitForExistence(timeout: 90), "the song player never opened")
+        title.press(forDuration: 1.0)
+        let map = app.buttons["Map the song"]
+        XCTAssertTrue(reveal(map, in: app), "Song details has no Map the song")
+        map.tap()
+
+        let tabMode = app.segmentedControls.buttons["Tab"]
+        XCTAssertTrue(tabMode.waitForExistence(timeout: Self.uiTimeout), "the map has no Tab view")
+        tabMode.tap()
+        tapToolbarMenu(app.buttons["Export tab"], in: app)
+        let pdf = app.buttons["PDF"]
+        XCTAssertTrue(pdf.waitForExistence(timeout: Self.uiTimeout), "Export has no PDF")
+        pdf.tap()
+
+        assertShareSheetOpens(showing: NSPredicate(format: "label ENDSWITH %@", ".pdf"), in: app)
+    }
+
     // MARK: - Steps
+
+    /// A toolbar `Menu` is found but never hittable on CI's iOS 18, so it's tapped by coordinate. A dead
+    /// control still fails: the menu wouldn't open, and the next wait would time out.
+    @MainActor
+    private func tapToolbarMenu(_ menu: XCUIElement, in app: XCUIApplication) {
+        XCTAssertTrue(menu.waitForExistence(timeout: Self.uiTimeout), "no \(menu.description) in the toolbar")
+        menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
+
+    /// Close the share sheet and delete the tab the test wrote. Best effort, with no assertions: the
+    /// test has already said what it came to say, and the other My tabs tests count rows as a delta.
+    @MainActor
+    private func leaveNoTabBehind(in app: XCUIApplication) {
+        let sheet = app.otherElements["ActivityListView"]
+        let close = sheet.buttons["Close"]
+        if close.exists { close.tap() } else { sheet.swipeDown(velocity: .fast) }
+        _ = waitForDisappearance(of: sheet)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        guard app.navigationBars["My tabs"].waitForExistence(timeout: Self.uiTimeout) else { return }
+        app.cells.element(boundBy: 0).swipeLeft()
+        let delete = app.buttons["Delete Untitled tab"].firstMatch
+        if delete.waitForExistence(timeout: 3) { delete.tap() }
+    }
 
     /// Swipe until `element` exists and sits **wholly clear of the bottom edge**. A `List` in a sheet
     /// builds its rows lazily, so a row below the fold doesn't exist yet and `scrollIntoView` (which

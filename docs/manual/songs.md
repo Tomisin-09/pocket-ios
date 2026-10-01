@@ -234,6 +234,11 @@ drew it picked out for a moment, and you can work on them from there.
 Without a tempo and a **1**, the tab is in seconds, and **Set the tempo and the 1 to see bars** takes
 you to the song's waveform to set them.
 
+The share button at the top right exports the tab as **Plain text** or a **PDF**, headed with the song's
+title and artist, each section under its name and bars. It's in the same fixed-width layout as on
+screen, with the notes evenly spaced where the screen spaces them by time. A tab only knows which notes
+come in what order, not how long each lasts, so neither file writes lengths.
+
 ## Next
 
 - [The loop workflow, end to end](looping.md)

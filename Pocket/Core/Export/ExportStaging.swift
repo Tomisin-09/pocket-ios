@@ -33,19 +33,38 @@ enum ExportStaging {
                                   fileManager: FileManager = .default,
                                   temporaryDirectory: URL? = nil,
                                   now: Date = .now) throws -> URL {
-        let outbox = (temporaryDirectory ?? fileManager.temporaryDirectory)
-            .appending(path: outboxName, directoryHint: .isDirectory)
-        sweep(outbox, before: now.addingTimeInterval(-keepFor), fileManager: fileManager)
-
-        let folder = outbox.appending(path: UUID().uuidString, directoryHint: .isDirectory)
-        try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
-        let destination = folder.appending(path: fileName, directoryHint: .notDirectory)
+        let destination = try freshPlace(for: fileName, fileManager: fileManager,
+                                         temporaryDirectory: temporaryDirectory, now: now)
         do {
             try fileManager.linkItem(at: source, to: destination)
         } catch {
             try fileManager.copyItem(at: source, to: destination)
         }
         return destination
+    }
+
+    /// Write a file made for the export (a tab's text or PDF, ADR 0236 D9) under `fileName`, and return
+    /// where it is. Swept with the rest.
+    nonisolated static func write(_ data: Data, as fileName: String,
+                                  fileManager: FileManager = .default,
+                                  temporaryDirectory: URL? = nil,
+                                  now: Date = .now) throws -> URL {
+        let destination = try freshPlace(for: fileName, fileManager: fileManager,
+                                         temporaryDirectory: temporaryDirectory, now: now)
+        try data.write(to: destination)
+        return destination
+    }
+
+    /// A new folder in the outbox, after sweeping the old ones, and the path for `fileName` inside it.
+    private nonisolated static func freshPlace(for fileName: String, fileManager: FileManager,
+                                               temporaryDirectory: URL?, now: Date) throws -> URL {
+        let outbox = (temporaryDirectory ?? fileManager.temporaryDirectory)
+            .appending(path: outboxName, directoryHint: .isDirectory)
+        sweep(outbox, before: now.addingTimeInterval(-keepFor), fileManager: fileManager)
+
+        let folder = outbox.appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
+        return folder.appending(path: fileName, directoryHint: .notDirectory)
     }
 
     /// A file name from a stem and an extension, safe to hand to any file system the share sheet

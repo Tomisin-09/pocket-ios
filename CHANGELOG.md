@@ -63,6 +63,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Export a song's audio.** **Song details** ▸ **Audio** ▸ **Export audio file only…** sends the file
   the song plays, as you imported it, for a DAW or another device. Your loops, markers and pieces stay
   in Red Moon.
+- **Export a tab as text or a PDF.** A tab you wrote in **My tabs**, and a song's tab in **Map the
+  song**, now have a share button with **Plain text** and **PDF**: the tab as it reads on screen, headed
+  with its title (and a song's artist), each section under its name.
 - **Write a tab.** A sixth Toolkit row, **My tabs**, keeps tabs you write yourself, one note at a time on
   the neck: the same neck as *Name the notes*, in the Toolkit's indigo. Tap the neck and the note goes in
   at the **+**, which moves on; bends, vibrato, hammer-ons, pull-offs and slides go on the note you just

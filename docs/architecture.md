@@ -2044,7 +2044,7 @@ true (ADR 0150 §118-121).
     `presetSlug`) and the sender's *measurements* (`mastery*`, `commandTempo`,
     `commandNotesPerBeat`, `linkedSongIDs`) both stay behind — a command tempo is a measured number
     (ADR 0045), and inheriting one you did not measure is ADR 0070 through a side door. No
-    `Recording` ever crosses (ADR 0181 §7, ADR 0150 still parked). References do not cross in S1.
+    `Recording` ever crosses in a routine (ADR 0188 D4; a take exports on its own since ADR 0236 D2). References do not cross in S1.
     Since ADR 0210 the sender's **folders** stay behind too — those paths are positions in the
     sender's tree, and reproducing `Students/2026/Beginner/Warm-ups` on a stranger's phone hands over
     a filing cabinet with the drill. The folders' **leaf names are added to `tags`** instead (added,
@@ -2083,7 +2083,7 @@ true (ADR 0150 §118-121).
     (`[WrittenTabRecord]?` — `uid`, `title`, `createdAt`, `changedAt`, and the payload as a `JSONValue`,
     so a newer build's label kinds survive), oldest first. Restore skips a uid already present, a
     repeated uid and a payload that won't read, and adds a *Written tabs* line to `RestorePlan`. Not in a
-    `.redmoonpractice` file: sharing a written tab waits on ADR 0150's review.
+    `.redmoonpractice` file: a written tab leaves on its own only as text or a PDF (ADR 0236 D9).
   - **A loop or song block arrives named, not dropped.** A `loopUID` is meaningless without the song
     that owns it, so those ids are nulled and a `SharedBlockPlaceholder` carries the label instead —
     the block lands as the orphan the app already draws (`RoutineItem.isOrphaned`). Dropping it
@@ -2237,6 +2237,14 @@ true (ADR 0150 §118-121).
   `Form` never presents**, the trap `ReferenceLinkEditing` records for its editors. So rows go through
   `SharePresenter` (`Pocket/UI/`): stage on the tap (a hard link, instant), then present
   `UIActivityViewController` from the top-most controller. Menus keep `ShareLink`.
+  A tab (S3) leaves as text or a PDF. `TabDocument` (pure) lays either kind out as blocks of fixed-width
+  lines, one block per row of tab, kept together on a PDF page: a written tab from
+  `PieceStaff.systems`, a song's from `SongTab`, columns placed by `SongTabLayout.spread` (rounded down,
+  which keeps its gaps) and one string-name gutter per song so bar numbers stay in their columns.
+  `TabPDF` (`Pocket/UI/`, UIKit) draws those lines on A4 or Letter by locale, chords in the chords lane's
+  indigo and names in the notes lane's teal. `ExportedTabFile` carries a `TabDocument.Source`, not the
+  laid-out document, and lays out and writes (`ExportStaging.write`) only in its `FileRepresentation`.
+  `TabExportMenu` is the one menu both reading screens use.
 
 ## Storage (Core/Storage, ADR 0182)
 

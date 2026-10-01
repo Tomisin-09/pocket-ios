@@ -4,8 +4,8 @@ import SwiftUI
 /// section, with **Edit** to write more. A tab opens here rather than in the writer: once it's written you
 /// play from it far more often than you change it.
 ///
-/// Nothing plays and nothing can be copied or shared: there's no recording behind it, and sharing a tab
-/// waits on the same legal review as sharing a take (ADR 0150, 0235 D8).
+/// Nothing plays: there's no recording behind it. It exports as plain text or a PDF from the toolbar
+/// (ADR 0236 D9), which superseded the legal review sharing used to wait on (0150, 0235 D8).
 struct WrittenTabView: View {
     let tab: WrittenTab
 
@@ -44,6 +44,12 @@ struct WrittenTabView: View {
         .background(PocketColor.background.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            if !payload.labels.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) {
+                    TabExportMenu(source: .written(title: tab.displayTitle, notes: payload.notes,
+                                                   spelling: NoteSpelling(rawValue: accidentalRaw) ?? .default))
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 NavigationLink("Edit") { TabWriterView(tab: tab) }
                     .accessibilityIdentifier("tab.edit")

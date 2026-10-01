@@ -129,7 +129,7 @@ struct SongMapView: View {
             .safeAreaInset(edge: .top, spacing: 0) { modePicker }
             .navigationTitle(song.title)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { toolbar }
+            .toolbar { toolbar(tab) }
             .navigationDestination(isPresented: Binding(get: { opening != nil },
                                                         set: { if !$0 { opening = nil } })) {
                 if let opening, let loop = loops[opening.uid] {
@@ -307,9 +307,15 @@ struct SongMapView: View {
 
     // MARK: - Toolbar
 
-    @ToolbarContentBuilder private var toolbar: some ToolbarContent {
+    /// *Done*, and on the Tab view with something drawn, *Export* (ADR 0236 D9).
+    @ToolbarContentBuilder private func toolbar(_ tab: SongTab?) -> some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
             Button("Done") { dismiss() }
+        }
+        if let tab, !tab.isEmpty {
+            ToolbarItem(placement: .primaryAction) {
+                TabExportMenu(source: .song(title: song.title, artist: song.artist, tab: tab))
+            }
         }
     }
 }
