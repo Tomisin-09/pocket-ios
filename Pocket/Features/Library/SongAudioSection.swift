@@ -2,8 +2,8 @@ import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The **Audio** section of `SongDetailsSheet`: what file this song is playing, and the way to
-/// point it at a different one (ADR 0152).
+/// The **Audio** section of `SongDetailsSheet`: what file this song is playing, the way to
+/// point it at a different one (ADR 0152), and the way to take the file out (ADR 0236 D3).
 ///
 /// ADR 0148 §6 put relink behind the failure itself — "Find the file" on `AudioUnavailableNotice`,
 /// offered at the moment the problem is discovered. That is still the right door for a *broken*
@@ -26,12 +26,17 @@ struct SongAudioSection: View {
     /// the bytes under a live `AVAudioFile` otherwise. Same two halves either way.
     let replace: (URL) async throws -> SongRelinker.Outcome
 
+    /// Open *Send this song* (ADR 0236 D4). A closure into the sheet's `NavigationStack`, never a sheet
+    /// raised here: a presentation from a row in this `Form` is lost. `nil` hides the row.
+    var onSend: (() -> Void)?
+
     @State private var confirming = false
     @State private var picking = false
     @State private var busy = false
     @State private var alert: ReplaceAlert?
 
-    /// A one-shot message about a replace — the failure, or the success that needs a caveat.
+    /// A one-shot message about a replace — the failure, or the success that needs a caveat — or about
+    /// an export that couldn't be prepared.
     /// Mirrors `WaveformPracticeView.RelinkAlert`, whose flow this shares.
     struct ReplaceAlert {
         let title: String
@@ -66,12 +71,29 @@ struct SongAudioSection: View {
             // A second pick landing mid-replace would race two decodes onto one `sourceID` and the
             // loser would overwrite the winner's copy — the same guard the practice screen keeps.
             .disabled(busy)
+
+            // Both doors out need the copy Red Moon keeps (`Song.exportedAudioFile`). To another Red Moon
+            // with its loops and markers (ADR 0236 D4), and the DAW door, the audio and nothing else (D3).
+            // Buttons, not `ShareLink`s: a presentation raised from a row in this sheet's form is lost.
+            if let file = song.exportedAudioFile() {
+                if let onSend {
+                    Button(action: onSend) {
+                        Label("Send this song…", systemImage: "square.and.arrow.up")
+                            .foregroundStyle(PocketColor.library)
+                    }
+                }
+                Button { export(file) } label: {
+                    Label("Export audio file only…", systemImage: "waveform")
+                        .foregroundStyle(PocketColor.library)
+                }
+            }
         } header: {
             Text("Audio")
         } footer: {
             Text("Points this song at a different file — for a song whose audio is missing, or one "
                  + "linked to the wrong track. Your loops, markers, takes and practice history all "
-                 + "stay with the song.")
+                 + "stay with the song. Send this song gives another Red Moon the song with its loops and "
+                 + "markers. Export sends the file alone, as you imported it, for a DAW or another device.")
         }
         // Single selection: this repairs *this* song, unlike the library's multi-select import.
         .fileImporter(isPresented: $picking, allowedContentTypes: [.audio],
@@ -102,6 +124,16 @@ struct SongAudioSection: View {
                                 copyExists: song.audioFileName.map {
                                     SongFileStore.exists(fileName: $0)
                                 } ?? false)
+    }
+
+    /// Stage the file under its name and open the share sheet on it. Staging is a hard link, so it is
+    /// instant and safe to do on the tap.
+    private func export(_ file: ExportedAudioFile) {
+        do {
+            SharePresenter.present(try file.staged())
+        } catch {
+            alert = ReplaceAlert(title: "Couldn’t export the file", message: error.localizedDescription)
+        }
     }
 
     private func handlePick(_ result: Result<[URL], Error>) {

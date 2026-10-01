@@ -115,7 +115,12 @@ A read-only summary, with `Edit` in its toolbar.
 - **`Audio`** — the `File` row, which reads *Missing* when the audio no longer resolves, and
   `Replace audio file…` beneath it. The app's own words for what that does: *Points this song at a
   different file — for a song whose audio is missing, or one linked to the wrong track. Your loops,
-  markers, takes and practice history all stay with the song.*
+  markers, takes and practice history all stay with the song.* Under it, `Send this song…` opens
+  `Send this song` (`Sent as`, `Goes with it`, `Stays with you`, with `Cancel` and `Send…` in the bar),
+  and `Export audio file only…` opens the share sheet on the file itself, as you imported it — *for a
+  DAW or another device*. Neither is offered until Red Moon holds its own copy of the song, which an
+  older linked song gets the first time it plays. A song someone sends you opens on `Add this song?`,
+  with `Cancel` and `Add`.
 - `Collections`.
 - **`Where you learned it`** — links out to the transcription or breakdown you worked from, with an
   `Add a link` button. See [where you learned it](../references.md).

@@ -46,8 +46,8 @@ Cancelling happens on Apple's own screen. There is no billing interface in the a
      | alt: The You screen with the artist name field and the Your sound section holding instrument, experience, genres, dream and time most days
      | state: Settings ▸ You -->
 
-- **`Artist name`** — *Your artist name greets you on the home screen. Optional, and it stays on this
-  device.*
+- **`Artist name`** — *Your artist name greets you on the home screen and signs a song you send.
+  Optional, and it only leaves this device in what you send.*
 - **`Your sound`** — `Instrument`, `Experience`, `Genres`, `Dream` and `Time most days`. Its footer:
   *Shapes what the app suggests — starting tempo, session length, and what surfaces first. Optional,
   and it stays on this device. New exercises open on your instrument; each drill keeps its own, so

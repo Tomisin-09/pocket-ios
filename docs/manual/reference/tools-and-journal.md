@@ -80,7 +80,7 @@ and `Record a take`. Underneath, a search field prompting
   opens `Name the notes` there.
 
 **Deleting is hold-only**, on every row. A take's hold menu leads with `Name this take`, or
-`Rename` once it has one; renaming is also a right swipe.
+`Rename` once it has one, then `Export take…`; renaming is also a right swipe.
 
 Empty, the wording follows the scope you are in — `Nothing here yet`, `No notes yet` or
 `No takes yet` — and a search with no hits says `No matches`.
@@ -178,7 +178,8 @@ Swipe a row to delete it. Empty, it reads `No progressions yet`.
 ### `My tabs`
 
 A list of written tabs, the one changed last first, each row its title, when it changed, and its notes,
-sections and instrument, with **+** (`New tab`) in the toolbar. Tap one to read it, with `Edit`. Hold or
+sections and instrument, with **+** (`New tab`) in the toolbar. Tap one to read it, with `Edit` and
+`Export tab` (`Plain text` or `PDF`) in the toolbar. Hold or
 swipe a row for `Rename` and `Delete`; a delete has an undo toast. Empty, it reads `No tabs yet` and
 offers `Write a tab`.
 

@@ -2,6 +2,10 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-23 (`pocket-283-a-copy-you-can-keep`)
+- **Amended by:** ADR 0236 — §7's *it does not unpark per-take sharing* no longer holds: a take
+  exports on its own (0236 D2), and 0150 is superseded. D5's `.forUploading` zip also writes a second
+  file, the `.redmoonpack` (0236 D8). The archive is unchanged: takes and reference pictures, no song
+  audio, and the speaker-bleed line stays.
 - **Amended by:** ADR 0205 — the archive gains `SongRecord.snags` and `LoopRecord.spanChanges`
   (0205 D1, D2). Additive with declaration defaults, so `schemaVersion` stays at **1** under this
   ADR's own bump rule (0205 D4). The nesting discipline and the two deliberate exclusions stand.

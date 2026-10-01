@@ -53,7 +53,7 @@ extension View {
     /// own — cancelling is the common "failure" and the player already knows they cancelled.
     func practiceFileImporter(isPresented: Binding<Bool>,
                               onPick: @escaping @MainActor (URL) -> Void) -> some View {
-        fileImporter(isPresented: isPresented, allowedContentTypes: [.redMoonPractice]) { result in
+        fileImporter(isPresented: isPresented, allowedContentTypes: [.redMoonPractice, .redMoonPack]) { result in
             if case let .success(url) = result { onPick(url) }
         }
     }

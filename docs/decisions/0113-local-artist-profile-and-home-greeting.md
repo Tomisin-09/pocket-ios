@@ -3,6 +3,10 @@
 - **Status:** Accepted
 - **Date:** 2026-07-23 (`pocket-185-artist-profile-adr`)
 - **Builds on:** ADR 0070 (Pocket never grades the player — the player is the judge). ADR 0112 (freemium; the planner / "Today's session" is the Pro curation surface). ADR 0102 (Home grouped sections — where the greeting lives). ADR 0092 (AI is an additive layer; a declared profile is the curated context a future Oracle can read).
+- **Amended by:** ADR 0236 — the explicit, later decision the last bullet under *The profile is
+  local and editable* waits for, for the artist name only. It travels in a file the player sends, and
+  the send screen shows it before anything is sent (0236 D7). Sound, influences, goal and minutes
+  still never leave the device.
 - **Reverses:** the earlier "no user profiles" stance (profiles were dropped when accounts were dropped; this brings them back **without** an account).
 
 ## Context

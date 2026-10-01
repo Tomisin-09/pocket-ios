@@ -123,12 +123,14 @@ when it last changed, and how many notes and sections it has, on which instrumen
 
 - **+** in the toolbar writes a new tab. Empty, the screen says **No tabs yet** and offers **Write a
   tab**.
-- Tap a tab to read it: the tab drawn section by section, with **Edit** to write more.
+- Tap a tab to read it: the tab drawn section by section, with **Edit** to write more. The share
+  button beside **Edit** exports it as **Plain text** or a **PDF**, to print, send to a teacher, or keep
+  in Files.
 - Hold a row, or swipe it, to **Rename** or **Delete** it. A delete can be undone from the toast.
 
 A written tab belongs to no song, and nothing plays it: there is no recording behind it. It isn't in
-the Journal. It travels in the whole-library export and comes back with a restore, and there is no way
-to share one on its own.
+the Journal. It travels in the whole-library export and comes back with a restore. On its own it leaves only
+as text or a PDF: nothing reads a tab file back into Red Moon.
 
 ### Writing a tab
 

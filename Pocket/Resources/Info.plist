@@ -100,6 +100,31 @@
 				</array>
 			</dict>
 		</dict>
+		<!-- The practice PACK (ADR 0236 D8): a song, or a routine with its songs,
+		     as one file with a zip inside (practice.json + songs/). Its own type
+		     because the one above is declared as JSON, and a zip isn't JSON.
+
+		     Conforms to public.data, NOT public.zip-archive: a zip-archive type
+		     is something Files offers to expand on a tap, and this is a Red Moon
+		     file to open, not a folder to unpack. `UTType(exportedAs:)` in
+		     SharedPracticeFile.swift reads this and traps at launch without it. -->
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>click.decooperations.pocket.pack</string>
+			<key>UTTypeDescription</key>
+			<string>Red Moon practice pack</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>redmoonpack</string>
+				</array>
+			</dict>
+		</dict>
 	</array>
 
 	<!-- The app is a *handler* for that type (ADR 0188 D3, S2) — this is the key
@@ -132,6 +157,20 @@
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>click.decooperations.pocket.practice</string>
+			</array>
+		</dict>
+		<!-- The pack (ADR 0236 D8), opened by the same host, which tells the
+		     two apart by extension. -->
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Red Moon practice pack</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>click.decooperations.pocket.pack</string>
 			</array>
 		</dict>
 	</array>

@@ -249,9 +249,9 @@ final class RoutineItem {
     /// follow-up). `nil` on every block the app itself made — which is all of them until a routine
     /// arrives from somebody else.
     ///
-    /// A received routine's loop and song blocks cannot cross: a loop's bounds are fractions of a
-    /// song whose audio never leaves the sender's device (ADR 0148), so the block lands with all
-    /// three unit relationships `nil` — the orphan the app already draws (`isOrphaned`). The file
+    /// A received routine's loop and song blocks cross only when their songs come with it (ADR 0236
+    /// D6): a loop's bounds are fractions of its song. A block whose song stayed with the sender lands
+    /// with all three unit relationships `nil` — the orphan the app already draws (`isOrphaned`). The file
     /// carries the sender's label for it (`SharedBlockPlaceholder`), and until this field existed
     /// that label was shown in the receive preview and then thrown away: the player was told what
     /// the block *was* only in the seconds before they added the routine, and afterwards it read

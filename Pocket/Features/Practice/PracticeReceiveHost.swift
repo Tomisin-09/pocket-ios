@@ -10,10 +10,14 @@ import SwiftUI
 private struct PendingReceive: Identifiable {
     let id = UUID()
     let practice: ReceivedPractice
+    /// What each received song will be called here (ADR 0236 D5), worked out against the library once,
+    /// when the preview opens: the one song of a song share, or a routine's songs in the order it carries
+    /// them. Empty for anything else.
+    var songTitles: [String] = []
 }
 
 /// The app's **inbound door** for `.redmoonpractice` files (ADR 0188 S2, ADR 0209 D4) — both doors,
-/// both payload kinds.
+/// both payload kinds — and for `.redmoonpack`s, which carry songs with their audio (ADR 0236 D8).
 ///
 /// Applied **once** at the app root, styled directly on `PaywallHost`, and for the same reason: one
 /// host means one preview sheet for the whole app, and the two doors cannot present different
@@ -39,6 +43,9 @@ private struct PracticeReceiveHost: ViewModifier {
     /// What just landed, and where it went, for the confirmation. Door A can land practice while the
     /// player is looking at the Toolkit, so "it worked" has to be said rather than shown.
     @State private var landed: String?
+    /// Where the pack on show was unpacked (ADR 0236 D8). Removed when the preview closes without Add;
+    /// on Add, the landing takes it over and removes it once the song is in.
+    @State private var unpacked: URL?
 
     func body(content: Content) -> some View {
         content
@@ -49,12 +56,21 @@ private struct PracticeReceiveHost: ViewModifier {
             // The first door. A tapped file arrives as a copy the system has already placed in this
             // app's own inbox, so it is ours to remove once read — and nothing ever reads it again.
             .onOpenURL { url in open(url, removingSource: true) }
-            .sheet(item: $pending) { arrival in
+            #if DEBUG
+            // The UI test of the receive door: a pack built at launch, opened as a tapped file would be.
+            .task { if let pack = ReceivedPackSeed.packIfAsked() { open(pack, removingSource: true) } }
+            #endif
+            .sheet(item: $pending, onDismiss: discardUnpacked) { arrival in
                 switch arrival.practice {
                 case let .routine(received):
-                    ReceivedRoutinePreviewSheet(received: received) { add(received) }
+                    ReceivedRoutinePreviewSheet(received: received, songTitles: arrival.songTitles) {
+                        add(received, songTitles: arrival.songTitles)
+                    }
                 case let .exercise(received):
                     ReceivedExercisePreviewSheet(received: received) { add(received) }
+                case let .song(received):
+                    let title = arrival.songTitles.first ?? received.displayTitle
+                    ReceivedSongPreviewSheet(received: received, title: title) { add(received, as: title) }
                 }
             }
             .alert("Couldn’t open that file", isPresented: presenting($failure)) {
@@ -88,6 +104,7 @@ private struct PracticeReceiveHost: ViewModifier {
         // an inbox copy, which is inside this app's own container and needs no scope.
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        if url.pathExtension.lowercased() == PracticePack.fileExtension { return openPack(url) }
         guard let data = try? Data(contentsOf: url) else {
             failure = "That file couldn’t be read."
             return
@@ -99,6 +116,68 @@ private struct PracticeReceiveHost: ViewModifier {
         case let .failure(reason):
             failure = reason.message
         }
+    }
+
+    /// A pack (ADR 0236 D8): copied into `tmp/` while the file is still in scope, since a picked URL's
+    /// scope closes when `open` returns and the zip is read memory-mapped, then read off the main actor:
+    /// unpacking a song's audio is megabytes of work.
+    private func openPack(_ url: URL) {
+        let staging = FileManager.default.temporaryDirectory
+            .appending(path: "RedMoonInbox", directoryHint: .isDirectory)
+            .appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        let copy = staging.appending(path: "received.\(PracticePack.fileExtension)", directoryHint: .notDirectory)
+        do {
+            try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
+            try FileManager.default.copyItem(at: url, to: copy)
+        } catch {
+            try? FileManager.default.removeItem(at: staging)
+            failure = "That file couldn’t be read."
+            return
+        }
+        let songs = staging.appending(path: PracticePack.songsFolder, directoryHint: .isDirectory)
+        Task {
+            let read = await Task.detached { () -> Result<PracticePack.Contents, ReceiveFailure> in
+                do {
+                    return .success(try PracticePack.read(copy, into: songs))
+                } catch let reason as ReceiveFailure {
+                    return .failure(reason)
+                } catch {
+                    return .failure(.corrupt)
+                }
+            }.value
+            try? FileManager.default.removeItem(at: copy)
+            switch read.flatMap({ ReceivedPracticeBuilder.evaluate($0, staging: staging) }) {
+            case let .success(practice):
+                guard allowed(practice) else {
+                    try? FileManager.default.removeItem(at: staging)
+                    return
+                }
+                unpacked = staging
+                pending = PendingReceive(practice: practice, songTitles: songTitles(for: practice))
+            case let .failure(reason):
+                try? FileManager.default.removeItem(at: staging)
+                failure = reason.message
+            }
+        }
+    }
+
+    /// Each received song's name here (ADR 0236 D5): its own, or a copy's when the library, or a song
+    /// arriving beside it, has that title.
+    private func songTitles(for practice: ReceivedPractice) -> [String] {
+        let songs: [ReceivedSong] = switch practice {
+        case let .song(received): [received]
+        case let .routine(received): received.songs
+        case .exercise: []
+        }
+        guard !songs.isEmpty else { return [] }
+        let library = ((try? context.fetch(FetchDescriptor<Song>())) ?? []).map(\.title)
+        return SongCopyName.titles(for: songs.map(\.record.title), sender: songs[0].senderName, existing: library)
+    }
+
+    /// The preview closed without Add: what the pack unpacked is never read again.
+    private func discardUnpacked() {
+        if let unpacked { try? FileManager.default.removeItem(at: unpacked) }
+        unpacked = nil
     }
 
     /// May this player take what the file holds? Presents the paywall and returns `false` when not.
@@ -122,16 +201,62 @@ private struct PracticeReceiveHost: ViewModifier {
                 presentPaywall(.receivedExercise(template))
                 return false
             }
+        case .song:
+            // A received song is an imported song (ADR 0236 D4): importing isn't gated, and practising it
+            // is gated where any song's is.
+            break
         }
         return true
     }
 
-    /// Write a routine — one of the two places in the receiving path that touch the store.
+    /// Write a routine — one of the places in the receiving path that touch the store.
     ///
     /// The graph comes back uninserted and `HydratedRoutine.insert` knows the one order that works,
     /// so this is a hand-off rather than an assembly.
-    private func add(_ received: ReceivedRoutine) {
-        let landing = ReceivedRoutineBuilder.materialize(received)
+    ///
+    /// With songs (ADR 0236 D6), their audio is copied in and read off the main actor first, as a song
+    /// sent on its own is, and the routine's blocks are bound to them. **All or nothing**: a song whose
+    /// audio can't be read lands nothing, and the copies already made are removed, since a routine
+    /// landing with some of what the preview promised would be a different routine.
+    private func add(_ received: ReceivedRoutine, songTitles: [String]) {
+        guard !received.songs.isEmpty else { return land(received, songs: []) }
+        // The landing owns the unpacked folder now, so closing the preview mustn't remove it.
+        unpacked = nil
+        let audio = received.songs.map(\.audio)
+        Task {
+            defer {
+                if let staging = received.songs.first?.staging { try? FileManager.default.removeItem(at: staging) }
+            }
+            let prepared = await Task.detached { () -> [SongImporter.Prepared]? in
+                var made: [SongImporter.Prepared] = []
+                for file in audio {
+                    guard let song = try? SongImporter.prepareReceived(from: file) else {
+                        for copy in made {
+                            if let leaf = copy.audioFileName { try? SongFileStore.delete(fileName: leaf) }
+                        }
+                        return nil
+                    }
+                    made.append(song)
+                }
+                return made
+            }.value
+            guard let prepared else {
+                failure = "One of the routine’s songs couldn’t be read, so nothing was added."
+                return
+            }
+            // Under the names the preview showed (D5); the song's own, should the two lists ever differ.
+            let songs = received.songs.enumerated().map { index, song in
+                ReceivedSongBuilder.landing(song, prepared: prepared[index],
+                                            title: songTitles.indices.contains(index)
+                                                ? songTitles[index] : song.displayTitle)
+            }
+            land(received, songs: songs)
+        }
+    }
+
+    /// Write the routine's graph, its songs first, and say so.
+    private func land(_ received: ReceivedRoutine, songs: [LandedSong]) {
+        let landing = ReceivedRoutineBuilder.materialize(received, songs: songs)
         landing.insert(into: context)
         save()
         // Both numbers, because the interesting question about this feature is not how often it is
@@ -139,7 +264,10 @@ private struct PracticeReceiveHost: ViewModifier {
         // lint rule forbids a free `String`, and there is nothing here worth naming anyway.
         Analytics.send(.routineReceived(items: landing.items.count,
                                         orphanedBlocks: landing.items.filter(\.isOrphaned).count))
-        landed = "“\(received.displayName)” is in your routines."
+        landed = songs.isEmpty
+            ? "“\(received.displayName)” is in your routines."
+            : "“\(received.displayName)” is in your routines, and its "
+                + (songs.count == 1 ? "song is" : "\(songs.count) songs are") + " in your songs."
         haptic(.medium)
     }
 
@@ -156,6 +284,26 @@ private struct PracticeReceiveHost: ViewModifier {
         Analytics.send(.exerciseReceived(template: received.template ?? .basic))
         landed = "“\(received.displayName)” is in your exercises."
         haptic(.medium)
+    }
+
+    /// Land a received song (ADR 0236 D4): its audio copied in and read like any import, off the main
+    /// actor, then the song written with its loops and markers under the name the preview showed.
+    private func add(_ received: ReceivedSong, as title: String) {
+        // The landing owns the unpacked folder now, so closing the preview mustn't remove it.
+        unpacked = nil
+        let audio = received.audio
+        Task {
+            defer { try? FileManager.default.removeItem(at: received.staging) }
+            do {
+                let prepared = try await Task.detached { try SongImporter.prepareReceived(from: audio) }.value
+                context.insert(ReceivedSongBuilder.song(from: received, prepared: prepared, title: title))
+                save()
+                landed = "“\(title)” is in your songs."
+                haptic(.medium)
+            } catch {
+                failure = "That song’s audio couldn’t be read."
+            }
+        }
     }
 
     /// Saved rather than left to autosave: Door A can land practice seconds before the player

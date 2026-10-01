@@ -10,6 +10,8 @@ import SwiftData
 enum ReceivedPractice: Equatable {
     case routine(ReceivedRoutine)
     case exercise(ReceivedExercise)
+    /// A song with its loops and markers, from a pack (ADR 0236 D4).
+    case song(ReceivedSong)
 }
 
 /// A single shared drill that has been read, checked, and **not yet written anywhere**
@@ -103,6 +105,34 @@ enum ReceivedPracticeBuilder {
         switch payload.kind {
         case .routine:
             return ReceivedRoutineBuilder.received(payload).map(ReceivedPractice.routine)
+        case .exercise:
+            return received(payload).map(ReceivedPractice.exercise)
+        case .song, nil:
+            // A song only ever travels in a pack, beside its audio (ADR 0236 D8). One in a bare JSON
+            // file has nothing to play.
+            return .failure(payload.kind == nil ? .unsupportedKind : .incomplete(.song))
+        }
+    }
+
+    /// A pack that's been read (`PracticePack.read`, which has already checked the version): its payload,
+    /// with the audio its songs name unpacked into `staging`.
+    static func evaluate(_ contents: PracticePack.Contents,
+                         staging: URL) -> Result<ReceivedPractice, ReceiveFailure> {
+        let payload = contents.payload
+        switch payload.kind {
+        case .song:
+            guard let record = payload.songs?.first, let leaf = record.audioFileName,
+                  let audio = contents.audio[leaf] else {
+                return .failure(.incomplete(.song))
+            }
+            return .success(.song(ReceivedSong(record: record, audio: audio, staging: staging,
+                                               senderName: SharedSongBuilder.senderName(payload.senderName),
+                                               appVersion: payload.appVersion,
+                                               exportedAt: payload.exportedAt)))
+        case .routine:
+            // With its songs (ADR 0236 D6): each song's audio, unpacked, goes with it.
+            return ReceivedRoutineBuilder.received(payload, audio: contents.audio, staging: staging)
+                .map(ReceivedPractice.routine)
         case .exercise:
             return received(payload).map(ReceivedPractice.exercise)
         case nil:

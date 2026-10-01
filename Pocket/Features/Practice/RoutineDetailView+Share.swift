@@ -19,14 +19,29 @@ extension RoutineDetailView {
     /// Cancel/Save contract) and a file is not — a routine handed over mid-edit could contain blocks
     /// the sender then cancelled, and there is no taking it back. Not before the first Save, for the
     /// same reason: a provisional generated session is a proposal, not yet a routine.
+    ///
+    /// **A routine that plays songs opens a send screen first** (ADR 0236 D6), for *Include the songs*
+    /// and the name it's sent as. One that plays none has nothing to choose, so it goes straight to the
+    /// share sheet as it always has, and carries no name, since nothing showed one (D7). The same
+    /// symbol either way, so the bar never changes width (ADR 0126).
     @ToolbarContentBuilder
     var shareToolbarItem: some ToolbarContent {
         if !isEditing && existsInStore {
             ToolbarItem(placement: .topBarTrailing) {
-                ShareLink(item: handover, preview: SharePreview(shareTitle)) {
-                    Image(systemName: "square.and.arrow.up")
+                if SharedPracticeBuilder.songsPlayed(by: routine).isEmpty {
+                    ShareLink(item: handover, preview: SharePreview(shareTitle)) {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .tint(PocketColor.practice)
+                } else {
+                    Button {
+                        sendingRoutine = true
+                    } label: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    .accessibilityLabel("Send this routine")
+                    .tint(PocketColor.practice)
                 }
-                .tint(PocketColor.practice)
             }
         }
     }

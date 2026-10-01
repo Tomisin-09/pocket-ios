@@ -80,7 +80,7 @@ struct AnalyticsConsentSheet: View {
             point(icon: "eye.slash",
                   title: "What never leaves this device",
                   body: "Your playing. Your recordings, your notes, your song names, your artist "
-                      + "name — none of it is ever sent anywhere.")
+                      + "name — none of it is ever sent anywhere, unless you send it yourself.")
             point(icon: "person.crop.circle.badge.questionmark",
                   title: "Nothing that identifies you",
                   body: "No account, no advertising ID, no profile. The counts can't be traced "

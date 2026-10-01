@@ -29,7 +29,8 @@ extension JournalTabView {
     /// swipe: it destroys nothing.
     ///
     /// Ordered by how often the verb is reached for and how much it costs: **Pin** first (every row,
-    /// reversible by the same gesture), then **Rename** on a take, then **Delete**.
+    /// reversible by the same gesture), then **Rename** and **Export take…** on a take (ADR 0236 D2),
+    /// then **Delete**.
     ///
     /// Pin is here rather than on a swipe (ADR 0190 D3). A take already spends its leading edge on
     /// Rename, so a swipe would either be asymmetric between the two row kinds or push Rename into
@@ -56,6 +57,7 @@ extension JournalTabView {
             } label: {
                 Label(take.title == nil ? "Name this take" : "Rename", systemImage: "pencil")
             }
+            ExportTakeMenuItem(take: take)
         }
         Button(role: .destructive) {
             requestDelete(item)

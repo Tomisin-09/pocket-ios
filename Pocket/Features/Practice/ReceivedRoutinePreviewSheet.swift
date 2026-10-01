@@ -12,6 +12,8 @@ import SwiftUI
 /// shown here and the routine that lands cannot disagree.
 struct ReceivedRoutinePreviewSheet: View {
     let received: ReceivedRoutine
+    /// What each song that came with it will be called here (ADR 0236 D5), in `received.songs`' order.
+    var songTitles: [String] = []
     /// Write it. The sheet doesn't own the store — the host does, because tap-to-open can arrive with
     /// no screen of the app's own on top.
     let onAdd: () -> Void
@@ -27,11 +29,10 @@ struct ReceivedRoutinePreviewSheet: View {
                 } header: {
                     Text(received.displayName)
                 } footer: {
-                    Text("Sent from Red Moon \(received.appVersion) on "
-                         + received.exportedAt.formatted(date: .abbreviated, time: .shortened)
-                         + ". Adding it makes your own copy — nothing in your library is changed or "
-                         + "replaced.")
+                    Text(provenance)
                 }
+
+                if !received.songs.isEmpty { songsSection }
 
                 if !received.routine.notes.isEmpty {
                     Section("Notes") {
@@ -56,9 +57,9 @@ struct ReceivedRoutinePreviewSheet: View {
                     } header: {
                         Text("Won’t come across")
                     } footer: {
-                        Text("These blocks played the sender's own song files, which stay on their "
-                             + "device. The blocks still arrive — named, and in their place in the "
-                             + "sitting — for you to point at your own material.")
+                        Text("These blocks played songs that weren’t sent with the routine. The blocks "
+                             + "still arrive — named, and in their place in the sitting — for you to point "
+                             + "at your own material.")
                     }
                 }
             }
@@ -79,6 +80,46 @@ struct ReceivedRoutinePreviewSheet: View {
                 }
             }
         }
+    }
+
+    /// The songs that came with it (ADR 0236 D6), each under the name it lands with, and a line for any
+    /// that lands as a copy beside a song the library already has.
+    private var songsSection: some View {
+        Section {
+            ForEach(Array(received.songs.enumerated()), id: \.offset) { index, song in
+                let title = songTitles.indices.contains(index) ? songTitles[index] : song.displayTitle
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Label(title, systemImage: "music.note")
+                            .font(.futura(.body))
+                            .foregroundStyle(PocketColor.textPrimary)
+                        Spacer()
+                        Text(song.record.loops.count == 1 ? "1 loop" : "\(song.record.loops.count) loops")
+                            .font(.futura(.body).monospacedDigit())
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                    if title != song.displayTitle {
+                        Text("You have a song called \(song.displayTitle). This one goes beside it.")
+                            .font(.futura(.footnote))
+                            .foregroundStyle(PocketColor.textSecondary)
+                    }
+                }
+                .listRowBackground(PocketColor.background)
+            }
+        } header: {
+            Text("Songs")
+        } footer: {
+            Text("Each comes with its audio, loops and markers, and its blocks play it. The sender’s pieces, "
+                 + "mastery and practice history stayed with them.")
+        }
+    }
+
+    /// *Sent by Tomisin from Red Moon 1.3 on …* (ADR 0236 D7), or *Sent from…* with no name in the file.
+    private var provenance: String {
+        let who = received.senderName.map { "Sent by \($0) from" } ?? "Sent from"
+        return "\(who) Red Moon \(received.appVersion) on "
+            + received.exportedAt.formatted(date: .abbreviated, time: .shortened)
+            + ". Adding it makes your own copy — nothing in your library is changed or replaced."
     }
 
     /// One tally row — a count with its icon, right-aligned on tabular digits, matching

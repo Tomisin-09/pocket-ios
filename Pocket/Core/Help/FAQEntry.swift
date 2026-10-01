@@ -223,7 +223,8 @@ extension FAQEntry {
               answer: "The microphone is used in exactly two places: the tuner, which listens to a "
                 + "string while you're on that screen, and a recording you start yourself. Neither "
                 + "sends anything anywhere — your audio never leaves this device, and neither do your "
-                + "notes, song names or artist name. Separately, the app counts which features get "
+                + "notes, song names or artist name, unless you send a file yourself from the share "
+                + "sheet. Separately, the app counts which features get "
                 + "used so we know what to improve. Those counts are anonymous and carry no account "
                 + "and no advertising ID. Whether counting starts on or off depends on where you "
                 + "are — Settings ▸ Privacy always shows which it is, and turns it off in one tap.",

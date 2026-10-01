@@ -93,6 +93,9 @@ run does and ends when it does. Takes land in this same timeline alongside your 
 - Swipe right to name it. An unnamed take is just called *Take*, and a list of those is the problem
   naming solves — which is why the hold menu offers **Name this take** on one that has never been
   named, and **Rename** after.
+- Hold it and choose **Export take…** to take the recording somewhere else: into a DAW, to your
+  teacher, or into Files. It goes as the file it is, named for what it was recorded against and the
+  day, like *Slow Bend · Chorus · 1 Oct 2026.m4a*. Nothing in Red Moon changes.
 
 Takes are also reachable from the run screen they were made on, through its **Takes** bar.
 
@@ -130,7 +133,7 @@ time — opens the take on a screen of its own.
   there. The two timecodes underneath say where you are and how long the take runs.
 - **▶** plays and pauses. **⏪** and **⏩** jump ten seconds back and forward.
 - **Length** and **Size** at the bottom say what the take runs to and what it is costing you.
-- **⋯** holds the rest: **Rename**, the note, **Trim…** and **Delete**.
+- **⋯** holds the rest: **Rename**, the note, **Trim…**, **Export take…** and **Delete**.
 
 ### A note on a take
 

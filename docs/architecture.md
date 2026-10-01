@@ -2044,7 +2044,7 @@ true (ADR 0150 §118-121).
     `presetSlug`) and the sender's *measurements* (`mastery*`, `commandTempo`,
     `commandNotesPerBeat`, `linkedSongIDs`) both stay behind — a command tempo is a measured number
     (ADR 0045), and inheriting one you did not measure is ADR 0070 through a side door. No
-    `Recording` ever crosses (ADR 0181 §7, ADR 0150 still parked). References do not cross in S1.
+    `Recording` ever crosses in a routine (ADR 0188 D4; a take exports on its own since ADR 0236 D2). References do not cross in S1.
     Since ADR 0210 the sender's **folders** stay behind too — those paths are positions in the
     sender's tree, and reproducing `Students/2026/Beginner/Warm-ups` on a stranger's phone hands over
     a filing cabinet with the drill. The folders' **leaf names are added to `tags`** instead (added,
@@ -2083,7 +2083,7 @@ true (ADR 0150 §118-121).
     (`[WrittenTabRecord]?` — `uid`, `title`, `createdAt`, `changedAt`, and the payload as a `JSONValue`,
     so a newer build's label kinds survive), oldest first. Restore skips a uid already present, a
     repeated uid and a payload that won't read, and adds a *Written tabs* line to `RestorePlan`. Not in a
-    `.redmoonpractice` file: sharing a written tab waits on ADR 0150's review.
+    `.redmoonpractice` file: a written tab leaves on its own only as text or a PDF (ADR 0236 D9).
   - **A loop or song block arrives named, not dropped.** A `loopUID` is meaningless without the song
     that owns it, so those ids are nulled and a `SharedBlockPlaceholder` carries the label instead —
     the block lands as the orphan the app already draws (`RoutineItem.isOrphaned`). Dropping it
@@ -2220,6 +2220,75 @@ true (ADR 0150 §118-121).
   handled. And **song audio was never in an archive** — an archive carries take audio and reference
   pictures, not song files (`SongRecord.audioFileName`) — so every restored song needs relinking
   (ADR 0152), and `RestorePlan.songsNeedingRelink` exists so the preview says so beforehand.
+
+- **Single files go out through the share sheet** (ADR 0236). A take (S1) leaves as its own audio file
+  under a name a person can read: `TakeExportName` (pure) writes *title, or owner caption, then the
+  date*, and `ExportStaging.fileName(stem:fileExtension:)` makes it safe for any file system without
+  hyphenating the words. `ExportedAudioFile` is the `Transferable`: it holds a source URL and a name,
+  and **stages only in its `FileRepresentation`**, so a `ShareLink` rebuilt on every body pass costs
+  nothing until a destination is picked. Staging hard-links the kept file into
+  `tmp/RedMoonOutbox/<uuid>/<name>` (copy as the fallback) and sweeps folders a day old, since the
+  system never says when a share has finished reading one. One representation each for MPEG-4 audio,
+  MP3, WAV and AIFF, so a receiver that takes only one of them matches, then plain audio for the rest.
+  `ExportTakeMenuItem` is the one view all three take menus use.
+  A song's audio (S2) is the same `ExportedAudioFile`, from `Song.exportedAudioFile()`: **only the copy
+  Red Moon keeps**, never a legacy bookmark, whose security scope nothing could hold open until the
+  share sheet read the file. Its row is in Song details, and **a `ShareLink` in a row of that sheet's
+  `Form` never presents**, the trap `ReferenceLinkEditing` records for its editors. So rows go through
+  `SharePresenter` (`Pocket/UI/`): stage on the tap (a hard link, instant), then present
+  `UIActivityViewController` from the top-most controller. Menus keep `ShareLink`.
+  A tab (S3) leaves as text or a PDF. `TabDocument` (pure) lays either kind out as blocks of fixed-width
+  lines, one block per row of tab, kept together on a PDF page: a written tab from
+  `PieceStaff.systems`, a song's from `SongTab`, columns placed by `SongTabLayout.spread` (rounded down,
+  which keeps its gaps) and one string-name gutter per song so bar numbers stay in their columns.
+  `TabPDF` (`Pocket/UI/`, UIKit) draws those lines on A4 or Letter by locale, chords in the chords lane's
+  indigo and names in the notes lane's teal. `ExportedTabFile` carries a `TabDocument.Source`, not the
+  laid-out document, and lays out and writes (`ExportStaging.write`) only in its `FileRepresentation`.
+  `TabExportMenu` is the one menu both reading screens use.
+  A song sent to another Red Moon (S4) is several files that have to arrive as one, so it travels as a
+  **`.redmoonpack`** (`PracticePack`, D8), a second declared type beside `.redmoonpractice`, which stays
+  JSON and unchanged. Inside the zip: `practice.json`, a `SharedPractice` of kind `song` whose optional
+  `songs` carries one `SongRecord` and whose optional `senderName` carries the artist name, and
+  `songs/<audioFileName>`. **Both halves already existed**: the writer stages the tree in an outbox
+  folder (`ExportStaging.freshFolder`, the audio hard-linked) and zips it with the archive's own
+  `ArchiveWriter.zip`; the reader is `ZipArchiveReader`. That keeps 0188 D8's rule that the zip method
+  is part of the format: `PracticePackTests` reads packs the writer made, never a fixture.
+  - **What leaves.** `SharedSongBuilder` starts from `ArchiveBuilder.songRecord`, so a receiver reads
+    the shape a backup writes, then strips what is the sender's: mastery, speeds reached, command
+    tempo, the piece and kept versions (the song's tab), snags, span history, notes, collections,
+    links, skills, favourites, dates. Metadata, the tempo grid, every loop's settings and every marker
+    go.
+  - **Reading a stranger's pack.** `PracticePack.read` gates `schemaVersion` **before** any audio is
+    unpacked, requires each song's file to be a plain name in `songs/`, and caps the payload (16 MB)
+    and each song (512 MB), because `ZipArchiveReader.inflate` allocates the size the zip declares.
+    The host copies the pack into `tmp/RedMoonInbox/<uuid>/` while the file is still in scope (a
+    picked URL's scope closes when `open` returns, and the zip is read memory-mapped), unpacks off the
+    main actor, and removes the folder when the preview closes without Add.
+  - **Landing.** `SongImporter.prepareReceived` decodes the waveform, then copies the audio into
+    `Songs/` under a fresh `sourceID`, with no bookmark (there is nothing outside the app to point
+    at). `ReceivedSongBuilder` mints every uid fresh (0188 D1) and follows *same as* and *repeats
+    through* to the new marker uids; it never reads mastery or a piece, whatever the file says. The
+    title comes from `SongCopyName` (pure, D5): the title as sent, or `<title> - <sender> copy` when
+    the library has that title (trimmed, ignoring case), numbered after that. The match is on the
+    title because `sourceID` is minted per import and can't match across phones.
+  A routine sent **with its songs** (S5, D6) is the same pack with a `routine` payload. `SendRoutineSheet`
+  opens in front of the share sheet only when a block plays a song or a loop, and its *Include the
+  songs* switch decides between a pack and the plain `.redmoonpractice`.
+  - **Sending.** `SharedPracticeBuilder.songsPlayed(by:)` lists the songs the blocks reach, each once, in
+    sitting order; the ones with a kept copy (`Song.exportedAudioFile`) travel. A block whose song
+    travels keeps its `loopUID` or `songSourceID`, a join key inside this payload as `exerciseUID`
+    always was; a block whose song doesn't is stripped and gets a `SharedBlockPlaceholder`, exactly as
+    before 0236. With the switch off the file is byte-for-byte the old shape plus `senderName`; a
+    routine with no song blocks goes straight to the share sheet and carries no name, since no screen
+    showed one (D7).
+  - **Receiving.** A bare `.redmoonpractice` that names songs is refused (`incomplete(.song)`): a
+    sender only writes songs into a pack. From a pack, each `SongRecord` becomes a `ReceivedSong` with
+    its unpacked audio. The host prepares every song off the main actor and lands **all or nothing**,
+    removing the copies already made if one fails. `ReceivedSongBuilder.landing` returns each new loop
+    by the uid the file gave it (`LandedSong`), and `ReceivedRoutineBuilder.materialize(_:songs:)`
+    binds a block to the first unit its ids reach among the drills and songs **in that file**, never
+    the receiver's library. `HydratedRoutine.insert` writes songs first. `SongCopyName.titles` names
+    several songs against the library and each other, so two songs sent under one title land as two.
 
 ## Storage (Core/Storage, ADR 0182)
 

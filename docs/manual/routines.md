@@ -320,22 +320,39 @@ drill's own links too, read-only. See [Where you learned it](references.md).
 ## Handing one to somebody else
 
 A saved routine carries a share control in its toolbar, beside **Edit**. Tapping it writes the whole
-session into one small file and hands it to the share sheet, so you send it however you send
-anything else.
+session into a file and hands it to the share sheet, so you send it however you send anything else.
 
 Every exercise the routine uses travels **inside** that file. The person you send it to gets the
 session complete — the blocks in order, the rests, the reps, the name, the description — on a phone
 that has never seen your library.
 
-Blocks built on **your own loops and songs** are the exception, and the file is honest about it
-rather than quiet. That audio is yours and stays on your device, so those blocks arrive named — the
-loop and the song it came from, in words — and the person at the other end fills them in with their
-own material. The routine they receive is the same length as the one you sent.
+### A routine that plays your songs
+
+When a block plays one of **your own loops or songs**, the share control opens **Send this routine**
+first, so you can choose whether the songs go too:
+
+- **Sent as** shows your artist name from **Settings ▸ You**, which goes with the routine. With no
+  name set, none is sent.
+- **Include the songs** is on to start with. Each song a block plays goes with it, with all its
+  loops, markers and tempo grid, as [Send this song…](songs.md#taking-a-song-somewhere-else) sends
+  one, and the blocks play it at the other end. Under the switch it says how much the songs add, and
+  the **Songs** list shows each one with its size.
+- Turn it off and the file stays small: those blocks arrive named — the loop and the song it came
+  from, in words — and the person at the other end fills them in with their own material.
+- A song Red Moon keeps no copy of, such as one that's missing its audio, reads **Can’t go**, and
+  its blocks arrive named the same way.
+
+**Send…** in the top corner opens the share sheet. Either way, the routine they receive is the same
+length as the one you sent. A routine with no song or loop blocks has nothing to choose, so its share
+control goes straight to the share sheet.
+
+A song sent in a routine carries the same things as one sent on its own, and leaves the same things
+behind: your pieces and the song's tab, mastery, takes and notes stay with you.
 
 **What you have done with the routine does not go with it.** Not when you last practised it, not
 your star, and nothing you have measured — no mastery ratings, no command tempos. A tempo you
 worked up to is a fact about your playing, not about the drill, and it would be somebody else's
-number sitting on their screen. Recordings never cross at all.
+number sitting on their screen. Recordings never cross in a routine, whether or not its songs go.
 
 Nothing is uploaded. The file is written on your device and handed to the share sheet, and where it
 goes after that is your choice alone.
@@ -352,21 +369,27 @@ picker showing the practice files it can read and nothing else, which is the way
 has been sitting in Files or iCloud Drive for a week.
 
 A single exercise can be shared the same way, and the picker does not mind which it is handed: a
-shared drill picked here lands in your exercises rather than your routines, and Red Moon says so.
+shared drill picked here lands in your exercises rather than your routines, and a song sent with its
+loops lands in your library, and Red Moon says so.
 See [Handing one to somebody else](exercises.md#handing-one-to-somebody-else).
 
 Either way, the same thing happens next: Red Moon shows you **what is in the file before it lands** —
-its name, how many blocks and how many exercises, the sender's version and the day they wrote it, and
-a **Won't come across** list if any block was built on their own audio. **Add** puts it in your
-library; **Cancel** leaves nothing behind.
+its name, how many blocks and how many exercises, who sent it (when they have an artist name), the
+sender's version and the day they wrote it, a **Songs** list when songs came with it, and a **Won't
+come across** list if any block plays a song that wasn't sent. **Add** puts it in your library;
+**Cancel** leaves nothing behind.
+
+Songs that came with it land in your library too, and the blocks play them. Each is a new song of your
+own, named as a song sent on its own is: if you already have one with that title, the new one is
+named after the sender, like *Low Road - Tomisin copy*, and the **Songs** list says so before you add.
 
 **It is your copy from the moment you add it.** The routine and its exercises are new rows with your
 own ids, so renaming or reworking them touches nothing the sender has, and nothing already in your
 library is changed, merged over or replaced. Add the same file twice and you get two routines — the
 app never guesses that two things with the same name are the same thing.
 
-The blocks on their audio arrive as **skipped blocks that still say what they were** — *Chorus — Slow
-Bend*, in the sender's words, under *Skipped — not on this device*. The routine keeps its shape and
+Blocks whose songs weren't sent arrive as **skipped blocks that still say what they were** — *Chorus —
+Slow Bend*, in the sender's words, under *Skipped — not on this device*. The routine keeps its shape and
 its length, and you know what to put there when you get to it. A block skipped because *you* deleted
 its unit still reads **Unit removed**: those are different facts and the rows say so.
 

@@ -213,6 +213,7 @@ struct TakeDetailView: View {
                 Label("Trim…", systemImage: "scissors")
             }
             .disabled(audioDuration <= TakeTrim.minimumKeep)
+            ExportTakeMenuItem(take: take)
             Divider()
             Button(role: .destructive) {
                 onDelete()

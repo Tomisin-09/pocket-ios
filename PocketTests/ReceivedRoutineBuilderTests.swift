@@ -87,12 +87,13 @@ final class ReceivedRoutineBuilderTests: XCTestCase {
         let messages = [ReceiveFailure.corrupt,
                         .futureVersion(message: SchemaVersionGate.refusalMessage),
                         .unsupportedKind,
-                        // Both incompletes, because ADR 0209 gave the case a payload precisely so the
-                        // two would not read the same. `CaseIterable` over the kinds, so a third
-                        // payload kind fails here until it is given its own sentence.
+                        // Every incomplete, because ADR 0209 gave the case a payload precisely so they
+                        // would not read the same. `CaseIterable` over the kinds, so a fourth payload
+                        // kind fails here until it is given its own sentence.
                         .incomplete(.routine),
-                        .incomplete(.exercise)].map(\.message)
-        XCTAssertEqual(SharedPracticeKind.allCases.count, 2,
+                        .incomplete(.exercise),
+                        .incomplete(.song)].map(\.message)
+        XCTAssertEqual(SharedPracticeKind.allCases.count, 3,
                        "A new payload kind needs its own incomplete sentence above")
 
         XCTAssertEqual(Set(messages).count, messages.count, "Two refusals read the same")

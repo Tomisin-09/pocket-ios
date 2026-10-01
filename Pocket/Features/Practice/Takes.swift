@@ -93,6 +93,7 @@ struct TakesSheet: View {
                     } label: {
                         Label(take.title == nil ? "Name this take" : "Rename", systemImage: "pencil")
                     }
+                    ExportTakeMenuItem(take: take)
                     Button(role: .destructive) { delete(take) } label: {
                         Label("Delete", systemImage: "trash")
                     }

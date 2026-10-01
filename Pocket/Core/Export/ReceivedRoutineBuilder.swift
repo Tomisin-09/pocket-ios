@@ -48,6 +48,8 @@ enum ReceiveFailure: Error, Equatable {
                 return "This file says it holds a routine, but the routine is missing."
             case .exercise:
                 return "This file says it holds an exercise, but the exercise is missing."
+            case .song:
+                return "This file says it holds a song, but the song or its audio is missing."
             }
         }
     }
@@ -72,6 +74,13 @@ struct ReceivedRoutine: Equatable {
     /// provenance there is, which is exactly why it is shown rather than merely stored.
     var appVersion: String
     var exportedAt: Date
+
+    /// The songs that came with it, each with its audio unpacked (ADR 0236 D6). Empty for a routine
+    /// sent without them, which is every `.redmoonpractice`.
+    var songs: [ReceivedSong] = []
+
+    /// The sender's artist name, when the file carried one (ADR 0236 D7).
+    var senderName: String?
 
     /// What to call it on screen. Falls back the way `RoutineDetailView+Share.shareTitle` does — a
     /// routine can legitimately be saved unnamed, and an empty heading reads as a broken file.
@@ -104,13 +113,17 @@ struct HydratedRoutine {
     var routine: Routine
     var exercises: [Exercise]
     var items: [RoutineItem]
+    /// The songs that came with it (ADR 0236 D6), with their loops and markers.
+    var songs: [Song] = []
 
     /// Write the whole graph into `context`, in the one order that works.
     ///
     /// The same sequence `RoutineLibraryView.duplicate(_:)` uses for a duplicate, with the drills
-    /// added because a received routine brings its own rather than pointing at the library's.
+    /// added because a received routine brings its own rather than pointing at the library's, and the
+    /// songs ahead of them, since a block points at a song or one of its loops.
     @MainActor
     func insert(into context: ModelContext) {
+        songs.forEach(context.insert)
         exercises.forEach(context.insert)
         context.insert(routine)
         routine.items = items
@@ -141,18 +154,42 @@ enum ReceivedRoutineBuilder {
     /// Pure over the decoded payload rather than over `Data`: reading the bytes, gating the version
     /// and reading the kind are one job shared by both payloads, and it moved to
     /// `ReceivedPracticeBuilder` when the second one arrived (ADR 0209 D4).
-    static func received(_ payload: SharedPractice) -> Result<ReceivedRoutine, ReceiveFailure> {
+    ///
+    /// - Parameters:
+    ///   - audio: each song's unpacked audio, by `audioFileName`, when the file was a pack
+    ///     (`PracticePack.read`, which has already refused a pack missing any). `nil` on the JSON door,
+    ///     where a routine that names songs has none of their audio and is refused: a sender only ever
+    ///     writes songs into a pack (ADR 0236 D8).
+    ///   - staging: where a pack was unpacked, removed once its songs land or are turned down.
+    static func received(_ payload: SharedPractice, audio: [String: URL]? = nil,
+                         staging: URL? = nil) -> Result<ReceivedRoutine, ReceiveFailure> {
         guard let routine = payload.routine else { return .failure(.incomplete(.routine)) }
+        let sender = SharedSongBuilder.senderName(payload.senderName)
+        var songs: [ReceivedSong] = []
+        for record in payload.songs ?? [] {
+            guard let leaf = record.audioFileName, let file = audio?[leaf], let staging else {
+                return .failure(.incomplete(.song))
+            }
+            songs.append(ReceivedSong(record: record, audio: file, staging: staging, senderName: sender,
+                                      appVersion: payload.appVersion, exportedAt: payload.exportedAt))
+        }
         return .success(ReceivedRoutine(routine: routine,
                                         exercises: payload.exercises,
                                         placeholders: payload.placeholders,
                                         appVersion: payload.appVersion,
-                                        exportedAt: payload.exportedAt))
+                                        exportedAt: payload.exportedAt,
+                                        songs: songs,
+                                        senderName: sender))
     }
 
     /// Build the models a received routine becomes — **uninserted**, for `HydratedRoutine.insert` to
     /// assemble.
-    static func materialize(_ received: ReceivedRoutine) -> HydratedRoutine {
+    ///
+    /// - Parameter songs: the songs that came with it, already built (`ReceivedSongBuilder.landing`),
+    ///   since reading their audio is work for off the main actor. A loop or song block is bound to the
+    ///   one its file ids name **among these and nothing else** (ADR 0236 D6): never to a song already
+    ///   in the library, whatever the file says.
+    static func materialize(_ received: ReceivedRoutine, songs: [LandedSong] = []) -> HydratedRoutine {
         let drills = received.exercises.map { ($0.uid, exercise(from: $0)) }
         // Keyed by the **file's** uid, which is a join key inside this payload and nothing else
         // (`SharedPracticeBuilder.shareable(_:)` says so where it decides to keep it). It is never
@@ -174,10 +211,24 @@ enum ReceivedRoutineBuilder {
         let labels = Dictionary(received.placeholders.map { ($0.itemUID, $0.label) },
                                 uniquingKeysWith: { first, _ in first })
 
+        let units = Units(exercises: byFileUID,
+                          songs: Dictionary(songs.map { ($0.sentSourceID, $0.song) },
+                                            uniquingKeysWith: { first, _ in first }),
+                          loops: songs.reduce(into: [:]) { loops, landed in
+                              loops.merge(landed.loops, uniquingKeysWith: { first, _ in first })
+                          })
         let items = ordered(received.routine.items).enumerated().map { index, record in
-            block(from: record, order: index, exercises: byFileUID, labels: labels)
+            block(from: record, order: index, units: units, labels: labels)
         }
-        return HydratedRoutine(routine: routine, exercises: drills.map(\.1), items: items)
+        return HydratedRoutine(routine: routine, exercises: drills.map(\.1), items: items,
+                               songs: songs.map(\.song))
+    }
+
+    /// What a block can point at, by the ids the file gave it.
+    private struct Units {
+        var exercises: [UUID: Exercise]
+        var songs: [String: Song]
+        var loops: [UUID: Loop]
     }
 
     // MARK: - Blocks
@@ -194,19 +245,19 @@ enum ReceivedRoutineBuilder {
         }
     }
 
-    /// One block, pointing at the inline drill it names — or at nothing.
+    /// One block, pointing at the inline drill it names, the song or loop that came with it — or at
+    /// nothing.
     ///
-    /// A block whose `exerciseUID` names no drill in the file, and every loop and song block (whose
-    /// ids `SharedPracticeBuilder` deliberately never writes), lands with all three unit
-    /// relationships `nil`. That is precisely `RoutineItem.isOrphaned`, which the routine screen
+    /// A block whose ids name nothing in the file, and every loop and song block whose song stayed with
+    /// the sender (whose ids `SharedPracticeBuilder` deliberately never writes), lands with all three
+    /// unit relationships `nil`. That is precisely `RoutineItem.isOrphaned`, which the routine screen
     /// already draws as a skipped block — D4's "exactly what the app already knows how to draw",
     /// reached by writing no drawing code.
     ///
     /// It also lands **named**, when the file said what it was. The placeholder wins over the
     /// record's own `orphanLabel` because it is what *this* sender could not send; the record is the
     /// fallback, and the only source an archive restore (S3) will have.
-    private static func block(from record: RoutineItemRecord, order: Int,
-                              exercises: [UUID: Exercise],
+    private static func block(from record: RoutineItemRecord, order: Int, units: Units,
                               labels: [UUID: String]) -> RoutineItem {
         let item = RoutineItem(order: order)
         // The raw column verbatim, not `RoutineItemKind(raw:)`. The typed setter would fold a kind
@@ -218,12 +269,21 @@ enum ReceivedRoutineBuilder {
         item.usesAuthoredLength = record.usesAuthoredLength
         item.recordsTake = record.recordsTake
         item.loopRunModeRaw = record.loopRunModeRaw
-        if let uid = record.exerciseUID { item.exercise = exercises[uid] }
+        // At most one unit, the first the file's ids reach, so a file naming two can't break the
+        // block's "exactly one" invariant. A loop or a song resolves only against the songs that came
+        // with this routine (ADR 0236 D6).
+        if let uid = record.exerciseUID, let drill = units.exercises[uid] {
+            item.exercise = drill
+        } else if let uid = record.loopUID, let loop = units.loops[uid] {
+            item.loop = loop
+        } else if let sourceID = record.songSourceID, let song = units.songs[sourceID] {
+            item.song = song
+        }
         // Only onto a block that resolved nothing. A well-formed file never names an exercise block
         // here, but this door's input is a file somebody else wrote: a label stored on a block that
         // *does* resolve would be a fact about the block that is not true, sitting there waiting for
         // a future reader to trust it.
-        if item.exercise == nil {
+        if item.exercise == nil && item.loop == nil && item.song == nil {
             item.orphanLabel = labels[record.uid] ?? record.orphanLabel
         }
         return item

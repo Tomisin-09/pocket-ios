@@ -1,6 +1,7 @@
 import Foundation
 
-/// Turns one live `Routine` into the payload of a `.redmoonpractice` file (ADR 0188 S1).
+/// Turns one live `Routine` into the payload of a `.redmoonpractice` file (ADR 0188 S1), or of a
+/// `.redmoonpack` when its songs go with it (ADR 0236 D6).
 ///
 /// `@MainActor` for `ArchiveBuilder`'s reason and no other: reading a `@Model` is main-actor work and
 /// neither a model nor a `ModelContext` is `Sendable`. What it returns is a plain value, so the
@@ -20,9 +21,20 @@ enum SharedPracticeBuilder {
     /// second time by hand. That is on purpose: a field added to `ExerciseRecord` reaches this path
     /// automatically, and the only way it can be wrong is by being carried when it should not be —
     /// which is a decision, visible here as a line, instead of an omission nobody notices.
-    static func routine(_ routine: Routine, appVersion: String,
-                        exportedAt: Date = .now) -> SharedPractice {
+    ///
+    /// - Parameters:
+    ///   - senderName: the artist name the send screen showed (ADR 0236 D7), or `nil`. Only that screen
+    ///     passes one: a routine with no song or loop block goes straight to the share sheet, nothing
+    ///     there shows a name, so none travels.
+    ///   - songs: the songs travelling with it, when *Include the songs* is on (ADR 0236 D6). A block
+    ///     that plays one of these keeps its loop or song id, a join key inside this payload as
+    ///     `exerciseUID` is, and the receiver binds it to the song that arrives. A block whose song is
+    ///     not among them is a placeholder, as every song and loop block was before 0236. Empty, the
+    ///     default, writes the file exactly as it was written before, apart from the name.
+    static func routine(_ routine: Routine, appVersion: String, senderName: String? = nil,
+                        songs travelling: [Song] = [], exportedAt: Date = .now) -> SharedPractice {
         let blocks = routine.orderedItems
+        let sent = Set(travelling.map(\.sourceID))
 
         var record = ArchiveBuilder.routineRecord(routine)
         // Facts about the sender's practice, not about the routine (D4). `lastPracticed` would tell
@@ -39,7 +51,9 @@ enum SharedPracticeBuilder {
         // ADR 0188's D4 table does not make. A link that ought to travel can be added here in one
         // line once that call is made.
         record.references = []
-        record.items = record.items.map(shareable)
+        record.items = zip(record.items, blocks).map { item, block in
+            travels(block, sent) ? item : shareable(item)
+        }
 
         var seen = Set<UUID>()
         let exercises = blocks
@@ -54,7 +68,25 @@ enum SharedPracticeBuilder {
                               appVersion: appVersion,
                               routine: record,
                               exercises: exercises,
-                              placeholders: blocks.compactMap(placeholder))
+                              placeholders: blocks.filter { !travels($0, sent) }.compactMap(placeholder),
+                              songs: travelling.isEmpty ? nil : travelling.map(SharedSongBuilder.record),
+                              senderName: senderName)
+    }
+
+    /// The songs `routine`'s blocks play, each once, in the order the sitting first reaches them: a song
+    /// block's song, and a loop block's loop's song (ADR 0236 D6). The send screen offers these, and
+    /// sends the ones Red Moon holds audio for.
+    static func songsPlayed(by routine: Routine) -> [Song] {
+        var seen = Set<String>()
+        return routine.orderedItems
+            .compactMap { $0.song ?? $0.loop?.song }
+            .filter { seen.insert($0.sourceID).inserted }
+    }
+
+    /// Whether `block` plays one of the songs travelling with the routine, by the song's `sourceID`.
+    private static func travels(_ block: RoutineItem, _ sent: Set<String>) -> Bool {
+        guard let song = block.song ?? block.loop?.song else { return false }
+        return sent.contains(song.sourceID)
     }
 
     /// Build the file's payload for one drill on its own (ADR 0209 D1).
@@ -82,10 +114,11 @@ enum SharedPracticeBuilder {
     /// A block with the ids that mean nothing elsewhere removed (D1).
     ///
     /// `exerciseUID` stays: the exercise travels inline in the same file, so within this payload the
-    /// uid is a real join key. `loopUID` and `songSourceID` do not travel with anything, and leaving
-    /// them in would invite a receiver to resolve them against its own store — the one thing an
-    /// untrusted file must never be allowed to do. What the block pointed at is said in words instead,
-    /// by `placeholder(for:)`.
+    /// uid is a real join key. `loopUID` and `songSourceID` stay only on a block whose song travels too
+    /// (ADR 0236 D6), for the same reason; this is the block whose song does not, and leaving them in
+    /// would invite a receiver to resolve them against its own store — the one thing an untrusted file
+    /// must never be allowed to do. What the block pointed at is said in words instead, by
+    /// `placeholder(for:)`.
     static func shareable(_ item: RoutineItemRecord) -> RoutineItemRecord {
         var copy = item
         copy.loopUID = nil
@@ -138,7 +171,8 @@ enum SharedPracticeBuilder {
         return record
     }
 
-    /// What a loop or song block was, for a receiver who cannot have it (D4).
+    /// What a loop or song block was, for a receiver who cannot have it (D4): its song was left behind,
+    /// by the switch or because Red Moon holds no audio for it (ADR 0236 D6).
     ///
     /// `nil` for everything else — an exercise block carries its unit inline, and a rest has none.
     ///

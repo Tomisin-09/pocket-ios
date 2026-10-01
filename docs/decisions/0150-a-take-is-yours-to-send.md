@@ -1,10 +1,14 @@
 # 0150 — A take is yours to send (export, not hosting)
 
-- **Status:** Proposed — **parked pending legal advice**, and **superseded in
-  part by ADR 0181, for self-export only** (see the amendment below). This ADR
-  is written to hold the shape of the question, not to authorise a build. It
-  must not move to Accepted on the evidence currently in it.
+- **Status:** Superseded by ADR 0236 (2026-10-01). Until then it was Proposed,
+  parked pending legal advice, and superseded in part by ADR 0181 for
+  self-export only (see the amendment below). The text is left as written.
 - **Date:** 2026-08-09
+- **Superseded by:** ADR 0236 — the parked question is decided without the legal
+  review this ADR waited on, by the owner, on a tool-not-host frame (0236 D1). Points
+  1, 2, 4 and 5 of the proposal below are taken as written (0236 D2). Point 3, the
+  speaker-bleed warning, is dropped for a single take, because the song itself now
+  exports. Hosting stays closed.
 
 ## Amendment — 2026-08-23, ADR 0181
 

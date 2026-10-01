@@ -127,6 +127,38 @@ song you expected. Check the audio is what you think it is afterwards.
 
 **See Help & FAQs: "My song stopped playing — what happened?"**
 
+## Taking a song somewhere else
+
+**Song details** ▸ **Audio** has two ways out. Both need Red Moon's own copy of the song, which an
+older song linked to a file elsewhere gets the first time it plays.
+
+**Send this song…** is for someone else with Red Moon: a teacher, a bandmate, your other phone. It
+opens a screen that says what goes and what stays before anything is sent:
+
+- **Goes with it:** the audio file, every loop with its speed, repeats and ramp, every marker and
+  section, and the tempo and beat grid, so the bars line up the same.
+- **Stays with you:** your pieces and the song's tab, your mastery and the speeds you've reached,
+  takes and journal notes, your notes, collections and links, and when you last practised.
+- **Sent as** shows your artist name from **Settings ▸ You**, which goes with the song. With no name
+  set, none is sent.
+
+**Send…** in the top corner opens the share sheet on one file, a *Red Moon practice pack*.
+
+**Export audio file only…** opens the share sheet on the song's audio file, as you imported it: into
+a DAW, to another device, or into Files. Only the audio goes. Your loops, markers, pieces and
+practice history stay in Red Moon.
+
+### Receiving a song
+
+Tap a practice pack wherever it arrived, in Messages, Mail, Files or an AirDrop, and Red Moon opens
+it on **Add this song?**: who sent it and when, the artist, how many loops and markers, and the tempo.
+**Add** puts it in your library as a new song of your own, and **Cancel** leaves nothing behind.
+
+Nothing you already have is changed. If you already have a song with the same title, the new one is
+named after whoever sent it, like *Low Road - Tomisin copy*, or *Low Road - copy* if they have no
+artist name, and the screen says so before you add it. Receive the same song again and it's numbered:
+*Low Road - Tomisin copy 2*.
+
 ## Mapping the song
 
 **Song details** ▸ **Map the song** lays the whole song out, left to right, with every loop you've
@@ -227,6 +259,11 @@ drew it picked out for a moment, and you can work on them from there.
 
 Without a tempo and a **1**, the tab is in seconds, and **Set the tempo and the 1 to see bars** takes
 you to the song's waveform to set them.
+
+The share button at the top right exports the tab as **Plain text** or a **PDF**, headed with the song's
+title and artist, each section under its name and bars. It's in the same fixed-width layout as on
+screen, with the notes evenly spaced where the screen spaces them by time. A tab only knows which notes
+come in what order, not how long each lasts, so neither file writes lengths.
 
 ## Next
 

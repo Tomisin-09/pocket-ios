@@ -58,6 +58,17 @@ enum UITestHooks {
     /// back out, so the rest of the suite starts from the library it expects. Read app-side through
     /// `NamingPieceSeed.action(for:)`.
     static let namingPieceArgument = "-seedNamingPiece"
+    /// `-receiveSongPack`: at launch, builds a `.redmoonpack` holding a short song (*Pack test*, sent by
+    /// *Tester*) and opens it on the receive door, the way a tapped file arrives (ADR 0236 D8). A UI test
+    /// can't hand the app a file, and this is the whole receive path from that point on. Without it, a
+    /// `-uiTesting` launch takes any received *Pack test* back out, so the starter track's card, which
+    /// needs an empty library, still shows for the tests that want it. Read app-side through
+    /// `ReceivedPackSeed`.
+    static let receivePackArgument = "-receiveSongPack"
+    /// `-receiveRoutinePack`: the same, for a routine sent with its song (ADR 0236 D6): *Pack routine*, a
+    /// block on *Pack test*'s loop and a block playing the song. Without it, a `-uiTesting` launch takes
+    /// any received *Pack routine* back out with the song.
+    static let receiveRoutinePackArgument = "-receiveRoutinePack"
 
     /// Marks Home as **finished seeding**, not merely rendered.
     ///
