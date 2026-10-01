@@ -59,8 +59,7 @@ extension Exercise {
     ///   0070: the app never invents a proficiency figure).
     /// - `isFavorite` — the pin is about *this* row, not the shape.
     /// - `presetSlug` — provenance is where a drill *came from*. A copy is user-authored, so it
-    ///   loses the seeded-preset marker along with its free-taste **run** allowance (ADR 0112).
-    ///   That closes the obvious bypass — duplicating a freebie can't mint an unlocked Pro drill.
+    ///   loses the seeded-preset marker.
     /// - `journal` / `recordings` — takes and dated entries belong to the sessions that made them.
     ///
     /// `linkedSongs` is a relationship, so it can't be set before insertion: assign it from the
@@ -112,7 +111,7 @@ extension Routine {
     ///
     /// `lastPracticed`, `isFavorite` and `presetSlug` are not carried, for the same reasons as
     /// `Exercise.duplicated(named:)`: a copy has no history of its own, and a copy of the curated
-    /// free-taste routine is a user-authored routine, not a second freebie (ADR 0112).
+    /// starter routine is a user-authored routine, not a second preset.
     func duplicated(named name: String) -> (routine: Routine, blocks: [RoutineItem]) {
         let blocks = orderedItems.enumerated().map { RoutineItem.copying($1, order: $0) }
         return (Routine(name: name), blocks)

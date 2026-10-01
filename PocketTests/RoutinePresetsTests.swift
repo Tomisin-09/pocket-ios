@@ -124,13 +124,13 @@ final class RoutinePresetsTests: XCTestCase {
         XCTAssertEqual(RoutinePresets.slug(forName: "Morning Routine"), RoutinePresets.starterSlug)
         XCTAssertNil(RoutinePresets.slug(forName: "My own routine"))
         // A retired curated routine is no longer recognised — an existing player's copy stays
-        // unslugged and therefore Pro, which is right: only the demo is free.
+        // unslugged, the same as a routine they built.
         XCTAssertNil(RoutinePresets.slug(forName: "Picking Builder"))
     }
 
     /// The rename trap: an install seeded before "Morning Warm-up" became "Morning Routine" still
     /// holds the old name, and the backfill matches by name. Without the legacy table it would never
-    /// be stamped and the demo would **Pro-lock on every existing install**.
+    /// be stamped, and the demo would keep its old name on every existing install.
     func testBackfillStillRecognisesTheOldNameAfterARename() {
         XCTAssertEqual(RoutinePresets.slug(forName: "Morning Warm-up"), RoutinePresets.starterSlug)
     }
@@ -145,43 +145,26 @@ final class RoutinePresetsTests: XCTestCase {
     }
 
     /// The slug is frozen across the rename — that's the whole point of having one.
-    func testFreeTasteSlugIsUnchangedByTheRename() {
+    func testStarterSlugIsUnchangedByTheRename() {
         XCTAssertEqual(RoutinePresets.starterSlug, "morning-warm-up")
         XCTAssertEqual(RoutinePresets.specs.first?.name, "Morning Routine")
     }
 
-    // MARK: - The routine-bypass invariant (ADR 0144)
+    // MARK: - The starter routine resolves
 
-    /// **Retired as a bypass, kept as a seam guard.** Under ADR 0112 this test carried real weight:
-    /// a free player could run Morning Routine, and the routine player embeds the *real*
-    /// `ExerciseRunView` per block with no per-block entitlement check — so a Pro drill landing in
-    /// that routine became a way to reach Pro content for free.
-    ///
-    /// ADR 0144 closed the bypass by closing the door it went through: **no routine runs without
-    /// Pro**, so there is nothing left to leak out of. What's pinned now is the other half — the
-    /// starter routine's blocks are all shipped presets (so they resolve at seed time), and running
-    /// it requires Pro like everything else. Re-open a free routine allowance and the
-    /// `canRun`-per-block loop is what has to come back with it.
-    func testStarterRoutineBlocksAreShippedPresetsAndNeedPro() throws {
+    /// Every block of the starter routine names a **shipped preset**, so it resolves at seed time.
+    /// (Under the paywall this test also asserted that running it needed Pro; ADR 0237 removed that
+    /// half along with the gate.)
+    func testStarterRoutineBlocksAreShippedPresets() throws {
         let spec = try XCTUnwrap(RoutinePresets.specs.first { $0.slug == RoutinePresets.starterSlug })
         let names: [String] = spec.blocks.compactMap { block in
             if case .exercise(let name) = block { return name }
             return nil
         }
         XCTAssertFalse(names.isEmpty)
-
-        XCTAssertFalse(AccessPolicy.canRunRoutine(
-            isPro: false,
-            isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: spec.slug)),
-            "The starter routine is trial content (ADR 0144 D8), not a free taste")
-
         for name in names {
-            let preset = try XCTUnwrap(PracticePresets.allSpecs.first { $0.name == name },
-                                       "\(name) is not a shipped preset — it would never resolve")
-            XCTAssertFalse(
-                AccessPolicy.canRun(preset.template, isPro: false,
-                                    isFreeTastePreset: AccessPolicy.isFreeTaste(slug: preset.slug)),
-                "\(name) (\(preset.template)) must not run without Pro")
+            XCTAssertNotNil(PracticePresets.allSpecs.first { $0.name == name },
+                            "\(name) is not a shipped preset — it would never resolve")
         }
     }
 

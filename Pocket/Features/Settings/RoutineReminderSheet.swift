@@ -5,20 +5,13 @@ import SwiftUI
 /// The second door onto an appointment whose first door is the routine screen (ADR 0163). It carries
 /// the same `ReminderSection`, so the two cannot drift.
 ///
-/// ## Why this is not Pro-gated, when every other route to a routine is
+/// ## It opens the reminder, not the routine
 ///
-/// `JumpBackInCard`, `RecentRoutineCard` and the Routines library all sit behind
-/// `proGated(.routine)` (ADR 0144 D4). This does not, and the difference is deliberate rather than
-/// an oversight of that rule.
-///
-/// It opens a **notification the player already owns**, not the routine. A lapsed subscriber can
-/// still be receiving reminders they set while subscribed — the schedules live in `UserDefaults`, so
-/// a lapse does not cancel them — and a reminder you cannot switch off because your subscription
-/// ended is user-hostile, and the kind of thing App Review is right to object to. Turning something
-/// off must never be the gated half.
-///
-/// So the sheet shows the routine's **name** and its reminder, and offers no way into the routine
-/// itself. Nothing Pro is reachable through it.
+/// It opens a **notification the player already owns**. The sheet shows the routine's **name** and
+/// its reminder, and offers no way into the routine itself: a Settings row is for changing the
+/// appointment, and the routine screen is one tap away from Practice. The shape was first argued
+/// while routines sat behind a paywall, so that switching a reminder off could never be the gated
+/// half; Red Moon is free now (ADR 0237), and the shape stays for the first reason.
 struct RoutineReminderSheet: View {
     let routineUID: UUID
     let routineName: String

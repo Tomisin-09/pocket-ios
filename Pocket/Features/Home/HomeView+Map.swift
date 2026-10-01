@@ -236,9 +236,9 @@ extension HomeView {
     /// Chords, Glossary, Help & FAQs). A push, in the indigo/violet "study/reference" accent
     /// (`PocketColor.toolkit`).
     ///
-    /// The label still **names the tuner first**. It is free forever (ADR 0144), needs no song and no
-    /// library, and is the thing a guitarist reaches for every time they pick the instrument up — the
-    /// strongest daily-habit hook in the app. That argument was made about a subtitle nobody sees any
+    /// The label still **names the tuner first**. It needs no song and no library, and is the thing
+    /// a guitarist reaches for every time they pick the instrument up — the strongest daily-habit
+    /// hook in the app. That argument was made about a subtitle nobody sees any
     /// more, and it survives where the subtitle went: `ToolkitUITests` and `ManualToolkitShots` both
     /// match `Toolkit,` as a prefix, so the copy after the comma can still move.
     private var toolkitTile: some View {

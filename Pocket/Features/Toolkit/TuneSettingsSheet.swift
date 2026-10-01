@@ -7,8 +7,7 @@ import SwiftUI
 /// effect on the tuner without any wiring between the two.
 ///
 /// Switching instrument resets the tuning to that instrument's Standard, so a bass tuning never leaks
-/// onto guitar. All controls are free — a tuner is a reference utility, not the author-vs-run Pro lever
-/// (ADR 0112) — and nothing here grades the player (ADR 0070).
+/// onto guitar. Nothing here grades the player (ADR 0070).
 struct TuneSettingsSheet: View {
     @AppStorage(AppSettings.Key.tunerInstrument) private var instrumentRaw = Instrument.default.rawValue
     @AppStorage(AppSettings.Key.tunerMode) private var modeRaw = TunerMode.default.rawValue

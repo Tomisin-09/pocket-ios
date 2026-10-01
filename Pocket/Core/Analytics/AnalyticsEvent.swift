@@ -18,10 +18,15 @@ import Foundation
 /// - **Nothing that grades playing** (ADR 0070). No mastery values, no achieved tempo, no accuracy.
 ///   Pocket does not judge how well you played and the telemetry must not create a back door to it.
 ///
-/// The set is kept deliberately small — **eighteen** events, nothing per-beat or per-tap — both
+/// The set is kept deliberately small — **fourteen** events, nothing per-beat or per-tap — both
 /// because a large one goes unread and because the hosted free tier is 20k events/month. (It was
 /// thirteen when ADR 0120 wrote that number, and this sentence said "~13" until the count was
 /// checked; `everyEvent` below is the list, and `AnalyticsEventTests` pins its size.)
+///
+/// **Retired names, never to be reused** (ADR 0237 D8): `paywall_shown`, `paywall_dismissed`,
+/// `purchase_completed` and `restore_completed` left with the paywall when Red Moon became free. An
+/// event that reused one would land on the old series in the dashboard and read as continuous with
+/// it.
 enum AnalyticsEvent: Equatable {
 
     // MARK: - Engagement
@@ -92,9 +97,9 @@ enum AnalyticsEvent: Equatable {
 
     /// An archive was read back in (ADR 0188 S3).
     ///
-    /// **Not `restoreCompleted`** — that name is taken, and by a different thing: a StoreKit purchase
-    /// restore. Two events called "restore" on one dashboard would be a reporting bug nobody would
-    /// notice until they were being read as one number.
+    /// **Not `restoreCompleted`** — that name belonged to a different thing, a purchase restore,
+    /// and is retired rather than free (ADR 0237 D8). Two events called "restore" on one
+    /// dashboard would be a reporting bug nobody would notice until they were being read as one number.
     ///
     /// `alreadyPresent` is the number worth watching, the way `orphanedBlocks` is for a received
     /// routine. It separates the two cases D6 reasoned about with no evidence: a restore into an
@@ -102,21 +107,6 @@ enum AnalyticsEvent: Equatable {
     /// one counts what the skip rule left alone. If that number is always zero, merge-only was free;
     /// if it rarely is, players are using this as a merge and the no-replace decision is load-bearing.
     case archiveRestored(itemsAdded: Int, alreadyPresent: Int, takeFiles: Int)
-
-    // MARK: - Monetization
-
-    /// A Pro gate presented the paywall. The trigger names *which* surface was locked — the single
-    /// highest-value question this pipeline answers, because it is the evidence behind every
-    /// free-vs-Pro boundary decision.
-    case paywallShown(trigger: PaywallTrigger)
-
-    case paywallDismissed(trigger: PaywallTrigger, purchased: Bool)
-
-    case purchaseCompleted(product: SubscriptionProduct, trial: Bool)
-
-    /// A restore finished. `restored` is false when the restore found no entitlement — the
-    /// difference between "restore works" and "restore is being tried and failing".
-    case restoreCompleted(restored: Bool)
 
     // MARK: - Health
 
@@ -144,7 +134,7 @@ extension AnalyticsEvent {
     /// case and forgetting its sample are now **one edit in one file**, three lines apart, instead of
     /// two edits in two targets — and the compiler puts the cases and the samples on the same screen.
     ///
-    /// Not `#if DEBUG`: eighteen enum values carrying no strings cost nothing in a release binary,
+    /// Not `#if DEBUG`: fourteen enum values carrying no strings cost nothing in a release binary,
     /// and `AnalyticsSink.RecordingSink` next door already declines the same guard for the same
     /// reason — a conditional is another way for two things to disagree.
     ///
@@ -164,10 +154,6 @@ extension AnalyticsEvent {
         .exerciseReceived(template: .picking),
         .archiveExported(includesTakeAudio: true, takes: 12),
         .archiveRestored(itemsAdded: 40, alreadyPresent: 8, takeFiles: 12),
-        .paywallShown(trigger: .newExercise(.scales)),
-        .paywallDismissed(trigger: .routine(.play), purchased: true),
-        .purchaseCompleted(product: .annual, trial: true),
-        .restoreCompleted(restored: false),
         .micPermission(outcome: .granted)
     ]
 }
@@ -192,10 +178,6 @@ extension AnalyticsEvent {
         case .exerciseReceived: return "exercise_received"
         case .archiveExported: return "archive_exported"
         case .archiveRestored: return "archive_restored"
-        case .paywallShown: return "paywall_shown"
-        case .paywallDismissed: return "paywall_dismissed"
-        case .purchaseCompleted: return "purchase_completed"
-        case .restoreCompleted: return "restore_completed"
         case .micPermission: return "mic_permission"
         }
     }
@@ -253,25 +235,6 @@ extension AnalyticsEvent {
                     "already_present": .number(alreadyPresent),
                     "take_files": .number(takeFiles)]
 
-        // Two axes, not one composite string: `trigger` stays the coarse six-way "which capability
-        // was locked" and `detail` narrows it to the template or routine action, so the dashboard
-        // can break down at either level.
-        case let .paywallShown(trigger):
-            return ["trigger": .text(trigger.reportingName),
-                    "detail": .text(trigger.reportingDetail ?? "none")]
-
-        case let .paywallDismissed(trigger, purchased):
-            return ["trigger": .text(trigger.reportingName),
-                    "detail": .text(trigger.reportingDetail ?? "none"),
-                    "purchased": .flag(purchased)]
-
-        case let .purchaseCompleted(product, trial):
-            return ["product": .text(product.rawValue),
-                    "trial": .flag(trial)]
-
-        case let .restoreCompleted(restored):
-            return ["restored": .flag(restored)]
-
         case let .micPermission(outcome):
             return ["outcome": .text(outcome.rawValue)]
         }
@@ -304,7 +267,7 @@ enum PracticeKind: String, CaseIterable {
 /// There is no `planner` case: a planner session materialises an ordinary `Routine` and plays
 /// through `RoutinePlayerView` like any other, so nothing at the run site could distinguish it and
 /// the case could never be emitted. Planner interest is already legible from
-/// `routine_created(generated: true)` and `paywall_shown(trigger: planner)`.
+/// `routine_created(generated: true)`.
 enum PracticeSource: String, CaseIterable {
     case standalone
     case routine
@@ -341,12 +304,6 @@ enum Tool: String, CaseIterable {
     case improvise
     /// Writing a tab on the neck (ADR 0235). Nothing written is sent; this counts that the writer opened.
     case tabWriter = "tab_writer"
-}
-
-/// Which Red Moon Pro product was bought.
-enum SubscriptionProduct: String, CaseIterable {
-    case monthly
-    case annual
 }
 
 /// The outcome of a microphone permission request.

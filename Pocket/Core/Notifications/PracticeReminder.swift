@@ -6,9 +6,9 @@ import UserNotifications
 /// notification requests and the stored schedules. Every *decision* is delegated to
 /// `PracticeReminderPlan`, which is pure and unit-tested; this type only does what a test cannot.
 ///
-/// This is the third instance of a shape the app already runs twice (`TrialReminder`, ADR 0144 D6;
-/// `DiagnosticsRecorder`, ADR 0183 D5), for the reason all three share: nothing here fails loudly.
-/// A reminder that should not have fired looks like nothing at all until it lands on a device.
+/// It shares its shape with `DiagnosticsRecorder` (ADR 0183 D5), and with the trial reminder that
+/// went with the paywall (ADR 0237), for the reason they all share: nothing here fails loudly. A
+/// reminder that should not have fired looks like nothing at all until it lands on a device.
 ///
 /// **Storage is `UserDefaults`, not SwiftData.** ADR 0186 adds no `@Model`, no field and no
 /// migration — one schedule per routine, JSON under a `uid`-keyed name. A reminder is a setting, not
@@ -28,11 +28,14 @@ final class PracticeReminder {
     /// Whether this instance talks to the system notification centre at all — `false` in previews
     /// and unit tests.
     ///
-    /// Deliberately a **flag, not a stored `UNUserNotificationCenter`**, and the reason is inherited
-    /// rather than rediscovered: the centre is not `Sendable` in the SDK CI builds against (Xcode
-    /// 16) though it is in a newer one, so holding it as a property of a `@MainActor` type and
-    /// passing it into an async context **compiles clean locally and fails CI**. See
-    /// `TrialReminder.usesSystemNotifications`, which pays for this lesson in full.
+    /// Deliberately a **flag, not a stored `UNUserNotificationCenter`**. Holding the centre as a
+    /// property of a `@MainActor` type puts it in the actor's isolation region, and the centre is not
+    /// `Sendable` in the SDK CI builds against (Xcode 16) though it is in a newer one — so passing it
+    /// into an async context **compiles clean locally and fails CI** with *"sending 'notifications'
+    /// risks causing data races"*. The trial reminder paid for that lesson first. Storing a `Bool`
+    /// and reaching for `.current()` at the point of use removes the boundary crossing rather than
+    /// annotating around it — and `UNUserNotificationCenter` has no public initialiser, so a stored
+    /// centre could only ever have been `.current()` or `nil`: always this flag in a costume.
     private let usesSystemNotifications: Bool
 
     /// **The observable state, and the reason it is held in memory at all.**
@@ -174,13 +177,12 @@ final class PracticeReminder {
     /// longer resolves, and every stored schedule likewise.
     ///
     /// The delete path cancels too, and that is the version which looks correct in review and fails
-    /// on a path nobody listed: a cascade delete, a Pro-lapse sweep or a future bulk action can
-    /// remove a routine without routing through the row-delete handler. `getPendingNotificationRequests`
+    /// on a path nobody listed: a cascade delete or a future bulk action can remove a routine without routing through the row-delete handler. `getPendingNotificationRequests`
     /// is the only source of truth about what the **system** still holds — the app's own bookkeeping
     /// is exactly what would be wrong in that case.
     ///
-    /// It matters more here than the same shape does for the trial reminder. An orphan does not sit
-    /// quietly in a list waiting to be found; it reaches the player on their lock screen, outside the
+    /// It matters because an orphan does not sit quietly in a list waiting to be found; it reaches
+    /// the player on their lock screen, outside the
     /// app, naming something the app has already forgotten. This is ADR 0151 — *a take outlives its
     /// loop* — with the wreckage in a place the app cannot see.
     func reconcile(liveRoutineUIDs: Set<UUID>) async {

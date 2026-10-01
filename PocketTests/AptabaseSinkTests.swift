@@ -46,12 +46,12 @@ final class AptabaseSinkTests: XCTestCase {
         let tool = AptabaseSink.props(for: .toolOpened(tool: .tuner))
         XCTAssertEqual(tool["tool"] as? String, "tuner")
 
-        let restore = AptabaseSink.props(for: .restoreCompleted(restored: true))
-        XCTAssertEqual(restore["restored"] as? Bool, true)
+        let routine = AptabaseSink.props(for: .routineCreated(items: 5, generated: true))
+        XCTAssertEqual(routine["generated"] as? Bool, true, "Flags must stay Bool, not become text.")
     }
 
     func testEveryPayloadKeySurvivesTheMapping() {
-        let event = AnalyticsEvent.paywallDismissed(trigger: .newExercise(.scales), purchased: false)
+        let event = AnalyticsEvent.practiceStarted(kind: .routine, source: .standalone, sinceInstall: .week1)
         XCTAssertEqual(Set(AptabaseSink.props(for: event).keys), Set(event.payload.keys),
                        "A dropped key is a breakdown that silently goes empty.")
     }

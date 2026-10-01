@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The **"Metronome sound"** picker (ADR 0114), hosted by *Settings ▸ Sound & feel*. One row per
-/// `ClickTimbre`; all are free — no Pro gate. The live metronome picks up the choice at its next
+/// `ClickTimbre`. The live metronome picks up the choice at its next
 /// playback start (`ClickVoice.loadTimbre`).
 ///
 /// **One tap chooses and plays (ADR 0162 D5).** The row used to carry two affordances at opposite

@@ -106,10 +106,8 @@ struct PracticeReminderSection: View {
 
     /// A routine's name, when it is due, and a way in.
     ///
-    /// **It opens `RoutineReminderSheet`, not the routine.** Every other door into a routine is
-    /// behind `proGated(.routine)` (ADR 0144 D4); this one needs no gate because it reaches no Pro
-    /// surface — only the reminder, which the player already owns. See that sheet for why turning a
-    /// notification *off* must never be the gated half.
+    /// **It opens `RoutineReminderSheet`, not the routine** — only the reminder, which the player
+    /// already owns. See that sheet for why.
     private func reminderRow(_ entry: RoutineReminderTarget) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {

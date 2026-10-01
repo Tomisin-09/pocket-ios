@@ -77,10 +77,10 @@ struct AboutSection: View {
 
             // Apple's standard EULA (the licence that governs use of the app on the
             // App Store) applies by default when we ship no custom terms — see
-            // docs/app-store-license-obligations.md. Surfacing the link here satisfies
-            // the "Terms of Use (EULA)" disclosure Apple requires once auto-renewable
-            // subscriptions ship, and is honest for v1. Swap for a hosted custom-ToS URL
-            // if/when the Oracle AI tier introduces its own terms (ADR 0092).
+            // docs/app-store-license-obligations.md. Red Moon sells nothing (ADR 0237), so no
+            // store rule requires the link; it stays because the licence does apply and a
+            // player should be able to read it. Swap for a hosted custom-ToS URL if/when the
+            // Oracle introduces its own terms (ADR 0092).
             Link(destination: Self.privacyPolicy) {
                 LabeledContent("Privacy Policy") {
                     Image(systemName: "arrow.up.right")

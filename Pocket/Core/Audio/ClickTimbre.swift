@@ -13,8 +13,7 @@ enum ClickLevel: Equatable, CaseIterable { case accent, beat, subdivision }
 ///
 /// **Hybrid-ready** (the v2 direction): the abstraction is "a timbre supplies samples for a level,"
 /// so a future case could load a bundled recording instead of synthesizing — without touching
-/// `ClickVoice`. Every current case synthesizes; there are no bundled samples yet. All timbres are
-/// **free** (ADR 0114): sound choice is quality-of-life, not a Red Moon Pro lever (ADR 0112).
+/// `ClickVoice`. Every current case synthesizes; there are no bundled samples yet.
 enum ClickTimbre: String, CaseIterable, Identifiable {
     /// The original crisp digital tick — the default, byte-for-byte unchanged from before timbres
     /// existed, so an install that never chooses hears exactly what it always did.

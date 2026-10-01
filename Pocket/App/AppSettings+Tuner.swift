@@ -12,8 +12,7 @@ import Foundation
 extension AppSettings {
 
     /// Reference-pitch (concert A) calibration range offered by the tuner, in Hz. A440 is the
-    /// default; A432–A446 covers the ensembles a player might tune to. Free — unlike Fender, we
-    /// don't gate calibration behind a paid tier (our Pro line is author-vs-run, ADR 0112).
+    /// default; A432–A446 covers the ensembles a player might tune to.
     static var tunerReferenceRange: ClosedRange<Int> { 432...446 }
 
     /// The tuner's default reference pitch, standard concert A.

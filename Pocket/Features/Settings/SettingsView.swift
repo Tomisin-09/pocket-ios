@@ -4,7 +4,7 @@ import SwiftUI
 /// The **Settings hub** (ADR 0162) — a short list of destinations, pushed from the Home toolbar gear.
 ///
 /// This was thirteen sections in one flat `Form`, grown one section per ADR in the order the ADRs
-/// landed. It is now ten rows that each push a screen owning one coherent group, which is the shape
+/// landed. It is now nine rows that each push a screen owning one coherent group, which is the shape
 /// `ToolkitView` (ADR 0096) already uses and the shape the platform's own Settings uses — so it costs
 /// the player no new idea. ADR 0050 chose a push over a sheet *"so it can grow sub-screens"*; this is
 /// that affordance finally being spent.
@@ -21,11 +21,6 @@ import SwiftUI
 struct SettingsView: View {
     /// The local artist profile (ADR 0113); drives the "You" row's summary. At most one row.
     @Query private var profiles: [Profile]
-    @Environment(\.isPro) private var isPro
-    /// **Optional** for the same reason `TrialCountdownRow` makes it optional: previews don't inject a
-    /// `TrialReminder`, and a non-optional `@Environment(Observable.self)` traps when it's missing.
-    /// Absent reminder = no trial, which is the right answer in a preview anyway.
-    @Environment(TrialReminder.self) private var trialReminder: TrialReminder?
 
     // Read only to summarise the rows — each destination owns the binding that writes them.
     @AppStorage(AppSettings.Key.appearance) private var appearance = AppearancePreference.system
@@ -42,13 +37,11 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            // State — who you are and what you have — rather than preferences, so it sits above them.
+            // State — who you are — rather than a preference, so it sits above them. It shared this
+            // group with the subscription row until the app went free (ADR 0237 D7).
             Section {
                 NavigationLink { YouSettingsView() } label: {
                     SettingsHubRow(icon: "person.crop.circle", title: "You", value: youSummary)
-                }
-                NavigationLink { ProSettingsView() } label: {
-                    SettingsHubRow(icon: "moon.stars", title: "Red Moon Pro", value: proSummary)
                 }
             }
 
@@ -94,7 +87,7 @@ struct SettingsView: View {
             // Hidden during a screenshot shoot as well as in release. The footer says it plainly —
             // never present in a shipping build — and a figure in the user manual is a picture of
             // the shipping build, so a Debug-only tenth destination in it is simply wrong (ADR 0165).
-            // The manual's own alt text for this screen lists the ten that ship.
+            // The manual's own alt text for this screen lists the nine that ship.
             #if DEBUG
             if !ScreenshotSeed.isShooting {
                 Section {
@@ -126,14 +119,6 @@ struct SettingsView: View {
         return "\(name) · \(instrument)"
     }
 
-    /// A running trial outranks the entitlement — it's the thing with a deadline on it (ADR 0144 D6).
-    private var proSummary: String {
-        if let days = trialReminder?.daysRemaining() {
-            return "Trial · \(days) day\(days == 1 ? "" : "s")"
-        }
-        return isPro ? "Active" : "Free"
-    }
-
     /// Says what the setting *does*, not whether a thing called "privacy" is on — "Privacy · On" would
     /// be genuinely ambiguous about which way the switch points.
     private var privacySummary: String {
@@ -147,12 +132,10 @@ struct SettingsView: View {
         .environment(\.horizontalSizeClass, .regular)
         .frame(width: 1024, height: 900)
         .modelContainer(for: Profile.self, inMemory: true)
-        .environment(StoreManager())
 }
 
 #Preview {
     NavigationStack { SettingsView() }
         .preferredColorScheme(.dark)
         .modelContainer(for: Profile.self, inMemory: true)
-        .environment(StoreManager())
 }

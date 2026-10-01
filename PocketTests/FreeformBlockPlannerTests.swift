@@ -99,12 +99,6 @@ final class FreeformBlockPlannerTests: XCTestCase {
         XCTAssertEqual(ExerciseTemplate(storage: "freeform"), .freeform)
     }
 
-    func testAuthoringAFreeformBlockIsPro() {
-        // F7 — creating one is authoring; running an existing one is free, the line every template
-        // sits on.
-        XCTAssertEqual(ExerciseTemplate.freeform.authoringTier, .pro)
-    }
-
     func testFreeformCarriesItsInstructionsThroughCreation() {
         // The consequence the ADR flags as the worst possible failure: the instructions *are* the
         // exercise, so anything that builds one and drops them has lost the drill, not a detail.

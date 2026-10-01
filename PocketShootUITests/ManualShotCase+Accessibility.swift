@@ -3,7 +3,7 @@ import XCTest
 /// The accessibility half of the shoot (ADR 0213).
 ///
 /// **Why this rides the shoot rather than owning a walk.** An accessibility audit needs the app in
-/// every state it has, and the shoot already erases, seeds, unlocks and drives sixty-odd of them —
+/// every state it has, and the shoot already erases, seeds and drives sixty-odd of them —
 /// navigation that stays correct because the manual's figures depend on it. A second walk written
 /// for the audit would be a copy of that, maintained by nobody, and it would rot the first time a
 /// sheet moved. So the audit is an *attachment*, not a test: every `capture` already photographs a

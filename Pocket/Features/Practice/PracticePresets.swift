@@ -313,7 +313,7 @@ enum PracticePresets {
     /// on an earlier build, before the slug field existed. Fetch **all** exercises (never an optional
     /// `#Predicate` — `presetSlug != nil` starves the main thread) and, for any with no slug yet,
     /// stamp the shipped spec whose name + template match. A renamed preset won't match and stays
-    /// user-authored — acceptable, since players who had the app before the paywall are grandfathered.
+    /// user-authored, which costs it nothing but the provenance marker.
     /// Guarded so it runs at most once; safe to call on every launch after `seedIfNeeded`.
     static func backfillPresetSlugsIfNeeded(into context: ModelContext,
                                             defaults: UserDefaults = .standard) {

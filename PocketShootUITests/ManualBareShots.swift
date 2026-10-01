@@ -17,8 +17,9 @@ final class ManualBareShots: ManualShotCase {
     /// `songs/empty-library` — the library with no songs in it.
     ///
     /// Seeded launch arguments are omitted; `-uiTesting` is not, and is doing real work here. Without
-    /// it the song library is behind the Pro wall, so the figure would be a paywall rather than an
-    /// empty state. First-launch seeding still runs — six exercises and a routine — and writes **no
+    /// it the first-launch intake comes up over Home, so the shoot would meet a sheet rather than the
+    /// Song library card. (It also used to unlock the library from behind the Pro wall, which went
+    /// with ADR 0237.) First-launch seeding still runs — six exercises and a routine — and writes **no
     /// song**, which is why an unseeded device is an empty library rather than an empty app.
     ///
     /// All three of the empty state's parts are required, because "the list is empty" is also true of

@@ -43,7 +43,7 @@ final class AnalyticsPolicyTests: XCTestCase {
         defer { Analytics.resetForTesting() }
 
         Analytics.send(.loopCreated)
-        Analytics.send(.paywallShown(trigger: .planner))
+        Analytics.send(.micPermission(outcome: .granted))
 
         XCTAssertTrue(sink.events.isEmpty, "The gate leaked events with consent off.")
     }

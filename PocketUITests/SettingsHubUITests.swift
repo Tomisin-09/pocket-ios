@@ -24,7 +24,7 @@ final class SettingsHubUITests: UITestCase {
 
         // The rows are NavigationLinks wrapping a LabeledContent, so match by label prefix across any
         // element type rather than assuming a button/cell trait (the ToolkitUITests lesson).
-        for title in ["You", "Red Moon Pro", "Appearance", "Sound & feel",
+        for title in ["You", "Appearance", "Sound & feel",
                       "Practice", "Routines", "Song player", "Privacy", "Help & About"] {
             XCTAssertTrue(firstElement(in: app, labelStartingWith: title).waitForExistence(timeout: Self.uiTimeout),
                           "\(title) row missing from the Settings hub")

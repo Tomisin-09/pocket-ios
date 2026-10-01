@@ -8,14 +8,14 @@ import Observation
 /// unit-tested; this type only does the things a test can't.
 ///
 /// **`usesSystemMetrics` is a flag, never a stored `MXMetricManager`.** Straight from
-/// `TrialReminder`'s doc comment, which learned it the hard way: holding a non-`Sendable` OS
+/// `PracticeReminder.usesSystemNotifications`, a lesson this app learned the hard way: holding a non-`Sendable` OS
 /// singleton as a property of a `@MainActor` type puts it in the actor's isolation region and
 /// compiles clean locally while failing CI's stricter Xcode 16 with *"sending risks causing data
 /// races"*. Storing a `Bool` and reaching for `.shared` at the point of use removes the crossing
 /// rather than annotating around it.
 ///
 /// ⚠ **`MXMetricManager` holds its subscribers weakly.** This object must be owned for the app's
-/// lifetime — it is a `@State` at the `PocketApp` root beside `store` and `trialReminder` — or the
+/// lifetime — it is a `@State` at the `PocketApp` root beside `practiceReminder` — or the
 /// subscription is silently dropped and the screen stays empty forever with nothing to notice.
 @MainActor
 @Observable

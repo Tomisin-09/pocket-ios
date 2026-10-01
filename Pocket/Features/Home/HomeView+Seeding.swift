@@ -18,8 +18,8 @@ extension HomeView {
     /// library starts empty and fills with music they actually practise.
     func seedFirstRunContent() async {
         PracticePresets.seedIfNeeded(into: context)
-        // Stamp provenance onto drills seeded before the slug existed, so the free-taste
-        // run allowance recognises them (ADR 0112). Both backfills run once, then no-op.
+        // Stamp provenance onto drills seeded before the slug existed (ADR 0112). Both
+        // backfills run once, then no-op.
         PracticePresets.backfillPresetSlugsIfNeeded(into: context)
         // Move the retired click subdivision into `notesPerBeat` and bind every measured
         // command to its rhythm (ADR 0121), so no later read branches on provenance.

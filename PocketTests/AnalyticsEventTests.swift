@@ -21,16 +21,17 @@ import XCTest
 /// but the two are now three lines apart in one file rather than in separate targets, which is the
 /// difference between a miss you see and a miss you count for.
 ///
-/// A **fourth** instance of the same drift was found while fixing the third, in this very file:
-/// `testTextValuesAreOnlyEnumRawValues` enumerated `PaywallTrigger`'s reporting names as six string
-/// literals against a `reportingName` that returns nine, and stayed green because the samples only
-/// ever exercised two triggers. It now reads `PaywallTrigger.everyTrigger` and checks **every** one.
+/// A **fourth** instance of the same drift was found while fixing the third, in this very file: the
+/// permitted-text list enumerated the paywall trigger's reporting names as six string literals
+/// against nine the type returned, and stayed green because the samples only ever exercised two
+/// triggers. The trigger went with the paywall (ADR 0237); the lesson stays — `permittedText` reads
+/// every list from its enum and retypes none.
 final class AnalyticsEventTests: XCTestCase {
 
     // MARK: - Wire format
 
     func testVocabularyIsComplete() {
-        XCTAssertEqual(AnalyticsEvent.everyEvent.count, 18,
+        XCTAssertEqual(AnalyticsEvent.everyEvent.count, 14,
                        "The vocabulary changed. Pin the new event's name and payload here, and "
                        + "check it against the 20k/month free tier before shipping it.")
     }
@@ -50,13 +51,20 @@ final class AnalyticsEventTests: XCTestCase {
                         "exercise_received",
                         "archive_exported",
                         "archive_restored",
-                        "paywall_shown",
-                        "paywall_dismissed",
-                        "purchase_completed",
-                        "restore_completed",
                         "mic_permission"],
                        "An event name changed. This breaks the dashboard series permanently — "
                        + "rename the Swift case instead.")
+    }
+
+    /// ADR 0237 D8: the four monetization events left with the paywall, and their names stay retired.
+    /// A new event wearing one would land on the old series in the dashboard and read as continuous
+    /// with it — the same permanent break `testEventNamesAreFrozen` guards against, arriving from the
+    /// other side.
+    func testRetiredNamesAreNeverReused() {
+        let retired: Set<String> = ["paywall_shown", "paywall_dismissed",
+                                    "purchase_completed", "restore_completed"]
+        XCTAssertTrue(retired.isDisjoint(with: AnalyticsEvent.everyEvent.map(\.name)),
+                      "A retired event name is back in the vocabulary. Pick a new name.")
     }
 
     func testEventNamesAreUnique() {
@@ -80,59 +88,28 @@ final class AnalyticsEventTests: XCTestCase {
             ["template"],
             ["includes_take_audio", "takes"],
             ["already_present", "items_added", "take_files"],
-            ["detail", "trigger"],
-            ["detail", "purchased", "trigger"],
-            ["product", "trial"],
-            ["restored"],
             ["outcome"]
         ], "A payload key changed — the dashboard breakdown built on it will go empty.")
     }
 
     // MARK: - The privacy guarantee
 
-    /// Every string the vocabulary is allowed to emit, gathered from the enums it draws on.
-    ///
-    /// A property rather than a local, because two tests need it: the sampled events below, and
-    /// **every** paywall trigger — which is the check that was missing.
+    /// Every string the vocabulary is allowed to emit, gathered from the enums it draws on — each read
+    /// from the enum's own list, never retyped here.
     private var permittedText: Set<String> {
         var permitted = Set<String>(["none"])   // the explicit "no template chosen" sentinel
         permitted.formUnion(PracticeKind.allCases.map(\.rawValue))
         permitted.formUnion(PracticeSource.allCases.map(\.rawValue))
         permitted.formUnion(LatencyBucket.allCases.map(\.rawValue))
         permitted.formUnion(Tool.allCases.map(\.rawValue))
-        permitted.formUnion(SubscriptionProduct.allCases.map(\.rawValue))
         permitted.formUnion(MicOutcome.allCases.map(\.rawValue))
         permitted.formUnion(ExerciseTemplate.allCases.map(\.rawValue))
         permitted.formUnion(Instrument.allCases.map(\.rawValue))
-        // `PaywallTrigger` gained associated values (ADR 0120) so it is no longer `CaseIterable`.
-        // **Read from `everyTrigger`, never retyped here.** The literal list this replaces named six
-        // of the nine `reportingName` returns — `received_exercise`, `home` and `launch` were absent,
-        // and `.launch` is emitted by `PaywallHost` on every locked cold launch. It never failed,
-        // because the samples above only exercise `.newExercise` and `.routine`, so the missing three
-        // were never asked about. A hand-kept list describing an enum drifts wherever it is kept.
-        permitted.formUnion(PaywallTrigger.everyTrigger.map(\.reportingName))
-        permitted.formUnion(RoutineGate.allCases.map(\.rawValue))
-        permitted.formUnion(HomeGate.allCases.map(\.rawValue))
         return permitted
     }
 
     func testTextValuesAreOnlyEnumRawValues() {
         assertOnlyPermittedText(in: AnalyticsEvent.everyEvent)
-    }
-
-    /// The assertion the six-literal list could not make.
-    ///
-    /// `everyEvent` samples two of the nine triggers, so seven of them had **never had their payload
-    /// inspected by any test** — which is why three missing names sat in the permitted list without
-    /// failing anything. Building both paywall events from every trigger closes that: a new trigger
-    /// whose `reportingDetail` returns something that is not an enum raw value now fails here, on the
-    /// commit that adds it.
-    func testEveryPaywallTriggerEmitsOnlyPermittedText() {
-        let events = PaywallTrigger.everyTrigger.flatMap {
-            [AnalyticsEvent.paywallShown(trigger: $0),
-             AnalyticsEvent.paywallDismissed(trigger: $0, purchased: false)]
-        }
-        assertOnlyPermittedText(in: events)
     }
 
     private func assertOnlyPermittedText(in events: [AnalyticsEvent],

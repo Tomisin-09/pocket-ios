@@ -71,7 +71,6 @@ enum RoutinePresets {
 
     /// The slug of the seeded starter routine, Morning Routine. A **frozen** provenance identifier:
     /// the value predates the routine's rename from Morning Warm-up and never follows a rename.
-    /// (Called `freeTasteSlug` until ADR 0237 removed the free taste it named.)
     static let starterSlug = "morning-warm-up"
 
     /// Build one preset routine (un-inserted) from a name→exercise lookup, resolving each exercise

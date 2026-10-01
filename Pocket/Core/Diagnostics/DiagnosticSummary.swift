@@ -61,8 +61,8 @@ struct DiagnosticEvent: Codable, Equatable, Sendable, Identifiable {
 /// reads as a row, and how the whole lot renders as the single line a support message can carry.
 ///
 /// **Pure, and it imports nothing but Foundation.** `DiagnosticsRecorder` is the half that touches
-/// MetricKit and it holds no judgement at all — the same split as `TrialReminderPlan` and
-/// `TrialReminder` (ADR 0144 D6), and for the same reason: the OS singleton can't be driven from a
+/// MetricKit and it holds no judgement at all — the same split as `PracticeReminderPlan` and
+/// `PracticeReminder` (ADR 0186), and for the same reason: the OS singleton can't be driven from a
 /// test, so nothing worth asserting may live behind it.
 enum DiagnosticSummary {
 
