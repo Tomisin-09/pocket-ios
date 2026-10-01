@@ -86,6 +86,26 @@ enum PracticeReminderPlan {
         return UUID(uuidString: String(rest[rest.startIndex..<dot]))
     }
 
+    /// The fixed id of the **trial-ending reminder** (ADR 0144 D6), which went with the rest of the
+    /// paywall when Red Moon became free (ADR 0237).
+    ///
+    /// It outlives the feature on purpose (0237 D5). A tester who started a sandbox trial can still
+    /// have that notification pending, and with the code that scheduled it gone, nothing else would
+    /// ever cancel it: it would fire once, on the lock screen, about a subscription the app no longer
+    /// has. **Never reuse this string** for a new request, because the launch sweep removes it.
+    static let retiredTrialReminderIdentifier = "click.decooperations.pocket.trial-ending"
+
+    /// Which of the system's pending requests the launch sweep removes: every practice reminder whose
+    /// routine no longer exists (D3), and the retired trial reminder (ADR 0237 D5). Anything else is
+    /// not this app's to cancel and is left alone.
+    static func staleIdentifiers(pending: [String], liveRoutineUIDs: Set<UUID>) -> [String] {
+        pending.filter { identifier in
+            if identifier == retiredTrialReminderIdentifier { return true }
+            guard let uid = routineUID(fromIdentifier: identifier) else { return false }
+            return !liveRoutineUIDs.contains(uid)
+        }
+    }
+
     // MARK: - Deciding
 
     /// The requests a schedule should currently have pending — **empty whenever nothing should

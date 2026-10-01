@@ -1,111 +1,26 @@
 import SwiftUI
 
-/// Bridges the live `StoreManager` into the preview-safe paywall environment (ADR 0112) and hosts the
-/// single shared paywall sheet. Applied **once** at the app root, above `HomeView`:
-/// - publishes `\.isPro` from the store (so every gate re-evaluates when entitlement flips), and
-/// - provides `\.presentPaywall`, which raises the one paywall sheet carrying the trigger.
+/// Hosts the single shared paywall sheet. Applied **once** at the app root, above `HomeView`.
 ///
-/// One host means one paywall sheet for the whole app — a gate anywhere calls `presentPaywall(_:)`
-/// and this is where it appears, over everything.
-///
-/// It also owns ADR 0144 D4's **launch wall**: a dismissible full-screen paywall shown **once per
-/// launch** to a player without Pro. It lives here rather than on `HomeView` because this is the one
-/// view that already knows the entitlement and owns the paywall's presentation.
+/// **Red Moon is free (ADR 0237).** This publishes `\.isPro` as `true` for everyone, so every gate in
+/// the app opens, and the launch wall ADR 0144 D4 put here is gone. The gates themselves, and this
+/// host with them, are deleted in the commits that follow (0237 D2); until then a gate that still
+/// calls `presentPaywall(_:)` can never be reached, because none of them fires once `isPro` is true.
 private struct PaywallHost: ViewModifier {
     @Environment(StoreManager.self) private var store
     /// Re-injected into the paywall alongside the store — the opt-in toggle reads it (ADR 0144 D6).
     @Environment(TrialReminder.self) private var trialReminder
     @State private var trigger: PaywallTrigger?
-    /// The once-per-launch wall (ADR 0144 D4). `@State` on an app-root modifier, so it is per
-    /// *process*: dismiss it and it stays dismissed until the app is launched again. Deliberately not
-    /// `@AppStorage` — a permanently-dismissible wall is invisible after day one, and deliberately not
-    /// per-foreground either, which would make backgrounding mid-practice punitive.
-    @State private var showingLaunchWall = false
-    /// Guards the wall against re-presenting within one launch (e.g. after a purchase that is later
-    /// refunded, or an entitlement refresh that re-runs).
-    @State private var launchWallShown = false
-    /// **The first-launch intake wins the screen** (ADR 0113). `HomeView` raises its own
-    /// `fullScreenCover` from `onAppear`, and this host is its *parent* — two covers competing across
-    /// that boundary is how one of them silently fails to present. The ladder in
-    /// `maybeOfferProfileMoment` already says first-run moments come first, so the wall waits behind
-    /// it and appears the moment the intake is dismissed. A fresh install therefore meets the app
-    /// before it meets the offer, which is also the better order.
-    @AppStorage(AppSettings.Key.artistIntakeSeen) private var artistIntakeSeen = false
-    /// Whether the wall has already spent its single ADR 0219 deferral. `@AppStorage`, not `@State`:
-    /// the whole point is that it survives the launch it was set on.
-    @AppStorage(AppSettings.Key.launchWallDeferred) private var launchWallDeferred = false
-    /// The trigger of the presentation now on screen, kept because `onDismiss` runs after
-    /// `$trigger` has already been cleared by `.sheet(item:)`.
-    @State private var presentedTrigger: PaywallTrigger?
-    /// Entitlement as it stood when the sheet went up, so "purchased" means *became* Pro during
-    /// this presentation rather than "is Pro", which an existing subscriber would always satisfy.
-    @State private var wasProAtPresent = false
 
     func body(content: Content) -> some View {
         content
-            .environment(\.isPro, store.isPro)
-            // Because every paywall in the app comes up here, this is the one place that has to
-            // report a gate firing (ADR 0120) — no gate call site knows or cares about analytics.
-            .environment(\.presentPaywall, { newTrigger in
-                presentedTrigger = newTrigger
-                wasProAtPresent = store.isPro
-                trigger = newTrigger
-                Analytics.send(.paywallShown(trigger: newTrigger))
-            })
-            .sheet(item: $trigger, onDismiss: reportDismissal) { trigger in
-                // Re-inject the store so the sheet's own environment carries it regardless of how
-                // SwiftUI propagates observables into sheets.
+            .environment(\.isPro, true)
+            .environment(\.presentPaywall, { newTrigger in trigger = newTrigger })
+            .sheet(item: $trigger) { trigger in
                 PaywallView(trigger: trigger)
                     .environment(store)
                     .environment(trialReminder)
             }
-            .fullScreenCover(isPresented: $showingLaunchWall, onDismiss: reportLaunchWallDismissal) {
-                PaywallView(trigger: .launch)
-                    .environment(store)
-                    .environment(trialReminder)
-            }
-            // Wait for the **first** entitlement scan before deciding. `isPro` is `false` until the
-            // async scan lands, so raising the wall on `!isPro` alone would flash it at every paying
-            // subscriber on every launch. `-uiTesting` forces `debugProOverride = true`, so `isPro` is
-            // already true at first paint and this never fires under UI test (verified: all four
-            // `PocketUITests` files pass the flag).
-            .onChange(of: store.hasResolvedEntitlements, initial: true) { _, _ in
-                maybeShowLaunchWall()
-            }
-            .onChange(of: artistIntakeSeen) { _, _ in maybeShowLaunchWall() }
-    }
-
-    private func maybeShowLaunchWall() {
-        guard artistIntakeSeen else { return }
-        guard store.hasResolvedEntitlements, !store.isPro, !launchWallShown else { return }
-        // **The first launch after the intake belongs to the starter track** (ADR 0219). Dismissing
-        // the intake flips `artistIntakeSeen`, which fires this in the same session — so without
-        // this the very first thing a new player met was still a full-screen wall, and Home's one
-        // open door was behind it. They get that launch; every launch after behaves exactly as
-        // ADR 0144 D4 specified.
-        //
-        // Deliberately **one** deferral, latched in `UserDefaults` rather than keyed on whether the
-        // starter track was actually opened. A player who ignores the card must still meet the
-        // offer, and a condition that waits for an action they may never take is a wall that can be
-        // avoided forever by doing nothing — which is not a deferral, it is a deletion.
-        if !launchWallDeferred {
-            launchWallDeferred = true
-            return
-        }
-        launchWallShown = true
-        showingLaunchWall = true
-        Analytics.send(.paywallShown(trigger: .launch))
-    }
-
-    private func reportLaunchWallDismissal() {
-        Analytics.send(.paywallDismissed(trigger: .launch, purchased: store.isPro))
-    }
-
-    private func reportDismissal() {
-        guard let presentedTrigger else { return }
-        Analytics.send(.paywallDismissed(trigger: presentedTrigger,
-                                         purchased: !wasProAtPresent && store.isPro))
-        self.presentedTrigger = nil
     }
 }
 

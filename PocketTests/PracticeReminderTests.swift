@@ -7,7 +7,7 @@ import XCTest
 ///
 /// Constructed with `usesSystemNotifications: false`, so no request is ever scheduled and the test
 /// never touches the notification service. The scheduling itself is device behaviour; the decision
-/// behind it is `PracticeReminderPlanTests`. Same split, and same reason, as `TrialReminderTests`.
+/// behind it is `PracticeReminderPlanTests`.
 @MainActor
 final class PracticeReminderTests: XCTestCase {
 

@@ -191,15 +191,13 @@ final class PracticeReminder {
             defaults.removeObject(forKey: storageKey(stored))
         }
         guard usesSystemNotifications else { return }
-        let pending = await Self.pendingIdentifiers()
-        let orphaned = pending.filter { identifier in
-            guard let uid = PracticeReminderPlan.routineUID(fromIdentifier: identifier)
-            else { return false }   // Not ours — the trial reminder shares this centre.
-            return !liveRoutineUIDs.contains(uid)
-        }
-        guard !orphaned.isEmpty else { return }
+        // The same pass clears the retired trial reminder (ADR 0237 D5): this is already the one
+        // place that asks the system what it is still holding, on every launch.
+        let stale = PracticeReminderPlan.staleIdentifiers(pending: await Self.pendingIdentifiers(),
+                                                          liveRoutineUIDs: liveRoutineUIDs)
+        guard !stale.isEmpty else { return }
         UNUserNotificationCenter.current()
-            .removePendingNotificationRequests(withIdentifiers: orphaned)
+            .removePendingNotificationRequests(withIdentifiers: stale)
     }
 
     /// `nonisolated`, so the non-`Sendable` centre never crosses an isolation boundary — the same
