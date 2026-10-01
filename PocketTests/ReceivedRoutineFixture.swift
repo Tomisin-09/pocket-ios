@@ -101,6 +101,7 @@ enum ReceivedRoutineFixture {
         switch try ReceivedPracticeBuilder.evaluate(data: try encoded(payload)).get() {
         case let .routine(routine): return routine
         case let .exercise(exercise): throw UnexpectedKind(name: exercise.displayName)
+        case let .song(song): throw UnexpectedKind(name: song.displayTitle)
         }
     }
 
@@ -110,6 +111,7 @@ enum ReceivedRoutineFixture {
         switch ReceivedPracticeBuilder.evaluate(data: data) {
         case let .success(.routine(value)): throw UnexpectedlyReadable(name: value.displayName)
         case let .success(.exercise(value)): throw UnexpectedlyReadable(name: value.displayName)
+        case let .success(.song(value)): throw UnexpectedlyReadable(name: value.displayTitle)
         case let .failure(reason): return reason
         }
     }

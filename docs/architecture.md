@@ -2245,6 +2245,32 @@ true (ADR 0150 §118-121).
   indigo and names in the notes lane's teal. `ExportedTabFile` carries a `TabDocument.Source`, not the
   laid-out document, and lays out and writes (`ExportStaging.write`) only in its `FileRepresentation`.
   `TabExportMenu` is the one menu both reading screens use.
+  A song sent to another Red Moon (S4) is several files that have to arrive as one, so it travels as a
+  **`.redmoonpack`** (`PracticePack`, D8), a second declared type beside `.redmoonpractice`, which stays
+  JSON and unchanged. Inside the zip: `practice.json`, a `SharedPractice` of kind `song` whose optional
+  `songs` carries one `SongRecord` and whose optional `senderName` carries the artist name, and
+  `songs/<audioFileName>`. **Both halves already existed**: the writer stages the tree in an outbox
+  folder (`ExportStaging.freshFolder`, the audio hard-linked) and zips it with the archive's own
+  `ArchiveWriter.zip`; the reader is `ZipArchiveReader`. That keeps 0188 D8's rule that the zip method
+  is part of the format: `PracticePackTests` reads packs the writer made, never a fixture.
+  - **What leaves.** `SharedSongBuilder` starts from `ArchiveBuilder.songRecord`, so a receiver reads
+    the shape a backup writes, then strips what is the sender's: mastery, speeds reached, command
+    tempo, the piece and kept versions (the song's tab), snags, span history, notes, collections,
+    links, skills, favourites, dates. Metadata, the tempo grid, every loop's settings and every marker
+    go.
+  - **Reading a stranger's pack.** `PracticePack.read` gates `schemaVersion` **before** any audio is
+    unpacked, requires each song's file to be a plain name in `songs/`, and caps the payload (16 MB)
+    and each song (512 MB), because `ZipArchiveReader.inflate` allocates the size the zip declares.
+    The host copies the pack into `tmp/RedMoonInbox/<uuid>/` while the file is still in scope (a
+    picked URL's scope closes when `open` returns, and the zip is read memory-mapped), unpacks off the
+    main actor, and removes the folder when the preview closes without Add.
+  - **Landing.** `SongImporter.prepareReceived` decodes the waveform, then copies the audio into
+    `Songs/` under a fresh `sourceID`, with no bookmark (there is nothing outside the app to point
+    at). `ReceivedSongBuilder` mints every uid fresh (0188 D1) and follows *same as* and *repeats
+    through* to the new marker uids; it never reads mastery or a piece, whatever the file says. The
+    title comes from `SongCopyName` (pure, D5): the title as sent, or `<title> - <sender> copy` when
+    the library has that title (trimmed, ignoring case), numbered after that. The match is on the
+    title because `sourceID` is minted per import and can't match across phones.
 
 ## Storage (Core/Storage, ADR 0182)
 

@@ -27,7 +27,9 @@ struct YouSettingsView: View {
                     .submitLabel(.done)
                     .onSubmit(commitArtistName)
             } footer: {
-                Text("Your artist name greets you on the home screen. Optional, and it stays on this device.")
+                // ADR 0236 D7: the one way it leaves, said where it's set.
+                Text("Your artist name greets you on the home screen and signs a song you send. Optional, and "
+                     + "it only leaves this device in what you send.")
             }
 
             // The curation fields (ADR 0113 S2) — the intake's four questions, editable any time.

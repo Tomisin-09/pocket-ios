@@ -58,13 +58,21 @@ enum ExportStaging {
     /// A new folder in the outbox, after sweeping the old ones, and the path for `fileName` inside it.
     private nonisolated static func freshPlace(for fileName: String, fileManager: FileManager,
                                                temporaryDirectory: URL?, now: Date) throws -> URL {
+        try freshFolder(fileManager: fileManager, temporaryDirectory: temporaryDirectory, now: now)
+            .appending(path: fileName, directoryHint: .notDirectory)
+    }
+
+    /// A new, empty folder in the outbox, after sweeping the old ones. The practice pack is built in one
+    /// (ADR 0236 D8).
+    nonisolated static func freshFolder(fileManager: FileManager = .default, temporaryDirectory: URL? = nil,
+                                        now: Date = .now) throws -> URL {
         let outbox = (temporaryDirectory ?? fileManager.temporaryDirectory)
             .appending(path: outboxName, directoryHint: .isDirectory)
         sweep(outbox, before: now.addingTimeInterval(-keepFor), fileManager: fileManager)
 
         let folder = outbox.appending(path: UUID().uuidString, directoryHint: .isDirectory)
         try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
-        return folder.appending(path: fileName, directoryHint: .notDirectory)
+        return folder
     }
 
     /// A file name from a stem and an extension, safe to hand to any file system the share sheet

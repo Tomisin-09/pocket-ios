@@ -55,6 +55,7 @@ struct SongDetailsSheet: View {
     /// The map asked for the waveform: once it has closed, this sheet goes too.
     @State private var showWaveformAfterMap = false
     @State private var editing = false
+    @State private var sendingSong = false
     // Inline notes editing: a local draft committed on Update, so the read view only
     // changes when you explicitly save (not keystroke-by-keystroke).
     @State private var editingNotes = false
@@ -82,7 +83,7 @@ struct SongDetailsSheet: View {
                     mapSection
                     // Which file this song plays, and the way to change it (ADR 0152) — the
                     // relink door that doesn't depend on the audio being broken.
-                    SongAudioSection(song: song, replace: replace)
+                    SongAudioSection(song: song, replace: replace, onSend: { sendingSong = true })
                     if !song.collections.isEmpty { collectionsSection }
                     linkedExercisesSection
                     ReferencesSection(owner: song, accent: PocketColor.library,
@@ -155,6 +156,11 @@ struct SongDetailsSheet: View {
         // observes, so the read view refreshes on save.
         .sheet(isPresented: $editing) {
             SongEditSheet(song: song)
+        }
+        // Send this song (ADR 0236 D4), at the sheet's root for `editing`'s reason: raised from the Audio
+        // row inside the `Form`, it would be lost.
+        .sheet(isPresented: $sendingSong) {
+            SendSongSheet(song: song)
         }
     }
 

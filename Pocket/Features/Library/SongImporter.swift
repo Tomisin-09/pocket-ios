@@ -103,6 +103,19 @@ enum SongImporter {
         persist(try prepare(from: url), into: context)
     }
 
+    /// A song that arrived in a pack (ADR 0236 D4), copied in and read like any import. The file is
+    /// already in the app's own `tmp/`, unpacked from the pack, so there is no security scope to open
+    /// and no bookmark to take. A copy that fails fails the receive: with no bookmark behind it, a song
+    /// without its own copy would play nothing. Read before it's copied, so a file that won't decode
+    /// leaves nothing behind in `Songs/`.
+    static func prepareReceived(from url: URL) throws -> Prepared {
+        let (duration, amplitudes) = try WaveformExtractor.extract(from: url)
+        let sourceID = UUID().uuidString
+        let audioFileName = try SongFileStore.adopt(contentsOf: url, sourceID: sourceID)
+        return Prepared(title: title(for: url), duration: duration, amplitudes: amplitudes, bookmark: nil,
+                        sourceID: sourceID, audioFileName: audioFileName)
+    }
+
     // MARK: - The starter track (ADR 0219)
 
     /// Resolve the bundled starter track into the data a `Song` needs.

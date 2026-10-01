@@ -48,6 +48,8 @@ enum ReceiveFailure: Error, Equatable {
                 return "This file says it holds a routine, but the routine is missing."
             case .exercise:
                 return "This file says it holds an exercise, but the exercise is missing."
+            case .song:
+                return "This file says it holds a song, but the song or its audio is missing."
             }
         }
     }

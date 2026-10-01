@@ -43,6 +43,11 @@ full. And a take recorded next to a playing song may have picked that song up th
 
 See [Settings ▸ Your data](reference/settings.md#your-data).
 
+A single take, a song's audio, a song sent with its loops, or a tab can leave the same way, each from
+its own screen: the file is made on your device and handed to the share sheet, and nothing is
+uploaded. A song you **send** carries your artist name, if you've set one, so the person who opens it
+knows who it's from. **Send this song** shows the name before anything is sent.
+
 ## The microphone
 
 The app asks for one system permission, and uses it in exactly two places:
@@ -104,7 +109,9 @@ definition quoted above. There is nothing to justify and no reason to give.
 
 Not your audio. Not your recordings. Not your journal notes, your song names, your file names, your
 artist name, or anything else you have typed or chosen — with the counts on or off. There is no
-profile of you, here or anywhere, because there is no identifier to hang one on.
+profile of you, here or anywhere, because there is no identifier to hang one on. The only way any of
+it leaves is in a file you send yourself, from the share sheet, as
+[Taking a copy out](#taking-a-copy-out) describes.
 
 ## Crashes and freezes
 

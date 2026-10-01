@@ -18,6 +18,10 @@ enum SharedPracticeKind: String, Codable, Sendable, CaseIterable {
     /// One drill on its own (ADR 0209 D1) — the smallest thing a teacher hands over, and the more
     /// frequent one: "try this at 80 this week" is a smaller act than handing over a whole sitting.
     case exercise
+
+    /// One song with its loops and markers (ADR 0236 D4). Always in a `.redmoonpack`, beside its audio,
+    /// so a build that only knows the JSON file never meets one.
+    case song
 }
 
 /// The payload of a shared practice file (ADR 0188).
@@ -80,6 +84,18 @@ struct SharedPractice: Codable, Equatable, Sendable {
     /// The blocks whose units cannot travel, named rather than dropped (D4).
     var placeholders: [SharedBlockPlaceholder] = []
 
+    /// The songs travelling with it (ADR 0236 D4, D6): the one song of a `song` share, or the songs a
+    /// routine's blocks play when it is sent with them. Each names its audio by `audioFileName`, a file
+    /// in the pack's `songs/` folder. Stripped of the sender's practice (`SharedSongBuilder`).
+    ///
+    /// **Optional, and that is load-bearing.** A Codable default does not survive a missing key, and
+    /// every file written before 0236 has none.
+    var songs: [SongRecord]?
+
+    /// The sender's artist name (ADR 0236 D7), shown on the receive preview and used to name a copy of a
+    /// song the receiver already has (D5). `nil` when they have none. Optional for the same reason.
+    var senderName: String?
+
     /// The typed payload kind, or `nil` if this file names one this build does not know.
     var kind: SharedPracticeKind? { SharedPracticeKind(rawValue: kindRaw) }
 
@@ -93,6 +109,8 @@ struct SharedPractice: Codable, Equatable, Sendable {
         case routine
         case exercises
         case placeholders
+        case songs
+        case senderName
     }
 }
 

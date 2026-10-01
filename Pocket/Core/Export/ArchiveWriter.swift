@@ -165,8 +165,11 @@ enum ArchiveWriter {
     /// The zip `NSFileCoordinator` hands back is only guaranteed to exist for the length of the
     /// accessor block, so the copy out has to happen inside it. Both errors are carried out rather
     /// than thrown from the block, because the accessor cannot throw.
-    private nonisolated static func zip(directory: URL, to destination: URL,
-                                        fileManager: FileManager) throws {
+    ///
+    /// Not private: the practice pack (ADR 0236 D8) is zipped by exactly this, because the zip method is
+    /// part of the format and `ZipArchiveReader` is only tested against what this writes.
+    nonisolated static func zip(directory: URL, to destination: URL,
+                                fileManager: FileManager) throws {
         var coordinationError: NSError?
         var copyError: Error?
         NSFileCoordinator().coordinate(readingItemAt: directory, options: .forUploading,

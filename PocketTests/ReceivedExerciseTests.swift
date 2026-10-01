@@ -53,6 +53,7 @@ final class ReceivedExerciseTests: XCTestCase {
         switch try ReceivedPracticeBuilder.evaluate(data: ArchiveCoding.encode(payload)).get() {
         case let .exercise(value): return value
         case let .routine(value): throw Fixture.UnexpectedKind(name: value.displayName)
+        case let .song(value): throw Fixture.UnexpectedKind(name: value.displayTitle)
         }
     }
 

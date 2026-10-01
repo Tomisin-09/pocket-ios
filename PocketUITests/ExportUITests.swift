@@ -136,6 +136,59 @@ final class ExportUITests: UITestCase {
         assertShareSheetOpens(showing: NSPredicate(format: "label ENDSWITH %@", ".pdf"), in: app)
     }
 
+    /// Song details › Audio › **Send this song…** opens the send screen, and **Send…** builds the pack and
+    /// opens the share sheet on it (ADR 0236 D4, D8).
+    @MainActor
+    func testASongSendsAsAPackFromSongDetails() throws {
+        let app = launchApp()
+        let card = app.buttons["Binta by Jack Trader, a song to start on"]
+        XCTAssertTrue(card.waitForExistence(timeout: Self.uiTimeout),
+                      "No Start here card on Home — does this simulator's store already hold songs?")
+        let title = app.buttons["Binta, Jack Trader"]
+        XCTAssertTrue(tap(card, until: title, in: app) || title.waitForExistence(timeout: Self.uiTimeout),
+                      "the starter track didn't open")
+        title.press(forDuration: 1.0)
+
+        let send = app.buttons["Send this song…"]
+        XCTAssertTrue(reveal(send, in: app), "Song details › Audio has no Send this song…")
+        send.tap()
+        XCTAssertTrue(app.navigationBars["Send this song"].waitForExistence(timeout: Self.uiTimeout),
+                      "the send screen didn't open")
+        let sendNow = app.navigationBars["Send this song"].buttons["Send…"]
+        XCTAssertTrue(sendNow.waitForExistence(timeout: Self.uiTimeout), "the send screen has no Send…")
+        sendNow.tap()
+
+        // A file URL's sheet names it without its extension: the pack is named for the song.
+        assertShareSheetOpens(showing: NSPredicate(format: "label == %@", "Binta"), in: app)
+    }
+
+    /// A pack someone sent opens on **Add this song?**, and **Add** lands it in the library as the
+    /// receiver's own (ADR 0236 D4, D5). `-receiveSongPack` builds the pack at launch and opens it as a
+    /// tapped file arrives; everything from there is the real path.
+    @MainActor
+    func testAReceivedSongLandsInTheLibrary() throws {
+        let app = launchApp(extraArguments: [UITestHooks.receivePackArgument])
+        let preview = app.navigationBars["Add this song?"]
+        XCTAssertTrue(preview.waitForExistence(timeout: 30), "the pack didn't open on the receive door")
+        let sentBy = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Sent by Tester")).firstMatch
+        XCTAssertTrue(sentBy.exists, "the preview doesn't say who sent it")
+
+        // Tapped until it takes: on a cold iOS 18.5 simulator a tap the moment the sheet appears lands
+        // and does nothing, and the sheet stays up. Once Add has gone, the landing is only slow.
+        let added = app.alerts["Added"]
+        XCTAssertTrue(tap(preview.buttons["Add"], until: added, in: app) || added.waitForExistence(timeout: 30),
+                      "the song never landed")
+        let said = added.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "“Pack test")).firstMatch
+        XCTAssertTrue(said.exists, "the confirmation doesn't name the song")
+        added.buttons["OK"].tap()
+
+        let library = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Song library,")).firstMatch
+        XCTAssertTrue(library.waitForExistence(timeout: Self.uiTimeout), "no Song library on Home")
+        XCTAssertTrue(tap(library, until: app.navigationBars["Library"], in: app), "the library didn't open")
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Pack test")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: Self.uiTimeout), "the received song isn't in the library")
+    }
+
     // MARK: - Steps
 
     /// A toolbar `Menu` is found but never hittable on CI's iOS 18, so it's tapped by coordinate. A dead

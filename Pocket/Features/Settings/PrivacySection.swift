@@ -54,8 +54,8 @@ struct PrivacySection: View {
             : "On by default, and off the moment you say so. Red"
         return opening
             + " Moon counts which features get used so we know what to improve — anonymously, with "
-            + "no account and no advertising ID. Your playing never leaves this device: not your "
-            + "recordings, your notes, your song names or your artist name."
+            + "no account and no advertising ID. Your playing never leaves this device unless you "
+            + "send it yourself: not your recordings, your notes, your song names or your artist name."
     }
 }
 

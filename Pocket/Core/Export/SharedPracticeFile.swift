@@ -20,6 +20,11 @@ extension UTType {
     /// behind that door. Advertising a capability the app does not exercise is the thing AGENTS.md
     /// forbids, so the handler declaration lands with the code that honours it.
     static let redMoonPractice = UTType(exportedAs: "click.decooperations.pocket.practice")
+
+    /// The practice **pack** (ADR 0236 D8): a song, or a routine with its songs, as one file with a zip
+    /// inside. Declared beside the type above in `Info.plist`, conforming to plain data rather than to
+    /// JSON or to a zip archive.
+    static let redMoonPack = UTType(exportedAs: "click.decooperations.pocket.pack")
 }
 
 /// One piece of shared practice on its way to the share sheet — a routine (ADR 0188 S1) or a single

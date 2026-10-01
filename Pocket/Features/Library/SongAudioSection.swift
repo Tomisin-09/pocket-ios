@@ -26,6 +26,10 @@ struct SongAudioSection: View {
     /// the bytes under a live `AVAudioFile` otherwise. Same two halves either way.
     let replace: (URL) async throws -> SongRelinker.Outcome
 
+    /// Open *Send this song* (ADR 0236 D4). A closure into the sheet's `NavigationStack`, never a sheet
+    /// raised here: a presentation from a row in this `Form` is lost. `nil` hides the row.
+    var onSend: (() -> Void)?
+
     @State private var confirming = false
     @State private var picking = false
     @State private var busy = false
@@ -68,10 +72,16 @@ struct SongAudioSection: View {
             // loser would overwrite the winner's copy — the same guard the practice screen keeps.
             .disabled(busy)
 
-            // The DAW door (ADR 0236 D3): the audio and nothing else. Absent until Red Moon holds a
-            // copy of this song (`Song.exportedAudioFile`). A button into `SharePresenter`, not a
-            // `ShareLink`: a presentation raised from a row in this sheet's form is lost.
+            // Both doors out need the copy Red Moon keeps (`Song.exportedAudioFile`). To another Red Moon
+            // with its loops and markers (ADR 0236 D4), and the DAW door, the audio and nothing else (D3).
+            // Buttons, not `ShareLink`s: a presentation raised from a row in this sheet's form is lost.
             if let file = song.exportedAudioFile() {
+                if let onSend {
+                    Button(action: onSend) {
+                        Label("Send this song…", systemImage: "square.and.arrow.up")
+                            .foregroundStyle(PocketColor.library)
+                    }
+                }
                 Button { export(file) } label: {
                     Label("Export audio file only…", systemImage: "waveform")
                         .foregroundStyle(PocketColor.library)
@@ -82,8 +92,8 @@ struct SongAudioSection: View {
         } footer: {
             Text("Points this song at a different file — for a song whose audio is missing, or one "
                  + "linked to the wrong track. Your loops, markers, takes and practice history all "
-                 + "stay with the song. Export sends the file as you imported it, for a DAW or "
-                 + "another device.")
+                 + "stay with the song. Send this song gives another Red Moon the song with its loops and "
+                 + "markers. Export sends the file alone, as you imported it, for a DAW or another device.")
         }
         // Single selection: this repairs *this* song, unlike the library's multi-select import.
         .fileImporter(isPresented: $picking, allowedContentTypes: [.audio],

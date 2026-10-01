@@ -113,7 +113,7 @@ practice:
 | title, artist, album, genre, year, key | mastery and the speeds reached (`mastery`, `masteryAtSpeed`, `lastPracticedSpeed`, `commandTempo`) |
 | tempo and beat grid (BPM, downbeats, meter) | takes and journal notes |
 | every loop: name, start, end, speed, repeats, type, tags, colour, ramp and automator settings, repeat reach | when it was last practised, snags, span changes |
-| every marker, with its sections and *same as* | collections, favourites, reference links, linked exercises |
+| every marker, with its sections and *same as* | collections, favourites, skills, reference links, linked exercises |
 
 **There is no loop export.** A loop is a start and an end on its song, a speed and a ramp. It is not
 audio, so it travels inside its song and nothing is rendered. A loop on its own, or an audio clip of

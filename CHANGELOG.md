@@ -63,6 +63,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Export a song's audio.** **Song details** ▸ **Audio** ▸ **Export audio file only…** sends the file
   the song plays, as you imported it, for a DAW or another device. Your loops, markers and pieces stay
   in Red Moon.
+- **Send a song to another Red Moon.** **Song details** ▸ **Audio** ▸ **Send this song…** sends the song
+  with its loops, markers and tempo grid as one *Red Moon practice pack*, signed with your artist name.
+  Your pieces, mastery and practice history stay with you. Tap a pack you're sent and **Add this song?**
+  shows what's in it before it lands. It always arrives as a new song; if you already have one with that
+  title, it's named for the sender, like *Low Road - Tomisin copy*.
 - **Export a tab as text or a PDF.** A tab you wrote in **My tabs**, and a song's tab in **Map the
   song**, now have a share button with **Plain text** and **PDF**: the tab as it reads on screen, headed
   with its title (and a song's artist), each section under its name.

@@ -352,7 +352,8 @@ picker showing the practice files it can read and nothing else, which is the way
 has been sitting in Files or iCloud Drive for a week.
 
 A single exercise can be shared the same way, and the picker does not mind which it is handed: a
-shared drill picked here lands in your exercises rather than your routines, and Red Moon says so.
+shared drill picked here lands in your exercises rather than your routines, and a song sent with its
+loops lands in your library, and Red Moon says so.
 See [Handing one to somebody else](exercises.md#handing-one-to-somebody-else).
 
 Either way, the same thing happens next: Red Moon shows you **what is in the file before it lands** —
