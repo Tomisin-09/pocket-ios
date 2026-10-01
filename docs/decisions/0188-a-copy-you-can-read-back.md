@@ -7,6 +7,14 @@
   in the text below — D7's attachment rewrite and an unstated fact about song audio — and both
   corrections are recorded in its slice note rather than edited silently into the decisions.**
 - **Date:** 2026-09-03 (`pocket-293-import-both-doors`)
+- **Amended by:** ADR 0236 — **D3**: a second file type, `.redmoonpack`, a zip for practice that
+  carries audio (0236 D8). `.redmoonpractice` is unchanged and stays JSON, and its `kind` gains
+  `song`. **D4**: with *Include the songs* on, song and loop blocks travel with their songs and bind
+  to them on arrival (0236 D6); with it off they arrive as the placeholders below. The reason given
+  below, that audio never leaves the device, no longer holds. D4's last paragraph, that no take
+  crosses in a routine, stands. **D8**: the reader reads a second file we wrote, so the pack's zip
+  method is part of its format too. D1, D2, D5, D6, D7 and D9 stand, and the received song's uids are
+  minted fresh under D1.
 - **Amended by:** ADR 0205 — restore hydrates snags onto the song and span changes onto the loop
   (0205 D3). D1's trust asymmetry, `SchemaVersionGate` and the raw-enum-column rule are untouched,
   and the receive door is unchanged: `SharedPractice` carries no loops, so there was no hole there.

@@ -10,6 +10,11 @@
   and 0225 D10 (never detected, never suggested) · 0233 (the map reads a piece's version in use, and its tab sheet
   opens **Versions**) · 0111 (a routine made for you is reviewed before it's kept) · 0138 (a Practice block
   needs a command tempo).
+- **Amended by:** ADR 0236 — **D12**: the Export tab is no longer waiting on a legal review. A
+  song's tab, and a tab written in My tabs, export as plain text or PDF (0236 D9). No hosting, no
+  importing and never inside a routine file all stand; the last now because a song sent inside a
+  routine carries no pieces (0236 D4). D12's "carries no song titles on purpose" cited the support-message
+  ADR by mistake, and no longer holds for a routine sent with its songs.
 - **Amends:** ADR 0229 D2 — under the **Pieces** scope a piece sits under its song, not on the day it
   last changed (D20). *All* keeps the day, and D1's one row per loop stands.
 - **Schema:** four additive fields: `Marker.startsSection` (D6, slice 1), `Marker.sameAsUID` (D8,
