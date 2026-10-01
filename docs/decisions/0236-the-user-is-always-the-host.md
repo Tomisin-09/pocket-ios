@@ -76,7 +76,8 @@ Three limits hold whatever the frame:
 ### D2 — A take
 
 **Export take…** (`square.and.arrow.up`) on a take's hold menu, in the Journal and on a loop's Takes
-sheet, above Delete. It hands the share sheet the take's file, as recorded: no trim, no re-encode.
+sheet, and in the take's own *Take actions* menu (0174), each time above Delete. It hands the share
+sheet the take's file as it is: no re-encode, and a trimmed take sends what the trim kept.
 
 - **Its name says where it came from:** the take's title if it has one, otherwise its owner caption,
   then the date. `Slow Bend · Chorus · 1 Oct 2026.m4a`. A standalone take with no title is
@@ -230,7 +231,8 @@ and **PDF**.
 
 Each slice stands on its own and is shippable alone; the last two share the pack.
 
-1. **Takes (D2).** Export take… on both hold menus; the pure file-name rule; the staged copy.
+1. **Takes (D2).** Export take… on both hold menus and the take's own screen; the pure file-name rule;
+   the staged copy.
 2. **A song's audio file (D3).** Export audio file only… in Song details › Audio.
 3. **Tabs (D9).** The pure text formatter for both sources; the PDF renderer; the Export menu on My
    tabs' reading screen and on Map the song's Tab view.

@@ -2221,6 +2221,17 @@ true (ADR 0150 §118-121).
   pictures, not song files (`SongRecord.audioFileName`) — so every restored song needs relinking
   (ADR 0152), and `RestorePlan.songsNeedingRelink` exists so the preview says so beforehand.
 
+- **Single files go out through the share sheet** (ADR 0236). A take (S1) leaves as its own audio file
+  under a name a person can read: `TakeExportName` (pure) writes *title, or owner caption, then the
+  date*, and `ExportStaging.fileName(stem:fileExtension:)` makes it safe for any file system without
+  hyphenating the words. `ExportedAudioFile` is the `Transferable`: it holds a source URL and a name,
+  and **stages only in its `FileRepresentation`**, so a `ShareLink` rebuilt on every body pass costs
+  nothing until a destination is picked. Staging hard-links the kept file into
+  `tmp/RedMoonOutbox/<uuid>/<name>` (copy as the fallback) and sweeps folders a day old, since the
+  system never says when a share has finished reading one. One representation each for MPEG-4 audio,
+  MP3, WAV and AIFF, so a receiver that takes only one of them matches, then plain audio for the rest.
+  `ExportTakeMenuItem` is the one view all three take menus use.
+
 ## Storage (Core/Storage, ADR 0182)
 
 What the app is holding, and the two leaks that ran behind ADR 0148 §8's unkept promise of honest
