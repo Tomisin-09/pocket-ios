@@ -88,22 +88,17 @@ extension SongDetailsSheet {
     /// routine would be a lone play-through.
     var canBuildRoutine: Bool { SongRoutineBuilder.canBuild(for: song) }
 
-    /// "Build a routine for this song" (ADR 0111) — a **Pro** action, since it materialises a real
-    /// `Routine` (ADR 0112). A free player keeps the row tappable so it can open the paywall; only a
-    /// song with nothing linked disables it.
+    /// "Build a routine for this song" (ADR 0111) — materialises a real `Routine`. A song with
+    /// nothing linked disables it.
     @ViewBuilder
     var buildRoutineButton: some View {
         Button {
-            guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
-                return presentPaywall(.routine(.generate))
-            }
             buildingRoutine = true
         } label: {
-            Label("Build a routine for this song",
-                  systemImage: isPro ? "wand.and.stars" : "lock.fill")
+            Label("Build a routine for this song", systemImage: "wand.and.stars")
                 .foregroundStyle(canBuildRoutine ? PocketColor.practice : PocketColor.textSecondary)
         }
-        .disabled(isPro && !canBuildRoutine)
+        .disabled(!canBuildRoutine)
     }
 
     func isLinked(_ exercise: Exercise) -> Bool {

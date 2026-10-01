@@ -216,15 +216,4 @@ final class HomeFeedTests: XCTestCase {
         XCTAssertFalse(HomeFeed.shouldOfferStarterTrack(totalSongs: 7, hasStarterTrack: true))
         XCTAssertFalse(HomeFeed.shouldOfferStarterTrack(totalSongs: 7, hasStarterTrack: false))
     }
-
-    /// **The rule takes no `isPro`, and that is the decision.** Gating the card on entitlement would
-    /// mean subscribing *removes* the starter song from Home — a player who bought Red Moon Pro
-    /// halfway through the walkthrough would watch it vanish mid-sentence. Entitlement is
-    /// `AccessPolicy.canPractiseSong`'s question; this one is only ever "is the library empty".
-    /// Written as a signature test because there is no argument left to assert against.
-    func testTheCardRuleIsAboutEmptinessNotEntitlement() {
-        let offered: (Int, Bool) -> Bool = HomeFeed.shouldOfferStarterTrack(totalSongs:hasStarterTrack:)
-        XCTAssertTrue(offered(0, false))
-        XCTAssertFalse(offered(3, false))
-    }
 }

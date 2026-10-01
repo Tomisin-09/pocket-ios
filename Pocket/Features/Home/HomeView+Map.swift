@@ -31,11 +31,9 @@ import SwiftUI
 ///   `RoutineLibraryUITests`, `OracleUITests`, `ToolkitUITests` and six shoot classes match on them —
 ///   and a description that has left the screen has not stopped being true. VoiceOver still gets the
 ///   sentence; the eye gets the map.
-/// - **The Oracle's door and the Toolkit's freedom.** `toolkitCard` alone does not route through
-///   `proGated` (ADR 0144 D2), and the Oracle appears here and in no other section: not in the
-///   Journal, whose promise is that a lapsed subscription takes nothing back, and not inside the
-///   Toolkit, whose proposition is being gate-free. `HomeView+Learn.swift` argued both at length and
-///   they are the reason its content is carried here rather than deleted with it.
+/// - **The Oracle's door.** The Oracle appears here and in no other section: not in the Journal and
+///   not inside the Toolkit. `HomeView+Learn.swift` argued it at length, which is why its content is
+///   carried here rather than deleted with it.
 extension HomeView {
 
     /// The three sections, in the order ADR 0102 fixed: what you do, what you own, what you learn
@@ -66,12 +64,11 @@ extension HomeView {
     /// command-anchored runs happen. A push (it's a *place* with its own list and run screens),
     /// in the brand teal accent (`PocketColor.practice`, the brand hero).
     private var practiceTile: some View {
-        proGated(.practice) { PracticeView() } label: {
+        NavigationLink { PracticeView() } label: {
             HomeTile(icon: "figure.run", title: "Practice",
                      tint: PocketColor.practice,
                      cardWash: PocketColor.practiceCardWash,
-                     circleWash: PocketColor.practiceCircleWash,
-                     locked: !isPro)
+                     circleWash: PocketColor.practiceCircleWash)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Practice, your exercises and training runs")
@@ -104,13 +101,12 @@ extension HomeView {
     /// (ADR 0112) — the count line read *Add a song to get started* and was Home's only word about
     /// it. The toolbar's green **+** is still the door; this keeps the sentence that points at it.
     private var songLibraryTile: some View {
-        proGated(.library) { LibraryView() } label: {
+        NavigationLink { LibraryView() } label: {
             HomeTile(icon: "music.note.list", title: "Song library",
                      tint: PocketColor.library,
                      cardWash: PocketColor.libraryCardWash,
                      circleWash: PocketColor.libraryCircleWash,
-                     caption: songs.isEmpty ? librarySubtitle : nil,
-                     locked: !isPro)
+                     caption: songs.isEmpty ? librarySubtitle : nil)
         }
         .buttonStyle(.plain)
         // Still the whole sentence, count included — `ManualLibraryShots`, `ManualBareShots`,
@@ -123,10 +119,6 @@ extension HomeView {
     /// notes + takes across loops and exercises, in its own warm **gold** identity
     /// (`PocketColor.journal`), a fifth home hue kept clear of the teal · plum · terracotta triad and
     /// the indigo reference hub.
-    ///
-    /// **Ungated** (ADR 0144 D2): what you wrote and what you recorded is yours, and a lapsed
-    /// subscription doesn't take it back. The doors *out* of the Journal — an entry's caption
-    /// opening its exercise or routine — stay gated inside `JournalTabView`.
     private var journalTile: some View {
         NavigationLink { JournalTabView() } label: {
             HomeTile(icon: "book.closed.fill", title: "Journal",
@@ -262,16 +254,16 @@ extension HomeView {
 }
 
 /// The map alone, at phone width, in both appearances — the check the build cannot make: that the hues
-/// read as places rather than a swatch card, that the locked tiles read as inviting rather than broken,
-/// and, since ADR 0235, that two indigo tiles side by side read as one space with two doors.
-#Preview("Home map — locked and unlocked") {
+/// read as places rather than a swatch card, and, since ADR 0235, that two indigo tiles side by side
+/// read as one space with two doors.
+#Preview("Home map") {
     ScrollView {
         VStack(alignment: .leading, spacing: 20) {
             HomeSection(title: "Practice") {
                 HomeTileRow {
                     HomeTile(icon: "figure.run", title: "Practice", tint: PocketColor.practice,
                              cardWash: PocketColor.practiceCardWash,
-                             circleWash: PocketColor.practiceCircleWash, locked: true)
+                             circleWash: PocketColor.practiceCircleWash)
                     HomeTile(icon: "metronome.fill", title: "Metronome", tint: PocketColor.metronome,
                              cardWash: PocketColor.metronomeCardWash,
                              circleWash: PocketColor.metronomeCircleWash)
@@ -282,7 +274,7 @@ extension HomeView {
                     HomeTile(icon: "music.note.list", title: "Song library",
                              tint: PocketColor.library, cardWash: PocketColor.libraryCardWash,
                              circleWash: PocketColor.libraryCircleWash,
-                             caption: "Add a song to get started", locked: true)
+                             caption: "Add a song to get started")
                     HomeTile(icon: "book.closed.fill", title: "Journal", tint: PocketColor.journal,
                              cardWash: PocketColor.journalCardWash,
                              circleWash: PocketColor.journalCircleWash)

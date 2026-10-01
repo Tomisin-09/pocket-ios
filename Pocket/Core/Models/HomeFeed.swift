@@ -108,13 +108,8 @@ enum HomeFeed {
     /// real import lands the card retires and `resumeCard` takes the slot, which is the right
     /// hand-off — the starter track exists to be outgrown.
     ///
-    /// **Deliberately not gated on `isPro`.** The obvious reading of ADR 0219 is that this is the
-    /// free taste and so belongs to non-Pro players only, and that is wrong in a way worth writing
-    /// down: subscribing would then *remove* the card, so a player who bought Red Moon Pro halfway
-    /// through the walkthrough would watch their starter song disappear from Home mid-sentence.
-    /// The **entitlement** question is `AccessPolicy.canPractiseSong`'s and stays narrow; the
-    /// **card** question is only ever "is this library empty", which is as true of a subscriber as
-    /// of anyone else — and a Pro player with nothing imported is exactly as stuck.
+    /// The question is only ever "is this library empty". ADR 0219 D6 said so while the song was
+    /// also a free taste, and since Red Moon became free (ADR 0237 D4) it is the card's whole reason.
     static func shouldOfferStarterTrack(totalSongs: Int, hasStarterTrack: Bool) -> Bool {
         hasStarterTrack ? totalSongs == 1 : totalSongs == 0
     }

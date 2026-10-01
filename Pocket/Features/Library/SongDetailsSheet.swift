@@ -34,10 +34,6 @@ struct SongDetailsSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) var modelContext
-    /// Entitlement + the shared paywall (ADR 0112) — "Build a routine for this song" produces a real
-    /// `Routine`, which is Pro. Linking exercises to a song stays free (it's not authoring content).
-    @Environment(\.isPro) var isPro
-    @Environment(\.presentPaywall) var presentPaywall
     /// Every exercise, to offer in the link picker (ADR 0111). Sorted by name, like the library.
     /// Candidates for the "Link exercises" picker. Loaded when *that* picker opens, not when
     /// this sheet does — it was a `@Query` for every `Exercise`, run on the main thread during

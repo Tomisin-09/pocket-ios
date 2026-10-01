@@ -18,18 +18,26 @@ import Foundation
 /// §7 objected that "every player receives the same song, which none of them chose". A song the
 /// player asked for answers both, so nothing inserts this at launch.
 ///
-/// Foundation-only on purpose: `AccessPolicy` keys the free taste on `sourceID` and must stay pure
+/// It was also a free taste while Red Moon had a paywall; since ADR 0237 it is onboarding alone (D4).
+///
+/// Foundation-only on purpose, so `isStarterTrack(sourceID:)` stays pure and unit-testable
 /// (AGENTS.md). The insert lives in `SongImporter.importStarterTrack(into:)`, which runs the same
 /// `SongFileStore.adopt` + `WaveformExtractor` path every real import runs.
 enum StarterTrack {
 
     /// The frozen `SongRef.id`.
     ///
-    /// **Never change this.** Two things key on it and neither migrates cheaply:
-    /// `AccessPolicy.canPractiseSong` decides the free taste from it, and `SongFileStore` names the
-    /// adopted copy after it — so a renamed id would orphan the file on disk *and* re-lock the song
-    /// for every player who already has one. A frozen identifier, exactly like `Exercise.presetSlug`.
+    /// **Never change this.** `SongFileStore` names the adopted copy after it, so a renamed id would
+    /// orphan the file on disk for every player who already has one — and Home's card and the
+    /// walkthrough would stop recognising the song. A frozen identifier, exactly like
+    /// `Exercise.presetSlug`.
     static let sourceID = "starter-binta"
+
+    /// Whether `sourceID` (a `Song.sourceID`) is the bundled starter track. Keyed on the frozen id,
+    /// never the title, which the player can edit.
+    static func isStarterTrack(sourceID: String?) -> Bool {
+        sourceID == Self.sourceID
+    }
 
     /// Bundled resource name and extension, split so `bundledURL` and any diagnostic that reports a
     /// missing file name the same thing.

@@ -1,13 +1,11 @@
 import SwiftData
 import SwiftUI
 
-/// Home's **Start here** card (ADR 0219) — the one door into the app's subject that a player
-/// without Red Moon Pro can walk through.
+/// Home's **Start here** card (ADR 0219) — a song to practise on before the player has added one.
 ///
-/// It exists because a fresh install is not "in trial": `trialEndsAt` is read from a real StoreKit
-/// expiration, so a player who has not subscribed is simply not Pro, and ADR 0144 D4's wall leaves
-/// Practice, the Song library, Today's session and Jump back in all locked. Everything the app is
-/// actually *for* sat behind a purchase made before hearing a note.
+/// It was built as the one door a player without Pro could walk through. Red Moon is free now
+/// (ADR 0237), and the card stays as onboarding (0237 D4): a fresh install has no song, and the
+/// first thing worth doing in this app is hearing one.
 ///
 /// Split out of `HomeView.swift` for the same reason `HomeView+Resume` is — the 400-line file cap
 /// and SwiftLint's `type_body_length`.
@@ -16,8 +14,7 @@ extension HomeView {
     /// The adopted starter track, if the player has already tapped the card.
     var starterTrack: Song? { songs.first(where: \.isStarterTrack) }
 
-    /// Whether to draw the card at all — see `HomeFeed.shouldOfferStarterTrack` for why this is not
-    /// gated on `isPro`.
+    /// Whether to draw the card at all — see `HomeFeed.shouldOfferStarterTrack`.
     var offersStarterTrack: Bool {
         HomeFeed.shouldOfferStarterTrack(totalSongs: songs.count,
                                          hasStarterTrack: starterTrack != nil)
@@ -35,7 +32,7 @@ extension HomeView {
         return song.isStarterTrack
     }
 
-    /// The card. A plain `Button`, **never `proGated`** — that is the entire point of it.
+    /// The card. A plain `Button`.
     ///
     /// Routing the tap through `openingSong` reuses the `navigationDestination` Home already owns
     /// for a single-file import, which is the correct shape twice over: it is bool-bound rather

@@ -15,9 +15,8 @@ import SwiftUI
 /// slices with their own ADRs. The landing is a simple list of sections in the indigo "study/reference"
 /// accent (`PocketColor.toolkit`), one visual level down from the home cards.
 ///
-/// The hub is **free forever** (ADR 0144 D2) and gate-free by construction — nothing here reads
-/// `isPro`. Help living inside it is deliberate: an undecided or lapsed player can still read what the
-/// app does and reach us.
+/// Help living inside it is deliberate: a player can read what the app does and reach us from the same
+/// place they find the tuner.
 struct ToolkitView: View {
     /// Drives the "N saved" count on the My Chords row — the same `@Query` the library screen reads.
     @Query private var savedChords: [SavedChord]

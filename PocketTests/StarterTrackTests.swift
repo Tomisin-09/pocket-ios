@@ -14,10 +14,9 @@ import XCTest
 /// goes missing at runtime.
 final class StarterTrackTests: XCTestCase {
 
-    /// **The id is frozen.** `SongFileStore` names the adopted copy after it and
-    /// `AccessPolicy.canPractiseSong` decides the free taste from it, so changing it would orphan
-    /// the file on disk *and* silently re-lock the song for every player who already has one. The
-    /// literal is repeated here on purpose: this test exists to make that change fail loudly, and a
+    /// **The id is frozen.** `SongFileStore` names the adopted copy after it, so changing it would
+    /// orphan the file on disk for every player who already has one, and Home and the walkthrough
+    /// would stop recognising the song. The literal is repeated here on purpose: this test exists to make that change fail loudly, and a
     /// test written as `XCTAssertEqual(StarterTrack.sourceID, StarterTrack.sourceID)` would not.
     func testSourceIDIsFrozen() {
         XCTAssertEqual(StarterTrack.sourceID, "starter-binta")
@@ -48,19 +47,26 @@ final class StarterTrackTests: XCTestCase {
         XCTAssertFalse(makeSong(id: UUID().uuidString).isStarterTrack)
     }
 
-    /// **Renaming the song must not change what it costs.** `Song.title` is user-editable, so
-    /// deriving the free taste from the title either lets a player mint a free song by typing
-    /// "Binta" over one, or takes the starter track away from someone who renamed it. Both
-    /// directions are checked, because the two failures are opposite and a title-keyed
-    /// implementation only fails one of them.
-    func testEntitlementFollowsTheIDNotTheTitle() {
+    /// **Renaming the song must not change what it is.** `Song.title` is user-editable, so keying
+    /// on the title would either make an imported song called "Binta" the starter track, or stop
+    /// recognising the starter track once someone renamed it. Both directions are checked, because
+    /// the two failures are opposite and a title-keyed implementation only fails one of them.
+    func testIdentityFollowsTheIDNotTheTitle() {
         let renamedStarter = makeSong(id: StarterTrack.sourceID, title: "My warm-up")
         XCTAssertTrue(renamedStarter.isStarterTrack,
-                      "Renaming the starter track must not take it away")
+                      "Renaming the starter track must not stop it being the starter track")
 
         let impostor = makeSong(id: UUID().uuidString, title: StarterTrack.title)
         XCTAssertFalse(impostor.isStarterTrack,
-                       "Calling an imported song Binta must not make it free")
+                       "Calling an imported song Binta must not make it the starter track")
+    }
+
+    /// The pure helper `Song.isStarterTrack` reads, checked on its own, `nil` included: a song with
+    /// no recorded id is never the starter track.
+    func testTheHelperMatchesOnlyTheFrozenID() {
+        XCTAssertTrue(StarterTrack.isStarterTrack(sourceID: "starter-binta"))
+        XCTAssertFalse(StarterTrack.isStarterTrack(sourceID: "Binta"))
+        XCTAssertFalse(StarterTrack.isStarterTrack(sourceID: nil))
     }
 
     /// The starter track carries an owned copy and no bookmark, and that combination must still
@@ -75,7 +81,7 @@ final class StarterTrackTests: XCTestCase {
     }
 
     /// `Song.sample()` is preview scaffolding, not the starter track, and the two must never be
-    /// conflated — they have different audio, different provenance and different entitlement.
+    /// conflated — they have different audio and different provenance.
     func testTheGeneratedSampleIsNotTheStarterTrack() {
         let sample = Song.sample()
         XCTAssertFalse(sample.isStarterTrack)
