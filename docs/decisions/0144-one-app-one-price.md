@@ -1,7 +1,7 @@
 # 0144 — One app, one price
 
-- **Status:** Accepted — built and **device-verified** 2026-08-06 (`pocket-235-one-app-one-price`),
-  v2 close-out workstream A. The device pass is what added the Journal to D2's free surface, and it
+- **Status:** **Superseded by ADR 0237 (2026-10-01).** Was: Accepted — built and
+  **device-verified** 2026-08-06 (`pocket-235-one-app-one-price`), v2 close-out workstream A. The device pass is what added the Journal to D2's free surface, and it
   caught a live App Store Connect inconsistency (annual on a 14-day intro offer, monthly on a
   2-month one) that D5's derived copy reported faithfully instead of papering over.
 
@@ -22,11 +22,18 @@
   is the reason: `trialEndsAt` comes from a real StoreKit expiration, so a fresh install is not "in
   trial" — it is simply not Pro, and D4's wall was therefore asking players to buy before hearing
   anything.
+- **Superseded by:** ADR 0237 (2026-10-01) — **Red Moon is free.** D1 (everything is Pro), D3 (the
+  `AccessPolicy` seam), D4 (the Home gates and the launch wall), D5 (trial length) and D6 (the trial
+  reminder) are gone, and the code with them (0237 D2). D7 is moot. D2's *Toolkit and Journal free
+  forever* is now true of the whole app, and its trust argument is 0237 D3: nothing free may ever
+  move behind a price. **D8 stands**: the first-run seed is unchanged, as onboarding rather than trial
+  content. The text below is the record of the paid design and is not current.
 - **Supersession proposed by:** ADR 0156 (a paywall you can predict, 2026-08-11) — **Proposed, not
   built.** It would replace D4's *once per launch* clause with a budget on the launch wall alone:
   none within 24 hours of any paywall dismissal, at most one per 72 hours, and at most one per 7 days
   from the fourth showing on. A paywall raised by touching a locked thing stays uncapped. Until 0156 is accepted and
-  built, D4 stands as written, which is what the 0219 note above assumes.
+  built, D4 stands as written, which is what the 0219 note above assumes. 0156 was never built, and
+  0237 superseded it along with D4.
 - **Date:** 2026-08-06
 - **Supersedes:** the **tier half** of ADR 0112 (freemium monetization). 0112 stays as the record of
   why a free line existed, what it cost to build, and why it was withdrawn before it ever met a

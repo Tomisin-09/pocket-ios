@@ -33,6 +33,12 @@
   never as a count or a rate. `OracleContext.Unit` gains `snags`, `droppedSnags` and `spans`
   (0204 D1, D2), and marks and spans are exempt from D6 R4's free-text budget (0204 D4). D6's
   original seven rules and every output-side guarantee (D7, D8, D11, D12) stand unchanged.
+- **Amended by:** ADR 0237 (2026-10-01) — **D20's two levels are gone.** Red Moon is free, with no
+  Practice tier and no subscription group (0237 D1). If the Oracle is ever priced it is the only thing
+  that is, and it is **strictly additive** (0237 D3): nothing free today, including everything a
+  reading reads, may move behind it. S5 ("the tier and the paywall") would be new StoreKit code scoped
+  to the Oracle alone, not a restored Pro tier. 0237 does not reopen the Oracle; the door stays closed
+  as the 0211 note above says, and every other decision here stands.
 - **Relates to:** ADR 0092 (the AI charter this executes — still *Proposed*, and this ADR amends it
   rather than merely obeying it), ADR 0002 (the proxy design, **whose Sign-in-with-Apple bullet
   this supersedes**), ADR 0070 (no performance feedback — the line this feature walks), ADR 0117
