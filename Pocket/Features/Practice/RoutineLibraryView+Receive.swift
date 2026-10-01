@@ -17,22 +17,13 @@ extension RoutineLibraryView {
     ///
     /// On the options menu rather than the nav bar, per ADR 0126: nothing on a nav bar may vary in
     /// width, and this is a labelled secondary action — a bare glyph for "open a file somebody sent
-    /// you" would be unreadable. Locked for a free player in the same way as everything else on this
-    /// screen, so the lock is visible before the picker rather than after it.
-    @ViewBuilder
+    /// you" would be unreadable.
     var receiveRoutineButton: some View {
         Button {
-            // Gated here **and** in the host. Not redundancy: the host is the only possible gate for
-            // a tapped file, which has no button to guard, and guarding here is what stops a free
-            // player picking a file and then being told it was never going to work — the repeated-guard
-            // style this screen already uses for New, Play, Edit, Duplicate and Generate.
-            guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
-                return presentPaywall(.routine(.receive))
-            }
             importingRoutine = true
             haptic(.light)
         } label: {
-            Label("Receive a routine…", systemImage: isPro ? "square.and.arrow.down" : "lock.fill")
+            Label("Receive a routine…", systemImage: "square.and.arrow.down")
         }
     }
 }

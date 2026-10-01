@@ -20,9 +20,6 @@ struct PracticeView: View {
     @Query private var allLoops: [Loop]
     @Query private var routines: [Routine]
     @Query private var longTermGoals: [LongTermGoal]
-    /// Red Moon Pro entitlement + the shared paywall (ADR 0112); safe preview defaults (free / no-op).
-    @Environment(\.isPro) private var isPro
-    @Environment(\.presentPaywall) private var presentPaywall
 
     /// Count of trainable loops — those with a measured command tempo (in-memory filter, not a
     /// SwiftData optional `#Predicate`, which starves the main thread; see `PracticeRunUITests`).
@@ -70,15 +67,7 @@ struct PracticeView: View {
     /// goals, and generate a session from your units. The guided "build a session" altitude above the
     /// focused libraries.
     private var plannerCard: some View {
-        // Today's session is a Pro feature (ADR 0112): Pro pushes the planner; free gets the paywall.
-        Group {
-            if isPro {
-                NavigationLink { PlannerView() } label: { plannerCardLabel }
-            } else {
-                Button { presentPaywall(.planner) } label: { plannerCardLabel }
-                    .buttonStyle(.plain)
-            }
-        }
+        NavigationLink { PlannerView() } label: { plannerCardLabel }
         .listRowBackground(PocketColor.background)
         .accessibilityLabel("Today's session")
         .accessibilityHint("A session shaped by your goals")
@@ -100,7 +89,7 @@ struct PracticeView: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
             Spacer(minLength: 8)
-            Image(systemName: isPro ? "chevron.right" : "lock.fill")
+            Image(systemName: "chevron.right")
                 .font(.futura(.footnote, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
         }

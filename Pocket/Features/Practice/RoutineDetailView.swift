@@ -42,10 +42,6 @@ struct RoutineDetailView: View {
     /// appear, because it can change in the Settings app while this screen is backgrounded.
     @State var notificationPermission: NotificationPermission?
 
-    /// Entitlement (ADR 0112) — internal so the access extension reads it. Routines are Pro; the
-    /// curated free-taste routine opens as a rearrange-only demo.
-    @Environment(\.isPro) var isPro
-
     @State private var addingUnit = false
     /// What the open picker has added, keyed by `RoutineUnitPick.pickID` → the `RoutineItem.uid` it
     /// created (ADR 0127). The editor owns this, not the picker: it drives the picker's checkmarks
@@ -137,7 +133,7 @@ struct RoutineDetailView: View {
         routine.items.contains { $0.kind.carriesUnit && $0.hasResolvableUnit }
     }
 
-    // `canAddBlocks` / `canDeleteBlocks` live in `RoutineDetailView+Access` (ADR 0112). A
+    // `canAddBlocks` / `canDeleteBlocks` live in `RoutineDetailView+Editing`. A
     // provisional generated session (`!existsInStore`) stays editable without an Edit tap — it's a
     // *template* the player customises (e.g. adding a drill from outside the source collection,
     // ADR 0118) before the single Save commits it — while drag-reorder needs edit mode on a stored

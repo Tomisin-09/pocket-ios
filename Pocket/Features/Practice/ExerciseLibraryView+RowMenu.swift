@@ -18,28 +18,15 @@ extension ExerciseLibraryView {
          PocketRowMenuItem("Duplicate", systemImage: "plus.square.on.square") { duplicate(exercise) }]
     }
 
-    /// Open the add-to-routine sheet for a drill (ADR 0222). Adding a block **is** editing a routine,
-    /// so it takes the editor's own gate (`canAddRoutineUnits`) and the editor's paywall reason —
-    /// the row is a second door into the same act, not a way round its wall.
-    ///
-    /// Not gated on `canRun`: a routine holding a drill its owner can't run yet is the same state the
-    /// editor's picker already allows, and the player skips nothing it can't open.
+    /// Open the add-to-routine sheet for a drill (ADR 0222).
     private func addToRoutine(_ exercise: Exercise) {
-        guard AccessPolicy.canAddRoutineUnits(isPro: isPro) else {
-            return presentPaywall(.routine(.edit))
-        }
         routineRequest = .exercise(exercise, named: displayName(exercise))
     }
 
     /// Fork a drill into an editable copy — the cheapest way to make a variant of a template you've
-    /// already tuned (Slice 3). Copying is **authoring**, so it takes the same `canAuthor` gate as
-    /// creation (ADR 0112): a free player can run the seeded Pro-template freebies but can't fork
-    /// one into a drill of their own. The copy is inserted before its song links are assigned —
-    /// a relationship can't be set on an un-inserted model.
+    /// already tuned (Slice 3). The copy is inserted before its song links are assigned — a
+    /// relationship can't be set on an un-inserted model.
     private func duplicate(_ exercise: Exercise) {
-        guard AccessPolicy.canAuthor(exercise.template, isPro: isPro) else {
-            return presentPaywall(.newExercise(exercise.template))
-        }
         let name = CopyNaming.copyName(of: exercise.name, existing: exercises.map(\.name))
         let copy = exercise.duplicated(named: name)
         context.insert(copy)

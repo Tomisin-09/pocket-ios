@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// The **row rendering** for `RoutineLibraryView` — the ▶/body split, the entitlement affordances
-/// and the two caption lines — split out when the library gained search and sort (ADR 0178) and the
+/// The **row rendering** for `RoutineLibraryView` — the ▶/body split and the two caption lines — split out when the library gained search and sort (ADR 0178) and the
 /// view reached the 400-line cap.
 ///
 /// The division is deliberate rather than arbitrary: what is left in `RoutineLibraryView` decides
@@ -11,28 +10,18 @@ extension RoutineLibraryView {
 
     /// A routine row — a ▶ that plays the session, then a tappable name + one-line block summary
     /// that opens the editor. Two independent plain buttons so the two actions never collide.
-    ///
-    /// Entitlement-aware (ADR 0112), and the two halves gate **differently**: ▶ asks `canRunRoutine`
-    /// (so the curated free-taste routine plays for a free player) while the body asks
-    /// `canAuthorRoutine` (so that same routine still can't be *edited* — run the freebie, don't
-    /// author it, exactly as the free-taste exercises behave). A routine a free player can neither run
-    /// nor edit stays **visible but badged** — "locked, not hidden".
     func row(for routine: Routine, facts: RoutineListFacts) -> some View {
-        let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
-        let runnable = AccessPolicy.canRunRoutine(isPro: isPro, isFreeTasteRoutine: isDemo)
-        return HStack(spacing: 14) {
+        HStack(spacing: 14) {
             Button { play(routine) } label: {
-                Image(systemName: runnable ? "play.circle.fill" : "lock.circle.fill")
+                Image(systemName: "play.circle.fill")
                     .font(.futura(.title2))
-                    .foregroundStyle(runnable ? PocketColor.practice : PocketColor.textSecondary)
+                    .foregroundStyle(PocketColor.practice)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel(runnable
-                                ? "Play \(routine.name.isEmpty ? "routine" : routine.name)"
-                                : "Locked — Red Moon Pro")
+            .accessibilityLabel("Play \(routine.name.isEmpty ? "routine" : routine.name)")
 
             Button { edit(routine) } label: {
-                rowBody(for: routine, openable: runnable, facts: facts)
+                rowBody(for: routine, facts: facts)
             }
             .buttonStyle(.plain)
         }
@@ -40,15 +29,13 @@ extension RoutineLibraryView {
     }
 
     /// The tappable half of a row: name (+ favourite star), block summary, the routine's estimated
-    /// length, and the trailing entitlement affordances.
+    /// length, and a chevron.
     ///
     /// **The length is trailing and right-aligned, not appended to the caption** (ADR 0178). Sorting
     /// by a fact the list does not show is a sort you cannot check, and a right-aligned column of
     /// numbers can be *scanned* — inside `8 blocks · 3 rests · ~12 min` it would have to be hunted
-    /// for on every row, and ADR 0173 had already warned against growing that first caption. `openable` means the row leads somewhere for this player — true for
-    /// any routine when Pro, and for the curated demo when free. The PRO capsule and the padlock both
-    /// mark the rows that don't, so the demo reads as ordinary and the rest read as locked.
-    func rowBody(for routine: Routine, openable: Bool, facts: RoutineListFacts) -> some View {
+    /// for on every row, and ADR 0173 had already warned against growing that first caption.
+    func rowBody(for routine: Routine, facts: RoutineListFacts) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
@@ -72,32 +59,17 @@ extension RoutineLibraryView {
                 }
             }
             Spacer(minLength: 8)
-            // The length **stands down for the PRO badge** rather than sitting beside it. Both want
-            // the same trailing slot, and three trailing elements plus a chevron is a crowded row —
-            // but the deciding argument is that they answer different questions: how long a routine
-            // takes is not what you are weighing up about one you cannot run.
-            if openable, let minutes = facts.minutes[routine.uid], minutes > 0 {
+            if let minutes = facts.minutes[routine.uid], minutes > 0 {
                 Text("~\(minutes) min")
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
                     .accessibilityLabel("About \(minutes) minutes")
             }
-            if !openable { proBadge }
-            Image(systemName: openable ? "chevron.right" : "lock.fill")
+            Image(systemName: "chevron.right")
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
         .contentShape(Rectangle())
-    }
-
-    /// The "PRO" capsule marking a routine a free player cannot run (ADR 0112). Matches the exercise
-    /// library's badge, and is deliberately absent from the curated free-taste routine, which plays.
-    var proBadge: some View {
-        Text("PRO")
-            .font(.futura(.caption2, weight: .bold))
-            .foregroundStyle(PocketColor.background)
-            .padding(.horizontal, 6).padding(.vertical, 1)
-            .background(Capsule().fill(PocketColor.practice))
     }
 
     /// "Practised 11 times · 3 days ago" — what the routine has *come to*, or `nil` when it has

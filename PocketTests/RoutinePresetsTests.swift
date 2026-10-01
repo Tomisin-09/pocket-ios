@@ -121,7 +121,7 @@ final class RoutinePresetsTests: XCTestCase {
     }
 
     func testBackfillSlugLookupMatchesByNameOnly() {
-        XCTAssertEqual(RoutinePresets.slug(forName: "Morning Routine"), RoutinePresets.freeTasteSlug)
+        XCTAssertEqual(RoutinePresets.slug(forName: "Morning Routine"), RoutinePresets.starterSlug)
         XCTAssertNil(RoutinePresets.slug(forName: "My own routine"))
         // A retired curated routine is no longer recognised — an existing player's copy stays
         // unslugged and therefore Pro, which is right: only the demo is free.
@@ -132,7 +132,7 @@ final class RoutinePresetsTests: XCTestCase {
     /// holds the old name, and the backfill matches by name. Without the legacy table it would never
     /// be stamped and the demo would **Pro-lock on every existing install**.
     func testBackfillStillRecognisesTheOldNameAfterARename() {
-        XCTAssertEqual(RoutinePresets.slug(forName: "Morning Warm-up"), RoutinePresets.freeTasteSlug)
+        XCTAssertEqual(RoutinePresets.slug(forName: "Morning Warm-up"), RoutinePresets.starterSlug)
     }
 
     /// Every legacy name must map to a slug some shipped spec actually uses — otherwise the table has
@@ -146,7 +146,7 @@ final class RoutinePresetsTests: XCTestCase {
 
     /// The slug is frozen across the rename — that's the whole point of having one.
     func testFreeTasteSlugIsUnchangedByTheRename() {
-        XCTAssertEqual(RoutinePresets.freeTasteSlug, "morning-warm-up")
+        XCTAssertEqual(RoutinePresets.starterSlug, "morning-warm-up")
         XCTAssertEqual(RoutinePresets.specs.first?.name, "Morning Routine")
     }
 
@@ -163,7 +163,7 @@ final class RoutinePresetsTests: XCTestCase {
     /// it requires Pro like everything else. Re-open a free routine allowance and the
     /// `canRun`-per-block loop is what has to come back with it.
     func testStarterRoutineBlocksAreShippedPresetsAndNeedPro() throws {
-        let spec = try XCTUnwrap(RoutinePresets.specs.first { $0.slug == RoutinePresets.freeTasteSlug })
+        let spec = try XCTUnwrap(RoutinePresets.specs.first { $0.slug == RoutinePresets.starterSlug })
         let names: [String] = spec.blocks.compactMap { block in
             if case .exercise(let name) = block { return name }
             return nil

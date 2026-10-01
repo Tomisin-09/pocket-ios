@@ -68,7 +68,7 @@ final class AccessPolicyTests: XCTestCase {
             XCTAssertFalse(AccessPolicy.isFreeTaste(slug: slug), "\(slug) is no longer free taste")
         }
         XCTAssertFalse(AccessPolicy.isFreeTaste(slug: nil))
-        XCTAssertFalse(AccessPolicy.isFreeTasteRoutine(slug: RoutinePresets.freeTasteSlug))
+        XCTAssertFalse(AccessPolicy.isFreeTasteRoutine(slug: RoutinePresets.starterSlug))
         XCTAssertFalse(AccessPolicy.isFreeTasteRoutine(slug: nil))
     }
 
@@ -112,13 +112,13 @@ final class AccessPolicyTests: XCTestCase {
         XCTAssertFalse(AccessPolicy.canEditRoutine(isPro: false))
         XCTAssertFalse(AccessPolicy.canRunRoutine(
             isPro: false,
-            isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: RoutinePresets.freeTasteSlug)))
+            isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: RoutinePresets.starterSlug)))
     }
 
     /// The seeded starter routine still seeds first — it is trial content now (ADR 0144 D8), not a
     /// free taste, and its slug is still the frozen provenance identifier the seeder stamps.
     func testStarterRoutineSlugStillMatchesTheSeededSpec() {
-        XCTAssertEqual(RoutinePresets.specs.first?.slug, RoutinePresets.freeTasteSlug)
+        XCTAssertEqual(RoutinePresets.specs.first?.slug, RoutinePresets.starterSlug)
     }
 
     // MARK: - canPractiseSong (ADR 0219)
