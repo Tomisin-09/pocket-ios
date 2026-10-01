@@ -15,6 +15,9 @@ struct DeveloperSettingsView: View {
     @AppStorage(AppSettings.Key.artistNamePromptSeen) private var artistNamePromptSeen = false
     /// Re-arms the first-launch curation intake (ADR 0113 S2).
     @AppStorage(AppSettings.Key.artistIntakeSeen) private var artistIntakeSeen = false
+    /// Read on appear and after a reset — nothing observes the record, so nothing else would redraw it.
+    @State private var reviewAsk: ReviewPrompt.DebugState?
+
     var body: some View {
         Form {
             // A/B the stretcher-latency correction (ADR 0140 §3).
@@ -29,8 +32,46 @@ struct DeveloperSettingsView: View {
                 Text("Clears your artist name and re-arms the “you've earned a name” prompt; the "
                      + "second row re-arms the first-launch curation intake.")
             }
+
+            reviewAskSection
         }
         .settingsScreen(title: "Developer")
+        .onAppear(perform: refreshReviewAsk)
+    }
+
+    /// The review ask's state (ADR 0214), because on a device there is no other way to see it: the
+    /// system call returns nothing, and a development build draws the dialog every time it is asked.
+    private var reviewAskSection: some View {
+        Section {
+            LabeledContent("Sittings",
+                           value: "\(reviewAsk?.sittings ?? 0) of \(ReviewPromptPlan.sittingsBeforeAsking)")
+            LabeledContent("Last ask", value: lastAskText)
+            LabeledContent("Next Home return", value: outcomeText)
+            Button("Reset review ask", role: .destructive, action: resetReviewAsk)
+        } header: {
+            Text("Review ask")
+        } footer: {
+            Text("Never on the launch appearance: open any screen and come back to Home. Reset "
+                 + "forgets our record only — iOS keeps its own budget on top of ours, so a "
+                 + "TestFlight or App Store build may still show nothing.")
+        }
+    }
+
+    private var lastAskText: String {
+        guard let ask = reviewAsk?.lastAsk else { return "Never" }
+        return "\(ask.askedAt.formatted(date: .abbreviated, time: .shortened)) · \(ask.version)"
+    }
+
+    private var outcomeText: String {
+        switch reviewAsk?.outcome {
+        case nil: "—"
+        case .ask: "Would ask"
+        case .hold(.screenNotSettled): "Holds: screen busy"
+        case .hold(.askedUnderThisVersion): "Holds: asked under \(ReviewPrompt.currentVersion)"
+        case .hold(.askedTooRecently):
+            "Holds: asked < \(Int(ReviewPromptPlan.minimumGapBetweenAsks / 86_400)) days ago"
+        case .hold(.tooFewSittings): "Holds: too few sittings"
+        }
     }
 
     /// Clear the artist name and re-arm the one-time naming prompt, so the "you've earned a name"
@@ -45,10 +86,26 @@ struct DeveloperSettingsView: View {
     private func resetIntake() {
         artistIntakeSeen = false
     }
+
+    /// Forget that the app has asked for a review, so the ladder's last rung can be exercised again
+    /// (ADR 0214). This clears **our** record only — iOS's own three-per-year budget is invisible to
+    /// the process and unaffected, so the system dialog may still show nothing after this. That is
+    /// the feature's central fact, not a bug in this button.
+    private func resetReviewAsk() {
+        ReviewPrompt.resetForTesting()
+        refreshReviewAsk()
+    }
+
+    /// Every sitting, not Home's short-circuited count: Home stops counting once a fetch says there
+    /// are too few runs to matter, and a readout that said "0" there would be a lie about the log.
+    private func refreshReviewAsk() {
+        let runs = (try? context.fetch(FetchDescriptor<PracticeRun>())) ?? []
+        reviewAsk = ReviewPrompt.debugState(sittingCount: PracticeLog.sittings(runs.map(\.record)).count)
+    }
 }
 
 #Preview {
     NavigationStack { DeveloperSettingsView() }
-        .modelContainer(for: Profile.self, inMemory: true)
+        .modelContainer(for: [Profile.self, PracticeRun.self], inMemory: true)
 }
 #endif

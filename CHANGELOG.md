@@ -56,6 +56,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Red Moon asks, once, whether you'd rate it.** After you have practised on several separate
+  occasions, the App Store's rating prompt appears when you next come back to the home screen —
+  never in the middle of playing, and never on the screen at the end of a session, which is for
+  your own notes. It asks about the app, not about you: it is not triggered by how often you
+  practise, how long it has been, or anything else about how you are doing. If you would rather
+  rate it on your own schedule, or say something after that one time has passed, there is now a
+  **Rate Red Moon** row in *Settings ▸ Help & About*.
 - **Export a take.** Hold a take in the Journal or in a loop's Takes list, or open its **⋯** menu, and
   **Export take…** hands the recording to the share sheet: into a DAW, to your teacher, or into Files.
   It goes as the file it is, named for what it was recorded against and the day, like

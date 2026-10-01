@@ -195,6 +195,9 @@ in [your data](../privacy.md).
   account set up.
 - **`Diagnostics`** — what iOS has reported going wrong, and whether any of it travels with a support
   message. See below.
+- **`Rate Red Moon`** — opens Red Moon's App Store page with a review started. Red Moon also asks
+  once, by itself, after you have practised on several separate occasions; there is no way to ask it
+  to ask again, and iOS decides whether that prompt appears at all.
 - **`Privacy Policy`** and **`Terms of Use`** — both open in the browser.
 
 ### `Diagnostics`
