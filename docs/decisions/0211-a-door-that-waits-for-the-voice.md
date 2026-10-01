@@ -12,6 +12,13 @@
   sections, the two-to-a-row grammar and §1's rule that a destination's accessibility label is the
   UI-test contract are all unchanged; the sixth tile is still drawn, hidden, and still sets the
   Learn row's height.
+- **Amended by:** ADR 0235 (Write a tab, 2026-09-30) — **D3**: the half beside Toolkit is now the
+  player's own tile, opening a Toolkit tool they pick (My tabs until changed), not the Oracle's tile
+  drawn hidden. The refused *another destination in the empty slot* is taken in that shape: a second
+  way into an existing tool, not a new destination. **D6**: deleting `learnRow`'s condition no longer
+  reopens the door on its own, since the half it would unhide is the player's tile; where the Oracle
+  goes is decided when it's picked up again (0235 D7 leaves it out). D1, D2, D4, D5 and D7 stand,
+  `-oracleDoor`, its two-argument rule, what the open door draws and the negative test included.
 - **Relates to:** ADR 0070 (no performance feedback — the line the Oracle walks, and the reason a
   teaching corpus cannot supply the missing register), ADR 0092 §A2 (the deterministic local
   fallback, which is why the shelved feature is *complete* rather than half-wired), ADR 0102 (the

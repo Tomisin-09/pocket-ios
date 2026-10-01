@@ -59,22 +59,14 @@ struct PieceTranscription: Codable, Equatable, Sendable {
 
     var count: Int { taps.count }
     var labels: [PieceLabel?] { taps.map(\.label) }
-    var hasFrettedLabels: Bool {
-        taps.contains { if case .fretted = $0.label { return true } else { return false } }
-    }
+    var hasFrettedLabels: Bool { notes.hasFrettedLabels }
 
     /// The names in tap order, `nil` where a tap is unnamed.
-    func names(spelling: NoteSpelling) -> [String?] {
-        taps.map { $0.label?.name(openMidi: openMidi ?? [], spelling: spelling) }
-    }
+    func names(spelling: NoteSpelling) -> [String?] { notes.names(spelling: spelling) }
 
     /// The piece's line, *"11 notes. A C D D♯ E"*, as *Saved on this loop* and the Journal both show
     /// it. A piece whose every answer is a chord counts chords.
-    func summary(spelling: NoteSpelling) -> String? {
-        let named = taps.compactMap(\.label)
-        return TapTally.summary(count: count, names: names(spelling: spelling), perBeat: nil,
-                                countsChords: !named.isEmpty && named.allSatisfy(\.isChord))
-    }
+    func summary(spelling: NoteSpelling) -> String? { notes.summary(spelling: spelling) }
 
     // MARK: - Storage
 

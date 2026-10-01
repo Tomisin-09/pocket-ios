@@ -46,3 +46,33 @@ extension AppSettings {
         store.removeObject(forKey: Key.jumpBackIn)
     }
 }
+
+// MARK: - The tile beside Toolkit (ADR 0235 D6)
+
+extension AppSettings {
+
+    /// What the tile beside Toolkit opens until the player changes it: **My tabs**. Named for the reason
+    /// `jumpBackInPreferenceDefault` is: an `@AppStorage` default is what SwiftUI uses for an unset key,
+    /// and it doesn't consult the resolver, so the tile, its hold menu and Settings all bind to this.
+    static let homeToolDefault = ToolkitSection.myTabs
+
+    /// A missing or unknown stored value opens My tabs: a value written by a later build that knows a
+    /// seventh tool opens something real rather than nothing.
+    static func resolvedHomeTool(storedValue: String?) -> ToolkitSection {
+        storedValue.flatMap(ToolkitSection.init(rawValue:)) ?? homeToolDefault
+    }
+
+    /// The tile's caption, *Hold to change*, until the tile has been changed once by either door. Like
+    /// the empty library's, it's an instruction, and it goes once it's followed (ADR 0197 D3, as amended).
+    static func homeToolCaption(chosen: Bool) -> String? {
+        chosen ? nil : "Hold to change"
+    }
+
+    /// Clear both keys, beside `resetJumpBackInPreference` and for its reason: called once at launch under
+    /// `-uiTesting` and nowhere else, so a test that changes the tile doesn't leave it changed for the next
+    /// test, the next run, or the Home figures the manual is shot through.
+    static func resetHomeTool(store: UserDefaults = .standard) {
+        store.removeObject(forKey: Key.homeTool)
+        store.removeObject(forKey: Key.homeToolChosen)
+    }
+}

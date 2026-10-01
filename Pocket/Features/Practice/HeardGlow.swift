@@ -39,6 +39,7 @@ private struct HeardGlow: View {
     let headroom: CGFloat
     let reduceMotion: Bool
     @State private var started = false
+    @Environment(\.neckAccent) private var accent
 
     struct Frame {
         var across: CGFloat
@@ -49,7 +50,7 @@ private struct HeardGlow: View {
 
     var body: some View {
         Circle()
-            .fill(PocketColor.practice.opacity(0.42))
+            .fill(accent.opacity(0.42))
             .frame(width: 36, height: 36)
             .keyframeAnimator(initialValue: first, trigger: started) { content, frame in
                 content

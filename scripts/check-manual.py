@@ -215,10 +215,14 @@ def check_c1():
 
 
 def check_c2():
-    """The four Toolkit sections are named in toolkit.md."""
-    text = strip_debug(read(os.path.join(SOURCE, "Features/Toolkit/ToolkitView.swift")))
-    names = labelled_arguments(text, "ToolkitSectionRow", "title")
-    return names_appear_in(names, page("toolkit.md"), "ToolkitSectionRow (ADR 0096)")
+    """Every Toolkit row is named in toolkit.md.
+
+    The rows come from `ToolkitSection` (ADR 0235), which the hub and the Home tile beside Toolkit both
+    read, so this reads the titles there rather than the hub's layout.
+    """
+    text = strip_debug(read(os.path.join(SOURCE, "Core/Models/ToolkitSection.swift")))
+    names = labelled_arguments(text, "ToolkitRowInfo", "title")
+    return names_appear_in(names, page("toolkit.md"), "ToolkitRowInfo (ADR 0096, 0235)")
 
 
 def faq_entries():

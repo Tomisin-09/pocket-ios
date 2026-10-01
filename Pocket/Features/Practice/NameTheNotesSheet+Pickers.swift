@@ -37,19 +37,9 @@ extension NameTheNotesSheet {
         }
     }
 
-    func pickerLabel(_ text: String) -> some View {
-        Text(text)
-            .font(.futura(.caption))
-            .foregroundStyle(PocketColor.textSecondary)
-    }
-
-    /// The title of a control under the neck, *Chords*, *Into it* and *Bend*, one size so they read as
-    /// one set.
-    func rowTitle(_ text: String) -> some View {
-        Text(text)
-            .font(.futura(.subheadline))
-            .lineLimit(1)
-    }
+    func pickerLabel(_ text: String) -> some View { NamingControls.pickerLabel(text) }
+    func hint(_ text: String) -> some View { NamingControls.hint(text) }
+    func link(_ title: String, action: @escaping () -> Void) -> some View { NamingControls.link(title, action: action) }
 
     func pickButton(_ title: String, state: PickState, action: @escaping () -> Void) -> some View {
         Button(action: action) {

@@ -1,137 +1,5 @@
 import SwiftUI
 
-// The five playing marks (ADR 0227 D5), under the neck. A bend changes the note and vibrato colours it, so
-// both live on the note; hammer-on, pull-off and slide are *Into it* (`+Into`): a join from the tap before,
-// or a lead-in inside the note when the two were heard as one. Split out for file length.
-extension NameTheNotesSheet {
-
-    var marksControls: some View {
-        let note = ringedNote
-        return VStack(alignment: .leading, spacing: 8) {
-            if let placedNote { markedLine(placedNote) }
-            intoControls
-            // Vibrato sits beside the bends when the row has room for both, and under them when it doesn't.
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 8) {
-                    bendRow(note)
-                    Spacer(minLength: 0)
-                    vibratoButton(note)
-                }
-                VStack(alignment: .leading, spacing: 8) {
-                    bendRow(note)
-                    vibratoButton(note)
-                        .padding(.leading, 52)
-                }
-            }
-        }
-    }
-
-    private func bendRow(_ note: FrettedNote?) -> some View {
-        HStack(spacing: 8) {
-            rowTitle("Bend").fixedSize().frame(minWidth: 44, alignment: .leading)
-            MarkSegments(options: FrettedNote.bends.map { bend in
-                .init(title: Self.bendTitle(bend), isOn: note?.bend == bend, isEnabled: note != nil) {
-                    mark { $0.bend = bend }
-                }
-            })
-        }
-    }
-
-    private func vibratoButton(_ note: FrettedNote?) -> some View {
-        Button {
-            mark { $0.vibrato.toggle() }
-        } label: {
-            Text("~ Vibrato")
-                .font(.futura(.footnote, weight: note?.vibrato == true ? .bold : nil))
-                .padding(.horizontal, 10)
-                .frame(minHeight: 32)
-                .foregroundStyle(note?.vibrato == true ? PocketColor.background : PocketColor.textPrimary)
-                .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(note?.vibrato == true ? PocketColor.practice : .clear))
-                .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .strokeBorder(note?.vibrato == true ? .clear : PocketColor.surfaceBorder))
-        }
-        .buttonStyle(.plain)
-        .disabled(note == nil)
-        .opacity(note == nil ? 0.35 : 1)
-        .accessibilityAddTraits(note?.vibrato == true ? .isSelected : [])
-    }
-
-    /// What a bend button says: *None*, *½*, *Whole*, *1½* (steps).
-    nonisolated static func bendTitle(_ semitones: Int) -> String {
-        ["None", "½", "Whole", "1½"][min(max(semitones, 0), 3)]
-    }
-
-    /// Which note the marks are on, while the strip has moved past it (ADR 0234 D3): "Note 12 · G7, until
-    /// you place 13". Said only then; otherwise the strip's own *Note 12 of 16* says it.
-    private func markedLine(_ index: Int) -> some View {
-        let placed = fretText(labels[index]?.frettedNotes ?? [])
-        return HStack(alignment: .firstTextBaseline, spacing: 6) {
-            Text("\(noun.capitalized) \(index + 1) · \(placed)")
-                .font(.futura(.footnote, weight: .bold))
-                .monospacedDigit()
-            Text("until you place \(active + 1)")
-                .font(.futura(.caption))
-                .foregroundStyle(PocketColor.textSecondary)
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Marks go on \(noun) \(index + 1), \(placed), until you place \(noun) \(active + 1)")
-    }
-
-    /// The note bend and vibrato go on: the one note, or a shape's ringed note (0227 D5). After a note is
-    /// placed and the strip moves on, that's still the note just placed (ADR 0234 D3).
-    private var ringedNote: FrettedNote? {
-        let notes = labels[marked]?.frettedNotes ?? []
-        return notes.first { $0.string == ringed } ?? notes.last
-    }
-
-    /// Change the marks on the marked note, or on a shape's ringed note.
-    private func mark(_ change: (inout FrettedNote) -> Void) {
-        guard case .fretted(var notes, let into) = labels[marked], !notes.isEmpty else { return }
-        let index = notes.firstIndex { $0.string == ringed } ?? notes.count - 1
-        change(&notes[index])
-        labels[marked] = .fretted(notes, into: into)
-    }
-}
-
-/// A row of small segments where each can be off on its own, which `Picker(.segmented)` can't do: *Into it*
-/// offers only the ways in that fit.
-struct MarkSegments: View {
-    struct Option {
-        let title: String
-        let isOn: Bool
-        let isEnabled: Bool
-        let action: () -> Void
-    }
-
-    let options: [Option]
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(options.indices, id: \.self) { index in
-                let option = options[index]
-                Button(action: option.action) {
-                    Text(option.title)
-                        .font(.futura(.footnote, weight: option.isOn ? .bold : nil))
-                        .lineLimit(1)
-                        .padding(.horizontal, 9)
-                        .frame(minWidth: 38, minHeight: 28)
-                        .foregroundStyle(PocketColor.textPrimary)
-                        .background(RoundedRectangle(cornerRadius: 7, style: .continuous)
-                            .fill(option.isOn ? PocketColor.surfaceBorder : .clear))
-                }
-                .buttonStyle(.plain)
-                .disabled(!option.isEnabled)
-                .opacity(option.isEnabled ? 1 : 0.35)
-                .accessibilityAddTraits(option.isOn ? .isSelected : [])
-            }
-        }
-        .padding(2)
-        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(PocketColor.surfaceSubtle))
-        .fixedSize()
-    }
-}
-
 /// The note being named's marks, drawn on the neck (ADR 0227 D5): a bend as an arrow to a dashed ghost
 /// where it lands (the fretLIVE idea), vibrato as a wave over the note, a hammer-on or pull-off as a curve
 /// under the string marked *h* or *p*, a slide as an arrow marked `/` or `\`. A lead-in draws the same
@@ -145,10 +13,11 @@ struct NeckMarksLayer: View {
     let stringCount: Int
     let maxFret: Int
     let headroom: CGFloat
+    @Environment(\.neckAccent) private var accent
 
     var body: some View {
         Canvas { context, _ in
-            let ink = GraphicsContext.Shading.color(PocketColor.practice)
+            let ink = GraphicsContext.Shading.color(accent)
             let line = StrokeStyle(lineWidth: 1.75, lineCap: .round, lineJoin: .round)
             drawShapeLinks(in: context, ink: ink)
             // A shape's lead-ins are one move: one pill, on its top string.
@@ -233,7 +102,7 @@ struct NeckMarksLayer: View {
         if case .fret(let fret) = leadIn.from {
             start = center(note.string, fret)
             context.stroke(Path(ellipseIn: CGRect(x: start.x - 12, y: start.y - 12, width: 24, height: 24)),
-                           with: .color(PocketColor.practice), lineWidth: 1.5)
+                           with: .color(accent), lineWidth: 1.5)
         } else {
             start = CGPoint(x: end.x + (way == .upward ? -1.4 : 1.4) * NeckGeometry.pitch, y: end.y)
         }
@@ -244,7 +113,7 @@ struct NeckMarksLayer: View {
     /// the mark in a pill when `labelled` (once per shape).
     private func drawLink(_ join: String, from start: CGPoint, to end: CGPoint, labelled: Bool,
                           in context: GraphicsContext) {
-        let ink = GraphicsContext.Shading.color(PocketColor.practice)
+        let ink = GraphicsContext.Shading.color(accent)
         let line = StrokeStyle(lineWidth: 1.75, lineCap: .round, lineJoin: .round)
         let middle = (start.x + end.x) / 2
         if join == "h" || join == "p" {
@@ -282,8 +151,8 @@ struct NeckMarksLayer: View {
     private func pill(_ text: String, at point: CGPoint, in context: GraphicsContext) {
         let box = CGRect(x: point.x - 6.5, y: point.y - 6.5, width: 13, height: 13)
         context.fill(Path(ellipseIn: box), with: .color(PocketColor.background))
-        context.stroke(Path(ellipseIn: box), with: .color(PocketColor.practice), lineWidth: 1)
+        context.stroke(Path(ellipseIn: box), with: .color(accent), lineWidth: 1)
         context.draw(Text(text).font(.system(size: 9, weight: .bold, design: .monospaced))
-            .foregroundStyle(PocketColor.practice), at: point)
+            .foregroundStyle(accent), at: point)
     }
 }

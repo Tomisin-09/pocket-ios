@@ -49,6 +49,9 @@ struct PocketApp: App {
             // test that pins the card to *Routine* leaves it pinned for the next test and the next
             // run, and `reference/home` is shot through that card.
             AppSettings.resetJumpBackInPreference()
+            // The tile beside Toolkit is the same trap (ADR 0235 D6): a test that changes it would change
+            // it for every test after, and for Home's figures.
+            AppSettings.resetHomeTool()
             // The Oracle's cadence is the same trap with a longer fuse (ADR 0187 D15). Its gate is
             // driven by a stored date, so the *second* run of a suite finds the week already spent
             // and the screen showing a persisted reading instead of the button. A test written
@@ -119,6 +122,7 @@ struct PocketApp: App {
                               Exercise.self, Routine.self, RoutineItem.self, Goal.self,
                               LongTermGoal.self, Recording.self, TakeNote.self, SavedChord.self, Profile.self,
                               PracticeRun.self, ReferenceLink.self, LoopSpanChange.self,
-                              Snag.self, PracticeFolder.self, CustomSkill.self, SavedProgression.self])
+                              Snag.self, PracticeFolder.self, CustomSkill.self, SavedProgression.self,
+                              WrittenTab.self])
     }
 }

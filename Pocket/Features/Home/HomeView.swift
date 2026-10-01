@@ -13,8 +13,8 @@ import SwiftUI
 /// **The ordering is the argument.** Everything above the map is different from yesterday and
 /// everything in it is not: the destinations barely move from one release to the next. Full-width
 /// strips put that unchanging half in the player's way every launch — ADR 0197 is what shrank it
-/// back to an index. (Five are reachable since ADR 0211 closed the Oracle's door; `learnRow` in
-/// `HomeView+Map` holds the reasoning.)
+/// back to an index. (Six are reachable: the sixth, beside Toolkit, is the player's own since ADR 0235,
+/// and the Oracle's door stays closed; `homeToolTile` in `HomeView+Map` holds the reasoning.)
 struct HomeView: View {
     /// Internal, not private: `HomeView+Seeding` writes the first-run content through it.
     @Environment(\.modelContext) var context
@@ -51,6 +51,10 @@ struct HomeView: View {
     /// accessor. The hold menu writes this binding directly.
     @AppStorage(AppSettings.Key.jumpBackIn)
     var jumpBackInRaw = AppSettings.jumpBackInPreferenceDefault.rawValue
+    /// The tile beside Toolkit (ADR 0235 D6), bound to the named default for the same reason, and whether
+    /// it has ever been changed, which is what takes its *Hold to change* caption away.
+    @AppStorage(AppSettings.Key.homeTool) var homeToolRaw = AppSettings.homeToolDefault.rawValue
+    @AppStorage(AppSettings.Key.homeToolChosen) var homeToolChosen = false
     /// One-time gate for the analytics sheet, so it appears once and never nags. Covers being
     /// *told* as well as being *asked* (ADR 0147) — the key string is unchanged so no install
     /// re-sees it.

@@ -339,6 +339,8 @@ enum Tool: String, CaseIterable {
     /// Improvising over a backing-track loop (ADR 0135) — a tool open, like ear training. Nothing
     /// about what was played is captured or sent (B5); this counts that the surface was reached.
     case improvise
+    /// Writing a tab on the neck (ADR 0235). Nothing written is sent; this counts that the writer opened.
+    case tabWriter = "tab_writer"
 }
 
 /// Which Red Moon Pro product was bought.

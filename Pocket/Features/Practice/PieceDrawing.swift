@@ -9,15 +9,27 @@ import UIKit
 /// in fours. It replaces the line of names that ran to a wall on a long piece and the one line of tab that
 /// ran off the side.
 ///
-/// Drawn from the piece every time, never kept as text (**edit pieces, never the picture**).
+/// Drawn from the piece every time, never kept as text (**edit pieces, never the picture**). It reads the
+/// notes alone, never their seconds, so a tab written on the neck (ADR 0235) draws the same way.
 struct PieceDrawing: View {
-    let piece: PieceTranscription
+    let piece: PieceNotes
     let spelling: NoteSpelling
     /// Folded to its line until *See the notes* is tapped: the Journal's Pieces rows, so the feed stays a
     /// feed (ADR 0234 D8, after the second design round).
     var folds = false
     /// *Copy tab* on a hold: the map's piece sheet, where the tab could be selected as text before.
     var copyable = false
+
+    init(notes: PieceNotes, spelling: NoteSpelling, folds: Bool = false, copyable: Bool = false) {
+        self.piece = notes
+        self.spelling = spelling
+        self.folds = folds
+        self.copyable = copyable
+    }
+
+    init(piece: PieceTranscription, spelling: NoteSpelling, folds: Bool = false, copyable: Bool = false) {
+        self.init(notes: piece.notes, spelling: spelling, folds: folds, copyable: copyable)
+    }
 
     @State private var isOpen = false
     @State private var width: CGFloat = 0
@@ -77,7 +89,11 @@ struct PieceDrawing: View {
     }
 
     @ViewBuilder private var drawing: some View {
-        if piece.hasFrettedLabels {
+        if piece.hasFrettedLabels && piece.hasStructure {
+            // A written tab with bar lines or sections (ADR 0235 D5). A loop's piece has neither, and takes
+            // the path below, unchanged.
+            sectionedStaff
+        } else if piece.hasFrettedLabels {
             if copyable, let tab = TabLine.render(piece.labels, openMidi: piece.openMidi ?? []) {
                 staff.contextMenu {
                     Button("Copy tab", systemImage: "doc.on.doc") { UIPasteboard.general.string = tab }
@@ -126,14 +142,16 @@ struct PieceDrawing: View {
         .accessibilityIdentifier("piece.tab")
     }
 
-    private func row(_ row: PieceStaff.Row, strings: [String], spread: CGFloat) -> some View {
+    private func row(_ row: PieceStaff.Row, strings: [String], spread: CGFloat, caption: Bool = true) -> some View {
         let hasAbove = row.columns.contains { $0.above != nil }
         let notes = row.notes
         return VStack(alignment: .leading, spacing: 2) {
-            Text(notes.count == 1 ? "Note \(notes.lowerBound)" : "Notes \(notes.lowerBound)–\(notes.upperBound)")
-                .font(.futura(.caption2))
-                .monospacedDigit()
-                .foregroundStyle(PocketColor.textSecondary)
+            if caption {
+                Text(notes.count == 1 ? "Note \(notes.lowerBound)" : "Notes \(notes.lowerBound)–\(notes.upperBound)")
+                    .font(.futura(.caption2))
+                    .monospacedDigit()
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
             HStack(alignment: .top, spacing: 0) {
                 VStack(alignment: .leading, spacing: 0) {
                     if hasAbove { Color.clear.frame(height: Self.aboveHeight) }
@@ -146,8 +164,12 @@ struct PieceDrawing: View {
                 }
                 .frame(width: Self.gutterCharacters * characterWidth, alignment: .leading)
                 bar(strings: strings.count, hasAbove: hasAbove)
-                ForEach(row.columns, id: \.note) { column in
-                    columnView(column, strings: strings.count, hasAbove: hasAbove, spread: spread)
+                ForEach(row.columns, id: \.id) { column in
+                    if column.isBar {
+                        barColumn(strings: strings.count, hasAbove: hasAbove, spread: spread)
+                    } else {
+                        columnView(column, strings: strings.count, hasAbove: hasAbove, spread: spread)
+                    }
                 }
                 bar(strings: strings.count, hasAbove: hasAbove)
             }
@@ -226,5 +248,75 @@ struct PieceDrawing: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(piece.summary(spelling: spelling) ?? "")
         .accessibilityIdentifier("piece.names")
+    }
+}
+
+// MARK: - A written tab's sections and bar lines (ADR 0235 D5)
+
+// In an extension so the struct's body stays inside SwiftLint's cap; the same file, so it shares the
+// drawing's private measures.
+extension PieceDrawing {
+
+    /// Each section on rows of its own under its heading, in ink, whole bars kept on a row. Every row but a
+    /// section's last is spread to the width. The rows drop their *Notes 12–23* captions when there are
+    /// headings: the headings already say where you are.
+    private var sectionedStaff: some View {
+        let strings = TabLine.stringNames(openMidi: piece.openMidi ?? [])
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+        let room = width - Self.gutterCharacters * characterWidth - 2 * Self.barWidth
+        let systems = PieceStaff.systems(of: piece, spelling: spelling,
+                                         fitting: max(Int(room / characterWidth) - Self.gap, 6), gap: Self.gap)
+        let captions = piece.sectionsWithNotes.isEmpty
+        let rowCount = systems.reduce(0) { $0 + $1.rows.count }
+        let sections = piece.sectionsWithNotes.count
+        return VStack(alignment: .leading, spacing: 0) {
+            // Measured as `staff` measures, on an empty line, never on the rows.
+            Color.clear
+                .frame(height: 0)
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+            VStack(alignment: .leading, spacing: 18) {
+                if width > 0 {
+                    ForEach(systems.indices, id: \.self) { index in
+                        system(systems[index], strings: strings, room: room, captions: captions)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Tab, \(sections) section\(sections == 1 ? "" : "s"), "
+                            + "\(rowCount) row\(rowCount == 1 ? "" : "s")")
+        .accessibilityIdentifier("piece.tab")
+    }
+
+    private func system(_ system: PieceStaff.System, strings: [String], room: CGFloat,
+                        captions: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let heading = system.heading {
+                Text(heading)
+                    .font(.futura(.footnote, weight: .bold))
+                    .foregroundStyle(PocketColor.textPrimary)
+            }
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(system.rows.indices, id: \.self) { index in
+                    let natural = CGFloat(system.rows[index].columns.map { $0.width + Self.gap }.reduce(0, +))
+                        * characterWidth
+                    let spread = index < system.rows.count - 1 && natural > 0 ? min(room / natural, 1.5) : 1
+                    row(system.rows[index], strings: strings, spread: max(spread, 1), caption: captions)
+                }
+            }
+        }
+    }
+
+    /// A bar line inside a row: the strings run through it, as a tab book draws them.
+    private func barColumn(strings: Int, hasAbove: Bool, spread: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            if hasAbove { Color.clear.frame(height: Self.aboveHeight) }
+            ForEach(0..<strings, id: \.self) { _ in
+                stringLine.frame(height: Self.stringSpacing)
+            }
+        }
+        .overlay(alignment: .top) { bar(strings: strings, hasAbove: hasAbove) }
+        .frame(width: CGFloat(1 + Self.gap) * characterWidth * spread)
     }
 }

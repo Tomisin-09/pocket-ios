@@ -20,6 +20,10 @@
   note moves on, silently, the marks follow the note just placed, and the three notes either side are
   drawn filled and ringed, numbered. **D8**: *Hear it again* goes; a chip tap plays the recording. The
   rest stands.
+- **Amended by:** ADR 0235 (Write a tab, 2026-09-30) — **D10**: *no free-text tab document* is lifted
+  for a tab written on this neck in My tabs, by the same editor, extracted and shared. Every other line
+  of D10 stands, and a written tab takes the same marks with the same limits. This sheet's copy is
+  unchanged.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the
   synth withdrawn here, and D4.3, the route back) · 0093 (the chord namer that names a shape) · 0095
   (My chords, whose one-note-per-string rule the Chords switch follows) · 0065 (exercise templates, whose scales editor

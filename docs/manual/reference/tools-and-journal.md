@@ -128,7 +128,7 @@ Nothing on this screen is a grade, and there is no target anywhere on it.
 
 ## Toolkit
 
-Reached from `Toolkit` on Home. Five sections, each carrying a count or a state.
+Reached from `Toolkit` on Home. Six sections, each carrying a count or a state.
 
 <!-- shot: reference/toolkit | role: screen
      | alt: The Toolkit hub listing My chords, Tuner, Glossary and Help & FAQs
@@ -138,6 +138,7 @@ Reached from `Toolkit` on Home. Five sections, each carrying a count or a state.
 |---|---|---|
 | `My chords` | `Your saved voicings` | How many, or `None yet` |
 | `My progressions` | `Progressions you've written` | How many, or `None yet` |
+| `My tabs` | `Tabs you write on the neck` | How many, or `None yet` |
 | `Tuner` | `Tune by ear or mic` | `Free` |
 | `Glossary` | `Chord, scale & theory terms` | The term count |
 | `Help & FAQs` | `How Red Moon works` | The answer count |
@@ -173,6 +174,18 @@ A list of written progressions, newest first — each row its name, its chords a
 **+** (`New progression`) in the toolbar. Tap one to open it in the builder: a name, `Written in`,
 `Chords`, `Chords in the key`, `Any chord` with its `Chord type`, `Save`, and `Delete progression`.
 Swipe a row to delete it. Empty, it reads `No progressions yet`.
+
+### `My tabs`
+
+A list of written tabs, the one changed last first, each row its title, when it changed, and its notes,
+sections and instrument, with **+** (`New tab`) in the toolbar. Tap one to read it, with `Edit`. Hold or
+swipe a row for `Rename` and `Delete`; a delete has an undo toast. Empty, it reads `No tabs yet` and
+offers `Write a tab`.
+
+The writer: a title field (`Name this tab`); the strip, its **+** and the line under it, which offers
+`Back to the end` while the **+** is in front of a note; **↶ ↷**, `Bar line` and `Section`, which opens a
+list of names, `Or type a name` and `Take the heading off`; the neck, under `Where do you play it?`,
+with `Chords`, `Into it`, `Bend` and vibrato; and `The tab so far`. `Done` goes back.
 
 ### `Glossary`
 

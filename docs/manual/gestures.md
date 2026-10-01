@@ -94,8 +94,9 @@ Not every list offers all of it, because not every item has all of it:
 
 The transport's skip buttons use the same kind of menu for a different job: hold either one and pick
 how far it jumps — **5s**, **10s**, **15s**, **30s** or **1 min**. Holding Home's **Jump back in**
-card picks what that card offers — see [Home](reference/home-and-library.md#home). Journal entries
-and recorded takes have their own hold menus too.
+card picks what that card offers, and holding the tile beside **Toolkit** picks which Toolkit tool it
+opens — see [Home](reference/home-and-library.md#home). Journal entries, recorded takes and your tabs
+in **My tabs** have their own hold menus too.
 
 ## Swipes
 

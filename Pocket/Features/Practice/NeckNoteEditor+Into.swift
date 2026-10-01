@@ -6,7 +6,7 @@ import SwiftUI
 // for one note or a shape moving as one (a double-stop slid into place).
 // All four ways in are always shown, so a pull-off is there to be seen before a note goes down to one.
 // Split out for file length.
-extension NameTheNotesSheet {
+extension NeckNoteEditor {
 
     /// *Into it* and its ⓘ on a line of their own, the four ways in under them at full width: with the ⓘ
     /// beside them they no longer fit one row on the smallest phone.
@@ -14,13 +14,15 @@ extension NameTheNotesSheet {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 2) {
                 rowTitle("Into it")
-                InfoPopoverButton(subject: "Into it", info: NamingInfo.into)
+                InfoPopoverButton(subject: "Into it", info: voice.intoInfo)
                     .padding(.vertical, -8)
             }
             MarkSegments(options: IntoChoice.allCases.map { choice in
                 let route = NeckJoin.route(choice, into: marked, of: labels)
                 return MarkSegments.Option(title: choice.title, isOn: isLit(choice),
-                                           isEnabled: route != .unavailable) { choose(choice, route) }
+                                           isEnabled: route != .unavailable) {
+                    apply(NeckEditing.choose(choice, labels: labels, cursor: cursor))
+                }
             })
             intoLine
         }
@@ -32,44 +34,6 @@ extension NameTheNotesSheet {
         return NeckJoin.holds(choice, into: marked, of: labels)
     }
 
-    /// Join from the tap before when it fits, else ask the neck for where the note started. Tapping the
-    /// choice already held changes nothing, so it can't swap a lead-in for the tap before by surprise.
-    private func choose(_ choice: IntoChoice, _ route: NeckJoin.Route) {
-        let waiting = awaitingStart != nil
-        awaitingStart = nil
-        guard waiting || choice == .picked || !NeckJoin.holds(choice, into: marked, of: labels) else { return }
-        switch route {
-        case .clear: setInto(nil)
-        case .fromBefore(let join): setInto(join)
-        case .inside(let request): awaitingStart = request
-        case .unavailable: break
-        }
-    }
-
-    /// Join from the tap before, or pick it: either way no lead-in. Never both (ADR 0230 D6).
-    private func setInto(_ join: Join?) {
-        guard case .fretted(var notes, _) = labels[marked] else { return }
-        for position in notes.indices { notes[position].leadIn = nil }
-        labels[marked] = .fretted(notes, into: join)
-    }
-
-    /// A tap on the neck while *Into it* waits for a start: where the lead-in began, when it can be, and in
-    /// a shape every other note as many frets away. A tap on one of the tap's own notes gives up; any
-    /// other is left alone, since the dimmed dots say where to tap.
-    func takeStart(string: Int, fret: Int, for request: LeadInRequest) {
-        guard case .fretted(let notes, _) = labels[marked], !notes.isEmpty else {
-            awaitingStart = nil
-            return
-        }
-        if NeckJoin.accepts(string: string, fret: fret, asStartOf: notes, for: request),
-           let started = NeckJoin.starts(string: string, fret: fret, of: notes, join: request.join) {
-            labels[marked] = .fretted(started, into: nil)
-            awaitingStart = nil
-        } else if notes.contains(where: { $0.string == string && $0.fret == fret }) {
-            awaitingStart = nil
-        }
-    }
-
     // MARK: - The line under it
 
     @ViewBuilder private var intoLine: some View {
@@ -77,8 +41,8 @@ extension NameTheNotesSheet {
             hint(startPrompt(request, notes))
             HStack(spacing: 18) {
                 if request.join == .slide {
-                    link("From below") { slideIn(from: .below) }
-                    link("From above") { slideIn(from: .above) }
+                    link("From below") { apply(NeckEditing.slideIn(from: .below, labels: labels, cursor: cursor)) }
+                    link("From above") { apply(NeckEditing.slideIn(from: .above, labels: labels, cursor: cursor)) }
                 }
                 link("Cancel") { awaitingStart = nil }
             }
@@ -86,14 +50,6 @@ extension NameTheNotesSheet {
             if let line = intoText { hint(line) }
             if let offer = intoOffer { link(offer.title, action: offer.action) }
         }
-    }
-
-    /// A slide in from nowhere, for every note of the tap.
-    private func slideIn(from start: LeadIn.Start) {
-        guard case .fretted(var notes, _) = labels[marked] else { return }
-        for position in notes.indices { notes[position].leadIn = LeadIn(from: start, join: .slide) }
-        labels[marked] = .fretted(notes, into: nil)
-        awaitingStart = nil
     }
 
     /// Where to tap for the start: on the note's own string, or for a shape on any of its strings, the
@@ -124,7 +80,7 @@ extension NameTheNotesSheet {
     private var intoText: String? {
         guard let notes = labels[marked]?.frettedNotes, !notes.isEmpty else { return "Place the note first." }
         if let leadIn = notes[0].leadIn {
-            let heard = notes.count == 1 ? "heard as one note" : "moving as one"
+            let heard = notes.count == 1 ? voice.asOneNote : "moving as one"
             switch leadIn.from {
             case .fret(let start) where notes.count == 1: return "Started at fret \(start), \(heard)."
             case .fret(let start):
@@ -139,7 +95,7 @@ extension NameTheNotesSheet {
         let before = "Note \(marked)"
         let placedBefore = marked > 0 ? fretText(labels[marked - 1]?.frettedNotes ?? []) : ""
         if NeckJoin.symbol(into: marked, of: labels) != nil {
-            return "From \(before.lowercased()) (\(placedBefore)), heard as two notes."
+            return "From \(before.lowercased()) (\(placedBefore)), \(voice.asTwoNotes)."
         }
         guard let blocker = NeckJoin.blocker(into: marked, of: labels) else { return nil }
         let reason: String
@@ -158,7 +114,7 @@ extension NameTheNotesSheet {
         if marked + 1 < labels.count, NeckJoin.direction(into: marked + 1, of: labels) != nil {
             return reason + " A hammer-on or slide into note \(marked + 2) goes on that note."
         }
-        return reason + (notes.count == 1 ? " Heard as one note that started elsewhere? Pick how."
+        return reason + (notes.count == 1 ? voice.startedElsewhere
             : " Moved into place as one? Pick how.")
     }
 
@@ -172,38 +128,7 @@ extension NameTheNotesSheet {
         }
         guard let into, NeckJoin.symbol(into: marked, of: labels) != nil else { return nil }
         let way = into == .legato ? NeckJoin.direction(into: marked, of: labels) : nil
-        let title = notes.count == 1 ? "Heard as one note?" : "Moved into place as one?"
+        let title = notes.count == 1 ? voice.oneNoteOffer : "Moved into place as one?"
         return (title, { awaitingStart = LeadInRequest(join: into, direction: way) })
     }
-
-    func hint(_ text: String) -> some View {
-        Text(text)
-            .font(.futura(.caption))
-            .foregroundStyle(PocketColor.textSecondary)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-
-    func link(_ title: String, action: @escaping () -> Void) -> some View {
-        Button(title, action: action)
-            .font(.futura(.caption, weight: .semibold))
-            .tint(PocketColor.practice)
-            .buttonStyle(.borderless)
-            .padding(.vertical, 2)
-    }
-}
-
-/// What the ⓘ beside *Chords* and *Into it* say (ADR 0227 D4, D5; ADR 0230), kept together so the two read
-/// as one voice.
-enum NamingInfo {
-    static let chords =
-        "One tap can hold more than one note: a double-stop, a triad or a whole chord, one note per "
-        + "string, as in My chords. Turn Chords on, then tap the other strings. Tap a note twice to take it "
-        + "out. Bend and vibrato go on the ringed note, and the neck names what you placed. A chord you "
-        + "heard but didn't play is named on By ear."
-    static let into =
-        "How you got to this note: picked, a hammer-on or pull-off (fretted from a lower or higher fret on "
-        + "the same string, without picking it), or a slide.\n\nTapped twice, heard as two notes? It "
-        + "joins from the note before. Tapped once, heard as one? Pick how it started, then tap the fret "
-        + "it came from; a slide can also come in From below or From above. A double-stop that moves as "
-        + "one works the same way. The tab reads the same however you tapped it."
 }

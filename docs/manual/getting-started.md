@@ -59,7 +59,8 @@ here.
 - **Metronome** is the click on its own.
 - **Song library** is your imported songs.
 - **Journal** is what you did and any takes you recorded.
-- **Toolkit** is the tuner, your chords and the glossary.
+- **Toolkit** is the tuner, your chords and the glossary. The tile beside it is yours: it opens
+  **My tabs**, where you write tabs on the neck, until you hold it and pick another Toolkit tool.
 - The **gear** at the top left opens Settings; the **+** at the top right imports a song.
 
 ## Your first session, in three moves

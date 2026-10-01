@@ -56,6 +56,19 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Write a tab.** A sixth Toolkit row, **My tabs**, keeps tabs you write yourself, one note at a time on
+  the neck: the same neck as *Name the notes*, in the Toolkit's indigo. Tap the neck and the note goes in
+  at the **+**, which moves on; bends, vibrato, hammer-ons, pull-offs and slides go on the note you just
+  placed, and **Chords** puts a double-stop or a chord on one note. Tap a note to change it, put one in
+  before it, or take it out, and ↶ ↷ undo anything. **Bar line** and **Section** (*Intro*, *Verse*,
+  *Chorus* or your own name) lay it out, and it's drawn a section at a time, under its heading, with its
+  bar lines. Nothing plays, and it saves as you go. A tab opens to be read, with **Edit**; hold or swipe
+  one in the list to rename or delete it. Written tabs aren't in the Journal, and they travel in the
+  whole-library export and restore.
+- **A Home tile that's yours.** The empty space beside **Toolkit** on Home is now a tile that opens a
+  Toolkit tool: **My tabs** until you change it. Hold it and pick another, or choose in **Settings ▸
+  Practice ▸ Beside Toolkit**; it takes that tool's name and glyph. *Hold to change* sits under its name
+  until you've changed it once.
 - **Versions of a piece.** Saving a new count over a loop's piece no longer replaces it: the old one is
   kept as an earlier version, and *Replace the saved piece?* is gone. **Versions**, under *Saved on this
   loop* in Train your ear and on a loop's tab in Map the song, lists them with the one in use first.
@@ -318,6 +331,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **CI's job gets 45 minutes, up from 30.** A green run was taking 25–29 minutes, so one slow runner or one
+  retry cancelled it before it could report. The limit is a backstop for a hung run, not a budget.
+- **Name the notes' neck is shared with the tab writer** (ADR 0235 D9). Its rules moved into a pure
+  `NeckEditing` (17 tests pinning what it did) and its view into `NeckNoteEditor`; the undo history became
+  a generic `EditHistory`, and a piece's drawing reads its notes without their seconds (`PieceNotes`).
+  Nothing a player sees changed: hosted snapshots of the sheet in seven states are byte-identical before
+  and after, and a loop's piece draws byte-identically too. **`NameTheNotesUITests`** is the first test to
+  open the sheet, through a seeded loop, and checks that a tap on a chip never snags while a hold does,
+  the check ADR 0234 left owed.
 - **Landscape is a lease**, counted like *Keep screen awake* (ADR 0226 D4). Only the song player
   rotates today, so nothing changes on screen; a second rotating screen can now be added without one
   screen's exit locking the other back to portrait.

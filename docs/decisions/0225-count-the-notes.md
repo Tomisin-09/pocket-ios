@@ -23,6 +23,10 @@
 - **Amended by:** ADR 0234 (Naming from real use, 2026-09-30) — **D5**: *Name the notes* opens on the
   saved piece only, so a pass is saved first and named there, and *Hear it again* goes, since a chip
   tap does the same. The rest of D5 stands.
+- **Amended by:** ADR 0235 (Write a tab, 2026-09-30) — **D10**: *no free-text tab document anywhere*
+  is lifted for one kind of tab: notes the player places on the neck in My tabs, with bar lines and
+  sections. It is still never typed, never imported and never detected. Order only, no playing back,
+  and a song's chart derived from its pieces all stand.
 - **Amends:** ADR 0104 — **E3** and **E6**. E3's "no transcription store" is reversed for one case on
   purpose: a loop now carries its **piece**, structured and read by a named future reader (D8). The
   Journal stays the dated history, and free-text notes still go nowhere else. E6's "a tally … is out of

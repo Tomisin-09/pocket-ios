@@ -53,6 +53,12 @@ enum UITestHooks {
     /// Read app-side through `UITestRuntime.walkthroughIsOpen`.
     static let walkthroughArgument = "-walkthrough"
 
+    /// `-seedNamingPiece`: puts a song in whose *Verse riff* has a saved piece, so a test can open
+    /// **Name the notes** (ADR 0235, build order 4). Without it, a `-uiTesting` launch takes that song
+    /// back out, so the rest of the suite starts from the library it expects. Read app-side through
+    /// `NamingPieceSeed.action(for:)`.
+    static let namingPieceArgument = "-seedNamingPiece"
+
     /// Marks Home as **finished seeding**, not merely rendered.
     ///
     /// First-launch seeding is a `.task` that paints Home before it completes, so "Home is on

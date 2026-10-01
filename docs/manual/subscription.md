@@ -59,8 +59,8 @@ first thing you meet is the app rather than the price.
 **Walking into a locked door** — tapping **Practice**, **Song library**, **Jump back in**, a card in
 the recent-routines rail, or **Start today's session** — opens the same paywall, with a line at the
 top naming what you just reached for. Those cards draw a **padlock** where the chevron would be, so
-they read as locked rather than broken. **Toolkit** and **Journal** never do, because they are never
-locked.
+they read as locked rather than broken. **Toolkit**, the tile beside it, and **Journal** never do,
+because they are never locked.
 
 <!-- shot: subscription/paywall | role: panel
      | crop: 0,160,1206,1040

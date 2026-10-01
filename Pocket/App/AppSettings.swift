@@ -120,6 +120,9 @@ enum AppSettings {
         /// Home's resume-card preference (ADR 0193). Read from a second place
         /// (`resetJumpBackInPreference`), so it is named here for the same reason the four above are.
         static let jumpBackIn = "jumpBackIn"
+        /// The tile beside Toolkit (ADR 0235 D6), and whether it has ever been changed, in `AppSettings+Home`.
+        static let homeTool = "homeTool"
+        static let homeToolChosen = "homeToolChosen"
         /// The songs already offered *Use your markers as sections?* (ADR 0232 D7), in `AppSettings+SongMap`.
         static let songMapSectionOffers = "songMapSectionOffers"
         #if DEBUG

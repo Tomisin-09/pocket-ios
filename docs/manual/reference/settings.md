@@ -93,6 +93,9 @@ Every one of these is optional, and none of it leaves the device.
   practised. Pin it to a song, a routine or an exercise if that is what you always come back to. You
   can also hold the card itself to change this. Whichever you pick, the most recent of any kind shows
   until there is one of that kind to show.*
+- **`Beside Toolkit`** — what the tile beside Toolkit on Home opens: `My tabs`, `My chords`,
+  `My progressions`, `Tuner`, `Glossary` or `Help & FAQs`. Its footer: *The tile beside Toolkit on Home
+  opens the tool you pick here. You can also hold the tile to change it.*
 
 ## `Routines`
 
