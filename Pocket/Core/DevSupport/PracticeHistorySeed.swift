@@ -164,7 +164,13 @@ enum PracticeHistorySeed {
     /// disagreeing on screen in a published figure.
     @MainActor
     private static func seedRecency(historiedRoutineUID: UUID?, into context: ModelContext) {
-        let songs = (try? context.fetch(FetchDescriptor<Song>())) ?? []
+        // Never the starter track. `StarterTrackUITests` opens it expecting it untouched (full speed,
+        // so the readout is its 83 BPM), and in `PocketAll` this seed runs in the same simulator after
+        // `ExportUITests`' song tests have already put it in the library: stamped here as the first
+        // song, it opened at 0.75× and failed a test that has nothing to do with history (PR #338).
+        // No figure loses anything: a shoot's library is `ScreenshotSeed`'s, whose *Binta* is an import
+        // with an id of its own, not the starter track.
+        let songs = ((try? context.fetch(FetchDescriptor<Song>())) ?? []).filter { !$0.isStarterTrack }
         // Newest first by index, so the resume card is stable across runs rather than whichever
         // song the fetch happened to return first.
         for (index, song) in songs.enumerated() {
