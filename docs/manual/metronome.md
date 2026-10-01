@@ -4,8 +4,7 @@ A click, on its own, with somewhere to put a tempo you discover. No song, no dri
 the screen for tuning up a pulse, working out how fast you can actually play something, and pushing
 it.
 
-It is **free forever**, and it is the one place in Red Moon where the click can deliberately stop
-clicking.
+It is the one place in Red Moon where the click can deliberately stop clicking.
 
 Reach it from the **Metronome** card on Home. It takes the whole screen; the **‹** at the top left
 brings you back.

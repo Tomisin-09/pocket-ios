@@ -221,8 +221,7 @@ Two honest notes:
   the ＋ writes one that belongs to no loop, drill or routine, which is what you want for
   "left hand tired today" or an idea you don't want to lose.
 - **Progress** — from the Journal toolbar. Your week, your month, your all-time hours.
-- **Toolkit** — tuner (guitar and bass), your saved chords, and a glossary. Free forever,
-  no subscription.
+- **Toolkit** — tuner (guitar and bass), your saved chords, and a glossary.
 - **Metronome** — standalone click with ramps and a tap-tempo. The **pencil** in its toolbar
   writes a note that carries the click you wrote it to — tempo, time signature, subdivision,
   any withdrawal — so weeks later it still says what it was clean *at*.

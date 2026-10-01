@@ -40,28 +40,10 @@
 │   Services — Persistence (SwiftData), Sync (CloudKit, planned), AIClient (→ proxy).
 │              MusicKit (browse) is PLANNED-ONLY and not shipped — no MusicKit import,
 │              no MPMediaLibrary, no NSAppleMusicUsageDescription
-│ Monetization — ADR 0144. One paid app: `AccessPolicy` is the single pure gate seam and every function
-│              now answers plain `isPro`; both free-taste allowlists are empty, kept as the one-file seam a
-│              free line would return through. The Toolkit and the Journal are the free surface; the Journal's
-│              doors *out* (an entry caption → its exercise/routine) stay gated, so reading your own history is
-│              free but walking back into the workbench is not.
-│              `StoreManager` (@MainActor @Observable, StoreKit 2) stays the app's only StoreKit type —
-│              `isPro`, plus `hasResolvedEntitlements` (so the launch wall can't flash at a subscriber
-│              mid-scan) and the renewal state (`currentExpiration`, `willAutoRenew`) the reminder needs.
-│              `refreshEntitlements()` runs at launch, on purchase/restore, on `Transaction.updates`, and
-│              **on every scenePhase → .active** — the last because a plain expiry mints no transaction,
-│              so `updates` stays silent and the gates would otherwise hold stale until a cold launch
-│              (sandbox-verified on device, 2026-08-07).
-│              `TrialReminder` (UserNotifications) owns one local notification and the app's own record of
-│              the trial end — recorded at the moment of a trial purchase, because StoreKit can't say
-│              whether a period is a trial without a deprecated `offerType` read. Its decisions are
-│              `TrialReminderPlan` (pure: schedule/cancel + days remaining); paywall wording comes from
-│              `TrialPeriodCopy` over the product's own intro-offer period, never a hardcoded length. The
-│              two are wired at the app root by `StoreManager.onSubscriptionStateChange`, so StoreKit and
-│              UserNotifications never import each other. **Local notifications only — no `aps-environment`,
-│              no push server, and none is possible**: ADR 0113 keeps the app account-free, so there is no
-│              address to mail. That is a structural guarantee rather than a promise, and it now covers two
-│              features rather than one.
+│ Monetization — none. Red Moon is free with no in-app purchase (ADR 0237); StoreKit is not linked.
+│              The paywall, `AccessPolicy`, `StoreManager` and the trial reminder were deleted, not left
+│              dormant (0237 D2); `f3a4175` is the last commit holding them. If the Oracle is ever priced it
+│              is strictly additive (0237 D3) and brings its own StoreKit code.
 │ Notifications — ADR 0186. `PracticeReminder` (`@MainActor @Observable`) schedules one repeating weekday
 │              request per routine, decided by the pure `PracticeReminderPlan`, whose inputs are the days
 │              and time the player chose plus `now` — and **nothing else**. It is handed no practice log,
@@ -1784,7 +1766,7 @@ empty, because that line was Home's only word about adding a first song.
   the *promise* tier ADR 0117 drafted — `This week` over `Minutes` · `Days` · `Notes`, one horizon,
   windowed through the new pure `PracticeLog.count(_:in:)` so a note and a run land in the same week —
   while the payoff screen stays exactly where 0176 put it, because the strip **does not navigate**. It
-  holds its own queries (`TrialCountdownRow`'s precedent) and draws nothing while `runs.isEmpty`.
+  holds its own queries and draws nothing while `runs.isEmpty`.
   `PracticeStatsCard` is **deleted** with it: its *Mastered* tile totals up self-ratings, which is a
   score (ADR 0070), and a dead card beside a live strip is an invitation to use the wrong one. **ADR 0176** renamed the screen (*Progress* → *Practice log*, `PracticeLogView`
   in `Features/PracticeLog/`) and moved its entry point out of the Journal's ⋯ menu onto a row above the
@@ -2123,13 +2105,11 @@ true (ADR 0150 §118-121).
   - **The sender's history is dropped again on the way in** (D5). `SharedPracticeBuilder` already
     clears it, and the receiving side does not depend on that — this is the untrusted door, and the
     file may have been written by a hand, an older build, or one that has not shipped.
-  - **`RoutineReceiveHost` is the app's one inbound door**, applied at the root **inside**
-    `paywallHost()` (it reads `\.isPro` and `\.presentPaywall`). It owns `.onOpenURL` — the app's
-    first and only inbound-URL path — publishes `\.receiveRoutineFile` for the in-app
-    `.fileImporter` in `RoutineLibraryView+Receive.swift`, and presents the one preview sheet both
-    doors go through. The Pro gate lives here as well as in front of the picker, because
-    tap-to-open has no button to guard. Only the tap-to-open copy is deleted after reading; a picked
-    URL points at the player's own file.
+  - **`RoutineReceiveHost` is the app's one inbound door**, applied at the root. It owns
+    `.onOpenURL` — the app's first and only inbound-URL path — publishes `\.receiveRoutineFile` for
+    the in-app `.fileImporter` in `RoutineLibraryView+Receive.swift`, and presents the one preview
+    sheet both doors go through. Only the tap-to-open copy is deleted after reading; a picked URL
+    points at the player's own file. (It also held a Pro gate until ADR 0237.)
   - **Nothing is written before the player sees what is in the file** (D9):
     `ReceivedRoutinePreviewSheet` names the routine, counts the blocks and drills, shows the
     sender's build and date, and lists what will arrive unresolvable.
@@ -2149,10 +2129,9 @@ true (ADR 0150 §118-121).
     `PracticeReceiveHost` and `\.receiveRoutineFile` became `\.receivePracticeFile`; both doors and
     both library pickers accept either kind, since the kind lives *inside* the file and the system
     filters on type.
-  - **The Pro gate moved behind the read** (0209 D5, amending 0188). An exercise's gate depends on
-    its template, which is a fact inside the file, so the file must be read to know which question to
-    ask. A valid file walls exactly as before; a corrupt or future-version file now reports itself
-    instead of presenting a paywall for a file that was never going to open.
+  - **There is no gate on receiving** since ADR 0237. (0209 D5 had moved the Pro gate behind the
+    read.) A drill on a template this build cannot name is added like any other, its raw template
+    kept for a build that can read it, and sends no `exercise_received` rather than a guessed one.
   - **The send control is ungated and reads the sheet's in-flight description.**
     `ExerciseDetailSheet` keeps `notes` in `@State` until Done, so the payload takes it as a
     parameter — otherwise a drill shared mid-edit carries the description the sender just replaced,
@@ -2479,12 +2458,12 @@ never goes near it.
   crash reporter.
 - **`DiagnosticsRecorder`** — `@MainActor @Observable`, owns the `MXMetricManagerSubscriber`, and
   holds no judgement. `usesSystemMetrics` is a **`Bool` flag, never a stored `MXMetricManager`** —
-  the `TrialReminder` lesson (ADR 0144 D6) about a non-`Sendable` OS singleton on a `@MainActor`
-  type. An `MXDiagnosticPayload` is not `Sendable`, so the private `DiagnosticsSubscriber` reduces it
+  the lesson the trial reminder paid for (ADR 0144 D6), now carried by `PracticeReminder`, about a
+  non-`Sendable` OS singleton on a `@MainActor` type. An `MXDiagnosticPayload` is not `Sendable`, so the private `DiagnosticsSubscriber` reduces it
   to values **on the delivery queue** and hands the main actor an array of structs.
 
 ⚠ `MXMetricManager` holds subscribers **weakly**, so the recorder is a `@State` at the `PocketApp`
-root beside `store` and `trialReminder`, injected via `.environment`. Both readers take it as an
+root beside `practiceReminder`, injected via `.environment`. Both readers take it as an
 *optional* environment value — the non-optional form traps wherever that root is absent. Surfaced as
 *Settings ▸ Help & About ▸ Diagnostics*, deliberately not a Settings hub destination.
 

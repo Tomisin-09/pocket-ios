@@ -17,8 +17,8 @@ are stored locally — there is nothing to sign into and nothing being kept for 
 
 Two consequences worth knowing before you rely on them:
 
-- **There is no sync.** Install Red Moon on a second phone and it starts empty. Your subscription
-  follows your Apple Account; your practice does not follow it.
+- **There is no sync.** Install Red Moon on a second phone and it starts empty. Your practice does not
+  follow your Apple Account.
 - **A device backup includes the app's data**, and audio you keep in iCloud Drive stays in iCloud
   Drive exactly as it was before you imported it.
 
@@ -156,4 +156,3 @@ that feature ships, the processing is disclosed, and it is opt-in.
 - [The full privacy policy](../privacy-policy.md)
 - [What Settings holds](reference/settings.md)
 - [Where your notes and takes live](journal-and-practice-log.md)
-- [Red Moon Pro, and what Apple handles](subscription.md)

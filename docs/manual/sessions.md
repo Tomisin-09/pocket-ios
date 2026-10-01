@@ -7,8 +7,6 @@ what is already in your library.
 What it produces is an ordinary [routine](routines.md) — the same blocks, the same player — so
 nothing about a generated session is a special case you have to learn separately.
 
-Today's session is part of **Red Moon Pro**.
-
 Reach it from **Start today's session** on Home, or from **Today's session** at the top of
 **Practice**.
 

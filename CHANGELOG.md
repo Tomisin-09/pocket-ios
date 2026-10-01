@@ -242,6 +242,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Red Moon is free.** Everything in the app is open to everyone, with nothing to buy: Practice, the
+  Song library, routines, Today's session and building your own exercises all open from Home with no
+  padlock, no **PRO** badge and no paywall, and the full-screen offer that came up at launch is gone.
+  Settings no longer has a *Red Moon Pro* row, Help & FAQs drops its two subscription questions, and
+  the Toolkit's Tuner row shows its instrument where it used to say *Free*. Nobody had subscribed, so
+  nothing changes for anyone's data. If a trial reminder was pending from a test, the app clears it on
+  launch. The starter song stays, as the first thing to practise on (ADR 0237).
 - **Save a pass, then name it.** *Count the notes* ends with **Clear** and **Save**; **Name the notes**
   now opens from the saved piece under *Saved on this loop*, so names are never left on a pass that
   **Clear** would throw away. A small **▶** beside *Show beats* starts and stops the loop, so you can
@@ -351,6 +358,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **The paywall machinery is deleted, not left dormant** (ADR 0237 D2). StoreKit, `StoreManager`,
+  `AccessPolicy`, `PaywallTrigger`, the paywall and its host, the trial reminder and its plan, the
+  `.storekit` config and the scheme's reference to it, and their six test suites. UI tests now run the
+  same app users get, since `-uiTesting` no longer has anything to unlock. Four analytics events retire
+  with their names (`paywall_shown`, `paywall_dismissed`, `purchase_completed`, `restore_completed`),
+  and a test keeps them from being reused. A received drill on a template this build doesn't know is
+  now added instead of refused.
 - **CI's job gets 45 minutes, up from 30.** A green run was taking 25–29 minutes, so one slow runner or one
   retry cancelled it before it could report. The limit is a backstop for a hung run, not a budget.
 - **Name the notes' neck is shared with the tab writer** (ADR 0235 D9). Its rules moved into a pure

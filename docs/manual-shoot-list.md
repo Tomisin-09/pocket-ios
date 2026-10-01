@@ -87,18 +87,17 @@ Were it ever wanted back: put two or three audio files somewhere the Files picke
 device or a simulator that has used Files, open **Song library ▸ Import a song**, select more than
 one, and catch the overlay. Larger files hold it on screen longer.
 
-### On a real phone — 5 photographs, 6 markers, marked DEVICE
+### On a real phone — 2 photographs, 3 markers, marked DEVICE
 
 | Photograph | Serves | Why hardware |
 |---|---|---|
-| The paywall | `subscription/paywall` | A fresh install without Pro |
-| The trial countdown row | `subscription/trial-row` | A running trial is an entitlement |
-| Settings ▸ Red Moon Pro | `subscription/settings-pro` | Subscribed is an entitlement |
 | The tuner, listening | `toolkit/tuner` + `reference/tuner` | Needs a microphone hearing a real string |
 | The player in landscape | `song-player/landscape` | The simulator does not render this layout honestly |
 
-No launch argument fakes an entitlement, and on a simulator `AppTransaction.shared` raises a sign-in
-prompt that leaves the app untappable — which is why all three subscription states need hardware.
+There were three more — the paywall, the trial countdown row and Settings ▸ Red Moon Pro, each an
+entitlement no launch argument could fake. They went with the paywall (ADR 0237), and so did the
+three-stage order this section used to need, because stage 1 had to run before stage 2 gave the
+install Pro.
 
 #### The phone has to be an iPhone 16 Pro
 
@@ -108,47 +107,10 @@ measured against, and it is why that geometry was chosen: it is also the iPhone 
 every crop taken against it. `shoot-progress.py --verify` is what catches it — run it before you put
 the phone down, not after.
 
-#### It is one sitting in three stages, in this order
+#### One sitting
 
-The order is not a preference. Stage 1 needs an install that has never had Pro, and stage 2 is what
-gives it Pro — so shooting them the other way round means erasing the app and starting again.
-
-Run from Xcode, on the device, with **no launch arguments at all** for stages 1 and 2. The scheme
-already points at `Configuration/RedMoonPro.storekit`, so buying is local and costs nothing; both
-products carry a free introductory month, which is the trial the countdown row counts down.
-
-**Stage 1 — `subscription/paywall`. No fresh install needed.** The first version of this guide said
-to delete the app, which was wrong, and the app has carried the answer all along:
-**Settings ▸ Developer ▸ Entitlement** is a three-way picker over `StoreManager.debugProOverride`
-(`Default` · `Free` · `Pro`), with a **Show paywall** button beside it, and its own footer says it
-exists to *"exercise the paywall gates before StoreKit sandbox exists"*. Set it to `Free` and the
-locked states come back on a device with your whole library still on it.
-
-Shoot the wall as it stands. Do not scroll: the marker's `crop: 0,160,1206,1040` cuts above the plan
-cards on purpose, because an image carrying a price outlives the sentence that would have carried it
-(D6). **That rect is confirmed** — cut against the filed frame it lands on the wordmark, the
-one-line promise and the three value lines, and stops before the Annual card.
-
-**Stage 2 — the two that differ from each other.** `subscription/settings-pro` needs no purchase at
-all: `ProSettingsView` branches on `isPro` alone, so **Settings ▸ Developer ▸ Entitlement → Pro**
-gives you `Manage Subscription`, `Restore Purchases` and the Pro footer. **The caution that used to
-sit here is gone** (2026-09-10): the footer no longer carries a monospaced beta-diagnostic line, so
-there is nothing to crop above and the marker's `role: panel` can take the whole panel. If you find
-an older draft of this file telling you to stop the `crop:` short, ignore it — it was written
-against the closed-beta grant, which no longer exists.
-
-**`subscription/trial-row` is the one thing no toggle fakes.** `TrialCountdownRow` renders only when
-`TrialReminder.daysRemaining()` is non-nil, and that reads `trialEndsAt`, which is written from a
-real StoreKit expiration and from nowhere else — `debugProOverride` does not touch it. So it needs an
-actual purchase, which is still cheap: run from Xcode with `Entitlement` on `Default`, buy from the
-paywall, and the local StoreKit environment confirms a free introductory month without money and
-without a fresh install. You land on Home with the countdown row at the top.
-
-To go round again: Xcode ▸ Debug ▸ StoreKit ▸ **Manage Transactions**, delete the transaction.
-
-**Stage 3 — the tuner and landscape.** These need the seeded library, so add `-seedScreenshots` to
-the scheme's arguments and run again. **Not `-uiTesting`** — it forces `debugProOverride`, and a
-habit of passing it is what would spoil stage 1 on the next pass round this list.
+**The tuner and landscape.** These need the seeded library, so add `-seedScreenshots` to the
+scheme's arguments and run from Xcode on the device.
 
 `ScreenshotSeed.seedIfNeeded` only fires on an empty library, which the first-run set still is (ADR
 0112 ships six exercises and one routine and **no song**). On a phone there is no `Documents/SeedAudio`

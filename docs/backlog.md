@@ -230,7 +230,8 @@ before the report was worth reading, and the narrowing is the interesting part:
 
 - **Pass B — VoiceOver on a real device.** Nothing automated can hear focus order, swipe order, or
   whether a label reads like a sentence (ADR 0213 D3). Order: `RoutinePlayerView` /
-  `RoutineSessionPlayer` first, then the run screens, then the song player, then paywall and Home.
+  `RoutineSessionPlayer` first, then the run screens, then the song player, then Home. (The paywall
+  was on this list until ADR 0237 removed it.)
 - **Pass C — the AX-size sweep. RUN 2026-09-10, and the run is the finding.** All **8 of 8 passes
   failed** and **nothing was filed**, against 4 of 8 at the default size. The evidence came from the
   11 screenshots XCUITest captures at the moment of a failed tap, still inside
@@ -667,9 +668,9 @@ snapshot rather than moving the SwiftData store. Original note preserved.
 There is no entry anywhere in this file for notifications, widgets or App Intents. Two facts make
 this cheaper than it looks, and one makes it dangerous:
 
-- **The notification permission is already exercised** —
-  `Pocket/Core/Monetization/TrialReminder.swift` / `TrialReminderPlan.swift` — so this adds no new
-  permission class (AGENTS.md: never add a permission the app doesn't use).
+- **The notification permission is already exercised** — by the practice reminders,
+  `Pocket/Core/Notifications/PracticeReminder.swift` (ADR 0186; the trial reminder that first used it
+  went with the paywall, ADR 0237) — so this adds no new permission class (AGENTS.md: never add a permission the app doesn't use).
 - **There is no WidgetKit or App Intents target.** `project.yml` has `Pocket`, `PocketTests`,
   `PocketUITests`, `PocketShootUITests`. A widget is a new target, not a new file.
 - ⚠ **The no-shame line is the entire design problem.** A nudge that counts days missed is exactly
@@ -681,6 +682,8 @@ this cheaper than it looks, and one makes it dangerous:
 **The design is not here.** [ADR 0186](decisions/0186-a-reason-to-come-back.md) D8–D11 hold what the
 widget is and why — pull rather than push, a bounded JSON snapshot rather than a relocated SwiftData
 store, and a Pro wall it has to draw itself. That does not need restating and must not be copied.
+**The Pro wall is moot since ADR 0237** (Red Moon is free): a widget draws no locked state, so
+D10's locked case and the paywall landing in item 5 below are gone from the cost.
 
 This entry holds what the ADR does **not**: what a second target costs in this repo. It was scoped
 on 2026-09-03 and deferred, and everything below was verified against the source that day. Without
@@ -2526,7 +2529,11 @@ flattened to brand blue. Optional insurance: add `BrandBlue` / `BrandBlueLight` 
 logo-adjacent chrome, so retuning a space accent later can't desync the mark. The blood-moon pair
 (`C24A2C` / `E3694A`) is the natural accent for the parked *Blood Moon theme* section below.
 
-## StoreKit purchase path — sandbox validation (ADR 0112, parked 2026-07-28)
+## ~~StoreKit purchase path — sandbox validation~~ — **MOOT under ADR 0237** (parked 2026-07-28, closed 2026-10-01)
+
+**Red Moon is free and no longer links StoreKit**, so there is no purchase path left to validate.
+Nobody ever subscribed. If the Oracle is ever priced it is strictly additive (0237 D3) and its
+StoreKit work starts fresh, against that day's API; the notes below are the record, not a to-do.
 
 **Full checklist: [`docs/plans/storekit-sandbox-validation.md`](plans/storekit-sandbox-validation.md).**
 To be folded into a larger work item rather than run as its own branch.
@@ -2687,7 +2694,8 @@ thought 2026-07-20):**
   user's *own purchased* DRM-free file for private practice is analogous to importing
   into Apple Music; risk lives in fetching-on-their-behalf or *sharing* audio (already
   closed by ADR 0064). Needs real thought before acting.
-- **Note 2 — pricing: lifetime + "own it after 2 years."** A **lifetime / one-time
+- **Note 2 — pricing: lifetime + "own it after 2 years."** *Moot under ADR 0237: the app sells
+  nothing.* A **lifetime / one-time
   tier alongside a subscription** is clean and recommended. The **subscribe-2-years →
   own-it** mechanic is parked: no native StoreKit primitive for it, "own it" is
   ambiguous (perpetual license to which version?), and rev-rec gets messy. Fold into
@@ -3773,7 +3781,10 @@ so the intent isn't lost:
   pay — find the sustainable balance without burning backend cost. Decide
   alongside the backend build (ADR 0002).
 
-## Monetization — first paid lever (parked 2026-07-17, decide once features are set)
+## ~~Monetization — first paid lever~~ — **MOOT under ADR 0237** (parked 2026-07-17, closed 2026-10-01)
+
+Decided on 2026-09-24 and recorded in ADR 0237: Red Moon is free, and if anything is ever charged for
+it is the Oracle alone, strictly additive. Kept for the reasoning.
 
 Deferred deliberately: settle the full feature set first, *then* design monetization
 (user's call, 2026-07-17). Captured so the reasoning isn't lost.
@@ -4094,9 +4105,8 @@ Ordered by value, highest first.
    generator-only. The model carries three kinds and the editor can author one."*
 6. **One seeded routine, exercise-only.** Deliberate — "the demo, shown whole", and the
    right call under progressive disclosure — but thin if routines become the headline.
-   Note the tension with ADR 0144: the seam that would make a routine free forever is
-   inert on purpose (`AccessPolicy.freeTasteRoutineSlugs`, and `docs/positioning.md` §9
-   rejects re-opening it).
+   (The tension this item used to note with ADR 0144's empty free-taste seam is gone: Red Moon
+   is free, ADR 0237, so every routine is.)
 7. **One rest has three lengths, in two units.** *Corrected 2026-09-27: this item used to
    say the model was more expressive than the editor. It isn't. A stored rest has no length
    at all.* Traced end to end:
@@ -4142,8 +4152,8 @@ Two constraints any design must satisfy, both from `docs/positioning.md` §4:
 
 - **Reveal by relevance and behaviour, never by attainment or permission.** Never lock;
   just don't lead with it. A level system fails this test.
-- **It must fit inside the one-month trial** (ADR 0144), or the drip hides the feature
-  that would have converted the player. Hard commercial bound.
+- ~~**It must fit inside the one-month trial** (ADR 0144), or the drip hides the feature
+  that would have converted the player.~~ Moot under ADR 0237: there is no trial.
 
 Likeliest first mechanism: generalise `hasEarnedAName` into a small derived "what has
 this player met?" read over existing data — exercises practised, loops captured, runs

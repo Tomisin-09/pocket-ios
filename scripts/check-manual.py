@@ -404,8 +404,8 @@ def check_c5():
 
 # The same pattern `FAQEntryTests` uses, deliberately verbatim (0165 D6). There
 # are **no exemptions** here: this copy is ported to a public page that outlives
-# the build it was written against, so a stale price is worse in the manual than
-# in a compiled FAQ — the FAQ is at least read next to the real offer.
+# the build it was written against. Red Moon is free (ADR 0237), so a price or a
+# trial length in the manual is not stale, it is simply wrong.
 MONEY = re.compile(r"\d+[- ]day|£|\$|€")
 
 
@@ -423,7 +423,7 @@ def check_c6():
     if problems:
         return FAIL, problems
     pages = len(manual_pages())
-    return OK, ["%d page%s carr%s no number StoreKit owns"
+    return OK, ["%d page%s carr%s no price and no trial length"
                 % (pages, "" if pages == 1 else "s", "ies" if pages == 1 else "y")]
 
 
@@ -946,7 +946,7 @@ def check_c14():
     """The shoot lives in its own target, and nothing has leaked back.
 
     A shoot class only means anything on a device `shoot-manual.sh` has staged — erased,
-    seeded, dark, mic granted, Pro unlocked. Run anywhere else it does not error out; it
+    seeded, dark, mic granted. Run anywhere else it does not error out; it
     walks a first-run app and fails on the *state*, which is why this once surfaced as
     sixteen assertions about missing rows rather than as anything pointing at a test plan.
 
