@@ -88,10 +88,8 @@ struct PracticeView: View {
                     .font(.futura(.subheadline))
                     .foregroundStyle(PocketColor.textSecondary)
             }
-            Spacer(minLength: 8)
-            Image(systemName: "chevron.right")
-                .font(.futura(.footnote, weight: .semibold))
-                .foregroundStyle(PocketColor.textSecondary)
+            // No chevron of its own: the `NavigationLink` draws the List's disclosure indicator, as
+            // it does for the rows below. A second one here put two chevrons side by side.
         }
     }
 
