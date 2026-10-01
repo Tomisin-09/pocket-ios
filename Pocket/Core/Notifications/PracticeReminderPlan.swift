@@ -1,8 +1,8 @@
 import Foundation
 
 /// **When a practice reminder fires** (ADR 0186 D1–D2). The pure half: Foundation-only per the
-/// "pure logic stays pure" rule (AGENTS.md), and unit-tested, because — as `TrialReminderPlan`'s own
-/// header puts it — every "don't send this" case is silent when it breaks.
+/// "pure logic stays pure" rule (AGENTS.md), and unit-tested, because every "don't send this" case is
+/// silent when it breaks.
 ///
 /// ## The dependency this type does not have, and must never acquire
 ///
@@ -55,8 +55,8 @@ enum PracticeReminderPlan {
         let minute: Int
     }
 
-    /// Namespaced so `reconcile` can tell this app's practice reminders apart from the trial one and
-    /// from anything a later feature schedules. Dot-terminated: the `uid` follows immediately.
+    /// Namespaced so `reconcile` can tell this app's practice reminders apart from anything else it
+    /// finds pending. Dot-terminated: the `uid` follows immediately.
     static let identifierPrefix = "click.decooperations.pocket.practice-reminder."
 
     static let weekdayRange = 1...7
@@ -64,8 +64,7 @@ enum PracticeReminderPlan {
     // MARK: - Identifiers
 
     /// **Fixed** per routine per weekday, so rescheduling *replaces* the pending request rather than
-    /// stacking a second copy behind it — the rule `TrialReminder.requestIdentifier` already states,
-    /// here multiplied by the days.
+    /// stacking a second copy behind it.
     ///
     /// Built from the routine's **`uid`**, never its `persistentModelID` (ADR 0090,
     /// `docs/swiftdata-gotchas.md`): a `PersistentIdentifier` is not stable across the store's
@@ -75,7 +74,7 @@ enum PracticeReminderPlan {
     }
 
     /// Recover the routine a pending request belongs to. `nil` for anything this app did not
-    /// schedule as a practice reminder — including the trial reminder, which shares the centre.
+    /// schedule as a practice reminder — including the retired trial reminder below.
     ///
     /// This is what makes the D3 sweep possible: the system's pending requests are the only source
     /// of truth about what it still holds, and they are strings.
@@ -84,6 +83,26 @@ enum PracticeReminderPlan {
         let rest = identifier.dropFirst(identifierPrefix.count)
         guard let dot = rest.lastIndex(of: ".") else { return nil }
         return UUID(uuidString: String(rest[rest.startIndex..<dot]))
+    }
+
+    /// The fixed id of the **trial-ending reminder** (ADR 0144 D6), which went with the rest of the
+    /// paywall when Red Moon became free (ADR 0237).
+    ///
+    /// It outlives the feature on purpose (0237 D5). A tester who started a sandbox trial can still
+    /// have that notification pending, and with the code that scheduled it gone, nothing else would
+    /// ever cancel it: it would fire once, on the lock screen, about a subscription the app no longer
+    /// has. **Never reuse this string** for a new request, because the launch sweep removes it.
+    static let retiredTrialReminderIdentifier = "click.decooperations.pocket.trial-ending"
+
+    /// Which of the system's pending requests the launch sweep removes: every practice reminder whose
+    /// routine no longer exists (D3), and the retired trial reminder (ADR 0237 D5). Anything else is
+    /// not this app's to cancel and is left alone.
+    static func staleIdentifiers(pending: [String], liveRoutineUIDs: Set<UUID>) -> [String] {
+        pending.filter { identifier in
+            if identifier == retiredTrialReminderIdentifier { return true }
+            guard let uid = routineUID(fromIdentifier: identifier) else { return false }
+            return !liveRoutineUIDs.contains(uid)
+        }
     }
 
     // MARK: - Deciding

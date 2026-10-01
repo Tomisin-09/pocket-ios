@@ -43,12 +43,7 @@ extension HomeView {
         }
     }
 
-    /// The card, its Pro gate, its destination and the hold menu that changes what it offers.
-    ///
-    /// **Gated with the nav strips (ADR 0144 D4)** in all three shapes: each is a *second* door into
-    /// a surface the section strips already lock, and a lapsed player who dismissed the launch wall
-    /// would otherwise walk straight through it. An exercise takes the `.practice` gate rather than
-    /// one of its own, because the door it duplicates is the Practice strip.
+    /// The card, its destination and the hold menu that changes what it offers.
     ///
     /// **The hold is ADR 0163's grammar** — the setting put where you are using it, with the
     /// Settings row kept as the findable route. Both surfaces write the same key, so there is no
@@ -58,39 +53,25 @@ extension HomeView {
         Group {
             switch target {
             case .song(let song):
-                // **The starter track is the one song this door does not lock** (ADR 0219). The
-                // gate below is still ADR 0144 D4's — a second door into a Pro surface — but the
-                // surface it duplicates is now open for exactly one song, and a card that locked
-                // the song the player has been practising all week would be the app taking back
-                // something it gave. `canPractiseSong` is the same call the entitlement axis makes;
-                // resolving it here rather than reading `isPro` is what keeps the two in step.
-                let playable = AccessPolicy.canPractiseSong(isPro: isPro,
-                                                            isStarterTrack: song.isStarterTrack)
-                if playable {
-                    NavigationLink {
-                        WaveformPracticeView(song: song, context: context)
-                    } label: {
-                        JumpBackInCard(content: Self.content(song), locked: false)
-                    }
-                } else {
-                    Button { presentPaywall(.home(.song)) } label: {
-                        JumpBackInCard(content: Self.content(song), locked: true)
-                    }
+                NavigationLink {
+                    WaveformPracticeView(song: song, context: context)
+                } label: {
+                    JumpBackInCard(content: Self.content(song))
                 }
             case .routine(let routine):
-                proGated(.routine) {
+                NavigationLink {
                     RoutineDetailView(container: context.container, existing: routine)
                 } label: {
-                    JumpBackInCard(content: Self.content(routine), locked: !isPro)
+                    JumpBackInCard(content: Self.content(routine))
                 }
             case .exercise(let exercise):
-                proGated(.practice) {
+                NavigationLink {
                     // Through `ExerciseRunScreen`, never `ExerciseRunView` — it is the one place
                     // that decides which run screen a drill gets, so a freeform block gets its own
                     // (ADR 0136).
                     ExerciseRunScreen(exercise: exercise)
                 } label: {
-                    JumpBackInCard(content: Self.content(exercise), locked: !isPro)
+                    JumpBackInCard(content: Self.content(exercise))
                 }
             }
         }

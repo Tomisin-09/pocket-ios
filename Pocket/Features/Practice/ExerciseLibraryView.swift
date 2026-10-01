@@ -17,10 +17,6 @@ struct ExerciseLibraryView: View {
     // Internal, not private, so `ExerciseLibraryView+Folders` can reach it — a same-module
     // extension in another file cannot see `private` (the `+Row` precedent).
     @Environment(\.modelContext) var context
-    /// Red Moon Pro entitlement + the shared paywall (ADR 0112); safe preview defaults (free / no-op).
-    /// Internal for `+RowMenu`, which gates Duplicate and Add to routine… on it.
-    @Environment(\.isPro) var isPro
-    @Environment(\.presentPaywall) var presentPaywall
     /// Deferred, undoable row deletion (Slice 3). **Owned here, not by the modifier**: this view
     /// reads `isPending` itself to filter out a row awaiting its delete, and a modifier applied
     /// inside `body` can only publish to its descendants.
@@ -292,42 +288,15 @@ struct ExerciseLibraryView: View {
         PocketRowDelete(id: exercise.uid, name: displayName(exercise)) { context.delete(exercise) }
     }
 
-    /// One library row, entitlement-aware (ADR 0112): a runnable drill (free-tier template, a
-    /// free-taste preset, or any drill for a Pro subscriber) pushes its run screen; a locked Pro drill
-    /// stays **visible but badged** and taps to the paywall instead ("locked, not hidden"). The
-    /// free-taste presets stay runnable here — only editing them is gated, on the run screen.
-    @ViewBuilder
+    /// One library row: it pushes the drill's run screen.
     private func exerciseRow(_ exercise: Exercise) -> some View {
-        let runnable = AccessPolicy.canRun(
-            exercise.template, isPro: isPro,
-            isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug))
-        if runnable {
-            NavigationLink { ExerciseRunScreen(exercise: exercise) } label: { row(exercise, locked: false) }
-        } else {
-            Button { presentPaywall(.proExercise) } label: { row(exercise, locked: true) }
-                .buttonStyle(.plain)
-        }
-    }
-
-    private func row(_ exercise: Exercise, locked: Bool) -> some View {
-        HStack(spacing: 8) {
+        NavigationLink { ExerciseRunScreen(exercise: exercise) } label: {
             PracticeUnitRow(
                 title: exercise.name.isEmpty ? "Untitled" : exercise.name,
                 progress: exercise.commandProgressLabel,
                 isFavorite: exercise.isFavorite)
-            if locked {
-                Spacer(minLength: 8)
-                Text("PRO")
-                    .font(.futura(.caption2, weight: .bold))
-                    .foregroundStyle(PocketColor.background)
-                    .padding(.horizontal, 6).padding(.vertical, 1)
-                    .background(Capsule().fill(PocketColor.practice))
-                Image(systemName: "lock.fill")
-                    .font(.futura(.caption, weight: .semibold))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
+                .contentShape(Rectangle())
         }
-        .contentShape(Rectangle())
     }
 
     /// The command tempo a fresh exercise pre-fills (ADR 0113 S2 consumer): the profile's experience
@@ -367,15 +336,10 @@ struct ExerciseLibraryView: View {
         justCreated = exercise
     }
 
-    /// Promote the just-created drill into a push, once the create sheet is actually gone. Locked Pro
-    /// templates never open (the same `canRun` gate the rows use) — authoring one shouldn't be a way
-    /// past the paywall; the drill is still there in the list, badged.
+    /// Promote the just-created drill into a push, once the create sheet is actually gone.
     private func openJustCreated() {
         guard let exercise = justCreated else { return }
         justCreated = nil
-        guard AccessPolicy.canRun(exercise.template, isPro: isPro,
-                                  isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug))
-        else { return }
         opening = exercise
     }
 

@@ -44,7 +44,7 @@ final class RowDeletionCoordinator {
     private(set) var pending: Set<AnyHashable> = []
 
     /// How long the undo window stays open — four seconds for a player, **stretched under
-    /// `-uiTesting`** (the launch flag `StoreManager` and the profile moment already read).
+    /// `-uiTesting`** (the launch flag the profile moment already reads).
     ///
     /// The UI test that covers this pins the *wiring* — Undo restores the row on the same screen —
     /// not the toast's lifetime. But XCUITest works in whole seconds: a query, a hit-point
@@ -103,7 +103,7 @@ final class RowDeletionCoordinator {
 // MARK: - Environment plumbing
 
 /// The row-delete seam a `.pocketRowActions` row talks to, as closures rather than the coordinator
-/// itself so the environment has a **safe default** (the `PaywallTrigger` pattern): a row outside a
+/// itself so the environment has a **safe default** (the `\.receivePracticeFile` pattern): a row outside a
 /// `.pocketRowUndoHost()` — an Xcode preview, a test — deletes immediately with no toast, exactly
 /// as the lists behaved before this slice, instead of trapping on a missing `@Observable`.
 struct RowDeletionSeam {

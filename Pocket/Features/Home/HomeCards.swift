@@ -72,11 +72,6 @@ struct HomeTile: View {
     /// nudge with the subtitles would have been a silent regression in the one state that needs it,
     /// so the exception is the instruction, not the description: it goes as soon as it is followed.
     var caption: String?
-    /// Whether this destination is behind the Pro wall (ADR 0144 D4). The strip swapped its chevron
-    /// for a lock; a tile has no chevron, so the lock rides in the top-trailing corner where
-    /// `RecentRoutineCard` already puts one. The tile stays fully visible and reads as
-    /// **inviting-but-locked**, never hidden and never broken.
-    var locked: Bool = false
 
     var body: some View {
         VStack(spacing: 8) {
@@ -110,14 +105,6 @@ struct HomeTile: View {
         .padding(.vertical, 16)
         .padding(.horizontal, 10)
         .background(RoundedRectangle(cornerRadius: 16).fill(cardWash))
-        .overlay(alignment: .topTrailing) {
-            if locked {
-                Image(systemName: "lock.fill")
-                    .font(.futura(.caption, weight: .semibold))
-                    .foregroundStyle(PocketColor.textSecondary)
-                    .padding(10)
-            }
-        }
     }
 }
 
@@ -171,35 +158,19 @@ struct JumpBackInCard: View {
     }
 
     let content: Content
-    /// Whether this card is behind the Pro wall (ADR 0144 D4). The card is a *second* door into the
-    /// Song library's Pro surface and has always routed through `proGated(.song)`; the lock makes that
-    /// visible, matching `HomeTile` and the recent-routines rail. Rides on the eyebrow rather than
-    /// the content row, which already ends in `MasteryReadout`.
-    var locked: Bool = false
     /// The small-caps label above the content. Defaults to the card's original wording; the
     /// starter-track card (ADR 0219) passes its own, because it is offering a first song rather
     /// than resuming anything and "Jump back in" would be the app claiming a history the player
-    /// does not have. Parameterising the one string beats a near-duplicate card — the layout,
-    /// lock grammar and `MasteryReadout` handling are all worth sharing.
+    /// does not have. Parameterising the one string beats a near-duplicate card — the layout and
+    /// `MasteryReadout` handling are worth sharing.
     var eyebrow: String = "JUMP BACK IN"
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Text(eyebrow)
-                    .font(.futura(.caption2, weight: .semibold))
-                    .tracking(1.5)
-                    .foregroundStyle(PocketColor.textSecondary)
-                Spacer(minLength: 0)
-                if locked {
-                    Image(systemName: "lock.fill")
-                        .font(.futura(.footnote, weight: .semibold))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        // Spoken, because an unlabelled glyph would leave VoiceOver describing an
-                        // openable card.
-                        .accessibilityLabel("Requires Red Moon Pro")
-                }
-            }
+            Text(eyebrow)
+                .font(.futura(.caption2, weight: .semibold))
+                .tracking(1.5)
+                .foregroundStyle(PocketColor.textSecondary)
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(content.title)
@@ -249,11 +220,6 @@ struct JumpBackInCard: View {
 /// practice content, kept clear of the blue library strip and the filled today's-session CTA.
 struct RecentRoutineCard: View {
     let routine: Routine
-    /// Whether this rail card is behind the Pro wall (ADR 0144 D4). Same grammar as `HomeTile`:
-    /// the tile stays fully visible and reads as **inviting-but-locked**. The rail has always *been*
-    /// gated — it routes through `proGated(.routine)` — but it drew no lock, so it was the one door
-    /// on Home that looked open while it wasn't.
-    var locked: Bool = false
 
     /// Playable blocks (rests excluded) — the "3 blocks" line, so the card previews the session's size.
     private var blockCount: Int {
@@ -262,19 +228,9 @@ struct RecentRoutineCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // The lock sits opposite the glyph on the top row — trailing, secondary, replacing
-            // nothing the tile needs. `HomeTile` borrows the corner this card established.
-            HStack(alignment: .top, spacing: 0) {
-                Image(systemName: "list.bullet.rectangle.portrait")
-                    .font(.futura(.title3))
-                    .foregroundStyle(PocketColor.practice)
-                Spacer(minLength: 0)
-                if locked {
-                    Image(systemName: "lock.fill")
-                        .font(.futura(.footnote, weight: .semibold))
-                        .foregroundStyle(PocketColor.textSecondary)
-                }
-            }
+            Image(systemName: "list.bullet.rectangle.portrait")
+                .font(.futura(.title3))
+                .foregroundStyle(PocketColor.practice)
             Text(routine.name.isEmpty ? "Routine" : routine.name)
                 .font(.futura(.headline))
                 .foregroundStyle(PocketColor.textPrimary)
@@ -294,9 +250,7 @@ struct RecentRoutineCard: View {
         .frame(width: 150, height: 132, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 16).fill(PocketColor.practiceCardWash))
         .accessibilityElement(children: .combine)
-        // `.combine` swallows the lock glyph (it carries no label of its own), so the locked state
-        // has to be spoken here or VoiceOver would announce an ordinary, openable tile.
-        .accessibilityHint(locked ? "Requires Red Moon Pro" : "Replays this routine")
+        .accessibilityHint("Replays this routine")
     }
 
     /// "2 days ago" — a relative, human description of the last practice time.
@@ -321,7 +275,7 @@ struct RecentRoutineCard: View {
         JumpBackInCard(content: .init(title: "Minor pentatonic, position 1",
                                       subtitle: "Command 90 → 120 BPM · 8ths",
                                       practiced: .now.addingTimeInterval(-172_800),
-                                      trailing: .mastery(nil)), locked: true)
+                                      trailing: .mastery(nil)))
     }
     .padding(20)
     .background(PocketColor.background)

@@ -16,6 +16,12 @@
   starter track now arrives with two markers (*Chords start*, *Solo start*), a measured tempo (83)
   and downbeat (0.027 s), and grid lines on. It still arrives with **no loops**, for the reason D1
   gives. `StarterTrack.bpm` (104) was wrong and becomes 83. D2–D9 stand.
+- **Amended by:** ADR 0237 (2026-10-01) — **the gate goes, the song stays.** Red Moon is free, so
+  there is no wall for the song to stand before. **D5** (one access axis on the frozen id) and **D7**
+  (the launch wall defers once, and its `launchWallDeferred` key) are removed. D1–D4, D6, D8 and D9
+  stand: the track still ships, arrives by tap and carries the walkthrough, and D6 was right that the
+  card is about an empty library. It is onboarding now, not a free taste (0237 D4). The frozen id
+  stays, and `Song.isStarterTrack` now lives in `StarterTrack`.
 - **Relates to:** ADR 0011 (the auto-seed this does not reinstate, D2), ADR 0112 / ADR 0144 D4 (the
   wall this stands in front of), ADR 0149 (whose §2 trigger this makes fire — **unamended**, D3),
   ADR 0090 (why the destination is bool-bound), ADR 0001 (why a local file is the only option)

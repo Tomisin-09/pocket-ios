@@ -56,8 +56,6 @@ struct SongMapView: View {
     @State var beginAfterSheet: TogetherBegin?
     /// The routine Put it together made, open for review (D11).
     @State var reviewing: TogetherReview?
-    @Environment(\.isPro) var isPro
-    @Environment(\.presentPaywall) var presentPaywall
 
     struct Opening: Equatable {
         let uid: UUID

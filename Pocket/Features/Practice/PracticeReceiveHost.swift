@@ -19,9 +19,8 @@ private struct PendingReceive: Identifiable {
 /// The app's **inbound door** for `.redmoonpractice` files (ADR 0188 S2, ADR 0209 D4) — both doors,
 /// both payload kinds — and for `.redmoonpack`s, which carry songs with their audio (ADR 0236 D8).
 ///
-/// Applied **once** at the app root, styled directly on `PaywallHost`, and for the same reason: one
-/// host means one preview sheet for the whole app, and the two doors cannot present different
-/// things or write by different rules.
+/// Applied **once** at the app root: one host means one preview sheet for the whole app, and the two
+/// doors cannot present different things or write by different rules.
 ///
 /// **Why the root and not the Routines library.** Tap-to-open is the door ADR 0188 D3 spends its
 /// length defending, and it can arrive with no screen of the app's own on top — from Messages, Mail,
@@ -34,9 +33,6 @@ private struct PendingReceive: Identifiable {
 /// making the pickers kind-specific would mean four doors to keep in step instead of one.
 private struct PracticeReceiveHost: ViewModifier {
     @Environment(\.modelContext) private var context
-    /// Receiving mints a routine or a drill, which is authoring — Pro (ADR 0112, ADR 0144).
-    @Environment(\.isPro) private var isPro
-    @Environment(\.presentPaywall) private var presentPaywall
 
     @State private var pending: PendingReceive?
     @State private var failure: String?
@@ -86,19 +82,9 @@ private struct PracticeReceiveHost: ViewModifier {
     }
 
     /// Read a file and offer what is in it — or say why not.
-    ///
-    /// **The gate moved behind the read in ADR 0209, and the move is deliberate.** ADR 0188 checked
-    /// Pro *before* opening the file, on the grounds that a free player's problem is not the file, so
-    /// they should get the offer rather than a report about JSON. That worked while a routine was the
-    /// only thing a file could hold and the answer was "Pro, always". An exercise's gate depends on
-    /// its **template**, which is a fact about the file — so the file has to be read to know which
-    /// question to ask. What changes for a free player is only the *failing* cases: a corrupt or
-    /// future-version file now reports itself instead of presenting a paywall for a file that was
-    /// never going to open, which is the more honest of the two. A valid file still walls exactly as
-    /// it did.
     private func open(_ url: URL, removingSource: Bool) {
-        // Runs whichever way this returns, the paywall included: an inbox copy the app has decided
-        // not to act on is dead weight nothing will ever read again.
+        // Runs whichever way this returns: an inbox copy the app has decided not to act on is dead
+        // weight nothing will ever read again.
         defer { if removingSource { try? FileManager.default.removeItem(at: url) } }
         // Bracketed the way the app's four audio importers already bracket a picked URL. Harmless on
         // an inbox copy, which is inside this app's own container and needs no scope.
@@ -111,7 +97,6 @@ private struct PracticeReceiveHost: ViewModifier {
         }
         switch ReceivedPracticeBuilder.evaluate(data: data) {
         case let .success(practice):
-            guard allowed(practice) else { return }
             pending = PendingReceive(practice: practice)
         case let .failure(reason):
             failure = reason.message
@@ -148,10 +133,6 @@ private struct PracticeReceiveHost: ViewModifier {
             try? FileManager.default.removeItem(at: copy)
             switch read.flatMap({ ReceivedPracticeBuilder.evaluate($0, staging: staging) }) {
             case let .success(practice):
-                guard allowed(practice) else {
-                    try? FileManager.default.removeItem(at: staging)
-                    return
-                }
                 unpacked = staging
                 pending = PendingReceive(practice: practice, songTitles: songTitles(for: practice))
             case let .failure(reason):
@@ -178,35 +159,6 @@ private struct PracticeReceiveHost: ViewModifier {
     private func discardUnpacked() {
         if let unpacked { try? FileManager.default.removeItem(at: unpacked) }
         unpacked = nil
-    }
-
-    /// May this player take what the file holds? Presents the paywall and returns `false` when not.
-    ///
-    /// The gate has to live here as well as in front of each picker, because tap-to-open has no
-    /// "before" moment of its own to gate at — no button was pressed.
-    ///
-    /// An exercise whose template this build does not recognise is refused for a free player rather
-    /// than waved through: an unreadable tier is not a free tier, and the trigger carries `nil`,
-    /// which is a true statement about what was reached for.
-    private func allowed(_ practice: ReceivedPractice) -> Bool {
-        switch practice {
-        case .routine:
-            guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
-                presentPaywall(.routine(.receive))
-                return false
-            }
-        case let .exercise(received):
-            let template = received.template
-            guard let template, AccessPolicy.canAuthor(template, isPro: isPro) else {
-                presentPaywall(.receivedExercise(template))
-                return false
-            }
-        case .song:
-            // A received song is an imported song (ADR 0236 D4): importing isn't gated, and practising it
-            // is gated where any song's is.
-            break
-        }
-        return true
     }
 
     /// Write a routine — one of the places in the receiving path that touch the store.
@@ -275,13 +227,15 @@ private struct PracticeReceiveHost: ViewModifier {
     /// of having the two functions rather than one that branches inside.
     ///
     /// The template is read off the record rather than the fresh model: they agree, and reading the
-    /// file's own value keeps the event about **what was sent**. `allowed(_:)` has already refused a
-    /// template this build cannot name, so the fallback is unreachable and merely total.
+    /// file's own value keeps the event about **what was sent**. A drill on a template this build
+    /// cannot name is still added — its raw value survives into the model for a build that can read
+    /// it — but sends no event, because the only template the event could carry would be a guess.
+    /// (Until ADR 0237 the receive gate refused such a file outright.)
     private func add(_ received: ReceivedExercise) {
         let landing = ReceivedPracticeBuilder.materialize(received)
         landing.insert(into: context)
         save()
-        Analytics.send(.exerciseReceived(template: received.template ?? .basic))
+        if let template = received.template { Analytics.send(.exerciseReceived(template: template)) }
         landed = "“\(received.displayName)” is in your exercises."
         haptic(.medium)
     }
@@ -324,15 +278,14 @@ private struct PracticeReceiveHost: ViewModifier {
 /// Open a `.redmoonpractice` file, from anywhere in the app (ADR 0188 S2, ADR 0209 D4).
 ///
 /// Defaults to a no-op so a view in an Xcode preview or a test does nothing rather than trapping on
-/// a host that isn't there — the same preview-safe shape `\.presentPaywall` has, and the reason both
-/// are environment actions rather than a shared singleton.
+/// a host that isn't there — the reason it is an environment action rather than a shared singleton.
 private struct ReceivePracticeFileKey: EnvironmentKey {
     static let defaultValue: @MainActor (URL) -> Void = { _ in }
 }
 
 extension EnvironmentValues {
     /// Hand a `.redmoonpractice` file to the app's one receiving door, whatever it holds.
-    /// `@MainActor` — it mutates view state, like `presentPaywall`.
+    /// `@MainActor` — it mutates view state.
     var receivePracticeFile: @MainActor (URL) -> Void {
         get { self[ReceivePracticeFileKey.self] }
         set { self[ReceivePracticeFileKey.self] = newValue }
@@ -340,8 +293,7 @@ extension EnvironmentValues {
 }
 
 extension View {
-    /// Install the app-wide receiving door (once, at the root, **inside** the paywall host's
-    /// environment — it reads `\.isPro` and `\.presentPaywall`).
+    /// Install the app-wide receiving door (once, at the root).
     func practiceReceiveHost() -> some View {
         modifier(PracticeReceiveHost())
     }

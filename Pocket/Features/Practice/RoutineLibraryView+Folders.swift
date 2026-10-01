@@ -95,10 +95,6 @@ extension RoutineLibraryView {
 
     /// **New folder…**, in the options menu — not on the nav bar, where nothing may vary in width
     /// (ADR 0126).
-    ///
-    /// **Not gated.** Making a folder is organising, not authoring: it mints no routine, and a free
-    /// player whose library is a handful of drills is exactly who needs it least *and* who would
-    /// read a padlock here as the app charging for tidiness.
     var newFolderButton: some View {
         Button {
             folderBrowse.beginCreate()

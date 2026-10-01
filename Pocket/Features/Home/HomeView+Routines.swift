@@ -24,12 +24,10 @@ extension HomeView {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(recentRoutines) { routine in
-                        // Gated for the same reason as "Jump back in" — a rail card is another door
-                        // into a Pro surface (ADR 0144 D4).
-                        proGated(.routine) {
+                        NavigationLink {
                             RoutineDetailView(container: context.container, existing: routine)
                         } label: {
-                            RecentRoutineCard(routine: routine, locked: !isPro)
+                            RecentRoutineCard(routine: routine)
                         }
                         .buttonStyle(.plain)
                     }
@@ -41,12 +39,6 @@ extension HomeView {
     // MARK: - Reminders (ADR 0186)
 
     /// Where a tapped reminder lands (D6).
-    ///
-    /// **Not wrapped in `proGated`**, unlike the rail card above, and the difference is deliberate:
-    /// the player set this appointment themselves, and answering it with a paywall would be the app
-    /// using a reminder they asked for as a sales surface. The routine screen carries the same Pro
-    /// gates it always has, so nothing is unlocked by arriving this way — only the door is the one
-    /// they knocked on.
     @ViewBuilder
     var openedRoutineDestination: some View {
         if let routine = openingRoutine {
@@ -73,7 +65,7 @@ extension HomeView {
     /// The launch sweep (D3): drop every pending reminder whose routine no longer exists.
     ///
     /// The delete path cancels too, and that is the version which looks correct in review and fails
-    /// on a path nobody listed — a cascade delete, a Pro-lapse sweep, a future bulk action. This one
+    /// on a path nobody listed — a cascade delete, a future bulk action. This one
     /// asks the *system* what it is still holding, which is the only source of truth about a request
     /// that has already left the app.
     ///

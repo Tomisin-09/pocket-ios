@@ -4,7 +4,7 @@ import SwiftUI
 /// The app's **front door** (ADR 0044), and since ADR 0197 a screen with a shape: what changed
 /// since yesterday on top, the map underneath.
 ///
-/// Top to bottom — a time-of-day greeting, the trial countdown while one is running, the
+/// Top to bottom — a time-of-day greeting, the starter-track card while the library is empty, the
 /// `Start today's session` CTA, the `Jump back in` card for whichever unit the player pinned
 /// (ADR 0193), the `This week` strip (ADR 0196), the six destinations as a tile grid
 /// (`HomeView+Map`), and the recent-routines rail. It is the app root in place of `LibraryView`
@@ -18,11 +18,6 @@ import SwiftUI
 struct HomeView: View {
     /// Internal, not private: `HomeView+Seeding` writes the first-run content through it.
     @Environment(\.modelContext) var context
-    /// Red Moon Pro entitlement + the shared paywall (ADR 0112). Both carry safe preview defaults
-    /// (free / no-op), so `HomeView` previews render without a `StoreManager` in the environment.
-    /// Non-private (like the `@Query`s below) so the `HomeView+Actions` extension can gate its CTA.
-    @Environment(\.isPro) var isPro
-    @Environment(\.presentPaywall) var presentPaywall
     /// Practice reminders (ADR 0186). Home owns the launch sweep (D3) and the tap landing (D6),
     /// because both need a `ModelContext` to resolve a `uid` against and this is where the store is.
     @Environment(PracticeReminder.self) var practiceReminder
@@ -105,18 +100,14 @@ struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     greeting
-                    // Present only while a free trial is running (ADR 0144 D6) — draws nothing
-                    // otherwise, so it costs the ordinary Home nothing.
-                    TrialCountdownRow()
-                    // The one open door, above the locked CTA on purpose (ADR 0219). A player
-                    // without Pro meets `Start today's session` as a lock; leading with it and
-                    // putting the thing they *can* do underneath would be the screen arguing for
-                    // the paywall before it has shown them anything. Retires itself the moment a
+                    // A song to start on, above the session CTA while the library is empty
+                    // (ADR 0219, kept as onboarding by ADR 0237 D4). A fresh install has no song,
+                    // and the first thing worth doing is hearing one. Retires itself the moment a
                     // song of their own lands.
                     if offersStarterTrack { starterTrackCard }
                     startTodaySessionCard
-                    // Which unit this offers is the player's choice since ADR 0193; the card, its
-                    // Pro gate and the hold that changes the choice live in `HomeView+Resume`.
+                    // Which unit this offers is the player's choice since ADR 0193; the card and the
+                    // hold that changes the choice live in `HomeView+Resume`.
                     // `duplicatesStarterTrackCard` keeps Home from stacking two cards for one song
                     // once the starter track has been practised (ADR 0219).
                     if let target = resumeTarget, !duplicatesStarterTrackCard(target) {

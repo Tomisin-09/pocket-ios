@@ -187,10 +187,9 @@ final class Song {
     /// currently resolves", which is `SongAudioResolver`'s job and a different question.
     var hasImportedAudio: Bool { audioFileName != nil || bookmark != nil }
 
-    /// Whether this is the bundled **starter track** (ADR 0219) — the one song a player without
-    /// Red Moon Pro may still practise on. Derived from the frozen `SongRef.id`, never the title,
-    /// which the player can edit.
-    var isStarterTrack: Bool { AccessPolicy.isStarterTrack(sourceID: sourceID) }
+    /// Whether this is the bundled **starter track** (ADR 0219). Derived from the frozen `SongRef.id`,
+    /// never the title, which the player can edit.
+    var isStarterTrack: Bool { StarterTrack.isStarterTrack(sourceID: sourceID) }
 
     /// The import identity. See the note on `sourceID` for what a `nil` bookmark means.
     var ref: SongRef {

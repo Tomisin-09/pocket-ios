@@ -14,10 +14,8 @@ on the right is `Add a song` and opens the file picker.
 **The greeting** changes with the time of day and, once you have given one, carries your artist name.
 Under it, `Ready to practice?`.
 
-**A trial countdown** sits here while one is running — see [subscription](../subscription.md).
-
 **`Start today's session`** is the filled teal card, and the primary action. It builds a session from
-your goals. Without Red Moon Pro it draws a padlock and opens the paywall instead.
+your goals.
 
 **`JUMP BACK IN`** appears once you have practised anything, and carries the last thing you
 practised — a song with its artist and mastery, a routine with its block count, or an exercise with
@@ -55,9 +53,6 @@ runs* — so nothing was lost from the spoken screen. Before you have added a so
 tile carries one line of its own, `Add a song to get started`, and loses it once you have.
 
 **`Recent routines`** is a horizontal rail of routines you have played, each showing its block count.
-
-Of those, only Journal, Toolkit and the tile beside it are outside Red Moon Pro. The rest draw a
-padlock without it.
 
 ### The first run
 

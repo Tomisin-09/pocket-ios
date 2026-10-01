@@ -6,15 +6,14 @@ out to where you were.
 ## The hub
 
 <!-- shot: reference/settings-hub | role: screen
-     | alt: The Settings hub with You and Red Moon Pro above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Your data, Privacy and Help & About in a group below
+     | alt: The Settings hub with You above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Your data, Privacy and Help & About in a group below
      | state: Settings open -->
 
-Ten destinations. **Each row states its current value on the right**, so most questions are
+Nine destinations. **Each row states its current value on the right**, so most questions are
 answered without opening anything.
 
 | Row | Holds |
 |---|---|
-| `Red Moon Pro` | Your subscription state, and the three things you can do about it |
 | `You` | Your name, and what you play |
 | `Appearance` | Theme, motion, and how notes are spelled |
 | `Sound & feel` | Haptics, and which click the metronome plays |
@@ -25,20 +24,10 @@ answered without opening anything.
 | `Privacy` | The one analytics switch |
 | `Help & About` | Version, help, contact, diagnostics, and the legal links |
 
-`Red Moon Pro` and `You` sit above the rest because they are *state* — what you have and who you
-are — rather than preferences.
+`You` sits above the rest because it is *state* — who you are — rather than a preference.
 
 Most rows carry an **ⓘ**. The explanations below are those popovers, word for word: where this page
 and the app differ, the app is right.
-
-## `Red Moon Pro`
-
-While a trial is running, a countdown row sits at the top. Then `Manage Subscription` for a
-subscriber, or `Upgrade to Red Moon Pro` for everyone else, and `Restore Purchases`, which is always
-offered.
-
-Cancelling happens on Apple's own screen. There is no billing interface in the app. See
-[Red Moon Pro](../subscription.md).
 
 ## `You`
 

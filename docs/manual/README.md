@@ -77,7 +77,6 @@ inside them is the order that was already there.
 
 | Page | The goal it serves | Status |
 |---|---|---|
-| `subscription` | What's free, what Pro covers, how to start and stop | Slice C |
 | `privacy` | Where your data lives and what leaves the device | Slice C |
 | `gestures` | Every hold, drag, pinch and swipe in one place | Slice A |
 | `terms` | The app's own words for the things it measures | Slice A |
@@ -98,6 +97,7 @@ Written in slices: Slice A is `getting-started` · `songs` · `looping` · `gest
 first hour, and the way most players come in. Slice B is `exercises` · `routines` · `sessions` — the
 session half, where the loops from Slice A become blocks in something you press play on. Slice C is
 `journal-and-practice-log` · `metronome` · `toolkit` · `subscription` · `privacy` — the rest of the app.
+(`subscription` was deleted when Red Moon became free, ADR 0237.)
 The reference wing came last on purpose, so the how-tos already knew what they were linking into.
 Slice D is `references`, written with ADR 0167 rather than after it — the first page whose feature
 and whose prose landed in the same change.
@@ -148,7 +148,6 @@ is a device the shoot cannot currently produce.
 |---|---|---|
 | `songs/empty-library` · `reference/loops-library` · `getting-started/first-run` | a launch with **no seed flags** — the seeded device has six songs with loops attached and skips the first-run questions | **solved — the `bare` pass.** `shoot-manual.sh` now drives an unseeded device as a pass of its own (`ManualBareShots`); `reference/loops-library` turned out not to need it and is shot in `base` |
 | `songs/missing-audio` | a song whose file cannot be found | **solved — break the link mid-session, do not seed it.** `ScreenshotSeed.importReal` builds every seeded song with a bookmark into `Documents/SeedAudio/` and **no** `audioFileName`, so a seeded song is pre-0148-shaped and resolves through that bookmark alone until it is first opened. Delete one staged file (and the song's owned copy, if it has since adopted) and `SongAudioResolver.resolve` returns `nil` for that song and nothing else. Reversible — copy the master back. Recipe in `docs/manual-shoot-list.md` |
-| `subscription/settings-pro` · `subscription/trial-row` | a Pro entitlement and a running trial | no launch hook exists — treat as `device:`, as `subscription/paywall` already is. The `AppTransaction.shared` sign-in prompt that used to be the stated reason is gone with the closed-beta grant (2026-09-10); the reason that remains is that `trialEndsAt` is written from a real StoreKit expiration and from nowhere else |
 | `references/section` | a reference with a **file** attached, not just links | **open — and it is a staleness gap, not a seeding one.** The image on disk is a clean, correct photograph of the section as it was before ADR 0167 phase 2 shipped file attachments: two links and an `Add a link` button, under a paragraph that now describes a picture row and `Add a file`. Nothing catches this. `shoot-progress.py` asks whether a file exists, `check-manual.py` never opens one, and the marker itself was updated with the prose — so the set reads 91 of 93 with a figure in it that contradicts its own page. The site port ships without it. **A prose change that renames or adds a control invalidates every figure showing that control**, and only a person comparing the two can say which |
 | `toolkit/tuner` · `reference/tuner` | a microphone hearing a real string | already `device:`, noted in `ManualToolkitShots` |
 | `songs/import-progress` | a multi-file import **caught in flight** | **open — it needs a hold, not a faster tap.** The picker itself is reachable (`ManualImportShots.resolvedPicker` already crosses into its process), but the overlay exists only for as long as the decode takes, and a driven attempt that arrives late photographs the library with nothing over it — clean, and wrong, which is the one failure this harness is built to refuse. `-uiTesting` has no equivalent of the undo window's 4s→120s stretch for an import. The fix has a known shape — seed the batch so it does not go through the picker, and hold `SongImportModel.progress` under the test flag — and it is an app-side seam, so it is a decision rather than a tap |
@@ -191,7 +190,7 @@ human, and it is the first thing to reread when a page starts to feel thin.
 - **Streaks, "this year", weekly goals on the Practice log.** These do not exist and are checked for by
   name, because there is no legitimate use of those words here.
 - **Ear training and theory as *creatable* templates.** Ear training shipped as a loop mode.
-- **A free tier or "free taste".** `freeTasteSlugs` is empty (ADR 0144).
+- **A free tier, a "free taste", or any price.** Red Moon is free and sells nothing (ADR 0237).
 - **Instruments beyond guitar and 4-string bass.** Ukulele and the rest are parked (ADR 0116).
 - **Take sharing.** Parked pending legal advice (ADR 0150).
 - ~~**The bundled demo song.**~~ **Resolved 2026-08-13, and it is not parked.** Walked in the
@@ -244,10 +243,6 @@ simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover
 - **Rows below the fold do not exist.** SwiftUI has not built them, so they cannot be found or
   scrolled to by element — scroll first, then query. Under the default **↑ Title** grouping only
   the first four songs are on screen.
-- **`-uiTesting` runs the app fully unlocked** (`StoreManager` sets `debugProOverride`), which is
-  what makes a driven walk possible at all — but it also means the trial row on Home, the paywall
-  and every locked state are *unreachable* on that launch. Those states need a launch without the
-  flag, so they are shot by hand or against a StoreKit test configuration.
 - **Anything the app only writes at runtime has to be seeded too.** `ScreenshotSeed` builds a
   library; it writes no `PracticeRun`, `JournalEntry`, `Recording` or `SavedChord`, because those are
   only ever written as somebody uses the app. The Practice log and the Journal therefore open empty on a
@@ -285,11 +280,11 @@ simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover
   not. A launch carrying only the seed flags shows the intake over Home — verified, not inferred.
   That is useful rather than a problem: `getting-started/first-run` is shootable on the seeded
   device by launching without `-uiTesting`, and does not need a bare install.
-- **`-uiTesting` is what unlocks Pro, and most of the manual is behind it.** `StoreManager` sets
-  `debugProOverride = true` under it, so a launch without it meets a paywall at Practice, Routines
-  and the song library. It also disables animations (no capture landing mid-transition) and holds
-  the undo toast open for 120s instead of 4, which is what makes `gestures/undo-toast` shootable by
-  hand at all. Every driven figure was shot under it, so any hand-shot frame must be too.
+- **`-uiTesting` changes what the app does, so every frame is shot under it.** It skips the first-run
+  questions, disables animations (no capture landing mid-transition) and holds the undo toast open
+  for 120s instead of 4, which is what makes `gestures/undo-toast` shootable by hand at all. Every
+  driven figure was shot under it, so any hand-shot frame must be too. (It also used to unlock Red
+  Moon Pro; there is nothing left to unlock, ADR 0237.)
 - **Debug-only UI has to be hidden, not cropped.** The Settings hub carries a tenth destination,
   `Developer`, under `#if DEBUG` — present in every build a shoot can drive, and shipped to nobody.
   The first shoot photographed it into `reference/settings-hub`, whose own alt text lists the nine
@@ -400,7 +395,6 @@ anything unticked either written or added to the parked list above with a reason
 | Practice log | `reference/tools-and-journal` · `journal-and-practice-log` |
 | Toolkit ×4 | `reference/tools-and-journal` · `toolkit` |
 | Settings ×9 | `reference/settings` |
-| The paywall, the trial, restore and cancel | `subscription` |
 | Every hold, swipe and pinch | `gestures` |
 | Where you learned it — the section, the editor, what it refuses | `references` |
 | The app's own practice vocabulary | `terms` |

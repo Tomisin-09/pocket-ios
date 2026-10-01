@@ -1,7 +1,5 @@
 # Metronome, Journal, Practice log and the Toolkit
 
-Everything on this page is free, permanently. Nothing here is behind Red Moon Pro.
-
 ## Metronome
 
 Reached from the `Metronome` card on Home, and it takes the whole screen. Procedure is in
@@ -139,7 +137,7 @@ Reached from `Toolkit` on Home. Six sections, each carrying a count or a state.
 | `My chords` | `Your saved voicings` | How many, or `None yet` |
 | `My progressions` | `Progressions you've written` | How many, or `None yet` |
 | `My tabs` | `Tabs you write on the neck` | How many, or `None yet` |
-| `Tuner` | `Tune by ear or mic` | `Free` |
+| `Tuner` | `Tune by ear or mic` | Its instrument, `Guitar` or `Bass` |
 | `Glossary` | `Chord, scale & theory terms` | The term count |
 | `Help & FAQs` | `How Red Moon works` | The answer count |
 

@@ -15,11 +15,6 @@ import SwiftUI
 struct RoutinePlayerView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
-    /// Entitlement (ADR 0112) — read here purely as **defence in depth**. The library row already
-    /// refuses to present a routine a free player can't run; this second check means a future entry
-    /// point that forgets the gate can't turn the player into a way to run Pro exercises (which embed
-    /// the real `ExerciseRunView`, itself gated only at the library row).
-    @Environment(\.isPro) private var isPro
     /// The routine being run — held so we can stamp `lastPracticed` when the session starts (the
     /// home hub's "recent routines" rail reads it), and so the summary screen can name the session it
     /// writes a journal entry about (ADR 0143). The player itself is a pure conductor over stages.
@@ -59,19 +54,10 @@ struct RoutinePlayerView: View {
         _player = State(initialValue: RoutineSessionPlayer(routine: routine))
     }
 
-    /// Whether this routine may be played at all under the current entitlement (ADR 0112).
-    private var runnable: Bool {
-        AccessPolicy.canRunRoutine(
-            isPro: isPro,
-            isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug))
-    }
-
     var body: some View {
         NavigationStack {
             Group {
-                if !runnable {
-                    lockedView
-                } else if showingTuneUpOffer {
+                if showingTuneUpOffer {
                     // Ahead of every other phase, because it is the thing that happens before the
                     // session does — and the session has not been started underneath it (ADR 0195).
                     tuneUpOfferView
@@ -98,7 +84,6 @@ struct RoutinePlayerView: View {
         // and with the lease reference-counted, a block asserting it too is harmless.
         .keepAwakeDuringPractice()
         .onAppear {
-            guard runnable else { return }
             // The question holds the session back; whichever answer the player gives starts it —
             // immediately, or after the tuner (ADR 0195).
             guard !promptTuneUpIfWanted() else { return }
@@ -289,30 +274,6 @@ struct RoutinePlayerView: View {
     //
     // The summary screen lives in `RoutinePlayerView+Finished.swift` — it grew a session journal
     // composer (ADR 0143) and this file is against the 400-line cap.
-}
-
-extension RoutinePlayerView {
-    /// The entitlement backstop a free player should never actually reach (ADR 0112) — a plain
-    /// "this is Pro" wall with a way out, rather than a silent dismissal or (worse) an unlocked
-    /// session. No paywall is raised from here: the gate that *presents* this screen is the one
-    /// that offers the upgrade. Lives in an extension to keep the main view body under the
-    /// type-body-length cap.
-    var lockedView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "lock.fill")
-                .font(.futura(.largeTitle))
-                .foregroundStyle(PocketColor.textSecondary)
-            Text("Routines are part of Red Moon Pro")
-                .font(.futura(.headline))
-                .foregroundStyle(PocketColor.textPrimary)
-                .multilineTextAlignment(.center)
-            Button("Close") { dismiss() }
-                .font(.futura(.body))
-                .tint(PocketColor.practice)
-        }
-        .padding(32)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
 }
 
 /// Scaffold for the previews below. Shared rather than pasted twice, because the point of the pair

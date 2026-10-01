@@ -1,6 +1,9 @@
 # ADR 0156 — a paywall you can predict
 
-- **Status:** Proposed — not built, not device-verified. See *Consequences* for why it cannot be verified yet.
+- **Status:** Proposed — not built, not device-verified. **Superseded by ADR 0237 (2026-10-01)**
+  before it was built.
+- **Superseded by:** ADR 0237 — Red Moon is free, so there is no launch wall to budget and no paywall
+  to predict. Nothing here was built and nothing needs undoing.
 - **Date:** 2026-08-11
 - **Supersedes:** ADR 0144 **D4**, narrowly — the "once per launch" clause only. Every other part of D4 (gate at the Home destinations, cards locked-not-hidden) stands unchanged.
 - **Builds on:** ADR 0112 (gate at read time; `AccessPolicy` as the one seam; nothing about Pro persisted) · ADR 0144 (one app, one price, evaluated through a free trial) · ADR 0120 (the paywall host is the one place that reports a gate firing)

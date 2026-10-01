@@ -154,11 +154,8 @@ from comfortable to target speed).
 
 **The brand mark stays its own thing.** The "Red Moon" mark (app icon + the in-app
 logo/mark/wordmark, ADR 0061) is **vector** artwork, two-tone: a `#17698a` crescent with a
-`#90b3cb` inner face on light, inverted on dark. The **paywall header is the "Red Moon PRO"
-wordmark** — artwork, not set type, because the tier word is deliberately *recessive*
-(`#a7c4d9` beside `#17698a` on light, inverted on dark) and no font weight reproduces that.
-It replaces the crescent seal on that one screen; the seal still leads Settings, the
-artist-name prompt and the icon. That is now within a hair of `TealCTA`
+`#90b3cb` inner face on light, inverted on dark. (A raster "Red Moon PRO" wordmark headed the
+paywall until the paywall went, ADR 0237.) The crescent's `#17698a` is now within a hair of `TealCTA`
 (`18698B`) — a coincidence of the same palette, not a binding. **Don't flatten them
 together.** The per-space accent families (Teal / Terracotta / Plum / Gold / Indigo / Crimson) are
 what tell you which space you're in; retuning one must never be able to desync the mark, so
@@ -353,7 +350,7 @@ vision if useful, but know that **Phase 1** is what gets built first.
 | **P1** | **Home hub** | The app's front door (ADR 0044). Header shows the "Red Moon" wordmark graphic (ADR 0063) in place of plain title text. Greeting · "Jump back in" resume card · **Practice card** · Metronome card · Song library strip · **Journal card** (→ the notes+takes practice-history space, ADR 0100, the 4th strip) · **Toolkit card** (→ the chords/theory reference hub, ADR 0096, now 5th/last) · Add a song. **Planner-free for V1** — see §4.2. |
 | **P1** | **Practice space** | A top-level destination (ADR 0046), plum `practice` accent. A list of **your exercises** (command → reach) above a live **"Build today's session"** planner entry (V2 planner Slice 3). Tap **+** to create; tap a unit → its **training run** (own engine, `engine.run(ramp:)`): set up working/command/reach + warm-up steps with a routine staircase, then a live BPM/beat/session readout while it plays. |
 | **P1** | **Journal space** | A top-level **read-only** practice-history destination (ADR 0100), the fourth home tile in the warm-gold `journal` accent — *look back*, distinct from Practice's *author* and Toolkit's *explore*. One newest-first, day-grouped timeline merging journal **notes** and audio **takes** across loops + exercises, with an **All / Notes / Takes** filter, **search** (song / exercise / template / date), a **Newest ↔ Oldest** sort toggle, and gold owner-attribution captions; takes play in place. Authoring stays on the owner (`JournalSheet`). |
-| **P1** | **Toolkit hub** | A top-level **reference** destination (ADR 0096), the fifth home tile (now after Journal) in the indigo/violet `toolkit` accent — *explore / keep*, distinct from Practice's *author*. A landing list of sections; **Slice 1**: **My chords** (the `SavedChord` library as a full grid; tap → large diagram + rename/delete; **+** builds via the placer in "Save" mode) and a searchable **Glossary** of chord/scale/theory terms; then the **Tuner** (ADR 0115) and **Help & FAQs** (ADR 0145). *Hear* / identifier / scales / ear-training are later slices, each its own ADR. The hub is **free forever** (ADR 0144 D2) and gate-free by construction, which is why help lives here rather than behind the paywall. **My progressions** (ADR 0218) sits beside My chords as the management home for progressions the player writes, and **My tabs** (ADR 0235) after it, for tabs the player writes on the neck. |
+| **P1** | **Toolkit hub** | A top-level **reference** destination (ADR 0096), the fifth home tile (now after Journal) in the indigo/violet `toolkit` accent — *explore / keep*, distinct from Practice's *author*. A landing list of sections; **Slice 1**: **My chords** (the `SavedChord` library as a full grid; tap → large diagram + rename/delete; **+** builds via the placer in "Save" mode) and a searchable **Glossary** of chord/scale/theory terms; then the **Tuner** (ADR 0115) and **Help & FAQs** (ADR 0145). *Hear* / identifier / scales / ear-training are later slices, each its own ADR. Help lives here, beside the tuner, which is where a player looks for it. **My progressions** (ADR 0218) sits beside My chords as the management home for progressions the player writes, and **My tabs** (ADR 0235) after it, for tabs the player writes on the neck. |
 | **P1** | **Use a progression** | ADR 0218 — the chord editor's second way in, beside *Add chord*, in the practice teal. A `Form` sheet: a segmented **Progressions / Two chords** control; twelve key chips (the chosen one kept scrolled into view); *Your progressions* then the built-in list, where the selected row opens into a horizontal strip of chord chips (numeral over the diagram, name and beats under — **yours** / **swapped** replace the numeral, with a teal outline); the Two chords tab's *Pick your own two* slots (dashed until filled) over a two-column grid of pair cards; a segmented **Hold each chord**; the *Use my chords* switch; and a full-width prominent **Add N chords** pinned to the bottom. Its builder, **New progression**, leads with chord **names** and puts numerals under them. |
 | **P1** | **Help & FAQs** | The Toolkit's fourth tenant (ADR 0145), same indigo chrome as the Glossary. Area-grouped questions that **expand in place** on tap — light haptic, 0.2s ease, rotating chevron, borrowed from `CollapsibleLibrarySection` without reusing it (help opens closed every time, so nothing persists). `.searchable` matches **inside answers**, and a non-empty search **force-expands every match**. Also pushed from Settings ▸ Help & About. Carries the app's first support address, in plain selectable text as well as the **Contact Support** form row (ADR 0161 — a `mailto:` until it proved to fail silently without a Mail account). |
 | **P1** | **My tabs · Write a tab** | ADR 0235 — in Toolkit indigo, from the Toolkit's **My tabs** row or the Home tile beside Toolkit. The list: title and when it last changed, then *30 notes · 3 sections · Guitar · Standard*; hold or swipe to rename or delete; **+** writes one. A tab opens **to read** (the tab drawn a section at a time, headings in ink, bar lines, no row captions once it has sections), with **Edit** into the writer: a title field; a strip of note chips with one **+** slot, which goes back to the end when another note is tapped; *Bar line* and *Section* (presets or the player's own name); Name the notes' neck with its accent set to indigo and the writing voice; ↶ ↷; and *The tab so far* under the neck. **Silent**, placed and never typed. |
@@ -483,9 +480,10 @@ The app's front door (ADR 0044), in place of launching straight into the library
 
 1. **Greeting** — a quiet time-of-day lead-in ("Good evening", carrying the artist name
    once one is given, ADR 0113) over a fixed **"Ready to practice?"** headline.
-2. **Trial countdown** — drawn only while a free trial is running (ADR 0144 D6).
+2. **"A song to start on"** — the starter-track card, drawn only while the library holds no song
+   of the player's own (ADR 0219; onboarding since ADR 0237).
 3. **"Start today's session"** — the filled teal CTA and the primary action, pushing
-   `PlannerView`. Pro; a free player gets the paywall and a padlock (ADR 0112).
+   `PlannerView`.
 4. **"Jump back in"** card — the most-recently-practised **song, routine or exercise**,
    whichever the player pinned (ADR 0193; the hold menu is on the card, ADR 0163), with a
    relative last-practised time and a mastery or block-count readout. **Hidden until
@@ -506,8 +504,6 @@ The app's front door (ADR 0044), in place of launching straight into the library
    0102's tile-grid rejection, which was decided at four cards): the descriptions were true
    on day one and re-read every day after, and they cost the height this screen needed for
    items 4 and 5. They survive in the **accessibility labels**, which did not change.
-   A tile locks with a corner padlock rather than hiding (ADR 0144 D4); Journal, Toolkit and
-   the tile beside it never do (D2).
 7. **"Recent routines"** — a horizontal rail of routines actually practised, newest first,
    capped at three.
 

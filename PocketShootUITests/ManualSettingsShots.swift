@@ -15,11 +15,12 @@ final class ManualSettingsShots: ManualShotCase {
     func testSettingsHub() {
         let app = launchForShoot()
         openSettings(in: app)
-        // `Red Moon Pro` rather than the first row: it sits below `You` and its presence proves the
-        // list rendered past its first cell, which an assertion on the nav title alone does not.
+        // `Appearance` rather than the first row: it sits in the section below `You` and its presence
+        // proves the list rendered past its first cell, which an assertion on the nav title alone
+        // does not. (It was the subscription row until that went, ADR 0237.)
         capture(app, slug: "reference/settings-hub",
                 assertingOnScreen: "Settings",
-                alsoRequiring: ["Red Moon Pro"])
+                alsoRequiring: ["Appearance"])
 
         // The hub ships **nine** destinations, and the manual's alt text names all nine. A Debug
         // build adds a tenth — `Developer` — which the first shoot duly photographed into a figure

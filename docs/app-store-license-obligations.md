@@ -93,14 +93,19 @@ Re-read this section the moment anyone proposes bundling a track again:
 
 ### Terms of Use (EULA) — App Review Guideline 3.1.2 / Schedule 2
 **Triggered by:** shipping any Terms link, and required once auto-renewable
-subscriptions ship (Red Moon Pro, [ADR 0112](decisions/0112-freemium-monetization-and-pro-tier.md)).
+subscriptions ship. **Red Moon ships none since [ADR 0237](decisions/0237-red-moon-is-free.md)**
+(the Red Moon Pro subscription of ADR 0112 was never sold and is removed), so 3.1.2's
+metadata requirement does not apply today. The in-app link stays: the licence applies to every
+App Store app.
 
 - **Decision (2026-07-23): no custom Terms of Service until the Oracle AI tier
   introduces its own service relationship.** Apple's [standard EULA](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/)
   applies by default and satisfies the required "Terms of Use (EULA)" link for
   both the free app and the Pro subscription. Don't re-litigate writing a custom
   ToS for v1 or Pro.
-- **When Pro ships:** the paywall and the App Store description must both carry a
+- **If a subscription ever ships** (only the Oracle, strictly additive — ADR 0237 D3; this was
+  written for Red Moon Pro, which never sold): the purchase screen and the App Store description
+  must both carry a
   functional **Terms of Use (EULA)** link (Apple's standard URL is acceptable)
   **and** a Privacy Policy link, plus the subscription disclosure text (title,
   duration, price/period, auto-renewal). The Terms link already ships in

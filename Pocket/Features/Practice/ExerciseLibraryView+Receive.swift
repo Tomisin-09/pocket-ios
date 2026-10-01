@@ -18,12 +18,6 @@ extension ExerciseLibraryView {
     /// On the options menu rather than the nav bar, per ADR 0126: nothing on a nav bar may vary in
     /// width, and this is a labelled secondary action — a bare glyph for "open a file somebody sent
     /// you" would be unreadable.
-    ///
-    /// **Unlocked, unlike the Routines twin.** Everything on that screen is Pro, so its row can show a
-    /// padlock and be done. Here the answer depends on the drill's template, which is inside a file
-    /// nobody has opened yet: a padlock would be a guess, and a wrong one every time a free-template
-    /// drill arrives. The gate lives where the answer is knowable — in the host, once the file is
-    /// read (ADR 0209 D5) — and it is the same gate for both doors.
     @ViewBuilder
     var receiveExerciseButton: some View {
         Button {

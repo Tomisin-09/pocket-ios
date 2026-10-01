@@ -1,5 +1,14 @@
 # App Store listing copy — Red Moon Practice v1.1
 
+> ## Red Moon is free — ADR 0237 (2026-10-01)
+>
+> The app sells nothing: no subscription, no trial, no in-app purchase. The description,
+> **Price / availability** and **App Review notes** below are updated for that. The 1.1
+> sections that described the subscription are kept as history and say so; do not paste
+> from them. What App Store Connect still needs, by hand: both `…pro.*` products and the
+> "Red Moon Pro" group removed from sale, any screenshot showing the paywall or a padlock
+> replaced, and App Privacy re-checked for a Purchases declaration.
+
 > ## ⚠ 1.0 is RELEASED, not held (discovered 2026-08-07)
 >
 > App Store Connect shows **"1.0 Ready for Distribution"** — approved *and released*.
@@ -105,17 +114,25 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 > • Chain loops, songs and exercises into a routine and press play
 > • Keep a private journal of how a passage is coming along
 >
-> Your playing never leaves your device. No account, no ads, no advertising ID —
+> Your playing never leaves your device. No account, no ads, nothing to buy, no
+> advertising ID —
 > your audio, recordings, notes and song names stay with you, on your device and
 > your own iCloud. Anonymous counts of which features get used can be switched off
 > in Settings at any time.
 >
 > Named after the Tom Misch track that started it all.
->
-> Red Moon Pro is an auto-renewable subscription. Terms of Use (EULA):
-> https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
-### ⛔ Why that last line is not optional — REJECTED 2026-08-08 for its absence
+*Check the line-wrap in the field: "nothing to buy" lengthened the privacy sentence by one
+clause.*
+
+### History: the EULA line — REJECTED 2026-08-08 for its absence, retired by ADR 0237
+
+**No longer applies.** Guideline 3.1.2 binds an app that offers auto-renewable
+subscriptions, and since ADR 0237 Red Moon offers none, so the two closing lines
+(*"Red Moon Pro is an auto-renewable subscription. Terms of Use (EULA): …"*) come out of
+the description. Settings ▸ Help & About still links Apple's standard EULA, because the
+licence applies to every App Store app. If the Oracle ever ships a subscription, the rule
+below comes straight back. Kept for that day:
 
 App Review returned 1.1 (3) automatically, before a human looked at it: *"The
 submission offers auto-renewable subscriptions but does not include a functional
@@ -137,7 +154,22 @@ Apple's standard terms. Only if that ever changes does the link move into ASC's
 own custom-EULA field instead of the description — and then all three surfaces
 (description, paywall, Settings) must point at the custom one, not Apple's.
 
-## What's New in This Version — 4,000 char max (1.1)
+## What's New — the free release (draft)
+
+The next version's notes carry everything built since 1.3; this is the part about
+price, to merge in near the top. Paste-ready:
+
+> Red Moon is now free. Everything in it is open to everyone, with nothing to buy:
+> practise your songs and loops, build your own exercises and routines, and let
+> Today's session plan one for you. Nothing you made has moved — your songs, loops,
+> routines, notes and takes are where you left them.
+
+Don't call it "free forever", and don't explain the change: the product page reads it
+as *what the app is now*, which is the whole point.
+
+## What's New in This Version — 4,000 char max (1.1) — history, do not paste
+
+*Shipped with 1.1. Its subscription lines describe a tier that ADR 0237 removed.*
 
 **Who actually reads this:** nobody is upgrading. 1.0 had zero downloads and is
 off sale, so there is no installed base to write a diff for. This field is read
@@ -243,28 +275,15 @@ true under ADR 0120 and is now true only inside the EEA.
 Questionnaire answers are all "None" → **4+**.
 
 ## Price / availability
-- **App price:** Free to download. The app itself is never paid — everything is
-  sold through the subscription below (ADR 0144 retired the free *tier*, not the
-  free *download*).
-- **In-app purchases:** two auto-renewable subscriptions in the **"Red Moon Pro"**
-  group — `click.decooperations.pocket.pro.annual` (£49.99/yr, the default the
-  paywall leads with) and `click.decooperations.pocket.pro.monthly` (£5.99/mo).
-  Both carry a **1-month** introductory free trial.
-  ⚠ **The live price and trial length are whatever App Store Connect says**, not
-  what this file or `Configuration/RedMoonPro.storekit` says — the `.storekit`
-  file only drives local and simulator testing. Never treat either as the source
-  of truth, and note the app *derives* the trial length from StoreKit rather than
-  hardcoding it (ADR 0144 A4), so ASC is the only place it needs changing.
-  ⚠ Both products must be **"Ready to Submit"** before submission — sandbox will
-  not vend a draft.
-- **Paid Applications Agreement:** required now that there is IAP, and **active**
-  (Tide GBP bank + W-8BEN-E both confirmed Active). The old note here said the
-  base ADPLA was enough because v1 shipped no IAP — that stopped being true with
-  ADR 0144.
-- **Free surface for App Review:** the Toolkit (tuner, metronome, saved chords,
-  glossary, Help & FAQs) and the Journal are free forever and need no purchase to
-  evaluate. A hard paywall draws 2.1 / 3.1.2 scrutiny and this is the mitigation —
-  paste-ready wording in **App Review notes** below.
+- **App price:** Free. There is no in-app purchase of any kind (ADR 0237).
+- **In-app purchases:** none. The two auto-renewable subscriptions that ADR 0144
+  set up (`click.decooperations.pocket.pro.annual` and `…pro.monthly`, group
+  **"Red Moon Pro"**) were never sold and are **removed from sale** in App Store
+  Connect; the app no longer links StoreKit at all. If the Oracle is ever priced,
+  it is strictly additive (0237 D3) and gets new products.
+- **Paid Applications Agreement:** no longer needed for this app. Keeping or
+  dropping it is the owner's call (ADR 0237 Consequences); nothing in the app
+  depends on it.
 - **Availability:** All territories, unless you want a phased rollout.
 
 ## App Review notes (paste-ready)
@@ -275,28 +294,21 @@ shipping code, not aspiration.
 > Red Moon Practice is a guitar practice tool. No account or sign-in is required —
 > nothing is created on a server and there is no login to give you.
 >
-> **You can evaluate a large part of the app without any purchase.** The Toolkit and
-> the Journal are free permanently, not a trial: the chromatic tuner (guitar and
-> bass), the metronome, the chord and theory tools, the glossary, and the in-app Help
-> & FAQs; plus the Journal — your written practice notes, your recordings, and the
-> Progress screen. All reachable from the home screen with no subscription.
+> **The whole app is free.** There are no in-app purchases, no subscription and no
+> advertising; every screen is reachable from the home screen without paying.
 >
-> **To evaluate the subscription features, open the Song library and tap "Try the
-> demo".** That adds a playable practice track so you can try the waveform, loop
+> **To try the song player, open the Song library and tap "Try the demo".** That adds a playable practice track so you can try the waveform, loop
 > capture and speed control immediately. You can also import your own audio from the
 > Files app; the app plays DRM-free local and iCloud Drive files only, and never
 > Apple Music streaming audio. The app requests **no** access to your music library —
 > it uses no MusicKit and no media-library API.
 >
-> **Subscription:** one group, "Red Moon Pro", offering the same thing at two
-> durations — monthly or annual — each with a one-month free trial. There are no
-> other in-app purchases, no consumables and no advertising. The trial length shown
-> in the app is read live from App Store Connect rather than hardcoded.
+> **Microphone:** used for the tuner (detecting the pitch of a played string) and for
+> optional practice recordings the player starts themselves. Audio is analysed and
+> stored on the device and is never uploaded — the app has no audio upload path.
 >
-> **Microphone:** the only permission the app requests. Used for the tuner (detecting
-> the pitch of a played string) and for optional practice recordings the player starts
-> themselves. Audio is analysed and stored on the device and is never uploaded — the
-> app has no audio upload path.
+> **Notifications:** asked for only when the player switches on a practice reminder for
+> one of their routines.
 >
 > **Privacy:** all practice data is stored locally on the device. There is no
 > cross-device sync and no user account. Anonymous, aggregate usage counts are
@@ -305,10 +317,9 @@ shipping code, not aspiration.
 > in Settings → Privacy. No advertising identifier is collected and no third-party
 > ad or attribution SDK is present.
 
-**Before pasting, re-check each claim still holds** — several of these lines are the
-mitigation for a 2.1 review, so a stale one is worse than no note at all. In
-particular the free surface (ADR 0144 D2), the region-split analytics default (ADR
-0147), and "Try the demo" ([`LibraryView.swift`](../Pocket/Features/Library/LibraryView.swift),
+**Before pasting, re-check each claim still holds** — a stale one is worse than no
+note at all. In particular "the whole app is free" (ADR 0237), the region-split
+analytics default (ADR 0147), and "Try the demo" ([`LibraryView.swift`](../Pocket/Features/Library/LibraryView.swift),
 `LibraryEmptyState.onTryDemo` → `Song.sample()` — the *generated* tone song, which is
 why it survives ADR 0148 §7 deleting the bundled demo track).
 
@@ -498,8 +509,20 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 1242×2688, shot 2026-07-16).
 
 ## Pre-submission checklist
+
+**For the free release (ADR 0237), before anything below:**
+- [ ] Both `…pro.annual` and `…pro.monthly` and the **"Red Moon Pro"** group removed from
+      sale in App Store Connect
+- [ ] Description pasted from above, with **no** subscription or EULA lines
+- [ ] Promotional text and review notes carry no subscription wording
+- [ ] No screenshot shows the paywall, a padlock or a PRO badge
+- [ ] App Privacy: nothing declared under Purchases
+- [ ] Paid Applications Agreement kept or dropped — the owner's call
+
+**The 1.1 checklist, kept as history:**
 - [ ] Subtitle, promotional text, keywords, description entered (above)
-- [ ] 🔴 **Terms of Use (EULA) URL is in the Description** —
+- [ ] ~~🔴 **Terms of Use (EULA) URL is in the Description**~~ — **no longer applies**:
+      Red Moon sells no subscription (ADR 0237). The 1.1 note, for the record:
       `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`, bare text, at
       the end. **This is what rejected 1.1 (3) on 2026-08-08**, automatically and before
       any human review. Guideline 3.1.2 wants it in the metadata *as well as* in the

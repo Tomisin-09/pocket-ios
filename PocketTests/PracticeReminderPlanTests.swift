@@ -4,10 +4,8 @@ import XCTest
 /// The practice reminder's decisions (ADR 0186 D1–D2, D7).
 ///
 /// Every assertion lives here rather than in a UI test, and that is not a preference: a repeating
-/// `UNCalendarNotificationTrigger` cannot be usefully driven from a test — the same wall
-/// `TrialReminderPlan` hit, and the reason `docs/plans/storekit-sandbox-validation.md` records the
-/// trial reminder as not testable in sandbox. Delivery is verified on a device. What is *decided*
-/// is verified here.
+/// `UNCalendarNotificationTrigger` cannot be usefully driven from a test. Delivery is verified on a
+/// device. What is *decided* is verified here.
 ///
 /// A `Calendar` is pinned in every date test. `.current` carries the machine's timezone and
 /// `firstWeekday`, both of which differ between a developer's Mac and CI, and a weekday assertion
@@ -45,7 +43,7 @@ final class PracticeReminderPlanTests: XCTestCase {
     }
 
     /// Fixed per routine per weekday, so rescheduling **replaces** rather than stacking a second
-    /// copy behind the first — `TrialReminder.requestIdentifier`'s rule, multiplied by the days.
+    /// copy behind the first.
     func testIdentifiersAreStableAcrossCalls() {
         let first = PracticeReminderPlan.requests(for: schedule(days: [3]), routineUID: routine)
         let again = PracticeReminderPlan.requests(for: schedule(days: [3], hour: 7),
@@ -88,17 +86,49 @@ final class PracticeReminderPlanTests: XCTestCase {
         XCTAssertEqual(PracticeReminderPlan.routineUID(fromIdentifier: identifier), routine)
     }
 
-    /// The sweep reads **every** pending request in the app, including the trial reminder's. Failing
-    /// to recognise a foreign identifier as foreign would either cancel it or crash on it; returning
-    /// `nil` is what lets `reconcile` leave it alone.
-    @MainActor
+    /// The sweep reads **every** pending request in the app. Failing to recognise a foreign
+    /// identifier as foreign would either cancel it or crash on it; returning `nil` is what lets
+    /// `reconcile` leave it alone. The retired trial reminder is foreign *here* too: it is not a
+    /// routine's, and `staleIdentifiers` removes it by its own rule, not by this one.
     func testAForeignIdentifierIsNotClaimed() {
         XCTAssertNil(PracticeReminderPlan.routineUID(
-            fromIdentifier: TrialReminder.requestIdentifier),
-                     "The trial reminder shares this notification centre")
+            fromIdentifier: PracticeReminderPlan.retiredTrialReminderIdentifier))
         XCTAssertNil(PracticeReminderPlan.routineUID(fromIdentifier: "nonsense"))
         XCTAssertNil(PracticeReminderPlan.routineUID(
             fromIdentifier: PracticeReminderPlan.identifierPrefix + "not-a-uuid.3"))
+    }
+
+    // MARK: - The launch sweep (D3, and ADR 0237 D5)
+
+    /// The string an older build scheduled, written out rather than read back from the constant: if
+    /// the constant drifted, the sweep would look for a request no install holds, and every other
+    /// assertion here would still pass.
+    func testTheRetiredTrialIdentifierIsTheOneOldBuildsScheduled() {
+        XCTAssertEqual(PracticeReminderPlan.retiredTrialReminderIdentifier,
+                       "click.decooperations.pocket.trial-ending")
+    }
+
+    /// A tester's pending trial-ending notification goes on the first launch of a free build, with
+    /// or without any routine in the library.
+    func testTheSweepRemovesTheRetiredTrialReminder() {
+        let trial = PracticeReminderPlan.retiredTrialReminderIdentifier
+        XCTAssertEqual(PracticeReminderPlan.staleIdentifiers(pending: [trial], liveRoutineUIDs: []),
+                       [trial])
+        XCTAssertEqual(PracticeReminderPlan.staleIdentifiers(pending: [trial],
+                                                             liveRoutineUIDs: [routine]),
+                       [trial])
+    }
+
+    /// The sweep's original job is unchanged: a deleted routine's reminders go, a live routine's stay,
+    /// and a request this app did not schedule is never touched.
+    func testTheSweepKeepsLiveAndForeignRequests() {
+        let gone = UUID()
+        let live = PracticeReminderPlan.identifier(routineUID: routine, weekday: 2)
+        let orphan = PracticeReminderPlan.identifier(routineUID: gone, weekday: 4)
+        let trial = PracticeReminderPlan.retiredTrialReminderIdentifier
+        let stale = PracticeReminderPlan.staleIdentifiers(
+            pending: [live, orphan, "some.other.feature", trial], liveRoutineUIDs: [routine])
+        XCTAssertEqual(stale, [orphan, trial])
     }
 
     // MARK: - Next fire date (the footer, and D1 made visible)

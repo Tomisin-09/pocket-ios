@@ -2,7 +2,7 @@ import Foundation
 
 /// The pure decision of whether an event may be emitted at all (ADR 0120). Kept free of
 /// `UserDefaults`, SwiftUI and any SDK so the rule that carries the app's privacy promise is
-/// exhaustively unit-testable — the same shape as `AccessPolicy` for the entitlement axis.
+/// exhaustively unit-testable.
 enum AnalyticsPolicy {
 
     /// How this region's law lets us arrive at "analytics is on" (ADR 0147).
@@ -41,7 +41,7 @@ enum AnalyticsPolicy {
     ///
     /// Callers pass `Locale.current.region?.identifier`. That is a good-faith, conventional signal,
     /// not a location claim: it is unverified, nothing is sent about it, and a player who travels is
-    /// not tracked. StoreKit storefront is a possible later refinement if a reason ever appears.
+    /// not tracked. The App Store storefront is a possible later refinement if a reason ever appears.
     static func consentModel(regionCode: String?) -> ConsentModel {
         guard let regionCode else { return .ask }
         return askRegions.contains(regionCode.uppercased()) ? .ask : .notify

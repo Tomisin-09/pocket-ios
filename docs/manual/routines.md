@@ -4,8 +4,6 @@ A routine is an ordered run of things you already have — exercises, loops, who
 where you want them, played through in one sitting. You build it once and start it whenever, and the
 app moves you through it so you are not deciding what comes next while you are meant to be playing.
 
-Routines are part of **Red Moon Pro**.
-
 Find them at **Practice ▸ Routines**.
 
 ## The library
@@ -238,8 +236,7 @@ record carry a small waveform badge in the routine's block list, so you can see 
 without opening each.
 
 The take is saved against the **exercise or loop you played, not the routine** — so it turns up
-wherever that drill's takes turn up, and it survives if the routine is ever deleted. Recording is
-free, like the rest of the journal.
+wherever that drill's takes turn up, and it survives if the routine is ever deleted.
 
 The first time you turn this on, the app asks for the microphone. That happens here, while you are
 building, and never mid-session: a routine cannot wait on a permission prompt. If microphone access

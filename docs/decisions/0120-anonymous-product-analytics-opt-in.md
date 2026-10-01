@@ -16,6 +16,10 @@
   `NewExercisePlan.finalise(in:)`, which both interactive creation paths call. It is deliberately not
   sent from `Exercise.commandAnchored`: the preset seeder calls that too, and would report six
   invented creations on every fresh install. §4's closed vocabulary is unchanged.
+- **Amended by:** ADR 0237 (2026-10-01) — Red Moon is free, so §4's vocabulary loses its four
+  monetization events: `paywall_shown`, `paywall_dismissed`, `purchase_completed` and
+  `restore_completed`, with `PaywallTrigger` and `SubscriptionProduct` (0237 D8). **The names are
+  retired, never reused**: they are a frozen wire format. The rest of §4, and §1–§3 and §5–§7, stand.
 - **Date:** 2026-07-29
 - **Extends:** ADR 0092 (AI strategy — "your playing never leaves your device" is load-bearing there
   too), ADR 0112 (freemium — the paywall gates this now reports on)

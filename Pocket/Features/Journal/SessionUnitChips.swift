@@ -15,7 +15,7 @@ struct SessionUnitChips: View {
     let units: [SessionUnitRef]
     /// The tap action for a ref, or `nil` when it has nowhere to go — a unit deleted since the
     /// session, a loop that qualifies for no run mode, or a kind this version doesn't know.
-    /// Mirrors `JournalTabView.openAction(for:)`, paywall gate included.
+    /// Mirrors `JournalTabView.openAction(for:)`.
     var openAction: (SessionUnitRef) -> (() -> Void)?
 
     var body: some View {

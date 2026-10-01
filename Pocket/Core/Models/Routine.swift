@@ -44,12 +44,10 @@ final class Routine {
     /// exactly: a plain optional `String`, not an enum, so the add is a **lightweight, non-lossy**
     /// migration (rows saved before this field decode to `nil` — CoreData 134110 rule, ADR 0012/0036).
     ///
-    /// It records *where the routine came from*, never a Pro flag — access stays computed live from
-    /// `isPro` (ADR 0112 "gate at read time"). It has **no monetization use since ADR 0144**: the
-    /// free-taste run allowance it fed (`AccessPolicy.isFreeTasteRoutine`) is retired and its
-    /// allowlist is empty, so the seeded routine is now simply trial content. **Never** filter it in a
-    /// `#Predicate` (`presetSlug != nil` starves the main thread — the optional-predicate freeze);
-    /// read it per-object in memory at the gate.
+    /// It records *where the routine came from*, and nothing else: it once also fed a free-taste run
+    /// allowance, which went with the paywall (ADR 0237). **Never** filter it in a `#Predicate`
+    /// (`presetSlug != nil` starves the main thread — the optional-predicate freeze); read it
+    /// per-object in memory.
     var presetSlug: String?
 
     /// The **folders** this routine is filed in (ADR 0210 D2) — canonical S3-style key prefixes,

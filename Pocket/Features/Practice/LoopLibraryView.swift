@@ -16,9 +16,6 @@ import SwiftUI
 /// (ADR 0056), reusing the pure `PracticeLibrarySort`.
 struct LoopLibraryView: View {
     @Query private var allLoops: [Loop]
-    /// Routines are Pro (ADR 0144 D1); *Add to routine…* takes the editor's gate (ADR 0222).
-    @Environment(\.isPro) private var isPro
-    @Environment(\.presentPaywall) private var presentPaywall
     /// Sort key + direction, persisted across launches (ADR 0056).
     @AppStorage("loopLibrarySort") private var sortKey: LoopSortKey = .song
     @AppStorage("loopLibrarySortAscending") private var sortAscending = true
@@ -318,12 +315,8 @@ struct LoopLibraryView: View {
         }]
     }
 
-    /// Adding a block **is** editing a routine, so the row takes the editor's own gate and paywall
-    /// reason — a second door into the same act, not a way round its wall.
+    /// Open the add-to-routine sheet for a loop (ADR 0222).
     private func addToRoutine(_ request: AddToRoutineRequest) {
-        guard AccessPolicy.canAddRoutineUnits(isPro: isPro) else {
-            return presentPaywall(.routine(.edit))
-        }
         routineRequest = request
     }
 

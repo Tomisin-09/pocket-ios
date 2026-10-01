@@ -4,6 +4,10 @@
 - **Date:** 2026-08-12
 - **Amends:** ADR 0050 (Settings V1). The thin `Form` shell 0050 built is not replaced — it is
   *split along the seam 0050 anticipated*. Its scope discipline (D9) is reaffirmed unchanged.
+- **Amended by:** ADR 0237 (2026-10-01) — Red Moon is free, so D2's **Red Moon Pro** row goes, with its
+  screen (trial countdown, Manage, Upgrade, Restore). The group above PREFERENCES is now **You** alone
+  (0237 D7). The debug section loses its entitlement override. Every other destination, the grouping
+  rule and D3 stand.
 - **Relates to:** ADR 0114 (metronome timbres — D5/D6 restyle the picker) · ADR 0147 (analytics
   inform-and-object — D7 checks the hub against the objection mechanism the exception is conditional
   on) · ADR 0145 (Help & FAQs, the second door) · ADR 0096 (the Toolkit hub, the pattern this copies)

@@ -100,13 +100,6 @@ marker grammar in [README.md](README.md).
 | `songs/song-edit` | `screen` | `songs` | seeded library, song "Slow Bend", edit sheet open, scrolled to Collections |  |
 | `songs/song-map` | `screen` | `songs` | seeded song with sections, counted and named pieces, map open full screen |  |
 | `songs/song-tab` | `screen` | `songs` | seeded song with sections, counted and named pieces, map open full screen on Tab |  |
-| `subscription/paywall` | `panel` | `subscription` | an account without Pro, the paywall on screen | iPhone — cropped above the plan cards on purpose: an image carrying a price outlives
-       the sentence that would have carried it, and D6 keeps prices out of this manual |
-| `subscription/settings-pro` | `panel` | `subscription` | Settings ▸ Red Moon Pro, subscribed | iPhone — subscribed is an entitlement the shoot cannot grant, and the same sign-in
-       prompt as the trial row applies |
-| `subscription/trial-row` | `band` | `subscription` | an account inside a running trial, Home | iPhone — a running trial is an entitlement, and no launch argument fakes one. No
-       driven attempt should be made: `trialEndsAt` is written from a real StoreKit expiration and
-       from nowhere else, so a shoot can only produce the row's absence |
 | `terms/command-tempo-info` | `detail` | `terms` | seeded library, Slow Bend, loop "Verse riff" edit sheet, ⓘ tapped on Command tempo |  |
 | `terms/info-button` | `glyph` | `terms` | — |  |
 | `terms/mastery-info` | `detail` | `terms` | seeded library, Slow Bend, loop "Verse riff" edit sheet, ⓘ tapped on Mastery |  |
@@ -117,4 +110,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped, top of the sheet |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 
-97 shots across 19 pages.
+94 shots across 18 pages.

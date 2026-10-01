@@ -298,8 +298,8 @@ playing rather than about the drill, and it would arrive as somebody else's numb
 Your song links and your **Where you learned it** links stay with you too — those point at files and
 pages on your device.
 
-You do not need Pro to send one. Nothing is uploaded: the file is written on your device and handed
-to the share sheet, and where it goes after that is your choice alone.
+Nothing is uploaded: the file is written on your device and handed to the share sheet, and where it
+goes after that is your choice alone.
 
 ## Receiving one
 

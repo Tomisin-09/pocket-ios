@@ -1,6 +1,6 @@
 # Practice
 
-Reached from the `Practice` card on Home. Everything in this region is part of Red Moon Pro.
+Reached from the `Practice` card on Home.
 
 ## The hub
 
@@ -79,8 +79,7 @@ sessions.* Procedure is in [Today's session](../sessions.md).
 
 A list of routines, each row carrying its name and what it is made of — `4 blocks · 2 rests` — with a
 **play** control on the row itself and the routine's estimated length. A routine that estimates at
-nothing, and one a free player cannot run, carry no length. The toolbar carries `List options` then `New routine`, in that
-order.
+nothing carries no length. The toolbar carries `List options` then `New routine`, in that order.
 
 Once a routine has been run, a second line underneath carries how many times it has been practised
 and when it last was.

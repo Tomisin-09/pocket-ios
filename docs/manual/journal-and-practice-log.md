@@ -4,9 +4,6 @@ Practice disappears if you do not write it down. The **Journal** is where Red Mo
 wrote and what you recorded — one timeline across everything you play, in the order it happened.
 The **Practice log** is the same history counted up: minutes, days, and the things you have made.
 
-Both are **free forever**. Notes and takes are yours whatever happens to a subscription, which is
-why they are the one part of the app that is never behind a lock.
-
 Reach the journal from **Journal** on Home. The practice log is on Home too — tap the **This week**
 strip, the three numbers under your last session.
 
@@ -382,5 +379,4 @@ week-on-week comparison. All of those turn a record into a debt, and this screen
 
 - [The click on its own](metronome.md), which can be journalled too
 - [Running a drill, where most notes get written](exercises.md)
-- [What is free and what is Pro](subscription.md)
 - [Where your data lives](privacy.md)

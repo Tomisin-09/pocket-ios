@@ -14,12 +14,6 @@ import SwiftUI
 /// than in the library's hold menu. That menu is where the bulk verbs live (details, duplicate,
 /// favourite, delete), and a share buried among them is a share nobody finds at the moment they want
 /// it.
-///
-/// **Sending is not gated** (ADR 0209 D3). Every other exercise verb in this app asks
-/// `AccessPolicy.canAuthor` first; this one deliberately does not. A free player can run
-/// free-template drills, and handing one to a friend authors nothing here, costs nothing, and is
-/// `docs/positioning.md` §1's multiplier working in the app's favour. The gate belongs on the
-/// receiving side, where a drill is actually minted.
 extension ExerciseDetailSheet {
 
     /// The share control.

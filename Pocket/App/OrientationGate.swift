@@ -194,7 +194,7 @@ extension View {
 ///
 /// So the rule the `Sendable` family of traps actually teaches is narrower than "make it
 /// nonisolated": keep non-`Sendable` OS types out of an actor region **when you own the call**
-/// (`TrialReminder.usesSystemNotifications`, `NotificationAuthorization`), and use
+/// (`PracticeReminder.usesSystemNotifications`, `NotificationAuthorization`), and use
 /// `@preconcurrency` when the OS owns it and hands you the values.
 extension AppDelegate: @preconcurrency UNUserNotificationCenterDelegate {
 

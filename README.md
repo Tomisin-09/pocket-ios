@@ -77,15 +77,8 @@ generated, not hand-cropped — after a new logo revision:
 ```sh
 scripts/derive-brand-svgs.py                     # light + dark → the asset catalog
 scripts/derive-brand-svgs.py --app-icon          # …and re-render the 1024² App Icon
-scripts/derive-brand-svgs.py --pro-wordmark      # …and re-crop the paywall's "Red Moon PRO"
 scripts/derive-brand-svgs.py --out /tmp/preview  # preview crops, catalog untouched
 ```
-
-The **Pro wordmark** is the exception to "one lockup, three crops": it arrives as
-a pair of transparent PNG exports rather than a lockup SVG, so there are no path
-ids to crop by and it is cropped by its **alpha channel** instead — tight to the
-ink, then area-resampled down. Point `--pro-source` at the folder holding the
-pair (default `~/Documents`).
 
 Point `--source` at the revision's folder if it moves. The App Icon is the same
 mark composited on an opaque near-black square and rasterised via QuickLook — it
@@ -121,7 +114,7 @@ Pocket/
   Core/        Audio (engine + pure tempo math) · Models · Services · Export and restore (ADRs 0181, 0188) · Storage · Diagnostics (MetricKit, ADR 0183) · Oracle (ADR 0187)
   UI/          Shared components, design tokens
   Resources/   Info.plist, PrivacyInfo.xcprivacy
-Configuration/    Per-config .xcconfig (the backend base URL) + RedMoonPro.storekit
+Configuration/    Per-config .xcconfig (the backend base URL)
 PocketTests/      Unit tests (pure logic)
 PocketUITests/    XCUITest flows
 PocketShootUITests/  The user manual's screenshot run — not tests (ADR 0165)

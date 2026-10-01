@@ -8,10 +8,6 @@ import UniformTypeIdentifiers
 /// than owning one, so its toolbar and row pushes land in the home's navigation.
 struct LibraryView: View {
     @Environment(\.modelContext) var context
-    /// Entitlement + the shared paywall (ADR 0112) — the collection-session banner builds a routine,
-    /// which is Pro.
-    @Environment(\.isPro) private var isPro
-    @Environment(\.presentPaywall) private var presentPaywall
     /// Deferred, undoable row deletion (Slice 3). **Owned here, not by the modifier**: this view
     /// reads `isPending` itself to hide a song while its Undo window is open, and a modifier applied
     /// inside `body` can only publish to its descendants.
@@ -151,14 +147,9 @@ struct LibraryView: View {
         if selectedCollections.count == 1, let collection = selectedCollections.first,
            CollectionSessionBuilder.canBuild(for: collection, in: presentSongs) {
             Button {
-                // A generated collection session is a real `Routine` — authoring, so Pro (ADR 0112).
-                guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
-                    return presentPaywall(.routine(.generate))
-                }
                 sessionCollection = collection
             } label: {
-                Label("Build a session from “\(collection)”",
-                      systemImage: isPro ? "wand.and.stars" : "lock.fill")
+                Label("Build a session from “\(collection)”", systemImage: "wand.and.stars")
                     .font(.futura(.subheadline, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 10)

@@ -18,9 +18,8 @@ enum PracticePresets {
     struct Spec {
         let name: String
         /// Stable provenance identifier stamped onto the seeded `Exercise.presetSlug` (ADR 0112). A
-        /// **frozen** kebab-case id — the one-time backfill keys off it, and it is what
-        /// `AccessPolicy.freeTasteSlugs` would match on if a free line ever returns (ADR 0144 D3), so
-        /// it must never change even if `name` is reworded.
+        /// **frozen** kebab-case id — the one-time backfill keys off it, so it must never change even
+        /// if `name` is reworded.
         let slug: String
         let command: Int
         /// The drill's own rhythm — notes per beat — for a preset whose **content** declares none
@@ -253,25 +252,23 @@ enum PracticePresets {
 
     /// The exercises a **fresh install** seeds — deliberately six, not the whole catalog.
     ///
-    /// Chosen as the *union* of two sets that only half overlap: the four **free-taste** slugs a free
-    /// player may run forever (ADR 0112), and the four exercises **`RoutinePresets`' Morning Routine
-    /// strings together**. Routine blocks resolve *by name at seed time*, so seeding only the free
-    /// taste would have shipped the demo routine with two blocks silently missing. The union is the
-    /// smallest set where both stay whole — and, happily, every one of the six is runnable by a free
-    /// player (two free-tier warm-ups plus the four freebies), so a new install has nothing locked in
-    /// it and nothing broken.
+    /// Chosen in ADR 0112 as the *union* of two sets that only half overlap: the four drills that were
+    /// then a permanent free taste, and the four exercises **`RoutinePresets`' Morning Routine strings
+    /// together**. Routine blocks resolve *by name at seed time*, so seeding only the first set would
+    /// have shipped the demo routine with two blocks silently missing; the union is the smallest set
+    /// where both stay whole. The free taste is gone (ADR 0237); the set is unchanged, as onboarding.
     ///
     /// The **rest of the catalog is retired from seeding, not deleted**: `allSpecs` still lists every
     /// shipped spec, because it's the table the provenance backfill matches an older install's
     /// exercises against. An existing player keeps everything they were seeded — the batch flags below
     /// are already set on their device, so none of this re-runs and nothing is removed.
     static let firstRunSlugs: [String] = [
-        "spider-walk",          // .warmup — free tier
-        "chromatic-warmup",     // .warmup — free tier
-        "alternate-picking",    // .picking — free taste
-        "a-minor-pentatonic",   // .scales  — free taste
-        "pop-changes",          // .chords  — free taste
-        "legato"                // .legato  — free taste
+        "spider-walk",          // .warmup  — in Morning Routine
+        "chromatic-warmup",     // .warmup  — in Morning Routine
+        "alternate-picking",    // .picking — in Morning Routine
+        "a-minor-pentatonic",   // .scales  — in Morning Routine
+        "pop-changes",          // .chords
+        "legato"                // .legato
     ]
 
     /// The first-run specs, resolved from `allSpecs` in `firstRunSlugs` order (which is also seed
@@ -316,7 +313,7 @@ enum PracticePresets {
     /// on an earlier build, before the slug field existed. Fetch **all** exercises (never an optional
     /// `#Predicate` — `presetSlug != nil` starves the main thread) and, for any with no slug yet,
     /// stamp the shipped spec whose name + template match. A renamed preset won't match and stays
-    /// user-authored — acceptable, since players who had the app before the paywall are grandfathered.
+    /// user-authored, which costs it nothing but the provenance marker.
     /// Guarded so it runs at most once; safe to call on every launch after `seedIfNeeded`.
     static func backfillPresetSlugsIfNeeded(into context: ModelContext,
                                             defaults: UserDefaults = .standard) {

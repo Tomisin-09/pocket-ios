@@ -238,9 +238,6 @@ final class PracticePresetsTests: XCTestCase {
         }
     }
 
-    // The `AccessPolicy.freeTasteSlugs` ↔ `PracticePresets` contract moved to `AccessPolicyTests`
-    // when ADR 0144 emptied the allowlist — it is now a guard on the *seam*, not on the presets.
-
     // MARK: - Provenance matcher + backfill
 
     func testSlugMatcherFindsAPresetByNameAndTemplate() {
@@ -315,26 +312,12 @@ final class PracticePresetsTests: XCTestCase {
 
     // MARK: - The first-run set (ADR 0112)
 
-    /// A fresh install seeds exactly six drills — the union of the free-taste freebies and the
-    /// exercises Morning Routine needs. Pinned so trimming or extending it is a deliberate act.
+    /// A fresh install seeds exactly six drills, Morning Routine's four among them. Pinned so trimming
+    /// or extending it is a deliberate act.
     func testFirstRunSeedsExactlySixExercises() {
         // Equal counts also prove no slug was silently dropped by failing to match a shipped spec.
         XCTAssertEqual(PracticePresets.firstRunSpecs.count, 6)
         XCTAssertEqual(PracticePresets.firstRunSlugs.count, 6)
-    }
-
-    /// **Inverted by ADR 0144.** The first-run library used to be the thing a free player could run
-    /// forever; it is now **trial content** (D8) — the reason a trial is worth starting rather than a
-    /// tour of an empty app. So every seeded drill needs Pro, and every one of them unlocks with it.
-    func testFirstRunExercisesAreTrialContentNotAFreeTaste() {
-        for spec in PracticePresets.firstRunSpecs {
-            XCTAssertFalse(
-                AccessPolicy.canRun(spec.template, isPro: false,
-                                    isFreeTastePreset: AccessPolicy.isFreeTaste(slug: spec.slug)),
-                "\(spec.name) ships on a fresh install but must not run without Pro")
-            XCTAssertTrue(AccessPolicy.canRun(spec.template, isPro: true),
-                          "\(spec.name) must run for a subscriber")
-        }
     }
 
     /// The retired catalog stays in `allSpecs` — it's the table the provenance backfill matches an

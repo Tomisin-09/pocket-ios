@@ -20,8 +20,7 @@ import SwiftUI
 ///
 /// **Its own view, with its own queries.** `HomeView` is close to SwiftLint's 400-line cap and holds
 /// six `@Query`s already; two more for a strip it does not otherwise touch would be paid on every
-/// Home redraw whether or not anything has been practised. Precedent: `TrialCountdownRow`, which
-/// draws nothing until it has something to say.
+/// Home redraw whether or not anything has been practised.
 ///
 /// **Three effort facts, never a grade (ADR 0070).** Minutes, days and notes are all things that
 /// happened. `PracticeStatsCard`'s *Mastered* tile — a count of self-ratings at 5 — is the one this

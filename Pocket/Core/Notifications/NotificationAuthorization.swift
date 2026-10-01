@@ -3,7 +3,7 @@ import UserNotifications
 /// **The only place the app reads or asks for notification permission** (ADR 0186 D5).
 ///
 /// Every member is `nonisolated static` and reaches for `UNUserNotificationCenter.current()` at the
-/// point of use rather than storing it. That is not style — it is the trap `TrialReminder`'s
+/// point of use rather than storing it. That is not style — it is the trap `PracticeReminder`'s
 /// `usesSystemNotifications` documents: the centre is not `Sendable` in the SDK CI builds against
 /// (Xcode 16) though it is in a newer one, so holding it as a property of a `@MainActor` type puts
 /// it in that actor's isolation region and passing it into an async context **compiles clean locally

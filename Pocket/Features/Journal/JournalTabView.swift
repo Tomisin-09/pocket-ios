@@ -86,10 +86,6 @@ struct JournalTabView: View {
     /// model presentation here. Not `private`: the row that sets it lives in
     /// `JournalTabView+List.swift`, and `private` is file-scoped.
     @State var openedTake: StableRef<Recording>?
-    /// Red Moon Pro entitlement + the shared paywall (ADR 0112) — the caption link honours the same
-    /// run gate the exercise library's rows do, so a note is never a way past it.
-    @Environment(\.isPro) private var isPro
-    @Environment(\.presentPaywall) private var presentPaywall
     /// For this space's write verbs — deleting any entry, and naming a take (ADR 0100 amendment).
     @Environment(\.modelContext) var modelContext
     /// Deferred, undoable deletion — screen-owned, like every library list's. Deferral is what makes
@@ -226,9 +222,7 @@ struct JournalTabView: View {
         .onDisappear { player.stop() }
     }
 
-    /// Follow an item's owner caption (ADR 0142). A locked Pro drill opens the paywall instead of its
-    /// run screen — the same `canRun` gate `ExerciseLibraryView`'s rows apply, since a player who
-    /// wrote notes while subscribed keeps the notes when the subscription lapses.
+    /// Follow an item's owner caption (ADR 0142).
     private func openOwner(of item: JournalTimeline.Item) {
         guard let route = JournalOwnerRoute.route(for: item, routines: routines) else { return }
         open(route)
@@ -244,32 +238,15 @@ struct JournalTabView: View {
 
     /// The tap action for one of a session entry's practised-unit pills (ADR 0143), or `nil` when the
     /// unit was deleted since the session — the pill then renders dimmed rather than as a promise the
-    /// tap can't keep. Applies the **same paywall gate** as the owner caption: notes written while
-    /// subscribed survive a lapse, and must not become a way around it (ADR 0142 J5c).
+    /// tap can't keep.
     func openAction(for ref: SessionUnitRef) -> (() -> Void)? {
         guard let route = JournalOwnerRoute.route(for: ref, exercises: exercises, loops: loops)
         else { return nil }
         return { open(route) }
     }
 
-    /// Follow a resolved route, honouring the Pro gate. A note written while subscribed survives a
-    /// lapse — but following it must not become a way around the gate (ADR 0142 J5c), so each kind is
-    /// checked against the same policy its own library applies: `canRun` for an exercise, and
-    /// `canEditRoutine` for a routine, since the editor is where a session caption lands.
+    /// Follow a resolved route.
     private func open(_ route: JournalOwnerRoute) {
-        switch route {
-        case .exercise(let exercise):
-            guard AccessPolicy.canRun(exercise.template, isPro: isPro,
-                                      isFreeTastePreset: AccessPolicy.isFreeTaste(slug: exercise.presetSlug))
-            else { return presentPaywall(.proExercise) }
-        case .routine(let routine):
-            guard AccessPolicy.canEditRoutine(
-                isPro: isPro,
-                isFreeTasteRoutine: AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug))
-            else { return presentPaywall(.routine(.edit)) }
-        case .loop, .naming:
-            break
-        }
         openingOwner = route
     }
 

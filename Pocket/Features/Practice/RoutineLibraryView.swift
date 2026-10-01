@@ -22,10 +22,6 @@ struct RoutineLibraryView: View {
     /// reads `isPending` itself so `ordered` can hide a row while its Undo window is open, and a
     /// modifier applied inside `body` can only publish to its descendants.
     @State private var rowDeletion = RowDeletionCoordinator()
-    /// Entitlement + the shared paywall (ADR 0112). **Routines are Pro**, apart from the one curated
-    /// free-taste routine a free player may run (but not edit).
-    @Environment(\.isPro) var isPro
-    @Environment(\.presentPaywall) var presentPaywall
     /// The app's one receiving door (ADR 0188 S2) — this screen picks a file and hands it over;
     /// the host at the app root decodes it, previews it and writes it. See
     /// `RoutineLibraryView+Receive.swift`.
@@ -177,17 +173,16 @@ struct RoutineLibraryView: View {
                     prompt: "Routines")
         // Leading is the back button alone. The session generator moves off the bar and into the
         // shared options menu — as a *labelled* row rather than a bare wand, which also gives its
-        // disabled and locked states somewhere to read (`LibraryOptionsMenu`). The sort pickers
+        // disabled state somewhere to read (`LibraryOptionsMenu`). The sort pickers
         // join it (ADR 0178), which is what made this the last library with a fixed order.
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 LibraryOptionsMenu(favoritesOnly: $favoritesOnly,
                                    showsFavoritesFilter: !presentRoutines.isEmpty, actions: {
                     Button(action: generateQuickSession) {
-                        Label("Generate a quick session",
-                              systemImage: isPro ? "wand.and.stars" : "lock.fill")
+                        Label("Generate a quick session", systemImage: "wand.and.stars")
                     }
-                    .disabled(isPro && !exercises.contains { $0.template != .warmup })
+                    .disabled(!exercises.contains { $0.template != .warmup })
                     newFolderButton
                     receiveRoutineButton
                 }, sortControls: {
@@ -196,17 +191,13 @@ struct RoutineLibraryView: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    // Building a routine is authoring — Pro, with no free-tier escape (ADR 0112).
-                    guard AccessPolicy.canAuthorRoutine(isPro: isPro) else {
-                        return presentPaywall(.routine(.new))
-                    }
                     creatingNew = true
                     haptic(.light)
                 } label: {
-                    Image(systemName: isPro ? "plus" : "lock.fill")
+                    Image(systemName: "plus")
                 }
                 .tint(PocketColor.practice)
-                .accessibilityLabel(isPro ? "New routine" : "New routine — Red Moon Pro")
+                .accessibilityLabel("New routine")
             }
         }
         .navigationDestination(item: $editing) { routine in
@@ -234,25 +225,14 @@ struct RoutineLibraryView: View {
         }
     }
 
-    /// Run the session — gated on `canRunRoutine`, so the curated free-taste routine plays for a
-    /// free player (ADR 0112). Shared by the ▶ button and the row menu's Play.
+    /// Run the session. Shared by the ▶ button and the row menu's Play.
     func play(_ routine: Routine) {
-        let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
-        guard AccessPolicy.canRunRoutine(isPro: isPro, isFreeTasteRoutine: isDemo) else {
-            return presentPaywall(.routine(.play))
-        }
         playing = routine
         haptic(.light)
     }
 
-    /// Open the editor. The demo exception (ADR 0112): the curated free-taste routine opens for a
-    /// free player too — read-only, then rearrange-only under Edit. Adding stays Pro. Shared by the
-    /// row-body tap and the row menu's Edit.
+    /// Open the editor. Shared by the row-body tap and the row menu's Edit.
     func edit(_ routine: Routine) {
-        let isDemo = AccessPolicy.isFreeTasteRoutine(slug: routine.presetSlug)
-        guard AccessPolicy.canEditRoutine(isPro: isPro, isFreeTasteRoutine: isDemo) else {
-            return presentPaywall(.routine(.edit))
-        }
         editing = routine
         haptic(.light)
     }
@@ -262,7 +242,7 @@ struct RoutineLibraryView: View {
     }
 
     /// The routine's own long-press actions (Slice 3). Play and Edit mirror the row's two buttons
-    /// — the menu is a discoverable second route to the same gated calls, not a bypass.
+    /// — the menu is a discoverable second route to the same calls.
     private func menuItems(for routine: Routine) -> [PocketRowMenuItem] {
         [PocketRowMenuItem("Play", systemImage: "play.circle") { play(routine) },
          PocketRowMenuItem("Edit", systemImage: "pencil") { edit(routine) },
@@ -278,7 +258,7 @@ struct RoutineLibraryView: View {
     /// Deleting a routine cancels its reminders (ADR 0186 D3).
     ///
     /// **This is the half that is not sufficient**, and it is written knowing that. A cascade
-    /// delete, a Pro-lapse sweep or a future bulk action can remove a routine without ever routing
+    /// delete or a future bulk action can remove a routine without ever routing
     /// through this closure; the pending request would survive in the system and fire days later on
     /// a lock screen, naming something the app has already forgotten. The sweep that actually holds
     /// is `PracticeReminder.reconcile`, run at launch from `HomeView` against the system's own list
@@ -296,12 +276,8 @@ struct RoutineLibraryView: View {
 
     /// Fork a session into an editable copy — the point of it is variation ("Tuesday, but with the
     /// legato block"), which otherwise means rebuilding the whole block list by hand (Slice 3).
-    ///
-    /// Duplicating composes a routine, so it takes `canAuthorRoutine` — flat Pro, no demo exception
-    /// (ADR 0112): copying the free demo would otherwise mint an unlocked, editable routine. The
-    /// blocks reference the **same** units; only the session is forked.
+    /// The blocks reference the **same** units; only the session is forked.
     private func duplicate(_ routine: Routine) {
-        guard AccessPolicy.canAuthorRoutine(isPro: isPro) else { return presentPaywall(.routine(.duplicate)) }
         let name = CopyNaming.copyName(of: routine.name, existing: routines.map(\.name))
         let (copy, blocks) = routine.duplicated(named: name)
         context.insert(copy)
@@ -329,11 +305,7 @@ struct RoutineLibraryView: View {
     /// push it for **review** — the V2 planner's first surface (Slice 1). Nothing is persisted here:
     /// the blocks are pure, and the provisional detail screen only commits them to the library on an
     /// explicit Save or Start. The default name is dated and de-duplicated against the library.
-    ///
-    /// A **fifth** routine producer, and so gated like the rest (ADR 0112) — it materialises a real
-    /// `Routine`, which is authoring.
     private func generateQuickSession() {
-        guard AccessPolicy.canAuthorRoutine(isPro: isPro) else { return presentPaywall(.routine(.generate)) }
         let blocks = PracticePlanner.planQuickSession(length: .default, exercises: exercises)
         guard blocks.contains(where: { $0.unit != nil }) else { return }
         let name = QuickSessionNaming.defaultName(existing: routines.map(\.name), date: .now)

@@ -77,7 +77,7 @@ later does not silence it.
 **If you have nothing to hand**, tap **A song to start on** at the top of Home instead. That brings
 in *Binta* — eighty-one seconds, written and recorded by us — and opens it. It arrives the same way
 an imported song does, so everything on the rest of this page works on it, and the next two moves
-are the two to try first. You can loop it, slow it and save that loop without Red Moon Pro.
+are the two to try first.
 
 *Binta* also arrives knowing a little about itself: its tempo is set, so the metronome works and
 the bar lines are drawn, and two markers, *Chords start* and *Solo start*, sit either side of the

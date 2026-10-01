@@ -2,8 +2,7 @@ import Foundation
 
 /// A stringed instrument the tuner supports (ADR 0115). Guitar and bass ship in v1; **ukulele**
 /// (re-entrant `GCEA`, whose non-monotonic string order needs a small UI accommodation) and
-/// **custom** user-authored tunings are deferred (the latter is the one legitimate future Pro seam,
-/// ADR 0112). `String`-raw so it drops straight into `@AppStorage` for the Tune Settings sheet.
+/// **custom** user-authored tunings are deferred. `String`-raw so it drops straight into `@AppStorage` for the Tune Settings sheet.
 enum Instrument: String, CaseIterable, Identifiable {
     case guitar
     case bass

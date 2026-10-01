@@ -2,7 +2,7 @@
 
 _Last updated: 1 October 2026_
 
-Red Moon Practice ("the app") is a guitar-practice tool published by **Deco
+Red Moon Practice ("the app") is a free guitar and bass practice tool published by **Deco
 Operations Ltd** (registered in England and Wales, company number **17032490**;
 ICO registration **ZC112793**). This policy explains what the app does and does
 not do with your information. It is written to match what the app actually does —
@@ -14,12 +14,11 @@ Deco Operations company privacy policy at
 
 ## The short version
 
-**Your playing never leaves your device.** Red Moon Practice has no user
-accounts, no advertising and no third-party trackers, and it never transmits your
-audio, your recordings, your journal notes, your song names or your artist name.
-Everything you create stays on your device and, if you use iCloud, in your own
-private iCloud storage, unless you send a file of it yourself (see *Files you send
-yourself*, below).
+**Your playing never reaches us.** Red Moon Practice has no user accounts, no
+advertising and no third-party trackers, and it never sends us your audio, your
+recordings, your journal notes, your song names or your artist name. Everything you
+create stays on your device unless you send a file of it yourself (see *Files you
+send yourself*, below).
 
 There are two exceptions, and neither one carries anything you have played,
 recorded or written.
@@ -48,8 +47,10 @@ to the address you gave us, and you can ask us to delete it.
 
 - **Your practice content** — songs you add, loops, exercises, routines, and
   journal entries — is stored locally on your device using Apple's on-device
-  storage, and synced only through your own iCloud account if iCloud is enabled.
-  We never see it.
+  storage. The app has no cross-device sync, so it is not copied to any server of
+  ours or to iCloud, and we never see it. If sync is added in a future version it
+  will use your own private iCloud storage, and this policy will be updated before
+  it ships.
 - **Your audio files** — the app practises against audio files you choose from
   your device or iCloud Drive. The app reads these files to display waveforms and
   play them back for looping. The app does not upload or share them; one leaves your
@@ -66,22 +67,22 @@ to the address you gave us, and you can ask us to delete it.
 
 You can take things out of the app as files: a backup of everything (Settings ▸
 Your data ▸ Export), a single recording, a song's audio, a song with its loops and
-markers for someone else's copy of Red Moon, a routine with the songs it plays, or a
-tab as text or a PDF. Each file is
-made on your device and handed to the system share sheet, and you choose where it
-goes: AirDrop, Messages, Mail, Files or another app. The app does not upload it, we
-keep no copy of it, and the app never learns where it went.
+markers for someone else's copy of Red Moon, an exercise, a routine with the songs it
+plays, or a tab as text or a PDF. Each file is made on your device and handed to the
+system share sheet, and you choose where it goes: AirDrop, Messages, Mail, Files or
+another app. The app does not upload it, we keep no copy of it, and the app never
+learns where it went.
 
-**A song or routine you send carries your artist name**, if you have set one, so the
-person who opens it knows who it is from. The send screen shows the name before
-anything is sent. Nothing else from your profile goes with it, and with no artist name set,
-no name is sent.
+**A song you send, or a routine that plays songs, carries your artist name**, if you
+have set one, so the person who opens it knows who it is from. The send screen shows
+the name before anything is sent. Nothing else from your profile goes with it, and
+with no artist name set, no name is sent.
 
 ## Anonymous usage counts
 
 The app sends a small, fixed set of counts about **which features get used**: that
 a practice run started, that a loop was made, that an exercise was created from a
-particular template, that a Red Moon Pro prompt was shown. That list is fixed in
+particular template. That list is fixed in
 the app's code and cannot be extended without a new release.
 
 **Whether this starts on or off depends on where you are, because the law
@@ -200,6 +201,14 @@ The app uses certain system capabilities purely on-device — for example, readi
 the system clock to keep the metronome and practice timers accurate. This
 information never leaves your device and is not stored between launches.
 
+## Purchases
+
+Red Moon Practice is free. There is no subscription and nothing to buy in the app,
+so it handles no payment details. If you subscribed before it went free, Apple was
+the merchant: your payment method, billing address and purchase history are held by
+Apple under [Apple's privacy policy](https://www.apple.com/legal/privacy/), and we
+never saw or stored them.
+
 ## Your rights
 
 Under the UK GDPR and the Data Protection Act 2018 you have rights over any
@@ -208,8 +217,8 @@ erase, restrict, or object to its processing, to data portability, and to lodge 
 complaint with the Information Commissioner's Office (ICO).
 
 Red Moon Practice holds no personal data about you on our systems. Everything you
-create lives on your own device and in your own iCloud account, under your
-control, and is removed when you delete it or remove the app. The optional usage
+create lives on your own device, under your control, and is removed when you
+delete it or remove the app. The optional usage
 counts described above are irreversibly anonymous and carry no identifier, so
 there is no record tied to you for us to find — meaning a request to access,
 correct or erase your data has nothing to act on. That is a consequence of how the

@@ -27,10 +27,8 @@ extension SongMapView {
 
     // MARK: - Picking
 
-    /// *Put it together…* from a piece's hold menu: picking starts, with that piece picked. Behind Routines'
-    /// own gate (ADR 0144), the one *Build a routine for this song* uses.
+    /// *Put it together…* from a piece's hold menu: picking starts, with that piece picked.
     func startTogether(_ uid: UUID) {
-        guard AccessPolicy.canAuthorRoutine(isPro: isPro) else { return presentPaywall(.routine(.generate)) }
         made = nil
         withAnimation(.easeOut(duration: 0.2)) { selection = [uid] }
     }

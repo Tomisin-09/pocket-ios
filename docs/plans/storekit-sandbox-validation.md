@@ -1,5 +1,10 @@
 # StoreKit sandbox validation — the purchase path (ADR 0112)
 
+> **OBSOLETE — ADR 0237 (2026-10-01).** Red Moon is free and no longer links StoreKit. The
+> purchase path this plan validated was deleted with the paywall, and nobody ever subscribed. Kept
+> as the record of what the sandbox pass found; nothing below is owed. If the Oracle is ever priced,
+> its StoreKit work starts fresh (0237 D3), and this file is where to look for the traps.
+
 **Status:** ✅ **sandbox validation COMPLETE 2026-08-07** — accounts A and B both passed, restore
 passed, two bugs found and fixed (both shipped in #226). What remains is not sandbox work: the
 `.storekit` sync loose end, and the submission items at the bottom. **This was the last open item in

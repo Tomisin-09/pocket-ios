@@ -26,8 +26,7 @@ enum RoutinePresets {
     struct Spec {
         let name: String
         /// Stable provenance identifier stamped onto the seeded `Routine.presetSlug` (ADR 0112). The
-        /// free-taste run allowance and the one-time backfill both key off it, so it must never
-        /// change even if `name` is reworded.
+        /// one-time backfill keys off it, so it must never change even if `name` is reworded.
         let slug: String
         /// What the session is for, seeded onto `Routine.notes` (ADR 0177). The starter routine is
         /// the demo shown whole, so it demonstrates this field by *having* one rather than by
@@ -50,11 +49,10 @@ enum RoutinePresets {
 
     /// The shipped set — **one** routine, seeded on a fresh install.
     ///
-    /// **Morning Routine is the free taste** (ADR 0112): every one of its blocks is either a
-    /// free-tier template (`.warmup`) or a free-taste exercise slug (`alternate-picking`,
-    /// `a-minor-pentatonic`), so a free player running it reaches no Pro content — the routine is
-    /// clean *by construction*, and must stay that way. It closes on the pentatonic box so the free
-    /// taste covers **lead** playing too, not only warm-ups and picking.
+    /// **Morning Routine** strings together four of the six first-run drills
+    /// (`PracticePresets.firstRunSlugs`), which resolve by name at seed time, so it always arrives
+    /// whole. It closes on the pentatonic box so it covers **lead** playing too, not only warm-ups and
+    /// picking. It was also the free taste while Red Moon had a paywall (ADR 0112; gone since 0237).
     ///
     /// It ships alone because it is the *demo*: one routine, shown whole, rather than a library to
     /// wade through. The retired Picking Builder and Rhythm & Changes recipes leaned on drills a new
@@ -63,7 +61,7 @@ enum RoutinePresets {
     /// player keeps the ones they were already given: the seed flag on their device is set, so none
     /// of this re-runs and nothing is removed.
     static let specs: [Spec] = [
-        Spec(name: "Morning Routine", slug: freeTasteSlug,
+        Spec(name: "Morning Routine", slug: starterSlug,
              notes: "Get the hands working before anything else: two warm-ups, then picking, then "
                   + "a scale to play with. Take the rests — they're part of it.",
              blocks: [.exercise(spiderWalk), .exercise(chromaticWarmup),
@@ -71,12 +69,9 @@ enum RoutinePresets {
                       .rest, .exercise(aMinorPentatonic)])
     ]
 
-    /// The slug of the seeded starter routine. It was the one routine a free player could **run**
-    /// forever under ADR 0112; since ADR 0144 it is ordinary trial content, and
-    /// `AccessPolicy.freeTasteRoutineSlugs` is empty. The name is kept (rather than renamed to
-    /// `starterSlug`) because the *value* is a frozen provenance identifier and the constant is what a
-    /// returning free line would put back into that allowlist.
-    static let freeTasteSlug = "morning-warm-up"
+    /// The slug of the seeded starter routine, Morning Routine. A **frozen** provenance identifier:
+    /// the value predates the routine's rename from Morning Warm-up and never follows a rename.
+    static let starterSlug = "morning-warm-up"
 
     /// Build one preset routine (un-inserted) from a name→exercise lookup, resolving each exercise
     /// block by name. Unresolved exercise blocks are skipped; a routine that resolves **no** exercise
@@ -105,13 +100,13 @@ enum RoutinePresets {
 
     /// Names a shipped routine used to carry, mapped to its (unchanged) slug — the backfill's memory.
     ///
-    /// Renaming a spec would otherwise **Pro-lock the demo on every existing install**: the backfill
+    /// Renaming a spec would otherwise **strand the demo on every existing install**: the backfill
     /// matches by name, so an install seeded as "Morning Warm-up" would stop matching the moment the
-    /// spec became "Morning Routine", never get stamped, and fail `isFreeTasteRoutine`. The slug is
+    /// spec became "Morning Routine", never get stamped, and keep its old name. The slug is
     /// frozen precisely so a rename is cosmetic; this table is what makes that true for rows seeded
     /// before the rename. Any future rename must add its old name here.
     static let legacyNameSlugs: [String: String] = [
-        "Morning Warm-up": freeTasteSlug     // renamed to "Morning Routine", 2026-07-28
+        "Morning Warm-up": starterSlug     // renamed to "Morning Routine", 2026-07-28
     ]
 
     /// Pure lookup: the stable `slug` of the shipped spec whose `name` exactly matches — falling back
@@ -127,8 +122,8 @@ enum RoutinePresets {
     static let presetSlugBackfillKey = "routinePresetSlugBackfill.v1"
 
     /// **One-time provenance backfill** (ADR 0112): stamp `presetSlug` onto curated routines seeded on
-    /// an earlier build, before the slug field existed — without it, a player who already had the app
-    /// would find their Morning Warm-up Pro-locked, since the free-taste allowance keys off the slug.
+    /// an earlier build, before the slug field existed, so the starter routine carries the same
+    /// provenance on every install.
     /// Fetches **all** routines (never an optional `#Predicate` — `presetSlug != nil` starves the main
     /// thread) and stamps any unslugged one whose name matches a shipped spec. Guarded so it runs at
     /// most once; safe to call on every launch after `seedIfNeeded`.
