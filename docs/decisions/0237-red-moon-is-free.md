@@ -137,7 +137,10 @@ continuous with it.
   routines all open, the cards show their chevrons, and "Draw your own" is always enabled. There is
   no launch wall, so nothing competes with the first-run intake (0113) for the first screen.
 - **The copy describes things, not tiers.** "Free forever" was a contrast with Pro. Where the manual,
-  the App Store listing or the site said it, the thing is now described for what it is.
+  the App Store listing or the site said it, the thing is now described for what it is. In the app
+  that reached one control: the Toolkit's Tuner row said **Free** at its end, which was the app
+  stating a tier, and now states the tuner's instrument. Help & FAQs loses its *Red Moon Pro*
+  section and both its questions.
 - **The manual loses a chapter.** `docs/manual/subscription.md` and its figure go, and every link to
   them.
 - **Reversibility.** Putting a price on something that exists is closed by D3. Putting a price on

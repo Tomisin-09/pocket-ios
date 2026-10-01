@@ -24,6 +24,9 @@ struct ToolkitView: View {
     @Query private var savedProgressions: [SavedProgression]
     /// And for My tabs (ADR 0235).
     @Query private var writtenTabs: [WrittenTab]
+    /// The tuner's instrument, which is what its row states. Bound to `Instrument.default`, never a
+    /// literal, so an unset key reads the same here as on the tuner itself.
+    @AppStorage(AppSettings.Key.tunerInstrument) private var tunerInstrumentRaw = Instrument.default.rawValue
 
     var body: some View {
         ScrollView {
@@ -58,7 +61,8 @@ struct ToolkitView: View {
         case .myChords: savedCountLabel(savedChords.count)
         case .myProgressions: savedCountLabel(savedProgressions.count)
         case .myTabs: savedCountLabel(writtenTabs.count)
-        case .tuner: "Free"
+        // Said "Free" until ADR 0237, which was the app stating a tier; the tuner states its own.
+        case .tuner: AppSettings.resolvedInstrument(storedValue: tunerInstrumentRaw).displayName
         case .glossary: "\(GlossaryTerm.all.count)"
         case .help: "\(FAQEntry.all.count)"
         }

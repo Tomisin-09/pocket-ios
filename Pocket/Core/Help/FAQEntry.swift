@@ -8,9 +8,8 @@ import Foundation
 /// unit-tested. Answers describe **what the app does** — they never coach, grade or score the player
 /// (ADR 0070), and every word is ours (the content-strategy rule in `docs/backlog.md`).
 ///
-/// **No price and no trial length may appear in an answer** (ADR 0145 D6, inheriting ADR 0144's rule
-/// that the trial is read from StoreKit and never hardcoded). Pricing answers point at the paywall and
-/// Settings ▸ Red Moon Pro instead. `FAQEntryTests` pins this.
+/// **No price and no trial length may appear in an answer** (ADR 0145 D6). Red Moon has neither since
+/// ADR 0237, so an answer naming one is simply wrong. `FAQEntryTests` pins this.
 struct FAQEntry: Identifiable, Equatable {
     /// The area an entry belongs to — drives the grouped sections in `FAQView`. Declaration order is
     /// the display order, and it is deliberately the order a new player meets the app in.
@@ -18,7 +17,6 @@ struct FAQEntry: Identifiable, Equatable {
         case gettingStarted = "Getting started"
         case audio = "Audio & files"
         case concepts = "How practice works"
-        case pro = "Red Moon Pro"
         case privacy = "Your data"
 
         var id: String { rawValue }
@@ -192,24 +190,6 @@ extension FAQEntry {
                 + "minutes shown are an estimate derived from the blocks; edit a session and the "
                 + "estimate follows.",
               area: .concepts),
-
-        // MARK: Red Moon Pro
-        .init(question: "What's free and what's Pro?",
-              answer: "Free forever: the Toolkit — tuner, your saved chords, the glossary and this "
-                + "help — the standalone metronome, and the Journal, because what you wrote and what "
-                + "you recorded stays yours whatever happens to a subscription. Red Moon Pro: "
-                + "practising songs and loops, your library, and building your own exercises and "
-                + "routines. Pro starts with a free trial, and the paywall states the current price "
-                + "and how long that trial runs.",
-              area: .pro),
-        .init(question: "How do I start, restore or cancel a subscription?",
-              answer: "Settings ▸ Red Moon Pro does all three. Restore Purchases brings back a "
-                + "subscription you already own — after reinstalling, or on another device signed in "
-                + "to the same Apple Account. Manage Subscription opens Apple's own screen, which is "
-                + "where cancelling happens; Red Moon never handles the billing itself. If you asked "
-                + "to be reminded before a trial converts, that reminder is a notification from this "
-                + "app, so it needs notifications allowed.",
-              area: .pro),
 
         // MARK: Your data
         .init(question: "Where is my practice data stored?",

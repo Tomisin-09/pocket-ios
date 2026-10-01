@@ -65,18 +65,18 @@ final class FAQEntryTests: XCTestCase {
         XCTAssertTrue(FAQEntry.matching("zzzznotathing").isEmpty)
     }
 
-    // MARK: - D6: no price, no trial length (ADR 0145 D6, inheriting ADR 0144)
+    // MARK: - D6: no price, no trial length (ADR 0145 D6)
 
     func testNoAnswerHardcodesAPriceOrTrialLength() {
-        // The live price and trial length come from StoreKit and App Store Connect; help copy that
-        // names either goes stale silently and ships a promise the paywall doesn't make.
+        // Red Moon is free (ADR 0237): there is no price and no trial, so help copy that names either
+        // is wrong. Kept as a check because a price is the kind of sentence that creeps back in.
         let forbidden = try? NSRegularExpression(pattern: "\\d+[- ]day|£|\\$|€")
         XCTAssertNotNil(forbidden)
         for entry in FAQEntry.all {
             let range = NSRange(entry.answer.startIndex..., in: entry.answer)
             let hit = forbidden?.firstMatch(in: entry.answer, range: range)
             XCTAssertNil(hit, "“\(entry.question)” names a price or trial length — ADR 0145 D6 "
-                         + "forbids it. Point at the paywall or Settings ▸ Red Moon Pro instead.")
+                         + "forbids it, and Red Moon has neither (ADR 0237).")
         }
     }
 
