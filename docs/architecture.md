@@ -2271,6 +2271,24 @@ true (ADR 0150 §118-121).
     title comes from `SongCopyName` (pure, D5): the title as sent, or `<title> - <sender> copy` when
     the library has that title (trimmed, ignoring case), numbered after that. The match is on the
     title because `sourceID` is minted per import and can't match across phones.
+  A routine sent **with its songs** (S5, D6) is the same pack with a `routine` payload. `SendRoutineSheet`
+  opens in front of the share sheet only when a block plays a song or a loop, and its *Include the
+  songs* switch decides between a pack and the plain `.redmoonpractice`.
+  - **Sending.** `SharedPracticeBuilder.songsPlayed(by:)` lists the songs the blocks reach, each once, in
+    sitting order; the ones with a kept copy (`Song.exportedAudioFile`) travel. A block whose song
+    travels keeps its `loopUID` or `songSourceID`, a join key inside this payload as `exerciseUID`
+    always was; a block whose song doesn't is stripped and gets a `SharedBlockPlaceholder`, exactly as
+    before 0236. With the switch off the file is byte-for-byte the old shape plus `senderName`; a
+    routine with no song blocks goes straight to the share sheet and carries no name, since no screen
+    showed one (D7).
+  - **Receiving.** A bare `.redmoonpractice` that names songs is refused (`incomplete(.song)`): a
+    sender only writes songs into a pack. From a pack, each `SongRecord` becomes a `ReceivedSong` with
+    its unpacked audio. The host prepares every song off the main actor and lands **all or nothing**,
+    removing the copies already made if one fails. `ReceivedSongBuilder.landing` returns each new loop
+    by the uid the file gave it (`LandedSong`), and `ReceivedRoutineBuilder.materialize(_:songs:)`
+    binds a block to the first unit its ids reach among the drills and songs **in that file**, never
+    the receiver's library. `HydratedRoutine.insert` writes songs first. `SongCopyName.titles` names
+    several songs against the library and each other, so two songs sent under one title land as two.
 
 ## Storage (Core/Storage, ADR 0182)
 

@@ -151,8 +151,8 @@ final class ExportUITests: UITestCase {
 
         let send = app.buttons["Send this song…"]
         XCTAssertTrue(reveal(send, in: app), "Song details › Audio has no Send this song…")
-        send.tap()
-        XCTAssertTrue(app.navigationBars["Send this song"].waitForExistence(timeout: Self.uiTimeout),
+        // Tapped until it takes: a tap on a row in this sheet is now and then dropped, settled or not.
+        XCTAssertTrue(tap(send, until: app.navigationBars["Send this song"], in: app),
                       "the send screen didn't open")
         let sendNow = app.navigationBars["Send this song"].buttons["Send…"]
         XCTAssertTrue(sendNow.waitForExistence(timeout: Self.uiTimeout), "the send screen has no Send…")
@@ -180,7 +180,13 @@ final class ExportUITests: UITestCase {
                       "the song never landed")
         let said = added.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "“Pack test")).firstMatch
         XCTAssertTrue(said.exists, "the confirmation doesn't name the song")
-        added.buttons["OK"].tap()
+        // Tapped until the alert has gone: a tap during its appear animation is dropped, and the alert
+        // then sits over Home, where every card is found and none is hittable.
+        for _ in 0..<3 where added.exists {
+            added.buttons["OK"].tap()
+            if waitForDisappearance(of: added, timeout: 3) { break }
+        }
+        XCTAssertFalse(added.exists, "the confirmation never closed")
 
         let library = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Song library,")).firstMatch
         XCTAssertTrue(library.waitForExistence(timeout: Self.uiTimeout), "no Song library on Home")

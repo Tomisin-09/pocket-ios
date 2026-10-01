@@ -4,6 +4,18 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## A *Receive a song…* door in the song library (parked 2026-10-01, ADR 0236)
+
+A song someone sends arrives as a `.redmoonpack`. Tapping it wherever it landed opens Red Moon, but
+there is no in-app way in from the **song library**: the only file picker is **Receive a routine…** /
+**Receive an exercise…** under Practice, which takes any Red Moon file (the host reads the kind and
+says where it went). So a song sitting in Files is fetched from the Routines screen — it works, and
+it's an odd place to look.
+
+What it would take: one item in the library's options menu calling the existing
+`practiceFileImporter` (`RoutineLibraryView+Receive.swift`) and `\.receivePracticeFile`, the same as
+the other two doors. No new reading path. The owner chose to leave it off for now (2026-10-01).
+
 ## `uk-site` needs a route for `/redmoon/manual/references` (logged 2026-08-17) — BLOCKING
 
 **One page of the user manual currently has no way to be read.** ADR 0167 added

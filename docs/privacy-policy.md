@@ -66,14 +66,15 @@ to the address you gave us, and you can ask us to delete it.
 
 You can take things out of the app as files: a backup of everything (Settings ▸
 Your data ▸ Export), a single recording, a song's audio, a song with its loops and
-markers for someone else's copy of Red Moon, or a tab as text or a PDF. Each file is
+markers for someone else's copy of Red Moon, a routine with the songs it plays, or a
+tab as text or a PDF. Each file is
 made on your device and handed to the system share sheet, and you choose where it
 goes: AirDrop, Messages, Mail, Files or another app. The app does not upload it, we
 keep no copy of it, and the app never learns where it went.
 
-**A song you send carries your artist name**, if you have set one, so the person
-who opens it knows who it is from. The send screen shows the name before anything
-is sent. Nothing else from your profile goes with it, and with no artist name set,
+**A song or routine you send carries your artist name**, if you have set one, so the
+person who opens it knows who it is from. The send screen shows the name before
+anything is sent. Nothing else from your profile goes with it, and with no artist name set,
 no name is sent.
 
 ## Anonymous usage counts

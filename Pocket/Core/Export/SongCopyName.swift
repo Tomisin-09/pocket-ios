@@ -32,6 +32,18 @@ enum SongCopyName {
         return "\(base) \(number)"
     }
 
+    /// The titles several received songs land under, in order: a routine's songs (ADR 0236 D6). Each is
+    /// named against the library **and the songs named before it**, so two songs sent with one title
+    /// still land as two names.
+    static func titles(for titles: [String], sender: String?, existing: [String]) -> [String] {
+        var taken = existing
+        return titles.map { sent in
+            let name = title(for: sent, sender: sender, existing: taken)
+            taken.append(name)
+            return name
+        }
+    }
+
     private static func cleaned(_ text: String) -> String {
         text.trimmingCharacters(in: .whitespacesAndNewlines)
     }

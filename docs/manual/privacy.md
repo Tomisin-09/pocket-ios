@@ -43,10 +43,11 @@ full. And a take recorded next to a playing song may have picked that song up th
 
 See [Settings ▸ Your data](reference/settings.md#your-data).
 
-A single take, a song's audio, a song sent with its loops, or a tab can leave the same way, each from
-its own screen: the file is made on your device and handed to the share sheet, and nothing is
-uploaded. A song you **send** carries your artist name, if you've set one, so the person who opens it
-knows who it's from. **Send this song** shows the name before anything is sent.
+A single take, a song's audio, a song sent with its loops, a routine sent with its songs, or a tab can
+leave the same way, each from its own screen: the file is made on your device and handed to the share
+sheet, and nothing is uploaded. A song or a routine you **send** carries your artist name, if you've
+set one, so the person who opens it knows who it's from. **Send this song** and **Send this routine**
+show the name before anything is sent.
 
 ## The microphone
 

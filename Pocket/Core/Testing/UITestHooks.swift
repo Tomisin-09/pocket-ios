@@ -65,6 +65,10 @@ enum UITestHooks {
     /// needs an empty library, still shows for the tests that want it. Read app-side through
     /// `ReceivedPackSeed`.
     static let receivePackArgument = "-receiveSongPack"
+    /// `-receiveRoutinePack`: the same, for a routine sent with its song (ADR 0236 D6): *Pack routine*, a
+    /// block on *Pack test*'s loop and a block playing the song. Without it, a `-uiTesting` launch takes
+    /// any received *Pack routine* back out with the song.
+    static let receiveRoutinePackArgument = "-receiveRoutinePack"
 
     /// Marks Home as **finished seeding**, not merely rendered.
     ///

@@ -20,6 +20,17 @@ struct ReceivedSong: Equatable, Sendable {
     }
 }
 
+/// A received song as it lands inside a routine (ADR 0236 D6): the new song, and how the file named it
+/// and its loops, so the routine's blocks can be pointed at the new ones. The file's ids are join keys
+/// inside that one payload and are never written to a model.
+struct LandedSong {
+    /// The `sourceID` the sender's file gave the song, which a song block names.
+    var sentSourceID: String
+    var song: Song
+    /// Each new loop, by the uid the sender's file gave it, which a loop block names.
+    var loops: [UUID: Loop]
+}
+
 /// A received song becomes the receiver's own (ADR 0236 D4, D5).
 ///
 /// The same rules as the receive door for a routine (ADR 0188 D1): **every uid is minted fresh**, so
@@ -32,17 +43,26 @@ enum ReceivedSongBuilder {
     /// The received song as it lands: the prepared import (`SongImporter.prepareReceived`), titled by D5,
     /// with the record's metadata, grid, loops and markers. Not inserted; the caller does that.
     static func song(from received: ReceivedSong, prepared: SongImporter.Prepared, title: String) -> Song {
+        landing(received, prepared: prepared, title: title).song
+    }
+
+    /// A song that arrived inside a routine (ADR 0236 D6), built as one sent on its own is, with the map
+    /// the routine's blocks are bound through. Not inserted.
+    static func landing(_ received: ReceivedSong, prepared: SongImporter.Prepared, title: String) -> LandedSong {
         let song = Song(title: title, duration: prepared.duration, amplitudes: prepared.amplitudes,
                         dateAdded: .now,
                         ref: SongRef(id: prepared.sourceID, source: .localFile, bookmark: nil),
                         audioFileName: prepared.audioFileName)
-        apply(received.record, to: song)
-        return song
+        let loops = apply(received.record, to: song)
+        return LandedSong(sentSourceID: received.record.sourceID, song: song, loops: loops)
     }
 
     /// Everything the record carries that is the song's own: metadata, the tempo and beat grid, every
     /// marker and every loop, with new uids, and links between them followed to the new ones.
-    static func apply(_ record: SongRecord, to song: Song) {
+    ///
+    /// Returns each new loop by the uid the file gave it, for a routine's blocks to find (ADR 0236 D6).
+    @discardableResult
+    static func apply(_ record: SongRecord, to song: Song) -> [UUID: Loop] {
         song.artist = record.artist
         song.album = record.album
         song.genre = record.genre
@@ -69,7 +89,11 @@ enum ReceivedSongBuilder {
             marker.sameAsUID = saved.sameAsUID.flatMap { markerUIDs[$0] }
         }
         song.markers = markers
-        song.loops = record.loops.map { loop(from: $0, markers: markerUIDs) }
+        let loops = record.loops.map { ($0.uid, loop(from: $0, markers: markerUIDs)) }
+        song.loops = loops.map(\.1)
+        // A file that names one uid twice keeps the first: a block bound to either reaches a loop of this
+        // song, which is all the receiver can ask of a file it didn't write.
+        return Dictionary(loops, uniquingKeysWith: { first, _ in first })
     }
 
     /// One loop's settings, with a new uid. Mastery, speeds reached, the command tempo, the piece and its

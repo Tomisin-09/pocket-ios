@@ -68,6 +68,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   Your pieces, mastery and practice history stay with you. Tap a pack you're sent and **Add this song?**
   shows what's in it before it lands. It always arrives as a new song; if you already have one with that
   title, it's named for the sender, like *Low Road - Tomisin copy*.
+- **Send a routine with its songs.** On a routine that plays your songs or loops, the share button now
+  opens **Send this routine**, with an **Include the songs** switch (on to start with) that says how much
+  the songs add. With it on, each song goes with all its loops and markers, and the blocks play it at the
+  other end; with it off, those blocks arrive named, as before. **Add this routine?** lists the songs
+  coming with it and who sent it. Takes, pieces and practice history never go.
 - **Export a tab as text or a PDF.** A tab you wrote in **My tabs**, and a song's tab in **Map the
   song**, now have a share button with **Plain text** and **PDF**: the tab as it reads on screen, headed
   with its title (and a song's artist), each section under its name.

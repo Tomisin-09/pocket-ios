@@ -117,9 +117,11 @@ struct SharedPractice: Codable, Equatable, Sendable {
 /// A block whose unit cannot cross, and what it was (ADR 0188 D4).
 ///
 /// A `loopUID` is meaningless without the song that owns it — `LoopRecord` nests inside `SongRecord`
-/// and carries no song key, and a loop's bounds are fractions of a song whose audio never leaves the
-/// device (ADR 0148). So the block arrives as exactly what the app already knows how to draw, a block
-/// whose unit did not resolve (`RoutineItem.isOrphaned`), and this carries the label to draw it with.
+/// and carries no song key, and a loop's bounds are fractions of its song. When the song goes with the
+/// routine (ADR 0236 D6) the block keeps its ids and needs none of this. When it stays behind, because
+/// the sender turned *Include the songs* off or Red Moon holds no audio for it, the block arrives as
+/// exactly what the app already knows how to draw, a block whose unit did not resolve
+/// (`RoutineItem.isOrphaned`), and this carries the label to draw it with.
 ///
 /// Silently dropping such a block would hand over a routine quietly shorter than the one that was
 /// sent — which is the failure this type exists to prevent.

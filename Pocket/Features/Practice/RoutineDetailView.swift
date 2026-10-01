@@ -80,6 +80,8 @@ struct RoutineDetailView: View {
     /// The picture being viewed, or the picker being opened (ADR 0167 phase 2) — held here for the
     /// same reason as `editingReference`: `.photosPicker` and `.fileImporter` are presentations too.
     @State var referenceAttachments: ReferenceAttachmentPresentation?
+    /// The send screen, for a routine that plays songs (ADR 0236 D6). Internal for `+Share`.
+    @State var sendingRoutine = false
 
     /// The session length the user asked the planner for, in minutes — set only on a provisional
     /// generated session so the review screen can show its estimate against a soft budget (R3).
@@ -230,6 +232,7 @@ struct RoutineDetailView: View {
                                               onToggle: toggleUnit) })
         .fullScreenCover(item: $playingRoutine) { RoutinePlayerView(routine: $0) }
         .sheet(item: $repsEditorItem) { repsEditorSheet($0.value) }
+        .sheet(isPresented: $sendingRoutine) { SendRoutineSheet(routine: routine) }
         // Attached to the `List`, never inside it — see `ReferenceLinkEditing`. Writes into the
         // sandbox and defers the save, so links follow this screen's Cancel/Save contract.
         .referenceLinkEditing($editingReference, owner: routine, accent: PocketColor.practice,

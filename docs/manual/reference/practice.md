@@ -100,6 +100,12 @@ tap `Edit`, which is what puts `Add a link` on it, the same gate the blocks are 
 [where you learned it](../references.md). A generated session that has not been saved yet does not
 show the section at all. Procedure is in [routines](../routines.md).
 
+A saved routine's toolbar carries a share control beside `Edit`. On a routine whose blocks play a song
+or a loop it is `Send this routine`, which opens `Send this routine`: `Sent as`, the
+`Include the songs` switch, the `Songs` it would carry (one Red Moon keeps no copy of reads
+`Can’t go`), `Goes with it` and `Stays with you`, with `Cancel` and `Send…` in the bar. On any other
+routine it opens the share sheet directly.
+
 ## `Exercises`
 
 <!-- shot: reference/exercises-library | role: screen

@@ -10,9 +10,10 @@ import SwiftUI
 private struct PendingReceive: Identifiable {
     let id = UUID()
     let practice: ReceivedPractice
-    /// What a received song will be called here (ADR 0236 D5), worked out against the library once, when
-    /// the preview opens. `nil` for anything but a song.
-    var songTitle: String?
+    /// What each received song will be called here (ADR 0236 D5), worked out against the library once,
+    /// when the preview opens: the one song of a song share, or a routine's songs in the order it carries
+    /// them. Empty for anything else.
+    var songTitles: [String] = []
 }
 
 /// The app's **inbound door** for `.redmoonpractice` files (ADR 0188 S2, ADR 0209 D4) — both doors,
@@ -62,11 +63,13 @@ private struct PracticeReceiveHost: ViewModifier {
             .sheet(item: $pending, onDismiss: discardUnpacked) { arrival in
                 switch arrival.practice {
                 case let .routine(received):
-                    ReceivedRoutinePreviewSheet(received: received) { add(received) }
+                    ReceivedRoutinePreviewSheet(received: received, songTitles: arrival.songTitles) {
+                        add(received, songTitles: arrival.songTitles)
+                    }
                 case let .exercise(received):
                     ReceivedExercisePreviewSheet(received: received) { add(received) }
                 case let .song(received):
-                    let title = arrival.songTitle ?? received.displayTitle
+                    let title = arrival.songTitles.first ?? received.displayTitle
                     ReceivedSongPreviewSheet(received: received, title: title) { add(received, as: title) }
                 }
             }
@@ -150,7 +153,7 @@ private struct PracticeReceiveHost: ViewModifier {
                     return
                 }
                 unpacked = staging
-                pending = PendingReceive(practice: practice, songTitle: songTitle(for: practice))
+                pending = PendingReceive(practice: practice, songTitles: songTitles(for: practice))
             case let .failure(reason):
                 try? FileManager.default.removeItem(at: staging)
                 failure = reason.message
@@ -158,11 +161,17 @@ private struct PracticeReceiveHost: ViewModifier {
         }
     }
 
-    /// A received song's name here (ADR 0236 D5): its own, or a copy's when the library has that title.
-    private func songTitle(for practice: ReceivedPractice) -> String? {
-        guard case let .song(received) = practice else { return nil }
-        let titles = ((try? context.fetch(FetchDescriptor<Song>())) ?? []).map(\.title)
-        return SongCopyName.title(for: received.record.title, sender: received.senderName, existing: titles)
+    /// Each received song's name here (ADR 0236 D5): its own, or a copy's when the library, or a song
+    /// arriving beside it, has that title.
+    private func songTitles(for practice: ReceivedPractice) -> [String] {
+        let songs: [ReceivedSong] = switch practice {
+        case let .song(received): [received]
+        case let .routine(received): received.songs
+        case .exercise: []
+        }
+        guard !songs.isEmpty else { return [] }
+        let library = ((try? context.fetch(FetchDescriptor<Song>())) ?? []).map(\.title)
+        return SongCopyName.titles(for: songs.map(\.record.title), sender: songs[0].senderName, existing: library)
     }
 
     /// The preview closed without Add: what the pack unpacked is never read again.
@@ -204,8 +213,50 @@ private struct PracticeReceiveHost: ViewModifier {
     ///
     /// The graph comes back uninserted and `HydratedRoutine.insert` knows the one order that works,
     /// so this is a hand-off rather than an assembly.
-    private func add(_ received: ReceivedRoutine) {
-        let landing = ReceivedRoutineBuilder.materialize(received)
+    ///
+    /// With songs (ADR 0236 D6), their audio is copied in and read off the main actor first, as a song
+    /// sent on its own is, and the routine's blocks are bound to them. **All or nothing**: a song whose
+    /// audio can't be read lands nothing, and the copies already made are removed, since a routine
+    /// landing with some of what the preview promised would be a different routine.
+    private func add(_ received: ReceivedRoutine, songTitles: [String]) {
+        guard !received.songs.isEmpty else { return land(received, songs: []) }
+        // The landing owns the unpacked folder now, so closing the preview mustn't remove it.
+        unpacked = nil
+        let audio = received.songs.map(\.audio)
+        Task {
+            defer {
+                if let staging = received.songs.first?.staging { try? FileManager.default.removeItem(at: staging) }
+            }
+            let prepared = await Task.detached { () -> [SongImporter.Prepared]? in
+                var made: [SongImporter.Prepared] = []
+                for file in audio {
+                    guard let song = try? SongImporter.prepareReceived(from: file) else {
+                        for copy in made {
+                            if let leaf = copy.audioFileName { try? SongFileStore.delete(fileName: leaf) }
+                        }
+                        return nil
+                    }
+                    made.append(song)
+                }
+                return made
+            }.value
+            guard let prepared else {
+                failure = "One of the routine’s songs couldn’t be read, so nothing was added."
+                return
+            }
+            // Under the names the preview showed (D5); the song's own, should the two lists ever differ.
+            let songs = received.songs.enumerated().map { index, song in
+                ReceivedSongBuilder.landing(song, prepared: prepared[index],
+                                            title: songTitles.indices.contains(index)
+                                                ? songTitles[index] : song.displayTitle)
+            }
+            land(received, songs: songs)
+        }
+    }
+
+    /// Write the routine's graph, its songs first, and say so.
+    private func land(_ received: ReceivedRoutine, songs: [LandedSong]) {
+        let landing = ReceivedRoutineBuilder.materialize(received, songs: songs)
         landing.insert(into: context)
         save()
         // Both numbers, because the interesting question about this feature is not how often it is
@@ -213,7 +264,10 @@ private struct PracticeReceiveHost: ViewModifier {
         // lint rule forbids a free `String`, and there is nothing here worth naming anyway.
         Analytics.send(.routineReceived(items: landing.items.count,
                                         orphanedBlocks: landing.items.filter(\.isOrphaned).count))
-        landed = "“\(received.displayName)” is in your routines."
+        landed = songs.isEmpty
+            ? "“\(received.displayName)” is in your routines."
+            : "“\(received.displayName)” is in your routines, and its "
+                + (songs.count == 1 ? "song is" : "\(songs.count) songs are") + " in your songs."
         haptic(.medium)
     }
 

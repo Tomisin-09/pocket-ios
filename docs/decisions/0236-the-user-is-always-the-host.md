@@ -1,6 +1,6 @@
 # ADR 0236 — The user is always the host: takes, songs, routines with their songs, and tabs leave as files
 
-- **Status:** Accepted. To be built on `pocket-342-export`, in the five slices of the build order.
+- **Status:** Accepted. Built on `pocket-342-export`, all five slices of the build order (2026-10-01).
 - **Date:** 2026-10-01 (decided 2026-09-30 and 2026-10-01; the design sketch is the artifact
   *Red Moon Export*)
 - **Supersedes:** ADR 0150 — its parked proposal is decided. Export is accepted on the tool-not-host frame

@@ -130,7 +130,9 @@ enum ReceivedPracticeBuilder {
                                                appVersion: payload.appVersion,
                                                exportedAt: payload.exportedAt)))
         case .routine:
-            return ReceivedRoutineBuilder.received(payload).map(ReceivedPractice.routine)
+            // With its songs (ADR 0236 D6): each song's audio, unpacked, goes with it.
+            return ReceivedRoutineBuilder.received(payload, audio: contents.audio, staging: staging)
+                .map(ReceivedPractice.routine)
         case .exercise:
             return received(payload).map(ReceivedPractice.exercise)
         case nil:
