@@ -1,6 +1,7 @@
 # ADR 0237 — Red Moon is free
 
-- **Status:** Accepted — building on `pocket-343-free` (2026-10-01).
+- **Status:** Accepted. Built on `pocket-343-free` (2026-10-01). Still owed: App Store
+  Connect and `uk-site`, both outside the repo (Consequences), and the reshoot.
 - **Date:** 2026-10-01 (decided 2026-09-24; the removal scoped in Q&A on 2026-10-01)
 - **Supersedes:** ADR 0112 — the Pro tier, its trial, its gates and its StoreKit design are gone
   (D1, D2). Its reason for existing, a free set of play-along tools beside a paid workbench, is moot,
