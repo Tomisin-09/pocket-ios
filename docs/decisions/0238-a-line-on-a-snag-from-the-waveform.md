@@ -1,7 +1,7 @@
 # ADR 0238 — A line on a snag, from the waveform
 
-- **Status:** Accepted. Built on `pocket-346-a-line-on-a-snag`. Still owed: the device check under
-  Consequences.
+- **Status:** Accepted. Built on `pocket-346-a-line-on-a-snag` and merged as #342, device-checked.
+  Still owed: a figure of the *Snags* panel in the reshoot (Consequences).
 - **Date:** 2026-10-02
 - **Amends:** ADR 0202 — **D2**: a hold on a *Snags* row now opens a sheet, with one field, a line on
   the snag (D1). No multi-select, the song-order sort, tap to go there and ✕ to remove all stand. **D3**
@@ -108,5 +108,6 @@ each row as in *Name the notes*, and a button beside ✕. Tomisin chose the hold
 - **Manual:** the *Snags* panel in `reference/song-player.md`, and an eleventh hold in `gestures.md`.
 - **Reshoot owed:** no figure shows the *Snags* panel today, so nothing is stale. The panel with a line
   is worth adding when the one reshoot runs.
-- **Device check owed:** a tap on a row never opens the sheet and a hold never seeks; the keyboard and
-  the sheet at medium height.
+- **Device check:** done 2026-10-02 on an iPhone 16 Pro (iOS 26.6). Tomisin tried a debug build of
+  `f12be1d` (the merged tree) and was happy with it. What it was for: a tap on a row never opens the
+  sheet and a hold never seeks; the keyboard and the sheet at medium height.
