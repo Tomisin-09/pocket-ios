@@ -1,11 +1,15 @@
 # ADR 0120 — product analytics are anonymous, opt-in, and can never carry what you played
 
-- **Status:** **Superseded by ADR 0239 (2026-10-02), except §1.** Before that, §2 and §3 were
-  superseded in part by ADR 0147.
+- **Status:** **Superseded by ADR 0239 (2026-10-02), except §1, which ADR 0240 amended the same
+  day.** Before that, §2 and §3 were superseded in part by ADR 0147.
 - **Superseded by:** ADR 0239 (2026-10-02) — Red Moon counts nothing. §2 to §7 are superseded: there
   is no analytics in the app, no SDK, no consent, no vocabulary and no lint rule, and usage figures
-  come from App Store Connect. **§1 stands as written.** It is about attribution and advertising,
+  come from App Store Connect. **§1 is not superseded.** It is about attribution and advertising,
   and 0239 decides nothing about either.
+- **Amended by:** ADR 0240 (2026-10-02) — §1's Tier 3 is split. **The IDFA, the ATT prompt and MMPs
+  stay ruled out permanently. Ad SDKs do not:** there is none in the app, and adding one takes its
+  own ADR first, which has to keep it inside the tracking ban and answer 0239's "counts nothing".
+  Tier 1 and Tier 2 are unchanged.
 - **Superseded in part by:** **ADR 0147** (2026-08-06). UK statute moved: DUAA 2025 Sch A1 para 5, in
   force 5 Feb 2026, exempts first-party service-improvement analytics from PECR reg 6 given clear
   information and a simple means of objecting. So §2's **opt-in default** and §3's **ask after a first
@@ -58,6 +62,12 @@ survives being read carefully by someone hostile.
 ## Decision
 
 ### 1. Anonymous product analytics, and nothing beyond it — Tier 3 is banned permanently
+
+> **Amended by ADR 0240 (2026-10-02) — ad SDKs leave the permanent ban.** The IDFA, the ATT prompt
+> and MMPs are still ruled out permanently, and the public "never will" line about the advertising
+> identifier and the tracking prompt is unchanged. An ad SDK is no longer ruled out for ever. There is
+> none in the app, and one can be added only by a new ADR that keeps it inside the tracking ban. The
+> reasoning below still holds for tracking, which is what it was about.
 
 The agreed ladder, restated so it is not re-litigated:
 

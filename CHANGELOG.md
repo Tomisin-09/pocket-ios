@@ -261,6 +261,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   and tap Send on, or a file you send yourself. Help & FAQs' *Does Red Moon listen to or send my
   playing?* says so, and points at the iPhone's own *Share With App Developers* switch, which is how
   Apple's anonymous totals reach us. (ADR 0239)
+- **The privacy policy no longer promises the app will never contain advertising software.** It
+  contains none today and shows no ads. The permanent promise is now about tracking: Red Moon will
+  never use the advertising identifier or the App Tracking Transparency prompt. (ADR 0240)
 - **Red Moon is free.** Everything in the app is open to everyone, with nothing to buy: Practice, the
   Song library, routines, Today's session and building your own exercises all open from Home with no
   padlock, no **PRO** badge and no paywall, and the full-screen offer that came up at launch is gone.
