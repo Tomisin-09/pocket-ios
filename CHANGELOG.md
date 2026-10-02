@@ -56,6 +56,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Time with the metronome counts as practice.** Stop the click on the Metronome screen, or leave
+  it, and the time the click sounded goes into the Practice log as **Metronome** — in the minutes,
+  the days, the month grid, *What you played* and Home's *This week* strip. Paused time is left out,
+  and a sitting under 30 seconds isn't logged: hearing what a tempo sounds like isn't a practice
+  session. Time from before this release wasn't recorded, so it can't be added back. (ADR 0242)
 - **Look back through the Practice log.** *This week* and *This month* still open on now, and now page
   back through every week and month since you started: swipe a chart sideways, or use the ‹ › beside
   its title. Once you have gone back, **This week** or **This month** in the header brings you to now.
@@ -391,6 +396,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   from inside the same sheet went down the same path. iOS 26 was unaffected.
 
 ### Internal
+
+- **A backup holding a kind of practice this build doesn't know still restores.** A practice-log row
+  of an unknown kind is read as *other* — its minutes still count — rather than failing the whole
+  archive as corrupt. Protects every build from this one on; a build already released will still call
+  a newer backup with a metronome row corrupt (ADR 0242 D8).
 
 - **Aptabase is uninstalled** (ADR 0239). The SDK — the project's only package — and its app key; the
   `Core/Analytics` module (`AnalyticsEvent`, `Analytics`, `AnalyticsPolicy`, the sinks);

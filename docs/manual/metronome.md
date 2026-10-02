@@ -19,6 +19,15 @@ brings you back.
 A **■** appears beside it once anything is running: pause keeps the sitting, stop ends it and zeroes
 it.
 
+**Time with the click counts as practice.** When a sitting ends — with **■**, or by leaving the
+screen — the time the click sounded goes into your [practice log](journal-and-practice-log.md#the-practice-log)
+as **Metronome**, and the day counts as practised. Paused time is left out. So is a sitting under 30
+seconds: hearing what a tempo sounds like isn't a practice session, and it shouldn't mark the day.
+
+The click keeps going on the lock screen, and that time counts too — come back and stop it, or leave
+the screen, and it is logged. The one sitting that isn't is one ended by closing Red Moon from the app
+switcher while the click is still running.
+
 Across the top, a **dot per beat in the bar** lights on the click you are hearing. Accented beats sit
 slightly larger and in the metronome's own colour, so you can see the shape of the bar as well as
 hear it.

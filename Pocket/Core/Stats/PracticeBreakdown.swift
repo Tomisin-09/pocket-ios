@@ -1,12 +1,14 @@
 import Foundation
 
 /// **What you played** (ADR 0241): a window's runs grouped by kind — exercises, loops, ear training,
-/// improvising, play-alongs — and inside each kind by the exercise, loop or song they were.
+/// improvising, play-alongs, the metronome — and inside each kind by the exercise, loop or song they
+/// were.
 ///
-/// **By what was played, not by where in the app.** The log holds finished practice runs and nothing
-/// else; it has never seen the song library, the metronome or the tuner, and it is not going to start
-/// timing screens (ADR 0241 D3). Every row already says its kind and which unit it was, so this is a
-/// grouping over data the app has always written.
+/// **By what was played, not by where in the app.** The log holds practice runs and nothing else; it
+/// has never seen the song library or the tuner, and it is not going to start timing screens (ADR 0241
+/// D3). Time with the metronome is here because it is practice, logged as a run of its own kind by
+/// the screen that plays it (ADR 0242) — not because the screen was open. Every row already says its
+/// kind and which unit it was, so this is a grouping over data the app writes anyway.
 ///
 /// **Ranked by minutes and nothing else (ADR 0070).** The largest group leads because it is the
 /// largest. Nothing here says whether the mix was a good one.
@@ -49,7 +51,9 @@ enum PracticeBreakdown {
     struct Group: Identifiable, Equatable, Sendable {
         let kind: PracticeRunKind
         let seconds: Double
-        /// Largest first.
+        /// Largest first. **Empty for the metronome** (ADR 0242): its runs belong to no unit, so the
+        /// one row it could hold would say "Metronome" again under a heading that already says it.
+        /// A group with no items has nothing to open.
         let items: [Item]
 
         var id: PracticeRunKind { kind }
@@ -85,7 +89,8 @@ enum PracticeBreakdown {
                 lhs.seconds == rhs.seconds ? lhs.name < rhs.name : lhs.seconds > rhs.seconds
             }
             guard !resolved.isEmpty else { return nil }
-            return Group(kind: kind, seconds: resolved.reduce(0) { $0 + $1.seconds }, items: resolved)
+            return Group(kind: kind, seconds: resolved.reduce(0) { $0 + $1.seconds },
+                         items: kind == .metronome ? [] : resolved)
         }
         .sorted { lhs, rhs in
             guard lhs.seconds != rhs.seconds else {
@@ -117,6 +122,8 @@ enum PracticeBreakdown {
             return record.songSourceID.map { "song:\($0)" } ?? "song:unrecorded"
         case .exercise, .loop, .earLoop, .improvise:
             return record.unitUID.map { "unit:\($0.uuidString)" } ?? "unit:none"
+        case .metronome:
+            return "metronome"
         case .other:
             return "other"
         }
@@ -149,6 +156,9 @@ enum PracticeBreakdown {
                 return Described(name: live.isEmpty ? "Untitled song" : live, detail: nil, isUnnamed: false)
             }
             return deleted(label: record.unitLabel, placeholder: "A deleted song", song: nil)
+
+        case .metronome:
+            return Described(name: record.kind.label, detail: nil, isUnnamed: false)
 
         case .other:
             return Described(name: "From a newer version of Red Moon", detail: nil, isUnnamed: true)

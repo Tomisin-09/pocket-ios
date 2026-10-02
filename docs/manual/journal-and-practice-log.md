@@ -319,7 +319,8 @@ take's audio file, which is what makes offering the delete safe at all.
 
 Tapping the **This week** strip on Home opens the counted-up version of the same history: three
 sections, at three scales. Where the timeline holds what you *wrote*, this holds what you *did* — and
-Red Moon fills it in by itself as you finish drills, so there is nothing to keep up.
+Red Moon fills it in by itself as you finish drills and play to the metronome, so there is nothing to
+keep up.
 
 The strip is the promise and this screen is the payoff, which is why they sit together: the three
 numbers are a summary of what is here in full. Neither appears until you have finished something —
@@ -365,8 +366,10 @@ little".
 ### What you played
 
 Under both the week and the month, **What you played** shows where the time went: by kind —
-exercises, loops, ear training, improvising, play-alongs — largest first. Tap a kind to open it and
-see the exercise, loop or song itself, with each loop's song underneath it.
+exercises, loops, ear training, improvising, play-alongs, the metronome — largest first. Tap a kind
+to open it and see the exercise, loop or song itself, with each loop's song underneath it.
+**Metronome** is the one kind with nothing inside it, so it doesn't open: the click isn't an
+exercise or a song, and its row is the whole of what there is to say.
 
 Tap a day — a bar in the week, a cell in the month — and the list narrows to that day. Tap the day
 again, or the date that appears beside **What you played**, to see the whole week or month.
@@ -376,8 +379,9 @@ again, or the date that appears beside **What you played**, to see the whole wee
      | state: seeded library, Practice log, a practised day tapped on This week's chart, its first kind opened -->
 
 It lists what you *played*, not where you were in the app: time spent browsing the song library or
-with the metronome on its own isn't practice the log has recorded, so it isn't here. An exercise or
-loop you have deleted keeps its minutes and is marked *Deleted*. Play-alongs from before Red Moon
+tuning isn't practice, so it isn't here. Time with the [metronome](metronome.md#starting-and-stopping)
+is — the time the click sounded, once it has sounded for 30 seconds. An exercise or loop you have
+deleted keeps its minutes and is marked *Deleted*. Play-alongs from before Red Moon
 started noting which song they were are listed together as *Song not recorded*.
 
 ### All-time

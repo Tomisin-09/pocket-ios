@@ -34,6 +34,10 @@ struct MetronomeView: View {
     /// aside while it is: the field being typed into otherwise ends up squeezed against the Start
     /// button, half hidden, and the keyboard's checkmark floats over Start's trailing edge.
     @State private var keyboardUp = false
+    @Environment(\.modelContext) private var modelContext
+    /// When the click started, so that ending it can log the time as practice (ADR 0242). See
+    /// `endSession()`.
+    @State private var runLog = MetronomeRunLog()
 
     /// A tap gap longer than this starts a fresh measurement — an old, stale tap shouldn't
     /// average against a new one.
@@ -117,7 +121,8 @@ struct MetronomeView: View {
         // The free-play metronome is the **only** host that offers click withdrawal (ADR 0132 §4, as
         // amended): opt in explicitly, so no screen inherits it by sharing the engine type.
         .onAppear { engine.allowsClickWithdrawal = true }
-        .onDisappear { engine.stop() }
+        .onChange(of: engine.transport) { old, new in runLog.transportChanged(from: old, to: new) }
+        .onDisappear(perform: endSession)
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
             keyboardUp = true
         }
@@ -233,7 +238,7 @@ struct MetronomeView: View {
     private var transport: some View {
         HStack(spacing: 14) {
             if engine.transport != .stopped {
-                Button { engine.stop(); haptic(.medium) } label: {
+                Button { endSession(); haptic(.medium) } label: {
                     Image(systemName: "stop.fill")
                         .font(.futura(.title3))
                         .foregroundStyle(PocketColor.textPrimary)
@@ -253,6 +258,25 @@ struct MetronomeView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    /// Stop the click and log the time it sounded (ADR 0242). The two ways a sitting here ends — the
+    /// Stop button and leaving the screen — both come through here.
+    ///
+    /// `elapsed` is read **before** `stop()`, which zeroes it. It is the engine's own session clock:
+    /// kept across pauses, and advanced by the same tick that schedules the clicks, so while the click
+    /// is sounding it is never more than a tick behind. Runs under 30 seconds are dropped by the
+    /// writer — a tempo check, not practice.
+    ///
+    /// **Not on going to the background.** The click plays on through the lock screen by design, so
+    /// backgrounding ends nothing. A sitting ended by closing the app from the app switcher is the one
+    /// that goes unlogged: no seam runs.
+    private func endSession() {
+        let sounded = engine.elapsed
+        engine.stop()
+        guard let run = runLog.finish(soundedSeconds: sounded) else { return }
+        PracticeLogWriter.log(kind: .metronome, startedAt: run.start, endedAt: run.end,
+                              unitUID: nil, into: modelContext)
     }
 
     private var primaryLabel: String {
@@ -289,62 +313,6 @@ struct MetronomeView: View {
 private struct PendingMetronomeNote: Identifiable {
     let id = UUID()
     let sitting: MetronomeJournalContext
-}
-
-// MARK: - Typable tempo
-
-/// The hero BPM readout, **typed into directly**: tap the number, a number pad opens, and the value
-/// commits when focus leaves — the keyboard's checkmark (`KeyboardDismissAccessory`), a scroll, or a
-/// tap elsewhere. The screen's other three ways in (±1, the slider, TAP) all move by feel; getting
-/// to 138 from 96 took either 42 taps or a slider you can't land a specific number on.
-///
-/// Same contract as `EditableTempoRow` and `AutomatorNumberField`, the two typable tempo fields
-/// already shipped: a *draft* string that the live value only refreshes while the field is **not**
-/// focused (so a ramp climbing underneath can't rewrite what is half-typed), and a commit that hands
-/// the parsed value to the clamp and then resyncs — so `999`, `0` or an empty field visibly snap
-/// back to what was actually stored rather than sitting there as a number the engine never took.
-///
-/// **Tapping it empties it**, and the tempo it held shows greyed as the placeholder until you type.
-/// Before, the draft kept the old digits and the caret landed wherever the tap fell — often the
-/// start, `|90` — so typing 120 made 12090, which the clamp turned into 300. Emptied, what you type is
-/// the tempo; dismiss without typing and the empty draft commits nothing and resyncs.
-///
-/// Its own view because it owns focus state: kept inline, every keystroke would re-render the
-/// controls around it. It also costs the readout `.contentTransition(.numericText())` — a
-/// `TextField` has no such transition — which is the one thing typing takes away here.
-private struct TypableTempo: View {
-    let engine: StandaloneMetronomeEngine
-
-    @State private var draft = ""
-    @FocusState private var typing: Bool
-
-    var body: some View {
-        TextField("", text: $draft, prompt: Text("\(engine.bpm)"))
-            .keyboardType(.numberPad)
-            .multilineTextAlignment(.center)
-            .font(.pocketMono(.largeTitle))
-            .foregroundStyle(PocketColor.textPrimary)
-            // Fixed width, not intrinsic: a TextField is greedy and would push the steppers to the
-            // screen edges, and a width that tracked the digit count would make the whole readout
-            // jump as the tempo crossed 99.
-            .frame(width: 132)
-            .focused($typing)
-            .accessibilityLabel("Tempo in beats per minute")
-            .accessibilityValue("\(engine.bpm)")
-            .onAppear { draft = "\(engine.bpm)" }
-            .onChange(of: engine.bpm) { _, updated in if !typing { draft = "\(updated)" } }
-            .onChange(of: typing) { _, isTyping in
-                if isTyping { draft = "" } else { commit() }
-            }
-    }
-
-    /// Hand the typed value to the engine — which clamps to `bpmRange` and re-bases an armed
-    /// automator exactly as a stepper or the slider does — then resync the draft to whatever was
-    /// actually stored.
-    private func commit() {
-        if let typed = Int(draft) { engine.setBPM(typed) }
-        draft = "\(engine.bpm)"
-    }
 }
 
 // MARK: - Meter (time signature + subdivision + click withdrawal)

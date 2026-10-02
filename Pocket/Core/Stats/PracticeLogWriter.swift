@@ -13,7 +13,9 @@ import SwiftData
 /// note, which are optional; the minutes are not.
 ///
 /// A run that is **stopped by hand** logs nothing. That is deliberate — the log records completed
-/// unit-runs, and an aborted run has no honest length or tempo to claim.
+/// unit-runs, and an aborted run has no honest length or tempo to claim. The **Metronome screen**
+/// is the exception (ADR 0242): it has no course to complete, so stopping is how it ends, and its
+/// length is the time the click sounded.
 ///
 /// **The "one seam" above holds for the *ramped* screens only.** Ear training (ADR 0104) and
 /// improvising (ADR 0135) are a shared core view inside several different hosts, not one screen with
@@ -27,7 +29,19 @@ enum PracticeLogWriter {
     /// Runs shorter than this are dropped as noise rather than logged. A real ramp is at least tens of
     /// seconds; anything under a second is a completion that fired without a run behind it, and a log
     /// full of zero-length rows would inflate the session count while adding no minutes.
-    static let minimumSeconds: Double = 1
+    nonisolated static let minimumSeconds: Double = 1
+
+    /// The floor for a **metronome** run (ADR 0242) — thirty seconds, not one. The Metronome screen
+    /// is also where you go to hear what a tempo sounds like, and a five-second listen must not mark
+    /// a day as practised. Thirty seconds is long enough that the click was played *with*, and short
+    /// enough that a real minute of practice is never lost to it. Every other kind keeps
+    /// `minimumSeconds`: a ramp or a loop that ran at all was practice.
+    nonisolated static let metronomeMinimumSeconds: Double = 30
+
+    /// The shortest run of `kind` the log keeps.
+    nonisolated static func minimumSeconds(for kind: PracticeRunKind) -> Double {
+        kind == .metronome ? metronomeMinimumSeconds : minimumSeconds
+    }
 
     /// Append one completed unit-run. Returns whether a row was written, so a caller can tell "logged"
     /// from "too short to be real" without inspecting the store.
@@ -51,7 +65,7 @@ enum PracticeLogWriter {
                     unitLabel: String? = nil,
                     into context: ModelContext) -> Bool {
         let seconds = endedAt.timeIntervalSince(startedAt)
-        guard seconds >= minimumSeconds else { return false }
+        guard seconds >= minimumSeconds(for: kind) else { return false }
         let run = PracticeRun(startedAt: startedAt,
                               durationSeconds: seconds,
                               kind: kind,

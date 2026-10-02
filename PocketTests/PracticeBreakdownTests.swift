@@ -169,6 +169,35 @@ final class PracticeBreakdownTests: XCTestCase {
         XCTAssertEqual(groups.first?.items.count, 2, "keyed by uid, so two placeholders don't merge")
     }
 
+    // MARK: - The metronome (ADR 0242)
+
+    /// Every metronome run is one group, summed, with **nothing inside it** — its runs belong to no
+    /// unit, so a row inside would only say "Metronome" again.
+    func testMetronomeRunsAreOneGroupWithNothingToOpen() {
+        let groups = PracticeBreakdown.groups([
+            run(.metronome, minutes: 12),
+            run(.metronome, minutes: 8, after: 600)
+        ], names: library)
+
+        XCTAssertEqual(groups.map(\.kind), [.metronome])
+        XCTAssertEqual(groups.first?.minutes, 20)
+        XCTAssertEqual(groups.first?.items, [])
+    }
+
+    /// It ranks by minutes with everything else, and having nothing to open doesn't empty the groups
+    /// around it.
+    func testTheMetronomeRanksByMinutesAmongTheOtherKinds() {
+        let groups = PracticeBreakdown.groups([
+            run(.exercise, unit: picking, minutes: 10),
+            run(.metronome, minutes: 25, after: 30),
+            run(.loop, unit: soloStart, minutes: 5, after: 90)
+        ], names: library)
+
+        XCTAssertEqual(groups.map(\.kind), [.metronome, .exercise, .loop])
+        XCTAssertEqual(groups[1].items.map(\.name), ["Alternate Picking"])
+        XCTAssertEqual(groups[2].items.map(\.name), ["Solo start"])
+    }
+
     // MARK: - A row from a newer build
 
     func testARowOfAnUnknownKindStillCountsAndClaimsNothing() {

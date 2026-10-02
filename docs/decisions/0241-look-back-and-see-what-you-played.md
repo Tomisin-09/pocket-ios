@@ -4,6 +4,10 @@
   checked on the simulator and on a device. Still owed: the Practice log figures in the reshoot
   (Consequences).
 - **Date:** 2026-10-02
+- **Amended by:** ADR 0242 (2026-10-02) — the metronome, left *"not decided here"* under *What stays
+  out*, is decided: time with the click on the Metronome screen counts as practice, its length is the
+  time the click sounded, and *What you played* gains a **Metronome** group with nothing to open.
+  D3's refusal to time parts of the app is unchanged.
 - **Amends:** ADR 0117 — *This week* and *This month* were the current week and month and nothing
   else. They now page back through every week and month since the first run (D1, D2), and each gains
   *What you played* (D3, D4). The song row's "no `unitUID`, give `Song` a `uid` if per-song history is
@@ -153,7 +157,9 @@ given a second copy of the same number. The mock had both, and they said one fac
 - **Rolling windows** (D1) and **time by part of the app** (D3).
 - **The metronome.** Practising with only the metronome writes no row, so it is not in *What you played*.
   Whether open-ended metronome time counts as practice is the prior question, and it is the same one
-  that left a looping play-along unlogged — no honest length. **Not decided here.**
+  that left a looping play-along unlogged — no honest length. **Not decided here.** *(Decided by
+  0242: it counts, and the engine's session clock — the time the click sounded — is the honest
+  length.)*
 - **"68 minutes of this was in Morning Routine."** Runs inside a routine already carry `routineUID`, so
   it is possible; it is not built, because nothing yet says it is wanted.
 - **This year, streaks, a weekly goal**, and the rest of 0117's deferred list.
