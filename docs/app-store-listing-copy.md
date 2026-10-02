@@ -256,8 +256,9 @@ Not "Data Not Collected" — the contact form sends what the player writes. Decl
   no `NSPrivacyAccessedAPITypes` entry — it is not a required-reason API.
 - Everything else stays *not collected*. No identifiers, no location, no contacts.
 - **"Do you or your third-party partners use data for tracking?" → No.** There is
-  no IDFA, no ATT prompt and no ad SDK, permanently (ADR 0120 §1), so no ATT
-  purpose string is needed and `NSPrivacyTracking` stays `false`.
+  no IDFA and no ATT prompt, permanently (ADR 0120 §1), and no ad SDK in the app
+  (one would need its own ADR first: ADR 0240), so no ATT purpose string is needed
+  and `NSPrivacyTracking` stays `false`.
 
 Note for App Review, if asked: the app contains **no analytics and no third-party
 SDK**, and sends nothing on its own. The only data it sends is a support message the

@@ -117,9 +117,10 @@ that screen and again in the form before you send.
   only when you type one into the contact form so we can reply.
 - We do **not** send your audio, recordings, journal notes, song names or artist
   name anywhere, ever — not in a support message or a crash summary either.
-- We do **not** show ads or use advertising identifiers.
-- We do **not** use the IDFA, the App Tracking Transparency prompt, or any
-  advertising SDK. We never will; this is a permanent product boundary.
+- We do **not** show ads or use advertising identifiers, and there is no
+  advertising software in the app.
+- We do **not** use the IDFA or the App Tracking Transparency prompt. We never
+  will; this is a permanent product boundary.
 - We do **not** track you across apps or websites, or build a profile of you.
 - We do **not** put analytics software in the app, or count how you use it.
 
