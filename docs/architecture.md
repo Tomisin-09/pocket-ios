@@ -41,6 +41,8 @@
 │              first, so the screen can page back; calendar periods, never rolling windows) and PracticeBreakdown
 │              (*What you played*: runs grouped by kind, then unit — live name first, the logged unitLabel for a
 │              deleted unit, a placeholder when the log never knew) and MinutesFigure ("<1 minute", never "0").
+│              ADR 0242 adds the .metronome kind (one group in What you played, with no items to open) and
+│              PracticeRunKind decodes an unknown raw value as .other, so a newer build's row can't fail an archive.
 │   Services — Persistence (SwiftData), Sync (CloudKit, planned), AIClient (→ proxy).
 │              MusicKit (browse) is PLANNED-ONLY and not shipped — no MusicKit import,
 │              no MPMediaLibrary, no NSAppleMusicUsageDescription
@@ -230,8 +232,14 @@ in-between ones sound the quieter subdivision level (the on-screen flash stays o
 beats only). Transport
 is three-state — **stopped → playing → paused** — with a **wall-clock session tracker**
 (`elapsed`, accumulated across pause/resume, frozen while paused, zeroed on stop, *not*
-persisted) kept separate from the **sample-clock beat phase** (re-anchored on a
-tempo/signature change or a resume). Lock-screen / Control Center play-pause is wired
+persisted by the engine) kept separate from the **sample-clock beat phase** (re-anchored on a
+tempo/signature change or a resume). **ADR 0242** makes that tracker the length of a practice-log
+row: `MetronomeView` routes both of its ends — **■** and leaving the screen — through one
+`endSession()`, which reads `elapsed` *before* `stop()` zeroes it and logs a `.metronome` run (no unit,
+no tempo) through `PracticeLogWriter`, whose floor for that kind is 30 s. The start comes from the
+transport leaving `.stopped` — the automator's Start can start the click too — and the bookkeeping
+is the pure `MetronomeRunLog`. The engine itself is unchanged and logs nothing, because it also drives
+the exercise screens (already logged as `.exercise`) and two previews. Lock-screen / Control Center play-pause is wired
 through the shared `NowPlayingController`, and the `audio` background mode (ADR 0025) keeps
 the click sounding while locked. An optional **tempo automator** ramps the BPM up over the
 sitting. The engine drives whichever pure ramp conforms to `TempoRamp`: the free-play
@@ -1513,7 +1521,11 @@ empty, because that line was Home's only word about adding a first song.
   **stopped by hand** logs nothing — the log records completed runs, and an aborted one has no honest
   length to claim; a *looping* play-along and standalone `EarTrainingSheet` stay unlogged under the same
   rule, being open-ended — as does the standalone `ImproviseSheet`, which inherits that open question
-  along with the shape (ADR 0135 B3b's logged run is the *routine block*, which Slice 2 builds). There is deliberately **no `recording` kind** despite ADR 0117 listing one: a
+  along with the shape (ADR 0135 B3b's logged run is the *routine block*, which Slice 2 builds).
+  **The Metronome screen is the exception (ADR 0242):** it has no course to complete, so a hand-stop
+  — **■**, or leaving the screen — *is* its end, and its honest length is the engine's session clock,
+  the time the click sounded with pauses left out. It logs `.metronome`, with a 30-second floor for that
+  kind alone (`PracticeLogWriter.minimumSeconds(for:)`) so a tempo check doesn't mark a day. There is deliberately **no `recording` kind** despite ADR 0117 listing one: a
   take is always captured during an exercise or loop run that already logs, so a second row would
   double-count the same minutes.
   Read today by `ExerciseDetailSheet`, which queries the whole log and filters in memory (a `#Predicate`

@@ -10,6 +10,12 @@
 > song. The song row's missing identity is answered without giving `Song` a `uid`: a run now carries
 > its song's `sourceID`, and the name it was logged under. Every deferral below still stands — no
 > streaks, weekly goal, days-active denominator, week-over-week delta or year tier.
+>
+> **Amended by ADR 0242 (2026-10-02).** Time with the click on the **Metronome screen** is logged, as
+> a run of its own kind. It is the one exception to *"a run stopped by hand logs nothing"* below: that
+> screen has no course to complete, so stopping it is how a sitting ends. Its length is not how long
+> the screen was open — the objection below stands — but the time the click sounded, from the
+> engine's session clock, with pauses left out and a 30-second floor.
 
 - **Status:** Accepted — **rescoped 2026-07-31** (`pocket-209-session-block-model`), then **amended the same
   day** (`pocket-214-practice-log-progress-screen`) to un-defer the near horizons of the Progress screen. The

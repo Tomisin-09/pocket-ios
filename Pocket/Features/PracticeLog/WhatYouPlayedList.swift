@@ -86,39 +86,61 @@ struct WhatYouPlayedList: View {
 
     // MARK: - Rows
 
+    @ViewBuilder
     private func groupRow(_ group: PracticeBreakdown.Group) -> some View {
         let isOpen = expanded.contains(group.kind)
         let figure = PracticeLog.MinutesFigure(seconds: group.seconds)
-        return Button {
-            withAnimation(.snappy(duration: 0.2)) {
-                if isOpen { expanded.remove(group.kind) } else { expanded.insert(group.kind) }
-            }
-        } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 8) {
-                    Image(systemName: "chevron.right")
-                        .font(.caption2.weight(.semibold))
-                        .foregroundStyle(PocketColor.textSecondary)
-                        .rotationEffect(.degrees(isOpen ? 90 : 0))
-                        .frame(width: 12)
-                    Text(group.kind.groupLabel)
-                        .font(.futura(.subheadline, weight: .medium))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    Spacer(minLength: 8)
-                    Text(figure.short)
-                        .font(.pocketMono(.caption))
-                        .foregroundStyle(PocketColor.textSecondary)
+        let spoken = "\(group.kind.groupLabel), \(figure.value) \(figure.unit)"
+        if group.items.isEmpty {
+            // Nothing inside to open — the metronome's runs belong to no unit (ADR 0242). So the row
+            // is the whole entry: not a button, and no chevron, because a control that opens onto
+            // nothing is worse than no control.
+            groupRowContent(group, figure: figure, chevron: nil)
+                .accessibilityElement(children: .ignore)
+                .accessibilityIdentifier(UITestHooks.practiceLogKind)
+                .accessibilityLabel(spoken)
+        } else {
+            Button {
+                withAnimation(.snappy(duration: 0.2)) {
+                    if isOpen { expanded.remove(group.kind) } else { expanded.insert(group.kind) }
                 }
-                ProportionBar(fraction: group.seconds / scale, height: 5, emphasis: 1)
-                    .padding(.leading, 20)
+            } label: {
+                groupRowContent(group, figure: figure, chevron: isOpen)
+                    .contentShape(Rectangle())
             }
-            .padding(.vertical, 8)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityIdentifier(UITestHooks.practiceLogKind)
+            .accessibilityLabel(spoken)
+            .accessibilityValue(isOpen ? "Open" : "Closed")
         }
-        .buttonStyle(.plain)
-        .accessibilityIdentifier(UITestHooks.practiceLogKind)
-        .accessibilityLabel("\(group.kind.groupLabel), \(figure.value) \(figure.unit)")
-        .accessibilityValue(isOpen ? "Open" : "Closed")
+    }
+
+    /// A group's name, minutes and bar. `chevron` is whether the group is open, or `nil` for a group
+    /// with nothing to open — which keeps the chevron's width, so its name still lines up with the
+    /// names above and below it.
+    private func groupRowContent(_ group: PracticeBreakdown.Group,
+                                 figure: PracticeLog.MinutesFigure,
+                                 chevron isOpen: Bool?) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Image(systemName: "chevron.right")
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .rotationEffect(.degrees(isOpen == true ? 90 : 0))
+                    .frame(width: 12)
+                    .opacity(isOpen == nil ? 0 : 1)
+                Text(group.kind.groupLabel)
+                    .font(.futura(.subheadline, weight: .medium))
+                    .foregroundStyle(PocketColor.textPrimary)
+                Spacer(minLength: 8)
+                Text(figure.short)
+                    .font(.pocketMono(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+            ProportionBar(fraction: group.seconds / scale, height: 5, emphasis: 1)
+                .padding(.leading, 20)
+        }
+        .padding(.vertical, 8)
     }
 
     private func items(_ group: PracticeBreakdown.Group) -> some View {

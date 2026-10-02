@@ -20,6 +20,12 @@ enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
     /// A play-along with the record (ADR 0071). Carries minutes and a day but no tempo — a play-along
     /// runs at the song's own speed, not at a tempo you own.
     case song
+    /// Time with the click on the **Metronome screen** (ADR 0242) — practice with nothing else on
+    /// screen. Carries **no unit and no tempo**: the click is not a unit you own, and the automator
+    /// moves the tempo under you, so no one number is the tempo you practised at. Logged by that
+    /// screen only, never by the engine it shares with the exercise screens (which log `.exercise`)
+    /// and the previews (which are not practice).
+    case metronome
     /// A row written by a newer build than the one reading it. Counts towards time totals; claims
     /// nothing about what it was.
     case other
@@ -40,6 +46,7 @@ enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
         case .earLoop: "Ear training"
         case .improvise: "Improvising"
         case .song: "Song"
+        case .metronome: "Metronome"
         case .other: "Practice"
         }
     }
@@ -55,8 +62,22 @@ enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
         case .earLoop: "Ear training"
         case .improvise: "Improvising"
         case .song: "Play-alongs"
+        case .metronome: "Metronome"
         case .other: "Other practice"
         }
+    }
+
+    /// Reads a kind this build doesn't know as `.other` instead of throwing (ADR 0242).
+    ///
+    /// The synthesised decoder for a `String` enum throws on a raw value it has no case for, and in
+    /// an archive that one row fails the **whole** restore as corrupt — a backup made on a newer
+    /// build, holding a kind added after this one, would be unreadable here. Read as `.other`, its
+    /// minutes still count, which is the rule `PracticeRun.kind` already applies to the store. What
+    /// is lost is the name: a restore writes that row back as `.other`, and a later update that
+    /// learns the kind cannot tell it apart from any other. The minutes are what the log is for.
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = PracticeRunKind(rawValue: raw) ?? .other
     }
 }
 
