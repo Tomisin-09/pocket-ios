@@ -4,8 +4,9 @@ Everything else in Red Moon asks you to decide what to practise. This is the par
 you: tell it how long you have, tell it what you are working towards, and it builds a session out of
 what is already in your library.
 
-What it produces is an ordinary [routine](routines.md) — the same blocks, the same player — so
-nothing about a generated session is a special case you have to learn separately.
+What it produces is an ordinary [routine](routines.md) — the same blocks, the same player. The one
+thing that differs is whether it stays: a session you start is yours for today, and joins your
+routines only if you save it ([below](#keeping-one)).
 
 Reach it from **Start today's session** on Home, or from **Today's session** at the top of
 **Practice**.
@@ -189,10 +190,27 @@ committed.
 What you get is a provisional routine: a dated name you can change on the spot, the blocks it picked,
 and the estimated length against the time you asked for. Nothing is in your library yet.
 
-- **Start** plays it — and keeps it, because a session you actually practise is real practice
-  history.
+- **Start** plays it for today. It does not join your routines, so using the planner every day
+  doesn't fill them with a dated session a day.
 - **Save** keeps it without playing it, and it becomes a routine like any other.
 - Backing out keeps nothing.
+
+Everything a session leaves behind is kept whether you save it or not: its minutes in the practice
+log, what you played, your note about it and any takes. Saving keeps the plan.
+
+### Keeping one
+
+A session you started stays on Home — in **Recent routines**, and in **Jump back in** while it is
+the last thing you played — until you start the next one, which takes its place. You can run it
+again from there as often as you like. To keep it for good, save it at either of two moments:
+
+- **Save as a routine**, on **Session complete**, just above **Done**.
+- **Save**, in the toolbar of the session's own screen — where a saved routine has **Edit** — any
+  time before you start another session.
+
+It keeps its name, its history and your note's link to it. Until it is saved its screen is
+read-only: no **Edit**, no reminder, no links and no sharing, because the next session would take
+them with it.
 
 The review screen is the routine editor, because what you are looking at is a routine. **Edit** and
 the blocks are yours to change before you start: reorder them, drop the one you are not in the mood
@@ -216,7 +234,7 @@ goal, or, for an away-from-your-instrument session, a loop.
 
 If you just want something to play, the **Routines** library's options control carries **Generate a
 quick session**. It skips the goals entirely and builds from whichever of your exercises are most
-due, landing on the same review screen.
+due, landing on the same review screen, where **Start** and **Save** work just as they do above.
 
 ## What it does not do
 

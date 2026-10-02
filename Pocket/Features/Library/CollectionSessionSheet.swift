@@ -88,7 +88,9 @@ struct CollectionSessionSheet: View {
                     container: context.container,
                     generatedSession: CollectionSessionBuilder.sessionBlocks(
                         for: collection, in: songs, length: length, order: order, seed: seed),
-                    defaultName: CollectionSessionBuilder.defaultName(for: collection))
+                    defaultName: CollectionSessionBuilder.defaultName(for: collection),
+                    // Built from songs, so the same tomorrow: Start keeps it (ADR 0243 D1).
+                    startsAs: .saved)
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

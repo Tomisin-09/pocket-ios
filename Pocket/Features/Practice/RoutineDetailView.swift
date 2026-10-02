@@ -30,6 +30,11 @@ struct RoutineDetailView: View {
     /// Whether this routine has been committed to the store yet — drives Cancel (discard vs dismiss)
     /// and the empty-new drop on Save. Flips true after the first Save of a new routine. Internal for
     /// the length-readout extension.
+    ///
+    /// **In the store is not the same as saved** (ADR 0243). A temporary session is in the store and
+    /// not in Routines, so anything a player would put *into* a routine reads `isSaved` instead
+    /// (`RoutineDetailView+Temporary`). This one still answers what it always did: whether there is a
+    /// stored row to write through.
     @State var existsInStore: Bool
     /// Read-only by default; every mutating control is revealed only in edit mode. A brand-new
     /// routine opens directly in edit mode (there's nothing to view yet).
@@ -83,6 +88,8 @@ struct RoutineDetailView: View {
     /// generated session so the review screen can show its estimate against a soft budget (R3).
     /// `nil` for a normal routine (no target to compare against). Internal for the length extension.
     let targetMinutes: Int?
+    /// What **Start** does with a provisional session (ADR 0243 D1). Only read while `!existsInStore`.
+    let startsAs: ProvisionalStart
 
     /// Build the sandbox. An existing routine is faulted into the child context by its id (opens
     /// read-only); a nil `existing` means a fresh routine created only in the sandbox, opened in edit
@@ -90,6 +97,7 @@ struct RoutineDetailView: View {
     init(container: ModelContainer, existing: Routine?) {
         self.container = container
         self.targetMinutes = nil
+        self.startsAs = .saved
         let context = ModelContext(container)
         context.autosaveEnabled = false
         _editContext = State(initialValue: context)
@@ -108,12 +116,17 @@ struct RoutineDetailView: View {
 
     /// A **provisional routine** for review, made by `build` in a private sandbox (autosave off), so
     /// nothing persists until the user Saves or Starts. Opens read-only on the block list; backing out
-    /// without committing discards the sandbox, and nothing lands in the library. `build` can run more
-    /// than once, as a view's init can, so it must write nothing outside the context it's handed. A
+    /// without committing discards the sandbox, and nothing is written. `build` can run more than
+    /// once, as a view's init can, so it must write nothing outside the context it's handed. A
     /// generated session (`+Generated`) and the song map's *Put it together* (ADR 0232 D11) come here.
-    init(container: ModelContainer, targetMinutes: Int? = nil, provisional build: (ModelContext) -> Routine) {
+    ///
+    /// **Save** always puts it in Routines. **Start** does what `startsAs` says (ADR 0243 D1): a
+    /// planner session runs as a temporary one, and a session built from songs is kept.
+    init(container: ModelContainer, targetMinutes: Int? = nil, startsAs: ProvisionalStart,
+         provisional build: (ModelContext) -> Routine) {
         self.container = container
         self.targetMinutes = targetMinutes
+        self.startsAs = startsAs
         let context = ModelContext(container)
         context.autosaveEnabled = false
         let routine = build(context)
@@ -226,7 +239,9 @@ struct RoutineDetailView: View {
         .sheet(isPresented: $addingUnit, onDismiss: { addedPickIDs.removeAll() },
                content: { AddRoutineUnitSheet(addedIDs: Set(addedPickIDs.keys),
                                               onToggle: toggleUnit) })
-        .fullScreenCover(item: $playingRoutine) { RoutinePlayerView(routine: $0) }
+        // *Save as a routine* on the player's finish screen writes the main context, which this
+        // screen's sandbox doesn't see — so a temporary session re-reads itself on the way back.
+        .fullScreenCover(item: $playingRoutine, onDismiss: rereadAfterPlaying) { RoutinePlayerView(routine: $0) }
         .sheet(item: $repsEditorItem) { repsEditorSheet($0.value) }
         .sheet(isPresented: $sendingRoutine) { SendRoutineSheet(routine: routine) }
         // Attached to the `List`, never inside it — see `ReferenceLinkEditing`. Writes into the
@@ -250,20 +265,19 @@ struct RoutineDetailView: View {
     }
 
     /// Commit a provisional generated session to the library under `name` (the inline Name field),
-    /// de-duplicated against the existing routines, and flip it into a normal stored routine. If the
+    /// de-duplicated against the saved routines, and flip it into a normal stored routine. If the
     /// field was blanked, fall back to a fresh dated default rather than saving an unnamed session.
     /// Idempotent — a no-op once already stored.
+    ///
+    /// A temporary session is left out of the names it is de-duplicated against (ADR 0243 D4): it is
+    /// about to be replaced, and numbering a kept routine against it would leave a gap in the dates.
     func commitProvisional(named name: String) {
         guard !existsInStore else { return }
         trimDescription()
-        let others = ((try? editContext.fetch(FetchDescriptor<Routine>())) ?? [])
+        let others = Routine.saved((try? editContext.fetch(FetchDescriptor<Routine>())) ?? [])
             .filter { $0.persistentModelID != routine.persistentModelID }
             .map(\.name)
-        let requested = name.trimmingCharacters(in: .whitespaces)
-        let base = requested.isEmpty
-            ? QuickSessionNaming.defaultName(existing: others, date: .now)
-            : requested
-        routine.name = QuickSessionNaming.uniqued(base, existing: others)
+        routine.name = QuickSessionNaming.savedName(requested: name, existing: others, date: .now)
         try? editContext.save()
         existsInStore = true
         isEditing = false
@@ -292,6 +306,14 @@ struct RoutineDetailView: View {
             // Name section above (R1b), so Save commits the current name directly.
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Save") { commitProvisional(named: routine.name) }
+                    .font(.futura(.body, weight: .bold))
+                    .tint(PocketColor.practice)
+            }
+        } else if routine.isTemporary {
+            // A temporary session (ADR 0243 D4): Save where a saved routine has Edit, the same word
+            // the review screen uses for the same act, and the same width on the bar (ADR 0126).
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Save") { saveTemporarySession() }
                     .font(.futura(.body, weight: .bold))
                     .tint(PocketColor.practice)
             }
@@ -334,14 +356,21 @@ struct RoutineDetailView: View {
         restGuardSlot = nil
         discardUnsavedReferenceImages()
         guard existsInStore else { dismiss(); return }
+        rebuildSandbox()
+        isEditing = false
+        haptic(.light)
+    }
+
+    /// Drop the sandbox and fault the routine into a fresh one, as the store has it now. Cancel's way
+    /// back to what was saved, and how a temporary session picks up a save made under the player
+    /// (ADR 0243). Internal for `+Temporary`.
+    func rebuildSandbox() {
         let context = ModelContext(container)
         context.autosaveEnabled = false
         if let local = context.model(for: routine.persistentModelID) as? Routine {
             routine = local
         }
         editContext = context
-        isEditing = false
-        haptic(.light)
     }
 
     // MARK: - Mutations (sandbox only — provisional until Save)

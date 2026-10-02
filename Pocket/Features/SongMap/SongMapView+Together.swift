@@ -82,10 +82,11 @@ extension SongMapView {
                                    joined: joined)
     }
 
-    /// The routine, built in the review's own context: nothing lands in Routines until Save (ADR 0111).
+    /// The routine, built in the review's own context: nothing lands in Routines until Save or Start
+    /// (ADR 0111). Built from the song, so Start keeps it rather than running it temporary (ADR 0243 D1).
     @ViewBuilder var togetherReview: some View {
         if let reviewing {
-            RoutineDetailView(container: modelContext.container) { context in
+            RoutineDetailView(container: modelContext.container, startsAs: .saved) { context in
                 SongMapWriter.routine(named: reviewing.name, runs: reviewing.runs, in: context)
             }
         }

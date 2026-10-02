@@ -14,8 +14,11 @@ import SwiftUI
 /// |---|---|
 /// | provisional, something playable | estimated length + the soft budget hint (unchanged) |
 /// | provisional, nothing playable | nothing — no history to have, and no length worth stating |
-/// | saved, something playable | estimated length · last practised · how many times |
-/// | saved, nothing playable | last practised · how many times (an all-rest or all-orphaned routine estimates at 0 min, and "~0 min" is a worse answer than no row) |
+/// | in the store, something playable | estimated length · last practised · how many times |
+/// | in the store, nothing playable | last practised · how many times (an all-rest or all-orphaned routine estimates at 0 min, and "~0 min" is a worse answer than no row) |
+///
+/// *In the store* includes a **temporary session** (ADR 0243 D5). It has been run, so "practised
+/// once, today" is true of it, and it is what the routine will carry if it is saved.
 ///
 /// **A provisional routine shows no history on purpose.** It has a `uid`, so the read would succeed
 /// and return zero — but zero here reports on something the player has not yet decided to keep, and

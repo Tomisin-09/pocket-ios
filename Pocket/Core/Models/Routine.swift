@@ -39,6 +39,10 @@ final class Routine {
     /// — additive, no store wipe (CoreData 134110 rule).
     var isFavorite: Bool = false
 
+    /// A started planner session not yet saved to Routines (ADR 0243) — see `Routine+Temporary`.
+    /// `isFavorite`'s shape: migration fills every existing routine with `false`, meaning saved (D7).
+    var isTemporary: Bool = false
+
     /// **Provenance**: the stable slug of the curated starter routine this was seeded from (ADR 0112,
     /// e.g. `"morning-warm-up"`) — `nil` for a user-built routine. Mirrors `Exercise.presetSlug`
     /// exactly: a plain optional `String`, not an enum, so the add is a **lightweight, non-lossy**

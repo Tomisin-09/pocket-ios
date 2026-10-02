@@ -35,6 +35,7 @@ extension RoutinePlayerView {
                     if !practicedTitles.isEmpty {
                         recap
                         sessionComposer
+                        if startedTemporary { saveAsRoutine }
                     }
                     Button { dismiss() } label: {
                         Label("Done", systemImage: "checkmark").pocketRunButton
@@ -86,6 +87,40 @@ extension RoutinePlayerView {
                             header: "How did that go?",
                             placeholder: "Anything worth keeping about this session?",
                             style: .card)
+    }
+
+    /// **Save as a routine** (ADR 0243 D4), on a temporary session only: one tap puts it in Routines
+    /// under its current name, and the button gives way to a line saying so.
+    ///
+    /// A button and never a prompt. This screen already asks one question, the note above, and a
+    /// "Keep this session?" dialog at the end of every sitting is the interruption ADR 0186 refused.
+    /// It writes the **main** context, which is where this routine lives; the routine screen under the
+    /// player re-reads itself when the player closes.
+    ///
+    /// Drawn in the screen's own shapes: the composer's 48 pt rounded rectangle, **outlined** rather
+    /// than filled so it reads as secondary to **Done** below it. `minHeight`, for ADR 0213 D6's reason.
+    @ViewBuilder private var saveAsRoutine: some View {
+        if routine.isTemporary {
+            Button {
+                routine.saveTemporary(in: modelContext)
+                haptic(.medium)
+            } label: {
+                Label("Save as a routine", systemImage: "list.bullet.rectangle.portrait")
+                    .font(.futura(.headline))
+                    .foregroundStyle(PocketColor.practice)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: 48)
+                    .background(RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(PocketColor.practice, lineWidth: 1.5))
+                    // An outline leaves the middle empty, and an empty middle takes no tap.
+                    .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.plain)
+        } else {
+            Label("Saved to your routines", systemImage: "checkmark")
+                .font(.futura(.footnote))
+                .foregroundStyle(PocketColor.textSecondary)
+        }
     }
 
     /// The unit blocks (exercises/loops/songs) in this routine, in order — the recap list; rests

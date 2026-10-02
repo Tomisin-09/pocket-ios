@@ -59,7 +59,11 @@ struct AddToRoutineSheet: View {
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @Query private var routines: [Routine]
+    @Query private var allRoutines: [Routine]
+    /// The routines a block can go into: the saved ones (ADR 0243 D2). A temporary session takes no
+    /// edit until it is saved (D5), and a block added to it would go when the next planner Start
+    /// deletes it.
+    private var routines: [Routine] { Routine.saved(allRoutines) }
     /// The chosen block shape's id (`AddToRoutineChoice.id`); `nil` = the first choice.
     @State private var choiceID: String?
     /// What this sheet has added: `"routineUID|pickID"` → the block's `uid`. The same session-scoped

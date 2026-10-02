@@ -46,6 +46,20 @@ tuition.
       → [ADR 0090](decisions/0090-present-model-sheets-by-stable-uid.md),
       memory `swiftdata-sheet-item-persistentid-dismiss`
 
+## When two contexts write rows that point at the same model
+
+- [ ] **Delete in the context that inserted the rows sharing a target, never a sibling.** A sandbox
+      `ModelContext` saved a routine whose blocks pointed at drills and loops; the main context then
+      deleted an older routine pointing at the same ones. Every shared block of the *new* routine came
+      back with its unit `nil` (*Unit removed*); the one unshared block survived. The main context's
+      view of each unit's inverse (`routineItems`) predated the sandbox's rows and was written back.
+      Doing the delete in the sandbox, in the same save as the insert, kept them all.
+      → [ADR 0243](decisions/0243-the-planners-sessions-are-temporary-until-you-save-them.md) D3,
+      memory `swiftdata-sibling-context-save-stale-relationship`
+- [ ] **The in-memory store won't settle this for you.** A test whose main context *fetched* the old
+      rows passed where the app failed; one whose main context *inserted* them failed even on flows
+      that work in the shipping app. Check the result in the app (a UI test reading the screen).
+
 ## When you write tests around models
 
 - [ ] **Don't `context.insert(...)` a full sample object graph in a test** — it

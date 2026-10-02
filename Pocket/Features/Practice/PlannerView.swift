@@ -5,7 +5,8 @@ import SwiftUI
 /// Slice 3). Pick how long you have (`SessionLength`), keep a short list of **goals** that shape what
 /// surfaces, then **Generate** — the front-half (`CandidateDeriver`) expands your active goals into a
 /// ranked pool and the back-half (`SessionBuilder`) lays out a timed session, materialised into a
-/// provisional `Routine` you review before Starting (nothing persists until you Save or Start it).
+/// provisional `Routine` you review before Starting. Nothing is written until you Save or Start it,
+/// and Start runs it as a **temporary** session that reaches Routines only if saved (ADR 0243).
 ///
 /// With **no active goals** this falls back to a goal-less **Quick session** (Slice 1): due-ranked
 /// exercises alone — so the button always produces something to practise.
@@ -141,10 +142,12 @@ struct PlannerView: View {
         .sheet(item: $editingGoal) { ref in
             GoalEditorView(existing: ref.value, songs: songs)
         }
+        // Today's plan is a function of today, so Start runs it as a temporary session that reaches
+        // Routines only if it is saved (ADR 0243 D1).
         .navigationDestination(item: $draft) { draft in
             RoutineDetailView(container: context.container,
                               generatedSession: draft.blocks, defaultName: draft.name,
-                              targetMinutes: draft.targetMinutes)
+                              targetMinutes: draft.targetMinutes, startsAs: .temporary)
         }
         .alert("Nothing to schedule yet", isPresented: $showingEmptyNotice) {
             Button("OK", role: .cancel) { }
@@ -311,7 +314,8 @@ struct PlannerView: View {
             haptic(.medium)
             return
         }
-        let name = QuickSessionNaming.defaultName(existing: routines.map(\.name), date: .now,
+        // Numbered against saved routines only: a temporary session is about to be replaced (ADR 0243 D4).
+        let name = QuickSessionNaming.defaultName(existing: Routine.saved(routines).map(\.name), date: .now,
                                                   constraint: constraint)
         draft = QuickSessionDraft(blocks: blocks, name: name, targetMinutes: length.minutes)
         haptic(.light)

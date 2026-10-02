@@ -13,12 +13,13 @@ import SwiftUI
 /// and a share buried among them is a share nobody finds at the moment they want it.
 extension RoutineDetailView {
 
-    /// The share control. Read-only mode only, and only once the routine is in the store.
+    /// The share control. Read-only mode only, and only once the routine is saved.
     ///
     /// Not while editing, because the sandbox's contents are provisional (`RoutineDetailView`'s
     /// Cancel/Save contract) and a file is not — a routine handed over mid-edit could contain blocks
     /// the sender then cancelled, and there is no taking it back. Not before the first Save, for the
-    /// same reason: a provisional generated session is a proposal, not yet a routine.
+    /// same reason: a provisional generated session is a proposal, not yet a routine. Nor on a
+    /// temporary session (ADR 0243 D5), which is in the store but not yet one of your routines.
     ///
     /// **A routine that plays songs opens a send screen first** (ADR 0236 D6), for *Include the songs*
     /// and the name it's sent as. One that plays none has nothing to choose, so it goes straight to the
@@ -26,7 +27,7 @@ extension RoutineDetailView {
     /// symbol either way, so the bar never changes width (ADR 0126).
     @ToolbarContentBuilder
     var shareToolbarItem: some ToolbarContent {
-        if !isEditing && existsInStore {
+        if !isEditing && isSaved {
             ToolbarItem(placement: .topBarTrailing) {
                 if SharedPracticeBuilder.songsPlayed(by: routine).isEmpty {
                     ShareLink(item: handover, preview: SharePreview(shareTitle)) {

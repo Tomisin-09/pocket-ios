@@ -268,6 +268,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Today's session no longer fills your routines.** Starting a session from **Today's session** or a
+  quick session plays it for today instead of adding a dated routine to your library every time.
+  It stays on Home — in **Recent routines**, and in **Jump back in** while it's the last thing you
+  played — until you start the next one, which replaces it. To keep one, tap **Save as a routine**
+  on **Session complete**, or **Save** on its own screen any time before your next session; it keeps
+  its name, its history and your note's link. Your minutes, what you played, your notes and takes
+  are kept whether you save it or not. A song's routine, a collection's session and *Put it
+  together* keep what they make, as before, and every routine already in your library stays.
+  (ADR 0243)
 - **Red Moon no longer counts how you use it.** The anonymous usage counts are gone, and with them
   the line about them under the first-run questions, the one-time screen that asked about them after
   a first practice, and **Settings ▸ Privacy**, whose only control they were — Settings now has eight

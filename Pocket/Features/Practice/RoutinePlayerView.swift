@@ -48,10 +48,15 @@ struct RoutinePlayerView: View {
     /// Whether the between-blocks tuner sheet is up. Reachable from the rest and Done screens, both
     /// of which are silent and both of which the block's run screen has already left.
     @State var showingTuner = false
+    /// Whether this run began as a **temporary session** (ADR 0243 D4), so the finish screen offers
+    /// *Save as a routine*. Fixed at the start, not read live: after a save the flag is `false`, and
+    /// the place the button was is where the line saying it's in Routines goes.
+    @State var startedTemporary: Bool
 
     init(routine: Routine) {
         self.routine = routine
         _player = State(initialValue: RoutineSessionPlayer(routine: routine))
+        _startedTemporary = State(initialValue: routine.isTemporary)
     }
 
     var body: some View {
