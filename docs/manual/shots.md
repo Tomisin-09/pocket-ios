@@ -50,7 +50,6 @@ marker grammar in [README.md](README.md).
 | `metronome/screen` | `screen` | `metronome` | Metronome open, 96 BPM, 4/4, stopped |  |
 | `metronome/settings-sheet` | `screen` | `metronome` | Metronome open, meter control tapped, scrolled to the top |  |
 | `metronome/tempo-controls` | `band` | `metronome` | Metronome open, 96 BPM |  |
-| `privacy/settings` | `panel` | `privacy` | Settings ▸ Privacy |  |
 | `reference/exercises-library` | `screen` | `practice` | seeded library, Practice ▸ Exercises, the seeded six present |  |
 | `reference/home` | `screen` | `home-and-library` | seeded library, Home, one song recently practised |  |
 | `reference/journal` | `screen` | `tools-and-journal` | seeded library, Journal, notes and a take across two days |  |
@@ -68,7 +67,6 @@ marker grammar in [README.md](README.md).
 | `reference/quick-note` | `screen` | `tools-and-journal` | an exercise run screen, quick note tapped |  |
 | `reference/routines-library` | `screen` | `practice` | seeded library, Practice ▸ Routines, at least one routine run before |  |
 | `reference/settings-hub` | `screen` | `settings` | Settings open |  |
-| `reference/settings-privacy` | `panel` | `settings` | Settings ▸ Privacy |  |
 | `reference/settings-routines` | `panel` | `settings` | Settings ▸ Routines |  |
 | `reference/settings-sound` | `panel` | `settings` | Settings ▸ Sound & feel |  |
 | `reference/settings-you` | `screen` | `settings` | Settings ▸ You |  |
@@ -110,4 +108,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped, top of the sheet |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 
-94 shots across 18 pages.
+92 shots across 18 pages.

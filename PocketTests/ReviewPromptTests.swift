@@ -15,30 +15,23 @@ import XCTest
 /// The class is **not** `@MainActor` and `setUp`/`tearDown` are not isolated, deliberately. CI builds
 /// on an older, stricter toolchain than local Xcode, where mutating a main-actor-isolated stored
 /// property from `XCTestCase`'s nonisolated `setUp` is an error rather than a warning — the same wall
-/// the project's other `@MainActor` suites hit. `Analytics` *is* `@MainActor`, so the two calls that
-/// touch it are wrapped in `MainActor.assumeIsolated`, which is sound because XCTest runs the
-/// non-async `setUp`/`tearDown` pair on the main thread.
+/// the project's other `@MainActor` suites hit. The tests that call into `ReviewPrompt` are
+/// `@MainActor` one by one instead.
 final class ReviewPromptTests: XCTestCase {
 
     private var defaults: UserDefaults!
     private var suiteName: String!
-    private var sink: RecordingSink!
 
     override func setUp() {
         super.setUp()
         suiteName = "ReviewPromptTests.\(UUID().uuidString)"
         defaults = UserDefaults(suiteName: suiteName)
-        let sink = RecordingSink()
-        self.sink = sink
-        MainActor.assumeIsolated { Analytics.resetForTesting(sink: sink, consent: { true }) }
     }
 
     override func tearDown() {
         defaults.removePersistentDomain(forName: suiteName)
         defaults = nil
         suiteName = nil
-        sink = nil
-        MainActor.assumeIsolated { Analytics.resetForTesting() }
         super.tearDown()
     }
 
@@ -122,22 +115,6 @@ final class ReviewPromptTests: XCTestCase {
                  ask: { asks += 1 })
 
         XCTAssertEqual(asks, 2)
-    }
-
-    // MARK: - Analytics
-
-    @MainActor
-    func testItEmitsExactlyOneReviewRequestedEventOnTheAsk() {
-        askIfDue()
-        XCTAssertEqual(sink.events, [.reviewRequested(trigger: .sittings)])
-    }
-
-    @MainActor
-    func testAHoldEmitsNothing() {
-        askIfDue(settled: false)
-        askIfDue(sittings: 0)
-        XCTAssertTrue(sink.events.isEmpty,
-                      "an ask that never happened is not an event; it is the absence of one")
     }
 
     // MARK: - The debug reset

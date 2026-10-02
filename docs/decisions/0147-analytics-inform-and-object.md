@@ -1,6 +1,9 @@
 # ADR 0147 — analytics moves from opt-in to inform-and-object, and the region decides which
 
-- **Status:** Accepted
+- **Status:** **Superseded by ADR 0239 (2026-10-02).**
+- **Superseded by:** ADR 0239 — all of it. Red Moon no longer has analytics, so there is no default
+  to split by region and nothing to disclose or object to. The legal reasoning below is where to
+  start if analytics ever comes back (0239 D6).
 - **Date:** 2026-08-06 (`pocket-238-analytics-inform-and-object`)
 - **Supersedes in part:** ADR 0120 §2 (opt-in, defaulting to off) and §3 (the ask comes after a first
   practice). **§1, §4, §5, §6 and §7 stand unchanged** — Tier 3 is still closed permanently, the

@@ -6,33 +6,20 @@
 	     EXPAND BEFORE PHASE 4: when the AI planner sends practice history to the
 	     Claude proxy, declare the relevant NSPrivacyCollectedDataTypes.
 
-	     ADR 0120: anonymous product analytics (Aptabase) are declared below. They
-	     are opt-in and off by default, and the vocabulary is a closed Swift enum
-	     that cannot carry audio, recordings, journal notes, song titles or the
-	     artist name — see Pocket/Core/Analytics/AnalyticsEvent.swift.
+	     ADR 0239: there is no product analytics. The Product Interaction entry
+	     ADR 0120 declared for Aptabase went with the SDK; usage figures come from
+	     App Store Connect, which Apple collects under the player's own device-level
+	     choice and which the app neither reads nor sends. The only data the app
+	     itself sends is the contact form below, and only when the player taps Send.
 
 	     NSPrivacyTracking stays false: no IDFA, no ATT prompt, no ad SDK, and no
-	     data is ever linked to identity or shared with a data broker. Tier 3 is
-	     ruled out permanently, so this flag should never need to change. -->
+	     data is ever linked to identity or shared with a data broker. -->
 	<key>NSPrivacyTracking</key>
 	<false/>
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>
 	<array>
-		<!-- Mirrors the manifest the Aptabase SDK ships, which we inherit. -->
-		<dict>
-			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypeProductInteraction</string>
-			<key>NSPrivacyCollectedDataTypeLinked</key>
-			<false/>
-			<key>NSPrivacyCollectedDataTypeTracking</key>
-			<false/>
-			<key>NSPrivacyCollectedDataTypePurposes</key>
-			<array>
-				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
-			</array>
-		</dict>
 		<!-- ADR 0161: the in-app contact form (Settings ▸ About ▸ Contact Support).
 		     Collected ONLY when the player fills the form in and taps Send — there is
 		     no background send and no other caller. Delivered to our support inbox

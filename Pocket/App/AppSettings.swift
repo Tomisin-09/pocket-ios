@@ -92,10 +92,6 @@ enum AppSettings {
         static let accidentalPreference = "accidentalPreference"
         static let countShowsBeats = "countShowsBeats"
         static let namingPhraseNotes = "namingPhraseNotes"
-        static let analyticsEnabled = "analyticsEnabled"
-        static let analyticsPromptSeen = "analyticsPromptSeen"
-        static let installDate = "installDate"
-        static let hasPracticed = "hasPracticed"
         static let songsInBackup = "songsInBackup"
         static let attachDiagnostics = "attachDiagnostics"
         /// The Journal feed's four persisted list controls (ADR 0190 D8). Named here rather than
@@ -330,46 +326,6 @@ enum AppSettings {
     static func resolvedSpelling(storedValue: String?) -> NoteSpelling {
         guard let storedValue else { return .default }
         return NoteSpelling(rawValue: storedValue) ?? .default
-    }
-
-    // MARK: - Analytics (ADR 0120, region-split by ADR 0147)
-    //
-    // `analyticsEnabled`, `analyticsDisclosureSeen` and `seedAnalyticsDefaultIfNeeded` live in
-    // `AppSettings+Analytics.swift` — this file sits just under the 400-line cap.
-
-    /// Whether a practice run has ever been *started* on this install. Purely local bookkeeping
-    /// that decides when the analytics consent ask is due; written whether or not consent exists.
-    ///
-    /// Deliberately keyed on starting rather than finishing: a player who always stops a ramp early
-    /// would otherwise never be asked at all.
-    static var hasPracticed: Bool { bool(Key.hasPracticed, default: false) }
-
-    /// Record that practice has happened. Idempotent.
-    static func recordPracticed(store: UserDefaults = .standard) {
-        guard !store.bool(forKey: Key.hasPracticed) else { return }
-        store.set(true, forKey: Key.hasPracticed)
-    }
-
-    /// When the app was first launched, used only to bucket an install's age (`LatencyBucket`) —
-    /// never sent as a date. Written on first launch regardless of consent: it is the user's own
-    /// local state, exempt under Art 5(3) as strictly necessary, and only becomes an analytics input
-    /// if consent later arrives. Returns `nil` before the first launch has recorded it.
-    static var installDate: Date? {
-        UserDefaults.standard.object(forKey: Key.installDate) as? Date
-    }
-
-    /// Record the install date once. A no-op on every launch after the first, so the value can never
-    /// drift forward and quietly reset every install to "day 1".
-    static func recordInstallDateIfNeeded(now: Date = .now, store: UserDefaults = .standard) {
-        guard store.object(forKey: Key.installDate) == nil else { return }
-        store.set(now, forKey: Key.installDate)
-    }
-
-    /// How old this install is, bucketed. Falls back to `.day1` when no install date was recorded —
-    /// the honest reading for a launch that predates the key.
-    static var installAgeBucket: LatencyBucket {
-        guard let installDate else { return .day1 }
-        return LatencyBucket(installAge: Date.now.timeIntervalSince(installDate))
     }
 
     /// Internal rather than private since ADR 0182's file split — `AppSettings+Tuner` reads it.

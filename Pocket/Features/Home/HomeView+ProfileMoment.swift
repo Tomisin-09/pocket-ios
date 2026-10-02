@@ -10,8 +10,9 @@ extension HomeView {
     /// Decide which one-time moment (if any) to surface on this Home appearance, keeping the covers
     /// mutually exclusive. The **first-launch intake** comes first — until it's been seen it takes
     /// the screen. Once it's done, the **"you've earned a name"** invitation can surface, but only
-    /// after the player has done real work and hasn't named themselves yet. Then the analytics
-    /// disclosure. The **review ask** is last, and is the only rung that draws nothing of our own.
+    /// after the player has done real work and hasn't named themselves yet. The **review ask** is
+    /// last, and is the only rung that draws nothing of our own. (An analytics disclosure sat between
+    /// the two until ADR 0239 removed analytics.)
     ///
     /// A home-appearance check rather than a per-action callback — for a loop, that just means the
     /// offer surfaces when they return to Home after leaving the song, the calmer moment.
@@ -32,38 +33,10 @@ extension HomeView {
             showingNamePrompt = true
             return
         }
-        if offerAnalyticsDisclosureIfDue() { return }
         maybeAskForReview()
         // Last, and unconditionally: every path that gets here has decided this appearance, and the
         // next one is no longer a launch.
         homeHasAppearedThisLaunch = true
-    }
-
-    /// The analytics sheet sits **last on the profile ladder** so it never competes with a profile
-    /// moment. What it's for now depends on the region's consent model (ADR 0147):
-    ///
-    /// - `.ask` (EEA + CH) — unchanged from ADR 0120: an actual consent ask, gated on a completed
-    ///   practice so it stays out of the activation flow it exists to measure.
-    /// - `.notify` (UK + rest of world) — a **catch-up for pre-existing installs only**. A fresh
-    ///   install is told by the intake footnote and must never see this, which is what the
-    ///   `artistIntakeSeen` check below encodes: reaching here with the intake seen but the
-    ///   disclosure unseen means this install passed through an intake that predates the
-    ///   footnote. `hasPracticed` is deliberately *not* required — they are already being
-    ///   counted, so telling them is owed now, not after another practice.
-    ///
-    /// - Returns: whether it took the screen, so the caller knows not to run the rung below it. It
-    ///   became a `Bool` rather than an early `return` when ADR 0214 added a rung underneath; the
-    ///   conditions inside are unchanged.
-    private func offerAnalyticsDisclosureIfDue() -> Bool {
-        guard !analyticsDisclosureSeen else { return false }
-        switch AnalyticsPolicy.consentModel(regionCode: Locale.current.region?.identifier) {
-        case .ask:
-            guard AppSettings.hasPracticed else { return false }
-        case .notify:
-            guard artistIntakeSeen else { return false }
-        }
-        showingAnalyticsConsent = true
-        return true
     }
 
     /// Ask for an App Store review, if `ReviewPromptPlan` says we may (ADR 0214).

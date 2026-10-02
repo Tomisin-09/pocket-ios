@@ -37,7 +37,6 @@ Every one of them is optional. **Skip** at the top leaves the whole thing; **Con
 **Back** returns. Answering nothing is a valid answer, and you can change any of it later under
 **Settings ▸ You**.
 
-The same screen tells you what the app counts and how to turn it off, under **Settings ▸ Privacy**.
 Nothing about your playing is recorded or sent anywhere.
 
 **See Help & FAQs: "Does Red Moon listen to or send my playing?"**

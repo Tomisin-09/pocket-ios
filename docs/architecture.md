@@ -56,24 +56,10 @@
 │              `reconcile` sweeps orphaned requests at launch from `HomeView`, against the system's own
 │              pending list rather than the app's bookkeeping (D3). Taps arrive at the existing
 │              `AppDelegate` and are posted to `HomeView` as a `uid` through `NotificationRouter` (D6).
-│   Analytics — ADR 0120, region-split by ADR 0147. `AnalyticsPolicy.consentModel(regionCode:)` is the
-│              pure rule: `.ask` (EEA + CH, default off, ePrivacy Art 5(3)) vs `.notify` (UK + RoW,
-│              default on, DUAA 2025 Sch A1 para 5). It decides only the DEFAULT — never whether an
-│              event may send — and the default is written once at launch by
-│              `AppSettings.seedAnalyticsDefaultIfNeeded`, so no `@AppStorage` literal is load-bearing
-│              and an explicit ADR 0120 decline survives. `AnalyticsEvent` is the complete closed
-│              vocabulary (13 events): an enum whose
-│              associated values are only other enums/Int/Bool, so no `String` parameter exists and
-│              user-authored text (song titles, file names, journal notes, the artist name) cannot be
-│              emitted by construction — pinned by `AnalyticsEventTests` + the repo's only SwiftLint
-│              `custom_rule`. `Analytics` is the @MainActor dispatcher holding one `AnalyticsSink`, with
-│              the consent gate as a single early return re-read per send (so Settings ▸ Privacy takes
-│              effect on the next event, no relaunch, under either model) plus `-uiTesting`/preview
-│              suppression;
-│              `AnalyticsPolicy.shouldEmit` is the pure rule. `NoOpSink` ships by default, `RecordingSink`
-│              backs tests, `AptabaseSink` is the vendor — main-actor confined because the SDK is not
-│              concurrency-safe, started lazily on its first *delivered* event so it can only ever begin
-│              after consent, and inert on an empty/unresolved app key
+│   Analytics — none (ADR 0239). The app has no analytics module, no SDK and no consent state;
+│              usage figures come from App Store Connect, which needs no code. ADR 0120/0147's
+│              Aptabase pipeline is gone. Stored keys `analyticsEnabled`, `analyticsPromptSeen`,
+│              `installDate` and `hasPracticed` stay inert on upgraded installs and are never reused.
 ├─────────────────────────────────────────────────────────┤
 │ Apple: AVFoundation · SwiftData · MediaPlayer (lock-screen transport only)
 │        planned, not shipped: MusicKit · CloudKit · Sign in with Apple
@@ -2433,10 +2419,9 @@ door would undo; not the Toolkit, whose whole proposition is being gate-free.
 
 ## Outbound network (Core/Support, ADR 0161)
 
-The app makes exactly two kinds of outbound call, both of which the player switched on or typed:
-
-1. **Anonymous analytics** — opt-in, closed vocabulary, Aptabase EU (ADR 0120 / 0147).
-2. **A support message** — Settings ▸ Help & About ▸ Contact Support, sent only on an explicit tap.
+The app makes exactly one kind of outbound call, and only when the player types it and taps Send:
+**a support message**, from Settings ▸ Help & About ▸ Contact Support. (Until ADR 0239 there was a
+second, the Aptabase analytics of ADR 0120 / 0147.)
 
 `SupportRequest` is the pure value type (message, reply address, `SupportDiagnostics`) carrying
 validation and the payload; it has no SwiftUI and no `URLSession`, so both are unit-tested away from
@@ -2454,9 +2439,8 @@ it — so the extra line reaches the screen and the payload by the same route as
 
 ## Crash and freeze reports (Core/Diagnostics, ADR 0183)
 
-MetricKit is the only reporter. No third-party SDK, no signal handler, and no route into analytics —
-`AnalyticsEvent` is a closed vocabulary that cannot carry a free `String` (ADR 0120 / 0147), and this
-never goes near it.
+MetricKit is the only reporter. No third-party SDK and no signal handler. (There is no analytics for
+it to route into either, since ADR 0239.)
 
 - **`DiagnosticSummary`** — pure, Foundation-only, and holds **every** decision: retention (five
   events, ~90 days), the noun a player would use ("freeze", not "hang"), the day-and-month format,
@@ -2503,13 +2487,13 @@ is stricter, so theirs is never approached.
 closure. It is never stored — the SDK declares it `Sendable`, so the compiler permits exactly the
 mistake ADR 0186 D4 records for `UNUserNotificationCenter`.
 
-Raised as the **fifth and last rung** of the `HomeView+ProfileMoment` ladder, after the intake, the
-naming invitation and the analytics disclosure, and only on an appearance that is not the launch one —
+Raised as the **last rung** of the `HomeView+ProfileMoment` ladder, after the intake and the naming
+invitation (the analytics disclosure sat between them until ADR 0239), and only on an appearance that
+is not the launch one —
 a cold launch is the player arriving to do something, so the ask waits for the walk back. The permanent door is a plain `Link` in *Settings ▸ Help & About*, never a second
 `requestReview()` (Guideline 1.1.7, and it would silently do nothing once the budget is spent).
 
-Analytics: one event, `review_requested(trigger:)`, sent by the presenter — never
-`review_prompt_shown`, which would be a fact the app does not have.
+No analytics event: ADR 0214 D7's `review_requested` went with analytics (ADR 0239).
 
 ## Testing
 

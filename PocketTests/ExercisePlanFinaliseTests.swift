@@ -22,7 +22,6 @@ final class ExercisePlanFinaliseTests: XCTestCase {
     /// The ADR 0111 regression, pinned once for both hosts: songs picked on the create sheet reach
     /// the stored drill. Previously true of the library and quietly false of the automator.
     func testPickedSongsLinkToTheCreatedExercise() throws {
-        silenceAnalytics()
         let context = try makeContext()
         let song = makeSong("Little Wing")
         context.insert(song)
@@ -42,7 +41,6 @@ final class ExercisePlanFinaliseTests: XCTestCase {
     /// `plan.instrument` for its analytics event and drop it on the floor for the model, so a bass
     /// player's breakdown was saved as a guitar drill.
     func testInstrumentRidesOntoTheCreatedExercise() throws {
-        silenceAnalytics()
         let context = try makeContext()
 
         let exercise = try XCTUnwrap(makePlan(name: "Bass run", instrument: .bass).finalise(in: context))
@@ -54,7 +52,6 @@ final class ExercisePlanFinaliseTests: XCTestCase {
     /// content states (ADR 0121) — the bind runs *after* the payload is encoded, or there is no
     /// rhythm to read yet.
     func testAuthoredPayloadIsEncodedAndTheCommandBindsToItsRhythm() throws {
-        silenceAnalytics()
         let context = try makeContext()
         let eighths = StrumPattern(slotsPerBeat: 2, slots: [.down, .up, .down, .up])
 
@@ -71,7 +68,6 @@ final class ExercisePlanFinaliseTests: XCTestCase {
     /// A nameless plan creates nothing at all — the guard lives on the shared path so it can't be
     /// one host's private belt-and-braces.
     func testAnEmptyNameCreatesNothing() throws {
-        silenceAnalytics()
         let context = try makeContext()
 
         XCTAssertNil(makePlan(name: "").finalise(in: context))
@@ -80,22 +76,6 @@ final class ExercisePlanFinaliseTests: XCTestCase {
     }
 
     // MARK: - Helpers
-
-    /// `finalise` emits `exerciseCreated` (ADR 0120), so pin the dispatcher to a no-op sink with
-    /// consent off — a unit run must never reach a real sink whatever the host's stored setting is.
-    ///
-    /// Called from each test rather than from `setUp`, deliberately: `XCTestCase.setUp` is
-    /// **nonisolated**, so an override can't inherit this class's `@MainActor` and can't touch
-    /// `Analytics`' main-actor state. Xcode 16 (CI) rejects that; the newer local toolchain lets it
-    /// through, so it compiles clean here and reddens there. The house idiom is
-    /// `AnalyticsPolicyTests`': reset from inside a main-actor test body.
-    ///
-    /// No teardown to match, because `resetForTesting()`'s defaults *are* the resting state (a
-    /// `NoOpSink` with consent off) — unlike `AnalyticsPolicyTests`, which installs a recording sink
-    /// and so has something to put back.
-    private func silenceAnalytics() {
-        Analytics.resetForTesting()
-    }
 
     private func makePlan(name: String,
                           command: Int = 90,

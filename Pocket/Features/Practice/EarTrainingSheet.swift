@@ -43,9 +43,6 @@ struct EarTrainingView: View {
     @Environment(\.modelContext) private var modelContext
     /// Latch for `namingAt`: a return from the sheet re-fires `.onAppear`.
     @State private var openedNaming = false
-    /// Latch for the tool-opened event (ADR 0120) — this view is embedded by both the loop-settings
-    /// sheet and a routine's ear block, and `.onAppear` re-fires on a return.
-    @State private var reportedOpen = false
     @State private var showingTakes = false
     /// The saved piece's **Versions** (ADR 0233), presented from this body's root, never from a row.
     @State private var showingVersions = false
@@ -97,9 +94,6 @@ struct EarTrainingView: View {
                 openedNaming = true
                 counting.nameSaved(at: namingAt)
             }
-            guard !reportedOpen else { return }
-            reportedOpen = true
-            Analytics.send(.toolOpened(tool: .earTraining))
         }
         .onDisappear {
             finishTake()     // before the bed stops — see `ContinuousLoopControls`' stop branch

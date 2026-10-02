@@ -101,7 +101,6 @@ extension NewExercisePlan {
         // Songs attach only *after* the insert — assigning a relationship on a model that isn't in a
         // context yet doesn't stick (the same ordering constraint `UnitDuplication` documents).
         if !songs.isEmpty { exercise.linkedSongs = songs }
-        Analytics.send(.exerciseCreated(template: template, instrument: instrument))
         return exercise
     }
 }

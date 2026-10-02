@@ -57,8 +57,7 @@ tile carries one line of its own, `Add a song to get started`, and loses it once
 ### The first run
 
 A fresh install asks a short set of optional questions before anything else — your name and how you
-play — and then, once you have practised, may ask about anonymous usage counts depending on where
-you are. Both are covered in [getting started](../getting-started.md) and [privacy](../privacy.md).
+play. They are covered in [getting started](../getting-started.md).
 The library starts empty; Home shows no `JUMP BACK IN` card, no `This week` strip and no rail until
 there is something to put in them, and the `Song library` tile reads `Add a song to get started`.
 

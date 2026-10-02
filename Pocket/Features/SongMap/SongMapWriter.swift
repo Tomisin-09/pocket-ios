@@ -121,7 +121,6 @@ enum SongMapWriter {
 
     private static func insert(_ loop: Loop, into song: Song, context: ModelContext) {
         context.insert(loop)
-        Analytics.send(.loopCreated)
         loop.song = song
     }
 }

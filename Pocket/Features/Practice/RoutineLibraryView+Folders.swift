@@ -114,7 +114,6 @@ extension RoutineLibraryView {
                               onCreate: { name in
                 guard let created = PracticeFolderStore.createFolder(named: name, at: "",
                                                                      in: context) else { return }
-                Analytics.send(.folderCreated(depth: FolderPath.segments(created).count))
                 PracticeFolderStore.file(routine, into: created, in: context)
             })
         }

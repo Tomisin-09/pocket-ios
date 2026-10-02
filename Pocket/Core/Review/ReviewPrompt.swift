@@ -61,7 +61,6 @@ enum ReviewPrompt {
         // a fact about our own action, produced by the code that takes it. And writing first means a
         // crash inside the system call cannot leave us able to ask a second time.
         record(ReviewPromptPlan.Ask(askedAt: now, version: version), in: defaults)
-        Analytics.send(.reviewRequested(trigger: .sittings))
         ask()
         return outcome
     }

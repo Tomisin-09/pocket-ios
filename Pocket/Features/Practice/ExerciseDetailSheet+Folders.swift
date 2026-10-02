@@ -64,7 +64,6 @@ extension ExerciseDetailSheet {
                           onCreate: { name in
             guard let created = PracticeFolderStore.createFolder(named: name, at: "",
                                                                  in: modelContext) else { return }
-            Analytics.send(.folderCreated(depth: FolderPath.segments(created).count))
             PracticeFolderStore.file(exercise, into: created, in: modelContext)
         })
     }

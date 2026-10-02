@@ -236,12 +236,12 @@ Leave blank for v1, or point at the same host's landing page.
 Host `docs/privacy-policy.md` (rendered) somewhere public and paste the URL.
 GitHub Pages renders Markdown directly, which is the zero-effort option.
 
-## App Privacy (nutrition label) — CHANGED by ADR 0120, widened by 0161 and 0183
-No longer "Data Not Collected". Declare **four** types, matching
-`Pocket/Resources/PrivacyInfo.xcprivacy` and the manifest the Aptabase SDK ships:
+## App Privacy (nutrition label) — set by ADRs 0161 and 0183; analytics removed by ADR 0239
+Not "Data Not Collected" — the contact form sends what the player writes. Declare
+**three** types, matching `Pocket/Resources/PrivacyInfo.xcprivacy`:
 
-- **Product Interaction** → used for **Analytics** → **not linked to the user's
-  identity** → **not used for tracking**. (ADR 0120.)
+- **Product Interaction is no longer declared.** It covered the Aptabase analytics
+  (ADR 0120), and ADR 0239 removed them. If it was ever submitted, take it off.
 - **Email Address**, **Other User Content** and **Other Diagnostic Data** → all used
   for **App Functionality** → all **linked**, and none used for tracking. These are
   the in-app contact form (ADR 0161 D6): the reply address the player types, their
@@ -259,13 +259,11 @@ No longer "Data Not Collected". Declare **four** types, matching
   no IDFA, no ATT prompt and no ad SDK, permanently (ADR 0120 §1), so no ATT
   purpose string is needed and `NSPrivacyTracking` stays `false`.
 
-Note for App Review, if asked: collection is **anonymous, unlinked and not used for
-tracking**, and there is a single switch in Settings ▸ Privacy that stops it. It is
-**opt-in and off by default in the EEA and Switzerland** (ePrivacy Art. 5(3)) and
-**on by default with a disclosure at first run elsewhere, including the UK** (Data
-(Use and Access) Act 2025, Sch. A1 para. 5) — see ADR 0147. The app is fully
-functional with it off. **Do not describe it as "opt-in" unqualified** — that was
-true under ADR 0120 and is now true only inside the EEA.
+Note for App Review, if asked: the app contains **no analytics and no third-party
+SDK**, and sends nothing on its own. The only data it sends is a support message the
+player writes and taps Send on, with every attached detail shown first. Usage figures
+come from App Store Connect (ADR 0239). The region-split usage counts ADRs 0120 and
+0147 described no longer exist — don't mention them anywhere.
 
 ## Category
 - **Primary:** Music
@@ -311,15 +309,13 @@ shipping code, not aspiration.
 > one of their routines.
 >
 > **Privacy:** all practice data is stored locally on the device. There is no
-> cross-device sync and no user account. Anonymous, aggregate usage counts are
-> collected to improve the app; in the EEA and Switzerland these are off until the
-> player opts in, and elsewhere they are on with a clearly signposted way to object
-> in Settings → Privacy. No advertising identifier is collected and no third-party
-> ad or attribution SDK is present.
+> cross-device sync and no user account. The app collects no usage data and contains
+> no analytics. No advertising identifier is collected and no third-party SDK of any
+> kind is present.
 
 **Before pasting, re-check each claim still holds** — a stale one is worse than no
-note at all. In particular "the whole app is free" (ADR 0237), the region-split
-analytics default (ADR 0147), and "Try the demo" ([`LibraryView.swift`](../Pocket/Features/Library/LibraryView.swift),
+note at all. In particular "the whole app is free" (ADR 0237), "no analytics"
+(ADR 0239), and "Try the demo" ([`LibraryView.swift`](../Pocket/Features/Library/LibraryView.swift),
 `LibraryEmptyState.onTryDemo` → `Song.sample()` — the *generated* tone song, which is
 why it survives ADR 0148 §7 deleting the bundled demo track).
 
@@ -334,13 +330,12 @@ Auto-skipped — `ITSAppUsesNonExemptEncryption = false` is already set.
 (iOS app)" section to the existing per-service policy at
 `decooperations.co.uk/privacy` (Vercel), matching the Docket/website section style
 — see the paste-ready section text in chat / commit. It must match
-`docs/privacy-policy.md` as revised by ADR 0120 **and 0147**: no accounts, data
-stored **on the device** (there is no cross-device sync — `Pocket.entitlements` is
-empty and no CloudKit database is configured, ADR 0145), your playing never
-transmitted, and anonymous usage counts whose **default depends on region** —
-**off until asked** in the EEA and Switzerland, **on with a simple way to object**
-everywhere else. The older "collects nothing" wording is no longer accurate, and
-neither is describing the counts as opt-in unqualified. Give
+`docs/privacy-policy.md` as revised by **ADR 0239**: no accounts, data stored **on
+the device** (there is no cross-device sync — `Pocket.entitlements` is empty and no
+CloudKit database is configured, ADR 0145), your playing never transmitted, and **no
+usage data collected** — no analytics, with usage figures coming from App Store
+Connect. The region-split usage counts of ADRs 0120 and 0147, and Aptabase as a
+processor, must come out of the live section. Give
 Apple the anchored URL so the reviewer lands on the relevant section:
 - **Privacy Policy URL** → `https://decooperations.co.uk/privacy#red-moon-practice`
   (verify the heading slugifies to that anchor).
@@ -517,6 +512,10 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 - [ ] Promotional text and review notes carry no subscription wording
 - [ ] No screenshot shows the paywall, a padlock or a PRO badge
 - [ ] App Privacy: nothing declared under Purchases
+- [ ] App Privacy: **Product Interaction removed** — there is no analytics (ADR 0239);
+      the three contact-form types stay
+- [ ] `decooperations.co.uk/privacy` Red Moon section: usage counts, the region split,
+      *Settings ▸ Privacy* and Aptabase removed, matching `docs/privacy-policy.md` (ADR 0239)
 - [ ] Paid Applications Agreement kept or dropped — the owner's call
 
 **The 1.1 checklist, kept as history:**
@@ -565,8 +564,8 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
       audio-files bullet also gained ADR 0148's "we keep our own copy" fact, which it
       predated
 - [ ] Support URL + Privacy Policy URL pasted into the form
-- [ ] App Privacy answered: Product Interaction → Analytics → not linked, not tracking (ADR 0120); everything else "not collected". **Unchanged by ADR 0147** — the nutrition label encodes collection type, linkage and tracking, none of which the region split moves
-- [x] `APTABASE_APP_KEY` set in `project.yml` from the real EU-region app key (done 2026-07-29; `AptabaseSinkTests` pins that it resolves and is EU-region)
+- [ ] ~~App Privacy answered: Product Interaction → Analytics → not linked, not tracking (ADR 0120)~~ — superseded: analytics removed by ADR 0239; see the free-release list above. The original line: **Unchanged by ADR 0147** — the nutrition label encodes collection type, linkage and tracking, none of which the region split moves
+- [x] ~~`APTABASE_APP_KEY` set in `project.yml` from the real EU-region app key (done 2026-07-29)~~ — the key, the SDK and `AptabaseSinkTests` were all removed by ADR 0239
 - [ ] Category: Music (primary) / Education (secondary)
 - [ ] Age rating questionnaire → 4+
 - [ ] Price: Free · Availability set

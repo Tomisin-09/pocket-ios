@@ -1,6 +1,6 @@
 # Privacy Policy — Red Moon Practice
 
-_Last updated: 1 October 2026_
+_Last updated: 2 October 2026_
 
 Red Moon Practice ("the app") is a free guitar and bass practice tool published by **Deco
 Operations Ltd** (registered in England and Wales, company number **17032490**;
@@ -20,28 +20,14 @@ recordings, your journal notes, your song names or your artist name. Everything 
 create stays on your device unless you send a file of it yourself (see *Files you
 send yourself*, below).
 
-There are two exceptions, and neither one carries anything you have played,
-recorded or written.
+**The app does not count or report how you use it.** There is no analytics in the
+app. See *How we know the app is used*, below.
 
-The first is **anonymous usage counts** — the app reports which features
-get used — that a loop was made, that an exercise was created — so we know what
-to improve. These counts carry no account, no device identifier, no advertising ID
-and nothing that could identify you, and they are not joined up across sessions.
-**You can turn them off at any time in Settings ▸ Privacy.**
-
-Whether they start on or off depends on where you are. **In the EEA and
-Switzerland they are off until you turn them on**, and the app asks. **Everywhere
-else, including the UK, they are on by default** and the app tells you so during
-setup — the law differs, and the section below explains which rule applies to you.
-
-The second is **a message you write to us** from Settings ▸ Help & About ▸ Contact
-Support. Nothing is sent unless you type it and tap Send, and the app shows you
-everything it attaches before you do. See *When you write to us*, below.
-
-Because the counts are irreversibly anonymous, there is no record tied to you for
-Deco Operations Ltd, as data controller, to access, correct or delete — a request
-to erase your data has nothing to find. A support message is different: it is tied
-to the address you gave us, and you can ask us to delete it.
+There is one exception to "nothing leaves your device", and it carries nothing you
+have played, recorded or written: **a message you write to us** from Settings ▸
+Help & About ▸ Contact Support. Nothing is sent unless you type it and tap Send, and
+the app shows you everything it attaches before you do. It is tied to the address
+you gave us, and you can ask us to delete it. See *When you write to us*, below.
 
 ## What stays on your device
 
@@ -59,9 +45,8 @@ to the address you gave us, and you can ask us to delete it.
 - **Your recordings** — practice takes you record with the microphone are saved
   locally on your device. They are not uploaded or shared, unless you export one
   yourself.
-- **App settings** — preferences (such as tempo defaults, and your answer to the
-  analytics question below) are stored on-device using standard system settings
-  storage.
+- **App settings** — preferences (such as tempo defaults) are stored on-device
+  using standard system settings storage.
 
 ## Files you send yourself
 
@@ -78,61 +63,22 @@ have set one, so the person who opens it knows who it is from. The send screen s
 the name before anything is sent. Nothing else from your profile goes with it, and
 with no artist name set, no name is sent.
 
-## Anonymous usage counts
+## How we know the app is used
 
-The app sends a small, fixed set of counts about **which features get used**: that
-a practice run started, that a loop was made, that an exercise was created from a
-particular template. That list is fixed in
-the app's code and cannot be extended without a new release.
+The app itself collects no usage data. It does not count which features you use, it
+contains no analytics software, and it sends nothing about how you use it.
 
-**Whether this starts on or off depends on where you are, because the law
-differs.**
+Apple separately gives developers anonymous, aggregated figures about their apps:
+how many devices opened the app on a given day, how many sessions there were, how
+many people kept using it after installing, and how often it crashed. Apple collects
+these only from people who have turned on **Share With App Developers** in the
+iPhone's Settings ▸ Privacy & Security ▸ Analytics & Improvements, under
+[Apple's privacy policy](https://www.apple.com/legal/privacy/). The App Store also
+gives us totals for how many people viewed the app's page and downloaded it.
 
-| Where you are | How it starts | How to change it |
-|---|---|---|
-| **EEA and Switzerland** | **Off.** The app asks, and nothing is sent unless you say yes. | Settings ▸ Privacy |
-| **UK and everywhere else** | **On.** The app tells you during setup. | Settings ▸ Privacy |
-
-Either way it is the same small set of counts, the same anonymity, and the same
-single switch to stop it.
-
-**What these counts can never contain.** Not your audio. Not your recordings. Not
-your journal notes, your song names, your file names, your artist name, or
-anything else you have typed or chosen. This is not a policy promise alone — the
-app is built so that the values it is *capable* of sending are a fixed set of
-predefined options, with no way to attach free text to them.
-
-**Nothing identifies you.** There is no account, no device identifier, no
-advertising identifier, no cookie and no fingerprint. The counts are not joined up
-across sessions or across apps, so they cannot be traced back to you or assembled
-into a profile — not by us, and not by anyone else.
-
-**Who processes them.** Our analytics provider is **Aptabase**, and your counts are
-processed in the **European Union**. They are used only to tell us which parts of
-the app are used and which are not. They are not sold, shared, or used for
-advertising.
-
-**Our lawful basis.** It depends on where you are.
-
-*In the EEA and Switzerland* — **your consent**. Storing or reading information on
-your device for analytics requires consent under the ePrivacy Directive Art. 5(3),
-so we ask, and the answer is "no" until you say otherwise.
-
-*In the UK* — the **statistical-purposes exception** in the Data (Use and Access)
-Act 2025, Schedule A1 paragraph 5, which came into force on 5 February 2026. It
-permits first-party analytics used solely to improve the service, provided we give
-you clear information about it and a simple, free way to object. We do both: the
-app tells you during setup, and Settings ▸ Privacy turns it off in one tap.
-
-*Everywhere else* — we apply the UK approach, as the more protective of the two
-available to us.
-
-In all cases, because the resulting counts are irreversibly anonymous, they are not
-personal data and the UK GDPR does not apply to them.
-
-**Turning it off, or withdrawing consent.** Settings ▸ Privacy, at any time. It
-takes effect immediately — the app checks your choice before every single count it
-would otherwise send. There is nothing to justify and no reason to give.
+We see totals, never individuals, and the app plays no part in collecting them. They
+are not personal data, so there is nothing about you in them for us to access,
+correct or delete.
 
 ## When you write to us
 
@@ -156,9 +102,8 @@ this policy.
 ### Crash and freeze reports
 
 iOS keeps its own record of any time the app crashed or froze, and hands it to the
-app roughly once a day. **That record stays on your device.** It is not analytics,
-it is not covered by the usage-counts switch, and it is never sent anywhere on its
-own. You can read it, and clear it, at Settings ▸ Help & About ▸ Diagnostics.
+app roughly once a day. **That record stays on your device**, and it is never sent
+anywhere on its own. You can read it, and clear it, at Settings ▸ Help & About ▸ Diagnostics.
 
 One switch on that screen — **off unless you turn it on** — adds a single line to
 your next support message: how many crashes or freezes there were, since when, and
@@ -171,15 +116,12 @@ that screen and again in the form before you send.
 - We do **not** collect names, contacts, or location. We collect an email address
   only when you type one into the contact form so we can reply.
 - We do **not** send your audio, recordings, journal notes, song names or artist
-  name anywhere, ever — with or without analytics turned on, and not in a support
-  message or a crash summary either.
+  name anywhere, ever — not in a support message or a crash summary either.
 - We do **not** show ads or use advertising identifiers.
 - We do **not** use the IDFA, the App Tracking Transparency prompt, or any
   advertising SDK. We never will; this is a permanent product boundary.
 - We do **not** track you across apps or websites, or build a profile of you.
-- We do **not** turn the usage counts on for you **in the EEA or Switzerland** —
-  there they stay off until you say yes. Everywhere else they start on, the app
-  tells you so at first run, and one switch in Settings ▸ Privacy stops them.
+- We do **not** put analytics software in the app, or count how you use it.
 
 ## Device permissions
 
@@ -213,23 +155,15 @@ personal data a company holds about you, including the rights to access, correct
 erase, restrict, or object to its processing, to data portability, and to lodge a
 complaint with the Information Commissioner's Office (ICO).
 
-Red Moon Practice holds no personal data about you on our systems. Everything you
-create lives on your own device, under your control, and is removed when you
-delete it or remove the app. The optional usage
-counts described above are irreversibly anonymous and carry no identifier, so
-there is no record tied to you for us to find — meaning a request to access,
-correct or erase your data has nothing to act on. That is a consequence of how the
-counts are built, not a refusal; if you would rather they stopped entirely, turn
-them off in Settings ▸ Privacy.
+Red Moon Practice holds no personal data about you on our systems, apart from any
+support message you send us, which you can ask us to delete. Everything you create
+lives on your own device, under your control, and is removed when you delete it or
+remove the app.
 
 ## Children's privacy
 
-The app is rated 4+. It has no accounts and asks for no personal details from
-anyone, including children under 13. The usage counts described above carry no
-personal information and nothing that could identify a child: they record that a
-feature was used, never who used it. In the EEA and Switzerland they are off
-unless someone deliberately turns them on; everywhere else they can be turned off
-at any time in Settings ▸ Privacy.
+The app is rated 4+. It has no accounts, asks for no personal details from anyone,
+including children under 13, and collects no usage data.
 
 ## Changes to this policy
 

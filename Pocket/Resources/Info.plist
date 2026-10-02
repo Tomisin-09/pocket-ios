@@ -22,11 +22,6 @@
 	<string>Red Moon</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
-	<!-- Aptabase ingest key (ADR 0120), resolved from the APTABASE_APP_KEY build
-	     setting. Write-only: it can post events and read nothing. Empty ⇒ the
-	     analytics sink never starts the SDK. -->
-	<key>AptabaseAppKey</key>
-	<string>$(APTABASE_APP_KEY)</string>
 	<!-- Red Moon Oracle backend base URL (ADR 0187 S0), resolved from the
 	     POCKET_API_BASE_URL build setting, which is set per-configuration in
 	     Configuration/Pocket-{Debug,Release}.xcconfig. Empty ⇒ no proxy is

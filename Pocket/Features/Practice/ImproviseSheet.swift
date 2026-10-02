@@ -37,9 +37,6 @@ struct ImproviseView: View {
     /// host that could quietly omit it is exactly how the standalone hosts came to log nothing.
     let routineContext: RoutineRunContext?
     @Environment(\.modelContext) private var modelContext
-    /// Latch for the tool-opened event (ADR 0120) — `.onAppear` re-fires on a return from a
-    /// pushed screen, and this view has two hosts.
-    @State private var reportedOpen = false
     @State private var showingTakes = false
 
     var body: some View {
@@ -61,11 +58,6 @@ struct ImproviseView: View {
                                     placeholder: "What came out? "
                                         + "(e.g. the b5 works over the turnaround)")
             }
-        }
-        .onAppear {
-            guard !reportedOpen else { return }
-            reportedOpen = true
-            Analytics.send(.toolOpened(tool: .improvise))
         }
         .onDisappear {
             finishTake()     // before the bed stops — see `ContinuousLoopControls`' stop branch

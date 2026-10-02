@@ -91,7 +91,7 @@ inside them is the order that was already there.
 | `reference/song-player` | The waveform screen band by band, its sheets, landscape | Phase 4 |
 | `reference/practice` | Practice hub, Planner, Routines, Exercises, Loops | Phase 4 |
 | `reference/tools-and-journal` | Metronome, Journal, Practice log, Toolkit | Phase 4 |
-| `reference/settings` | Reaching Settings, and each of its nine destinations | Phase 4 |
+| `reference/settings` | Reaching Settings, and each of its eight destinations | Phase 4 |
 
 Written in slices: Slice A is `getting-started` · `songs` · `looping` · `gestures` · `terms` — the
 first hour, and the way most players come in. Slice B is `exercises` · `routines` · `sessions` — the
@@ -285,10 +285,10 @@ simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover
   for 120s instead of 4, which is what makes `gestures/undo-toast` shootable by hand at all. Every
   driven figure was shot under it, so any hand-shot frame must be too. (It also used to unlock Red
   Moon Pro; there is nothing left to unlock, ADR 0237.)
-- **Debug-only UI has to be hidden, not cropped.** The Settings hub carries a tenth destination,
+- **Debug-only UI has to be hidden, not cropped.** The Settings hub carries one destination more than it ships,
   `Developer`, under `#if DEBUG` — present in every build a shoot can drive, and shipped to nobody.
-  The first shoot photographed it into `reference/settings-hub`, whose own alt text lists the nine
-  that ship. `ScreenshotSeed.isShooting` now hides it, and `ManualSettingsShots` asserts it is gone;
+  The first shoot photographed it into `reference/settings-hub`, whose own alt text lists only the
+  ones that ship. `ScreenshotSeed.isShooting` now hides it, and `ManualSettingsShots` asserts it is gone;
   a figure is a claim about the shipping app, so the shoot has to be able to say *not this*.
 - **Home's cards need slow swipes.** They sit in titled sections below the fold, and the shared
   `scrollIntoView` moves more than a card's height per swipe — a card can be carried past the

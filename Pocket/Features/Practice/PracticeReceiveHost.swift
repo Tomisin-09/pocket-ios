@@ -211,11 +211,6 @@ private struct PracticeReceiveHost: ViewModifier {
         let landing = ReceivedRoutineBuilder.materialize(received, songs: songs)
         landing.insert(into: context)
         save()
-        // Both numbers, because the interesting question about this feature is not how often it is
-        // used but how much of a shared routine actually crosses (D4). Two `Int`s — the analytics
-        // lint rule forbids a free `String`, and there is nothing here worth naming anyway.
-        Analytics.send(.routineReceived(items: landing.items.count,
-                                        orphanedBlocks: landing.items.filter(\.isOrphaned).count))
         landed = songs.isEmpty
             ? "“\(received.displayName)” is in your routines."
             : "“\(received.displayName)” is in your routines, and its "
@@ -226,16 +221,13 @@ private struct PracticeReceiveHost: ViewModifier {
     /// Write a drill (ADR 0209 D4). One row, and the asymmetry with the routine's three is the point
     /// of having the two functions rather than one that branches inside.
     ///
-    /// The template is read off the record rather than the fresh model: they agree, and reading the
-    /// file's own value keeps the event about **what was sent**. A drill on a template this build
-    /// cannot name is still added — its raw value survives into the model for a build that can read
-    /// it — but sends no event, because the only template the event could carry would be a guess.
-    /// (Until ADR 0237 the receive gate refused such a file outright.)
+    /// A drill on a template this build cannot name is still added — its raw value survives into the
+    /// model for a build that can read it. (Until ADR 0237 the receive gate refused such a file
+    /// outright.)
     private func add(_ received: ReceivedExercise) {
         let landing = ReceivedPracticeBuilder.materialize(received)
         landing.insert(into: context)
         save()
-        if let template = received.template { Analytics.send(.exerciseReceived(template: template)) }
         landed = "“\(received.displayName)” is in your exercises."
         haptic(.medium)
     }

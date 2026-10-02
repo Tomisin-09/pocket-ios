@@ -79,7 +79,6 @@ extension HomeView {
     private var metronomeTile: some View {
         Button {
             showingMetronome = true
-            Analytics.send(.toolOpened(tool: .metronome))
         } label: {
             HomeTile(icon: "metronome.fill", title: "Metronome",
                      tint: PocketColor.metronome,
