@@ -9,7 +9,7 @@ import SwiftData
 /// simulator's store is shared by the whole suite, so the seed is **its own song**, found by its own id:
 ///
 /// - under `-uiTesting -seedNamingPiece` it is put in, or put back as it was: six unnamed notes on
-///   *Verse riff*, and no snags;
+///   *Verse riff*, no snags, and no notes in its loops' Journals (the snag line test writes one, ADR 0238);
 /// - under `-uiTesting` alone it is **taken out**. The *Start here* card shows only in an empty library,
 ///   and two tests start from it, so a song left behind by a naming run that failed halfway would fail
 ///   them too. Every other test's launch cleans up, whatever the last run did.
@@ -49,6 +49,13 @@ enum NamingPieceSeed {
         guard action != .none else { return }
         // In memory, not a `#Predicate`: a handful of songs, and no predicate trap to step in.
         let seeded = ((try? context.fetch(FetchDescriptor<Song>())) ?? []).filter { $0.sourceID == sourceID }
+        // A loop's notes outlive it (ADR 0151), so they go first or a removed song leaves them in the Journal.
+        for song in seeded {
+            for loop in song.loops {
+                loop.journal.forEach(context.delete)
+                loop.journal = []
+            }
+        }
         switch action {
         case .remove:
             seeded.forEach(context.delete)

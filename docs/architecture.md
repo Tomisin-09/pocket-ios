@@ -1662,6 +1662,17 @@ empty, because that line was Home's only word about adding a first song.
   not something you administer. So 0202 D2's "no multi-select" and D3's "no undo toast" stand with no
   exception, and `snagsByTime` deliberately carries **no** pending-delete filter — `loops` and
   `markers` need one because their delete is deferred behind an undo window, and a snag's is not.
+
+  **ADR 0238** gives the row a hold after all, for the one thing a snag gained since: a **line**
+  (ADR 0234 D7). A hold opens `SnagLineSheet`, presented with the marker sheet from `PanelRowSheets`
+  at the body root. There is no new storage. The line is the `JournalEntry` tied by `snagUID` that
+  *Name the notes* already writes, and `SnagLine` (pure) owns the three rules. **`lines`**: a snag's
+  line is the latest tied note in *any* of the song's loops' Journals, and `Loop.line(forSnag:)`
+  reads it that way too, because a snag belongs to the song while a Journal belongs to a loop, so the
+  two places would otherwise split one line in two. **`home`**: a new line goes to the loop the snag
+  was made under, else the tightest loop that holds it now, else nowhere, since a song has no Journal.
+  **`kind`**: 🧗 Struggle for a stumble, 👂 Ear for a note snagged while naming, never 🧩. D3's no-toast
+  rule stands, because the line is a Journal note, not part of the snag, and outlives it.
 - **`LoopSpanChange`** (ADR 0199) is *how the loop got this narrow* — one row per edit to a loop's
   span, carrying `changedAt`, the span after, **the span before**, the playback `speed` in force and
   the song's `songDuration` at write time. It exists because `Loop.start` / `Loop.end` are

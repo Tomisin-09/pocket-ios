@@ -34,7 +34,7 @@ That popover covers the waveform. The rest of this page covers everything else.
 
 ## Holds that open something
 
-Ten places in the app wire up a hold of their own <!-- long-press-sites: 10 -->, and all but two of
+Eleven places in the app wire up a hold of their own <!-- long-press-sites: 11 -->, and all but two of
 them are in the song player.
 
 | Hold this | And you get |
@@ -46,6 +46,7 @@ them are in the song player.
 | The **Loop controls** line | The song player's settings |
 | A row in the **Loops** panel | That loop's edit sheet |
 | A row in the **Markers** panel | That marker's edit sheet |
+| A row in the **Snags** panel | A line on that snag, for when you come back |
 | A panel header — **Loops** or **Markers** | Selection mode, for acting on several at once |
 | **Insert rest**, while editing a routine | Rest-placing mode, to drop rests between blocks |
 | A note in the strip, in **Name the notes** | A snag on that note, somewhere you're stuck, or the snag taken off |

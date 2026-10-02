@@ -191,10 +191,12 @@ struct PracticeReference: View {
                                  onDelete: model.deleteMarker,
                                  selection: model.markerSelectionSeam)
                     // 12. Snags (ADR 0202) — last, and folded by default: the marks are made and
-                    // read on the waveform, and this is where you reach one to remove it.
+                    // read on the waveform, and this is where you reach one to remove it, or hold it
+                    // to leave a line on it (ADR 0238).
                     SnagsPanel(snags: model.snagsByTime, loopNames: model.loopNamesByUID,
+                               lines: model.snagLinesByUID,
                                expanded: $model.snagsExpanded,
-                               onSeek: model.seekToSnag, onDelete: model.deleteSnag)
+                               onSeek: model.seekToSnag, onEdit: model.editSnagLine, onDelete: model.deleteSnag)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
