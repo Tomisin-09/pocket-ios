@@ -204,10 +204,7 @@ information never leaves your device and is not stored between launches.
 ## Purchases
 
 Red Moon Practice is free. There is no subscription and nothing to buy in the app,
-so it handles no payment details. If you subscribed before it went free, Apple was
-the merchant: your payment method, billing address and purchase history are held by
-Apple under [Apple's privacy policy](https://www.apple.com/legal/privacy/), and we
-never saw or stored them.
+so it handles no payment details.
 
 ## Your rights
 
