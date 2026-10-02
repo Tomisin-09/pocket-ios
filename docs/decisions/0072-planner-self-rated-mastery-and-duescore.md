@@ -4,6 +4,11 @@
 - **Date:** 2026-07-08
 - **Supersedes:** ADR 0014 R6's *proficiency* assumption (the planner's proficiency term is a
   self-rating, not a measured score).
+- **Amended by:** ADR 0243 (2026-10-02) — the *First surface* below: the Quick session still
+  materialises a real `Routine`, but Start runs it as a **temporary** session that reaches Routines
+  only if the player saves it, before or after. Today's session works the same way. At most one
+  temporary session exists; the next Start replaces it. The mastery rating and the due-score ranking
+  are unchanged.
 - **Relates to:** ADR 0015 (goal → candidate selection), ADR 0039 (`Loop.mastery` self-rating),
   ADR 0066 (routine model — the planner's output substrate), ADR 0070 (no performance feedback),
   ADR 0071 (routine player). Build plan: `docs/plans/planner-build-plan.md` (Slice 1).
