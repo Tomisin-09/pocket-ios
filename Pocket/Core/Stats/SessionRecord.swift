@@ -43,6 +43,21 @@ enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
         case .other: "Practice"
         }
     }
+
+    /// How the kind heads a group of runs in the Practice log's *What you played* (ADR 0241) — the
+    /// plural of `label`, except where the plural is not a word anyone would say: you do "ear
+    /// training" and "improvising", not "ear trainings". A `.song` run is named for what it was, a
+    /// play-along, since the songs themselves are the rows inside the group.
+    var groupLabel: String {
+        switch self {
+        case .exercise: "Exercises"
+        case .loop: "Loops"
+        case .earLoop: "Ear training"
+        case .improvise: "Improvising"
+        case .song: "Play-alongs"
+        case .other: "Other practice"
+        }
+    }
 }
 
 /// A logged run as a **plain value** — the unit every stat is computed over (ADR 0117).
@@ -64,6 +79,12 @@ struct SessionRecord: Codable, Equatable, Identifiable, Sendable {
     let tempoBPM: Int?
     let tempoPercent: Int?
     let notesPerBeat: Int?
+    /// The song a play-along or loop-based run came from (`Song.sourceID`), and the unit's name when
+    /// it was logged (ADR 0241). Both `Optional`, which is what lets an archive written before they
+    /// existed still decode: the synthesised `Decodable` reads an optional with `decodeIfPresent`,
+    /// and a missing non-optional key would fail the **whole** archive, not just this row.
+    let songSourceID: String?
+    let unitLabel: String?
 
     init(id: UUID = UUID(),
          startedAt: Date,
@@ -73,7 +94,9 @@ struct SessionRecord: Codable, Equatable, Identifiable, Sendable {
          routineUID: UUID? = nil,
          tempoBPM: Int? = nil,
          tempoPercent: Int? = nil,
-         notesPerBeat: Int? = nil) {
+         notesPerBeat: Int? = nil,
+         songSourceID: String? = nil,
+         unitLabel: String? = nil) {
         self.id = id
         self.startedAt = startedAt
         self.durationSeconds = max(0, durationSeconds)
@@ -83,6 +106,8 @@ struct SessionRecord: Codable, Equatable, Identifiable, Sendable {
         self.tempoBPM = tempoBPM
         self.tempoPercent = tempoPercent
         self.notesPerBeat = notesPerBeat
+        self.songSourceID = songSourceID
+        self.unitLabel = unitLabel
     }
 
     /// When the run ended — derived, never stored (`PracticeRun` keeps the duration instead).

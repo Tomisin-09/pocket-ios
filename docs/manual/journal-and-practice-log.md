@@ -326,7 +326,7 @@ numbers are a summary of what is here in full. Neither appears until you have fi
 there is no counting to read before there is anything to count.
 
 <!-- shot: journal/progress | role: screen
-     | alt: The Practice log screen showing This week with its seven-day bar chart above This month with its shaded calendar grid and Less to More key, with All-time beginning at the foot
+     | alt: The Practice log screen showing This week with its seven-day bar chart and the arrows beside its title, and What you played under it listing the week's time by kind
      | state: seeded library, Home, This week strip tapped, several weeks of practice history -->
 
 Before you have finished anything it says **Nothing here yet** and describes what will fill it — one
@@ -336,22 +336,49 @@ statement rather than three empty sections.
 
 Minutes and days practised, over a bar per day. The seven bars are drawn even in a week with nothing
 in them, because the *shape* of a quiet week is the honest answer and a section that appeared and
-vanished week to week would be worse.
+vanished week to week would be worse. A day with less than half a minute on it reads **<1 minute**,
+not 0.
+
+It opens on the current week, and you can go back through every week since you started: swipe
+right across the chart, or tap **‹** beside the title. **›** comes forward again, and once you have gone
+back, **This week** in the header brings you straight to now. The title names the week you are
+looking at.
 
 ### This month
 
 Minutes, days, and — when there are any — **new tempos**, meaning tempos you reached that you had
-not reached before. Under them, your longest day, and a calendar grid with one cell per day, shaded
-by how long you played.
+not reached before. Under them, your longest day once the month has two days to compare, and a
+calendar grid with one cell per day, shaded by how long you played. It pages back through every
+month since you started, the same way the week does.
 
 <!-- shot: journal/month-heatmap | role: panel
      | alt: The month grid with one shaded cell per day and the Less to More key beneath it
-     | state: seeded library, Practice log, two or more weeks of history in the current month -->
+     | state: seeded library, Practice log, scrolled to This month, two or more weeks of history in the current month -->
 
-The shading is **relative to this month's own busiest day** — that is what the *Less → More* key
-under it means. There is no fixed number it is shaded against, because choosing one would be setting
-a daily target by the back door. Days with nothing on them are a distinct neutral rather than the
-palest step, so "nothing" never reads as "a little".
+The shading is **relative to that month's own longest day** — that is what the *Less → More* key
+under it means, and the *Longest day* line above the grid is the darkest cell. There is no fixed
+number it is shaded against, because choosing one would be setting a daily target by the back door,
+so as you page back, the same shade can mean more in a busy month than in a quiet one. Days with
+nothing on them are a distinct neutral rather than the palest step, so "nothing" never reads as "a
+little".
+
+### What you played
+
+Under both the week and the month, **What you played** shows where the time went: by kind —
+exercises, loops, ear training, improvising, play-alongs — largest first. Tap a kind to open it and
+see the exercise, loop or song itself, with each loop's song underneath it.
+
+Tap a day — a bar in the week, a cell in the month — and the list narrows to that day. Tap the day
+again, or the date that appears beside **What you played**, to see the whole week or month.
+
+<!-- shot: journal/what-you-played | role: panel
+     | alt: The week chart with one day chosen and the others dimmed, and What you played narrowed to that day with one kind opened onto what was played
+     | state: seeded library, Practice log, a practised day tapped on This week's chart, its first kind opened -->
+
+It lists what you *played*, not where you were in the app: time spent browsing the song library or
+with the metronome on its own isn't practice the log has recorded, so it isn't here. An exercise or
+loop you have deleted keeps its minutes and is marked *Deleted*. Play-alongs from before Red Moon
+started noting which song they were are listed together as *Song not recorded*.
 
 ### All-time
 
@@ -371,7 +398,8 @@ effort — minutes, days, sessions, things made — and tempo appears only as a 
 played. Nothing compares you to another player.
 
 There is also no count of consecutive days, no weekly target, no percentage of days active, and no
-week-on-week comparison. All of those turn a record into a debt, and this screen is a record.
+week-on-week comparison. You can page back and look at last week yourself; the screen never sets one
+week beside another for you. All of those turn a record into a debt, and this screen is a record.
 
 **See Help & FAQs: "Does Red Moon score my playing?"**
 

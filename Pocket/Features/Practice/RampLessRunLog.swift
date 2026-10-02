@@ -26,8 +26,9 @@ import SwiftUI
 struct RampLessRunLog: ViewModifier {
     /// What the run was — `.earLoop` or `.improvise`. Named by the host's mode, not by the unit.
     let kind: PracticeRunKind
-    /// The `uid` of the loop that was practised. A loose copy, as every log row's references are.
-    let unitUID: UUID
+    /// The loop that was practised. The row copies its `uid`, its song and its name (ADR 0241) when
+    /// the run ends rather than when it starts, so a loop renamed mid-session logs under the new name.
+    let loop: Loop
     /// The routine hosting this run, if any. Non-`nil` disables the modifier entirely.
     let routineContext: RoutineRunContext?
 
@@ -50,7 +51,9 @@ struct RampLessRunLog: ViewModifier {
         self.startedAt = nil
         PracticeLogWriter.log(kind: kind,
                               startedAt: startedAt,
-                              unitUID: unitUID,
+                              unitUID: loop.uid,
+                              songSourceID: loop.song?.sourceID,
+                              unitLabel: loop.name,
                               into: modelContext)
     }
 }
@@ -60,8 +63,8 @@ extension View {
     /// `ImproviseView` so **every** host of those cores logs; a no-op when `routineContext` is
     /// present, since a routine block logs at its own completion seam instead.
     func logsRampLessRun(kind: PracticeRunKind,
-                         unitUID: UUID,
+                         loop: Loop,
                          routineContext: RoutineRunContext?) -> some View {
-        modifier(RampLessRunLog(kind: kind, unitUID: unitUID, routineContext: routineContext))
+        modifier(RampLessRunLog(kind: kind, loop: loop, routineContext: routineContext))
     }
 }

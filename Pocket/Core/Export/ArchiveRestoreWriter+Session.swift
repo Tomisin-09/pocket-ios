@@ -124,7 +124,9 @@ extension ArchiveRestoreWriter {
                                             routineUID: record.routineUID,
                                             tempoBPM: record.tempoBPM,
                                             tempoPercent: record.tempoPercent,
-                                            notesPerBeat: record.notesPerBeat))
+                                            notesPerBeat: record.notesPerBeat,
+                                            songSourceID: record.songSourceID,
+                                            unitLabel: record.unitLabel))
         }
     }
 }

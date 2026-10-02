@@ -34,6 +34,10 @@ enum PracticeLogWriter {
     ///
     /// Saves immediately: the log is append-only and one insert cheap, and a practice session is
     /// exactly the kind of thing that ends with the app being backgrounded before the next autosave.
+    ///
+    /// `songSourceID` and `unitLabel` (ADR 0241) say which song and what name, so the Practice log
+    /// can list what you played. Every caller passes both that it has: a play-along its song, a
+    /// loop-based run its loop's song, and every run the name it was shown under.
     @discardableResult
     static func log(kind: PracticeRunKind,
                     startedAt: Date,
@@ -43,6 +47,8 @@ enum PracticeLogWriter {
                     tempoBPM: Int? = nil,
                     tempoPercent: Int? = nil,
                     notesPerBeat: Int? = nil,
+                    songSourceID: String? = nil,
+                    unitLabel: String? = nil,
                     into context: ModelContext) -> Bool {
         let seconds = endedAt.timeIntervalSince(startedAt)
         guard seconds >= minimumSeconds else { return false }
@@ -53,9 +59,20 @@ enum PracticeLogWriter {
                               routineUID: routineUID,
                               tempoBPM: tempoBPM,
                               tempoPercent: tempoPercent,
-                              notesPerBeat: notesPerBeat)
+                              notesPerBeat: notesPerBeat,
+                              songSourceID: songSourceID,
+                              unitLabel: label(unitLabel))
         context.insert(run)
         try? context.save()
         return true
+    }
+
+    /// A blank name is no name. The Practice log shows an unnamed loop as "Untitled loop", and storing
+    /// `""` would freeze the blank instead of letting that fallback decide what it reads as.
+    private static func label(_ name: String?) -> String? {
+        guard let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else {
+            return nil
+        }
+        return trimmed
     }
 }

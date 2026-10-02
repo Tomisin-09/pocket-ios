@@ -20,6 +20,11 @@ struct WeekMinutesChart: View {
     /// view is deterministic in previews and tests.
     var today: Date = .now
     var calendar: Calendar = .current
+    /// The day *What you played* is narrowed to (ADR 0241). The other practised days dim so the chosen
+    /// one stands out; nothing is dimmed when no day is chosen.
+    var selectedDay: Date?
+    /// Called with a practised day's start when its bar is tapped. `nil` leaves the bars inert.
+    var onSelectDay: ((Date) -> Void)?
 
     /// Bar geometry. The stub is what a zero day draws — visible enough to say "this day exists and
     /// nothing happened", quiet enough not to read as a small amount of practice.
@@ -42,9 +47,27 @@ struct WeekMinutesChart: View {
         }
     }
 
+    /// A practised day is a button when the chart is tappable; an empty day never is, since there is
+    /// nothing to narrow to.
+    @ViewBuilder
     private func column(_ day: PracticeLog.DayBucket) -> some View {
+        if day.isActive, let onSelectDay {
+            Button { onSelectDay(day.day) } label: { columnContent(day) }
+                .buttonStyle(.plain)
+                .accessibilityLabel(accessibilityLabel(day))
+                .accessibilityIdentifier(UITestHooks.practiceLogDay)
+                .accessibilityAddTraits(isSelected(day) ? .isSelected : [])
+        } else {
+            columnContent(day)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(accessibilityLabel(day))
+        }
+    }
+
+    private func columnContent(_ day: PracticeLog.DayBucket) -> some View {
         VStack(spacing: 6) {
-            Text(day.day == peakDay ? "\(day.minutes)" : " ")
+            // "<1" rather than "0" over a day that rounds to nothing (ADR 0241).
+            Text(day.day == peakDay ? PracticeLog.MinutesFigure(seconds: day.seconds).value : " ")
                 .font(.pocketMono(.caption2))
                 .foregroundStyle(PocketColor.textSecondary)
                 .lineLimit(1)
@@ -54,15 +77,28 @@ struct WeekMinutesChart: View {
                 Color.clear.frame(height: barHeight)
                 UnevenRoundedRectangle(topLeadingRadius: corner, topTrailingRadius: corner)
                     .fill(day.isActive ? PocketColor.practice : PocketColor.surfaceStandard)
+                    .opacity(isDimmed(day) ? 0.32 : 1)
                     .frame(height: height(for: day))
             }
             Text(weekdayInitial(day.day))
-                .font(.futura(.caption2, weight: isToday(day.day) ? .semibold : .regular))
-                .foregroundStyle(isToday(day.day) ? PocketColor.textPrimary : PocketColor.textSecondary)
+                .font(.futura(.caption2, weight: isToday(day.day) || isSelected(day) ? .semibold : .regular))
+                .foregroundStyle(labelColour(day))
         }
         .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityLabel(day))
+        .contentShape(Rectangle())
+    }
+
+    private func isSelected(_ day: PracticeLog.DayBucket) -> Bool {
+        selectedDay.map { calendar.isDate($0, inSameDayAs: day.day) } ?? false
+    }
+
+    private func isDimmed(_ day: PracticeLog.DayBucket) -> Bool {
+        selectedDay != nil && day.isActive && !isSelected(day)
+    }
+
+    private func labelColour(_ day: PracticeLog.DayBucket) -> Color {
+        if isSelected(day) { return PocketColor.practice }
+        return isToday(day.day) ? PocketColor.textPrimary : PocketColor.textSecondary
     }
 
     /// A practised day is scaled against the week's own peak; an unpractised one draws the stub. The
@@ -88,9 +124,10 @@ struct WeekMinutesChart: View {
     }
 
     private func accessibilityLabel(_ day: PracticeLog.DayBucket) -> String {
-        let name = day.day.formatted(.dateTime.weekday(.wide))
+        let name = day.day.formatted(.dateTime.weekday(.wide).day().month(.wide))
         guard day.isActive else { return "\(name), no practice" }
-        return "\(name), \(day.minutes) minutes"
+        let figure = PracticeLog.MinutesFigure(seconds: day.seconds)
+        return "\(name), \(figure.value) \(figure.unit)"
     }
 }
 

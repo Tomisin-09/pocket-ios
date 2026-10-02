@@ -109,14 +109,20 @@ Reached from the `This week` strip on `Home`. The strip is not drawn until somet
 been practised, so neither is the way in.
 
 <!-- shot: reference/progress | role: screen
-     | alt: The Practice log screen with This week's bar chart and This month's shaded grid in full, and All-time beginning at the foot
+     | alt: The Practice log screen with This week's bar chart, the arrows beside its title, and What you played under it
      | state: seeded library, Home, This week strip tapped, several weeks of history -->
 
-- **`This week`** — minutes and days, over a bar per day.
+- **`This week`** — minutes and days, over a bar per day. **‹** and **›** beside the title step back
+  and forward a week, as does swiping the chart; once you have gone back, `This week` in the header
+  returns to now, and the title names the week instead.
 - **The month section** — its header names the month it is showing (*This month · August*), because
   a calendar grid with no month on it is ambiguous once you have scrolled past the top. Minutes,
-  days, new tempos when there are any, the longest day, and a grid shaded relative to that month's
-  busiest day, with a `Less` → `More` key.
+  days, new tempos when there are any, the longest day once there are two days to compare, and a grid
+  shaded relative to that month's longest day, with a `Less` → `More` key. It pages like the week,
+  with `This month` to return.
+- **`What you played`** — under both, the period's time by kind, largest first; tap a kind to open it
+  onto the exercises, loops or songs. Tap a practised bar or day to narrow it to that day, and the
+  date beside the title to widen it again.
 - **`All-time`** — time played and sessions with the date you started, the hours wall, and
   **`What you've built`**: counts of `Exercises`, `Loops`, `Mastered` and `Notes`.
 

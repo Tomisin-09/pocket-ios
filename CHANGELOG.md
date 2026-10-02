@@ -56,6 +56,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Look back through the Practice log.** *This week* and *This month* still open on now, and now page
+  back through every week and month since you started: swipe a chart sideways, or use the ‹ › beside
+  its title. Once you have gone back, **This week** or **This month** in the header brings you to now.
+- **See what you played.** Under each week and month, **What you played** lists the time by kind
+  (exercises, loops, ear training, improvising, play-alongs). Tap a kind to open it and see the
+  exercise, loop or song itself, with each loop's song underneath. Tap a day on the chart or the grid
+  to narrow the list to that day. From this release a run also remembers its song and its name, so a
+  play-along is listed by its song and a deleted exercise keeps the name it had. Play-alongs from
+  before then are listed together as *Song not recorded*.
 - **Leave a line on a snag from the song player.** Hold a row in the **Snags** panel to write yourself a
   line about that spot, *what's stopping you here?*, for when you come back. It saves to the Journal of
   the loop you were running when you marked it, and shows under the row. It's the same line *Name the
@@ -353,6 +362,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **The Practice log no longer says "0 minutes" for a day you did practise.** A day with less than half
+  a minute logged now reads **<1 minute**, and *Longest day* appears once a month has two days to
+  compare instead of naming the only one.
 - **There is a way off the keyboard again, on every screen.** On iOS 26.6 the ✓ above the keyboard
   had stopped appearing anywhere in the app, which left a number pad — the metronome's tempo, an
   automator value, a BPM — with no way to close it. The ✓ is now the app's own and sits above every

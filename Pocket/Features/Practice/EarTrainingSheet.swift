@@ -113,7 +113,7 @@ struct EarTrainingView: View {
         // On the shared core, so all three hosts get it once (ADR 0050). Humming along is exactly the
         // hands-free practice the setting exists for, and this screen had never asked.
         .keepAwakeDuringPractice()
-        .logsRampLessRun(kind: .earLoop, unitUID: loop.uid,
+        .logsRampLessRun(kind: .earLoop, loop: loop,
                          routineContext: routineContext)
     }
 

@@ -64,6 +64,23 @@ final class PracticeRun {
     /// that ignored this would plot 90 in sixteenths against 90 in quarters as "no progress".
     var notesPerBeat: Int?
 
+    /// The song the run was played from, by its import identity (`Song.sourceID`) — or `nil` for an
+    /// exercise, and for every row logged before ADR 0241. Set on a **play-along**, which has no
+    /// `unitUID` to carry because `Song` has no business `uid`, and on every **loop-based** run
+    /// (loop, ear training, improvising), so a loop's minutes still know their song after the loop is
+    /// deleted. A loose copy like the ids above, and the same key the archive already uses for a
+    /// song (`songSourceID` on a routine item or a take), so no `uid` had to be added to `Song`.
+    var songSourceID: String?
+
+    /// What the unit was called when the run was logged — the exercise's or loop's name, or the
+    /// song's title for a play-along — or `nil` for rows logged before ADR 0241.
+    ///
+    /// **A fallback, never the first choice.** The Practice log names a live unit by its *current*
+    /// name, so a rename shows everywhere at once. This copy exists for the unit that is gone: the
+    /// log keeps a deleted exercise's minutes by design, and without it they could only be listed as
+    /// "a deleted exercise". The same snapshot `JournalEntry.ownerLabelAtEntry` keeps for a note.
+    var unitLabel: String?
+
     init(uid: UUID = UUID(),
          startedAt: Date,
          durationSeconds: Double,
@@ -72,7 +89,9 @@ final class PracticeRun {
          routineUID: UUID? = nil,
          tempoBPM: Int? = nil,
          tempoPercent: Int? = nil,
-         notesPerBeat: Int? = nil) {
+         notesPerBeat: Int? = nil,
+         songSourceID: String? = nil,
+         unitLabel: String? = nil) {
         self.uid = uid
         self.startedAt = startedAt
         self.durationSeconds = max(0, durationSeconds)
@@ -82,6 +101,8 @@ final class PracticeRun {
         self.tempoBPM = tempoBPM
         self.tempoPercent = tempoPercent
         self.notesPerBeat = notesPerBeat
+        self.songSourceID = songSourceID
+        self.unitLabel = unitLabel
     }
 
     /// What was practised, decoded from the stored raw value. An unrecognised string — only reachable
@@ -104,6 +125,8 @@ final class PracticeRun {
                       routineUID: routineUID,
                       tempoBPM: tempoBPM,
                       tempoPercent: tempoPercent,
-                      notesPerBeat: notesPerBeat)
+                      notesPerBeat: notesPerBeat,
+                      songSourceID: songSourceID,
+                      unitLabel: unitLabel)
     }
 }

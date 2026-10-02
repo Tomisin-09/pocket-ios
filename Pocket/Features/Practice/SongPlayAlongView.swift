@@ -207,10 +207,9 @@ struct SongPlayAlongView: View {
     /// isn't one.
     ///
     /// `unitUID` is deliberately `nil`: `Song` is the one model with no business `uid` — it is
-    /// identified by its `SongRef` — and the row's job here is to carry the **minutes and the day**,
-    /// which every window stat reads without needing to know which song it was. Giving `Song` a `uid`
-    /// is the follow-up if per-song history is ever wanted; it would touch the store's aggregate root,
-    /// so it isn't worth doing speculatively for a surface that doesn't exist.
+    /// identified by its `SongRef`. The song travels as `songSourceID` instead (ADR 0241), the same
+    /// key the archive already uses for a song, so the Practice log can say which song was played
+    /// without a `uid` being added to the store's aggregate root.
     private func logCompletedRun() {
         guard let startedAt = runStartedAt else { return }
         runStartedAt = nil
@@ -218,6 +217,8 @@ struct SongPlayAlongView: View {
                               startedAt: startedAt,
                               unitUID: nil,
                               routineUID: routineContext?.routineUID,
+                              songSourceID: song.sourceID,
+                              unitLabel: song.title,
                               into: modelContext)
     }
 

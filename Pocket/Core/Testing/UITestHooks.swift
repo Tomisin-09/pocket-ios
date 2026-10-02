@@ -132,4 +132,13 @@ enum UITestHooks {
     /// `THIS WEEK`** — the string the shoot used to gate on, which after this move would have been
     /// true of the screen it was leaving.
     static let practiceLogDoor = "home.practiceLogDoor"
+
+    /// A practised day's bar in the Practice log's week chart, and a kind's row in *What you played*
+    /// (ADR 0241) — what the shoot taps to photograph the list narrowed to a day with one kind open.
+    ///
+    /// Identifiers for the same reason as the door: both labels are the **numbers** ("Tuesday 29
+    /// September, 23 minutes", "Loops, 40 minutes"), which change with the seed's dates, and a fixed
+    /// label would cost VoiceOver the very minutes the controls exist to read out.
+    static let practiceLogDay = "practiceLog.day"
+    static let practiceLogKind = "practiceLog.kind"
 }
