@@ -76,9 +76,10 @@ routines; the claim is holding both ends.*
   acquisition layer working correctly — *"slow downer"* is a real search query and
   *"practice routine app"* is not. Do not trade a working keyword for a positioning
   statement.
-- **Description**: *"Build a session"* is currently the 4th block and routines are one
+- **Description**: ~~*"Build a session"* is currently the 4th block and routines are one
   bullet inside it. In 1.2 it moves up beside *"Loop and slow down"*, and the opening
-  paragraph names both halves rather than only the waveform.
+  paragraph names both halves rather than only the waveform.~~ **Done in the free-release
+  rewrite below (2026-10-02).**
 
 ## Keywords — 100 char max, comma-separated, NO spaces after commas
 Don't spend keyword space on words already in the name ("practice") or subtitle.
@@ -89,41 +90,79 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 ## Description
 > **Red Moon is a practice room, not a jukebox.**
 >
-> Drop in your own recordings — local files or anything in iCloud Drive — and
-> turn the part you can't play yet into the part you own. Set a loop over the
-> tricky bar, slow it down without dropping the pitch, and run it until your
-> hands catch up.
+> Bring in a song you own and loop the bar you can't play yet, on guitar or bass.
+> Slow it down without the pitch dropping, then line your loops up with your drills
+> into a session you press play on. Red Moon remembers how each one is coming along.
+> Nobody is marking you.
 >
 > **Loop and slow down**
-> • Draw a loop on the waveform and repeat it hands-free
-> • Slow the tempo while the pitch stays true
-> • Stack loops across a song and jump between them
->
-> **A real metronome**
-> • Precise, steady tempo you can trust
-> • Use it on its own or under any exercise
->
-> **Exercises that show you the neck**
-> • Scales and arpeggios drawn as fretboard boxes, labelled by where your hand
->   goes
-> • Chords as diagrams — open shapes, movable barre grips, or a custom placer
->   for any voicing you can imagine
-> • Picking, legato and strumming drills with a tempo ramp
+> • Import audio files you own from Files or iCloud Drive
+> • Draw a loop on the waveform, as short as half a second, and repeat it hands-free
+> • Slow the tempo while the pitch stays true, with a click under it at the same speed
+> • Mark snags without stopping, then tighten the loop to where they land
+> • A song is waiting the first time you open the app, with a three-step guide
 >
 > **Build a session**
-> • Chain loops, songs and exercises into a routine and press play
-> • Keep a private journal of how a passage is coming along
+> • Chain loops, songs, drills and rests into a routine and press play
+> • A routine remembers when you last played it, and never sets you a target
+> • Today's session builds one for you from three questions and your goals
+> • A tuner is offered before you start, and between blocks
 >
-> Your playing never leaves your device. No account, no ads, nothing to buy, no
-> advertising ID —
-> your audio, recordings, notes and song names stay with you, on your device and
-> your own iCloud. Anonymous counts of which features get used can be switched off
-> in Settings at any time.
+> **Work a part out by ear**
+> • Count the notes: tap once for each note you hear, pass after pass
+> • Name the notes on the neck, by fret and string, or by ear
+> • Keep what you found as tab, and watch the song's map fill in
+> • Or write a tab yourself, and export it as text or PDF
+> You do the hearing. Red Moon keeps the record, and never checks your answer.
+>
+> **Drills on a real fretboard**
+> • Scales and arpeggios drawn as fretboard boxes, labelled by where your hand goes
+> • Chord diagrams, movable shapes, and a placer that names any voicing you build
+> • Picking, legato, strumming and chord-change drills with a tempo ramp
+> • Progressions in any key, including ones you write yourself
+>
+> **A journal, not a scoreboard**
+> • Notes on a loop, a drill or a whole session, in a dated journal
+> • Record takes with the mic, and pin a note to a moment in one
+> • This week shows the minutes and days you played, and never scores them
+>
+> **A metronome and a tuner you can trust**
+> • Count-in, time signatures, and a tempo that ramps across a run
+> • Click withdrawal thins the click, so you carry the pulse yourself
+> • A tuner for guitar and bass, with alternate tunings
+>
+> **Keep the lesson you're following**
+> • Put a link or a file on any song, loop or drill, with a note on what you took
+>   from it
+> • Send a routine to your teacher or a bandmate with its songs inside, so it plays
+>   at the other end
+> • Export a take or a song's audio to work on in your DAW
+>
+> Red Moon plays audio files you own. It can't play Apple Music or Spotify streams.
+>
+> Nothing you play leaves your phone unless you send it yourself. There's no account
+> and nothing to buy. Your audio, recordings, notes and song names stay on your
+> device, Red Moon doesn't count what you do in it, and it never uses the
+> advertising identifier.
 >
 > Named after the Tom Misch track that started it all.
 
-*Check the line-wrap in the field: "nothing to buy" lengthened the privacy sentence by one
-clause.*
+*Rewritten for the free release, 2026-10-02, to the plan in the Marketing Foundation:*
+
+- *The opening names both halves, the loop on your own song and the session it feeds,
+  and ends on "Nobody is marking you". The headline and the start of that paragraph
+  are what show before "more".*
+- *"Build a session" moves up beside "Loop and slow down" (the 1.2 reframe, landed now),
+  and working a part out by ear gets one block. It never implies the app hears the notes
+  for you.*
+- *Sending follows ADR 0236 D1: it's about taking your work somewhere to work on it, never
+  "share". A routine sent with its songs plays only for someone who also has Red Moon.*
+- *The streaming line sets expectations before install, so nobody downloads it for Apple
+  Music.*
+- *"No ads" is gone (ADR 0240: it stays only in disclosures, the privacy policy and the
+  review notes), the usage-counts sentence went with ADR 0239, and "free" is not a
+  headline. "Nothing to buy" is one plain fact at the end.*
+- *Every claim is in the free build. Check the line-wrap in the field.*
 
 ### History: the EULA line — REJECTED 2026-08-08 for its absence, retired by ADR 0237
 
@@ -509,14 +548,17 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 **For the free release (ADR 0237), before anything below:**
 - [ ] Both `…pro.annual` and `…pro.monthly` and the **"Red Moon Pro"** group removed from
       sale in App Store Connect
-- [ ] Description pasted from above, with **no** subscription or EULA lines
+- [ ] Description pasted from above, with **no** subscription or EULA lines, no usage
+      counts, and no "no ads" as a selling line
 - [ ] Promotional text and review notes carry no subscription wording
 - [ ] No screenshot shows the paywall, a padlock or a PRO badge
 - [ ] App Privacy: nothing declared under Purchases
 - [ ] App Privacy: **Product Interaction removed** — there is no analytics (ADR 0239);
       the three contact-form types stay
 - [ ] `decooperations.co.uk/privacy` Red Moon section: usage counts, the region split,
-      *Settings ▸ Privacy* and Aptabase removed, matching `docs/privacy-policy.md` (ADR 0239)
+      *Settings ▸ Privacy* and Aptabase removed, matching `docs/privacy-policy.md` (ADR 0239).
+      Written in `uk-site` PR #75, with the free-price and file-sending changes; merge it
+      when the free build is live
 - [ ] Paid Applications Agreement kept or dropped — the owner's call
 
 **The 1.1 checklist, kept as history:**
