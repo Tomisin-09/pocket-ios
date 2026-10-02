@@ -188,6 +188,11 @@ about the sitting as a whole. That is the note for the things that belong to the
 any one block: how the hands felt, what the room was like, what you would do differently. It files
 under the session rather than under whichever drill happened to be last.
 
+After a session from [Today's session](sessions.md) or a quick session, the screen also offers
+**Save as a routine**, just above **Done**. Those sessions don't join your routines unless you save
+them — see [keeping one](sessions.md#keeping-one). One tap keeps it under its name, and the button
+gives way to *Saved to your routines*.
+
 ## How it moves — the settings
 
 **Settings ▸ Routines** holds five:

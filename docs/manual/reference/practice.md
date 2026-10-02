@@ -84,6 +84,10 @@ nothing carries no length. The toolbar carries `List options` then `New routine`
 Once a routine has been run, a second line underneath carries how many times it has been practised
 and when it last was.
 
+The list holds the routines you have saved. A session from Today's session or a quick session that
+you started and did not save is not on it, and not in the count on Practice; it is on Home until
+the next one replaces it. See [keeping one](../sessions.md#keeping-one).
+
 <!-- not-in-source: "4 blocks · 2 rests" — counted per routine at render time, so the row's summary
      is never one literal. The words either side of the counts are. -->
 

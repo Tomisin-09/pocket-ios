@@ -1,7 +1,10 @@
 # ADR 0243 — The planner's sessions are temporary until you save them
 
-- **Status:** Accepted — decided with Tomisin, 2026-10-02. Not yet built
-  (`pocket-355-a-session-you-keep`).
+- **Status:** Accepted — decided with Tomisin, 2026-10-02. Built on `pocket-355-a-session-you-keep`
+  (2026-10-02). The store-upgrade check passed on the simulator — a store made by `main` opened by this
+  build gains `ZISTEMPORARY`, and its routine reads `0`, saved (D7, D9); the check on a device holding
+  real routines is still owed. Notes on what the build learned are marked *Built:* in D3 (why the
+  one save has to be the sandbox's) and D8 (where the archive filter lives).
 - **Date:** 2026-10-02
 - **Amends:** ADR 0072 — its *First surface* has the Quick session materialise "a real `Routine`" and
   hand it to the player. It still does, but that routine is now **temporary** (D2) and reaches
@@ -100,6 +103,15 @@ the new one. So there is never more than one, by construction: no timer, no swee
 the player can't see. "Every other" rather than "the previous one", so that a stray left behind by a
 crash between the two writes is cleared by the next Start.
 
+*Built:* as written — one save, in the review screen's sandbox, which is the context that made the new
+session's blocks. **It has to be that context.** The first build deleted the old session through the
+main context after the sandbox had saved the new one, to reach Jump back in and the rail the way a
+library delete does. On the simulator that turned every block the new session shared with the old one
+into *Unit removed* the moment it started; the one block they didn't share survived. The main
+context's view of each shared drill and loop predated the new blocks, and the delete wrote that view
+back. `TemporarySessionUITests` asserts the second session has no orphaned block, and
+`Routine.deleteTemporaries` no longer saves, so its caller saves in the context that inserted.
+
 Until then the last one stays — on Jump back in, in the rail, and runnable again from either. Running
 it again is another run of the same session, so it deletes nothing. A session generated and then
 backed out of was never written, so it replaces nothing either.
@@ -160,6 +172,9 @@ A backup holds what you saved. The session's runs and note are in it regardless,
 ids, so all that is missing is the plan. Writing the session in would mean adding the flag to the
 archive format, or else it would restore as a saved routine. Leaving it out needs no format change, and
 `schemaVersion` does not move (0181).
+
+*Built:* in `ArchiveBuilder`, not `ArchiveSource+Store` as the Consequences list it. The builder holds
+every rule about what may cross into an archive and is the side unit-tested over plain models.
 
 ### D9 — The routines already there stay
 

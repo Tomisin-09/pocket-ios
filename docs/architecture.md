@@ -1071,7 +1071,20 @@ and materialises the blocks into a persisted `Routine`
 (exercises by `uid`, loops by `uid`, songs by a deterministic `PlannerID` since `Song` has no stored
 `uid`). The **UI** (ADR 0015/0073, V2 Slice 3) is `Features/Practice/PlannerView` — a duration
 selector (`SessionLength`), a list of `Goal`s, and **Generate** → a provisional `Routine` reviewed in
-`RoutineDetailView` before Start (no active goals ⇒ the Quick-session fallback). That review carries an
+`RoutineDetailView` before Start (no active goals ⇒ the Quick-session fallback). **Start does not keep a
+planner session (ADR 0243).** `RoutineDetailView` is told what Start does by its `startsAs:
+ProvisionalStart` — `.temporary` from `PlannerView` and the library's Quick session, `.saved` from the
+three song-side producers — and a temporary one is inserted with **`Routine.isTemporary = true`** (an
+additive `Bool`, `isFavorite`'s shape), and every *other* temporary routine is deleted **in the same
+save, through the review screen's sandbox** — the context that made the new blocks. Deleting through
+the main context instead unlinked every block the two sessions shared (`Routine.deleteTemporaries`). "In the store" and "in Routines" are now different questions:
+`Routine.saved(_:)` (`Routine+Temporary`) is the filter every *what you keep* surface reads — the library's
+`presentRoutines`, Practice's count, Add to routine, the archive (`ArchiveBuilder`), name de-duplication
+— while Jump back in, the Recent routines rail and a session note's link read every routine as before. On
+the routine screen `existsInStore` still means in the store and `isSaved` gates reminder, references and
+share; *Save as a routine* on the finish screen writes the main context, so the screen under the
+player rebuilds its sandbox on the cover's dismiss. Runs and notes already hold the routine by a loose
+`uid` (ADR 0117/0143), which is what makes deleting an unsaved one lose no history. That review carries an
 **Estimated length** readout + soft over/under-budget hint vs. the chosen length (R3, `RoutineDetailView+Length`):
 pure `SessionEstimate` turns each exercise's ramp staircase into minutes (per-plateau tempo × meter, not
 a flat default), times each block's additive `RoutineItem.reps`, summed by `PracticePlanner.estimatedMinutes(forRoutine:)`

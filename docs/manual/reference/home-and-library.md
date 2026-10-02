@@ -53,6 +53,9 @@ runs* — so nothing was lost from the spoken screen. Before you have added a so
 tile carries one line of its own, `Add a song to get started`, and loses it once you have.
 
 **`Recent routines`** is a horizontal rail of routines you have played, each showing its block count.
+It and `JUMP BACK IN` both include a session from Today's session you started and have not saved,
+which stays until you start the next one; its screen offers `Save` where a saved routine has
+`Edit`. See [keeping one](../sessions.md#keeping-one).
 
 ### The first run
 

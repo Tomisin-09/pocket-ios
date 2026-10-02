@@ -119,7 +119,9 @@ struct SongDetailsSheet: View {
             .navigationDestination(isPresented: $buildingRoutine) {
                 RoutineDetailView(container: modelContext.container,
                                   generatedSession: SongRoutineBuilder.sessionBlocks(for: song),
-                                  defaultName: SongRoutineBuilder.defaultName(for: song))
+                                  defaultName: SongRoutineBuilder.defaultName(for: song),
+                                  // A song's routine is a recipe: Start keeps it (ADR 0243 D1).
+                                  startsAs: .saved)
             }
             // A linked drill opens its run screen, pushed inside this sheet the same way "Build a
             // routine" is — so the back chevron returns to the song you came from. Bool-bound, not

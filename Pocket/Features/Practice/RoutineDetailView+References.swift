@@ -18,9 +18,10 @@ extension RoutineDetailView {
     ///
     /// Three constraints, none of which the other four surfaces need:
     ///
-    /// 1. **Held back until the routine is in the store.** A provisional generated session is not
-    ///    saved yet, and attaching a link would insert it through the relationship — quietly keeping
-    ///    a routine the player never chose to keep.
+    /// 1. **Held back until the routine is saved.** A provisional generated session is not saved
+    ///    yet, and attaching a link would insert it through the relationship — quietly keeping a
+    ///    routine the player never chose to keep. A temporary session (ADR 0243 D5) is in the store
+    ///    but not kept, and a link put on it would go when the next planner Start deletes it.
     /// 2. **Writes into `editContext`, not the environment's context.** `routine` is faulted into
     ///    this screen's private child context; inserting a link through the app context while
     ///    pointing it at that routine is a cross-context relationship, which is a corruption rather
@@ -32,7 +33,7 @@ extension RoutineDetailView {
     ///    contract the blocks already follow, and the one the manual already states for this screen:
     ///    **Cancel discards, Save keeps.**
     @ViewBuilder var referencesSection: some View {
-        if existsInStore {
+        if isSaved {
             if isEditing {
                 ReferencesSection(owner: routine, accent: PocketColor.practice,
                                   context: editContext, savesImmediately: false,

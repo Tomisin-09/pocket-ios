@@ -27,11 +27,22 @@ extension RoutineDetailView {
         }
     }
 
-    /// Start the session in the player. A **provisional** generated session is committed first
-    /// (Start is a deliberate keep, and running must write real practice history), then resolved into
-    /// the main context so its run screens write to the real store — not this view's editing sandbox.
+    /// Start the session in the player. A **provisional** generated session is written first, then
+    /// resolved into the main context so its run screens write to the real store — not this view's
+    /// editing sandbox.
+    ///
+    /// *Written* is not *kept* (ADR 0243 D1). A planner session goes in as a temporary one and
+    /// reaches Routines only if it is saved; a session built from songs is kept, as Save keeps it.
+    /// What a run leaves behind (its practice log rows, its note, its takes) names the routine by a
+    /// loose `uid` and outlives it either way (ADR 0117, 0143), so being in Routines was never what
+    /// made a run count.
     private func startPlaying() {
-        if !existsInStore { commitProvisional(named: routine.name) }
+        if !existsInStore {
+            switch startsAs {
+            case .temporary: commitTemporary()
+            case .saved: commitProvisional(named: routine.name)
+            }
+        }
         playingRoutine = appContext.model(for: routine.persistentModelID) as? Routine
         haptic(.medium)
     }

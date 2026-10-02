@@ -30,6 +30,21 @@ enum QuickSessionNaming {
         return uniqued(base, existing: existing)
     }
 
+    /// The name a **temporary** session runs under (ADR 0243 D4): the one typed on the review screen,
+    /// or the dated default if it was left blank. **Not** de-duplicated: `existing` is the saved
+    /// routines' names, and a temporary session is numbered against nothing until it is saved.
+    static func temporaryName(requested: String, existing: [String], date: Date) -> String {
+        let trimmed = requested.trimmingCharacters(in: .whitespaces)
+        return trimmed.isEmpty ? defaultName(existing: existing, date: date) : trimmed
+    }
+
+    /// The name a generated session is **saved** under (ADR 0243 D4): `temporaryName`'s answer,
+    /// made unique among `existing`. The review screen's Save and every later save of a temporary
+    /// session both come here, so a session is named the same way whichever moment it was kept at.
+    static func savedName(requested: String, existing: [String], date: Date) -> String {
+        uniqued(temporaryName(requested: requested, existing: existing, date: date), existing: existing)
+    }
+
     /// `base` if free, else `"base 2"`, `"base 3"`, … — the first suffix not already taken. Trailing
     /// whitespace on the base is trimmed so an empty/blank rename still yields a clean numbered name.
     static func uniqued(_ base: String, existing: [String]) -> String {

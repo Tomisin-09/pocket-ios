@@ -23,11 +23,12 @@ extension RoutineDetailView {
 
     @ViewBuilder
     var reminderSection: some View {
-        // Nothing to keep an appointment with until the routine is in the store: a provisional
-        // generated session has a `uid`, so the write would succeed, and it would schedule a
-        // notification for a routine the player has not yet decided to keep — one that would fire
-        // days later naming something that was never saved. That is D3's orphan, created on purpose.
-        if existsInStore && !isEditing {
+        // Nothing to keep an appointment with until the routine is saved: a provisional generated
+        // session has a `uid`, so the write would succeed, and it would schedule a notification for
+        // a routine the player has not yet decided to keep — one that would fire days later naming
+        // something that was never saved. That is D3's orphan, created on purpose. A temporary
+        // session (ADR 0243 D5) is in the store and still not kept: the next planner Start deletes it.
+        if isSaved && !isEditing {
             ReminderSection(
                 header: "Reminder",
                 schedule: scheduleBinding,

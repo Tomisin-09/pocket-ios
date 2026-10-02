@@ -70,7 +70,10 @@ enum ArchiveBuilder {
             savedChords: source.savedChords
                 .sorted { ($0.name, $0.uid.uuidString) < ($1.name, $1.uid.uuidString) }
                 .map(savedChordRecord),
-            routines: source.routines
+            // A backup holds what you saved (ADR 0243 D8). A temporary session's runs and note cross
+            // regardless, under their loose ids; writing the plan too would need the flag in the
+            // format, or it would restore as a saved routine.
+            routines: Routine.saved(source.routines)
                 .sorted { ($0.name, $0.uid.uuidString) < ($1.name, $1.uid.uuidString) }
                 .map(routineRecord),
             goals: source.goals

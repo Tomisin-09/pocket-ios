@@ -48,7 +48,8 @@ struct RoutineLibraryView: View {
     /// The routine being played (▶) — presented full-screen over the library; `nil` when none.
     @State private var playing: Routine?
     /// A freshly-generated Quick session awaiting review — pushed as a **provisional** detail
-    /// (nothing persists until the user Saves or Starts it, V2 planner Slice 1); `nil` when none.
+    /// (nothing is written until the user Saves or Starts it, V2 planner Slice 1; Start runs it as a
+    /// temporary session, ADR 0243); `nil` when none.
     @State private var quickDraft: QuickSessionDraft?
     /// Whether the document picker for a shared routine is up (ADR 0188 S2).
     @State var importingRoutine = false
@@ -109,11 +110,15 @@ struct RoutineLibraryView: View {
         return "No favourite routines yet. Swipe or hold a routine and tap Favourite to pin it."
     }
 
-    /// The routines actually on screen — everything except rows whose delete is pending behind the
+    /// The routines actually on screen — the saved ones, less any whose delete is pending behind the
     /// Undo toast (Slice 3). The empty state reads from here too, so deleting your last routine says
     /// "no routines yet" rather than "no favourites".
+    ///
+    /// **Saved**, because a temporary session is not in Routines until it is saved (ADR 0243 D2).
+    /// Everything on this screen reads from here — the search, the sort, favourites, the folder scope
+    /// and its counts, the empty state — so one filter leaves it out of all of them.
     var presentRoutines: [Routine] {
-        routines.filter { !rowDeletion.isPending($0.uid) }
+        Routine.saved(routines).filter { !rowDeletion.isPending($0.uid) }
     }
 
     var body: some View {
@@ -209,7 +214,7 @@ struct RoutineLibraryView: View {
         .navigationDestination(item: $quickDraft) { draft in
             RoutineDetailView(container: context.container,
                               generatedSession: draft.blocks, defaultName: draft.name,
-                              targetMinutes: draft.targetMinutes)
+                              targetMinutes: draft.targetMinutes, startsAs: .temporary)
         }
         .fullScreenCover(item: $playing) { routine in
             RoutinePlayerView(routine: routine)
@@ -278,7 +283,7 @@ struct RoutineLibraryView: View {
     /// legato block"), which otherwise means rebuilding the whole block list by hand (Slice 3).
     /// The blocks reference the **same** units; only the session is forked.
     private func duplicate(_ routine: Routine) {
-        let name = CopyNaming.copyName(of: routine.name, existing: routines.map(\.name))
+        let name = CopyNaming.copyName(of: routine.name, existing: Routine.saved(routines).map(\.name))
         let (copy, blocks) = routine.duplicated(named: name)
         context.insert(copy)
         copy.items = blocks
@@ -303,12 +308,13 @@ struct RoutineLibraryView: View {
 
     /// Generate a Quick session (default short budget, ADR 0014 R8) from the exercise library and
     /// push it for **review** — the V2 planner's first surface (Slice 1). Nothing is persisted here:
-    /// the blocks are pure, and the provisional detail screen only commits them to the library on an
-    /// explicit Save or Start. The default name is dated and de-duplicated against the library.
+    /// the blocks are pure, and the provisional detail screen commits them to the library on an
+    /// explicit Save. Start runs them as a temporary session instead (ADR 0243 D1). The default name
+    /// is dated and de-duplicated against the saved routines.
     private func generateQuickSession() {
         let blocks = PracticePlanner.planQuickSession(length: .default, exercises: exercises)
         guard blocks.contains(where: { $0.unit != nil }) else { return }
-        let name = QuickSessionNaming.defaultName(existing: routines.map(\.name), date: .now)
+        let name = QuickSessionNaming.defaultName(existing: Routine.saved(routines).map(\.name), date: .now)
         quickDraft = QuickSessionDraft(blocks: blocks, name: name,
                                        targetMinutes: SessionLength.default.minutes)
         haptic(.light)

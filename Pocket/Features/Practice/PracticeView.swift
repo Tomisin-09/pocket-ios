@@ -29,8 +29,9 @@ struct PracticeView: View {
         List {
             Section {
                 plannerCard
+                // Saved routines only: the count says what the library behind it lists (ADR 0243 D2).
                 libraryRow(title: "Routines", subtitle: "Hand-built practice sessions",
-                           icon: "list.bullet.rectangle.portrait", count: routines.count) {
+                           icon: "list.bullet.rectangle.portrait", count: Routine.saved(routines).count) {
                     RoutineLibraryView()
                 }
                 // The long-term tier's one editable surface (ADR 0171 D6). Same altitude as the
