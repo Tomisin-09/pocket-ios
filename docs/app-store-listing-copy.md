@@ -114,16 +114,19 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 > • Chain loops, songs and exercises into a routine and press play
 > • Keep a private journal of how a passage is coming along
 >
-> Your playing never leaves your device. No account, no ads, nothing to buy, no
-> advertising ID —
-> your audio, recordings, notes and song names stay with you, on your device and
-> your own iCloud. Anonymous counts of which features get used can be switched off
-> in Settings at any time.
+> Nothing you play leaves your phone unless you send it yourself. There's no account
+> and nothing to buy. Your audio, recordings, notes and song names stay on your
+> device, Red Moon doesn't count what you do in it, and it never uses the
+> advertising identifier.
 >
 > Named after the Tom Misch track that started it all.
 
-*Check the line-wrap in the field: "nothing to buy" lengthened the privacy sentence by one
-clause.*
+*Reworded 2026-10-02. "No ads" is no longer a selling line: ads are possible in future
+(ADR 0240), so it stays only where it is a disclosure, in the privacy policy and the review
+notes. The usage-counts sentence went with ADR 0239. "Never leaves your device" became
+"unless you send it yourself", because songs, takes, routines and tabs can be sent (ADR
+0236). "And your own iCloud" is dropped: the app doesn't sync, and only a device backup
+takes its data to iCloud. Check the line-wrap in the field.*
 
 ### History: the EULA line — REJECTED 2026-08-08 for its absence, retired by ADR 0237
 
@@ -509,14 +512,17 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 **For the free release (ADR 0237), before anything below:**
 - [ ] Both `…pro.annual` and `…pro.monthly` and the **"Red Moon Pro"** group removed from
       sale in App Store Connect
-- [ ] Description pasted from above, with **no** subscription or EULA lines
+- [ ] Description pasted from above, with **no** subscription or EULA lines, no usage
+      counts, and no "no ads" as a selling line
 - [ ] Promotional text and review notes carry no subscription wording
 - [ ] No screenshot shows the paywall, a padlock or a PRO badge
 - [ ] App Privacy: nothing declared under Purchases
 - [ ] App Privacy: **Product Interaction removed** — there is no analytics (ADR 0239);
       the three contact-form types stay
 - [ ] `decooperations.co.uk/privacy` Red Moon section: usage counts, the region split,
-      *Settings ▸ Privacy* and Aptabase removed, matching `docs/privacy-policy.md` (ADR 0239)
+      *Settings ▸ Privacy* and Aptabase removed, matching `docs/privacy-policy.md` (ADR 0239).
+      Written in `uk-site` PR #75, with the free-price and file-sending changes; merge it
+      when the free build is live
 - [ ] Paid Applications Agreement kept or dropped — the owner's call
 
 **The 1.1 checklist, kept as history:**
