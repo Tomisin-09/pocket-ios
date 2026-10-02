@@ -56,12 +56,6 @@ struct HomeView: View {
     /// it has ever been changed, which is what takes its *Hold to change* caption away.
     @AppStorage(AppSettings.Key.homeTool) var homeToolRaw = AppSettings.homeToolDefault.rawValue
     @AppStorage(AppSettings.Key.homeToolChosen) var homeToolChosen = false
-    /// One-time gate for the analytics sheet, so it appears once and never nags. Covers being
-    /// *told* as well as being *asked* (ADR 0147) — the key string is unchanged so no install
-    /// re-sees it.
-    @AppStorage(AppSettings.Key.analyticsPromptSeen) var analyticsDisclosureSeen = false
-    /// Drives the after-first-practice analytics consent cover.
-    @State var showingAnalyticsConsent = false
     /// Drives the after-first-session artist-name sheet.
     @State var showingNamePrompt = false
     /// Drives the first-launch curation intake sheet.
@@ -220,17 +214,6 @@ struct HomeView: View {
             .fullScreenCover(isPresented: $showingIntake,
                              onDismiss: { artistIntakeSeen = true },
                              content: { ArtistIntakeView() })
-            // The analytics sheet — a consent ask under `.ask`, a catch-up notice under `.notify`
-            // (ADR 0120, region-split by ADR 0147). Shown once, last on the ladder so it never
-            // competes with a profile moment. Marking it seen on dismiss — rather than on answer —
-            // means every exit closes it, including any dismissal path added later.
-            .fullScreenCover(isPresented: $showingAnalyticsConsent,
-                             onDismiss: { analyticsDisclosureSeen = true },
-                             content: {
-                                 AnalyticsConsentSheet(
-                                     mode: AnalyticsPolicy.consentModel(
-                                         regionCode: Locale.current.region?.identifier))
-                             })
             .onAppear(perform: maybeOfferProfileMoment)
             // Seeding first, then the reminder sweep — the ordering is load-bearing, see
             // `sweepOrphanedReminders`.

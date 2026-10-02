@@ -518,28 +518,11 @@ comes back to it. There is no tab bar on the phone — ADR 0102 deferred that de
 §2 of `docs/directions-2026-09.md` takes it up again at the iPad, where the same six become
 a sidebar.
 
-### 4.3 Analytics consent — the one-time ask
+### 4.3 Analytics consent — removed
 
-A full-screen cover in the intake's register (ADR 0120), and the **last** of the three
-one-time Home moments — after the curation intake (ADR 0113) and the earned-a-name
-invitation, never competing with either.
-
-**When:** once, on returning Home after a **first practice** — deliberately *not* in the
-first-run intake. Analytics exists to measure whether a cold install reaches a first
-practice, so an extra screen in front of that flow would tax the very metric it observes,
-and would ask for trust before the player has any reason to extend it.
-
-**Layout:** headline → three icon-led points → two stacked full-width actions.
-The three points are the whole design, and their honesty is the point:
-*what we'd count* · *what never leaves this device* · *nothing that identifies you*.
-Written concretely ("your recordings, your notes, your song names, your artist name"),
-never in the abstract — this is the copy the brand claim rests on.
-
-**Weighting:** accept is the filled `PocketColor.practice` capsule and decline is plain
-text, matching the app's primary/secondary grammar — but decline is a **full-width,
-equally reachable target**, not a buried "no thanks", and it is the outcome of every
-other exit from the screen. A consent screen that nudges makes the privacy claim a lie.
-A closing line points at Settings ▸ Privacy, where the same switch lives permanently.
+There is no analytics in the app (ADR 0239), so there is no consent screen, no intake
+footnote and no *Settings ▸ Privacy*. The one-time Home moments are the curation intake
+and the earned-a-name invitation; the review ask after them draws nothing of ours.
 
 ---
 

@@ -3,6 +3,9 @@
 - **Status:** Accepted — built (`pocket-318-review-prompt`), ported onto `main` after ADR 0237 on
   `pocket-345-review-prompt`
 - **Date:** 2026-09-10 (`pocket-318-review-prompt`); ported 2026-10-01
+- **Amended by:** ADR 0239 (2026-10-02) — **D7** goes: there is no analytics, so no
+  `review_requested`. **D2**'s ladder loses the analytics rung, so the ask is the fourth rung, after
+  the intake and the naming invitation. D3–D6 and D8 stand.
 - **Relates to:** ADR 0186 (a reason to come back — D1's rule that the only legal trigger is
   something the player *did*, applied one surface further out), ADR 0070 (no performance feedback),
   ADR 0113 (the Home profile-moment ladder this joins as a fifth rung), ADR 0144 D4 (the launch

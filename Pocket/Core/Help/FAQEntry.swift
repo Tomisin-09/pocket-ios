@@ -204,10 +204,10 @@ extension FAQEntry {
                 + "string while you're on that screen, and a recording you start yourself. Neither "
                 + "sends anything anywhere — your audio never leaves this device, and neither do your "
                 + "notes, song names or artist name, unless you send a file yourself from the share "
-                + "sheet. Separately, the app counts which features get "
-                + "used so we know what to improve. Those counts are anonymous and carry no account "
-                + "and no advertising ID. Whether counting starts on or off depends on where you "
-                + "are — Settings ▸ Privacy always shows which it is, and turns it off in one tap.",
+                + "sheet. The app doesn't count or report what you do in it, either. Apple gives "
+                + "developers anonymous totals, such as how often an app is opened and how often it "
+                + "crashes, but only from people who turned on Share With App Developers in the "
+                + "iPhone's Settings ▸ Privacy & Security ▸ Analytics & Improvements.",
               area: .privacy)
     ]
 

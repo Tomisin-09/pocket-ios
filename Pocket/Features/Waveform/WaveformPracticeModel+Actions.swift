@@ -198,7 +198,6 @@ extension WaveformPracticeModel {
         let name = AutoName.next(prefix: "Loop", existing: loops.map(\.name))
         let loop = Loop(name: name, start: start, end: end, speed: speed, repeats: 4)
         context.insert(loop)
-        Analytics.send(.loopCreated)
         // Fractions, so the hint's span check is in seconds. Before the beat: a beat that finishes
         // the walkthrough ends it only if no hint is left to show (ADR 0220 D4).
         walkthroughLoopKept(loop.uid, start: start * duration, end: end * duration)

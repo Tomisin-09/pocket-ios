@@ -47,16 +47,12 @@ extension RoutineDetailView {
                     item.recordsTake = newValue
                     if existsInStore { try? editContext.save() }
                     guard newValue else { return }
-                    // One event, at the decision — not once per block-run, which would count the same
-                    // choice every time the routine is played (ADR 0120).
-                    Analytics.send(.toolOpened(tool: .recording))
                     guard MicPermission.status == .undetermined else { return }
                     // Explicitly `@MainActor`: the sandboxed `RoutineItem` written on the far side
                     // of the await is a `@Model`, and CI's older toolchain is stricter about this
                     // than local Xcode is.
                     Task { @MainActor in
                         let granted = await MicPermission.request()
-                        Analytics.send(.micPermission(outcome: granted ? .granted : .denied))
                         guard !granted else { return }
                         item.recordsTake = false
                         if existsInStore { try? editContext.save() }

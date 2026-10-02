@@ -25,10 +25,15 @@ final class SettingsHubUITests: UITestCase {
         // The rows are NavigationLinks wrapping a LabeledContent, so match by label prefix across any
         // element type rather than assuming a button/cell trait (the ToolkitUITests lesson).
         for title in ["You", "Appearance", "Sound & feel",
-                      "Practice", "Routines", "Song player", "Privacy", "Help & About"] {
+                      "Practice", "Routines", "Song player", "Your data", "Help & About"] {
             XCTAssertTrue(firstElement(in: app, labelStartingWith: title).waitForExistence(timeout: Self.uiTimeout),
                           "\(title) row missing from the Settings hub")
         }
+        // Privacy held one control, the analytics switch, and went with analytics (ADR 0239). Asserted
+        // after the rows above have rendered, so its absence is a fact about a loaded hub rather than
+        // about one still arriving.
+        XCTAssertFalse(firstElement(in: app, labelStartingWith: "Privacy").exists,
+                       "a Privacy row is back on the Settings hub, with nothing behind it to control")
     }
 
     /// Opening a destination must land on its own screen — the half a hub can get wrong that merely
@@ -43,14 +48,14 @@ final class SettingsHubUITests: UITestCase {
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: Self.uiTimeout),
                       "Settings hub did not appear")
 
-        // Privacy, because ADR 0162 D7 rests on this control staying reachable — it is the DUAA
-        // "simple, free means of objecting", and a broken push would quietly remove it.
-        let privacyRow = firstElement(in: app, labelStartingWith: "Privacy")
-        XCTAssertTrue(privacyRow.waitForExistence(timeout: Self.uiTimeout), "Privacy row missing")
-        privacyRow.tap()
-        XCTAssertTrue(app.navigationBars["Privacy"].waitForExistence(timeout: Self.uiTimeout),
-                      "Privacy screen did not appear")
-        app.navigationBars["Privacy"].buttons.firstMatch.tap()
+        // Your data, because it is where a player's only copy of their library is made (ADR 0181), and
+        // a broken push would quietly take that away. It sits where Privacy did until ADR 0239.
+        let dataRow = firstElement(in: app, labelStartingWith: "Your data")
+        XCTAssertTrue(dataRow.waitForExistence(timeout: Self.uiTimeout), "Your data row missing")
+        dataRow.tap()
+        XCTAssertTrue(app.navigationBars["Your data"].waitForExistence(timeout: Self.uiTimeout),
+                      "Your data screen did not appear")
+        app.navigationBars["Your data"].buttons.firstMatch.tap()
 
         // Sound & feel, because it hosts the metronome picker the same ADR restyled (D5/D6).
         let soundRow = firstElement(in: app, labelStartingWith: "Sound & feel")

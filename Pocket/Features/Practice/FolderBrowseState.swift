@@ -130,9 +130,8 @@ private struct FolderBrowsingModifier: ViewModifier {
     }
 
     private func create() {
-        guard let created = PracticeFolderStore.createFolder(named: state.draftName,
-                                                             at: state.path, in: context) else { return }
-        Analytics.send(.folderCreated(depth: FolderPath.segments(created).count))
+        guard PracticeFolderStore.createFolder(named: state.draftName,
+                                               at: state.path, in: context) != nil else { return }
         state.draftName = ""
         haptic(.medium)
     }

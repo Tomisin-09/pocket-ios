@@ -5,9 +5,7 @@ import Foundation
 /// Two jobs. It is what previews and unit tests drive the screen with, and it is what **UI tests
 /// get instead of a network**: D17 is categorical that no test, unit or UI, may reach the API, and
 /// the way that is guaranteed is by installing this at the composition root under
-/// `UITestRuntime.isActive` — the same place and the same reasoning as the analytics sink
-/// (`PocketApp.swift:30-35`: *"the composition root, and the only place that knows a vendor
-/// exists"*).
+/// `UITestRuntime.isActive`.
 ///
 /// It records what it was asked, so a test can assert on the **request** — which is where D6's
 /// rules actually live. Asserting that a builder produced a field is one test; asserting that the

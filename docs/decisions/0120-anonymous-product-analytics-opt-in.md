@@ -1,6 +1,11 @@
 # ADR 0120 — product analytics are anonymous, opt-in, and can never carry what you played
 
-- **Status:** Accepted — **§2 and §3 superseded in part by ADR 0147**; §1, §4–§7 stand
+- **Status:** **Superseded by ADR 0239 (2026-10-02), except §1.** Before that, §2 and §3 were
+  superseded in part by ADR 0147.
+- **Superseded by:** ADR 0239 (2026-10-02) — Red Moon counts nothing. §2 to §7 are superseded: there
+  is no analytics in the app, no SDK, no consent, no vocabulary and no lint rule, and usage figures
+  come from App Store Connect. **§1 stands as written.** It is about attribution and advertising,
+  and 0239 decides nothing about either.
 - **Superseded in part by:** **ADR 0147** (2026-08-06). UK statute moved: DUAA 2025 Sch A1 para 5, in
   force 5 Feb 2026, exempts first-party service-improvement analytics from PECR reg 6 given clear
   information and a simple means of objecting. So §2's **opt-in default** and §3's **ask after a first

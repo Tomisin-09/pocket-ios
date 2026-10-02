@@ -18,9 +18,10 @@ extension OracleContextSource {
     /// runs (D6 R2).
     ///
     /// `Profile` is not fetched at all. D6 R3 keeps `artistName` on the device — a reading that
-    /// addresses the player by name has the name interpolated client-side, and
-    /// `PrivacySection.swift:57-58`'s promise about it survives this feature intact. The way to
-    /// keep a field from crossing is to not read it.
+    /// addresses the player by name has the name interpolated client-side, and the promise about it
+    /// in the FAQ answer *"Does Red Moon listen to or send my playing?"* (`FAQEntry.swift`; Settings ▸
+    /// Privacy made it too, until ADR 0239) survives this feature intact. The way to keep a field from
+    /// crossing is to not read it.
     @MainActor
     static func forReading(in context: ModelContext) throws -> OracleContextSource {
         var source = OracleContextSource()

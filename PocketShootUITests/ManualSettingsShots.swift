@@ -1,16 +1,17 @@
 import XCTest
 
-/// The manual's **Settings** figures (ADR 0165, Phase 5) — the hub and four of its destinations.
+/// The manual's **Settings** figures (ADR 0165, Phase 5) — the hub and three of its destinations.
 ///
-/// Six markers, five frames: `reference/settings-privacy` and `privacy/settings` are the same screen
-/// photographed for two pages, so only one attachment is made (see `ManualShotCase.capture`).
+/// Four markers, four frames. There were six and five until ADR 0239: `reference/settings-privacy`
+/// and `privacy/settings` were one Privacy screen photographed for two pages, and that screen went
+/// with analytics.
 ///
 /// Every destination is a push, so each test returns to the hub by relaunching rather than by tapping
 /// Back. A relaunch costs seeding time but cannot leave the shoot one screen deeper than it thinks it
 /// is — and a figure taken one screen off is the failure this whole harness exists to prevent.
 final class ManualSettingsShots: ManualShotCase {
 
-    /// `reference/settings-hub` — the nine destinations that replaced the flat thirteen-section form.
+    /// `reference/settings-hub` — the eight destinations that replaced the flat thirteen-section form.
     @MainActor
     func testSettingsHub() {
         let app = launchForShoot()
@@ -22,8 +23,8 @@ final class ManualSettingsShots: ManualShotCase {
                 assertingOnScreen: "Settings",
                 alsoRequiring: ["Appearance"])
 
-        // The hub ships **nine** destinations, and the manual's alt text names all nine. A Debug
-        // build adds a tenth — `Developer` — which the first shoot duly photographed into a figure
+        // The hub ships **eight** destinations, and the manual's alt text names all eight. A Debug
+        // build adds a ninth — `Developer` — which the first shoot duly photographed into a figure
         // whose own page says it is not there. `ScreenshotSeed.isShooting` now hides it; this is the
         // assertion that keeps it hidden, because nothing else in the suite would notice it coming
         // back and the figure would be wrong in a way that reads as perfectly normal.
@@ -43,20 +44,6 @@ final class ManualSettingsShots: ManualShotCase {
         tapRow(labelStartingWith: "You", in: app,
                arrivingAt: app.navigationBars["You"], called: "the You screen")
         capture(app, slug: "reference/settings-you", assertingOnScreen: "You")
-    }
-
-    /// `reference/settings-privacy` · `privacy/settings` — one screen, two pages.
-    ///
-    /// ADR 0162 D7 rests on this control staying reachable: it is the DUAA "simple, free means of
-    /// objecting", and it is the one Settings screen the manual documents twice.
-    @MainActor
-    func testSettingsPrivacy() {
-        let app = launchForShoot()
-        openSettings(in: app)
-        tapRow(labelStartingWith: "Privacy", in: app,
-               arrivingAt: app.navigationBars["Privacy"], called: "the Privacy screen")
-        capture(app, slug: "reference/settings-privacy", assertingOnScreen: "Privacy",
-                alsoServing: ["privacy/settings"])
     }
 
     /// `reference/settings-routines` — auto-start, auto-advance, rest length, song looping.

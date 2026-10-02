@@ -2387,8 +2387,10 @@ forward:
 - **Aptabase EU app created and `APTABASE_APP_KEY` set** (2026-07-29), so the pipeline is live for
   anyone who opts in. Debug builds flush every 2s and land in the dashboard's separate debug bucket,
   which is the quickest way to watch the pipeline end-to-end without touching release numbers.
-- **Still outstanding:** answer the ASC App Privacy nutrition label (Product Interaction → Analytics
-  → not linked, not tracking); paste the revised Red Moon section into `decooperations.co.uk/privacy`;
+- **Still outstanding:** ~~answer the ASC App Privacy nutrition label (Product Interaction → Analytics
+  → not linked, not tracking)~~ — **reversed by ADR 0239 (2026-10-02)**: analytics is removed, so
+  Product Interaction comes *off* the label and the usage counts come out of the site's section;
+  paste the revised Red Moon section into `decooperations.co.uk/privacy`;
   and **Tier 2** (AdAttributionKit / Apple Search Ads) plus the **marketing-site cookie policy**,
   both separate slices with no code overlap here.
 
@@ -3741,6 +3743,10 @@ A coherent vision, captured for V1's creation experience.
   derivative of command tempo (2026-06-25) and rejected it for this reason.
 
 ## Analytics — SUPERSEDED by ADR 0120 (kept for the reasoning)
+
+> **2026-10-02 — back to this.** ADR 0239 removed Aptabase and every event. The app is Apple-only
+> again, which is the 2026-07-16 decision below: usage comes from App Store Connect's App Analytics,
+> crashes from Xcode Organizer. The 0120 reasoning in the next paragraph is why it was left once.
 
 > **Resolved 2026-07-29.** The "designated later path" below was taken: Aptabase, opt-in, EU region.
 > The "v1 ships no SDK" position was overtaken by the decision to instrument *before* distribution —

@@ -47,8 +47,8 @@ struct ZipEntry: Equatable, Sendable {
 ///
 /// `NSFileCoordinator` gives zipping **out** and has no read side, and Foundation has no public unzip
 /// on iOS. The two ways forward were a third-party package or a reader of our own, and D8 refuses the
-/// package for the reason ADR 0120 already gives: Aptabase is this project's one pinned dependency,
-/// and `ArchiveWriter` declined the same trade on the way out.
+/// package: dependencies are kept to the minimum (since ADR 0239, none at all), and `ArchiveWriter`
+/// declined the same trade on the way out.
 ///
 /// **What that scoping means concretely.** Stored (method 0) and deflate (method 8) entries, no
 /// encryption, no spanning, no ZIP64. Everything outside that is refused by name rather than

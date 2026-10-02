@@ -44,9 +44,8 @@ struct ExportedArchive: Sendable, Equatable {
 /// zipping — wherever the caller runs it, which for a library of any size must not be the main thread.
 ///
 /// **Zipping is Foundation's, not a dependency's.** `NSFileCoordinator`'s `.forUploading` read hands
-/// back a zipped copy of a directory. Aptabase is this project's one third-party package and
-/// `project.yml` pins it deliberately (ADR 0120); adding a zip library to save a dozen lines would
-/// spend that restraint on nothing.
+/// back a zipped copy of a directory. The project has no third-party packages — ADR 0239 removed the
+/// only one — and adding a zip library to save a dozen lines would end that for nothing.
 enum ArchiveWriter {
 
     /// The archive's folder and file stem. User-facing, so it says Red Moon.

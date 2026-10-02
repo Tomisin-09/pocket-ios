@@ -117,9 +117,9 @@ private struct FormspreeFailure: Decodable {
     let errors: [Item]?
 }
 
-/// Keeps every request it is given and fails on command, for tests and previews. Mirrors
-/// `RecordingSink`'s role for analytics — not compiled out of the app target (it costs nothing and
-/// `@testable import` needs it visible), but never installed outside a test or a `#Preview`.
+/// Keeps every request it is given and fails on command, for tests and previews. Not compiled out
+/// of the app target (it costs nothing and `@testable import` needs it visible), but never installed
+/// outside a test or a `#Preview`.
 final class RecordingSupportSender: SupportSending, @unchecked Sendable {
     /// Guards `requests` — `send` is called from a detached task, so the array is touched off the main
     /// actor and the `@unchecked` conformance has to be earned rather than assumed.

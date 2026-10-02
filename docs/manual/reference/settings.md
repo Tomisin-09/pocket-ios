@@ -6,10 +6,10 @@ out to where you were.
 ## The hub
 
 <!-- shot: reference/settings-hub | role: screen
-     | alt: The Settings hub with You above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Your data, Privacy and Help & About in a group below
+     | alt: The Settings hub with You above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Your data and Help & About in a group below
      | state: Settings open -->
 
-Nine destinations. **Each row states its current value on the right**, so most questions are
+Eight destinations. **Each row states its current value on the right**, so most questions are
 answered without opening anything.
 
 | Row | Holds |
@@ -21,7 +21,6 @@ answered without opening anything.
 | `Routines` | How a routine moves from block to block |
 | `Song player` | Five things about the waveform screen |
 | `Your data` | A copy of everything, and what it takes up |
-| `Privacy` | The one analytics switch |
 | `Help & About` | Version, help, contact, diagnostics, and the legal links |
 
 `You` sits above the rest because it is *state* — who you are — rather than a preference.
@@ -173,18 +172,6 @@ are comparable.
 
 - **`Keep songs in backup`** is on to start with: *Your imported song files ride along in your device backup, so a restored phone plays them straight away. Turning this off makes backups much smaller, and means a restored phone needs each song pointed at its file again. Your recordings are always backed up.*
 - **`Reclaim space`**: *Deletes audio files left behind by songs and takes you have already removed. It never touches a song or a take you still have.* It tells you how much it freed, or that there was nothing to reclaim — which is the answer you want.
-
-## `Privacy`
-
-One switch, **`Share anonymous usage`**: *Counts of which features get used — how often a loop gets made, which exercises get built. Anonymous and not joined up across sessions, so it can't be traced back to you. Never your audio, notes, song names or artist name.*
-
-<!-- shot: reference/settings-privacy | role: panel
-     | alt: The Privacy screen with the Share anonymous usage toggle and its footer
-     | state: Settings ▸ Privacy -->
-
-The footer under it states the position you are actually in, which differs by region. The hub row
-states it too. What is counted, what never leaves the device, and which rule applies where are all
-in [your data](../privacy.md).
 
 ## `Help & About`
 

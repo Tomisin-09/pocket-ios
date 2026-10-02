@@ -254,6 +254,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Red Moon no longer counts how you use it.** The anonymous usage counts are gone, and with them
+  the line about them under the first-run questions, the one-time screen that asked about them after
+  a first practice, and **Settings ▸ Privacy**, whose only control they were — Settings now has eight
+  rows. The app sends nothing on its own: the only thing that leaves it is a support message you write
+  and tap Send on, or a file you send yourself. Help & FAQs' *Does Red Moon listen to or send my
+  playing?* says so, and points at the iPhone's own *Share With App Developers* switch, which is how
+  Apple's anonymous totals reach us. (ADR 0239)
 - **Red Moon is free.** Everything in the app is open to everyone, with nothing to buy: Practice, the
   Song library, routines, Today's session and building your own exercises all open from Home with no
   padlock, no **PRO** badge and no paywall, and the full-screen offer that came up at launch is gone.
@@ -370,12 +377,21 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **Aptabase is uninstalled** (ADR 0239). The SDK — the project's only package — and its app key; the
+  `Core/Analytics` module (`AnalyticsEvent`, `Analytics`, `AnalyticsPolicy`, the sinks);
+  `AnalyticsConsentSheet`, the intake footnote, `PrivacySettingsView` and `PrivacySection`; the
+  `analytics_event_no_free_strings` lint rule; the Product Interaction entry in
+  `PrivacyInfo.xcprivacy`; all 32 send sites, with the once-only latches that existed only for them;
+  and three test suites. `AppSettings` loses the consent seeding, `installDate`, `hasPracticed` and the
+  install-age bucket, and their stored keys stay inert on upgraded installs. The Settings hub UI test
+  now pushes *Your data* where it pushed *Privacy*, and asserts Privacy is gone; the Privacy figure
+  leaves the manual shoot. Usage figures come from App Store Connect, which needs no code.
 - **The paywall machinery is deleted, not left dormant** (ADR 0237 D2). StoreKit, `StoreManager`,
   `AccessPolicy`, `PaywallTrigger`, the paywall and its host, the trial reminder and its plan, the
   `.storekit` config and the scheme's reference to it, and their six test suites. UI tests now run the
   same app users get, since `-uiTesting` no longer has anything to unlock. Four analytics events retire
-  with their names (`paywall_shown`, `paywall_dismissed`, `purchase_completed`, `restore_completed`),
-  and a test keeps them from being reused. A received drill on a template this build doesn't know is
+  with their names (`paywall_shown`, `paywall_dismissed`, `purchase_completed`, `restore_completed`)
+  — and since ADR 0239, the rest of analytics with them. A received drill on a template this build doesn't know is
   now added instead of refused.
 - **CI's job gets 45 minutes, up from 30.** A green run was taking 25–29 minutes, so one slow runner or one
   retry cancelled it before it could report. The limit is a backstop for a hung run, not a budget.

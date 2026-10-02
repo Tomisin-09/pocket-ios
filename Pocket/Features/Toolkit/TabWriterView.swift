@@ -91,7 +91,6 @@ struct TabWriterView: View {
             }
         }
         .onChange(of: title) { persist() }
-        .onAppear { Analytics.send(.toolOpened(tool: .tabWriter)) }
         .onDisappear { finish() }
     }
 

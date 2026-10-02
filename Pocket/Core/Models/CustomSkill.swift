@@ -12,7 +12,7 @@ import SwiftData
 ///
 /// Lifting ADR 0015 Decision 7's ban on free text is safe for one reason: the ban existed because an
 /// orphan skill schedules nothing, and the goal editor now **shows** an orphan and offers the fix
-/// (D4). Names and descriptions are the player's own words, so they never enter analytics.
+/// (D4).
 ///
 /// Model discipline per ADR 0011/0036: a business `uid`, and a **declaration default** on every
 /// non-optional attribute. A brand-new entity is additive on its own account, so registering it

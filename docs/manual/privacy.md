@@ -65,60 +65,30 @@ streaming audio at all.
 
 **See Help & FAQs: "Does Red Moon listen to or send my playing?"**
 
-## Anonymous usage counts
+## How we know the app is used
 
-One thing does leave the device, and only one: counts of which features get used. In the app's own
-words, on the toggle that controls them:
+Red Moon itself does not count what you do in it. There is no analytics in the app, nothing to turn
+off, and nothing sent about how you use it.
 
-> Counts of which features get used — how often a loop gets made, which exercises get built.
-> Anonymous and not joined up across sessions, so it can't be traced back to you. Never your audio,
-> notes, song names or artist name.
-
-They carry no account, no device identifier and no advertising identifier, they are not linked
-together across sessions, and the set of things the app is capable of sending is fixed in its code —
-there is no way to attach free text to any of them. They are processed in the European Union and are
-never sold, shared or used for advertising.
+What we do see comes from Apple. If you turned on **Share With App Developers** in your iPhone's
+Settings ▸ Privacy & Security ▸ Analytics & Improvements, Apple passes developers anonymous totals for
+the apps you use: how many devices opened an app on a given day, how often, and how often it crashed.
+That switch is Apple's and covers every app on the phone. Red Moon has no say in it.
 
 **Red Moon does not use the advertising identifier or the App Tracking Transparency prompt, and it
 never will.** That is a permanent product boundary, not a setting.
 
-### Whether they start on or off depends on where you are
-
-| Where you are | How it starts |
-|---|---|
-| **EEA and Switzerland** | Off. The app asks, and sends nothing unless you say yes. |
-| **UK and everywhere else** | On. The app tells you so during setup. |
-
-The law differs between the two, which is the only reason the app does. Either way it is the same
-small set of counts and the same single switch.
-
-### Turning them off
-
-**Settings ▸ Privacy** — one toggle, **Share anonymous usage**. The Settings hub row states which way
-it is currently set, so you can see where you stand without opening it. It takes effect immediately: the app
-checks the switch before every single count it would otherwise send, so there is nothing to relaunch
-and nothing pending.
-
-<!-- shot: privacy/settings | role: panel
-     | alt: The Privacy settings screen with the Share anonymous usage toggle and the footer explaining what is counted and what never leaves the device
-     | state: Settings ▸ Privacy -->
-
-The footer under it states the position you are actually in, and the ⓘ beside the toggle carries the
-definition quoted above. There is nothing to justify and no reason to give.
-
 ## What is never sent
 
 Not your audio. Not your recordings. Not your journal notes, your song names, your file names, your
-artist name, or anything else you have typed or chosen — with the counts on or off. There is no
-profile of you, here or anywhere, because there is no identifier to hang one on. The only way any of
+artist name, or anything else you have typed or chosen. There is no profile of you, here or anywhere, because there is no identifier to hang one on. The only way any of
 it leaves is in a file you send yourself, from the share sheet, as
 [Taking a copy out](#taking-a-copy-out) describes.
 
 ## Crashes and freezes
 
 iOS keeps its own record of any time Red Moon crashed or froze, and hands it to the app about once a
-day. That record stays on your device. It is not analytics, it does not go through the toggle above,
-and it is never sent on its own.
+day. That record stays on your device, and it is never sent on its own.
 
 `Settings ▸ Help & About ▸ Diagnostics` shows you exactly what iOS reported — the last five, with the
 date, what iOS called each one, and the build and iOS version it happened on. `Clear` forgets them.

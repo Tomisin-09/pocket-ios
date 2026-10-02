@@ -27,9 +27,6 @@ struct SettingsView: View {
     @AppStorage(AppSettings.Key.clickTimbre) private var clickTimbre = ClickTimbre.default
     @AppStorage(AppSettings.Key.countInEnabled) private var countInEnabled = true
     @AppStorage(AppSettings.Key.routineAutoStart) private var routineAutoStart = true
-    /// The `= false` is unreachable — `AppSettings.seedAnalyticsDefaultIfNeeded` writes this at launch
-    /// (ADR 0147 §3) — but it is the safe direction if it ever were reached.
-    @AppStorage(AppSettings.Key.analyticsEnabled) private var analyticsEnabled = false
 
     /// Disk use behind the *Your data* row (ADR 0181). Optional so the row shows nothing rather than
     /// a confident "Zero KB" in the moment before the measurement lands.
@@ -76,9 +73,6 @@ struct SettingsView: View {
                 NavigationLink { YourDataSettingsView() } label: {
                     SettingsHubRow(icon: "externaldrive", title: "Your data", value: storageSummary)
                 }
-                NavigationLink { PrivacySettingsView() } label: {
-                    SettingsHubRow(icon: "hand.raised", title: "Privacy", value: privacySummary)
-                }
                 NavigationLink { AboutSettingsView() } label: {
                     SettingsHubRow(icon: "info.circle", title: "Help & About")
                 }
@@ -117,12 +111,6 @@ struct SettingsView: View {
         let instrument = (profiles.first?.preferredInstrument ?? .guitar).displayName
         guard let name = profiles.first?.artistName, !name.isEmpty else { return instrument }
         return "\(name) · \(instrument)"
-    }
-
-    /// Says what the setting *does*, not whether a thing called "privacy" is on — "Privacy · On" would
-    /// be genuinely ambiguous about which way the switch points.
-    private var privacySummary: String {
-        analyticsEnabled ? "Sharing usage" : "Not sharing"
     }
 }
 
