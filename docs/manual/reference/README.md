@@ -10,7 +10,7 @@ control on them.
 | [song-player](song-player.md) | The waveform screen band by band, its sheets, landscape |
 | [practice](practice.md) | The Practice hub, Today's session, Routines, Exercises, Loops |
 | [tools-and-journal](tools-and-journal.md) | Metronome, Journal, Practice log, Toolkit |
-| [settings](settings.md) | Reaching Settings, and each of its nine destinations |
+| [settings](settings.md) | Reaching Settings, and each of its eight destinations |
 
 ## How to read a page here
 
