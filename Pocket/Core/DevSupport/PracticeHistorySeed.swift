@@ -261,7 +261,8 @@ enum PracticeHistorySeed {
                                unitUID: exercise?.uid,
                                routineUID: routineUID,
                                tempoBPM: exerciseTempos[index % exerciseTempos.count],
-                               notesPerBeat: 2)
+                               notesPerBeat: 2,
+                               unitLabel: exercise?.name)
         case 1:
             let loop = loops.isEmpty ? nil : loops[index % loops.count]
             return PracticeRun(startedAt: startedAt,
@@ -269,13 +270,20 @@ enum PracticeHistorySeed {
                                kind: .loop,
                                unitUID: loop?.uid,
                                routineUID: routineUID,
-                               tempoPercent: 75 + (index % 4) * 5)
+                               tempoPercent: 75 + (index % 4) * 5,
+                               songSourceID: loop?.song?.sourceID,
+                               unitLabel: loop?.name)
         default:
+            // The song the seeded loops belong to, so a play-along names its song the way a real one
+            // has since ADR 0241.
+            let song = loops.lazy.compactMap(\.song).first
             return PracticeRun(startedAt: startedAt,
                                durationSeconds: seconds,
                                kind: .song,
                                unitUID: nil,
-                               routineUID: routineUID)
+                               routineUID: routineUID,
+                               songSourceID: song?.sourceID,
+                               unitLabel: song?.title)
         }
     }
 

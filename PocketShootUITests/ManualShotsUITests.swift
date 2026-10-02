@@ -152,7 +152,11 @@ final class ManualShotsUITests: ManualShotCase {
                 alsoServing: ["journal/take-detail"])
     }
 
-    /// `journal/progress` · `reference/progress` · `journal/month-heatmap` — one frame, three markers.
+    /// `journal/progress` · `reference/progress` · `journal/month-heatmap` · `journal/what-you-played`.
+    ///
+    /// **Three frames since ADR 0241.** *What you played* now sits under the week chart, so the month
+    /// grid no longer fits in the opening frame — the fit this test used to assert, and was right to
+    /// assert, until the screen grew. The history below is why the frames are what they are.
     ///
     /// **The screen as it opens, unscrolled.** An earlier version added a `swipeUp` to bring All-time
     /// into shot, which pushed This week off the top — and passed, because a section above the frame
@@ -190,16 +194,55 @@ final class ManualShotsUITests: ManualShotCase {
         tap(door, labelled: "This week",
             revealing: app.navigationBars["Practice log"], called: "the Practice log screen")
 
-        // No scroll, and one frame for all three markers. `THIS WEEK` is the first section; `Less` and
-        // `More` are the key under the month grid, so requiring all three *in frame* is what proves
-        // both ends of the picture fit — the bar chart at the top, the whole grid and its key at the
-        // bottom. If they ever stop fitting, this fails and says so.
-        // The slug stays `journal/progress`: a shot slug is an id, and renaming it would orphan
-        // every already-captured frame that names it (ADR 0176).
+        // The screen as it opens, unscrolled: the week chart and *What you played* under it. The
+        // slug stays `journal/progress`: a shot slug is an id, and renaming it would orphan every
+        // already-captured frame that names it (ADR 0176).
         capture(app, slug: "journal/progress",
                 assertingOnScreen: "Practice log",
-                alsoRequiring: ["THIS WEEK", "Less", "More"],
-                alsoServing: ["reference/progress", "journal/month-heatmap"])
+                alsoRequiring: ["THIS WEEK", "What you played"],
+                alsoServing: ["reference/progress"])
+
+        // The grid, scrolled to. Aimed at the key — the *last* thing the figure needs (see
+        // `scrollIntoFrame`). ⚠ The month's header ends up **under the navigation bar** in this frame,
+        // as it did in the scrolled attempt described above, and no label gate can catch that: a
+        // header beneath a translucent bar is still inside the window. The marker is a `panel` whose
+        // alt promises the grid and its key, not the header, so the crop is what keeps it out.
+        scrollIntoFrame(app.staticTexts["More"], called: "the month grid's key", in: app)
+        capture(app, slug: "journal/month-heatmap",
+                assertingOnScreen: "Practice log",
+                alsoRequiring: ["Less", "More"])
+
+        // Back to the top, one practised day chosen, its first kind opened. Both are **toggles**, so
+        // each is tapped once by hand and checked by what it changed — `tap(_:labelled:revealing:)`
+        // retries, and a retried toggle undoes itself (see its warning). The seed always practises
+        // today, so the current week always has a bar to tap.
+        app.swipeDown(velocity: .fast)
+        app.swipeDown(velocity: .fast)
+        // The chart pages lazily, so the weeks either side of this one are built too and their bars
+        // are in the tree off-screen. `firstMatch` is the *previous* week's — the strip runs oldest
+        // first — so the bar is chosen by being inside the window, not by order.
+        let window = app.windows.firstMatch.frame
+        let bars = app.buttons.matching(identifier: UITestHooks.practiceLogDay)
+        let day = bars.allElementsBoundByIndex.first { window.contains($0.frame) } ?? bars.firstMatch
+        XCTAssertTrue(awaitHittable(day), "no practised day in this week's chart. \(stepLog)")
+        day.tap()
+        note("tapped a practised day")
+        // Choosing a day swaps the week list's *Whole week* for a chip naming the day.
+        let wholeWeek = app.staticTexts["Whole week"]
+        let narrowed = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: wholeWeek)
+        XCTAssertEqual(XCTWaiter.wait(for: [narrowed], timeout: Self.shootTimeout), .completed,
+                       "the week list never narrowed to the day. \(stepLog)")
+
+        let kind = app.buttons.matching(identifier: UITestHooks.practiceLogKind).firstMatch
+        XCTAssertTrue(awaitHittable(kind), "What you played listed no kinds. \(stepLog)")
+        kind.tap()
+        note("opened '\(kind.label)'")
+        let opened = expectation(for: NSPredicate(format: "value == 'Open'"), evaluatedWith: kind)
+        XCTAssertEqual(XCTWaiter.wait(for: [opened], timeout: Self.shootTimeout), .completed,
+                       "the kind never opened. \(stepLog)")
+        capture(app, slug: "journal/what-you-played",
+                assertingOnScreen: "Practice log",
+                alsoRequiring: ["What you played"])
     }
 
     /// `reference/home` — Home with something recently practised.

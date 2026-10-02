@@ -143,6 +143,8 @@ extension LoopRunView {
                               unitUID: loop.uid,
                               routineUID: routineContext?.routineUID,
                               tempoPercent: command,
+                              songSourceID: loop.song?.sourceID,
+                              unitLabel: loop.name,
                               into: modelContext)
     }
 

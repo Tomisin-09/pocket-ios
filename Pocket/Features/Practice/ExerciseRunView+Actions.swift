@@ -191,6 +191,7 @@ extension ExerciseRunView {
                               routineUID: routineContext?.routineUID,
                               tempoBPM: command,
                               notesPerBeat: (exercise.commandNoteRate ?? exercise.noteRate)?.perBeat,
+                              unitLabel: exercise.name,
                               into: modelContext)
     }
 

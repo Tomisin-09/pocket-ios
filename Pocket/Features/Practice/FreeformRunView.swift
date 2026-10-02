@@ -326,6 +326,7 @@ struct FreeformRunView: View {
                               unitUID: exercise.uid,
                               routineUID: routineContext?.routineUID,
                               tempoBPM: nil,
+                              unitLabel: exercise.name,
                               into: modelContext)
     }
 }

@@ -4,6 +4,12 @@
 > and is reached from a row on the Journal above the timeline rather than from the ⋯ menu. Its
 > content, its constraints and every deferral below are unchanged — read "Progress screen" throughout
 > as "Practice log screen".
+>
+> **Amended by ADR 0241 (2026-10-02).** *This week* and *This month* now page back through every week
+> and month since the first run, and each lists *What you played* — by kind, then by exercise, loop or
+> song. The song row's missing identity is answered without giving `Song` a `uid`: a run now carries
+> its song's `sourceID`, and the name it was logged under. Every deferral below still stands — no
+> streaks, weekly goal, days-active denominator, week-over-week delta or year tier.
 
 - **Status:** Accepted — **rescoped 2026-07-31** (`pocket-209-session-block-model`), then **amended the same
   day** (`pocket-214-practice-log-progress-screen`) to un-defer the near horizons of the Progress screen. The

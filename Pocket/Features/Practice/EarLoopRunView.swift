@@ -74,6 +74,8 @@ struct EarLoopRunView: View {
                               startedAt: startedAt,
                               unitUID: loop.uid,
                               routineUID: routineContext?.routineUID,
+                              songSourceID: loop.song?.sourceID,
+                              unitLabel: loop.name,
                               into: modelContext)
     }
 

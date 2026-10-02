@@ -37,6 +37,10 @@
 │              against all history, not the window on screen) and PracticeProgress, which computes the whole
 │              Practice log screen in one pure pass so the view does no arithmetic; now/calendar are params,
 │              never .now/.current. There is no year tier and no placeholder for one (ADR 0117 defers it)
+│              ADR 0241 adds PracticeLogPages (every week/month start from the first run's period to now, oldest
+│              first, so the screen can page back; calendar periods, never rolling windows) and PracticeBreakdown
+│              (*What you played*: runs grouped by kind, then unit — live name first, the logged unitLabel for a
+│              deleted unit, a placeholder when the log never knew) and MinutesFigure ("<1 minute", never "0").
 │   Services — Persistence (SwiftData), Sync (CloudKit, planned), AIClient (→ proxy).
 │              MusicKit (browse) is PLANNED-ONLY and not shipped — no MusicKit import,
 │              no MPMediaLibrary, no NSAppleMusicUsageDescription
@@ -1494,6 +1498,11 @@ empty, because that line was Home's only word about adding a first song.
   opposite of the inventory counts in `PracticeStats`, which can go down. Tempo is logged as a **fact, not
   a grade** (ADR 0070): `tempoBPM` for exercises, `tempoPercent` for loops (percent-of-original, ADR 0082),
   and `notesPerBeat` beside it because a BPM without its rhythm is only half a fact (ADR 0121).
+  **ADR 0241** adds two optional `String`s, both additive and migration-exempt (no default): `songSourceID`
+  — the song a play-along or loop-based run came from, by `Song.sourceID`, the key the archive already
+  uses, so `Song` still has no `uid` — and `unitLabel`, the name the unit was shown under when the run
+  ended. The Practice log names a live unit by its current name; the label is only the fallback for one
+  that has been deleted. Rows from before 0241 carry neither and can't be backfilled.
   Writes go through one path, `PracticeLogWriter`, called from each run screen's **natural-completion
   hook** — one seam that serves a standalone run *and* a routine block, since a block is the same run
   screen with a `RoutineRunContext`. That is deliberately not the Done screen: writing there would lose

@@ -28,7 +28,7 @@ marker grammar in [README.md](README.md).
 | `getting-started/first-run` | `screen` | `getting-started` | fresh install, first launch, step 1 of 4 |  |
 | `getting-started/home` | `screen` | `getting-started` | seeded library, Home, morning greeting |  |
 | `getting-started/loop-active` | `band` | `getting-started` | seeded library, Slow Bend, a loop active and repeating |  |
-| `journal/month-heatmap` | `panel` | `journal-and-practice-log` | seeded library, Practice log, two or more weeks of history in the current month |  |
+| `journal/month-heatmap` | `panel` | `journal-and-practice-log` | seeded library, Practice log, scrolled to This month, two or more weeks of history in the current month |  |
 | `journal/progress` | `screen` | `journal-and-practice-log` | seeded library, Home, This week strip tapped, several weeks of practice history |  |
 | `journal/quick-note` | `screen` | `journal-and-practice-log` | an exercise run screen, quick note tapped |  |
 | `journal/quick-note-button` | `glyph` | `journal-and-practice-log` | — |  |
@@ -39,6 +39,7 @@ marker grammar in [README.md](README.md).
 | `journal/take-row` | `detail` | `journal-and-practice-log` | seeded library, Journal, Takes filter, at least one take |  |
 | `journal/take-trim` | `screen` | `journal-and-practice-log` | seeded library, Journal, a take opened, Trim tapped |  |
 | `journal/timeline` | `screen` | `journal-and-practice-log` | seeded library, Journal, several notes and one take across two days |  |
+| `journal/what-you-played` | `panel` | `journal-and-practice-log` | seeded library, Practice log, a practised day tapped on This week's chart, its first kind opened |  |
 | `looping/ab-forming` | `band` | `looping` | seeded library, Slow Bend, playing, loop start dropped, end not set |  |
 | `looping/automator` | `screen` | `looping` | seeded library, Slow Bend, loop "Verse riff", automator open |  |
 | `looping/loop-active` | `band` | `looping` | seeded library, Slow Bend, loop "Verse riff" active and repeating |  |
@@ -108,4 +109,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped, top of the sheet |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 
-92 shots across 18 pages.
+93 shots across 18 pages.

@@ -18,6 +18,12 @@ import SwiftUI
 /// (ADR 0117). Neither are **streaks, a weekly goal, a days-active denominator, or a week-over-week
 /// delta** — all four are habit-pressure, held together with the mitigations designed to contain them.
 ///
+/// **Any week, any month (ADR 0241).** Both near horizons open on now and page back through every
+/// period since you started, and tapping a day narrows *What you played* under it — what the minutes
+/// went on, by kind and then by exercise, loop or song. Calendar periods only, never a rolling window,
+/// and still nothing that compares one period with another: the player can page and compare, the
+/// screen never does it for them.
+///
 /// **Never a grade (ADR 0070).** Every measure is effort: minutes, days, sessions, things made. Tempo
 /// appears only as a factual log of what was played. Nothing is compared to another player, and a
 /// quiet week is described, not judged.
@@ -31,10 +37,25 @@ struct PracticeLogView: View {
     @Query(sort: \PracticeRun.startedAt) private var runs: [PracticeRun]
     @Query private var loops: [Loop]
     @Query private var exercises: [Exercise]
+    @Query private var songs: [Song]
     @Query private var journalEntries: [JournalEntry]
 
-    private var summary: PracticeProgress.Summary {
-        PracticeProgress.summarize(records: runs.map(\.record), inventory: inventory)
+    /// Where each section's pager has settled, by the period's start (ADR 0241). `nil` until it has
+    /// settled anywhere, which reads as the current period — the screen always opens on now.
+    @State private var weekPosition: Date?
+    @State private var monthPosition: Date?
+    /// The day each section's *What you played* is narrowed to, if one has been tapped.
+    @State private var weekDay: Date?
+    @State private var monthDay: Date?
+
+    /// The library as it is now, keyed the way log rows refer to it, so *What you played* can name a
+    /// unit by its current name and tell a deleted one apart (ADR 0241).
+    private var names: PracticeBreakdown.Names {
+        PracticeBreakdown.Names(
+            exercises: Dictionary(exercises.map { ($0.uid, $0.name) }, uniquingKeysWith: { first, _ in first }),
+            loops: Dictionary(loops.map { ($0.uid, .init(name: $0.name, songSourceID: $0.song?.sourceID)) },
+                              uniquingKeysWith: { first, _ in first }),
+            songs: Dictionary(songs.map { ($0.sourceID, $0.title) }, uniquingKeysWith: { first, _ in first }))
     }
 
     /// The derived inventory counts the achievement wall shows — the existing `PracticeStats` roll-up,
@@ -47,14 +68,29 @@ struct PracticeLogView: View {
 
     var body: some View {
         ScrollView {
-            let summary = summary
+            // Mapped once per pass and handed down: both sections and every page read this array.
+            let records = runs.map(\.record)
+            let now = Date.now
+            let since = records.first?.startedAt
+            let allTime = PracticeProgress.allTime(records: records, inventory: inventory)
             VStack(alignment: .leading, spacing: 30) {
-                if summary.hasNoHistory {
+                if allTime.isEmpty {
                     noHistoryYet
                 } else {
-                    weekSection(summary.week)
-                    monthSection(summary.month)
-                    allTimeSection(summary.allTime)
+                    let library = self.names
+                    PracticeLogWeekSection(records: records,
+                                           starts: PracticeLogPages.weekStarts(since: since, now: now),
+                                           names: library,
+                                           position: $weekPosition,
+                                           selectedDay: $weekDay,
+                                           now: now)
+                    PracticeLogMonthSection(records: records,
+                                            starts: PracticeLogPages.monthStarts(since: since, now: now),
+                                            names: library,
+                                            position: $monthPosition,
+                                            selectedDay: $monthDay,
+                                            now: now)
+                    allTimeSection(allTime)
                     // A read-only reflection of the Practice list (ADR 0171 D6) — no controls, so
                     // this screen stays read-back-only per ADR 0117. Renders nothing when the
                     // player has authored no long-term goals.
@@ -91,63 +127,6 @@ struct PracticeLogView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - This week
-
-    private func weekSection(_ week: PracticeProgress.Week) -> some View {
-        HomeSection(title: "This week") {
-            VStack(alignment: .leading, spacing: 14) {
-                if week.isEmpty {
-                    // The seven bars still draw. An empty week's *shape* is the honest answer, and
-                    // hiding it would make the section reappear and vanish week to week.
-                    Text("Nothing logged this week yet.")
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.textSecondary)
-                } else {
-                    HStack(spacing: 20) {
-                        figure("\(week.minutes)", "minutes")
-                        figure("\(week.daysActive)", week.daysActive == 1 ? "day" : "days")
-                    }
-                }
-                WeekMinutesChart(week: week)
-            }
-        }
-    }
-
-    // MARK: - This month
-
-    private func monthSection(_ month: PracticeProgress.Month) -> some View {
-        HomeSection(title: monthTitle(month)) {
-            VStack(alignment: .leading, spacing: 14) {
-                if month.isEmpty {
-                    Text("Nothing logged this month yet.")
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.textSecondary)
-                } else {
-                    HStack(spacing: 20) {
-                        figure("\(month.minutes)", "minutes")
-                        figure("\(month.daysActive)", month.daysActive == 1 ? "day" : "days")
-                        if month.newTempos > 0 {
-                            figure("\(month.newTempos)", month.newTempos == 1 ? "new tempo" : "new tempos")
-                        }
-                    }
-                    if let best = month.bestDay {
-                        Text("Longest day: \(best.day.formatted(.dateTime.weekday(.wide).day().month())) "
-                             + "· \(best.minutes) minutes")
-                            .font(.futura(.footnote))
-                            .foregroundStyle(PocketColor.textSecondary)
-                    }
-                }
-                MonthHeatmap(month: month)
-            }
-        }
-    }
-
-    /// "This month" carries its name, since a heatmap of an unnamed month is ambiguous once you've
-    /// scrolled past the top of the screen.
-    private func monthTitle(_ month: PracticeProgress.Month) -> String {
-        "This month · \(month.interval.start.formatted(.dateTime.month(.wide)))"
-    }
-
     // MARK: - All-time
 
     private func allTimeSection(_ allTime: PracticeProgress.AllTime) -> some View {
@@ -169,16 +148,16 @@ struct PracticeLogView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 20) {
                 if lifetime.hours > 0 {
-                    figure("\(lifetime.hours)", lifetime.hours == 1 ? "hour" : "hours")
+                    PracticeLogFigure("\(lifetime.hours)", lifetime.hours == 1 ? "hour" : "hours")
                     // Dropped at a round hour — "2 hours 0 minutes" is noise, not precision.
                     if lifetime.remainingMinutes > 0 {
-                        figure("\(lifetime.remainingMinutes)",
+                        PracticeLogFigure("\(lifetime.remainingMinutes)",
                                lifetime.remainingMinutes == 1 ? "minute" : "minutes")
                     }
                 } else {
-                    figure("\(lifetime.minutes)", lifetime.minutes == 1 ? "minute" : "minutes")
+                    PracticeLogFigure("\(lifetime.minutes)", lifetime.minutes == 1 ? "minute" : "minutes")
                 }
-                figure("\(lifetime.sittingCount)",
+                PracticeLogFigure("\(lifetime.sittingCount)",
                        lifetime.sittingCount == 1 ? "session" : "sessions")
             }
             if let since = lifetime.since {
@@ -232,22 +211,6 @@ struct PracticeLogView: View {
     }
 
     // MARK: - Shared pieces
-
-    /// A value with its unit — the screen's one figure style, so week / month / all-time read as the
-    /// same kind of statement at three scales.
-    private func figure(_ value: String, _ unit: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 5) {
-            Text(value)
-                .font(.pocketMono(.title2).weight(.semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-                .contentTransition(.numericText())
-            Text(unit)
-                .font(.futura(.footnote))
-                .foregroundStyle(PocketColor.textSecondary)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(value) \(unit)")
-    }
 
     /// One inventory tile — deliberately the same shape as the old home card's, since these are the
     /// same numbers, now in the place they belong.

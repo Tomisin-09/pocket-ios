@@ -187,4 +187,48 @@ final class PracticeProgressTests: XCTestCase {
         XCTAssertEqual(allTime.lifetime.hours, 12)
         XCTAssertEqual(allTime.nextMilestone, 50)
     }
+
+    // MARK: - Figures (ADR 0241)
+
+    func testPracticeThatRoundsToNothingReadsAsUnderAMinute() {
+        // 20 seconds today: the day counts as active, so "0 minutes · 1 day" would say two things
+        // that cannot both be true.
+        let figure = PracticeLog.MinutesFigure(seconds: 20)
+        XCTAssertEqual(figure.value, "<1")
+        XCTAssertEqual(figure.unit, "minute")
+        XCTAssertEqual(figure.short, "<1 min")
+    }
+
+    func testNothingAtAllStillReadsAsZero() {
+        let figure = PracticeLog.MinutesFigure(seconds: 0)
+        XCTAssertEqual(figure.value, "0")
+        XCTAssertEqual(figure.unit, "minutes")
+    }
+
+    func testTheMinutesFigureUsesTheLogsOneRoundingRule() {
+        XCTAssertEqual(PracticeLog.MinutesFigure(seconds: 30).value, "1", "half a minute rounds up, as everywhere")
+        XCTAssertEqual(PracticeLog.MinutesFigure(seconds: 90).unit, "minutes")
+        XCTAssertEqual(PracticeLog.MinutesFigure(seconds: 60).unit, "minute")
+    }
+
+    func testAMonthOfUnderAMinuteSaysSo() {
+        let month = summarize([run(6, 9, minutes: 20.0 / 60)]).month
+        XCTAssertEqual(month.minutes, 0)
+        XCTAssertEqual(month.minutesFigure.value, "<1")
+        XCTAssertEqual(month.daysActive, 1)
+    }
+
+    func testTheWeeksFigureIsTheWeeksOwnTotal() {
+        let week = summarize([run(6, 8, minutes: 61), run(6, 9, minutes: 223), run(6, 1, minutes: 50)]).week
+        XCTAssertEqual(week.minutesFigure.value, "284", "the 1 June run is the week before")
+    }
+
+    func testTheLongestDayWaitsForASecondDay() {
+        // With one active day, "Longest day" names the only day there is.
+        XCTAssertNil(summarize([run(6, 9, minutes: 30)]).month.longestDay)
+        let month = summarize([run(6, 9, minutes: 30), run(6, 3, minutes: 45)]).month
+        XCTAssertEqual(month.longestDay?.minutes, 45)
+        XCTAssertNotNil(summarize([run(6, 9, minutes: 30)]).month.bestDay,
+                        "the busiest day still exists; it just isn't worth a sentence")
+    }
 }

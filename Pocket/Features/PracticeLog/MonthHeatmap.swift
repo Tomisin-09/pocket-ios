@@ -20,17 +20,26 @@ import SwiftUI
 struct MonthHeatmap: View {
     let month: PracticeProgress.Month
     var calendar: Calendar = .current
+    /// The day *What you played* is narrowed to (ADR 0241), outlined in the grid.
+    var selectedDay: Date?
+    /// Called with a practised day's start when its cell is tapped. `nil` leaves the grid inert.
+    var onSelectDay: ((Date) -> Void)?
+    /// Off when the grid pages (ADR 0241): the key reads the same for every month, so the section
+    /// draws it once under the pager rather than once per page — a key on every page would put a copy
+    /// of it in the tree for each month the lazy strip has built either side of the one on screen.
+    var showsKey = true
 
     private let cellCorner = 3.0
     private let spacing = 4.0
     /// Light → dark, one hue. Opacities rather than four colour assets: `PocketColor.practice` is
     /// already appearance-aware, so the whole ramp follows the theme without a second set of tokens.
-    private let rampOpacities = [0.25, 0.45, 0.7, 1.0]
+    static let rampOpacities = [0.25, 0.45, 0.7, 1.0]
+    private var rampOpacities: [Double] { Self.rampOpacities }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             grid
-            key
+            if showsKey { MonthHeatmapKey() }
         }
     }
 
@@ -51,19 +60,42 @@ struct MonthHeatmap: View {
     @ViewBuilder
     private func cellView(_ bucket: PracticeLog.DayBucket?) -> some View {
         if let bucket {
-            RoundedRectangle(cornerRadius: cellCorner)
-                .fill(fill(for: bucket))
-                .aspectRatio(1, contentMode: .fit)
-                .frame(maxWidth: .infinity)
-                .accessibilityLabel(label(for: bucket))
+            if bucket.isActive, let onSelectDay {
+                Button { onSelectDay(bucket.day) } label: { cell(fill(for: bucket), selected: isSelected(bucket)) }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(label(for: bucket))
+                    .accessibilityAddTraits(isSelected(bucket) ? .isSelected : [])
+            } else {
+                cell(fill(for: bucket), selected: false)
+                    .accessibilityLabel(label(for: bucket))
+            }
         } else {
-            // A leading/trailing blank so the 1st lands under its real weekday. Not a day, so it
-            // carries no colour and no VoiceOver presence.
-            Color.clear
-                .aspectRatio(1, contentMode: .fit)
-                .frame(maxWidth: .infinity)
+            // A blank so the 1st lands under its real weekday, and the padding rows that hold every
+            // month at six (ADR 0241). Not a day, so no colour and no VoiceOver presence. The real
+            // cell hidden rather than `Color.clear`, so a blank sizes exactly as a day does.
+            cell(PocketColor.surfaceStandard, selected: false)
+                .hidden()
                 .accessibilityHidden(true)
         }
+    }
+
+    private func cell(_ fill: Color, selected: Bool) -> some View {
+        RoundedRectangle(cornerRadius: cellCorner)
+            .fill(fill)
+            .overlay {
+                // Inside the cell rather than around it: the grid sits in a paging scroll view, and a
+                // ring drawn outside the frame would be clipped at the grid's edges.
+                if selected {
+                    RoundedRectangle(cornerRadius: cellCorner)
+                        .strokeBorder(PocketColor.textPrimary, lineWidth: 2)
+                }
+            }
+            .aspectRatio(1, contentMode: .fit)
+            .frame(maxWidth: .infinity)
+    }
+
+    private func isSelected(_ bucket: PracticeLog.DayBucket) -> Bool {
+        selectedDay.map { calendar.isDate($0, inSameDayAs: bucket.day) } ?? false
     }
 
     private func fill(for bucket: PracticeLog.DayBucket) -> Color {
@@ -81,7 +113,8 @@ struct MonthHeatmap: View {
 
     private func label(for bucket: PracticeLog.DayBucket) -> String {
         let day = bucket.day.formatted(.dateTime.day().month(.wide))
-        return bucket.isActive ? "\(day), \(bucket.minutes) minutes" : "\(day), no practice"
+        let figure = PracticeLog.MinutesFigure(seconds: bucket.seconds)
+        return bucket.isActive ? "\(day), \(figure.value) \(figure.unit)" : "\(day), no practice"
     }
 
     // MARK: - Rows
@@ -95,15 +128,21 @@ struct MonthHeatmap: View {
         let leading = (weekday - calendar.firstWeekday + 7) % 7
         var cells: [PracticeLog.DayBucket?] = Array(repeating: nil, count: leading)
         cells.append(contentsOf: month.days.map { Optional($0) })
-        while cells.count % 7 != 0 { cells.append(nil) }
+        // Always six rows, the most any month needs (ADR 0241). The grid pages, and a paging strip
+        // takes the height of what it holds — so a five-row October beside a six-row November would
+        // make the screen jump on every swipe.
+        while cells.count < 42 || cells.count % 7 != 0 { cells.append(nil) }
         return stride(from: 0, to: cells.count, by: 7).map { Array(cells[$0..<$0 + 7]) }
     }
+}
 
-    // MARK: - Key
+/// The month grid's magnitude scale. Words rather than numbers, because the ramp is relative to the
+/// month — putting minutes on it would imply a fixed scale it doesn't have. The *Longest day* line above
+/// the grid is the number it is relative to (ADR 0241 D7).
+struct MonthHeatmapKey: View {
+    private var rampOpacities: [Double] { MonthHeatmap.rampOpacities }
 
-    /// The magnitude scale. Words rather than numbers, because the ramp is relative to the month —
-    /// putting minutes on it would imply a fixed scale it doesn't have.
-    private var key: some View {
+    var body: some View {
         HStack(spacing: 4) {
             Text("Less")
             RoundedRectangle(cornerRadius: 2)
@@ -120,7 +159,7 @@ struct MonthHeatmap: View {
         .foregroundStyle(PocketColor.textSecondary)
         .frame(maxWidth: .infinity, alignment: .trailing)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Shading runs from less practice to more, relative to this month's busiest day")
+        .accessibilityLabel("Shading runs from less practice to more, relative to the month's longest day")
     }
 }
 

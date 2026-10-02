@@ -232,6 +232,31 @@ enum PracticeLog {
         Int((max(0, seconds) / 60).rounded())
     }
 
+    /// A minute total **as a figure on screen**: the value and its unit.
+    ///
+    /// Practice that rounds to zero reads **"<1 minute"**, never "0 minutes" (ADR 0241 D6). The log
+    /// keeps any run of a second or more, so a day can count as active on less than half a minute,
+    /// and "0 minutes · 1 day" states two things that cannot both be true. Nothing at all still reads
+    /// "0 minutes" — that one is accurate.
+    struct MinutesFigure: Equatable, Sendable {
+        let value: String
+        let unit: String
+
+        init(seconds: Double) {
+            let rounded = PracticeLog.minutes(seconds)
+            if rounded == 0, seconds > 0 {
+                value = "<1"
+                unit = "minute"
+            } else {
+                value = "\(rounded)"
+                unit = rounded == 1 ? "minute" : "minutes"
+            }
+        }
+
+        /// "<1 min" / "12 min" — the short form a dense row has room for.
+        var short: String { "\(value) min" }
+    }
+
     // MARK: - Recency
 
     /// When each **unit** was last practised — the map the planner ranks recency on (ADR 0137).

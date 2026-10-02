@@ -69,7 +69,7 @@ struct ImproviseView: View {
         // On the shared core, so all three hosts get it once (ADR 0050) — a jam is the longest a
         // player goes without touching the screen, and this one had never asked.
         .keepAwakeDuringPractice()
-        .logsRampLessRun(kind: .improvise, unitUID: loop.uid,
+        .logsRampLessRun(kind: .improvise, loop: loop,
                          routineContext: routineContext)
     }
 

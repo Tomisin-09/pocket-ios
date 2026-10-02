@@ -36,6 +36,11 @@ enum PracticeProgress {
         /// The busiest day's minutes — the chart's y-scale. At least 1 so an all-zero week doesn't
         /// divide by zero, and so a single one-minute day doesn't draw a full-height bar.
         var peakMinutes: Int { max(1, days.lazy.map(\.minutes).max() ?? 0) }
+        /// The week's practice as a figure — "<1 minute" when it rounds to nothing (ADR 0241).
+        /// Summed from the buckets, which cover every day of the week and so every run in it.
+        var minutesFigure: PracticeLog.MinutesFigure {
+            .init(seconds: days.reduce(0) { $0 + $1.seconds })
+        }
     }
 
     /// **This month** — the same aggregation as the week, bucketed differently. The most legible
@@ -51,6 +56,13 @@ enum PracticeProgress {
 
         var isEmpty: Bool { daysActive == 0 }
         var peakMinutes: Int { max(1, days.lazy.map(\.minutes).max() ?? 0) }
+        var minutesFigure: PracticeLog.MinutesFigure {
+            .init(seconds: days.reduce(0) { $0 + $1.seconds })
+        }
+
+        /// The longest day **worth stating** — `nil` until the month has two active days (ADR 0241).
+        /// With one, "Longest day" names the only day there is and repeats the figures above it.
+        var longestDay: PracticeLog.DayBucket? { daysActive >= 2 ? bestDay : nil }
     }
 
     /// **All-time** — meaningful from the second session, which is why it ships with the near
