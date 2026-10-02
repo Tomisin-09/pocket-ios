@@ -33,9 +33,10 @@ extension Loop {
 }
 
 extension Loop {
-    /// The line written on snag `uid`, the latest if there's more than one: a note in this loop's Journal
-    /// that carries the snag's id (ADR 0234 D7).
+    /// The line written on snag `uid`, the latest if there's more than one: a note that carries the snag's
+    /// id (ADR 0234 D7), in **any** of the song's loops' Journals (ADR 0238). The waveform writes a new line
+    /// to the loop the snag was made under, which may not be this one, and it has to show here too.
     func line(forSnag uid: UUID) -> JournalEntry? {
-        journal.filter { $0.snagUID == uid }.max { $0.createdAt < $1.createdAt }
+        SnagLine.lines(in: (song?.loops ?? [self]).flatMap(\.journal))[uid]
     }
 }

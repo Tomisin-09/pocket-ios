@@ -77,6 +77,54 @@ extension WaveformPracticeModel {
         Dictionary(loops.map { ($0.uid, $0.name) }, uniquingKeysWith: { first, _ in first })
     }
 
+    /// Each snag's line by the snag's `uid` (ADR 0238), for the panel's rows: one pass over the Journals
+    /// per render rather than a search per row. Every loop on the song, the same set *Name the notes*
+    /// reads (`Loop.line(forSnag:)`), so the two can't disagree about a snag's line.
+    var snagLinesByUID: [UUID: String] {
+        SnagLine.lines(in: song.loops.flatMap(\.journal)).mapValues(\.text)
+    }
+
+    /// `snag`'s line, from any of the song's loops.
+    func snagLine(for snag: Snag) -> JournalEntry? {
+        SnagLine.lines(in: song.loops.flatMap(\.journal))[snag.uid]
+    }
+
+    /// The loop a new line on `snag` goes to (`SnagLine.home`), or `nil` when no loop has it. Reads
+    /// `loops`, so a loop waiting out its undo window is never given a line it's about to lose.
+    func snagLineHome(for snag: Snag) -> Loop? {
+        let spans = loops.map { SnagLine.Span(uid: $0.uid, start: $0.startSeconds, end: $0.endSeconds) }
+        let home = SnagLine.home(madeUnder: snag.loopUID, at: snag.seconds, among: spans)
+        return loops.first { $0.uid == home }
+    }
+
+    /// Hold a snag row — write or change its line.
+    func editSnagLine(_ snag: Snag) {
+        editingSnag = StableRef(value: snag)
+    }
+
+    /// Save `draft` as `snag`'s line, straight to the Journal like *Name the notes* does (ADR 0234 D7):
+    /// change the line it has, take it out when emptied, or write a new one, of `SnagLine.kind`, to
+    /// `snagLineHome`.
+    func saveSnagLine(_ draft: String, for snag: Snag) {
+        let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let line = snagLine(for: snag) {
+            guard text != line.text else { return }
+            if text.isEmpty {
+                JournalWriter.delete(line, from: context)
+            } else {
+                JournalWriter.update(line, text: text, kind: line.kind)
+            }
+        } else if let home = snagLineHome(for: snag) {
+            guard JournalWriter.add(to: .loop(home), text: text,
+                                    kind: SnagLine.kind(markedWhileNaming: snag.markedWhileNaming),
+                                    snagUID: snag.uid, into: context) else { return }
+        } else {
+            return
+        }
+        try? context.save()
+        haptic(.light)
+    }
+
     /// Tap a snag row — go there and play, like a marker row.
     func seekToSnag(_ snag: Snag) {
         engine.seek(toSeconds: snag.seconds)
@@ -89,6 +137,10 @@ extension WaveformPracticeModel {
     /// snag is an anonymous timestamp, so the toast would guard nothing and would cost the panel a
     /// row of chrome per tap. Deleting the last one also folds the panel away, which is the only
     /// state it has to say something about.
+    ///
+    /// A snag with a line (ADR 0238) still has no toast: the line is a Journal note that only points at
+    /// the snag, so it stays, an ordinary note on its loop. The words are the authored part, and they
+    /// aren't lost.
     func deleteSnag(_ snag: Snag) {
         context.delete(snag)
         // The offer was raised from marks that no longer describe the same cluster.

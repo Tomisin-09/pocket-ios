@@ -17,6 +17,10 @@
 - **Amended by:** ADR 0203 — snag rows carry the name of the loop they were made under (0203 D2).
   **D2's song-order sort stands**, and 0203 declines the grouping-by-loop that would replace it, for
   the reason D2 gives: proximity is the signal, and grouping splits a cluster.
+- **Amended by:** ADR 0238 (2026-10-02) — a hold on a snag row opens a sheet with one field, a line on
+  the snag (0238 D1), so D2's *no edit sheet, no hold* no longer holds. No multi-select, the song-order
+  sort, tap to go there and ✕ to remove stand. **D3 stands**: still no undo toast, because the line is a
+  Journal note that stays when the snag goes (0238 D5).
 
 ## Context
 

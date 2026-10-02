@@ -56,6 +56,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Leave a line on a snag from the song player.** Hold a row in the **Snags** panel to write yourself a
+  line about that spot, *what's stopping you here?*, for when you come back. It saves to the Journal of
+  the loop you were running when you marked it, and shows under the row. It's the same line *Name the
+  notes* shows under its strip, so one written in either place shows in both. Removing the snag keeps
+  the line in the Journal.
 - **Red Moon asks, once, whether you'd rate it.** After you have practised on several separate
   occasions, the App Store's rating prompt appears when you next come back to the home screen —
   never in the middle of playing, and never on the screen at the end of a session, which is for

@@ -34,6 +34,10 @@
 - **Schema:** two additive Optional attributes, `Snag.markedWhileNaming: Bool?` and
   `JournalEntry.snagUID: UUID?`. Neither is a custom enum, so both meet 0189's criteria. The archive
   gains the matching optional fields.
+- **Amended by:** ADR 0238 (2026-10-02) — **D7**: a snag's line can also be written from the song
+  player's *Snags* panel, by holding a row, and it's read from every loop on the song, not only the one
+  being named. A new line written there goes to the loop the snag was made under, and is 🧗 Struggle for
+  a stumble. The rest of D7 stands.
 
 ## Context
 

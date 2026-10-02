@@ -242,7 +242,8 @@ Hold a note in the strip to **snag** it, somewhere you're stuck, and hold it aga
 a hold never plays the note. It's the same crimson snag you make on the practice screen while you play,
 so it shows on the waveform and in the `Snags` panel too, and a snag made while playing shows here on
 the note it's nearest. Under the strip, `Add a line` leaves yourself a line about it for when you come
-back. It saves to the loop's journal straight away, and `Next snag` goes to the next one.
+back. It saves to the loop's journal straight away, and it's the same line the `Snags` panel shows under
+that snag, so one written in either place shows in both. `Next snag` goes to the next one.
 
 `Done` writes the names onto the saved piece. Under `Saved on this loop` it reads as one line (*98 notes
 · Guitar · Standard · 6 unnamed*), then its tab in rows that fit the screen, each saying which notes it

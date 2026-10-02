@@ -26,6 +26,7 @@ extension LongTermGoal: UIDIdentified {}
 extension RoutineItem: UIDIdentified {}
 extension Recording: UIDIdentified {}   // takes are renamed through a `StableRef` (ADR 0069 amendment)
 extension CustomSkill: UIDIdentified {} // edited from the skill picker (ADR 0216 D7)
+extension Snag: UIDIdentified {}        // its line is written from the Snags panel (ADR 0238)
 
 /// `Identifiable` wrapper whose `id` is the wrapped model's stable `uid`.
 struct StableRef<Model: UIDIdentified>: Identifiable {

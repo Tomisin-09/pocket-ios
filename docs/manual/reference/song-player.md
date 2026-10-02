@@ -82,7 +82,8 @@ Taking it does not change the loop: it opens the shorter range as a live A / B s
 first, and `Save changes` is what commits it. If your snags are spread across the loop, nothing is
 offered — that spread is telling you the trouble is not in one place.
 
-Snags live in the `Snags` panel below, where you can jump to one or remove it. A loop's row in the
+Snags live in the `Snags` panel below, where you can jump to one, leave a line on it, or remove it. A
+loop's row in the
 `Loops` panel also shows how many marks fall inside it, so you can see which passage has been giving
 trouble without opening anything.
 
@@ -134,6 +135,13 @@ One row per snag, in the order they fall in the song: the time, the loop you wer
 marked it, and the speed you were playing at if it was not full tempo. Tapping a row goes there and
 plays. The ✕ removes it.
 
+**Hold a row** to leave yourself a line about that snag, for when you come back: *What’s stopping you
+here?* It saves to the Journal of the loop the row names, or, if that loop is gone, of the loop the
+snag falls in now, and shows under the row from then on. Hold it again to change it, or clear it to take
+it out. Removing the snag doesn't remove the line: it stays in the Journal as a note on that loop.
+
+It's the same line `Name the notes` shows under its strip, so one written in either place shows in both.
+
 The rows stay in song order rather than being grouped by loop, so two marks a beat apart sit
 together even when you made them under different loops. A snag whose loop you have since deleted
 keeps its place and simply shows no loop name.
@@ -141,8 +149,8 @@ keeps its place and simply shows no loop name.
 A note you snagged in `Name the notes`, somewhere you were stuck working a lick out, is listed here too,
 in its place in the song.
 
-There is nothing else to a snag — no name, no colour, no rating — so there is no edit sheet, no
-holding a row, and no selection mode. It starts collapsed.
+There is nothing else to a snag — no name, no colour, no rating — so there is no selection mode. It
+starts collapsed.
 
 ## The sheets
 

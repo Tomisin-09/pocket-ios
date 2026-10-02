@@ -162,10 +162,7 @@ struct WaveformPracticeView: View {
                     }
             }
         }
-        .sheet(item: $model.editingMarker) { ref in
-            let marker = ref.value
-            MarkerEditSheet(marker: marker, onDelete: { model.deleteMarker(marker) })
-        }
+        .modifier(PanelRowSheets(model: model))     // a marker's edit sheet, a snag's line (ADR 0238)
         .sheet(item: $model.editingAutomatorLoop) { ref in
             let loop = ref.value
             AutomatorSheet(loop: loop, song: model.song,
@@ -223,8 +220,8 @@ struct WaveformPracticeView: View {
         // engine alive via the global command center.
         .onDisappear { model.endPlaybackSession() }
         // Page-mode + the lock-screen clock ride the playhead, which moves once per display
-        // frame. Reading it *here* would make this body — and with it all **nine** presentations
-        // declared above (the tempo-carry chooser, ADR 0170, is the ninth) — re-evaluate at 120 Hz,
+        // frame. Reading it *here* would make this body — and with it all **ten** presentations
+        // declared above (two in `PanelRowSheets`; the snag line, ADR 0238, is the tenth) — re-evaluate at 120 Hz,
         // which is what made opening song or loop settings mid-playback feel heavy. `PlayheadWatcher` owns that dependency instead.
         .background { PlayheadWatcher(model: model) }
         // Crisp deep-zoom (ADR 0020): re-downsample the visible window when the

@@ -139,6 +139,8 @@ final class WaveformPracticeModel {
     /// content closure is re-evaluated whenever its presenting body is.
     var editingLoopAutoColor: Color = PocketColor.loopPalette.first ?? .gray
     var editingMarker: StableRef<Marker>?
+    /// The snag whose line is being written, from a hold on its *Snags* row (ADR 0238).
+    var editingSnag: StableRef<Snag>?
 
     /// Open the loop edit sheet, resolving its auto colour up front (see `editingLoopAutoColor`).
     func editLoop(_ loop: Loop) {
