@@ -206,9 +206,10 @@ to open this too; it now carries the tempo out instead.)
 
 ### The player settings sheet
 
-Titled `Song player`, and reached only by **holding `Loop controls`**. It carries the same five
+Titled `Song player`, and reached only by **holding `Loop controls`**. It carries the same
 controls as [Settings ▸ Song player](settings.md#song-player): `Loop control on left`,
-`Show minimap`, `Show marker labels`, `Zoom follows playhead` and `Snap when seeking`.
+`Show minimap`, `Show marker labels`, `Zoom follows playhead`, `Snap when seeking`, and the hold
+tips' `Show hold tips` and `Show the tips again`.
 
 ### The others
 

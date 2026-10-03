@@ -41,6 +41,8 @@ struct SongStrip: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .lineLimit(1)
             }
+            // The hold covers the whole strip; the tip (ADR 0244) rings the name, which is what it says to hold.
+            .gestureHintTarget(.songTitle)
             Spacer(minLength: 12)
             // Derived song mastery (ADR 0036) — shown only when the song has loops to
             // roll up. An unrated song simply omits it (no length fallback anymore).

@@ -31,6 +31,10 @@ struct SongPlayerSettingsView: View {
     private var zoomFollowsPlayhead = AppSettings.zoomFollowsPlayheadDefault
     @AppStorage(AppSettings.Key.seekSnapping)
     private var seekSnappingRaw = AppSettings.seekSnappingDefault.rawValue
+    @AppStorage(AppSettings.Key.gestureHints)
+    private var gestureHints = AppSettings.gestureHintsDefault
+    @AppStorage(AppSettings.Key.gestureHintsRetired)
+    private var gestureHintsRetired = ""
 
     private var seekSnapping: Binding<SeekSnapping> {
         Binding(get: { AppSettings.resolvedSeekSnapping(storedValue: seekSnappingRaw) },
@@ -70,6 +74,19 @@ struct SongPlayerSettingsView: View {
                      + "puts the playhead exactly where you lifted your finger. Loop edges still "
                      + "line up either way.")
             }
+
+            // The hold tips (ADR 0244 D6). On by default; the button brings back every tip that was
+            // used or closed, and lets one show straight away rather than at the next opening.
+            Section {
+                Toggle(isOn: $gestureHints) {
+                    FieldInfoLabel(title: "Show hold tips", info: SettingsInfo.holdTips)
+                }
+                Button("Show the tips again") {
+                    AppSettings.restoreGestureHints()
+                    GestureHintOpening.current.shown = nil
+                }
+                .disabled(!gestureHints || gestureHintsRetired.isEmpty)
+            }
         }
         .settingsScreen(title: "Song player")
     }
@@ -94,7 +111,7 @@ struct SongPlayerSettingsSheet: View {
                     }
                 }
         }
-        // Five rows fit the medium detent; `.large` stays available for accessibility text sizes.
+        // Opens at medium, the snapping picker in reach; the hold tips are a scroll or a drag up away.
         .presentationDetents([.medium, .large])
     }
 }

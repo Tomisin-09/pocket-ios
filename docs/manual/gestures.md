@@ -7,6 +7,24 @@ somebody tells you. This page is that somebody.
 Nothing on this page is required to use the app. Every hold either opens something you can also
 reach another way, or changes a setting that has a sensible default.
 
+## Tips for the holds
+
+The song player points out its own hidden holds, one at a time. A tip is a ring round the control
+and a line beside it saying what holding it does. It shows only while the song is paused, and only
+once your first-song guide is behind you: they start the next time you open the app.
+
+There are six, for the holds nothing else on screen tells you about: a loop's row, the metronome,
+the **BPM**, a marker's row, a panel's name (once it has two rows to select), and the song's name.
+Holds that already say what they do where they are, such as a **Snags** row or a strum slot, get no
+tip.
+
+**Using the hold puts its tip away for good, and so does its ✕.** A hold you find on your own is
+never pointed out. You will see at most one tip each time you open the app, and coming back to it
+after half an hour or more away counts as opening it.
+
+To turn them off, or bring back every one you have closed, use **Settings ▸ Song player ▸ Show hold
+tips** and **Show the tips again**. See [Settings](reference/settings.md#song-player).
+
 ## The cheatsheet the app carries
 
 The song player has its own summary built in. Tap **Loop controls** on the line under the speed bar
@@ -74,7 +92,7 @@ one you wanted.
      | crop: 0,370,1206,280 -->
 
 **Tapping and holding the Loop controls line do different things.** A tap gives you the cheatsheet
-above; a hold opens the player's settings — the same five controls as **Settings ▸ Song player**,
+above; a hold opens the player's settings — the same controls as **Settings ▸ Song player**,
 put where you are actually using them.
 
 ## Holds that open a menu

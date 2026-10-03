@@ -152,12 +152,17 @@ struct SpeedBar: View {
         .contentShape(Rectangle())
         .onLongPressGesture(minimumDuration: 0.4) {
             haptic(.medium)     // confirm the hold landed before the chooser opens
+            AppSettings.retireGestureHint(.bpm)
             onCarryTempo(bpm)
         }
+        .gestureHintTarget(.bpm)    // ADR 0244
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(bpm) beats per minute")
         .accessibilityHint("Long press to take this tempo to the metronome or into a new exercise")
-        .accessibilityAction(named: "Carry this tempo") { onCarryTempo(bpm) }
+        .accessibilityAction(named: "Carry this tempo") {
+            AppSettings.retireGestureHint(.bpm)
+            onCarryTempo(bpm)
+        }
     }
 }
 
@@ -242,6 +247,10 @@ private struct MetronomeControl: View {
             .overlay {
                 if isHinted { HintRing(color: PocketColor.waveformAccent).padding(-4) }
             }
+            // The hold tip (ADR 0244) only once a tap toggles the click: before that, a tap opens
+            // the tempo editor itself and there is no hold to discover. Rings the disc, not the
+            // 44-pt target round it.
+            .gestureHintTarget(.metronome, when: mode == .click)
             .frame(width: 44, height: 44)
             // Tap + hold as gestures on a plain shape, **not** a `Button` with a long press bolted
             // on: that pairing fires both on a hold. The loop row (ADR 0041) does the same.
@@ -249,6 +258,7 @@ private struct MetronomeControl: View {
             .onTapGesture { mode == .click ? onToggle() : openTempoEditor() }
             .onLongPressGesture(minimumDuration: 0.4) {
                 haptic(.medium)     // confirm the hold landed before the editor appears
+                AppSettings.retireGestureHint(.metronome)
                 onSetBPM()
             }
             .accessibilityElement(children: .ignore)
@@ -257,7 +267,10 @@ private struct MetronomeControl: View {
             .accessibilityValue(mode == .click ? (isOn ? "On" : "Off") : "")
             .accessibilityHint(hint)
             // VoiceOver can't long-press, so surface the hold's action explicitly.
-            .accessibilityAction(named: "Change tempo") { onSetBPM() }
+            .accessibilityAction(named: "Change tempo") {
+                AppSettings.retireGestureHint(.metronome)
+                onSetBPM()
+            }
     }
 
     private func openTempoEditor() {

@@ -19,7 +19,7 @@ answered without opening anything.
 | `Sound & feel` | Haptics, and which click the metronome plays |
 | `Practice` | Count-in, screen, the strumming click, reminders, and what Home offers you |
 | `Routines` | How a routine moves from block to block |
-| `Song player` | Five things about the waveform screen |
+| `Song player` | How the waveform screen looks and behaves, and its hold tips |
 | `Your data` | A copy of everything, and what it takes up |
 | `Help & About` | Version, help, contact, diagnostics, and the legal links |
 
@@ -100,7 +100,7 @@ Every one of these is optional, and none of it leaves the device.
 
 ## `Song player`
 
-The same five controls the [player](song-player.md#the-player-settings-sheet) carries behind a hold
+The same controls the [player](song-player.md#the-player-settings-sheet) carries behind a hold
 on `Loop controls` — one setting, two doors.
 
 - **`Loop control on left`** — *Big Loop and Marker buttons flank the transport bar while idle. Marker sits on the left and Loop on the right by default — turn this on to swap them.*
@@ -112,6 +112,10 @@ on `Loop controls` — one setting, two doors.
   see. Dragging already ignores the beats and keeps the markers. Structure only drops the beats from
   a tap too; Off puts the playhead exactly where you lifted your finger. Loop edges still line up
   either way.*
+- **`Show hold tips`** — *Points out a hold on the song player you haven't used yet, with a ring round the control and a line saying what holding it does. One tip at a time, and only while the song is paused. Using the hold, or closing its tip, puts that tip away for good.* On until you
+  turn it off. See [Tips for the holds](../gestures.md#tips-for-the-holds).
+- **`Show the tips again`** — brings back every tip you have used or closed, and lets one show the
+  next time you open a song. Greyed out while the tips are off, or while none has been put away.
 
 ## `Your data`
 

@@ -38,6 +38,10 @@ enum SettingsInfo {
     static let markerLabels =
         "Floats a marker's name over the timeline as you play up to it. Off keeps labels in the "
         + "Markers panel only."
+    static let holdTips =
+        "Points out a hold on the song player you haven't used yet, with a ring round the control and "
+        + "a line saying what holding it does. One tip at a time, and only while the song is paused. "
+        + "Using the hold, or closing its tip, puts that tip away for good."
     static let zoomFollowsPlayhead =
         "Pinch-zoom normally keeps the spot under your fingers still. Turn this on to have the "
         + "window re-center on the playhead as you zoom instead."

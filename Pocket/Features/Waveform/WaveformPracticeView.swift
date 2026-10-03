@@ -109,6 +109,7 @@ struct WaveformPracticeView: View {
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isLoadingAudio)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.audioLoadFailed)
+        .gestureHintLayer { model.gestureHintsCanShow }   // hold tips (ADR 0244)
         // Single selection: relink repairs *this* song, unlike the library's multi-select import.
         .fileImporter(isPresented: $relinking, allowedContentTypes: [.audio],
                       allowsMultipleSelection: false, onCompletion: handleRelink)
@@ -255,7 +256,7 @@ struct WaveformPracticeView: View {
                 // lets the title sit just under the status bar.
                 HStack(alignment: .top, spacing: 12) {
                     backButton
-                    SongStrip(song: model.song, onHoldTitle: { model.showingSongDetails = true })
+                    SongStrip(song: model.song, onHoldTitle: model.holdTitle)
                 }
             }
             .padding(.horizontal, 16)
@@ -332,11 +333,12 @@ struct WaveformPracticeView: View {
             .contentShape(Rectangle())
             .onLongPressGesture(minimumDuration: 0.4) {
                 haptic(.medium)
-                model.showingSongDetails = true
+                model.holdTitle()
             }
+            .gestureHintTarget(.songTitle)
             .accessibilityElement(children: .combine)
             .accessibilityHint("Hold to view song details")
-            .accessibilityAction(named: "Song details") { model.showingSongDetails = true }
+            .accessibilityAction(named: "Song details") { model.holdTitle() }
 
             Spacer(minLength: 8)
 

@@ -421,6 +421,15 @@ on the Teal card wash with the moon glyph. On the starter track the transport's 
 a breathing ring while the song waits on a marker (still under Reduce Motion). Landscape shows the
 current beat only, inline in the cockpit.
 
+**Hold tips (ADR 0244).** From the opening after the walkthrough's, one hidden hold at a time is pointed
+out: the walkthrough's breathing ring (waveform teal, never hit-tested) round the control, and a tip
+beside it — one Futura footnote line in cream on the Teal CTA fill, a caret to the control, a 32-pt
+✕. Above the control when there is room (the holding hand comes from below), below it otherwise,
+16 pt clear of both sides. Paused only; never beside the walkthrough card, in selection, range
+editing or setting the 1. Six controls qualify (0244 D2): loop row, metronome, BPM, marker row, a
+panel's name, the song's name. **A new hold earns a tip only by 0244 D1's test**, and otherwise gets a
+caption where it lives or nothing.
+
 **Scrollable (reference):**
 
 8. Loops panel (collapsible) — each loop shows a **name** + time range, with the

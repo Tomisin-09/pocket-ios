@@ -1303,7 +1303,16 @@ ledger lives in `UserDefaults` (`AppSettings+Walkthrough`), armed by `SongImport
 starter track the pure `StarterTrackHints` rides beside the script (ADR 0220 D4, step 3): fed by the
 same choke points plus `toggleMetronome`, the delete path and Edit loop's `onDismiss`, it decides the
 click and backing-track hints, and the walkthrough now ends only when no beat is outstanding **and**
-no hint is showing. Landscape
+no hint is showing. The **hold tips** (ADR 0244) come after it: six controls report their bounds
+through one anchor preference (`.gestureHintTarget`, `Pocket/UI/GestureHintLayer.swift`) only while
+their tip is still in play, the panels' scroll view reports its visible frame (`.gestureHintViewport`),
+and one `.gestureHintLayer` over the whole screen asks the pure `GestureHintPolicy`
+(`Pocket/Core/Help/GestureHint.swift`) which tip, if any, to draw. Drawn there rather than on the
+control because a row's overlay is clipped by its scroll view and covered by the next row. The
+retired set and the switch are two `UserDefaults` keys (`AppSettings+GestureHints`); the
+one-per-opening latch and the walkthrough-ran flag are the observable `GestureHintOpening`, in
+memory. An opening is a launch, or a return after `GestureHintPolicy.openingGap` (the practice log's
+30-minute `sittingGap`) in the background, judged from the scene phase `PocketApp` reports. Landscape
 is gated to this screen alone by `OrientationGate.swift` (an `AppDelegate` answering
 `supportedInterfaceOrientationsFor` from a mask that a `.landscapeEnabled()` modifier
 widens through a counted claim, `OrientationLease`, and narrows when the last claim goes) — ADR

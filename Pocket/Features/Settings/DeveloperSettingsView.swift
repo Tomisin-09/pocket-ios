@@ -17,6 +17,8 @@ struct DeveloperSettingsView: View {
     @AppStorage(AppSettings.Key.artistIntakeSeen) private var artistIntakeSeen = false
     /// Read on appear and after a reset — nothing observes the record, so nothing else would redraw it.
     @State private var reviewAsk: ReviewPrompt.DebugState?
+    @AppStorage(AppSettings.Key.gestureHints) private var gestureHints = AppSettings.gestureHintsDefault
+    @AppStorage(AppSettings.Key.gestureHintsRetired) private var gestureHintsRetired = ""
 
     var body: some View {
         Form {
@@ -34,6 +36,7 @@ struct DeveloperSettingsView: View {
             }
 
             reviewAskSection
+            holdTipsSection
         }
         .settingsScreen(title: "Developer")
         .onAppear(perform: refreshReviewAsk)
@@ -54,6 +57,58 @@ struct DeveloperSettingsView: View {
             Text("Never on the launch appearance: open any screen and come back to Home. Reset "
                  + "forgets our record only — iOS keeps its own budget on top of ours, so a "
                  + "TestFlight or App Store build may still show nothing.")
+        }
+    }
+
+    /// The hold tips' state (ADR 0244), none of which a player can see: which tips are put away, which
+    /// one this opening has used, and what is holding them back. *Start a new opening* is the
+    /// app's own `begin()`, the one a half-hour away calls, so a test here takes the real path.
+    private var holdTipsSection: some View {
+        let opening = GestureHintOpening.current
+        let retired = GestureHintPolicy.retired(gestureHintsRetired)
+        return Section {
+            LabeledContent("Held back by", value: holdTipsHeldBack(opening: opening, retired: retired))
+            ForEach(GestureHint.allCases) { hint in
+                LabeledContent(Self.name(of: hint), value: holdTipState(hint, opening: opening, retired: retired))
+            }
+            Button("Start a new opening") { opening.begin() }
+            Button("Reset hold tips", role: .destructive) {
+                AppSettings.resetGestureHints()
+                opening.begin()
+            }
+        } header: {
+            Text("Hold tips")
+        } footer: {
+            Text("An opening is a launch, or a return after \(Int(GestureHintPolicy.openingGap / 60)) "
+                 + "minutes or more in the background. Start a new opening does what that break does. "
+                 + "Reset also brings every tip back and turns the switch on.")
+        }
+    }
+
+    private func holdTipsHeldBack(opening: GestureHintOpening, retired: Set<GestureHint>) -> String {
+        if !UITestRuntime.gestureHintsAreOpen { return "A UI test without -gestureHints" }
+        if !gestureHints { return "Switched off" }
+        if GestureHintOpening.walkthroughOutstanding { return "The guide, on the next song" }
+        if opening.walkthroughSeen { return "The guide ran this opening" }
+        if retired.count == GestureHint.allCases.count { return "All put away" }
+        return "Nothing"
+    }
+
+    /// "Next opening": this opening has shown its one tip, and this one waits for the next.
+    private func holdTipState(_ hint: GestureHint, opening: GestureHintOpening, retired: Set<GestureHint>) -> String {
+        if retired.contains(hint) { return "Put away" }
+        if opening.shown == hint { return "This opening's tip" }
+        return opening.shown == nil ? "Can show" : "Next opening"
+    }
+
+    private static func name(of hint: GestureHint) -> String {
+        switch hint {
+        case .loopRow: "Loop row"
+        case .metronome: "Metronome"
+        case .bpm: "BPM"
+        case .markerRow: "Marker row"
+        case .panelHeader: "Panel name"
+        case .songTitle: "Song name"
         }
     }
 

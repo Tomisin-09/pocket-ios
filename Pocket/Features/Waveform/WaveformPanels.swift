@@ -56,7 +56,8 @@ struct LoopsPanel: View {
                             : "\(loops.count) loop\(loops.count == 1 ? "" : "s")",
                          expanded: $expanded,
                          onBeginSelection: loops.isEmpty ? nil : selection.begin,
-                         isSelecting: selection.isActive) {
+                         isSelecting: selection.isActive,
+                         hintsSelection: loops.count > 1) {
             if loops.isEmpty {
                 EmptyPanelMessage(
                     systemImage: "repeat",
@@ -149,6 +150,7 @@ private struct LoopRow: View {
                     onToggleSelection()
                 } else {
                     haptic(.medium)     // confirm the hold landed before the sheet appears
+                    AppSettings.retireGestureHint(.loopRow)
                     onEdit()
                 }
             }
@@ -159,7 +161,7 @@ private struct LoopRow: View {
             // VoiceOver can't long-press, so surface the same actions explicitly.
             .accessibilityActions {
                 if !isSelecting {
-                    Button("Edit", action: onEdit)
+                    Button("Edit") { AppSettings.retireGestureHint(.loopRow); onEdit() }
                     Button("Adjust range", action: onAdjustRange)
                     Button("Delete", action: onDelete)
                 }
@@ -171,6 +173,8 @@ private struct LoopRow: View {
                         .padding(-4)
                 }
             }
+            // The hold tip (ADR 0244) rings the same part, for the same reason.
+            .gestureHintTarget(.loopRow, when: !isSelecting, scrolls: true)
 
             // Adjust + automator read as a pair; in the narrow landscape drawer they sit
             // closer together (their 44pt targets keep a usable gap) to reclaim width.

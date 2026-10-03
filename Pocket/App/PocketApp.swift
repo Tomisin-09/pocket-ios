@@ -22,6 +22,10 @@ struct PocketApp: App {
     // retired trial reminder (ADR 0237 D5).
     @State private var practiceReminder = PracticeReminder()
 
+    // The hold tips count openings of the app, not launches (ADR 0244 D5): iOS keeps a suspended app
+    // for days, and a return after half an hour away is the player opening it again.
+    @Environment(\.scenePhase) private var scenePhase
+
     init() {
         // The Journal's list filters persist (ADR 0190 D8), and a simulator keeps its `UserDefaults`
         // between runs — so a driven test starts from whatever the last one left behind unless the
@@ -45,6 +49,8 @@ struct PocketApp: App {
             // The walkthrough's ledger is the same trap again (ADR 0149): a second run finds it
             // spent. Only the test that asks for it gets it back — see `walkthroughArgument`.
             if UITestRuntime.walkthroughIsOpen { AppSettings.resetSongWalkthroughForUITest() }
+            // And the hold tips' (ADR 0244): the first run retires the tag it shows.
+            if UITestRuntime.gestureHintsAreOpen { AppSettings.resetGestureHints() }
         }
     }
 
@@ -65,5 +71,6 @@ struct PocketApp: App {
                               PracticeRun.self, ReferenceLink.self, LoopSpanChange.self,
                               Snag.self, PracticeFolder.self, CustomSkill.self, SavedProgression.self,
                               WrittenTab.self])
+        .onChange(of: scenePhase) { _, phase in GestureHintOpening.current.sceneChanged(to: phase) }
     }
 }
