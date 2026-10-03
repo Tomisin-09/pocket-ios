@@ -21,12 +21,13 @@ enum IntakeGoalOffer {
     /// deciding whether the app is worth keeping.
     ///
     /// Left off for that reason, as of 2026-10-03: *Play a specific song* (it needs a song, and a new
-    /// install has none), *Tighten your timing* and *Train your ear* (none of the first-run drills
-    /// works on their skills). They stay in the editor, where a player who has the material for them
-    /// will find them. If the first-run set gains a drill that reaches one, add it here; the test says
-    /// whether it qualifies.
+    /// install has none) and *Train your ear* (none of the first-run drills works on its skills). They
+    /// stay in the editor, where a player who has the material for them will find them. *Tighten your
+    /// timing* was left off too, until ADR 0247 seeded a strumming drill for it. If the first-run set
+    /// gains a drill that reaches another, add it here; the test says whether it qualifies.
     static let offeredIDs: [String] = [
-        "build-speed", "improvise", "chord-changes", "fretboard", "fretting-hand", "write", "general"
+        "build-speed", "improvise", "timing", "chord-changes", "fretboard", "fretting-hand", "write",
+        "general"
     ]
 
     /// Whether the intake asks at all. **Not after "Just unwind"**: giving homework to someone who

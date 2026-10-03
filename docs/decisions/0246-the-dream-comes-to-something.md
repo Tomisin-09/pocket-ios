@@ -10,6 +10,8 @@
 - **Amends:** ADR 0171 — D6's *"ranking, adding, editing and deleting all happen here and only here"*
   gains one exception. The first run can **add** long-term goals. Ranking, editing and deleting still
   happen only in Practice ▸ Long-term goals, and the Practice log echo stays read-only.
+- **Amended by:** ADR 0247 (2026-10-03) — D4's list only: *Tighten your timing* is now offered,
+  because the first-run set gained a strumming drill. D4's rule stands.
 - **Relates to:** 0070 (never grading, and no pressure, which is why *Just unwind* is not asked — D3)
   · 0015 S1 and 0171 D5 (the shared goal templates the card draws from) · 0113 S3 (`dreamLift`, which
   stays — D6) · 0171 D10 (the `Build from` control, which now appears on day one)
@@ -38,6 +40,10 @@ goals during onboarding."*
 | **D5** | **Three, not ten.** The tier allows ten (0171 D4), but on a first run three ranked goals give a direction, and ten would be homework. Past three, the other rows dim and stop responding. |
 | **D6** | **The dream keeps its tilt.** The card follows on from the dream and does not replace it: the dream says why the player plays, and the goals say what they are working on. `dreamLift` is unchanged. |
 | **D7** | **No offer to existing players.** No one has the app yet (Tomisin, 2026-10-03), so nobody has finished an intake that lacked this card. |
+
+> **Amended by ADR 0247 (2026-10-03).** D4's list is shorter: a new install now seeds a strumming
+> drill, so *Tighten your timing* gives Today's session something and is offered. *Play a specific
+> song* and *Train your ear* are still left off.
 
 ### Rejected
 

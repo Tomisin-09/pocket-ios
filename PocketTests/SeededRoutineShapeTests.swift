@@ -48,7 +48,7 @@ final class SeededRoutineShapeTests: XCTestCase {
 
     /// **The test that would have caught it.** Every slug the routine seed names has to be one a
     /// fresh install actually seeds — not merely one that exists in the catalog. Reads
-    /// `firstRunSlugs` rather than restating it, so retiring a spec from the first-run six fails
+    /// `firstRunSlugs` rather than restating it, so retiring a spec from the first-run set fails
     /// here instead of in a photograph.
     func testSeededRoutinesNameOnlyDrillsAFreshInstallHas() {
         let named = ["spider-walk", "alternate-picking", "a-minor-pentatonic"]

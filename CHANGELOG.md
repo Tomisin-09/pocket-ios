@@ -61,6 +61,8 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   they become your long-term goals, so Today's session builds from them from the first day. You can
   change them any time in **Practice ▸ Long-term goals**. If you answered *Just unwind*, the question
   is skipped. (ADR 0246)
+- **A new install comes with a strumming drill.** *Strumming — Down-Up Eighths* joins the starter
+  exercises, so *Tighten your timing* is one of the goals you can pick on the first run. (ADR 0247)
 - **The song player points out the holds it hides, one at a time.** Six of its controls do something
   when you hold them that nothing on screen tells you: a loop's row, the metronome, the BPM, a
   marker's row, a panel's name and the song's name. Each now has a tip: a ring round the control and

@@ -29,7 +29,7 @@ class UITestCase: XCTestCase {
     /// stalling the suite.
     static let uiTimeout: TimeInterval = 10
 
-    /// The one long wait in the suite: cold-install seeding writes six exercises, a routine and a
+    /// The one long wait in the suite: cold-install seeding writes the first-run exercises, a routine and a
     /// demo song that decodes off-main. This is the only place a number this big is justified,
     /// because it is the only wait covering genuinely variable work.
     static let seedingTimeout: TimeInterval = 60

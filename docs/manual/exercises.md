@@ -7,9 +7,9 @@ different things all the way down.
 
 Exercises live in **Practice ▸ Exercises**, reached from **Practice** on Home.
 
-A fresh install arrives with six of them — **Spider Walk**, **Chromatic Warm-up**, **Alternate
-Picking**, **A Minor Pentatonic**, **Pop Changes** and **Legato** — so there is something to run
-before you have built anything. They are ordinary drills: rename them, retune them, duplicate them,
+A fresh install arrives with seven of them — **Spider Walk**, **Chromatic Warm-up**, **Alternate
+Picking**, **A Minor Pentatonic**, **Pop Changes**, **Legato** and **Strumming — Down-Up Eighths** —
+so there is something to run before you have built anything. They are ordinary drills: rename them, retune them, duplicate them,
 delete them.
 
 ## The library
