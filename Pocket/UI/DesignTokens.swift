@@ -113,9 +113,8 @@ enum PocketColor {
     /// is also the seam the Blood Moon theme uses to swap it to terracotta (Slice 2). Kept
     /// clear of the metronome plum and every other functional hue.
     static let practice = Color("Teal")
-    /// Mastery indicator accent — the dots/stars showing how well a loop or song is
-    /// owned (Home's "Mastered" stat, the mastery dots on song cards and the loop
-    /// mastery picker, mastery stars). **Tracks the brand hero** (`practice`) rather than
+    /// Mastery indicator accent — the dots showing how well a loop or song is owned (Home's
+    /// "Mastered" stat, `MasteryDots` everywhere mastery is drawn, and the loop mastery picker). **Tracks the brand hero** (`practice`) rather than
     /// its own hue — "mastered" reads as an on-brand positive state — so it is teal in the
     /// default theme and follows Practice to terracotta in Blood Moon (ADR 0081). Never the
     /// metronome plum.

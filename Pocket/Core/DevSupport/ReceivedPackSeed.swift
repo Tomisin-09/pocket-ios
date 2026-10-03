@@ -26,11 +26,41 @@ enum ReceivedPackSeed {
         let routine = arguments.contains(UITestHooks.receiveRoutinePackArgument)
         guard routine || arguments.contains(UITestHooks.receivePackArgument) else { return nil }
         let leaf = "uitest-pack.m4a"
+        let shooting = arguments.contains(ScreenshotSeed.launchArgument)
         let tone = FileManager.default.temporaryDirectory.appending(path: leaf, directoryHint: .notDirectory)
         try? FileManager.default.removeItem(at: tone)
-        guard (try? SampleToneGenerator.writeSample(duration: 8, to: tone, settings: TakeRecorder.settings)) != nil
+        guard (try? SampleToneGenerator.writeSample(duration: shooting ? 30 : 8, to: tone,
+                                                    settings: TakeRecorder.settings)) != nil
         else { return nil }
 
+        let song = shooting ? shootSong(audio: leaf, routine: routine) : testSong(audio: leaf)
+        guard let riff = song.loops.first else { return nil }
+        let from = shooting ? shootSender : sender
+        let version = shooting ? SupportDiagnostics.currentAppVersion(bundle: Bundle.main) : "UI test"
+        guard routine else {
+            let payload = SharedSongBuilder.payload(song, senderName: from, appVersion: version)
+            return try? PracticePack.write(payload, audio: [leaf: tone], named: song.title)
+        }
+        let name = shooting ? shootRoutineName : routineName
+        let sitting = Routine(name: name)
+        sitting.items = [RoutineItem.item(riff, order: 0), RoutineItem.item(song, order: 1)]
+        let payload = SharedPracticeBuilder.routine(sitting, appVersion: version, senderName: from,
+                                                    songs: [song])
+        return try? PracticePack.write(payload, audio: [leaf: tone], named: name)
+    }
+
+    // MARK: - What the pack holds
+
+    /// The manual's sender and routine (`-seedScreenshots`): a song a teacher sent, not a test fixture. The
+    /// leftover sweep below still matches *Pack test* and *Pack routine* only, so it can never take the
+    /// shoot's own Slow Bend for a leftover. The shoot cancels on the preview, so nothing of these lands.
+    static let shootSender = "Jack Trader"
+    static let shootRoutineName = "Low Road, start to finish"
+    /// The routine's song. Not Slow Bend: the shoot's own Slow Bend is the tone-generator demo with no file,
+    /// so a routine built on it would send with *Can't go*. Received, this one has its own copy and goes.
+    static let shootRoutineSong = "Low Road"
+
+    private static func testSong(audio leaf: String) -> Song {
         let song = Song(title: title, artist: "Jack Trader", bpm: 120, duration: 8,
                         ref: SongRef(id: "uitest-pack", source: .localFile), audioFileName: leaf)
         let verse = Marker(seconds: 0, label: "Verse")
@@ -39,15 +69,17 @@ enum ReceivedPackSeed {
         let riff = Loop(name: "Riff", start: 0.25, end: 0.5, speed: 0.8, repeats: 4)
         riff.song = song
         if !song.loops.contains(where: { $0 === riff }) { song.loops.append(riff) }
-        guard routine else {
-            let payload = SharedSongBuilder.payload(song, senderName: sender, appVersion: "UI test")
-            return try? PracticePack.write(payload, audio: [leaf: tone], named: title)
-        }
-        let sitting = Routine(name: routineName)
-        sitting.items = [RoutineItem.item(riff, order: 0), RoutineItem.item(song, order: 1)]
-        let payload = SharedPracticeBuilder.routine(sitting, appVersion: "UI test", senderName: sender,
-                                                    songs: [song])
-        return try? PracticePack.write(payload, audio: [leaf: tone], named: routineName)
+        return song
+    }
+
+    /// The demo song as a sent copy: its loops, markers and tempo. Sent alone it keeps its title, and the
+    /// shoot's library already holds a Slow Bend, so *Add this song?* shows the copy-name note the manual
+    /// describes. In a routine it is *Low Road*, which nothing in the library is called.
+    private static func shootSong(audio leaf: String, routine: Bool) -> Song {
+        let song = Song.sample()
+        if routine { song.title = shootRoutineSong }
+        song.audioFileName = leaf
+        return song
     }
 
     /// Take any received *Pack test* and *Pack routine* back out on a UI-test launch that didn't ask for

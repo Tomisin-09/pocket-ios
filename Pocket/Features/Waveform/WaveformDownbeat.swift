@@ -155,11 +155,10 @@ extension WaveformView {
     /// itself against — the two used to overlap.
     ///
     /// **Marks inside the armed loop are full strength; the rest recede** (ADR 0203 D1). The test is
-    /// **position**, not the `loopUID` the mark was made under — because `SnagCluster` filters by
-    /// position too, so keying the fade on the recorded loop would dim a mark that is still being
-    /// counted in *"3 snags close together"* and still driving the offer above it. Bright marks are
-    /// exactly the offer's input. With no loop armed there is no work area to contrast against, so
-    /// everything draws full rather than everything dim.
+    /// **position**, not the `loopUID` the mark was made under — because the Loops panel's count on
+    /// the row filters by position too (ADR 0206 D1), so keying the fade on the recorded loop would dim
+    /// a mark the row is still counting. Bright marks are exactly the counted ones. With no loop armed
+    /// there is no work area to contrast against, so everything draws full rather than everything dim.
     ///
     /// The contrast is made by **raising** the in-loop marks to full, not by dimming from the old
     /// 0.85 baseline: these are already the quietest thing on the canvas, and taking them further

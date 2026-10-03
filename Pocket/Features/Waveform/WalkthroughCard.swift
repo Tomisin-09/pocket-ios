@@ -1,9 +1,9 @@
 import SwiftUI
 
 /// The first-song walkthrough's card (ADR 0149, ADR 0220 D3): the three beats, the experienced
-/// player's offer, and the one ceremony — whichever `SongWalkthrough.phase` says. On the starter
-/// track it also carries the session's two hints (D4), under the beats and set apart from them, and
-/// once the beats are done a hint can be all it shows.
+/// player's offer, and the one ceremony — whichever `SongWalkthrough.phase` says. It also carries the
+/// session's hints (D4; ADR 0249 D3), under the beats and set apart from them, and once the beats are
+/// done a hint can be all it shows.
 ///
 /// **It instructs; it never advances.** There is no Next anywhere on it (0149 §1): a beat ticks when
 /// the model reports the player did the thing. The only buttons are the ✕ (permanent, §4), the
@@ -53,8 +53,9 @@ struct WalkthroughCard: View {
         case .running(let beat): beats(walkthrough, current: beat)
         case .ceremony: ceremony
         case .finished:
-            // The beats are done; what can remain is the backing-track hint, which arrives after the
-            // ceremony (D4). Its ✕ is the card's: closing the last thing on it ends the walkthrough.
+            // The beats are done; what can remain is a row hint (backing track, or where to edit the
+            // loop), which arrives after the ceremony (D4). Its ✕ is the card's: closing the last thing
+            // on it ends the walkthrough.
             if let hint = model.walkthroughHint {
                 hintRow(hint)
                     .frame(maxWidth: .infinity, alignment: .leading)

@@ -128,7 +128,7 @@ near-invisible on near-black (ADR 0063).
 | `oracleCardWash` / `oracleCircleWash` | `#371C22` / `#44222B` | `#EBD1D9` / `#E7C9D2` | Oracle strip + reading-card tint — baked flat per appearance, ratios lifted from the Indigo trio so the sixth hue sits at the same weight as the five before it |
 | `confirmWash` | `#13421E` | `#B4DAAF` | "Add a song" tint — baked flat, same rationale (ADR 0063) |
 | `fine` | `#EAF2FF` (high-key) | `#1F3651` (low-key) | Fine-mode precision selection — same cool hue, inverted key |
-| `mastery` | teal `#60A8C7` | `#2B6982` | Mastery dots/stars (Home, Library, waveform loop picker) — **tracks the brand hero** `practice` (teal by default; follows it to terracotta in Blood Moon, ADR 0081), never the metronome plum |
+| `mastery` | teal `#60A8C7` | `#2B6982` | Mastery dots (Home, Library, the song player, Song details, the loop picker) — **tracks the brand hero** `practice` (teal by default; follows it to terracotta in Blood Moon, ADR 0081), never the metronome plum |
 | `marker` | orange | orange | Reserved (ADR 0023) — not currently drawn anywhere; kept as the next free functional hue |
 | `pin` | purple | purple | Waveform markers, single-point (system dynamic colour) |
 | `loopPalette` | red/orange/gold/magenta/violet/blue | deepened twins, same hues | Per-loop **identity** colour (ADR 0023); plain non-brand hues since ADR 0063 — a loop's job is to be distinguishable, not brand-consistent |
@@ -201,7 +201,7 @@ Elsewhere, don't reach for a literal hex in views; go through
 
 - Collapsible panels use a **chevron** and show a **summary line when collapsed**
   (the user is never left wondering what's hidden). Example collapsed song-info
-  header: `G minor · ★★★☆☆ · Groove / lead phrasing`.
+  header: `G minor · ●●●○○ · Groove / lead phrasing`.
 - **A grouped list's sections collapse from their headers** (`CollapsibleLibrarySection`): a leading
   chevron, an **optional icon**, the section title, and a trailing **count** — the summary line,
   shown in both states so the header doesn't grow a number the moment you shut it. The icon is

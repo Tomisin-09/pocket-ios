@@ -59,7 +59,7 @@ screen opens on the tempo you were practising that song at. See **Every hold, sw
 <!-- shot: metronome/tempo-controls | role: band
      | alt: The BPM readout with its Italian tempo marking, the minus and plus steppers, and the slider flanked by two TAP buttons
      | state: Metronome open, 96 BPM
-     | crop: 0,575,1206,395 -->
+     | crop: 0,730,1206,400 -->
 
 Under the number sits its **Italian tempo marking** — *Andante*, *Allegro* and the rest — which is
 there to name the tempo, not to grade it.

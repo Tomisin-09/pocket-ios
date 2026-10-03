@@ -1,11 +1,12 @@
 import Foundation
 
-// MARK: - The starter track's two hints (ADR 0220 D4)
+// MARK: - The first session's hints (ADR 0220 D4, ADR 0249 D3)
 //
-// The click, once beat 1's loop is playing, and the Backing track flag on the loop the player kept,
-// once the ceremony has closed. The rules are the pure `StarterTrackHints`; this file reports what
-// the player did and says what to draw. `starterHints` is `nil` on every song but the starter track
-// (D6), so every hook here no-ops on almost every visit.
+// On the starter track, the click once beat 1's loop is playing and the Backing track flag on the loop
+// the player kept. On every song, where the kept loop is edited. Both row hints wait for the ceremony to
+// close. The rules are the pure `StarterTrackHints`; this file reports what the player did and says what
+// to draw. `starterHints` exists only while a walkthrough runs, so every hook here no-ops on almost
+// every visit.
 
 extension WaveformPracticeModel {
 
@@ -19,8 +20,17 @@ extension WaveformPracticeModel {
     /// Whether the speed bar's metronome carries the ring.
     var walkthroughHintsMetronome: Bool { walkthroughHint == .click }
 
-    /// The loop row that carries the ring, if any: the one kept on the scripted span.
+    /// The loop row that carries the ring, if any: the one either row hint points at.
     var walkthroughHintedLoopID: UUID? {
+        switch walkthroughHint {
+        case .backingTrack, .editLoop: starterHints?.keptLoopID
+        case .click, nil: nil
+        }
+    }
+
+    /// The loop whose edit sheet opens scrolled to Backing track and rings it: the backing-track hint's
+    /// alone. The edit hint's job ends at the hold.
+    var walkthroughBackingTrackLoopID: UUID? {
         walkthroughHint == .backingTrack ? starterHints?.keptLoopID : nil
     }
 
@@ -51,12 +61,14 @@ extension WaveformPracticeModel {
     func walkthroughLoopKept(_ id: UUID, start: TimeInterval, end: TimeInterval) {
         advanceHints { $0.loopKept(id: id, start: start, end: end) }
         // A ring on a row inside a folded panel points at nothing.
-        if starterHints?.showing == .backingTrack { loopsExpanded = true }
+        if starterHints?.showing == .backingTrack || starterHints?.showing == .editLoop { loopsExpanded = true }
     }
 
     /// Edit loop closed. Its toggle writes the flag only on Done (Cancel discards it), so the loop is
-    /// read after the sheet has gone rather than the toggle watched inside it.
+    /// read after the sheet has gone rather than the toggle watched inside it. Any loop's sheet means
+    /// the hold has been found, which is all the edit hint asks.
     func walkthroughLoopEditClosed() {
+        advanceHints { $0.loopEdited() }
         guard let id = starterHints?.keptLoopID,
               loops.first(where: { $0.uid == id })?.isBackingTrack == true else { return }
         advanceHints { $0.backingTrackUsed() }

@@ -70,11 +70,13 @@ class ManualShotCase: UITestCase {
     /// - Parameter hour: the hour Home's greeting is computed from. Defaults to `defaultShotHour`,
     ///   which matches the faked status bar; pass another only for a figure whose `state:` asks for
     ///   a different part of the day, as `getting-started/home` does.
+    /// - Parameter seeding: further launch arguments a pass needs — `-seedSongMap`, or a pack to receive.
     @MainActor
     @discardableResult
-    func launchForShoot(hour: Int = ManualShotCase.defaultShotHour) -> XCUIApplication {
+    func launchForShoot(hour: Int = ManualShotCase.defaultShotHour,
+                        seeding extra: [String] = []) -> XCUIApplication {
         launchApp(extraArguments: Self.shootArguments
-                  + [UITestHooks.shotHourArgument, String(hour)])
+                  + [UITestHooks.shotHourArgument, String(hour)] + extra)
     }
 
     /// Wait until `element` will actually take a touch.

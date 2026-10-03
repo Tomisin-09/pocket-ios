@@ -111,10 +111,10 @@ final class ManualLoopSheetShots: ManualShotCase {
     @MainActor
     func testAutomator() {
         let app = launchForShoot()
-        openSlowBend(in: app)
+        openHeroSong(in: app)
 
-        let automator = app.buttons["Set up automator for Verse riff"]
-        tap(automator, labelled: "the Verse riff automator button",
+        let automator = app.buttons["Set up automator for Chords"]
+        tap(automator, labelled: "the Chords automator button",
             revealing: app.navigationBars["Automator"], called: "the Automator sheet")
 
         capture(app, slug: "reference/loop-automator",
@@ -130,7 +130,7 @@ final class ManualLoopSheetShots: ManualShotCase {
     @MainActor
     func testTempoEditor() {
         let app = launchForShoot()
-        openSlowBend(in: app)
+        openHeroSong(in: app)
 
         let setTempo = app.buttons["Set tempo"]
         tap(setTempo, labelled: "Set tempo",
@@ -143,7 +143,7 @@ final class ManualLoopSheetShots: ManualShotCase {
 
     // MARK: - Navigation
 
-    /// Slow Bend, then **hold a loop row** — which opens the Edit loop sheet directly.
+    /// Binta, then **hold a loop row** — which opens the Edit loop sheet directly.
     ///
     /// **There is no menu in between, and the manual said there was.** `reference/song-player.md`
     /// read *"Hold a row for its menu, including `Edit loop`"*, and the row has no `contextMenu` at
@@ -161,8 +161,8 @@ final class ManualLoopSheetShots: ManualShotCase {
     /// the second attempt reports the row as unreachable.
     @MainActor
     private func openLoopEditor(in app: XCUIApplication) {
-        openSlowBend(in: app)
-        hold(app.buttons["Play Verse riff"], labelled: "the Verse riff row",
+        openHeroSong(in: app)
+        hold(app.buttons["Play Chords"], labelled: "the Chords row",
              revealing: app.navigationBars["Edit loop"], called: "the Edit loop sheet")
     }
 }

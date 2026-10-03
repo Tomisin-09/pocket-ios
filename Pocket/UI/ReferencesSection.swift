@@ -147,8 +147,7 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
     /// being appended to it: a footer that grows a third clause the moment you hit a cap reads as
     /// telling you off, and `docs/design-brief.md` §3.5 says no owner is nagged for what it holds.
     private var footer: String {
-        let sources = "A lesson, a tab page, a teacher's write-up — or a picture, PDF, text or "
-            + "Markdown file you keep here."
+        let sources = owner.referenceExamples + " — or a picture, PDF, text or Markdown file you keep here."
         guard owner.canAddAttachment else {
             return sources + " Files are capped at \(ReferenceAttachmentStore.maxPerOwner) — remove "
                 + "one to add another."

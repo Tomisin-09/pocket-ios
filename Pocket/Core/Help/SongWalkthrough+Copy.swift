@@ -73,6 +73,7 @@ extension StarterTrackHints.Hint {
         switch self {
         case .click: return "Hear the beat"
         case .backingTrack: return "Something to play over"
+        case .editLoop: return "Change it later"
         }
     }
 
@@ -89,6 +90,9 @@ extension StarterTrackHints.Hint {
             // loop (ADR 0135 B2), and the flag only decides where the loop turns up again.
             return "Four bars of chords make a good bed to solo over. Hold \(loopName) and turn on "
                 + "Backing track to keep it with your backing tracks."
+        case .editLoop:
+            // What the hold tip (`GestureHint.loopRow`) says the sheet holds, on the row just made.
+            return "Hold \(loopName) to change its name, its range or how you practise it."
         }
     }
 
@@ -97,6 +101,7 @@ extension StarterTrackHints.Hint {
         switch self {
         case .click: return "Hide the metronome hint"
         case .backingTrack: return "Hide the backing track hint"
+        case .editLoop: return "Hide the edit loop hint"
         }
     }
 }

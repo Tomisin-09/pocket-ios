@@ -25,13 +25,13 @@ extension WaveformPracticeModel {
         let experience = (try? context.fetch(FetchDescriptor<Profile>()))?.first?.experience
         walkthrough = SongWalkthrough(entry: SongWalkthrough.entry(for: experience),
                                       ceremonyAlreadyShown: AppSettings.songWalkthroughCeremonySeen())
-        if walkthrough?.isAccepted == true { startStarterTrackScript() }
+        if walkthrough?.isAccepted == true { startWalkthroughSession() }
     }
 
     /// *Show me* on the experienced player's offer (0149 §4).
     func acceptWalkthrough() {
         walkthrough?.accept()
-        startStarterTrackScript()
+        startWalkthroughSession()
         haptic(.light)
     }
 
@@ -71,8 +71,13 @@ extension WaveformPracticeModel {
         endWalkthroughIfDone()
     }
 
-    /// Whether the Loop button carries the hint: the script is holding on a marker (D3).
-    var walkthroughHintsLoop: Bool { starterScript?.hintsLoop == true }
+    /// Whether the Loop button carries the hint. On the starter track, while the script holds on a
+    /// marker (D3). On any other song, for as long as beat 1 is the beat (ADR 0249 D2): its words say
+    /// *Tap Loop*, and the ring is what says where Loop is.
+    var walkthroughHintsLoop: Bool {
+        if let starterScript { return starterScript.hintsLoop }
+        return !song.isStarterTrack && walkthrough?.phase == .running(.loopIt)
+    }
 
     // MARK: Hooks
 
@@ -106,13 +111,18 @@ extension WaveformPracticeModel {
         haptic(.light)
     }
 
+    /// The hints ride with every walkthrough (ADR 0249 D3); the script with the starter track's alone.
+    private func startWalkthroughSession() {
+        if starterHints == nil { starterHints = StarterTrackHints(onStarterTrack: song.isStarterTrack) }
+        startStarterTrackScript()
+    }
+
     // MARK: The script (starter track only — D6)
 
     private func startStarterTrackScript() {
         guard song.isStarterTrack, starterScript == nil else { return }
         let script = StarterTrackScript()
         starterScript = script
-        starterHints = StarterTrackHints()     // D4 rides with the script: starter track only (D6)
         // D3 step 1: two bars early, so the section is heard arriving. Not while a saved loop is
         // armed — a seek outside its region would land somewhere the loop never plays.
         if activeLoopID == nil { engine.seek(toSeconds: script.leadIn) }

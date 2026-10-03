@@ -14,7 +14,7 @@ strip, the three numbers under your last session.
 ## Writing a note
 
 The **✏️** in the toolbar
-<!-- shot: journal/quick-note-button | role: glyph | alt: | crop: 856,188,120,120 -->
+<!-- shot: journal/quick-note-button | role: glyph | alt: | crop: 878,203,100,100 -->
 opens **Quick note** — one field, the kind chips, **Save**. It is on the metronome, and on an
 exercise or loop run screen while the run plays or inside a routine. A stopped run screen has its
 **Journal** bar instead, which writes notes too. On the journal itself it sits under the **＋**, as
@@ -215,6 +215,11 @@ because the day is part of what the entry says.
   beside it, which lays that song's pieces out where they play. Its pieces are listed in the order they
   play, each with the day it last changed, and the song you changed most recently comes first. Under
   **All**, a piece sits on the day it last changed, like everything else.
+
+<!-- shot: journal/pieces | role: screen
+     | alt: The Journal on Pieces, with Slow Bend's heading and Map the song beside it, and its pieces listed in the order they play
+     | state: map seed, Journal, scope Pieces -->
+
 - **Search** matches song, exercise, template and date — so *Slow Bend*, *Legato* or a month name
   all work.
 - **⋯ ▸ Sort** flips the whole feed between **Newest first** and **Oldest first**, which is how you

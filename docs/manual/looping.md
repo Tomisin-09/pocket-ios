@@ -10,11 +10,11 @@ Open a song from the library and you land on the player, which is where all of t
 
 <!-- shot: song-player/portrait-idle | role: screen
      | alt: The song player in portrait, showing the song strip, speed bar, status line, waveform, time ruler, minimap and transport
-     | state: seeded library, Slow Bend, idle at full speed, no loop active -->
+     | state: seeded library, Binta, idle at full speed, no loop active -->
 
 From the top:
 
-1. **The song strip** — title, artist and the song's mastery as stars. Hold it for the song's
+1. **The song strip** — title, artist and the song's mastery as dots. Hold it for the song's
    details.
 2. **The speed bar** — the current speed, a slider, the effective BPM, a repeat toggle and the
    metronome. Underneath sit **0.25×**, **0.50×** and **0.75×** shortcuts and a **Reset**.
@@ -39,7 +39,7 @@ playing to the end and tap **Loop** again to drop B. The span is now live.
 
 <!-- shot: looping/ab-forming | role: band
      | alt: The A/B strip with the start point dropped and the end not yet set, prompting for B
-     | state: seeded library, Slow Bend, playing, loop start dropped, end not set
+     | state: seeded library, Binta, playing, loop start dropped, end not set
      | crop: 0,690,1206,530 -->
 
 **Or draw it.** Hold anywhere on the waveform and drag across the passage. One gesture, both ends.
@@ -73,7 +73,7 @@ top, tap where it starts on the waveform.
 
 <!-- shot: looping/loop-active | role: band
      | alt: The transport in its active form with the loop's name above the controls and the loop's colour strip on the right
-     | state: seeded library, Slow Bend, loop "Verse riff" active and repeating
+     | state: seeded library, Binta, loop "Chords" active and repeating
      | crop: 0,1500,1206,220 -->
 
 ## Slowing it down
@@ -85,7 +85,7 @@ retuning your guitar to practise.
 
 <!-- shot: looping/speed-bar | role: band
      | alt: The speed bar showing the speed control, the metronome button and the effective BPM readout
-     | state: seeded library, Slow Bend, speed reduced below 100%
+     | state: seeded library, Binta, speed reduced below 100%
      | crop: 0,370,1206,280 -->
 
 The **BPM** readout on the same bar shows the effective tempo — the song's tempo multiplied by the
@@ -107,7 +107,7 @@ times round to stay on each one. The per-step change is worked out for you. **Se
 
 <!-- shot: looping/automator | role: screen
      | alt: The automator sheet with a start speed, a target, the number of steps and loops per step, and the derived per-step change
-     | state: seeded library, Slow Bend, loop "Verse riff", automator open -->
+     | state: seeded library, Binta, loop "Chords", automator open -->
 
 **See Help & FAQs: "What is a ramp?"**
 
@@ -126,7 +126,7 @@ number will settle on it.
 
 <!-- shot: looping/tempo-editor | role: screen
      | alt: The tempo editor with a tap area, a typed BPM field, the guess-from-audio option, setting the 1, and the time signature
-     | state: seeded library, Slow Bend, tempo editor open -->
+     | state: seeded library, Binta, tempo editor open -->
 
 **The 1.** **Set the 1** on the status line tells the app where the bar starts. Play along and tap
 the 1, or drag the handle onto a peak in the waveform, then commit with the tick. If a song's grid
@@ -169,7 +169,7 @@ Hold a loop's row to open **Edit loop**. It carries:
 
 <!-- shot: looping/loop-edit-practice | role: panel
      | alt: The Practice section of the loop edit sheet showing Type, Mastery, Focus and Command tempo, each with an ⓘ
-     | state: seeded library, Slow Bend, loop "Verse riff" edit sheet, scrolled to Practice -->
+     | state: seeded library, Binta, loop "Chords" edit sheet, scrolled to Practice -->
 
 ## Working on several loops at once
 
@@ -179,7 +179,7 @@ what you can do to all of them together — including a bulk edit sheet carrying
 
 <!-- shot: looping/multi-select | role: panel
      | alt: The Loops panel in selection mode with two loops selected and the selection bar showing
-     | state: seeded library, Slow Bend, Loops panel header held, two loops selected -->
+     | state: seeded library, Binta, Loops panel header held, two loops selected -->
 
 Deleting from here goes through the same undo toast as anywhere else — the loops are only really
 gone once it has passed.
@@ -191,7 +191,7 @@ drawer at the side. The same gestures apply; there is simply more waveform to be
 
 <!-- shot: song-player/landscape | role: band
      | alt: The player in landscape, the waveform across the left and the loops drawer open down the right
-     | state: seeded library, Slow Bend, landscape, drawer open
+     | state: seeded library, Binta, landscape, drawer open
      | device: iPhone — the simulator does not render this layout honestly -->
 
 ## Next

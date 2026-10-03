@@ -56,6 +56,20 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **The first-run questions start with what you play.** Guitar, Bass, Piano or keys, Singing,
+  Producing, Drums, Ukulele, Violin or Something else. The next question asks where you are with it,
+  in its own words: a singer is asked whether they *know a few songs*, not a few chords. Guitar and
+  bass start with the seven drills and Morning Routine as before. Anything else starts with an empty
+  Practice library and no goals question, because you came for the looping, the slowing down and the
+  metronome. Practice fills up from the loops you save. You can change your answer in
+  **Settings ▸ You**, where *Instrument* is now *You play*. (ADR 0248)
+- **The first song's guide points at Loop, and then at where to change the loop.** On any song, not
+  just *Binta*, the Loop button is ringed while the guide asks you to tap it. Once you've saved the
+  loop and closed *That's your first loop*, its row is ringed: hold it to change its name, its range or
+  how you practise it. (ADR 0249)
+- **A song's "Where you learned it" suggests the artist's pages.** The note under the section now
+  names the artist's Instagram or YouTube alongside lessons and tab pages.
+
 - **The first-run questions ask what you're working toward.** After *What's the dream?* comes a list of
   goals, with the ones closest to your answer at the top. Pick up to three, most important first, and
   they become your long-term goals, so Today's session builds from them from the first day. You can
@@ -284,6 +298,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **A song's mastery is shown as dots.** The song player's title and Song details used stars, while
+  every loop row used dots. Now they all use dots.
+- **Marking a snag no longer suggests a tighter loop.** The *Tighten to …* offer that replaced Loop
+  controls under the speed bar is gone. It was confusing, and it arrived while you were playing. Your
+  snags still show on the waveform, in the Snags panel and as a count on each loop. (ADR 0249)
+
 - **The return pill is gone from the speed bar.** It appeared beside the speed after you slowed down
   and took you back to where you started, but on a phone it cut off its own number and squeezed the
   slider. Use **Reset**, a preset, or tap the speed to type one in. (ADR 0245)
@@ -396,6 +416,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **Writing a tab, the + stays in sight.** The strip of notes now follows the + as each note goes in.
+  Before, it stayed where it started, so on a tab longer than the screen is wide the + slid off the
+  right edge and you were writing note 16 without seeing where it would go.
 - **The Practice log no longer says "0 minutes" for a day you did practise.** A day with less than half
   a minute logged now reads **<1 minute**, and *Longest day* appears once a month has two days to
   compare instead of naming the only one.

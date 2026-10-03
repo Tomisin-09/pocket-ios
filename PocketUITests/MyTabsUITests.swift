@@ -2,7 +2,7 @@ import XCTest
 
 /// **My tabs and the writer**, driven (ADR 0235). The rules are unit-tested (`TabDraftTests`,
 /// `TabContentTests`); what only a driven run shows is the wiring: a tap on the shared neck filling the +,
-/// the strip saying so, the tab kept on its first note, and the list it lands in.
+/// the strip saying so and keeping the + in sight, the tab kept on its first note, and the list it lands in.
 ///
 /// The simulator keeps its store between runs, so this asserts a **delta** (a row more than before), and
 /// takes its tab back out at the end.
@@ -17,10 +17,8 @@ final class MyTabsUITests: UITestCase {
         app.navigationBars["My tabs"].buttons["New tab"].tap()
         XCTAssertTrue(app.navigationBars["New tab"].waitForExistence(timeout: Self.uiTimeout), "the writer didn't open")
 
-        spot("G string, fret 2,", in: app).tap()
-        XCTAssertTrue(waitForLabel("Note 1, G2", on: chip(0, in: app)), "the tap didn't write note 1")
-        spot("G string, fret 4,", in: app).tap()
-        XCTAssertTrue(waitForLabel("Note 2, G4", on: chip(1, in: app)), "the + didn't move on to note 2")
+        write("G string, fret 2,", as: "Note 1, G2", at: 0, in: app)
+        write("G string, fret 4,", as: "Note 2, G4", at: 1, in: app)
 
         app.buttons["tab.barLine"].tap()
         let bar = app.descendants(matching: .any)
@@ -28,6 +26,18 @@ final class MyTabsUITests: UITestCase {
         XCTAssertTrue(bar.waitForExistence(timeout: Self.uiTimeout), "no bar line in the strip")
         app.buttons["tab.undo"].tap()
         XCTAssertTrue(waitForDisappearance(of: bar), "↶ didn't take the bar line back")
+
+        // Six more run the strip past the screen's width. The + stays the lit chip as it moves on, so it
+        // has to be followed for its own sake, or it walks off the right edge (it did, 2026-10-03).
+        let more = [("D", 2), ("D", 4), ("A", 2), ("A", 3), ("B", 1), ("B", 3)]
+        for (offset, (string, fret)) in more.enumerated() {
+            let index = offset + 2
+            write("\(string) string, fret \(fret),", as: "Note \(index + 1), \(string)\(fret)", at: index, in: app)
+        }
+        let slot = app.descendants(matching: .any)["tab.slot"]
+        let inSight = expectation(for: NSPredicate(format: "isHittable == true"), evaluatedWith: slot)
+        XCTAssertEqual(XCTWaiter().wait(for: [inSight], timeout: Self.uiTimeout), .completed,
+                       "the + went off the strip's edge")
         attach(app, named: "my-tabs-writer")
 
         app.navigationBars["New tab"].buttons["Done"].tap()
@@ -39,7 +49,7 @@ final class MyTabsUITests: UITestCase {
         let words = written.descendants(matching: .any)
             .matching(NSPredicate(format: "label BEGINSWITH %@", "Untitled tab")).firstMatch
         XCTAssertTrue(words.exists, "the new tab isn't the top row")
-        XCTAssertTrue(words.label.contains("2 notes"), words.label)
+        XCTAssertTrue(words.label.contains("8 notes"), words.label)
         attach(app, named: "my-tabs-list")
 
         // Leave nothing behind: delete it, and leave the screen, which closes the undo window.
@@ -56,8 +66,7 @@ final class MyTabsUITests: UITestCase {
         openMyTabs(in: app)
         app.navigationBars["My tabs"].buttons["New tab"].tap()
         XCTAssertTrue(app.navigationBars["New tab"].waitForExistence(timeout: Self.uiTimeout))
-        spot("B string, fret 3,", in: app).tap()
-        XCTAssertTrue(waitForLabel("Note 1, B3", on: chip(0, in: app)))
+        write("B string, fret 3,", as: "Note 1, B3", at: 0, in: app)
         app.navigationBars["New tab"].buttons["Done"].tap()
 
         let written = app.cells.element(boundBy: 0)
@@ -89,8 +98,8 @@ final class MyTabsUITests: UITestCase {
                       file: file, line: line)
         let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "My tabs,")).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: Self.uiTimeout), "no My tabs row", file: file, line: line)
-        row.tap()
-        XCTAssertTrue(app.navigationBars["My tabs"].waitForExistence(timeout: Self.uiTimeout), "My tabs didn't open",
+        // Retried like the card: a tap as the Toolkit slid in opened nothing, once in each test (2026-10-03).
+        XCTAssertTrue(tap(row, until: app.navigationBars["My tabs"], in: app), "My tabs didn't open",
                       file: file, line: line)
     }
 
@@ -99,6 +108,20 @@ final class MyTabsUITests: UITestCase {
         let spot = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", prefix)).firstMatch
         XCTAssertTrue(spot.waitForExistence(timeout: Self.uiTimeout), "no \(prefix) on the neck")
         return spot
+    }
+
+    /// Tap a spot on the neck and wait for it to fill chip `index`, as `label`. Tapped again only while that
+    /// chip doesn't exist: a tap as the writer arrived filled nothing, once in each test (2026-10-03). A slow
+    /// first tap that lands after the second makes two notes, and the next call's label check fails on it.
+    @MainActor
+    private func write(_ prefix: String, as label: String, at index: Int, in app: XCUIApplication,
+                       file: StaticString = #filePath, line: UInt = #line) {
+        let filled = chip(index, in: app)
+        for _ in 0..<2 where !filled.exists {
+            spot(prefix, in: app).tap()
+            _ = filled.waitForExistence(timeout: 4)
+        }
+        XCTAssertTrue(waitForLabel(label, on: filled), "the tap didn't write note \(index + 1)", file: file, line: line)
     }
 
     @MainActor

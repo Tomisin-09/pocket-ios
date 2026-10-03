@@ -99,4 +99,7 @@ struct ProfileRecord: Codable, Equatable, Sendable {
     var dreamRaw: String?
     var minutesPerDayRaw: String?
     var preferredInstrumentRaw: String?
+    /// What the player plays (ADR 0248). Optional, so an archive written before it decodes with it absent
+    /// rather than failing the whole file, and the memberwise init leaves it out.
+    var playsRaw: String?
 }

@@ -13,10 +13,6 @@ func timecode(_ seconds: TimeInterval) -> String {
     return String(format: "%d:%02d", total / 60, total % 60)
 }
 
-func stars(_ filled: Int) -> String {
-    String(repeating: "★", count: filled) + String(repeating: "☆", count: max(0, 5 - filled))
-}
-
 // MARK: - 1. Song strip
 
 struct SongStrip: View {
@@ -26,7 +22,7 @@ struct SongStrip: View {
     var onHoldTitle: () -> Void = {}
 
     var body: some View {
-        // P1a: a tight two-line title/artist stack with the proficiency stars beside it on
+        // P1a: a tight two-line title/artist stack with the mastery dots beside it on
         // the right (rather than stacked below), so the header stays two lines tall and the
         // waveform + loops move up. The song length used to sit on the right; it's dropped
         // (`song.duration` is still used for marker/minimap math, just not shown here).
@@ -47,11 +43,8 @@ struct SongStrip: View {
             // Derived song mastery (ADR 0036) — shown only when the song has loops to
             // roll up. An unrated song simply omits it (no length fallback anymore).
             if let mastery = song.mastery {
-                Text(stars(mastery))
-                    .font(.futura(.subheadline))
-                    .foregroundStyle(PocketColor.mastery)
+                MasteryDots(filled: mastery, size: 8)
                     .padding(.trailing, 4)   // nudge off the screen edge
-                    .accessibilityLabel("Mastery \(mastery) of 5")
             }
         }
         .frame(maxWidth: .infinity)

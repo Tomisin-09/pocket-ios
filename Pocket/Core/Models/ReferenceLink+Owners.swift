@@ -15,11 +15,15 @@ protocol ReferenceLinkOwner: AnyObject {
     func makeReference() -> ReferenceLink
     /// What the References section calls this owner in its footer, in the player's words.
     var referenceOwnerNoun: String { get }
+    /// The kinds of link the footer names first, as examples. A requirement, so a song's own wins.
+    var referenceExamples: String { get }
 }
 
 extension ReferenceLinkOwner {
     /// Links in the player's order (ADR 0167) — the explicit `order` field, never the array's.
     var referencesInOrder: [ReferenceLink] { ReferenceLink.ordered(references) }
+
+    var referenceExamples: String { "A lesson, a tab page, a teacher's write-up" }
 
     /// Whether this owner has anything to show. Cheap enough to read in a `body`.
     var hasReferences: Bool { !references.isEmpty }
@@ -173,6 +177,9 @@ extension Exercise: ReferenceLinkOwner {
 extension Song: ReferenceLinkOwner {
     func makeReference() -> ReferenceLink { ReferenceLink(song: self) }
     var referenceOwnerNoun: String { "song" }
+    /// The artist's own pages belong with the song, and saying so costs one clause rather than a
+    /// field of their own (Tomisin, 2026-10-03: the cheaper of the two ways to hold them).
+    var referenceExamples: String { "A lesson, a tab page, the artist's Instagram or YouTube" }
 }
 
 extension Loop: ReferenceLinkOwner {

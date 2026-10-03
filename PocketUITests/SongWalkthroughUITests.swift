@@ -1,16 +1,17 @@
 import XCTest
 
 /// The first-song walkthrough on the starter track (ADR 0149, ADR 0220 D3), driven for real: tap
-/// Start here, press play, and let the song pause itself on both markers while the Loop taps land.
+/// Start here, press play, and let the song pause itself on both markers while the Loop taps land. And
+/// on any other song, the pointer at the kept loop that follows the ceremony (ADR 0249 D3).
 ///
 /// The rules are unit-tested (`StarterTrackScriptTests`, `SongWalkthroughTests`). What only a driven
 /// run shows is the wiring: that the engine's per-frame tick reaches the model, that the pause
 /// actually stops playback and puts the playhead on the marker, that the card follows along, and
 /// that the click hint (ADR 0220 D4) arrives with the loop and goes when the click is switched on.
 ///
-/// **It leaves nothing behind**, because this simulator's store is shared with the rest of the suite
-/// and `StarterTrackUITests` asserts Binta has no loops and opens at 83 BPM. So it stops short of
-/// *Save as loop* — beat 3 and the ceremony are pinned in the unit tests — and puts the speed back
+/// **They leave nothing behind**, because this simulator's store is shared with the rest of the suite
+/// and `StarterTrackUITests` asserts Binta has no loops and opens at 83 BPM. So the starter test stops
+/// short of *Save as loop* — beat 3 and the ceremony are pinned in the unit tests — and puts the speed back
 /// to 1× before it ends, since leaving the screen writes the speed onto the song.
 ///
 /// **Real time:** about eighteen seconds of playback (bar 7 to bar 13 at 83 BPM), which is why the
@@ -78,5 +79,104 @@ final class SongWalkthroughUITests: UITestCase {
         app.buttons["Clear loop"].tap()
         app.buttons["Close the guide"].tap()
         XCTAssertTrue(waitForDisappearance(of: app.buttons["Close the guide"]), "✕ did not close the guide")
+    }
+
+    // MARK: - Any song (ADR 0249)
+
+    /// On the player's own song, once the loop is kept and the ceremony closed, the card points at the new
+    /// row and says it is held to edit — and finding the hold puts the pointer away. The way in is the
+    /// naming seed's song (`-seedNamingPiece`), which is not the starter track.
+    ///
+    /// It saves a loop, so it deletes it again before it ends, and leaves the screen so the delete's undo
+    /// window closes. The ring on Loop during beat 1 is drawn, not announced, so it is checked by eye and
+    /// in `StarterTrackHintsTests`, not here.
+    @MainActor
+    func testOnAnySongTheKeptLoopIsPointedAtAfterTheCeremony() throws {
+        let app = launchApp(extraArguments: [UITestHooks.walkthroughArgument, UITestHooks.namingPieceArgument])
+        openNamingSong(in: app)
+
+        let loopIt = app.staticTexts["Play the song. Tap Loop where a part you want to learn begins, "
+                                     + "and tap it again where it ends."]
+        XCTAssertTrue(loopIt.waitForExistence(timeout: songTimeout), "The walkthrough did not start on this song")
+        app.buttons["Reset"].tap()
+        app.buttons["Play"].tap()
+        app.buttons["Loop"].tap()
+        XCTAssertTrue(app.staticTexts["Tap Loop again to set the end"].waitForExistence(timeout: Self.uiTimeout))
+        Thread.sleep(forTimeInterval: 2)    // a loop wider than the half-second floor (ADR 0199)
+        app.buttons["Loop"].tap()
+
+        app.buttons["0.50×"].tap()
+        // Its words read *Save as loop*; its label, the one VoiceOver and this query hear, is *Save loop*.
+        let save = app.buttons["Save loop"]
+        XCTAssertTrue(save.waitForExistence(timeout: Self.uiTimeout), "No Save as loop after slowing down")
+        save.tap()
+        XCTAssertTrue(app.staticTexts["That's your first loop."].waitForExistence(timeout: Self.uiTimeout),
+                      "Saving did not bring the ceremony")
+        let hint = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label CONTAINS %@", "to change its name, its range or how you practise it")).firstMatch
+        XCTAssertFalse(hint.exists, "The hint talked over the ceremony (0220)")
+        app.buttons["Close the guide"].tap()
+
+        XCTAssertTrue(hint.waitForExistence(timeout: Self.uiTimeout), "No pointer at the kept loop")
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "walkthrough-edit-loop-hint"
+        shot.lifetime = .keepAlways
+        add(shot)
+        let name = try XCTUnwrap(hint.label.range(of: #"Hold (.+?) to change"#, options: .regularExpression)
+            .map { String(hint.label[$0].dropFirst(5).dropLast(10)) }, hint.label)
+
+        // The hold it names opens the sheet, and that is the hint taken. A loop just saved is playing, so
+        // its row reads *Pause*, and *Play* once it stops.
+        let row = app.buttons.matching(NSPredicate(format: "label IN %@", ["Play \(name)", "Pause \(name)"]))
+            .firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: Self.uiTimeout), "No row for \(name)")
+        let sheet = app.navigationBars["Edit loop"]
+        XCTAssertTrue(hold(row, opening: sheet), "Holding \(name) didn't open Edit loop")
+        sheet.buttons["Cancel"].tap()
+        XCTAssertTrue(waitForDisappearance(of: sheet))
+        XCTAssertTrue(waitForDisappearance(of: hint), "Finding the hold didn't put the pointer away")
+
+        // Leave nothing behind: the loop goes, the speed comes back, and leaving ends the undo window.
+        XCTAssertTrue(hold(row, opening: sheet), "Holding \(name) didn't open Edit loop again")
+        // Delete loop is the sheet's last row, under the medium detent's fold. A drag inside the rows
+        // raises the sheet; one on its bar doesn't (GestureHintUITests found the same).
+        let delete = app.buttons["Delete loop"]
+        for _ in 0..<4 where !(delete.exists && delete.isHittable) {
+            app.collectionViews.firstMatch.swipeUp()
+        }
+        delete.tap()
+        XCTAssertTrue(waitForDisappearance(of: row), "\(name) wasn't deleted")
+        app.buttons["Reset"].tap()
+        app.buttons["Back to library"].tap()
+    }
+
+    /// Hold `row` until `sheet` opens: once more if the first press opened nothing and the row is still
+    /// there to press. Seen 2026-10-03 on the loop just saved, playing: one 1.5 s press opened nothing,
+    /// and the same press on the next run did. A press that opened something else covers the row, and
+    /// then this stops rather than pressing blind.
+    @MainActor
+    private func hold(_ row: XCUIElement, opening sheet: XCUIElement) -> Bool {
+        for _ in 0..<2 {
+            row.press(forDuration: 1.5)
+            if sheet.waitForExistence(timeout: 8) { return true }
+            guard row.exists, row.isHittable else { return false }
+        }
+        return false
+    }
+
+    /// Home ▸ Song library ▸ the naming seed's song, swiped into view on a used simulator.
+    @MainActor
+    private func openNamingSong(in app: XCUIApplication) {
+        let library = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Song library,")).firstMatch
+        XCTAssertTrue(library.waitForExistence(timeout: Self.uiTimeout), "no Song library on Home")
+        XCTAssertTrue(tap(library, until: app.navigationBars["Library"], in: app), "the library didn't open")
+        let song = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Naming test")).firstMatch
+        var swipes = 0
+        while !song.waitForExistence(timeout: 2), swipes < 6 {
+            app.swipeUp()
+            swipes += 1
+        }
+        XCTAssertTrue(song.waitForExistence(timeout: Self.uiTimeout), "the seeded song isn't in the library")
+        _ = tap(song, until: app.buttons["Back to library"], in: app)
     }
 }

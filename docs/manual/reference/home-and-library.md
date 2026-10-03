@@ -103,12 +103,14 @@ Hold a row for `Details`, `Edit` and `Delete`. There is no delete swipe here, an
 A read-only summary, with `Edit` in its toolbar.
 
 <!-- shot: reference/song-details | role: screen
-     | alt: The Song details sheet showing the title and artist, an empty Notes section, key, tempo, mastery and length, and the audio file section with Replace audio file
+     | alt: The Song details sheet showing the title and artist, an empty Notes section, key, tempo, mastery and length, Map the song, and the Audio section's File row
      | state: seeded library, song "Feels", Details from the row hold menu -->
 
 - The title, artist, and album with its year.
 - `Notes` — free text about the song, with `Edit notes`.
 - `Key`, `Tempo`, `Mastery` (with its ⓘ) and `Length`.
+- `Map the song` — *your loops laid out where they play, section by section*. See
+  [mapping the song](../songs.md#mapping-the-song).
 - **`Audio`** — the `File` row, which reads *Missing* when the audio no longer resolves, and
   `Replace audio file…` beneath it. The app's own words for what that does: *Points this song at a
   different file — for a song whose audio is missing, or one linked to the wrong track. Your loops,

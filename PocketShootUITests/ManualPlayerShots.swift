@@ -4,8 +4,8 @@ import XCTest
 /// loop controls popover, and the states the transport takes.
 ///
 /// The sheets that open *from* here — Edit loop, Automator, Set tempo — are `ManualLoopSheetShots`.
-/// Both ride in the `player` pass, on Slow Bend, which is the song every player figure in the manual
-/// is shot on.
+/// Both ride in the `player` pass, on Binta, which is the song every player figure in the manual is
+/// shot on (`ScreenshotSeed+Binta`: its real waveform, its two markers, two loops and three snags).
 ///
 /// ## Two things about this screen shape every test below
 ///
@@ -38,16 +38,16 @@ final class ManualPlayerShots: ManualShotCase {
     @MainActor
     func testPlayerIdle() {
         let app = launchForShoot()
-        openSlowBend(in: app)
+        openHeroSong(in: app)
         resetSpeed(in: app)
 
         captureChromeless(app, slug: "song-player/portrait-idle",
                           screen: "the song player",
                           ownedBy: ["Back to library"],
-                          alsoRequiring: ["Playback speed 1.00 times", "76 beats per minute",
+                          alsoRequiring: ["Playback speed 1.00 times", "83 beats per minute",
                                           "Set tempo", "Loop controls", "Waveform", "Song position",
-                                          "Loops, expanded", "Play Verse riff", "Play Chorus bend"],
-                          orBeginningWith: ["Slow Bend, Jack Trader"],
+                                          "Loops, expanded", "Play Chords", "Play Solo opener"],
+                          orBeginningWith: ["Binta, Jack Trader"],
                           alsoServing: ["reference/player", "reference/loops-panel",
                                         "gestures/speed-bar"])
     }
@@ -58,13 +58,13 @@ final class ManualPlayerShots: ManualShotCase {
     /// happens to end, so the readout it produces is not reproducible and the figure would show a
     /// different number every shoot.
     ///
-    /// The effective BPM is asserted as `57`, which is 76 × 0.75 — the whole point of the figure is
+    /// The effective BPM is asserted as `62`, which is 83 × 0.75 rounded — the whole point of the figure is
     /// that the readout follows the speed, so a bar that showed the original tempo at three-quarter
     /// speed would be exactly the wrong picture and would still be a picture of the speed bar.
     @MainActor
     func testSpeedReduced() {
         let app = launchForShoot()
-        openSlowBend(in: app)
+        openHeroSong(in: app)
 
         let threeQuarters = app.buttons["0.75×"]
         tap(threeQuarters, labelled: "the 0.75× preset",
@@ -73,7 +73,7 @@ final class ManualPlayerShots: ManualShotCase {
         captureChromeless(app, slug: "looping/speed-bar",
                           screen: "the song player, slowed",
                           ownedBy: ["Back to library"],
-                          alsoRequiring: ["Playback speed 0.75 times", "57 beats per minute"])
+                          alsoRequiring: ["Playback speed 0.75 times", "62 beats per minute"])
     }
 
     /// `gestures/loop-controls-popover` — the nine-row popover.
@@ -85,7 +85,7 @@ final class ManualPlayerShots: ManualShotCase {
     @MainActor
     func testLoopControlsPopover() {
         let app = launchForShoot()
-        openSlowBend(in: app)
+        openHeroSong(in: app)
 
         let controls = app.buttons["Loop controls"]
         tap(controls, labelled: "Loop controls",
@@ -101,7 +101,7 @@ final class ManualPlayerShots: ManualShotCase {
 
     /// `gestures/carry-tempo` — the sheet a held BPM readout opens (ADR 0170).
     ///
-    /// **The readout is not a button.** It is an `Other` labelled `76 beats per minute`, so
+    /// **The readout is not a button.** It is an `Other` labelled `83 beats per minute`, so
     /// `app.buttons[…]` finds nothing — which is exactly how the first walk of this screen reported
     /// the readout missing from a player it was standing on. Resolved through `descendants` instead.
     ///
@@ -110,8 +110,8 @@ final class ManualPlayerShots: ManualShotCase {
     @MainActor
     func testCarryTempo() {
         let app = launchForShoot()
-        openSlowBend(in: app)
-        // 76 below is the song's tempo at **full speed**, and the readout carries the number as
+        openHeroSong(in: app)
+        // 83 below is the song's tempo at **full speed**, and the readout carries the number as
         // shown — so the speed has to be known before the number can be asserted. See `resetSpeed`.
         resetSpeed(in: app)
 
@@ -125,13 +125,13 @@ final class ManualPlayerShots: ManualShotCase {
         // number pass.
         capture(app, slug: "gestures/carry-tempo",
                 assertingOnScreen: "Carry this tempo",
-                alsoRequiring: ["Take 76 beats per minute to the metronome",
-                                "Start a new exercise at 76 beats per minute"])
+                alsoRequiring: ["Take 83 beats per minute to the metronome",
+                                "Start a new exercise at 83 beats per minute"])
     }
 
     /// `looping/loop-active` · `getting-started/loop-active` — the transport in its looping form.
     ///
-    /// Gated on `Looping Verse riff`, which is the transport's own label once a loop is active and
+    /// Gated on `Looping Chords`, which is the transport's own label once a loop is active and
     /// does not exist before. `Deactivate loop` is the control the active form adds, and requiring it
     /// is what separates this from a player that is merely playing. `Back 10 seconds` is required
     /// alongside it because ADR 0192 is exactly the claim that the skip pair survives into this
@@ -143,15 +143,15 @@ final class ManualPlayerShots: ManualShotCase {
     @MainActor
     func testLoopActive() {
         let app = launchForShoot()
-        openSlowBend(in: app)
+        openHeroSong(in: app)
 
-        let play = app.buttons["Play Verse riff"]
-        tap(play, labelled: "Play Verse riff",
+        let play = app.buttons["Play Chords"]
+        tap(play, labelled: "Play Chords",
             revealing: app.buttons["Deactivate loop"], called: "the active loop transport")
 
         captureChromeless(app, slug: "looping/loop-active",
                           screen: "the song player, looping",
-                          ownedBy: ["Looping Verse riff"],
+                          ownedBy: ["Looping Chords"],
                           alsoRequiring: ["Deactivate loop", "Back 10 seconds", "Waveform"],
                           alsoServing: ["getting-started/loop-active"])
     }
@@ -165,15 +165,16 @@ final class ManualPlayerShots: ManualShotCase {
     @MainActor
     func testMultiSelect() {
         let app = launchForShoot()
-        openSlowBend(in: app)
+        openHeroSong(in: app)
 
         let header = app.buttons["Loops, expanded"]
         hold(header, labelled: "the Loops panel header",
              revealing: app.buttons["Done selecting"], called: "selection mode")
 
-        for loop in ["Verse riff", "Chorus bend"] {
+        // Exact, not a prefix: Binta's *Chords start* marker begins with the first loop's name.
+        for loop in ["Chords", "Solo opener"] {
             let row = app.descendants(matching: .any)
-                .matching(NSPredicate(format: "label BEGINSWITH %@", loop)).firstMatch
+                .matching(NSPredicate(format: "label == %@", loop)).firstMatch
             XCTAssertTrue(row.waitForExistence(timeout: Self.shootTimeout),
                           "no '\(loop)' row to select.\n\(stepLog)")
             row.tap()
@@ -183,7 +184,7 @@ final class ManualPlayerShots: ManualShotCase {
         captureChromeless(app, slug: "looping/multi-select",
                           screen: "the Loops panel selecting",
                           ownedBy: ["Done selecting"],
-                          orBeginningWith: ["Verse riff", "Chorus bend"])
+                          alsoRequiring: ["Chords, selected", "Solo opener, selected"])
     }
 
     /// `looping/ab-forming` — the A/B strip with A dropped and B not yet set.
@@ -204,11 +205,11 @@ final class ManualPlayerShots: ManualShotCase {
     /// its own, so that half of the figure can only be confirmed by opening the image.
     ///
     /// A span is ephemeral until `Save as loop` — nothing is written — so this belongs in the
-    /// read-only player pass and leaves Slow Bend with the loops the seed gave it.
+    /// read-only player pass and leaves Binta with the loops the seed gave it.
     @MainActor
     func testABForming() {
         let app = launchForShoot()
-        openSlowBend(in: app)
+        openHeroSong(in: app)
 
         // The caption is reached by prefix rather than as `app.staticTexts[…]`: whether a `Text`
         // inside a strip that also holds buttons surfaces as its own static text is SwiftUI's call,
@@ -223,13 +224,47 @@ final class ManualPlayerShots: ManualShotCase {
                           alsoRequiring: ["Clear loop"])
     }
 
+    /// `reference/snags-panel` — the song player's Snags panel open, three rows, one with its line.
+    ///
+    /// On Binta since 2026-10-03, with the rest of the player's figures: it was the map pass's Slow Bend,
+    /// whose waveform is drawn in code. Loops folded first, so the panel comes up under the waveform
+    /// with less dragging; a swipe on the player lands on the waveform and scrubs, so the panels are
+    /// raised from below it (`raisePanels`).
+    @MainActor
+    func testSnagsPanel() {
+        let app = launchForShoot()
+        openHeroSong(in: app)
+
+        let loops = app.buttons["Loops, expanded"]
+        XCTAssertTrue(loops.waitForExistence(timeout: Self.shootTimeout), "no Loops panel header.\n\(stepLog)")
+        loops.tap()
+        note("folded Loops")
+        XCTAssertTrue(app.buttons["Loops, collapsed"].waitForExistence(timeout: Self.shootTimeout),
+                      "Loops didn't fold.\n\(stepLog)")
+
+        let header = app.buttons["Snags, collapsed"]
+        XCTAssertTrue(header.waitForExistence(timeout: Self.shootTimeout),
+                      "no Snags panel — did Binta's snags seed?\n\(stepLog)")
+        awaitHittable(header)
+        header.tap()
+        note("opened Snags")
+
+        // The last row, the solo's, in the picture: the panel can run past the bottom once it's open.
+        let last = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH 'Snag at ' AND label ENDSWITH ', Solo opener'"))
+        raisePanels(until: { self.isInFrame(last, of: app) }, called: "the solo's snag", in: app)
+
+        captureChromeless(app, slug: "reference/snags-panel", screen: "the song player's Snags panel",
+                          ownedBy: ["Snags, expanded", ScreenshotSeedText.bintaSnagLine])
+    }
+
     // MARK: - Navigation
 
     /// Put the speed bar back to 1.00× before a figure that names a speed or a tempo.
     ///
     /// **A song does not open at full speed.** `WaveformPracticeModel` sets `speed` from
     /// `song.resumeSpeed` on load (ADR 0044 — "the speed you last practised it at"), and
-    /// `Song.lastPracticedSpeed` is persisted. Slow Bend's `Verse riff` is seeded at `speed: 0.75`,
+    /// `Song.lastPracticedSpeed` is persisted. Binta's `Chords` is seeded at `speed: 0.75`,
     /// so any earlier test in this pass that arms it changes the state every later figure opens in.
     ///
     /// **The passes cannot fix this and are not meant to.** A pass isolates one *area* per erased

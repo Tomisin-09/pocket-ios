@@ -1,8 +1,8 @@
 import Foundation
 
-/// **The two hints** the starter track's first session carries beside the beats (ADR 0220 D4): the
-/// in-song click, once beat 1's loop is playing, and the Backing track flag on the loop the player
-/// kept, once the ceremony has closed.
+/// **The hints** a first session carries beside the beats. On the starter track (ADR 0220 D4): the in-song
+/// click, once beat 1's loop is playing, and the Backing track flag on the loop the player kept, once the
+/// ceremony has closed. On every song (ADR 0249 D3): where a kept loop is edited, the same way.
 ///
 /// A hint is not a beat, in three ways. **It never gates anything**: the beats move on whether or
 /// not it is taken, and nothing here is read by `SongWalkthrough`. **It is shown once**: taken,
@@ -13,10 +13,14 @@ import Foundation
 /// two beats to be noticed, and two pointers on one screen is how guidance turns into a ride (0149
 /// §5's warning, which the amendment answered by cutting five steps to three).
 ///
-/// **Starter track only** (D6). Only there is the click known to run from the first note (D1) and
-/// the loop known to be four bars of chords — the claim the backing-track hint makes. So that hint
-/// is offered only when the loop kept is the scripted span; a player who looped something else by
-/// hand is not told it makes a good bed.
+/// **The click and the backing track are the starter track's alone** (D6). Only there is the click
+/// known to run from the first note (D1) and the loop known to be four bars of chords — the claim the
+/// backing-track hint makes. So that hint is offered only when the loop kept is the scripted span; a
+/// player who looped something else by hand is not told it makes a good bed.
+///
+/// **Where to edit it goes on every song** (ADR 0249 D3), on the loop just kept: the walkthrough's last
+/// beat saves a loop, and nothing else says the row is held to change it. Not after the backing-track
+/// hint, which already says *"Hold Chords"*: one lesson about the hold is enough.
 ///
 /// Pure and Foundation-only, so every rule here is unit-tested (AGENTS.md). The model reports what
 /// happened; the view reads `showing`.
@@ -27,6 +31,8 @@ struct StarterTrackHints: Equatable {
         case click
         /// The Backing track toggle on the loop just kept.
         case backingTrack
+        /// The loop just kept, held to edit it (ADR 0249 D3).
+        case editLoop
     }
 
     /// The in-song click as the model sees it when a loop starts playing.
@@ -48,11 +54,18 @@ struct StarterTrackHints: Equatable {
     private(set) var showing: Hint?
     /// Hints that have had their turn. Nothing leaves this set (D4: shown once).
     private(set) var spent: Set<Hint> = []
-    /// The loop the backing-track hint points at: the one kept on the scripted span.
+    /// The loop a row hint points at: the one kept on the scripted span, or the one just kept.
     private(set) var keptLoopID: UUID?
+    /// Whether this is the starter track's session, which alone has the click and the backing track.
+    let onStarterTrack: Bool
+
+    init(onStarterTrack: Bool = true) {
+        self.onStarterTrack = onStarterTrack
+    }
 
     /// A loop began playing: beat 1's span closed, and the four bars are going round.
     mutating func loopStarted(click: Click) {
+        guard onStarterTrack else { return }
         switch click {
         case .off: offer(.click)
         case .running: retire(.click)       // already found; there is nothing to point at
@@ -63,18 +76,32 @@ struct StarterTrackHints: Equatable {
     /// The click was turned on — from the hint or not, the player has found it.
     mutating func clickTurnedOn() { retire(.click) }
 
-    /// A loop was saved. The backing-track hint is offered when it is the scripted four bars.
+    /// A loop was saved. The backing-track hint is offered when it is the starter's scripted four bars;
+    /// any other loop gets the edit hint, unless the backing-track hint has already taught the hold.
     mutating func loopKept(id: UUID, start: TimeInterval, end: TimeInterval) {
-        guard Self.isScriptedSpan(start: start, end: end), !spent.contains(.backingTrack) else { return }
-        keptLoopID = id
-        offer(.backingTrack)
+        if onStarterTrack, Self.isScriptedSpan(start: start, end: end) {
+            guard !spent.contains(.backingTrack) else { return }
+            keptLoopID = id
+            offer(.backingTrack)
+        } else {
+            let taughtTheHold = spent.contains(.backingTrack) || showing == .backingTrack
+            guard !taughtTheHold, !spent.contains(.editLoop) else { return }
+            keptLoopID = id
+            offer(.editLoop)
+        }
     }
 
     /// The kept loop is now a backing track: the toggle was switched on and the edit saved.
     mutating func backingTrackUsed() { retire(.backingTrack) }
 
-    /// The kept loop was deleted: the hint would point at a row that is not there.
-    mutating func keptLoopRemoved() { retire(.backingTrack) }
+    /// A loop's edit sheet was opened and closed: the hold has been found.
+    mutating func loopEdited() { retire(.editLoop) }
+
+    /// The kept loop was deleted: a row hint would point at a row that is not there.
+    mutating func keptLoopRemoved() {
+        retire(.backingTrack)
+        retire(.editLoop)
+    }
 
     /// The hint's own ✕.
     mutating func dismiss() {

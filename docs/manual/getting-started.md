@@ -14,9 +14,10 @@ and the routines a week or two later, which is the order this manual is written 
 
 ## What you need
 
-A guitar or bass, and **audio files you own** — anything you can play in the Files app: files bought
-as downloads, ripped from your own discs, backing tracks, or bounces of your own recordings. iCloud
-Drive counts.
+Something to play, and **audio files you own**. Red Moon is built around the guitar and bass, but the
+looping, the slowing down and the metronome work for any instrument or voice. The audio is anything you
+can play in the Files app: files bought as downloads, ripped from your own discs, backing tracks, or
+bounces of your own recordings. iCloud Drive counts.
 
 What will not work is streaming. Apple Music and Spotify audio is protected, and protected audio
 cannot be slowed down or drawn as a waveform by any app, including this one.
@@ -25,18 +26,28 @@ cannot be slowed down or drawn as a waveform by any app, including this one.
 
 ## The first run
 
-The first time you open the app it asks **A few quick things**: your experience, what you want to
-play, what you are aiming at, what you are working toward, and how long you usually have. They shape
-the sessions the app suggests later.
+The first time you open the app it asks **A few quick things**: what you play, your experience, what
+you want to play, what you are aiming at, what you are working toward, and how long you usually have.
+They shape the sessions the app suggests later.
 
 <!-- shot: getting-started/first-run | role: screen
-     | alt: The first-run questions, showing "Where are you with the guitar?" with four choices and a Continue button
-     | state: fresh install, first launch, step 1 of 5 -->
+     | alt: The first-run questions, showing "What do you play?" with Guitar, Bass, Piano or keys, Singing, Producing and more below, and a Continue button
+     | state: fresh install, first launch, step 1 of 6 -->
+
+**What do you play?** comes first, and the next question asks where you are with it. Guitar and bass
+are what the drills and the Toolkit are built for, so either one starts you with seven drills and a
+Morning Routine in Practice. Anything else — piano, singing, producing, drums — starts you with an empty
+Practice library instead: you came for the looping and the metronome, and Practice fills up from the
+loops you save. The Toolkit is still there if you want it.
 
 **What are you working toward?** lists goals, with the ones closest to your answer to the question
 before it at the top. Pick up to three, most important first, and each becomes a
 [long-term goal](sessions.md#long-term-goals) that Today's session builds from. If you answered
-**Just unwind**, this question is skipped.
+**Just unwind**, or you play something other than guitar or bass, this question is skipped.
+
+<!-- shot: getting-started/goals-card | role: screen
+     | alt: The first-run question "What are you working toward?", a list of goals with two of them picked and numbered 1 and 2
+     | state: fresh install, first launch, step 5 of 6, Guitar, dream Play songs I love, two goals picked -->
 
 Every one of them is optional. **Skip** at the top leaves the whole thing; **Continue** moves on and
 **Back** returns. Answering nothing is a valid answer, and you can change any of it later under
@@ -96,14 +107,19 @@ how it moves on, and each step carries one link into Help & FAQs for the why.
 On *Binta* the first step is guided. The playhead starts two bars before the chords come in; press
 play and it stops by itself on *Chords start*, with the Loop button ringed. Tap **Loop**. It plays
 on and stops again on *Solo start*: tap **Loop** again, and the four bars between the two start
-going round. The stops are there so your taps land on the bar lines. On any other song, and on
-*Binta* afterwards, a loop starts wherever you tap.
+going round. The stops are there so your taps land on the bar lines. On any other song the Loop
+button is ringed for the whole first step, and a loop starts wherever you tap.
 
-Two pointers come with the guide on *Binta*. They are not steps, and nothing waits on them. Once the
-four bars are going round, the metronome in the speed bar is ringed: tap it to hear a click on every
-beat, and it slows down with the song. After you save the loop, its row is ringed. Hold it and turn
-on **Backing track**, and the loop is kept with your backing tracks. Edit loop opens with that
-switch in view. Each pointer has its own **✕**, and neither comes back once taken or closed.
+Pointers come with the guide. They are not steps, and nothing waits on them. After you save the loop
+and close the card that marks it, its row is ringed, under **Change it later**: hold it to change
+its name, its range or how you practise it. Edit loop is where a saved loop is changed, and holding
+the row is the way in.
+
+*Binta* has two of its own. Once the four bars are going round, the metronome in the speed bar is
+ringed: tap it to hear a click on every beat, and it slows down with the song. And the four bars you
+saved are a good bed to solo over, so its saved row says so instead: hold it and turn on **Backing
+track**, and the loop is kept with your backing tracks. Edit loop opens with that switch in view.
+Each pointer has its own **✕**, and none comes back once taken or closed.
 
 Saving your first loop is marked once, and never again. If you told the opening questions you are
 comfortable or have been playing a while, the card offers the steps rather than starting them.
@@ -120,7 +136,7 @@ the end of it and tap **Loop** again. That span now repeats.
 
 <!-- shot: getting-started/loop-active | role: band
      | alt: The waveform with a loop span drawn across it and the transport showing the loop active
-     | state: seeded library, Slow Bend, a loop active and repeating
+     | state: seeded library, Binta, a loop active and repeating
      | crop: 0,810,1206,945 -->
 
 If you would rather draw it, hold anywhere on the waveform and drag across the passage instead.

@@ -2,22 +2,25 @@ import SwiftData
 import SwiftUI
 
 /// The **first-launch intake** (ADR 0113, Slice 2): short, skippable questions that declare what the
-/// player wants — experience, genres, the dream, what they are working toward, minutes a day — so
-/// the app can *curate* rather than infer everything from behaviour. One question per card, Red Moon
-/// register (quiet, no urgency, no reveal-theatre, no paywall). Every question is skippable and the
+/// player wants — what they play, experience, genres, the dream, what they are working toward, minutes
+/// a day — so the app can *curate* rather than infer everything from behaviour. One question per card,
+/// Red Moon register (quiet, no urgency, no reveal-theatre, no paywall). Every question is skippable and the
 /// whole thing is skippable; a player who skips it all gets a fully working app and a warm,
 /// name-free home.
 ///
 /// Distinct from the naming ceremony (`ArtistNamePromptSheet`): the intake is *not* where the artist
 /// name is asked — that is earned after a first session. On finish (or skip) it writes
-/// `Profile.setCuration`, adds the picked **long-term goals** (ADR 0246), and the parent sets
-/// `artistIntakeSeen` so it never returns. The curation stays editable in Settings ▸ You, and the
-/// goals in Practice ▸ Long-term goals.
+/// `Profile.setCuration` and `Profile.setPlays` and adds the picked **long-term goals** (ADR 0246); the
+/// parent sets `artistIntakeSeen` so it never returns, and seeds the first run from the answers (ADR
+/// 0248). The curation stays editable in Settings ▸ You, and the goals in Practice ▸ Long-term goals.
 struct ArtistIntakeView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
     @State private var step = 0
+    /// What they play (ADR 0248). First, because the experience card asks about it, and because it
+    /// decides whether the first run seeds guitar drills (`HomeView.seedAfterIntake`).
+    @State private var plays: PlayedInstrument?
     @State private var experience: ArtistExperience?
     @State private var genres: Set<MusicGenre> = []
     @State private var dream: MusicalDream?
@@ -25,15 +28,10 @@ struct ArtistIntakeView: View {
     @State private var goalPicks: [String] = []
     @State private var minutes: PracticeMinutes?
 
-    private enum Step { case experience, genres, dream, goals, minutes }
-
-    /// The goals card follows the dream, and is left out after "Just unwind" (ADR 0246). Changing the
-    /// dream on its own card cannot move the player: the dream is third either way.
-    private var steps: [Step] {
-        IntakeGoalOffer.asksForGoals(after: dream)
-            ? [.experience, .genres, .dream, .goals, .minutes]
-            : [.experience, .genres, .dream, .minutes]
-    }
+    /// The goals card follows the dream, and is left out after "Just unwind" (ADR 0246) or for someone
+    /// who doesn't play guitar or bass (ADR 0248). `IntakeStep` says why neither answer can move the
+    /// player from the card they're on.
+    private var steps: [IntakeStep] { IntakeStep.steps(plays: plays, dream: dream) }
     private var stepCount: Int { steps.count }
     private var isLastStep: Bool { step == stepCount - 1 }
 
@@ -45,6 +43,7 @@ struct ArtistIntakeView: View {
                 header
                 Group {
                     switch steps[min(step, stepCount - 1)] {
+                    case .plays: playsStep
                     case .experience: experienceStep
                     case .genres: genresStep
                     case .dream: dreamStep
@@ -103,10 +102,22 @@ struct ArtistIntakeView: View {
 
     // MARK: - Steps
 
+    /// Guitar first, bass second, then the rest (ADR 0248).
+    private var playsStep: some View {
+        questionScroll(title: "What do you play?") {
+            ForEach(PlayedInstrument.allCases) { option in
+                choiceRow(option.displayName, selected: plays == option) {
+                    plays = plays == option ? nil : option
+                }
+            }
+        }
+    }
+
+    /// Asked about what they play; a skipped first card asks about the guitar, as it always did.
     private var experienceStep: some View {
-        questionScroll(title: "Where are you with the guitar?") {
+        questionScroll(title: "Where are you with \((plays ?? .guitar).experienceSubject)?") {
             ForEach(ArtistExperience.allCases) { option in
-                choiceRow(option.displayName, selected: experience == option) {
+                choiceRow(option.displayName(for: plays), selected: experience == option) {
                     experience = experience == option ? nil : option
                 }
             }
@@ -225,6 +236,7 @@ struct ArtistIntakeView: View {
     private func finish() {
         Profile.setCuration(experience: experience, genres: Array(genres),
                             dream: dream, minutesPerDay: minutes, in: context)
+        if let plays { Profile.setPlays(plays, in: context) }
         addPickedGoals()
         haptic(.medium)
         dismiss()
@@ -234,7 +246,7 @@ struct ArtistIntakeView: View {
     /// when the card is no longer part of the flow: a player who picked goals, went back and chose
     /// "Just unwind" has said they do not want them.
     private func addPickedGoals() {
-        guard IntakeGoalOffer.asksForGoals(after: dream), !goalPicks.isEmpty else { return }
+        guard IntakeGoalOffer.asksForGoals(after: dream, plays: plays), !goalPicks.isEmpty else { return }
         let existing = (try? context.fetchCount(FetchDescriptor<LongTermGoal>())) ?? 0
         let templates = goalPicks.compactMap(GoalTemplateLibrary.template)
         for goal in LongTermGoalStore.makeGoals(from: templates, below: existing) {

@@ -153,7 +153,8 @@ extension ArchiveBuilder {
                       genresRaw: profile.genresRaw,
                       dreamRaw: profile.dreamRaw,
                       minutesPerDayRaw: profile.minutesPerDayRaw,
-                      preferredInstrumentRaw: profile.preferredInstrumentRaw)
+                      preferredInstrumentRaw: profile.preferredInstrumentRaw,
+                      playsRaw: profile.playsRaw)
     }
 
     // MARK: - Journal and takes

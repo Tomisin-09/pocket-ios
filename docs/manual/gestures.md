@@ -32,7 +32,7 @@ and a popover lists the nine things you can do to a loop:
 
 <!-- shot: gestures/loop-controls-popover | role: panel
      | alt: The Loop controls popover open over the waveform, listing nine rows from "Make a loop" to "Follow"
-     | state: seeded library, Slow Bend, player idle, Loop controls tapped -->
+     | state: seeded library, Binta, player idle, Loop controls tapped -->
 
 <!-- loop-controls-rows: 9 -->
 
@@ -80,7 +80,7 @@ linked to the song you took it from.
 
 <!-- shot: gestures/carry-tempo | role: panel
      | alt: The Carry this tempo sheet listing "To the metronome" and "Into a new exercise", headed with the tempo being carried
-     | state: seeded library, Slow Bend, player idle at full speed, BPM readout held -->
+     | state: seeded library, Binta, player idle at full speed, BPM readout held -->
 
 The number it carries is the one on screen. That is the song's tempo **at the speed you have set**,
 so a 200 BPM song at 0.25× carries 50 — the tempo you are actually playing at, which is usually the
@@ -88,7 +88,7 @@ one you wanted.
 
 <!-- shot: gestures/speed-bar | role: band
      | alt: The speed bar with the speed control, the metronome button and the BPM readout
-     | state: seeded library, Slow Bend, player idle
+     | state: seeded library, Binta, player idle
      | crop: 0,370,1206,280 -->
 
 **Tapping and holding the Loop controls line do different things.** A tap gives you the cheatsheet

@@ -75,6 +75,12 @@ enum UITestHooks {
     /// block on *Pack test*'s loop and a block playing the song. Without it, a `-uiTesting` launch takes
     /// any received *Pack routine* back out with the song.
     static let receiveRoutinePackArgument = "-receiveRoutinePack"
+    /// `-seedSongMap`: with `-seedScreenshots`, the shoot's Slow Bend is the one `SongMapPreview` lays out
+    /// (sections, chords and notes pieces, a named riff) with three snags on it, one carrying a line. The
+    /// manual's song map, Name the notes, Pieces and Snags figures are all of that song. Its own pass, so
+    /// no other figure sees a Slow Bend that differs from the demo song. Read app-side through
+    /// `ScreenshotSeed.heroSong()`.
+    static let songMapArgument = "-seedSongMap"
 
     /// Marks Home as **finished seeding**, not merely rendered.
     ///

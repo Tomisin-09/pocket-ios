@@ -78,7 +78,7 @@ enum PracticeFieldInfo {
     Form {
         Section("Practice") {
             LabeledContent {
-                Text("★★★☆☆").foregroundStyle(PocketColor.marker)
+                MasteryDots(filled: 3)
             } label: {
                 FieldInfoLabel(title: "Mastery", info: PracticeFieldInfo.mastery)
             }

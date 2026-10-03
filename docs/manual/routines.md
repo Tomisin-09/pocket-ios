@@ -233,7 +233,7 @@ is live.
 <!-- shot: routines/block-record | role: detail
      | alt: The Record this block switch on an exercise block's preview, turned on, with the line explaining that the take starts with the block
      | state: seeded library, Practice ▸ Routines ▸ Morning Routine, first block opened
-     | crop: 70,1010,1065,365 -->
+     | crop: 56,1130,1094,390 -->
 
 It is per block on purpose. One drill in a session is usually the one worth hearing again; the
 warm-up before it is not, and a whole session recorded is a folder nobody opens. Blocks set to
@@ -274,7 +274,7 @@ evening count as two.
 <!-- shot: routines/history | role: detail
      | alt: The length and history section of a saved routine, showing its estimated length, when it was last practised and how many times
      | state: seeded history, Practice ▸ Routines ▸ Morning Routine, read-only
-     | crop: 70,1810,1065,410 -->
+     | crop: 70,1375,1065,445 -->
 
 It counts and it dates, and that is all it does. There is no target to hit, nothing that goes up or
 down against last week, and nothing anywhere that remarks on a gap.
@@ -344,6 +344,10 @@ first, so you can choose whether the songs go too:
 - A song Red Moon keeps no copy of, such as one that's missing its audio, reads **Can’t go**, and
   its blocks arrive named the same way.
 
+<!-- shot: routines/send-routine | role: screen
+     | alt: Send this routine for Low Road, start to finish, with Include the songs on, the size it adds, and Low Road in the Songs list
+     | state: seeded library, the received routine Low Road, start to finish added, its share control -->
+
 **Send…** in the top corner opens the share sheet. Either way, the routine they receive is the same
 length as the one you sent. A routine with no song or loop blocks has nothing to choose, so its share
 control goes straight to the share sheet.
@@ -380,6 +384,10 @@ its name, how many blocks and how many exercises, who sent it (when they have an
 sender's version and the day they wrote it, a **Songs** list when songs came with it, and a **Won't
 come across** list if any block plays a song that wasn't sent. **Add** puts it in your library;
 **Cancel** leaves nothing behind.
+
+<!-- shot: routines/receive-routine | role: screen
+     | alt: Add this routine? for Low Road, start to finish, sent by Jack Trader, with its blocks, the sender's version and day, and Low Road under Songs
+     | state: seeded library, a routine pack with its song opened, before Add -->
 
 Songs that came with it land in your library too, and the blocks play them. Each is a new song of your
 own, named as a song sent on its own is: if you already have one with that title, the new one is

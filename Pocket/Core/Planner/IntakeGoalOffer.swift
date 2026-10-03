@@ -33,8 +33,12 @@ enum IntakeGoalOffer {
     /// Whether the intake asks at all. **Not after "Just unwind"**: giving homework to someone who
     /// came to unwind is the pressure ADR 0070 rules out. A skipped dream still gets the card, because
     /// skipping one question is not a statement about the next.
-    static func asksForGoals(after dream: MusicalDream?) -> Bool {
-        dream != .unwind
+    ///
+    /// **Nor for someone who doesn't play guitar or bass** (ADR 0248): their first run seeds no drills, so
+    /// by this card's own rule every template comes to nothing. `nil` — the question skipped — is asked as
+    /// it always was, about the guitar.
+    static func asksForGoals(after dream: MusicalDream?, plays: PlayedInstrument? = nil) -> Bool {
+        dream != .unwind && plays?.leansOnSongs != true
     }
 
     /// The card's templates: the dream's closest first, then the rest in library order. With no dream

@@ -12,6 +12,9 @@
   skipped after *Just unwind*, so "3–4 questions" becomes "four, or five". The four questions below,
   their consumers, and the dream's emphasis tilt all stand.
 - **Reverses:** the earlier "no user profiles" stance (profiles were dropped when accounts were dropped; this brings them back **without** an account).
+- **Amended by:** ADR 0248 (2026-10-03) — a first card, *What do you play?*, comes before the
+  experience card, which now asks about the answer. "Four, or five" becomes "five, or six". Every card
+  and the whole flow stay skippable.
 
 ## Context
 

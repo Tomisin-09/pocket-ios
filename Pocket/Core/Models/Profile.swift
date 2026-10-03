@@ -51,6 +51,12 @@ final class Profile {
     /// untouched install and every pre-0116 profile default to guitar (additive migration).
     var preferredInstrumentRaw: String?
 
+    /// **What the player plays** (`PlayedInstrument.rawValue`, ADR 0248), or `nil` if never answered — a
+    /// profile from before the question, or a skipped card. Wider than `preferredInstrumentRaw`, which is
+    /// only ever a neck: a pianist's answer lives here and leaves that one alone. Optional, so a store
+    /// from before it opens with the attribute empty (a lightweight migration, no default to lose).
+    var playsRaw: String?
+
     init(uid: UUID = UUID(), artistName: String? = nil, createdAt: Date = .now) {
         self.uid = uid
         self.artistName = artistName
@@ -91,6 +97,16 @@ final class Profile {
         set { preferredInstrumentRaw = newValue.rawValue }
     }
 
+    /// What the player plays, as answered (`nil` if never asked or skipped).
+    var plays: PlayedInstrument? {
+        get { playsRaw.flatMap(PlayedInstrument.init(rawValue:)) }
+        set { playsRaw = newValue?.rawValue }
+    }
+
+    /// What the player plays, falling back on the neck an older profile chose (Guitar or Bass were the
+    /// only answers before ADR 0248), and so never empty — what Settings shows and summarises.
+    var playsOrNeck: PlayedInstrument { plays ?? PlayedInstrument(fretboard: preferredInstrument) }
+
     /// The one profile row, if it exists yet. Returns `nil` on an untouched install (no row is
     /// inserted until a name is set *or* the intake writes curation) — callers treat that as the
     /// name-free / no-preferences state.
@@ -129,6 +145,16 @@ final class Profile {
     static func setPreferredInstrument(_ instrument: Instrument, in context: ModelContext) {
         let profile = fetchOrCreate(in: context)
         profile.preferredInstrument = instrument
+        try? context.save()
+    }
+
+    /// Set what the player plays (ADR 0248). An answer with a neck also sets `preferredInstrument`, which
+    /// is what ADR 0116 meant the intake to do: a bassist's new drills open on the bass. Any other answer
+    /// leaves the neck as it was — a pianist who adds a scale still gets one, on the default guitar.
+    static func setPlays(_ plays: PlayedInstrument?, in context: ModelContext) {
+        let profile = fetchOrCreate(in: context)
+        profile.plays = plays
+        if let neck = plays?.fretboard { profile.preferredInstrument = neck }
         try? context.save()
     }
 

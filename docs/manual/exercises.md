@@ -124,9 +124,9 @@ run before you play a note of it. While a row is open, that phase's bars are lit
 Under it, a line says how long the run is, roughly in time and exactly in bars.
 
 <!-- shot: exercises/staircase | role: band
-     | alt: The training staircase with its warm-up steps, the wide command plateau labelled 80 BPM, the reach step and the back-off step
+     | alt: The training staircase with its warm-up steps, the wide command plateau labelled 90 BPM, the reach step and the back-off step
      | state: seeded library, an exercise run screen, staircase visible
-     | crop: 0,1355,1206,410 -->
+     | crop: 0,615,1206,430 -->
 
 The line under the staircase ends with the drill's meter — **4/4** unless you have changed it — and
 tapping it sets the accents and the length of the count-in.
