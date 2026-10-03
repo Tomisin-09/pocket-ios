@@ -41,6 +41,15 @@ enum UITestRuntime {
             || arguments.contains(UITestHooks.walkthroughArgument)
     }
 
+    /// Whether the song player's hold tips may show (ADR 0244). **Always `true` outside UI testing**;
+    /// under `-uiTesting` it takes `-gestureHints` as well. The walkthrough's shape, for its reason.
+    static let gestureHintsAreOpen = parseGestureHints(in: CommandLine.arguments)
+
+    static func parseGestureHints(in arguments: [String]) -> Bool {
+        !arguments.contains(UITestHooks.launchArgument)
+            || arguments.contains(UITestHooks.gestureHintsArgument)
+    }
+
     /// Split out from the `static let` for the same reason `parseShotHour` is, and named the same
     /// way: the argument that must *also* be present is the entire guarantee here, and a guarantee
     /// nothing checks is a comment.

@@ -53,6 +53,12 @@ enum UITestHooks {
     /// Read app-side through `UITestRuntime.walkthroughIsOpen`.
     static let walkthroughArgument = "-walkthrough"
 
+    /// `-gestureHints`: lets the song player's hold tips show under `-uiTesting` (ADR 0244), with every
+    /// tag back in play. `-uiTesting` alone keeps them off for the walkthrough's reason: a tag over the
+    /// song player sits on the controls the suite drives and in the figures the manual shoots there.
+    /// Read app-side through `UITestRuntime.gestureHintsAreOpen`.
+    static let gestureHintsArgument = "-gestureHints"
+
     /// `-seedNamingPiece`: puts a song in whose *Verse riff* has a saved piece, so a test can open
     /// **Name the notes** (ADR 0235, build order 4). Without it, a `-uiTesting` launch takes that song
     /// back out, so the rest of the suite starts from the library it expects. Read app-side through

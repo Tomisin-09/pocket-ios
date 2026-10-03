@@ -105,6 +105,9 @@ comfortable or have been playing a while, the card offers the steps rather than 
 Either way **✕** closes it for good, and **Help & FAQs ▸ Show the first-song guide again** brings
 it back for the next song you open.
 
+From the next time you open the app, the song player points out the holds it hides, one tip at a
+time: see [Tips for the holds](gestures.md#tips-for-the-holds).
+
 ### 2. Loop the hard bit
 
 Open the song. Play up to the start of the passage that keeps going wrong and tap **Loop**; play to

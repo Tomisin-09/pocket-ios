@@ -24,7 +24,8 @@ struct MarkersPanel: View {
                             : "\(markers.count) marker\(markers.count == 1 ? "" : "s")",
                          expanded: $expanded,
                          onBeginSelection: markers.isEmpty ? nil : selection.begin,
-                         isSelecting: selection.isActive) {
+                         isSelecting: selection.isActive,
+                         hintsSelection: markers.count > 1) {
             if markers.isEmpty {
                 EmptyPanelMessage(
                     systemImage: "mappin",
@@ -94,9 +95,11 @@ private struct MarkerRow: View {
                 onToggleSelection()
             } else {
                 haptic(.medium)     // confirm the hold landed before the sheet appears
+                AppSettings.retireGestureHint(.markerRow)
                 onEdit()
             }
         }
+        .gestureHintTarget(.markerRow, when: !isSelecting, scrolls: true)   // ADR 0244
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
         .accessibilityLabel(isSelecting
@@ -106,7 +109,7 @@ private struct MarkerRow: View {
         // VoiceOver can't long-press, so surface the same actions explicitly.
         .accessibilityActions {
             if !isSelecting {
-                Button("Edit", action: onEdit)
+                Button("Edit") { AppSettings.retireGestureHint(.markerRow); onEdit() }
                 Button("Delete", action: onDelete)
             }
         }

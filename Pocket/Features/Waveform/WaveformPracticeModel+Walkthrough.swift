@@ -20,6 +20,8 @@ extension WaveformPracticeModel {
         guard !isPreview, UITestRuntime.walkthroughIsOpen, walkthrough == nil,
               !audioLoadFailed, engine.duration > 0,
               AppSettings.takeArmedSongWalkthrough() else { return }
+        // This opening is the walkthrough's; the hold tips wait for the next (ADR 0244 D3).
+        GestureHintOpening.current.walkthroughSeen = true
         let experience = (try? context.fetch(FetchDescriptor<Profile>()))?.first?.experience
         walkthrough = SongWalkthrough(entry: SongWalkthrough.entry(for: experience),
                                       ceremonyAlreadyShown: AppSettings.songWalkthroughCeremonySeen())

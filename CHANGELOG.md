@@ -56,6 +56,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **The song player points out the holds it hides, one at a time.** Six of its controls do something
+  when you hold them that nothing on screen tells you: a loop's row, the metronome, the BPM, a
+  marker's row, a panel's name and the song's name. Each now has a tip: a ring round the control and
+  a line beside it saying what holding it does. You'll see at most one each time you open the app
+  (coming back after half an hour or more away counts), only while the song is paused, and never
+  alongside the first-song guide: they start the next time you open the app. Using the
+  hold, or closing its tip, puts that tip away for good, and a hold you find on your own is never
+  pointed out. **Settings ▸ Song player** has **Show hold tips** to turn them off, and **Show the
+  tips again** to bring them all back (ADR 0244).
 - **Time with the metronome counts as practice.** Stop the click on the Metronome screen, or leave
   it, and the time the click sounded goes into the Practice log as **Metronome** — in the minutes,
   the days, the month grid, *What you played* and Home's *This week* strip. Paused time is left out,

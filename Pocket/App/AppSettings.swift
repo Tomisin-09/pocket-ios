@@ -83,6 +83,9 @@ enum AppSettings {
         /// The first-song walkthrough (ADR 0149): its ledger, and the latch on its one ceremony.
         static let songWalkthrough = "songWalkthrough"
         static let songWalkthroughCeremonySeen = "songWalkthroughCeremonySeen"
+        /// Hold tips (ADR 0244), in `AppSettings+GestureHints`: whether they show, and which are retired.
+        static let gestureHints = "gestureHints"
+        static let gestureHintsRetired = "gestureHintsRetired"
         static let clickTimbre = "clickTimbre"
         static let tunerInstrument = "tunerInstrument"
         static let tunerMode = "tunerMode"

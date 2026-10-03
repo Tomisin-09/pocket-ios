@@ -201,6 +201,8 @@ struct PracticeReference: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
+            // A row's hold tip (ADR 0244) shows only while the row is inside what this shows.
+            .gestureHintViewport()
         }
         .opacity(model.isRangeEditing ? 0.25 : 1)
         .disabled(model.isRangeEditing)

@@ -18,6 +18,9 @@ struct CollapsiblePanel<Content: View>: View {
     var onBeginSelection: (() -> Void)?
     /// True while this panel is selecting — its header is pinned outside the scroll view.
     var isSelecting: Bool = false
+    /// Whether the header's hold tip may point here (ADR 0244): only with two or more rows, since
+    /// selecting several of one is nothing to show anyone.
+    var hintsSelection: Bool = false
     @ViewBuilder var content: Content
 
     var body: some View {
@@ -58,6 +61,7 @@ struct CollapsiblePanel<Content: View>: View {
         .onLongPressGesture(minimumDuration: 0.4) {
             guard let onBeginSelection else { return }
             haptic(.medium)     // confirm the hold landed before the header changes
+            AppSettings.retireGestureHint(.panelHeader)
             withAnimation(.easeInOut(duration: 0.2)) {
                 // Selecting a **collapsed** panel would otherwise pin a selection bar over
                 // no rows, with the chevron that would expand them gone. Entering the mode
@@ -66,6 +70,7 @@ struct CollapsiblePanel<Content: View>: View {
                 onBeginSelection()
             }
         }
+        .gestureHintTarget(.panelHeader, when: hintsSelection && onBeginSelection != nil, scrolls: true)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
         .accessibilityLabel("\(title), \(expanded ? "expanded" : "collapsed")")
@@ -74,6 +79,7 @@ struct CollapsiblePanel<Content: View>: View {
         // same way the hold does, or it pins a selection bar over hidden rows.
         .accessibilityAction(named: "Select") {
             guard let onBeginSelection else { return }
+            AppSettings.retireGestureHint(.panelHeader)
             expanded = true
             onBeginSelection()
         }
