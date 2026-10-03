@@ -113,7 +113,7 @@ routine it opens the share sheet directly.
 
 <!-- shot: reference/exercises-library | role: screen
      | alt: The Exercises library with drills grouped into collapsible template sections, each row showing its name and command tempos
-     | state: seeded library, Practice ▸ Exercises, the seeded six present -->
+     | state: seeded library, Practice ▸ Exercises, the first-run drills present -->
 
 Drills grouped into collapsible sections by **template** — the kind of drill they are — with a count
 on each header. A row shows the drill's name and its tempo line: `Command 90 → 95 BPM · 16ths`, which

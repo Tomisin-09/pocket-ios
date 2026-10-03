@@ -89,7 +89,7 @@ extension PracticeHistorySeed {
     /// **Blocks resolve by `presetSlug`, against `PracticePresets.firstRunSlugs`, and assert.** The
     /// first version matched on display name and skipped what it could not find, which is how the
     /// first shoot filed a `Blues, week three` reading `1 block`: it asked for "Scale Runs", a spec
-    /// that is in `allSpecs` but **not** in the six a fresh install seeds, so the exercise silently
+    /// that is in `allSpecs` but **not** in the set a fresh install seeds, so the exercise silently
     /// no-matched, the rest that follows it was never appended, and the routine went in holding the
     /// loop alone. Nothing failed — a `continue` is invisible, and the row it produced looked like a
     /// short routine rather than a broken one.

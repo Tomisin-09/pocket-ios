@@ -250,13 +250,15 @@ enum PracticePresets {
 
     // MARK: - The first-run set
 
-    /// The exercises a **fresh install** seeds — deliberately six, not the whole catalog.
+    /// The exercises a **fresh install** seeds — deliberately seven, not the whole catalog.
     ///
-    /// Chosen in ADR 0112 as the *union* of two sets that only half overlap: the four drills that were
-    /// then a permanent free taste, and the four exercises **`RoutinePresets`' Morning Routine strings
-    /// together**. Routine blocks resolve *by name at seed time*, so seeding only the first set would
-    /// have shipped the demo routine with two blocks silently missing; the union is the smallest set
-    /// where both stay whole. The free taste is gone (ADR 0237); the set is unchanged, as onboarding.
+    /// Six were chosen in ADR 0112 as the *union* of two sets that only half overlap: the four drills
+    /// that were then a permanent free taste, and the four exercises **`RoutinePresets`' Morning
+    /// Routine strings together**. Routine blocks resolve *by name at seed time*, so seeding only the
+    /// first set would have shipped the demo routine with two blocks silently missing; the union is
+    /// the smallest set where both stay whole. The free taste is gone (ADR 0237); the set stayed, as
+    /// onboarding. **ADR 0247 added the seventh**, a strumming drill, so the first run's *Tighten your
+    /// timing* goal (ADR 0246) has something to build from on day one.
     ///
     /// The **rest of the catalog is retired from seeding, not deleted**: `allSpecs` still lists every
     /// shipped spec, because it's the table the provenance backfill matches an older install's
@@ -268,7 +270,8 @@ enum PracticePresets {
         "alternate-picking",    // .picking — in Morning Routine
         "a-minor-pentatonic",   // .scales  — in Morning Routine
         "pop-changes",          // .chords
-        "legato"                // .legato
+        "legato",               // .legato
+        "strumming-down-up-eighths" // .strumming — what *Tighten your timing* builds from (ADR 0247)
     ]
 
     /// The first-run specs, resolved from `allSpecs` in `firstRunSlugs` order (which is also seed
@@ -293,12 +296,13 @@ enum PracticePresets {
 
     /// Seed the curated presets **once, ever**, guarded by the v1 key.
     ///
-    /// A fresh install gets `firstRunSpecs` — the six-exercise first-run set (see above), not the
-    /// whole catalog. The later batch keys (v2…v11) are **no longer seeded**: on an existing device
-    /// they are already `true`, so that player keeps every drill they were given and nothing is
-    /// removed; on a new device they simply never run, which is how the library arrives at six.
-    /// Reusing the v1 key rather than minting a v12 is deliberate — a new key would re-seed the six
-    /// onto existing installs that already have them, duplicating rows.
+    /// A fresh install gets `firstRunSpecs` — the first-run set (see above), not the whole catalog.
+    /// The later batch keys (v2…v11) are **no longer seeded**: on an existing device they are already
+    /// `true`, so that player keeps every drill they were given and nothing is removed; on a new
+    /// device they simply never run, which is how the library arrives at the first-run set alone.
+    /// Reusing the v1 key rather than minting a v12 is deliberate — a new key would re-seed the set
+    /// onto existing installs that already have it, duplicating rows. The cost is that a drill added
+    /// to the set later reaches only new installs (ADR 0247 D3).
     ///
     /// Safe to call on every launch. The keys are retained below so the flags stay documented and a
     /// future curated batch can seed under its own new key without disturbing this one.

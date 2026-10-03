@@ -181,7 +181,7 @@ final class PracticePresetsTests: XCTestCase {
     /// **The upgrade guarantee, inverted (ADR 0112).** Seeding used to be additive: an existing v1
     /// player picked up each newer batch on the next launch. Now only the first-run set ships, under
     /// the *same* v1 key — so a player who already seeded gets **nothing new and loses nothing**. That
-    /// key reuse is the point: minting a new key would re-seed the six onto installs that already hold
+    /// key reuse is the point: minting a new key would re-seed the set onto installs that already hold
     /// them, duplicating every one.
     func testExistingSeededUserGainsNothingAndKeepsEverything() throws {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
@@ -312,12 +312,22 @@ final class PracticePresetsTests: XCTestCase {
 
     // MARK: - The first-run set (ADR 0112)
 
-    /// A fresh install seeds exactly six drills, Morning Routine's four among them. Pinned so trimming
-    /// or extending it is a deliberate act.
-    func testFirstRunSeedsExactlySixExercises() {
+    /// A fresh install seeds exactly seven drills, Morning Routine's four among them: ADR 0112's six,
+    /// and the strumming drill ADR 0247 added. Pinned so trimming or extending it is a deliberate act.
+    func testFirstRunSeedsExactlySevenExercises() {
         // Equal counts also prove no slug was silently dropped by failing to match a shipped spec.
-        XCTAssertEqual(PracticePresets.firstRunSpecs.count, 6)
-        XCTAssertEqual(PracticePresets.firstRunSlugs.count, 6)
+        XCTAssertEqual(PracticePresets.firstRunSpecs.count, 7)
+        XCTAssertEqual(PracticePresets.firstRunSlugs.count, 7)
+    }
+
+    /// The seventh is there for one reason: *Tighten your timing* on the first run's goals card
+    /// (ADR 0246) needs a drill that works on its skills, and only a strumming drill does among the
+    /// starter set (ADR 0247). `IntakeGoalOfferTests` checks the derivation; this checks the drill.
+    func testTheFirstRunSetHasAStrummingDrillWithARealPattern() throws {
+        let strum = try XCTUnwrap(PracticePresets.makeExercises(PracticePresets.firstRunSpecs)
+            .first { $0.template == .strumming })
+        XCTAssertEqual(strum.presetSlug, "strumming-down-up-eighths")
+        XCTAssertNotNil(strum.strumPattern, "a strumming drill with no pattern draws an empty lane")
     }
 
     /// The retired catalog stays in `allSpecs` — it's the table the provenance backfill matches an

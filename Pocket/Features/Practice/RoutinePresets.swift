@@ -49,7 +49,7 @@ enum RoutinePresets {
 
     /// The shipped set — **one** routine, seeded on a fresh install.
     ///
-    /// **Morning Routine** strings together four of the six first-run drills
+    /// **Morning Routine** strings together four of the first-run drills
     /// (`PracticePresets.firstRunSlugs`), which resolve by name at seed time, so it always arrives
     /// whole. It closes on the pentatonic box so it covers **lead** playing too, not only warm-ups and
     /// picking. It was also the free taste while Red Moon had a paywall (ADR 0112; gone since 0237).

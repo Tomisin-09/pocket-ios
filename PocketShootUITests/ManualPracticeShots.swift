@@ -39,7 +39,7 @@ final class ManualPracticeShots: ManualShotCase {
     /// rows inside them are ordinary, and a header is at the top of the screen where a `role: screen`
     /// capture can actually see it. `Picking` holds the seeded Alternate Picking drill.
     ///
-    /// **The two markers are one screen in one state** — "the seeded six present" and "several
+    /// **The two markers are one screen in one state** — "the first-run drills present" and "several
     /// templates present" — so they share this frame rather than being shot twice. That is worth
     /// more than tidiness here. `exercises/library` was listed for a hand shoot with an ordering rule
     /// beside it: shoot it *before* authoring the freeform drill, or a seventh row appears in one

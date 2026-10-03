@@ -96,8 +96,8 @@ extension HomeView {
     /// teal · plum · terracotta home triad (content / tool / songs).
     ///
     /// **The one tile that can carry a caption**, and only while the library is empty. The strip's
-    /// subtitle was count-aware, and on a fresh install — six drills, one routine, no song
-    /// (ADR 0112) — the count line read *Add a song to get started* and was Home's only word about
+    /// subtitle was count-aware, and on a fresh install — the first-run drills, one routine, no
+    /// song (ADR 0112) — the count line read *Add a song to get started* and was Home's only word about
     /// it. The toolbar's green **+** is still the door; this keeps the sentence that points at it.
     private var songLibraryTile: some View {
         NavigationLink { LibraryView() } label: {

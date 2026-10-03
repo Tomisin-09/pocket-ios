@@ -51,7 +51,7 @@ marker grammar in [README.md](README.md).
 | `metronome/screen` | `screen` | `metronome` | Metronome open, 96 BPM, 4/4, stopped |  |
 | `metronome/settings-sheet` | `screen` | `metronome` | Metronome open, meter control tapped, scrolled to the top |  |
 | `metronome/tempo-controls` | `band` | `metronome` | Metronome open, 96 BPM |  |
-| `reference/exercises-library` | `screen` | `practice` | seeded library, Practice ▸ Exercises, the seeded six present |  |
+| `reference/exercises-library` | `screen` | `practice` | seeded library, Practice ▸ Exercises, the first-run drills present |  |
 | `reference/home` | `screen` | `home-and-library` | seeded library, Home, one song recently practised |  |
 | `reference/journal` | `screen` | `tools-and-journal` | seeded library, Journal, notes and a take across two days |  |
 | `reference/library` | `screen` | `home-and-library` | seeded library, Library, sorted by title |  |

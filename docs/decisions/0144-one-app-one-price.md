@@ -28,6 +28,8 @@
   forever* is now true of the whole app, and its trust argument is 0237 D3: nothing free may ever
   move behind a price. **D8 stands**: the first-run seed is unchanged, as onboarding rather than trial
   content. The text below is the record of the paid design and is not current.
+- **Amended by:** ADR 0247 (2026-10-03) — D8 only: the first-run seed is seven exercises, not six.
+  The seventh is *Strumming — Down-Up Eighths*. One routine and one song, and the rest of D8, stand.
 - **Supersession proposed by:** ADR 0156 (a paywall you can predict, 2026-08-11) — **Proposed, not
   built.** It would replace D4's *once per launch* clause with a budget on the launch wall alone:
   none within 24 hours of any paywall dismissal, at most one per 72 hours, and at most one per 7 days
@@ -144,6 +146,9 @@ Two things make a hard paywall defensible rather than hostile, and both are chea
   makes a trial worth starting rather than a month-long tour of an empty app. `presetSlug` stays on
   `Exercise` and `Routine` as seeding provenance; the specs in `PracticePresets.swift` and
   `RoutinePresets.swift` are untouched.
+
+  > **Amended by ADR 0247 (2026-10-03).** A new install now seeds seven exercises: these six and a
+  > strumming drill, so the first run's *Tighten your timing* goal has something to build from.
 
 ## Consequences
 

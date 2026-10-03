@@ -68,7 +68,7 @@ extension NewExercisePlan {
     ///
     /// Deliberately hung off `NewExercisePlan` rather than `commandAnchored`: only the two
     /// interactive entry points build a plan, whereas the **preset seeder** calls the factory
-    /// directly, so a hook there would also fire for the six drills a fresh install seeds — ADR 0120
+    /// directly, so a hook there would also fire for the drills a fresh install seeds — ADR 0120
     /// recorded that trap for the `exerciseCreated` event. A plan is the thing that means *a person
     /// just authored this*.
     ///
