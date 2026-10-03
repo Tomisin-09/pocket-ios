@@ -21,6 +21,8 @@
   the snag (0238 D1), so D2's *no edit sheet, no hold* no longer holds. No multi-select, the song-order
   sort, tap to go there and ✕ to remove stand. **D3 stands**: still no undo toast, because the line is a
   Journal note that stays when the snag goes (0238 D5).
+- **Superseded by:** ADR 0245 (2026-10-03) — **D4 only: the return pill is removed**, so the rule D4
+  re-anchored is gone too, `TempoReturnTests` included. D1–D3 and D5 stand.
 
 ## Context
 
@@ -79,6 +81,8 @@ Deleting the last snag folds the panel to *None*, which is the only state it has
 about.
 
 ### D4 — the return pill goes back one rung, and now appears at all
+
+> **Superseded by ADR 0245 (2026-10-03).** The pill was removed. What follows is history.
 
 Two changes to one rule, and the second is a bug the first exposes.
 

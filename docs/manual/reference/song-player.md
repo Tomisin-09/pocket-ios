@@ -17,10 +17,6 @@ open [Song details](home-and-library.md#song-details) — there is no button for
 - **`Playback speed`** — the slider that slows the song down without changing its pitch. Its
   accessibility label states the current value.
 - **`Reset`**, and the shortcuts beside it, return it to full speed or jump to a fixed fraction.
-- **The return pill** appears beside the readout once you slow the song down, showing the speed you
-  dropped from — tap it to go back. Slow down twice and it offers the speed you were on before the
-  second drop, not the one you started the session at: one step back at a time. It goes when you
-  take it, when you get back to that speed yourself, and when you leave the song; nothing is saved.
 - **The BPM readout** shows the song's tempo, captioned `BPM`. It reads *Tempo not set* until you
   give the song one.
 - **Holding the BPM readout** carries that tempo out of the song — to the metronome, or into a new

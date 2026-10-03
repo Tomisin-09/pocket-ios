@@ -41,8 +41,6 @@ struct PracticeCockpit<Header: View>: View {
             SpeedBar(speed: $model.speed, displayedBPM: model.displayedBPM, // 3
                      onSetBPM: model.setBPM, onCarryTempo: model.carryTempo,
                      onUserAdjust: model.userAdjustedSpeed,
-                     speedBeforeDrop: model.speedBeforeDrop,
-                     onReturnToSpeed: model.returnToSpeedBeforeDrop,
                      metronomeOn: model.metronomeOn,
                      canUseMetronome: model.canUseMetronome,
                      onToggleMetronome: model.toggleMetronome,

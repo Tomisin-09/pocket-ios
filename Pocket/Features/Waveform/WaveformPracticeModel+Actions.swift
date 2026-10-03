@@ -276,12 +276,8 @@ extension WaveformPracticeModel {
             return
         }
         activeLoopID = loop.uid               // didSet records the outgoing loop's leave speed
-        // Arming is the app setting the speed, not the player: stand the return offer down and
-        // stop treating writes as user-driven, so a new loop never inherits the last one's pill
-        // (ADR 0201).
+        // Arming is the app setting the speed, not the player: stop treating writes as user-driven.
         speedIsUserDriven = false
-        speedBeforeDrop = nil
-        speedAtGestureStart = nil
         speed = loop.armingSpeed              // command-anchored: its command tempo, else 100% (ADR 0089)
         engine.setRate(speed)                 // push the rate NOW (not via the async speed onChange) so the
                                               // new loop starts at its own tempo — no mid-switch lurch (ADR 0089)

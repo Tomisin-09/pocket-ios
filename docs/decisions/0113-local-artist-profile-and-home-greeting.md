@@ -7,6 +7,10 @@
   local and editable* waits for, for the artist name only. It travels in a file the player sends, and
   the send screen shows it before anything is sent (0236 D7). Sound, influences, goal and minutes
   still never leave the device.
+- **Amended by:** ADR 0246 (2026-10-03) — the intake gains a fifth card after the dream, *What are
+  you working toward?*. Up to three picked goal templates become ranked long-term goals. It is
+  skipped after *Just unwind*, so "3–4 questions" becomes "four, or five". The four questions below,
+  their consumers, and the dream's emphasis tilt all stand.
 - **Reverses:** the earlier "no user profiles" stance (profiles were dropped when accounts were dropped; this brings them back **without** an account).
 
 ## Context
@@ -58,6 +62,9 @@ No demographic questions. No age band. No real name. Nothing leaves the device.
   fully working app and a warm, name-free greeting. The profile *enriches*; it never gates.
 
 ### The first-launch intake — four questions, each wired to a consumer
+
+> **Amended by ADR 0246 (2026-10-03):** a fifth card, *What are you working toward?*, follows the
+> dream unless the answer was *Just unwind*. Its consumer is the long-term goals list.
 
 Skippable, one question per card, Red Moon tone, no demographics, no urgency, no paywall. Each maps
 to a named consumer so no field is theatre:

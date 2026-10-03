@@ -133,7 +133,8 @@ A **long-term goal** is something you are working toward over months — playing
 to end, getting your picking faster, building a vocabulary to improvise with. Unlike the goals on
 Today's session, it stays put: you set it once and it keeps steering sessions until you mark it met.
 
-They live in their own list, in **Practice ▸ Long-term goals**, and they are authored exactly like
+The ones you pick on the [first run](getting-started.md#the-first-run) start this list. They live
+in their own list, in **Practice ▸ Long-term goals**, and they are authored exactly like
 the goals above — same four starting points, same skill trimming, same target song, same **Mark as
 met**. What they do not have is a priority control, and what they do not have is a deadline.
 

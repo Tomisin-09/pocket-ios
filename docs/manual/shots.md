@@ -25,7 +25,7 @@ marker grammar in [README.md](README.md).
 | `gestures/carry-tempo` | `panel` | `gestures` | seeded library, Slow Bend, player idle at full speed, BPM readout held |  |
 | `gestures/loop-controls-popover` | `panel` | `gestures` | seeded library, Slow Bend, player idle, Loop controls tapped |  |
 | `gestures/speed-bar` | `band` | `gestures` | seeded library, Slow Bend, player idle |  |
-| `getting-started/first-run` | `screen` | `getting-started` | fresh install, first launch, step 1 of 4 |  |
+| `getting-started/first-run` | `screen` | `getting-started` | fresh install, first launch, step 1 of 5 |  |
 | `getting-started/home` | `screen` | `getting-started` | seeded library, Home, morning greeting |  |
 | `getting-started/loop-active` | `band` | `getting-started` | seeded library, Slow Bend, a loop active and repeating |  |
 | `journal/month-heatmap` | `panel` | `journal-and-practice-log` | seeded library, Practice log, scrolled to This month, two or more weeks of history in the current month |  |

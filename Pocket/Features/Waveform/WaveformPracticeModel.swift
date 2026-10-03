@@ -15,29 +15,18 @@ final class WaveformPracticeModel {
     let context: ModelContext
 
     // UI state.
-    /// Playback rate (× of original). The observer feeds `TempoReturn` (ADR 0201), and only for
-    /// player-driven changes — arming a loop writes this too (ADR 0089), and offering a "return"
-    /// to the previous loop's tempo would be nonsense.
+    /// Playback rate (× of original). The observer feeds the walkthrough, and only for
+    /// player-driven changes — arming a loop writes this too (ADR 0089), and the app's own write is
+    /// not the player trying the speed.
     var speed: Double = 1.0 {
         didSet {
             guard speedIsUserDriven, speed != oldValue else { return }
-            speedBeforeDrop = TempoReturn.remembered(speedBeforeDrop,
-                                                     gestureStart: speedAtGestureStart ?? oldValue,
-                                                     now: speed)
             recordWalkthrough(.speedChanged(to: speed))     // beat 2 (ADR 0149): the player's hand only
         }
     }
 
-    /// The speed to offer going back to (ADR 0201). **Not persisted** — it lives as long as the
-    /// screen, like the A/B span; a stored one would offer last week's tempo. `speedIsUserDriven`
-    /// is how the observer above tells a player's drag from the app's own write.
-    var speedBeforeDrop: Double?
+    /// How the observer above tells a player's drag from the app's own write.
     var speedIsUserDriven = false
-    /// The settled speed the current gesture started from (ADR 0202 D4) — written by
-    /// `userAdjustedSpeed`, which every hand on the tempo already calls. The slider writes `speed`
-    /// on every frame of a drag, so comparing against `oldValue` compares two frames of one gesture
-    /// and never sees a drop; this is what the rule is actually anchored to.
-    @ObservationIgnored var speedAtGestureStart: Double?
     /// True while a finger is down on the waveform (scrub / handle drag). Drives the
     /// swipe-back guard so a scrub near the left edge can't pop the screen (ADR 0030).
     var isScrubbing = false
