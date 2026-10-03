@@ -277,6 +277,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **The return pill is gone from the speed bar.** It appeared beside the speed after you slowed down
+  and took you back to where you started, but on a phone it cut off its own number and squeezed the
+  slider. Use **Reset**, a preset, or tap the speed to type one in. (ADR 0245)
+
 - **Today's session no longer fills your routines.** Starting a session from **Today's session** or a
   quick session plays it for today instead of adding a dated routine to your library every time.
   It stays on Home — in **Recent routines**, and in **Jump back in** while it's the last thing you

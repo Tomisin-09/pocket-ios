@@ -13,6 +13,10 @@
   dozens of times per drag, so as written here the pill never appeared from a drag at all. D1's
   *How it got here* section also caps at three rows (0202 D5). **D1's surface, D2, D3 and D5
   stand** — only the list's length and the return rule change.
+- **Superseded by:** ADR 0245 (2026-10-03) — **D4 only: the return pill is gone**, along with
+  `TempoReturn`. On a phone the pill truncated its own number and narrowed the slider, and `Reset`,
+  the presets and numeric entry already cover nearly every way back. `speedIsUserDriven` stays because
+  the first-song walkthrough reads it. **D1, D2, D3 and D5 stand.**
 
 ## Context
 
@@ -70,6 +74,8 @@ that is a thing to hear rather than a number to accept. Save commits it through 
 widening is recorded by ADR 0199 like any other edit — no second write site. ✕ discards it.
 
 ### D4 — the return pill is screen-lived, and only the player's hand arms it
+
+> **Superseded by ADR 0245 (2026-10-03).** The pill was removed. What follows is history.
 
 A pill beside the speed readout offers the speed a drop started from.
 

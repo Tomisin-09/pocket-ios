@@ -1589,25 +1589,14 @@ empty, because that line was Home's only word about adding a first song.
   narrowing stuck, and that is a thing to hear. Save commits through `saveABSpan`, recorded by
   ADR 0199 with no second write site.
 
-  The **return pill** (`TempoReturn`) is the other half: dropping the speed always worked, coming
-  back never did — the codebase had no `previousSpeed`/`restoreSpeed`/`revertTempo` at all. It is
-  **screen-lived and unstored** (a persisted one would offer last week's tempo) and gated on
-  `speedIsUserDriven`, because `speed` is also written by the app when a loop arms at its
-  command-anchored speed (ADR 0089) and offering a return to the *previous* loop's tempo would be
-  nonsense. A sub-0.05 nudge is not a drop, and getting back by hand clears it.
-
-  **The rule is anchored to a gesture, not to consecutive writes** (ADR 0202 D4, replacing 0201 D4).
-  `userAdjustedSpeed` — which the slider's *grab*, a preset pill and numeric entry all already call
-  — captures the settled speed the hand started from, and the rule compares against that. The
-  version it replaces compared each write of `speed` against the previous one, which on a
-  **continuous** slider is the previous frame: every step of a drag was far under `minimumDrop`, no
-  frame ever counted as a drop, and **the pill could not be raised by dragging at all** — only by a
-  preset, a typed value or the automator. The unit tests could not see it either, because they
-  called the rule with the large discrete jumps a slider never makes; `TempoReturnTests` now walks a
-  real drag a hundredth at a time and asserts *inside the loop* that a per-write rule would find
-  nothing. What the offer returns to also changed: **the rung above, not the top of the ladder** —
-  a second drop offers where that drop started, matching what `SpanHistory.widenTarget` already did
-  for spans one decision earlier in the same ADR.
+  The **return pill** that 0201 D4 and 0202 D4 put beside the speed readout was **removed by
+  ADR 0245**. At phone width it truncated its own number and narrowed the slider, and `Reset`, the
+  presets and numeric entry already cover the way back. One lesson outlives it. A rule fed by a
+  **continuous** slider has to compare against where the gesture started, captured on the grab, and
+  not against the previous write. Each frame of a drag is a tiny step, so no single frame ever
+  crosses a threshold. `speedIsUserDriven` survives because the first-song walkthrough's speed beat
+  (ADR 0149) reads it. That way the speed the app sets when a loop arms (ADR 0089) does not count as
+  the player trying the speed.
 - **`Snag`** (ADR 0200) is *a place it went wrong* — `markedAt`, `seconds`, the `speed` in force,
   and `loopUID`. Cascade-owned by its `Song`, like `Marker` and for the same reason rather than by
   copying it: both are points on that song's timeline, and a point on a song that no longer exists
