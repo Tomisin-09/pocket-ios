@@ -56,6 +56,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **The first-run questions ask what you're working toward.** After *What's the dream?* comes a list of
+  goals, with the ones closest to your answer at the top. Pick up to three, most important first, and
+  they become your long-term goals, so Today's session builds from them from the first day. You can
+  change them any time in **Practice ▸ Long-term goals**. If you answered *Just unwind*, the question
+  is skipped. (ADR 0246)
 - **The song player points out the holds it hides, one at a time.** Six of its controls do something
   when you hold them that nothing on screen tells you: a loop's row, the metronome, the BPM, a
   marker's row, a panel's name and the song's name. Each now has a tip: a ring round the control and

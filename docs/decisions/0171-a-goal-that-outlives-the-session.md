@@ -7,6 +7,9 @@
   description. The Save gate D5 actually relies on — no goal with no skills — is unchanged, and so
   is everything else here. (0216's slice 1 also adds a reach line under each skill in this tier's
   editor.)
+- **Amended by:** ADR 0246 (2026-10-03) — D6's *"here and only here"* gains one exception for
+  **adding**: the first-run intake can create up to three long-term goals from templates. Ranking,
+  editing and deleting still happen only in the list, and the echo stays read-only.
 - **Relates to:** ADR 0015 (the planner's goal model — S1 "the goals are *not equal*", S5 weight,
   S6 met, S7 "one near-term goal"), ADR 0014 (the session layout the goals feed),
   ADR 0129 (the block model that cut Quick to three items and forced round-robin),
@@ -140,6 +143,9 @@ the same fixed taxonomy a template seeds from. What the row removes is only the 
 from someone else's phrasing of the goal.
 
 ### D6 — Two surfaces, split by role: an editable list in Practice, a read-only echo on Progress.
+
+> **Amended by ADR 0246 (2026-10-03):** the first-run intake can also **add** up to three goals.
+> Nothing else below changes.
 
 1. **The list** — a row in `PracticeView`'s first section, beside the planner card and Routines.
    Same altitude, one tap from the screen that consumes it, and outside any session. Ranking,

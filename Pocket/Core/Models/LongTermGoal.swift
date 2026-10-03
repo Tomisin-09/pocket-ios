@@ -113,4 +113,15 @@ enum LongTermGoalStore {
     static func ranking(_ goals: [LongTermGoal]) -> [UUID] {
         inRankOrder(goals).filter { !$0.isMet }.map(\.uid)
     }
+
+    /// Goals made from templates, ranked in the order given and placed below the `existingCount`
+    /// goals already in the list, so `order` stays contiguous. Returned **uninserted**, so the caller
+    /// owns the insert. The first-run goals card (ADR 0246) is the only caller. Each goal takes its
+    /// template's title and every one of its skills, which is what the editor saves when nothing is
+    /// trimmed.
+    static func makeGoals(from templates: [GoalTemplate], below existingCount: Int) -> [LongTermGoal] {
+        templates.enumerated().map { index, template in
+            LongTermGoal(title: template.title, skillIDs: template.skillIDs, order: existingCount + index)
+        }
+    }
 }

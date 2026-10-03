@@ -36,7 +36,8 @@ struct PracticeView: View {
                 }
                 // The long-term tier's one editable surface (ADR 0171 D6). Same altitude as the
                 // planner and routines — one tap from the screen that consumes it, and outside any
-                // session. Progress echoes this list read-only; nothing else may edit it.
+                // session. Progress echoes this list read-only; nothing else may edit it. The
+                // first-run intake may add to it, and that is all (ADR 0246).
                 libraryRow(title: "Long-term goals", subtitle: "Standing outcomes, ranked",
                            icon: "flag", count: longTermGoals.count) {
                     LongTermGoalListView()

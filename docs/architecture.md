@@ -1875,8 +1875,9 @@ empty, because that line was Home's only word about adding a first song.
   `ArtistExperience`/`MusicGenre`/`MusicalDream`/`PracticeMinutes`), never a stored enum (the
   enum-attribute migration rule). They're written by `Profile.setCuration` (a fetch-or-create that
   *does* legitimately create a still-nameless row — the first-launch intake runs before a name is
-  earned). Collected by the **first-launch intake** (`ArtistIntakeView`, a four-card skippable
-  full-screen flow gated once by `artistIntakeSeen`; Home shows the intake *or* the naming prompt,
+  earned). Collected by the **first-launch intake** (`ArtistIntakeView`, a skippable full-screen flow of
+  five cards — four after *Just unwind* — gated once by `artistIntakeSeen`; its goals card writes
+  ranked `LongTermGoal`s rather than a profile field, ADR 0246; Home shows the intake *or* the naming prompt,
   never both, via `maybeOfferProfileMoment`) and editable any time in **Settings ▸ You**
   (`ProfileCurationSection` — its own "Your sound" top-level section until ADR 0162 folded it in with
   the artist name, since both answer the same question). That section also holds the ADR-0116 **Instrument** row (Guitar/Bass,

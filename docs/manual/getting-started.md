@@ -25,13 +25,18 @@ cannot be slowed down or drawn as a waveform by any app, including this one.
 
 ## The first run
 
-The first time you open the app it asks **A few quick things** — four questions, on your experience,
-what you want to play, what you are aiming at, and how long you usually have. They shape the
-sessions the app suggests later.
+The first time you open the app it asks **A few quick things**: your experience, what you want to
+play, what you are aiming at, what you are working toward, and how long you usually have. They shape
+the sessions the app suggests later.
 
 <!-- shot: getting-started/first-run | role: screen
      | alt: The first-run questions, showing "Where are you with the guitar?" with four choices and a Continue button
-     | state: fresh install, first launch, step 1 of 4 -->
+     | state: fresh install, first launch, step 1 of 5 -->
+
+**What are you working toward?** lists goals, with the ones closest to your answer to the question
+before it at the top. Pick up to three, most important first, and each becomes a
+[long-term goal](sessions.md#long-term-goals) that Today's session builds from. If you answered
+**Just unwind**, this question is skipped.
 
 Every one of them is optional. **Skip** at the top leaves the whole thing; **Continue** moves on and
 **Back** returns. Answering nothing is a valid answer, and you can change any of it later under
