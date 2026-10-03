@@ -175,6 +175,9 @@ A **rest** block is a countdown with the next block named under it, and it moves
 None of that is compulsory. An unchanged rating, an empty note and an untouched tempo offer all
 commit nothing.
 
+Accept a move and the rating starts again at the new tempo, so next time the dots open blank. Your
+last rating stays with the drill as *Last rated 5 at 70 BPM*, under its Mastery row.
+
 **See Help & FAQs: "What's the difference between mastery and command tempo?"**
 
 ### At the end

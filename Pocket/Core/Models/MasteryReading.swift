@@ -9,9 +9,14 @@ import Foundation
 /// other. What it adds is the missing *condition*: a rating records which command it describes, so
 /// the app can tell a 5 earned at today's tempo from one earned two promotes ago. That is ADR 0121's
 /// argument for `commandNotesPerBeat` ("a BPM without its note rate is only half a fact") applied to
-/// the rating instead of the tempo, and `RhythmChange`'s doctrine for when measurement conditions
-/// move: a reading whose conditions have changed is marked **stale**, never silently rewritten and
-/// never wiped (ADR 0070 — the app does not change a number the player set).
+/// the rating instead of the tempo.
+///
+/// **When the command moves, the rating is set aside** (ADR 0250, amending 0169 D3): the drill reads
+/// unrated at its new tempo, and the old rating survives as `previousMastery`, captioned "Last rated
+/// 5 at 70 BPM". It is never rewritten and never wiped. The move is the player's own act and the old
+/// number stays on screen, so ADR 0070 holds. **Stale** survives only as the fallback for a rating
+/// that arrives already moved-off (an archive from an older build) until `MasteryStaleBackfill`
+/// sets it aside too.
 ///
 /// Pure and **SwiftData-/SwiftUI-free** so the comparison rules stay unit-tested per AGENTS.md.
 enum MasteryReading {
@@ -51,15 +56,30 @@ enum MasteryReading {
     struct Display: Equatable {
         /// The stored rating this describes, 0–5.
         var rating: Int
-        /// The conditions, already formatted for the unit — "90 BPM · 8ths", "85%".
-        var conditions: String
+        /// The conditions, already formatted for the unit — "90 BPM · 8ths", "85%". `nil` only for a
+        /// set-aside rating that predates the stamp (ADR 0169): it is known, its tempo never was.
+        var conditions: String?
         /// Whether the command has since left those conditions.
         var isStale: Bool
+        /// Whether this is the rating a command move **set aside** (ADR 0250) rather than the current
+        /// one — shown under blank dots as what was, not as what is.
+        var isPrevious = false
 
         /// The caption itself. Stale reads as a fact about the *command*, not a verdict on the
         /// rating: the rating stands, the thing it was measured against has moved.
         var caption: String {
-            isStale ? "Rated at \(conditions) — command has moved since" : "Rated at \(conditions)"
+            let conditions = conditions ?? ""
+            if isPrevious {
+                return conditions.isEmpty ? "Last rated \(rating)" : "Last rated \(rating) at \(conditions)"
+            }
+            return isStale ? "Rated at \(conditions) — command has moved since" : "Rated at \(conditions)"
+        }
+
+        /// Whether this caption belongs under dots currently showing `shown`. A current reading
+        /// captions its own number; a set-aside one captions the **blank** row the move left, so
+        /// rating the drill again at its new tempo takes the caption away.
+        func describes(_ shown: Int?) -> Bool {
+            isPrevious ? shown == nil : shown == rating
         }
     }
 }

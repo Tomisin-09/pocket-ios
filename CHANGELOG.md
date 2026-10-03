@@ -298,6 +298,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Mastery starts again when you move the command tempo.** Rate a drill or loop up to 5, raise its
+  command tempo, and it now reads unrated at the new tempo instead of carrying the 5 along. Your old
+  rating isn't lost: under the dots it says *Last rated 5 at 70 BPM*. This applies whichever way the
+  tempo moves, whether you raise it after a run, settle it lower, or change it in the edit sheet. A
+  drill you've just raised now comes round sooner in your sessions, because the new tempo is the one
+  to work on. Changing an exercise's rhythm while keeping the same note speed keeps the rating.
+  (ADR 0250)
 - **A song's mastery is shown as dots.** The song player's title and Song details used stars, while
   every loop row used dots. Now they all use dots.
 - **Marking a snag no longer suggests a tighter loop.** The *Tighten to …* offer that replaced Loop
@@ -416,6 +423,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **Raising a drill no longer takes it out of your sessions.** After you raised the tempo on a 5, the
+  next completion screen showed your 5 again and leaned toward another raise. Tapping Continue
+  without touching the dots then saved that 5 at the new tempo, and the drill stopped being picked.
+  Now the dots open blank at the new tempo, and the tempo offer leans neither way. (ADR 0250)
+- **A note written on the Done screen records the run as you played it.** If you also raised the
+  tempo, the note used to record the new tempo. Now it records the tempo the run was at and the
+  rating you gave it. (ADR 0250)
 - **Writing a tab, the + stays in sight.** The strip of notes now follows the + as each note goes in.
   Before, it stayed where it started, so on a tab longer than the screen is wide the + slid off the
   right edge and you were writing note 16 without seeing where it would go.

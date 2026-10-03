@@ -12,10 +12,11 @@ struct ExerciseProgressSection: View {
     @Binding var mastery: Int?
     /// When the exercise was last practised — read-only, stamped by the run path.
     let lastPracticed: Date?
-    /// The conditions the **stored** rating was given under (ADR 0169), or `nil` when there is no
-    /// rating or no stamp. Passed as a value so this view stays SwiftData-free; shown only while the
-    /// edited `mastery` still matches the rating it describes, so walking the dots doesn't leave a
-    /// caption attached to a number that is no longer on screen.
+    /// The conditions the **stored** rating was given under (ADR 0169) — or the rating a command move
+    /// set aside, "Last rated 5 at 70 BPM" (ADR 0250) — or `nil` when there is nothing to report.
+    /// Passed as a value so this view stays SwiftData-free; shown only while it describes the dots on
+    /// screen (`Display.describes`), so walking the dots doesn't leave a caption attached to a number
+    /// that is no longer there.
     var reading: MasteryReading.Display?
     /// This drill's own tempo history, read off the practice log (ADR 0117), or `nil` when there
     /// isn't one to draw yet. Passed in as a value so this view stays SwiftData-free and previewable.
@@ -46,7 +47,7 @@ struct ExerciseProgressSection: View {
                     }
                 }
             }
-            if let reading, reading.rating == mastery {
+            if let reading, reading.describes(mastery) {
                 Text(reading.caption)
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
@@ -201,18 +202,18 @@ private struct Sparkline: View {
 }
 
 #Preview("Progress — a rating whose command has moved") {
-    // The ADR 0169 caption in both states, side by side: a reading taken at today's command, and one
-    // the command has since been promoted past. The second is what a drill looks like after an
-    // accepted raise — the rating stands, and the line says what it was measured against.
+    // The caption in both states, side by side: a reading taken at today's command (ADR 0169), and
+    // the rating an accepted raise set aside (ADR 0250). The second is what a drill looks like after
+    // the raise — unrated at its new tempo, with the line saying what it was last rated, and where.
     @Previewable @State var fresh: Int? = 5
-    @Previewable @State var moved: Int? = 5
+    @Previewable @State var moved: Int?
     return Form {
         ExerciseProgressSection(mastery: $fresh, lastPracticed: .now,
                                 reading: .init(rating: 5, conditions: "90 BPM · 8ths",
                                                isStale: false))
         ExerciseProgressSection(mastery: $moved, lastPracticed: .now,
                                 reading: .init(rating: 5, conditions: "70 BPM · 8ths",
-                                               isStale: true))
+                                               isStale: false, isPrevious: true))
     }
 }
 

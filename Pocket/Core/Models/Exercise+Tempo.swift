@@ -134,7 +134,7 @@ extension Exercise {
     /// command has caught up to is auto-cleared (a reach must stay above command), reverting to the
     /// auto value. No longer writes the vestigial `targetTempo` (ADR 0075).
     func promoteCommand(to tempo: Int) {
-        commandTempo = tempo
+        moveCommand(to: tempo)   // sets aside a rating the move leaves behind (ADR 0250)
         // Bind the achievement to the rhythm it was just measured in (ADR 0121). Every promote runs
         // through here, so the binding can't be forgotten at a call site; `nil` when the drill states
         // no rhythm, which is the honest record of "measured, rhythm unstated".
@@ -169,7 +169,7 @@ extension Exercise {
     /// through here — they apply the same two rules to their local state instead. Sharing the pure
     /// helpers is what keeps the two paths from drifting.
     func settleCommand(to tempo: Int) {
-        commandTempo = tempo
+        moveCommand(to: tempo)   // sets aside a rating the move leaves behind (ADR 0250)
         workingTempo = CommandOffer.settledFloor(command: tempo, working: workingTempo)
         backoffTempoOverride = CommandOffer.survivingBackoffPin(backoffTempoOverride, command: tempo)
         commandNotesPerBeat = noteRate?.perBeat

@@ -20,7 +20,7 @@ the words Red Moon coined for its own practice model.
 
 ## Mastery
 
-> How cleanly you own this loop — feel, tone, accuracy. Separate from speed: you can play something fast but scrappy, or slow but perfect. A rating is kept with the tempo you gave it at, so it still means something after you move on.
+> How cleanly you own this loop — feel, tone, accuracy. Separate from speed: you can play something fast but scrappy, or slow but perfect. A rating is for the tempo you gave it at. Move the command tempo and it starts again; your last one is kept.
 
 **Where you set it.** Open a song, hold a loop in the **Loops** panel to open its edit sheet, and
 set **Mastery** there. It is a rating out of five and it is yours to set — nothing in Red Moon
@@ -35,15 +35,15 @@ An untouched loop shows no rating at all rather than a zero. That is deliberate:
 never assessed and a loop you have assessed as poor are different things, and only one of them
 should look like a problem.
 
-**A rating remembers the tempo you gave it at.** Under the rating you will see a line like
-*Rated at 85%* — on an exercise, *Rated at 90 BPM · 8ths*. Once you move the command tempo past
-that, the line adds *command has moved since*: your rating is still yours and still stands, but
-it describes a speed you have since left behind.
+**A rating belongs to a tempo.** Under the rating you will see a line like *Rated at 85%* — on
+an exercise, *Rated at 90 BPM · 8ths*. When you move the command tempo — raising it after a run,
+settling it lower, or changing it in the edit sheet — the dots go back to unrated, and the line
+under them becomes *Last rated 5 at 85%*. Your old rating is kept, not erased: it describes a
+speed you have since left.
 
-That matters most when you raise your command tempo straight after rating something 5. Without
-the tempo attached, a 5 would take the drill out of rotation entirely — at a speed you had not
-actually rated it at yet. With it, the drill comes back round instead, so you get a chance to
-say whether the new tempo is really clean.
+That is the cycle the two numbers are for. Rate a loop until it is a 5, raise the command tempo,
+and rate it again at the new speed. A drill you have just raised comes back round in your
+sessions, because a tempo nobody has rated yet is exactly the one worth working on.
 
 ## Command tempo
 

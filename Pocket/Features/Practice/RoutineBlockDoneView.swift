@@ -39,7 +39,8 @@ struct RoutineBlockDoneView: View {
     /// The just-finished block's title (the drill name) — the completion line names what you did.
     let title: String
     /// The unit's current self-rated mastery (0–5, `nil` = unrated), pre-filled so a tap *adjusts*
-    /// rather than starts from blank.
+    /// rather than starts from blank. Blank after the command has moved, which sets the rating aside
+    /// (ADR 0250), so the offer it seeds leans neither way at a tempo nobody has rated.
     let initialMastery: Int?
     /// The tempo anchors the revision offer is sized from (ADR 0134), or `nil` for a unit that
     /// carries no offer at all (a routine's loop blocks, songs, rests).

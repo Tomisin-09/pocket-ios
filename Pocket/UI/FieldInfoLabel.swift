@@ -54,8 +54,8 @@ struct FieldInfoLabel: View {
 enum PracticeFieldInfo {
     static let mastery =
         "How cleanly you own this loop — feel, tone, accuracy. Separate from speed: you can "
-        + "play something fast but scrappy, or slow but perfect. A rating is kept with the tempo "
-        + "you gave it at, so it still means something after you move on."
+        + "play something fast but scrappy, or slow but perfect. A rating is for the tempo you "
+        + "gave it at. Move the command tempo and it starts again; your last one is kept."
     static let commandTempo =
         "The fastest speed you own this loop at, as a % of the original. Command is speed; "
         + "Mastery is cleanliness — deliberately two axes."

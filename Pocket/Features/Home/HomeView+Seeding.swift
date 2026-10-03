@@ -31,6 +31,10 @@ extension HomeView {
         // Date every piece saved before the Journal listed pieces (ADR 0229). Every launch: a piece
         // restored from an older archive arrives undated too. Writes only to an undated piece.
         PieceDateBackfill.run(into: context)
+        // Set aside every rating a command has already moved off (ADR 0250), so a store from before
+        // it reads the way a command move reads now. Every launch, for restored archives; a re-run
+        // writes nothing.
+        MasteryStaleBackfill.run(into: context)
         await Task.yield()
         if !waitForTheIntake { RoutinePresets.seedIfNeeded(into: context) }
         await Task.yield()

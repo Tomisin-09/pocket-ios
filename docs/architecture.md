@@ -989,6 +989,18 @@ on `priority`, not score, so a 0 sorts *last* rather than being excluded.) The r
 conditions moved is new. The stamp is read back as a caption under the mastery row on the exercise
 detail's Progress section and the loop edit sheet ("Rated at 90 BPM · 8ths"), never on the Done
 screen, which is a commit beat rather than a read-back.
+
+**A command move sets the rating aside (ADR 0250).** Each model writes `commandTempo` through
+`moveCommand(to:)` — the path `promoteCommand`, `settleCommand` and the loop editor share — which moves
+the rating to the additive `previousMastery: Int?` when the stamp no longer matches the new command
+(or, for an unstamped rating, when the effective value actually changed). The unit then reads
+unrated at its new tempo, which `DueScore` treats as most due, and the read-back caption becomes
+"Last rated 5 at 70 BPM · 8ths". `ratingWouldBeSetAside(movingTo:)` is the same rule asked ahead of
+the write, so the loop editor shows the dots it will save. `rateMastery` writes nothing for an
+unchanged value, so a completion screen handing back its pre-filled row on Continue can neither wipe
+the set-aside rating nor re-stamp an old one at a new tempo. `MasteryStaleBackfill` runs every launch
+beside `PieceDateBackfill` and sets aside any rating 0169 left stale; the stale reading and its
+`DueScore` floor remain as the fallback.
 into `[SessionBlock]` honouring the ADR 0014 pacing (≤20-min blocks, U-shape with the top-due drill
 last, warm-up LRU-picked / unbudgeted). **A preset denominates focused *blocks*, not minutes
 (ADR 0129):** `SessionLength` is `blocks × itemsPerBlock` — Quick 1×3, Focused 2×3, Full 4×3 — each

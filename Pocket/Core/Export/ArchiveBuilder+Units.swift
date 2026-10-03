@@ -57,6 +57,7 @@ extension ArchiveBuilder {
             mastery: exercise.mastery,
             masteryTempo: exercise.masteryTempo,
             masteryNotesPerBeat: exercise.masteryNotesPerBeat,
+            previousMastery: exercise.previousMastery,
             linkedSongIDs: exercise.linkedSongs.map(\.sourceID).sorted(),
             references: referenceRecords(exercise.references)
         )

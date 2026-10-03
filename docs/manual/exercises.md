@@ -168,7 +168,8 @@ take. That is covered with the rest of the journal.
 A run that reaches the end of its staircase on its own lands on a completion screen: **Nice work**,
 then an optional mastery rating, an optional note, and the offer to move your command tempo up to
 the reach you just played. A run with **Reach** off never went above command, so it offers no move
-up.
+up. Moving your command tempo starts the rating again at the new tempo, and the drill's **Progress**
+section shows the old one as *Last rated 5 at 70 BPM*.
 
 A run you stop by hand does not land there and does not log. The practice log records runs that
 finished, because a run cut short has no honest length to claim.

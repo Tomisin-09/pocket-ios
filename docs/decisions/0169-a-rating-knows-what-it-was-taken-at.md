@@ -2,6 +2,13 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-18 (`pocket-272-mastery-conditions`)
+- **Amended by:** ADR 0250 (2026-10-04) — a command move now **sets the rating aside**: the unit
+  reads unrated at its new tempo and the old rating survives as `previousMastery`, captioned *Last
+  rated…*. That replaces D3's *staleness, not wiping* as the answer to a move, and adopts this ADR's
+  rejected alternative in a form that keeps the rating. It was found because the Done screen
+  pre-filled a stale 5 and re-stamped it on an untouched Continue. D5's caption gains the *Last
+  rated…* case; D8's rollup gains a speed line beside it. The stamp, D1, D2, D4's floor (now the
+  fallback) and D6–D7 stand.
 - **Relates to:** ADR 0036 (mastery and command tempo as separate fields), ADR 0039
   (optional-on-purpose — "unrated" is not zero), ADR 0070 (the app never grades the player,
   and never silently changes a number they set), ADR 0072 (gave `Exercise` a `mastery`),

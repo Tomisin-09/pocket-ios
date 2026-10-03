@@ -194,7 +194,8 @@ enum ArchiveBuilder {
             isBackingTrack: loop.isBackingTrack,
             lastPracticedSpeed: loop.lastPracticedSpeed,
             mastery: loop.mastery,
-            masteryAtSpeed: loop.masteryAtSpeed,
+            // The stamp and the set-aside rating it can describe on one line (ADR 0250).
+            masteryAtSpeed: loop.masteryAtSpeed, previousMastery: loop.previousMastery,
             focus: loop.focus,
             commandTempo: loop.commandTempo,
             targetSpeedOverride: loop.targetSpeedOverride,

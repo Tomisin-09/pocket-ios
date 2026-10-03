@@ -82,6 +82,9 @@ struct ExerciseRecord: Codable, Equatable, Sendable {
     var mastery: Int?
     var masteryTempo: Int?
     var masteryNotesPerBeat: Int?
+    /// The rating a command move set aside (ADR 0250). `Optional`, so an archive written before 0250
+    /// decodes with no key.
+    var previousMastery: Int?
 
     /// The songs this drill was linked to (ADR 0111), by `sourceID`. A many-to-many that is written on
     /// this side only — recording it from both ends would put the same fact in the archive twice, with
