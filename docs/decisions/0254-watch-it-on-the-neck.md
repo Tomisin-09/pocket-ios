@@ -1,9 +1,10 @@
 # ADR 0254 — Watch it on the neck
 
 - **Status:** Accepted — decided with Tomisin, 2026-10-04, from a mockup with four open choices, all left
-  at their defaults (*"I'm happy with the default options"*). Built on `pocket-364-watch-it-on-the-neck`.
-  Still owed: the build and tests on the Mac, screenshots, and a device check that the light keeps time
-  with the audio (Consequences).
+  at their defaults (*"I'm happy with the default options"*). Built on `pocket-364-watch-it-on-the-neck`,
+  and verified on the Mac: the full test plan on iOS 26, the sheet's UI tests on iOS 18.5 as well, and
+  screenshots at 375 and 402 points in light and dark. On Tomisin's iPhone the light keeps time with the
+  audio and every door is in reach (2026-10-04).
 - **Date:** 2026-10-04
 - **Relates to:** 0227 D2 (Name the notes' neck never scrolls under a finger; this one is free to, and
   that rule stands) · 0225, 0227 and 0235 (the app never plays an answer back; it still doesn't) · 0234 D5
@@ -64,9 +65,10 @@ shows when the song's audio can't play. They kept every default.
   rows pass the piece they've already decoded (`canWatch(_:on:)`).
 - `NamingPieceSeed` gains `-seedWatchPiece`: the same song with its six notes placed on the neck.
   `WatchOnNeckUITests` opens the sheet from Edit loop and checks the neck's value while the loop plays,
-  the first UI test to play a loop's audio, so it's to be run on the iOS 18.5 simulator (CI's) as well as
-  iOS 26 before it's trusted.
+  the first UI test to play a loop's audio. It passes on iOS 26 and on iOS 18.5, CI's. A second test
+  opens it from *Saved on this loop*, whose button shares a Form row with *Name the notes*: a row holding
+  two buttons can fire both on one tap, and the test fails if Name the notes comes too.
 - The manual gains the sheet under Practice ▸ *The other run modes*, and a line at each door. Its figure
   goes on the reshoot list; no figure is shot per branch.
-- **Owed to Tomisin:** a device check that the light keeps time with the audio, over Bluetooth
-  headphones and at a slow tempo.
+- **Device check, done by Tomisin (2026-10-04):** the light keeps time with the audio, and the doors are
+  in reach.

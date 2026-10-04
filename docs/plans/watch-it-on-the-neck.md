@@ -10,7 +10,7 @@ there).
 | Branch | State |
 |---|---|
 | `pocket-363-hear-out-of-exercises` | **Part A, ADR 0253, done.** Commit `832c5fc`. Verified on the Mac: strict lint, the build, 3,913 unit tests, the UI tests (13/13 on a clean install), ManualExerciseShots 6/6, `check-manual.py`. **No PR yet**: Tomisin hasn't asked for one. |
-| `pocket-364-watch-it-on-the-neck` | **Part B, this plan, written in full; none of it built yet.** Stacked on `pocket-363`, because 363 isn't merged. It contains 363's commit. C2 and C3 are the WIP commit; C1 and C4–C7 were written in a cloud session (no Xcode there), so the whole branch is owed the **Verification** list below, on the Mac, before any PR. |
+| `pocket-364-watch-it-on-the-neck` | **Part B, built and verified on the Mac** (see *Verified* below), and on Tomisin's iPhone. Stacked on `pocket-363`, because 363 isn't merged, so it contains 363's commit. C2 and C3 are the WIP commit, C1 and C4–C7 the cloud session's, and two layout fixes and a second UI test came from the Mac's screenshots. It goes to main as one PR with Part A. |
 
 **After 363 squash-merges into main:**
 `git fetch && git rebase --onto origin/main pocket-363-hear-out-of-exercises pocket-364-watch-it-on-the-neck`
@@ -312,8 +312,39 @@ loses its write). Present by `StableRef` uid, never by the model (ADR 0090).
    snapshot catches the glow.
 8. Run the new UI test on the iOS 18.5 simulator.
 9. Run `scripts/check-manual.py`, C16 included.
-10. **Owed to Tomisin:** a device check that the glow keeps time with the audio, over Bluetooth and at a
-    slow tempo.
+10. **Tomisin's device check** that the glow keeps time with the audio, over Bluetooth and at a slow
+    tempo. Done, 2026-10-04.
+
+## Verified (on the Mac, 2026-10-04)
+
+- `xcodegen generate`, then `swiftlint --strict`: 0 violations. The simulator build: **BUILD SUCCEEDED**,
+  no warnings in any touched file. `scripts/check-manual.py`: passed, C16 included.
+- **PocketAll on a clean iPhone 17 (iOS 26.5): TEST SUCCEEDED.** 3,926 unit tests and 50 UI tests, 0 failures,
+  each case started once (no retries), all 27 UI suites ran.
+- `PieceNeckTests` (11), `NamingPieceSeedTests`, `NeckMarksTests`, `NeckEditingTests`, `HaloMotionTests` and
+  `NeckNeighboursTests`: all six requested suites ran, 65 tests, 0 failures.
+- **Two mutants** on `NeckFollow.window`, one at a time: rounding the first fret in view down, then the last
+  one up. Each failed `testTheBoardsFretsInViewStopAtEitherEnd` and `testItMovesOnlyWhenTheHeardFretsLeaveTheView`
+  on the assertion meant for it, then was reverted.
+- **`WatchOnNeckUITests`** passes on iOS 26.5 (iPhone 17, and an iPhone SE at 375 points in light and dark) and
+  on **iOS 18.5** (iPhone 16). The loop's audio plays on both, and the neck's value changes as it does.
+  - The first iOS 18.5 run, on a cold-booted simulator, failed **before the new code**. The hold on the
+    loop row landed as a tap and started the loop instead of opening Edit loop. That route is
+    `NameTheNotesUITests`' own. On the warm simulator both classes passed.
+  - The second test, opening from *Saved on this loop*, was checked against a mutant that made its button
+    fire Name the notes as well. It failed on "the tap fired both buttons", then the mutant was reverted.
+- **`ManualSongMapShots`** (3/3) shot Name the notes and By ear unchanged by the lifted dot and chip.
+- **Screenshots** looked at: the sheet stopped and playing, at 402 points (dark) and at 375 points (light
+  and dark). The glow, the hammer-on's curve, the ringed chip and the heard line all show. The controls
+  and chips stay above the fold on the SE.
+- **Fixed from the screenshots:**
+  - *Saved on this loop*: *Watch it on the neck* had a Form row of its own, with a divider at a stray
+    inset. It now shares *Name the notes*' row.
+  - The Journal's link: as a `Label` it took the List's icon column, which put a gap before its words and
+    moved the divider in. It's now an icon and words inline, like the caption above it.
+- **Stale figures** for the reshoot: `reference/saved-piece` and `journal/pieces`.
+- **New figure** `reference/watch-on-neck`: the row and marker exist, but the shoot method doesn't yet.
+- **Device check, done by Tomisin:** *"the timing is good and the doors are accessible."*
 
 ## House rules that apply here
 

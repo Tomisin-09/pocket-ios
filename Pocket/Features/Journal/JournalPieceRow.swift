@@ -35,17 +35,25 @@ struct JournalPieceRow: View {
         .padding(.vertical, 6)
     }
 
-    /// Styled as the caption above it, a link in the Journal's colour.
+    /// Styled as the caption above it, a link in the Journal's colour. Its icon sits beside the words, as the
+    /// caption's chevron does: a `Label` in a List row takes the List's icon column, which left a gap before
+    /// the words and moved the row's divider in to meet them.
     private func watchLink(_ action: @escaping () -> Void) -> some View {
         Button {
             action()
             haptic(.light)
         } label: {
-            Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
-                .font(.futura(.caption))
-                .foregroundStyle(PocketColor.journal)
+            HStack(spacing: 4) {
+                Image(systemName: WatchOnNeckSheet.symbol)
+                    .font(.futura(.caption2, weight: .semibold))
+                    .accessibilityHidden(true)
+                Text(WatchOnNeckSheet.title)
+            }
+            .font(.futura(.caption))
+            .foregroundStyle(PocketColor.journal)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(WatchOnNeckSheet.title)
         .accessibilityAddTraits(.isLink)
         .accessibilityIdentifier("journal.piece.watch")
     }

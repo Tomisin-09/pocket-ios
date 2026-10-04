@@ -8,8 +8,8 @@ import XCTest
 /// as much as the sheet, so read the attachment before the code.
 ///
 /// The way in is the naming seed with its six notes placed on the neck (`-seedWatchPiece`): Song library ▸
-/// the song ▸ hold the loop ▸ *Watch it on the neck*. The seed is put back on each launch, and every other
-/// test's launch takes it out.
+/// the song ▸ hold the loop ▸ *Watch it on the neck*, or on into *Train your ear* ▸ *Saved on this loop*.
+/// The seed is put back on each launch, and every other test's launch takes it out.
 final class WatchOnNeckUITests: UITestCase {
 
     /// The player loads the song's audio before it shows; generous, as the shoot's is.
@@ -49,10 +49,47 @@ final class WatchOnNeckUITests: UITestCase {
         app.navigationBars[title].buttons["Done"].tap()
     }
 
+    /// The door under *Saved on this loop* shares its Form row with *Name the notes*, and a row holding two
+    /// buttons can fire both on one tap: this one opens the sheet, and Name the notes doesn't come with it or
+    /// after it. (`NameTheNotesUITests` taps the other button of the pair.)
+    @MainActor
+    func testSavedOnThisLoopOpensItAndNotNameTheNotes() {
+        let app = openEditLoop()
+        let train = app.buttons["Train your ear on this loop"]
+        XCTAssertTrue(reveal(train, in: app), "no Train your ear in Edit loop")
+        train.tap()
+        XCTAssertTrue(app.navigationBars["Train your ear"].waitForExistence(timeout: Self.uiTimeout),
+                      "Train your ear didn't open")
+
+        let watch = app.buttons["count.saved.watch"]
+        XCTAssertTrue(reveal(watch, in: app), "no \(title) under Saved on this loop — did the seed place the notes?")
+        watch.tap()
+        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: Self.uiTimeout),
+                      "\(title) didn't open from Saved on this loop")
+        XCTAssertFalse(app.navigationBars["Name the notes"].exists, "the tap opened Name the notes as well")
+
+        app.navigationBars[title].buttons["Done"].tap()
+        XCTAssertFalse(app.navigationBars["Name the notes"].waitForExistence(timeout: 2),
+                       "Name the notes opened once the sheet closed: the tap fired both buttons")
+    }
+
     // MARK: - The way in
 
     @MainActor
     private func openWatch(file: StaticString = #filePath, line: UInt = #line) -> XCUIApplication {
+        let app = openEditLoop(file: file, line: line)
+        let watch = app.buttons["loopEdit.watch"]
+        XCTAssertTrue(reveal(watch, in: app), "no \(title) in Edit loop — did the seed place the notes?",
+                      file: file, line: line)
+        watch.tap()
+        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: Self.uiTimeout),
+                      "Watch it on the neck didn't open", file: file, line: line)
+        return app
+    }
+
+    /// Song library ▸ the seeded song ▸ hold *Verse riff* ▸ Edit loop.
+    @MainActor
+    private func openEditLoop(file: StaticString = #filePath, line: UInt = #line) -> XCUIApplication {
         let app = launchApp(extraArguments: [UITestHooks.watchPieceArgument], file: file, line: line)
 
         let library = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Song library,")).firstMatch
@@ -74,13 +111,6 @@ final class WatchOnNeckUITests: UITestCase {
         loop.press(forDuration: 1.0)
         XCTAssertTrue(app.navigationBars["Edit loop"].waitForExistence(timeout: Self.uiTimeout),
                       "holding the loop didn't open Edit loop", file: file, line: line)
-
-        let watch = app.buttons["loopEdit.watch"]
-        XCTAssertTrue(reveal(watch, in: app), "no \(title) in Edit loop — did the seed place the notes?",
-                      file: file, line: line)
-        watch.tap()
-        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: Self.uiTimeout),
-                      "Watch it on the neck didn't open", file: file, line: line)
         return app
     }
 

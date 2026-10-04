@@ -27,20 +27,21 @@ struct SavedPieceSection: View {
                 PieceDrawing(piece: piece, spelling: spelling)
                 let snags = loop.snagsOnPiece
                 if !snags.isEmpty { snagRows(snags) }
-                Button("Name the notes") { onEdit(0) }
-                    .font(.futura(.subheadline))
-                    .buttonStyle(.bordered)
-                    .tint(PocketColor.practice)
-                    .accessibilityIdentifier("count.saved.name")
-                if let onWatch {
-                    Button(action: onWatch) {
-                        Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
+                // One row for the ways to work on the piece, naming it and watching it back: as two rows, the
+                // Form drew a divider between them at an inset of its own.
+                VStack(alignment: .leading, spacing: 10) {
+                    Button("Name the notes") { onEdit(0) }
+                        .accessibilityIdentifier("count.saved.name")
+                    if let onWatch {
+                        Button(action: onWatch) {
+                            Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
+                        }
+                        .accessibilityIdentifier("count.saved.watch")
                     }
-                    .font(.futura(.subheadline))
-                    .buttonStyle(.bordered)
-                    .tint(PocketColor.practice)
-                    .accessibilityIdentifier("count.saved.watch")
                 }
+                .font(.futura(.subheadline))
+                .buttonStyle(.bordered)
+                .tint(PocketColor.practice)
                 let kept = loop.keptTranscriptions.count
                 if kept > 0 {
                     PieceVersionsRow(count: kept + 1, action: onVersions)
