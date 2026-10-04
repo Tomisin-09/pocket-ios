@@ -110,11 +110,11 @@ extension ConfigureExerciseForm {
 
             switch runMode {
             case .generate:
-                FretboardRunEditor(run: $run, instrument: instrument)
+                FretboardRunEditor(run: $run, instrument: instrument, template: template)
                     .listRowBackground(Color.clear)
             case .draw:
                 FretboardDrillEditor(beatsPerBar: signature.beats, drill: $customDrill,
-                                     referenceEnabled: true)
+                                     referenceEnabled: true, template: template)
                     .listRowBackground(Color.clear)
             }
         } header: {

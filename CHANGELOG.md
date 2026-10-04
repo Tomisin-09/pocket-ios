@@ -298,6 +298,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **A Legato drill shows its hammer-ons and pull-offs.** The first note on each string is picked,
+  and every note after it on that string is hammered on going up or pulled off coming down. As the
+  board walks, each one is drawn as a curve under the string marked *h* or *p*, the way Name the notes
+  draws them. This works for a run you set up and one you draw yourself, and for Legato drills you
+  already have. A new Legato drill, and the Legato drill a new install starts with, now open on a
+  hammer-on / pull-off figure, 5h6h8p6 on every string and back, a note a beat so the marks can be
+  followed, instead of the chromatic warm-up. Speed it up from **Rhythm** when you're ready. (ADR 0251)
 - **Mastery starts again when you move the command tempo.** Rate a drill or loop up to 5, raise its
   command tempo, and it now reads unrated at the new tempo instead of carrying the 5 along. Your old
   rating isn't lost: under the dots it says *Last rated 5 at 70 BPM*. This applies whichever way the

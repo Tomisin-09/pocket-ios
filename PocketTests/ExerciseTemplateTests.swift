@@ -47,7 +47,9 @@ final class ExerciseTemplateTests: XCTestCase {
         let runFamily: Set<ExerciseTemplate> = [.warmup, .picking, .legato, .fingerstyle]
         for template in runFamily {
             XCTAssertEqual(template.bespokeEditor, .run, "\(template) declares a run")
-            XCTAssertEqual(template.defaultFretboardContent, .run(.chromaticWarmup))
+            // Legato opens on its own hammer-on / pull-off figure (ADR 0251); the rest on the warm-up.
+            XCTAssertEqual(template.defaultFretboardContent,
+                           .run(template == .legato ? .hammerOnPullOff : .chromaticWarmup))
             XCTAssertNil(template.defaultStrumPattern, "\(template) should ship no strum pattern")
         }
 

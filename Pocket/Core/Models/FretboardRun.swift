@@ -282,17 +282,6 @@ extension FretboardRun {
     }
 }
 
-// MARK: - Curated default (T8 — common-practice vocabulary, authored in-house)
-
-extension FretboardRun {
-    /// The canonical **chromatic warm-up**: one finger per fret, 1-2-3-4 up every string from the
-    /// low E to the high e and back, in eighths. The starter canvas a warm-up-family drill opens on —
-    /// a full, real warm-up the moment it's created, not an empty board (ADR 0065 build 2).
-    static let chromaticWarmup = FretboardRun(
-        fingers: [1, 2, 3, 4], baseFret: 1,
-        fromString: 5, toString: 0, roundTrip: true, notesPerBeat: 2)
-}
-
 /// The **content of a fretboard-template payload** (ADR 0065 build 2): a **generated** finger-pattern
 /// run (warm-up families), a preprogrammed **scale** run (Scales, Slice 2), or a **custom** hand-placed
 /// drill (the tap-to-place escape hatch). All resolve to the one `FretboardDrill` the renderer plays,

@@ -174,7 +174,11 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
     /// generated chromatic warm-up for the run families, an A-minor-pentatonic run for Scales, or a
     /// spider-walk canvas for the custom grid. `nil` for non-fretboard templates. Encoded at creation
     /// via `setFretboardContent`.
+    ///
+    /// **Legato opens on its own figure** (ADR 0251): a hammer-on / pull-off run rather than the
+    /// chromatic warm-up, which left a new Legato drill indistinguishable from a new Warm-up.
     var defaultFretboardContent: FretboardContent? {
+        if self == .legato { return .run(.hammerOnPullOff) }
         switch bespokeEditor {
         case .run: return .run(.chromaticWarmup)
         case .scale: return .scale(.aMinorPentatonic)
@@ -182,6 +186,20 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         case .fretboardGrid: return .custom(.spiderWalk)
         case .strumming, .chords, .strumChords, .freeform, .none: return nil
         }
+    }
+
+    /// The **run** a run-family editor starts from when there's no stored one — this template's own
+    /// starter, else the chromatic warm-up. Shared by the create form and *Edit shape*, so a Legato drill
+    /// seeded before it had a board opens on the hammer-on / pull-off figure too (ADR 0251).
+    var starterRun: FretboardRun { defaultFretboardContent?.runValue ?? .chromaticWarmup }
+
+    /// How this template **plays** a fretboard drill (ADR 0251) — the one place that decides which
+    /// templates articulate. Legato works out its hammer-ons and pull-offs from the frets
+    /// (`FretboardDrill.withLegatoJoins`); every other template plays the drill as it stands. Keyed off
+    /// the template and never stored, so a Legato drill made before this reads its joins too, with no
+    /// migration, and the same content under Warm-up or Picking stays picked.
+    func articulating(_ drill: FretboardDrill) -> FretboardDrill {
+        self == .legato ? drill.withLegatoJoins() : drill
     }
 
     /// The starter **chord progression** a freshly-created Chords exercise begins with — **empty**, so

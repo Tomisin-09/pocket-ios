@@ -307,7 +307,7 @@ private extension ConfigureExerciseForm {
     /// The generated seed for a fresh run/scale/arpeggio at a given instrument — the template's guitar
     /// default, or the bass flagship (ADR 0116).
     static func seededRun(template: ExerciseTemplate, instrument: Instrument) -> FretboardRun {
-        let guitar = template.defaultFretboardContent?.runValue ?? .chromaticWarmup
+        let guitar = template.starterRun
         return instrument == .guitar ? guitar : guitar.stringClamped(to: instrument.stringCount)
     }
 

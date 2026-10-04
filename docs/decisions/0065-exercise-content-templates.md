@@ -7,6 +7,11 @@
   set here), and the disabled **"Sound soon"** `SoundPreviewButton` is removed. The
   `ExerciseAudioEngine` seam (protocol, environment key, `AccompanimentSettings`) is **retained**; a
   real pitch audition is deferred to a future ADR.
+- **Amended by:** ADR 0251 (2026-10-04) — build 2's run families no longer all seed the chromatic
+  warm-up. **Legato** opens on a hammer-on / pull-off figure (`FretboardRun.hammerOnPullOff`) and
+  plays every drill with its joins worked out from the frets (`ExerciseTemplate.articulating`), so the
+  `FretTechnique.hammerOn` / `.pullOff` cases this ADR added are finally set. The shared run editor,
+  the generate-or-draw split, and Warm-up, Picking and Fingerstyle stand.
 
 ## Context
 

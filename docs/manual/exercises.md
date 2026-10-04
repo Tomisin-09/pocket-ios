@@ -219,6 +219,9 @@ The second step is titled for what you picked — **New warm-up**, **New scales*
   to run. Scales, Arpeggios and the warm-up family offer **Generate** or **Draw your own**: generate
   and you set a finger pattern, where on the neck it starts, how far across it travels and whether
   it moves; draw and you place the notes yourself. **Hear** plays it back to you either way.
+  A **Legato** drill works out its own hammer-ons and pull-offs: the first note on each string is
+  picked, and every note after it on that string is hammered on going up or pulled off coming down.
+  As the board walks, each one is drawn as a curve under the string marked *h* or *p*.
 - **Your command tempo** — the fastest you can play it cleanly right now. Everything else in the
   staircase derives from it, which is why it is the number the form asks for.
 - **Time signature** — sets the run's accents and count-in length. Defaults to 4/4.
