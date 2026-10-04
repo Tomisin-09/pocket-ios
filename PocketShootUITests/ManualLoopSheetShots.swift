@@ -124,17 +124,18 @@ final class ManualLoopSheetShots: ManualShotCase {
 
     /// `reference/tempo-editor` · `looping/tempo-editor` — the tap-tempo / manual BPM sheet.
     ///
-    /// Reached from the metronome glyph in the speed bar, whose label is `Set tempo` — the same words
-    /// as the sheet's title, so the gate is the **navigation bar** rather than the phrase, which the
-    /// button already carries before anything opens.
+    /// Reached by **holding** the metronome glyph in the speed bar, as the manual says. Binta arrives
+    /// with its tempo and its 1 placed, so the glyph is `Metronome click` and a tap only toggles the
+    /// click; a tap opens the editor only on a song with no grid, where the glyph reads `Set tempo`.
+    /// That was Slow Bend's state, and this test tapped `Set tempo` until the player figures moved to
+    /// Binta (2026-10-03). The gate is the **navigation bar**, since the sheet's title is `Set tempo`.
     @MainActor
     func testTempoEditor() {
         let app = launchForShoot()
         openHeroSong(in: app)
 
-        let setTempo = app.buttons["Set tempo"]
-        tap(setTempo, labelled: "Set tempo",
-            revealing: app.navigationBars["Set tempo"], called: "the tempo sheet")
+        hold(app.buttons["Metronome click"], labelled: "the metronome button",
+             revealing: app.navigationBars["Set tempo"], called: "the tempo sheet")
 
         capture(app, slug: "reference/tempo-editor",
                 assertingOnScreen: "Set tempo",

@@ -45,7 +45,7 @@ final class ManualPlayerShots: ManualShotCase {
                           screen: "the song player",
                           ownedBy: ["Back to library"],
                           alsoRequiring: ["Playback speed 1.00 times", "83 beats per minute",
-                                          "Set tempo", "Loop controls", "Waveform", "Song position",
+                                          "Metronome click", "Loop controls", "Waveform", "Song position",
                                           "Loops, expanded", "Play Chords", "Play Solo opener"],
                           orBeginningWith: ["Binta, Jack Trader"],
                           alsoServing: ["reference/player", "reference/loops-panel",
