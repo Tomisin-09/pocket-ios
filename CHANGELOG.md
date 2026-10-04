@@ -487,6 +487,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **A song playing to its end no longer crashes CI's build.** The closure `PracticeAudioEngine` gives
+  AVFoundation for a song's natural end is now marked `@Sendable`, as the slice player's and the tuner's
+  already were. Xcode 26 imports that handler as `@Sendable` itself, so the app built for phones never
+  crashed. CI's Xcode 16 doesn't, so there the closure ran as main-actor code, and Swift 6 trapped when
+  AVFoundation called it from its own queue. It took down the unit tests on `main` after #356
+  (`PracticeAudioEngineTests`, *Test crashed with signal trap*), as a race: the tests stop the player
+  first, which usually calls it on the main thread. A new test lets a file play out, which calls it off
+  the main thread every time. `report-test-retries.sh` now names a test that crashed, too: it had
+  reported that run as *every test passed on its first attempt*.
 - **A backup holding a kind of practice this build doesn't know still restores.** A practice-log row
   of an unknown kind is read as *other* — its minutes still count — rather than failing the whole
   archive as corrupt. Protects every build from this one on; a build already released will still call

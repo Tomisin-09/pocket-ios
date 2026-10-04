@@ -260,14 +260,15 @@ final class PracticeAudioEngine {
     }
 
     /// Schedule a straight-through segment `[fromFrame, toFrame)` that stops at the file end
-    /// (`.dataPlayedBack`, after the tail plays out). `false` = empty span, nothing queued.
+    /// (`.dataPlayedBack`, after the tail plays out). `false` = empty span, nothing queued. Its completion
+    /// is `@Sendable`: AVFoundation calls it off the main thread, and CI's Xcode 16 trapped without it.
     private func scheduleSegment(_ file: AVAudioFile, fromFrame: Int, toFrame: Int) -> Bool {
         let count = toFrame - fromFrame
         guard count > 0 else { return false }
         let token = generation
         player.scheduleSegment(file, startingFrame: AVAudioFramePosition(fromFrame),
                                frameCount: AVAudioFrameCount(count), at: nil,
-                               completionCallbackType: .dataPlayedBack) { [weak self] _ in
+                               completionCallbackType: .dataPlayedBack) { @Sendable [weak self] _ in
             Task { @MainActor in self?.handleReachedEnd(token: token) }
         }
         return true
@@ -362,8 +363,7 @@ final class PracticeAudioEngine {
 
     private func startTimer() {
         stopTimer()
-        // Playhead: one update per display frame (assumeIsolated is safe — the link
-        // runs on the main run loop, i.e. the main thread / main actor).
+        // Playhead: one update per display frame (assumeIsolated is safe: the link runs on the main thread).
         if playheadTicker == nil {
             playheadTicker = DisplayLinkTicker { [weak self] in
                 MainActor.assumeIsolated { self?.updateCurrentTime() }
