@@ -111,7 +111,7 @@ struct ContinuousLoopControls: View {
                 RecordingStatusView(recorder: recorder)
                 recordRestingLine(recorder)
             }
-            tempoControl
+            LoopTempoControl(player: player)
                 .padding(.top, 4)
         }
         .animation(.easeInOut(duration: 0.2), value: recorder?.state)
@@ -167,11 +167,22 @@ struct ContinuousLoopControls: View {
         if player.isLoading { return "Loading…" }
         return player.isPlaying ? playingStatus : idleStatus
     }
+}
 
-    /// −/+ tempo adjuster (ADR 0104 / 0135 B3): slow the audio down, or nudge it back up. Takes
-    /// effect live while sounding. Percent-of-original, matching the loop's tempo vocabulary.
-    private var tempoControl: some View {
-        HStack(spacing: 20) {
+/// The **−/+ tempo adjuster** (ADR 0104 / 0135 B3): slow the audio down, or nudge it back up. Takes effect
+/// live while sounding. Percent-of-original, matching the loop's tempo vocabulary. Its bounds are
+/// `ContinuousLoopPlayer`'s, which is why there is one of these: the big loop controls draw it under their
+/// button, and *Watch it on the neck* draws it smaller, in a row beside its play button (ADR 0254).
+struct LoopTempoControl: View {
+    let player: ContinuousLoopPlayer
+    /// The − and + glyphs' size.
+    var buttonSize: CGFloat = 32
+    var spacing: CGFloat = 20
+    /// The room the percentage keeps, so the buttons don't move as it changes.
+    var valueWidth: CGFloat = 72
+
+    var body: some View {
+        HStack(spacing: spacing) {
             tempoButton(symbol: "minus.circle.fill", delta: -ContinuousLoopPlayer.step,
                         enabled: player.canSlowDown, label: "Slow down")
             VStack(spacing: 0) {
@@ -183,7 +194,7 @@ struct ContinuousLoopControls: View {
                     .font(.futura(.caption2))
                     .foregroundStyle(PocketColor.textSecondary)
             }
-            .frame(minWidth: 72)
+            .frame(minWidth: valueWidth)
             tempoButton(symbol: "plus.circle.fill", delta: ContinuousLoopPlayer.step,
                         enabled: player.canSpeedUp, label: "Speed up")
         }
@@ -196,7 +207,7 @@ struct ContinuousLoopControls: View {
             player.adjustTempo(by: delta)
         } label: {
             Image(systemName: symbol)
-                .font(.system(size: 32))
+                .font(.system(size: buttonSize))
                 .foregroundStyle(enabled ? PocketColor.practice : PocketColor.surfaceBorder)
         }
         .buttonStyle(.plain)

@@ -5,6 +5,10 @@ enum NeckGeometry {
     /// A dot's cell is 30 points square, 4 apart, on both axes.
     static let cellSize: CGFloat = 30
     static let pitch: CGFloat = 34
+    /// The string names' column down the left, and the space between it and the board: what's left of
+    /// the width is the board's, which *Watch it on the neck* follows the heard note within (ADR 0254).
+    static let namesWidth: CGFloat = 16
+    static let namesSpacing: CGFloat = 8
 
     /// The middle of a spot in the marks' coordinates: fret across, string down, below the headroom.
     static func center(string: Int, fret: Int, headroom: CGFloat) -> CGPoint {
@@ -41,7 +45,7 @@ struct FretNeckBoard<Cell: View, Marks: View, Beneath: View>: View {
     @ViewBuilder let beneath: () -> Beneath
 
     var body: some View {
-        HStack(alignment: .center, spacing: 8) {
+        HStack(alignment: .center, spacing: NeckGeometry.namesSpacing) {
             VStack(spacing: 4) {
                 ForEach(stringNames.indices, id: \.self) { row in
                     Text(stringNames[row])
@@ -52,7 +56,7 @@ struct FretNeckBoard<Cell: View, Marks: View, Beneath: View>: View {
                 Color.clear.frame(width: 1, height: 26)   // aligns labels against the inlay + number rows
             }
             .padding(.top, headroom)
-            .frame(width: 16)   // fixed gutter — matches FretboardGrid so the two boards line up
+            .frame(width: NeckGeometry.namesWidth)   // fixed gutter — matches FretboardGrid so the two boards line up
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
                     VStack(spacing: 4) {

@@ -45,7 +45,7 @@ extension NameTheNotesSheet {
                     .padding(.top, 9)
                     .padding(.bottom, 4)
                 }
-                .mask(stripFade)
+                .mask(PieceChip.rowFade)
                 .onAppear { proxy.scrollTo(active, anchor: .center) }
                 .onChange(of: active) {
                     withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(active, anchor: .center) }
@@ -79,11 +79,11 @@ extension NameTheNotesSheet {
         let seconds = taps.map(\.seconds)
         switch following {
         case .loop:
-            HeardChipTracker { player.loopClock().flatMap { NamingStrip.heard($0, taps: seconds) } } report: {
+            HeardTapTracker { player.loopClock().flatMap { NamingStrip.heard($0, taps: seconds) } } report: {
                 hearing = $0
             }
         case .phrase(let phrase):
-            HeardChipTracker {
+            HeardTapTracker {
                 player.sliceClock().flatMap { NamingStrip.heard($0, phrase: phrase, taps: seconds) }
             } report: {
                 hearing = $0
@@ -139,37 +139,13 @@ extension NameTheNotesSheet {
         .accessibilityIdentifier("naming.phraseLength")
     }
 
-    /// The strip fades out at both ends, so a chip cut off by the edge reads as "more this way".
-    private var stripFade: some View {
-        HStack(spacing: 0) {
-            LinearGradient(colors: [.clear, .black], startPoint: .leading, endPoint: .trailing).frame(width: 18)
-            Rectangle()
-            LinearGradient(colors: [.black, .clear], startPoint: .leading, endPoint: .trailing).frame(width: 18)
-        }
-    }
-
     /// A chip. **A tap plays it; a hold snags it** (ADR 0234 D7). They're separate gestures on a plain
     /// shape, never a `Button` with a hold added: a Button fires its tap on the hold's release too, so a
     /// snag would also play the note. VoiceOver can't find a hold, so snagging is a named action.
     private func chip(_ index: Int, snagged: Bool) -> some View {
         let shown = chipText(index)
         let isActive = index == active
-        return VStack(spacing: 0) {
-            Text("\(index + 1)")
-                .font(.futura(.caption2))
-                .monospacedDigit()
-            Text(shown.text ?? "?")
-                .font(.futura(.subheadline, weight: shown.text == nil || shown.dim ? nil : .bold))
-                .lineLimit(1)
-        }
-        .foregroundStyle(isActive ? PocketColor.background
-                         : shown.text == nil || shown.dim ? PocketColor.textSecondary : PocketColor.textPrimary)
-        .padding(.horizontal, 8)
-        .frame(minWidth: 46, minHeight: 44)
-        .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .fill(isActive ? PocketColor.practice : .clear))
-        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .strokeBorder(isActive ? .clear : PocketColor.surfaceBorder))
+        return PieceChip(number: index + 1, text: shown.text, dim: shown.dim, isCurrent: isActive)
         // The note just placed, which the marks are still on while the strip has moved past it (ADR
         // 0234 D3): outlined in dashes, the way a bend's landing is drawn on the neck.
         .overlay {
@@ -178,15 +154,8 @@ extension NameTheNotesSheet {
                     .strokeBorder(PocketColor.practice, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
             }
         }
-        // The chip being heard while the loop plays: a ring just outside, so it reads on the filled
-        // current chip as well as on the rest.
-        .overlay {
-            if index == hearing {
-                RoundedRectangle(cornerRadius: 13, style: .continuous)
-                    .strokeBorder(PocketColor.practice, lineWidth: 2)
-                    .padding(-3)
-            }
-        }
+        // The chip being heard while the loop plays.
+        .heardRing(index == hearing)
         .overlay(alignment: .topTrailing) {
             if snagged {
                 snagGlyph
@@ -208,38 +177,8 @@ extension NameTheNotesSheet {
         .accessibilityIdentifier("naming.chip.\(index)")
     }
 
-    /// What a chip shows. On Fret & string a placed note is its string and fret ("B8"), and a name given
-    /// by ear shows dimmed: it can't be drawn there. On By ear every answer is its name, a placed note
-    /// read as the note it sounds (0227 D7).
+    /// What a chip shows (`NamingStrip.chipText`): on Fret & string, read as it sits on the neck.
     private func chipText(_ index: Int) -> (text: String?, dim: Bool) {
-        guard let label = labels[index] else { return (nil, false) }
-        if mode == .fret {
-            // A chord of four notes or more is too long to spell out on a chip; its name says it.
-            if label.frettedNotes.count > 3 {
-                return (label.name(openMidi: tuning.openMidi, spelling: spelling), false)
-            }
-            if label.isOnTheNeck { return (fretText(label.frettedNotes), false) }
-            return (label.name(openMidi: tuning.openMidi, spelling: spelling), true)
-        }
-        // On By ear a shape that spells no chord shows its interval or notes, dimmed: nothing to name.
-        let unread = label.isOnTheNeck && label.earReading(openMidi: tuning.openMidi) == nil
-        return (label.name(openMidi: tuning.openMidi, spelling: spelling), unread)
-    }
-}
-
-/// While the strip's loop or a phrase plays, which chip is being heard. **The one view in the sheet that
-/// reads a clock** (ADR 0153): it redraws on its own, 30 times a second, and reports only when the chip
-/// changes.
-private struct HeardChipTracker: View {
-    let read: @MainActor () -> Int?
-    let report: (Int?) -> Void
-
-    var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30)) { _ in
-            let heard = read()
-            Color.clear
-                .onChange(of: heard, initial: true) { _, now in report(now) }
-        }
-        .accessibilityHidden(true)
+        NamingStrip.chipText(labels[index], onTheNeck: mode == .fret, openMidi: tuning.openMidi, spelling: spelling)
     }
 }
