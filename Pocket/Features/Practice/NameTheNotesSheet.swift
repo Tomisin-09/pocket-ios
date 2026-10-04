@@ -116,7 +116,7 @@ struct NameTheNotesSheet: View {
     @State var replacing: PieceLabel?
     /// Whether that answer moves on once replaced: a name does, a kind doesn't (0227 D6).
     @State var replacingAdvances = false
-    /// This piece's instrument and tuning (0227 D3), changed from the *Where did you play it?* row.
+    /// This piece's instrument and tuning (0227 D3), changed from the instrument row over the neck.
     @State var tuning: NamingTuning
     @State var showingInstrument = false
     /// The fret the neck scrolls to: the selected chip's note, set when the chip changes rather than on
@@ -186,7 +186,7 @@ struct NameTheNotesSheet: View {
                     case .fret: neckPicker
                     case .ear: earPicker
                     }
-                    moveButtons
+                    nextUnnamedButton
                     NamingResultView(labels: labels, active: active, openMidi: tuning.openMidi,
                                      spelling: spelling, mode: mode, tuningLabel: tuning.label)
                 }

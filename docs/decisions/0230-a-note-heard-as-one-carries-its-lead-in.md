@@ -8,6 +8,10 @@
   placed note gains an optional `leadIn` key.
   **D10**: a slide **into** a note from nowhere (`/7`) is lifted. A slide out to nowhere (`7\`), bend
   releases and pre-bends stay out, and so does everything else D10 lists.
+- **Amended by:** ADR 0252 (One note moves inside a chord, 2026-10-04) — **D6**: in a chord, a
+  hammer-on or pull-off moves the note on the string tapped and the rest are held; *The whole chord
+  moved?* moves them all as one. A slide, *Moved into place as one?* and a shape moving as one keep D6
+  as written, the carry of a note moved or added included. D1–D5 and D7 stand.
 - **Relates to:** 0225 (count what you hear: the tap is the record, and nothing is detected) · 0070
   (never grades).
 
@@ -54,6 +58,9 @@ On the device, hammer-ons and slides were hard to mark and pull-offs looked miss
   Lead-ins that don't move as one go, all of them. A shape whose notes move apart (one slides, one
   holds) stays out, with the partial joins 0227 D10 keeps out. A lead-in also goes when its note moves
   off its string or onto its own start, and a tap with one has no join from the tap before as well.
+  *(Amended by 0252: in a chord a hammer-on or pull-off moves one note, the one whose string is tapped,
+  and the rest are held; "The whole chord moved?" gives them all the move. A slide still moves the
+  whole shape.)*
 - **D7 — Storage.** An optional `leadIn` object on the note: `{"from": 11, "join": "legato"}`, or
   `{"from": "below", "join": "slide"}`. The direction, and so hammer-on or pull-off, `/` or `\`, is
   worked out from the frets as 0227 D9 does, never stored. One that can't be played into its fret (its

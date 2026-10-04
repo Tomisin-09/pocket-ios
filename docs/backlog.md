@@ -4,6 +4,25 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## Chord flourishes past one note (parked 2026-10-04, ADR 0252)
+
+ADR 0252 lets a hammer-on or pull-off in a chord move one note, the one on the string tapped, with the
+rest held, and *The whole chord moved?* moves them all. Tomisin asked for *"back to basics, cheapest
+but most effective"* after a first mockup that did more. Parked, **not decided against**:
+
+- **Several notes, each with its own start** (keep tapping, then Done). The most complicated part of
+  the first mockup; one note covers the chords Tomisin plays. The rule already allows several moving
+  notes that share a join and a direction (`NeckJoin.leadInsFit`); only the gesture is missing.
+- **Trill.** Most of the cost is a new stored key, a tab mark, a drawing, a glow and a gesture. The
+  first mockup's frets were wrong too: a chord trill runs between the barre and the chord note. Until
+  then, write it as a hammer-on, then pull-offs and hammer-ons on single notes.
+- **One note sliding inside a held chord.** A slide moves the whole chord (*"a hand slides the shape,
+  a finger hammers"*). The rule would keep one that was stored; nothing makes one.
+- **Working out a start from the barre** instead of tapping it. It gets the minor-to-major hammer (a D
+  shape barred at 5, its B going 6→7) and the m7's middle finger (Dm7 from the A string, B 6h8 / 8p6)
+  wrong. Don't propose it without an answer for both.
+- **Joins from a chord to a single note** were already out under 0227 D10.
+
 ## The Legato template needs a review (parked 2026-10-04, ADR 0251)
 
 Tomisin, after trying ADR 0251 on the device: *"I feel like this template will need a review at some

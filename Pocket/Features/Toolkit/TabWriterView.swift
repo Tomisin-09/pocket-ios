@@ -67,7 +67,7 @@ struct TabWriterView: View {
                                noun: "note", voice: .writing, scrollTarget: neckTarget,
                                write: { labels in change { $0.write(editorLabels: labels) } },
                                onPlace: { string, fret in change { $0.place(string: string, fret: fret) } },
-                               onInstrument: { showingInstrument = true })
+                               onInstrument: { showingInstrument = true }, trailing: EmptyView())
                     .environment(\.neckAccent, PocketColor.toolkit)
                 soFar
             }

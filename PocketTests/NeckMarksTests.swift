@@ -201,8 +201,9 @@ final class LeadInTests: XCTestCase {
                        "moved onto its own start")
         XCTAssertEqual(NeckJoin.tidied([placed(lead(2, 13, from: .below, .legato))])[0], placed(note(2, 13)),
                        "a hammer-on from nowhere")
-        XCTAssertEqual(NeckJoin.tidied([placed(lead(2, 13, from: .below, .slide), note(1, 14))])[0],
-                       placed(note(2, 13), note(1, 14)), "every note of a shape moves in, or none does")
+        let oneOfTwo = placed(lead(2, 13, from: .below, .slide), note(1, 14))
+        XCTAssertEqual(NeckJoin.tidied([oneOfTwo])[0], oneOfTwo,
+                       "one note of a shape moves and the other is held (ADR 0252 D1)")
     }
 
     func testTheFourWaysIn() {

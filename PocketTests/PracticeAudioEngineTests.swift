@@ -97,6 +97,26 @@ final class PracticeAudioEngineTests: XCTestCase {
         XCTAssertTrue(engine.isPlaying)
     }
 
+    /// **Playing to the end must not crash** (CI on `0dea63f`, 2026-10-04: *Test crashed with signal
+    /// trap*). AVFoundation reports the end of a segment from its own queue, not the main thread. The
+    /// completion closure was written inside this `@MainActor` engine and not marked `@Sendable`, so it
+    /// took main-actor isolation, and Swift 6's check at its entry trapped. The tests above stop the
+    /// player first, which usually reports on the main thread, so they crashed only when the timing
+    /// went the other way. This one lets the file play out, so the report comes from AVFoundation's
+    /// queue every time.
+    @MainActor
+    func testPlayingToTheEndRewindsAndSaysSo() async throws {
+        let engine = try await loadedEngine(seconds: 0.3)
+        defer { engine.stop() }
+        let reachedEnd = expectation(description: "the natural end is reported")
+        engine.onReachedEnd = { reachedEnd.fulfill() }
+
+        engine.play()
+        await fulfillment(of: [reachedEnd], timeout: 10)
+        XCTAssertFalse(engine.isPlaying)
+        XCTAssertEqual(engine.currentTime, 0, accuracy: 0.001, "the natural end rewinds to the top")
+    }
+
     /// A loop is scheduled by its own branch and doesn't care where the playhead was parked, so
     /// arming one at the end plays the region rather than rewinding to zero.
     @MainActor

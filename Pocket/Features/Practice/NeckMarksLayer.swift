@@ -20,8 +20,9 @@ struct NeckMarksLayer: View {
             let ink = GraphicsContext.Shading.color(accent)
             let line = StrokeStyle(lineWidth: 1.75, lineCap: .round, lineJoin: .round)
             drawShapeLinks(in: context, ink: ink)
-            // A shape's lead-ins are one move: one pill, on its top string.
-            let top = notes.map(\.string).min()
+            // A shape's lead-ins are one move: one pill, on the top string that moves. In a chord where one
+            // note is hammered and the rest held (ADR 0252 D1), that's the moving note's own string.
+            let top = notes.filter { $0.leadIn != nil }.map(\.string).min()
             for note in notes {
                 drawNoteMarks(note, in: context, ink: ink, line: line)
                 drawLeadIn(note, labelled: note.string == top, in: context)

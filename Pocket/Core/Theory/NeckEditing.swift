@@ -124,9 +124,11 @@ enum NeckEditing {
         return labels
     }
 
-    /// A tap on the neck while *Into it* waits for a start: where the lead-in began, when it can be, and in
-    /// a shape every other note as many frets away. A tap on one of the tap's own notes gives up; any
-    /// other is left alone, since the dimmed dots say where to tap.
+    /// A tap on the neck while *Into it* waits for a start: where the lead-in began, when it can be. In a
+    /// shape, a hammer-on or pull-off moves the note on the string tapped and the rest are held (ADR 0252
+    /// D1), one tap and done; a slide, or a request to move the shape, moves every other note as many
+    /// frets. A tap on one of the tap's own notes gives up; any other is left alone, since the dimmed dots
+    /// say where to tap.
     static func takeStart(string: Int, fret: Int, for request: LeadInRequest, labels: [PieceLabel?],
                           cursor: NeckCursor) -> Edit {
         let marked = cursor.marked(count: labels.count)
@@ -135,8 +137,7 @@ enum NeckEditing {
             cursor.awaitingStart = nil
             return Edit(labels: labels, cursor: cursor)
         }
-        if NeckJoin.accepts(string: string, fret: fret, asStartOf: notes, for: request),
-           let started = NeckJoin.starts(string: string, fret: fret, of: notes, join: request.join) {
+        if let started = NeckJoin.started(string: string, fret: fret, of: notes, for: request) {
             var labels = labels
             labels[marked] = .fretted(started, into: nil)
             cursor.awaitingStart = nil
@@ -145,6 +146,19 @@ enum NeckEditing {
         if notes.contains(where: { $0.string == string && $0.fret == fret }) {
             cursor.awaitingStart = nil
         }
+        return Edit(labels: labels, cursor: cursor)
+    }
+
+    /// *The whole chord moved?* (ADR 0252 D2): the one note's hammer-on or pull-off given to every note,
+    /// as many frets from its own, by `NeckJoin.movedAsOne`. No change when a note would start off the neck.
+    static func moveTogether(labels: [PieceLabel?], cursor: NeckCursor) -> Edit {
+        let marked = cursor.marked(count: labels.count)
+        var cursor = cursor
+        cursor.awaitingStart = nil
+        guard labels.indices.contains(marked), case .fretted(let notes, _) = labels[marked],
+              let moved = NeckJoin.movedAsOne(notes) else { return Edit(labels: labels, cursor: cursor) }
+        var labels = labels
+        labels[marked] = .fretted(moved, into: nil)
         return Edit(labels: labels, cursor: cursor)
     }
 

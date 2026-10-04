@@ -19,6 +19,10 @@
   its pieces. *Order only*, *no playing the tab back* and *never detected, never suggested* stand.
 - **Amends:** ADR 0227 — **D10**: *no free-text tab document* is lifted the same way, for the same
   tab. The rest of D10 stands, and a written tab takes the same marks with the same limits.
+- **Amended by:** ADR 0252 (One note moves inside a chord, 2026-10-04) — **D3**: the neck's *Where do
+  you play it?* title goes with Name the notes', since the neck is shared. The writer's ↶ ↷ stay above
+  the neck. The neck's other change, one note moving inside a chord, reaches the writer the same way.
+  The rest of D3 stands.
 - **Relates to:** 0193 D4 (the two ways into a Home choice, reused, not changed) · 0163 (a hold beside
   a Settings row that stays findable) · 0162 (Settings ▸ Practice, which gains a card) · 0187 (the
   Oracle, left out: D7) · 0232 D10 and D12 (the map's tab stays drawn from pieces; no share
@@ -85,7 +89,8 @@ other defaults stand.
 
 - Top to bottom: a title field (*Name this tab*), the strip with its line, ↶ ↷ with **| Bar line** and
   **§ Section**, the neck with *Where do you play it?*, the marks, *Into it*, *Chords*, and **The tab
-  so far**, drawn as D5 draws it.
+  so far**, drawn as D5 draws it. *(Amended by 0252: the neck's title goes; its row is the instrument
+  and tuning alone.)*
 - **The strip has one open slot, a +.** Tapping the neck fills it and moves on, silently. With
   *Chords* on it stays, since a shape takes several taps. The marks follow the note just placed, and
   the three notes either side are drawn numbered (0234 D3, D4).

@@ -225,16 +225,20 @@ note you just placed, and the line above them says which, until you place the ne
 stays put, since a chord is several taps. Every spot carries its note name faintly. The three notes
 before the one you're naming are filled and the three after it ringed, fading the further they are, each
 with its number, so a lick reads in order even where it comes back to the same fret; the rest of the
-pass sits faintly behind them. `Where did you play
-it?` sets guitar or bass and the tuning for this piece only; a new tuning keeps your frets, and a new
-instrument clears them after asking. Under the neck, `Into it` says how you got to the note: `Picked`,
+pass sits faintly behind them. The row over the neck, *Guitar · Standard* until you change it, sets
+guitar or bass and the tuning for this piece only; a new tuning keeps your frets, and a new instrument
+clears them after asking. Under the neck, `Into it` says how you got to the note: `Picked`,
 `Hammer-on`, `Pull-off` or `Slide`. A quick hammer-on or slide can sound like one note or two, so it
 goes however you tapped it. If you heard two notes and tapped twice, the join comes from the note
 before when it's on the same string, and the line under the choices names it. If you heard one note
 and tapped once, pick how it started and tap the fret it started on (the frets it can't have come from
-fade out); a slide can also come in from nowhere, `From below` or `From above`. A double-stop or chord
-that slides into place as one works the same way: tap where one of its notes started and the rest follow. `Heard as one note?`
-moves a join from the note before into the note. `Bend` and `~ Vibrato` mark the note itself. A bend
+fade out); a slide can also come in from nowhere, `From below` or `From above`. In a chord, a hammer-on
+or pull-off moves one note: tap the fret it started on, on that note's string, and the rest of the chord
+is held, so a B string hammered from the barre writes *5h7* while the other strings ring. The start is
+always the fret you tap, whether that's the barre or the middle finger of an m7. If the whole chord moved,
+`The whole chord moved?` under it moves every note as many frets. A slide moves the whole chord: tap
+where one of its notes started and the rest follow. `Heard as one note?` moves a join from the note
+before into the note. `Bend` and `~ Vibrato` mark the note itself. A bend
 changes the note, so a bent note reads as the note it reaches, and so does a note with a quick start.
 The marks go into the tab the usual way, the same however you tapped them: *7b9*, *7~*, *5h7*, *8/10*,
 */10*. Turn on
@@ -243,9 +247,10 @@ full chord are the same taps. The neck names what you placed, a chord such as *A
 that aren't one, the interval between them. By ear has the twelve note names and, under them, the kinds
 of chord grouped by how many notes they hold. The kind you pick stays picked, and tapping a name saves it
 and moves on, so a solo named by ear is one tap a note. A note placed on the neck reads on By ear as the
-note it sounds, and naming it something else there asks first. `Next unnamed` jumps to the next note
-without a name, and ↶ and ↷ beside it undo and redo any change made on this visit: a fret, a mark, a
-name, a note taken out or tapped in, a new tuning. With a keyboard, ⌘Z, ⇧⌘Z and ⌘Y work too. Red Moon
+note it sounds, and naming it something else there asks first. ↶ and ↷, at the right of the row over
+the neck and in the same place beside `What did you hear?` on By ear, undo and redo any change made on
+this visit: a fret, a mark, a name, a note taken out or tapped in, a new tuning. With a keyboard, ⌘Z,
+⇧⌘Z and ⌘Y work too. `Next unnamed`, under the sheet, jumps to the next note without a name. Red Moon
 never plays your answer: tap the note in the strip, play it on your own instrument, and you decide
 whether they match.
 

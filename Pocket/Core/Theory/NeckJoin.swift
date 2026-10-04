@@ -94,17 +94,38 @@ enum NeckJoin {
 
 extension NeckJoin {
 
-    /// Whether a tap's lead-ins can be played: one note's, or a shape's moving **as one** (0230 D6), the
-    /// way a hand slides a double-stop. Every note has one, with the same join, from the same side and
-    /// the same number of frets, and each can be played into its fret.
+    /// Whether a tap's lead-ins can be played. At least one note has one. The notes that move share one
+    /// join and one direction, and each can be played into its fret; **the rest are held**, the way a
+    /// finger hammers inside a chord (ADR 0252 D1). When every note moves, they move the same number of
+    /// frets: a shape moving as one (0230 D6), the way a hand slides a double-stop.
     static func leadInsFit(_ notes: [FrettedNote]) -> Bool {
+        let moving = notes.filter { $0.leadIn != nil }
+        guard let first = moving.first?.leadIn, let way = first.direction(into: moving[0].fret) else { return false }
+        let shared = moving.allSatisfy { note in
+            note.leadIn?.join == first.join && note.leadIn?.direction(into: note.fret) == way
+        }
+        return shared && (moving.count < notes.count || movesAsOne(notes))
+    }
+
+    /// Whether every note has a lead-in, with the same join, from the same side and the same number of
+    /// frets: the shape moves as one (0230 D6). A lone note with one does too.
+    static func movesAsOne(_ notes: [FrettedNote]) -> Bool {
         guard let first = notes.first?.leadIn else { return false }
         let move = shift(of: notes[0])
-        return notes.allSatisfy { note in
-            guard let leadIn = note.leadIn, leadIn.join == first.join,
-                  leadIn.direction(into: note.fret) != nil else { return false }
-            return shift(of: note) == move
+        return notes.allSatisfy { $0.leadIn?.join == first.join && shift(of: $0) == move }
+    }
+
+    /// The notes with a start tapped at `string`, `fret` given to the note on that string alone, the rest
+    /// held (ADR 0252 D1): the string tapped picks the note. `nil` when the tap isn't on their strings, or
+    /// the start can't be played (its own fret, off the neck). Any other note's start goes.
+    static func start(string: Int, fret: Int, of notes: [FrettedNote], join: Join) -> [FrettedNote]? {
+        guard let moving = notes.firstIndex(where: { $0.string == string }),
+              LeadIn(from: .fret(fret), join: join).direction(into: notes[moving].fret) != nil else { return nil }
+        var started = notes
+        for position in started.indices {
+            started[position].leadIn = position == moving ? LeadIn(from: .fret(fret), join: join) : nil
         }
+        return started
     }
 
     /// The notes with the lead-ins a start tapped at `string`, `fret` gives them: the note on that string
@@ -119,6 +140,16 @@ extension NeckJoin {
             return note
         }
         return started.allSatisfy { $0.leadIn?.direction(into: $0.fret) != nil } ? started : nil
+    }
+
+    /// *The whole chord moved?* (ADR 0252 D2): a hammer-on or pull-off on one note of a shape, given to
+    /// every note as many frets from its own, so the shape moves as one. `nil` unless one note's start is
+    /// a fret and the rest are held, or when a note would start off the neck.
+    static func movedAsOne(_ notes: [FrettedNote]) -> [FrettedNote]? {
+        let moving = notes.filter { $0.leadIn != nil }
+        guard notes.count > 1, moving.count == 1, let leadIn = moving[0].leadIn, leadIn.join == .legato,
+              case .fret(let start) = leadIn.from else { return nil }
+        return starts(string: moving[0].string, fret: start, of: notes, join: leadIn.join)
     }
 
     /// The shape's move given to the note at `index`, just moved or added, from another note that has one,
@@ -173,6 +204,16 @@ struct LeadInRequest: Equatable, Sendable {
     let join: Join
     /// The way it has to move into the note, or `nil` for a slide.
     let direction: JoinDirection?
+    /// In a shape, whether the start moves **every** note as many frets (0230 D6), or only the note on
+    /// the string tapped while the rest are held (ADR 0252 D1). A slide always moves them all: a hand
+    /// slides the shape, a finger hammers.
+    let together: Bool
+
+    init(join: Join, direction: JoinDirection?, together: Bool = false) {
+        self.join = join
+        self.direction = direction
+        self.together = together || join == .slide
+    }
 
     /// The choice it was asked for, lit while the neck waits.
     var choice: IntoChoice {
@@ -194,8 +235,9 @@ extension NeckJoin {
         case unavailable
     }
 
-    /// The tap before when it fits the choice, else a lead-in inside this tap, for one note or a shape
-    /// moving as one.
+    /// The tap before when it fits the choice, else a lead-in inside this tap: for one note; in a chord,
+    /// a hammer-on or pull-off on the note whose string is tapped (ADR 0252 D1); a slide for the shape as
+    /// one.
     static func route(_ choice: IntoChoice, into index: Int, of labels: [PieceLabel?]) -> Route {
         guard labels.indices.contains(index), let notes = labels[index]?.frettedNotes, !notes.isEmpty else {
             return .unavailable
@@ -215,12 +257,14 @@ extension NeckJoin {
     }
 
     /// Whether a choice is the one the tap at `index` holds now, from the tap before or inside the note.
+    /// Inside a shape it's the moving note's, wherever it is (0252 D1).
     static func holds(_ choice: IntoChoice, into index: Int, of labels: [PieceLabel?]) -> Bool {
         guard labels.indices.contains(index), case .fretted(let notes, let into) = labels[index],
               !notes.isEmpty else { return false }
-        let leadIn = notes[0].leadIn
+        let moving = notes.first { $0.leadIn != nil } ?? notes[0]
+        let leadIn = moving.leadIn
         let join = leadIn?.join ?? into
-        let way = leadIn.flatMap { $0.direction(into: notes[0].fret) } ?? direction(into: index, of: labels)
+        let way = leadIn.flatMap { $0.direction(into: moving.fret) } ?? direction(into: index, of: labels)
         switch choice {
         case .picked: return join == nil
         case .hammerOn: return join == .legato && way == .upward
@@ -229,12 +273,22 @@ extension NeckJoin {
         }
     }
 
-    /// Whether a tap on the neck at `string`, `fret` can be where `notes` started, for `request`: on one
-    /// of their strings, every note moving as many frets and staying on the neck (`starts`), from the side
-    /// the join moves from.
+    /// Whether a tap on the neck at `string`, `fret` can be where `notes` started, for `request`.
     static func accepts(string: Int, fret: Int, asStartOf notes: [FrettedNote], for request: LeadInRequest) -> Bool {
-        guard let started = starts(string: string, fret: fret, of: notes, join: request.join) else { return false }
-        return request.direction == nil
-            || started.allSatisfy { $0.leadIn?.direction(into: $0.fret) == request.direction }
+        started(string: string, fret: fret, of: notes, for: request) != nil
+    }
+
+    /// The notes with the start a tap at `string`, `fret` gives them for `request`, or `nil` when it can't
+    /// be one. On one of their strings, from the side the join moves from. When the request moves the
+    /// shape, every note moves as many frets and stays on the neck (`starts`); otherwise only the note on
+    /// that string moves and the rest are held (`start`, 0252 D1), so another note can't dim the fret.
+    static func started(string: Int, fret: Int, of notes: [FrettedNote], for request: LeadInRequest) -> [FrettedNote]? {
+        let started = request.together ? starts(string: string, fret: fret, of: notes, join: request.join)
+            : start(string: string, fret: fret, of: notes, join: request.join)
+        guard let started else { return nil }
+        let fromTheSide = request.direction == nil || started.allSatisfy { note in
+            note.leadIn.map { $0.direction(into: note.fret) == request.direction } ?? true
+        }
+        return fromTheSide ? started : nil
     }
 }

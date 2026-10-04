@@ -1,30 +1,26 @@
 import SwiftUI
 
-// **Undo and redo** (ADR 0234 D6), and the row they share with *Next unnamed*. Every change to the pass
-// goes through `commit`, which tidies it and remembers what it replaced, so ↶ can put back a fret re-picked,
-// a bend, a name, a tap taken out or tapped in, and ↷ can put it back again. The row used to hold *Hear it
-// again* and *Next note*: tapping a chip plays it, and placing a note moves on by itself (D3), so both went
-// and the history took their place. Split out for file length.
+// **Undo and redo** (ADR 0234 D6), at the top right of the picker since ADR 0252 D3, and *Next unnamed*
+// under it. Every change to the pass goes through `commit`, which tidies it and remembers what it replaced,
+// so ↶ can put back a fret re-picked, a bend, a name, a tap taken out or tapped in, and ↷ can put it back
+// again. They sat in the bottom row beside *Next unnamed*, under the neck and its controls, a long reach
+// from the neck they undo; they moved up into the picker's first row, in the same spot on both sheets.
+// Split out for file length.
 extension NameTheNotesSheet {
 
-    /// ↶ ↷ on the left, *Next unnamed* on the right. Nothing here plays: a chip tap is what's heard.
-    var moveButtons: some View {
-        HStack(spacing: 10) {
+    /// ↶ ↷, drawn small to sit on the picker's first row and touched at 44 pt. Nothing here plays: a chip
+    /// tap is what's heard.
+    var historyButtons: some View {
+        HStack(spacing: 2) {
             historyButton("arrow.uturn.backward", label: "Undo", enabled: history.canUndo, action: undoLast)
                 .keyboardShortcut("z", modifiers: .command)
                 .accessibilityIdentifier("naming.undo")
             historyButton("arrow.uturn.forward", label: "Redo", enabled: history.canRedo, action: redoLast)
                 .keyboardShortcut("z", modifiers: [.command, .shift])
                 .accessibilityIdentifier("naming.redo")
-            Spacer(minLength: 0)
-            if let gap = NamingStrip.nextUnnamed(after: active, in: labels) {
-                Button("Next unnamed") { moveTo(gap) }
-                    .buttonStyle(.bordered)
-                    .accessibilityIdentifier("naming.nextUnnamed")
-            }
         }
-        .font(.futura(.subheadline))
-        .tint(PocketColor.practice)
+        // Touched at 44 pt, laid out at the height they're drawn, so the row stays a caption line.
+        .padding(.vertical, -7)
         // ⌘Y as well as ⇧⌘Z, the redo a Windows hand reaches for. Zero-sized, so it takes no room.
         .background {
             Button("Redo", action: redoLast)
@@ -35,15 +31,34 @@ extension NameTheNotesSheet {
         }
     }
 
+    /// *Next unnamed* on its own, on the right, when there's a gap to go to.
+    @ViewBuilder var nextUnnamedButton: some View {
+        if let gap = NamingStrip.nextUnnamed(after: active, in: labels) {
+            Button("Next unnamed") { moveTo(gap) }
+                .buttonStyle(.bordered)
+                .font(.futura(.subheadline))
+                .tint(PocketColor.practice)
+                .accessibilityIdentifier("naming.nextUnnamed")
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+    }
+
+    /// A plain button drawn as a small bordered one, with a 44 pt target round it: a `.bordered` button
+    /// is touched only where it's drawn.
     private func historyButton(_ symbol: String, label: String, enabled: Bool,
                                action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 16, weight: .semibold))
-                .frame(minWidth: 24, minHeight: 24)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(PocketColor.practice)
+                .frame(width: 38, height: 30)
+                .background(RoundedRectangle(cornerRadius: 9).fill(PocketColor.practice.opacity(0.15)))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
         }
-        .buttonStyle(.bordered)
+        .buttonStyle(.plain)
         .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.35)
         .accessibilityLabel(label)
     }
 

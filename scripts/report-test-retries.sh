@@ -7,7 +7,8 @@
 # That keeps a one-off timing loss on a cold simulator from reddening `main`, but
 # it also means a green tick no longer proves every test passed first time. This
 # script closes that gap: it names every test that failed at least one attempt, as
-# a GitHub warning annotation and in the job summary.
+# a GitHub warning annotation and in the job summary, and every test that crashed
+# the runner, as an error.
 #
 # **A green run with retries in it is not a clean run.** A test that needs a retry
 # is either racing the app or racing the runner, and the next person to see it red
@@ -48,8 +49,51 @@ RETRIED=$(grep -oE "Test Case '[^']+' failed" "$LOG" 2>/dev/null \
   | sed -E "s/^Test Case '(.*)' failed$/\1/" \
   | sort -u || true)
 
+# A test that **crashes** prints `started` and never `passed` or `failed`: the runner dies under it,
+# and xcodebuild restarts on the next test. Matching `failed` alone missed it. The run on `0dea63f`
+# (2026-10-04) crashed in an audio test and was reported here as "every test passed on its first
+# attempt", two lines after `** TEST FAILED **`. So a test still running when the runner restarts,
+# or when the log ends, is named as crashed. The suite runs one test at a time (no parallel
+# testing in the plans), so the last test started is the one that was running.
+CRASHED=$(awk '
+  /^Test Case \047[^\047]+\047 started/ {
+    running = $0
+    sub(/^Test Case \047/, "", running)
+    sub(/\047 started.*$/, "", running)
+    next
+  }
+  /^Test Case \047[^\047]+\047 (passed|failed)/ { running = ""; next }
+  /^Restarting after unexpected exit, crash, or test timeout/ {
+    if (running != "") print running
+    running = ""
+  }
+  END { if (running != "") print running }
+' "$LOG" | sort -u || true)
+
+if [ -n "$CRASHED" ]; then
+  CRASH_COUNT=$(printf '%s\n' "$CRASHED" | wc -l | tr -d ' ')
+  echo "$CRASH_COUNT test(s) crashed — started and never finished:"
+  printf '%s\n' "$CRASHED" | sed 's/^/  /'
+  printf '%s\n' "$CRASHED" | while IFS= read -r TEST; do
+    [ -n "$TEST" ] || continue
+    echo "::error title=Test crashed::$TEST started and never finished: the test runner crashed or timed out under it. The result bundle's diagnostics hold the crash report."
+  done
+  if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+    {
+      echo "### ❌ $CRASH_COUNT test(s) crashed"
+      echo
+      printf '%s\n' "$CRASHED" | sed 's/^/- `/; s/$/`/'
+      echo
+    } >> "$GITHUB_STEP_SUMMARY"
+  fi
+fi
+
 if [ -z "$RETRIED" ]; then
-  echo "$TOTAL test result(s) recorded, no failures — every test passed on its first attempt."
+  if [ -z "$CRASHED" ]; then
+    echo "$TOTAL test result(s) recorded, no failures — every test passed on its first attempt."
+  else
+    echo "$TOTAL test result(s) recorded, and no test failed an attempt; the crash above is the failure."
+  fi
   exit 0
 fi
 

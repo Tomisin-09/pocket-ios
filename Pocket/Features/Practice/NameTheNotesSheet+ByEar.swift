@@ -20,7 +20,12 @@ extension NameTheNotesSheet {
                     .foregroundStyle(PocketColor.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            pickerLabel("What did you hear?")
+            // ↶ ↷ on the right, in the same spot as on Fret & string (0252 D3).
+            HStack(spacing: 8) {
+                pickerLabel("What did you hear?")
+                Spacer(minLength: 8)
+                historyButtons
+            }
             LazyVGrid(columns: sixColumns, spacing: 6) {
                 ForEach(0..<12, id: \.self) { pitchClass in
                     let isRead = reading?.root == pitchClass || loose.contains(pitchClass)

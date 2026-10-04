@@ -10,7 +10,7 @@ extension NameTheNotesSheet {
                        voice: .naming, scrollTarget: neckTarget, hearing: hearing,
                        write: { labels = $0 },
                        onPlace: { string, fret in place(string: string, fret: fret) },
-                       onInstrument: { showingInstrument = true })
+                       onInstrument: { showingInstrument = true }, trailing: historyButtons)
     }
 
     /// A tap on the neck, by `NeckEditing.place`: with Chords off it replaces the note (which keeps its
@@ -31,7 +31,7 @@ extension NameTheNotesSheet {
 
     /// Where a placed note sits from the one being named, said after the spot: ", note 11, 1 before".
     nonisolated static func neighbourWords(_ mark: NeckNeighbours.Mark?, noun: String) -> String {
-        NeckNoteEditor.neighbourWords(mark, noun: noun)
+        NeckNoteEditor<EmptyView>.neighbourWords(mark, noun: noun)
     }
 }
 
