@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// **Where did you play it?** for one piece (ADR 0227 D3): the instrument, then the tuner's curated
+/// **The instrument and tuning** for one piece (ADR 0227 D3): the instrument, then the tuner's curated
 /// tunings for it. A list sheet over `OptionListSection` rather than a menu: twelve choices and an
 /// explanation are past what a menu may hold.
 ///

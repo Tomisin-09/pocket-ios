@@ -87,7 +87,7 @@ extension TabWriterView {
     private func noteChip(_ index: Int) -> some View {
         let lit = draft.selected == index
         let notes = draft.content.labels[index]?.frettedNotes ?? []
-        let text = notes.isEmpty ? nil : NeckNoteEditor.fretText(notes, openMidi: tuning.openMidi)
+        let text = notes.isEmpty ? nil : NeckNoteEditor<EmptyView>.fretText(notes, openMidi: tuning.openMidi)
         return chipShape(lit: lit, marked: draft.marked == index && !lit) {
             VStack(spacing: 0) {
                 Text("\(index + 1)")

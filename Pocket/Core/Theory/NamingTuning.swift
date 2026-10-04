@@ -8,7 +8,7 @@ import Foundation
 struct NamingTuning: Equatable {
     /// Open-string MIDI notes, **highest first**, as `PieceLabel.fretted` indexes them.
     let openMidi: [Int]
-    /// What the *Where did you play it?* row says, e.g. "Guitar · Standard".
+    /// What the instrument row over the neck says, e.g. "Guitar · Standard".
     let label: String
     let instrument: Instrument
 

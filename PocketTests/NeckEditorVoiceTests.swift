@@ -8,7 +8,6 @@ final class NeckEditorVoiceTests: XCTestCase {
 
     func testNameTheNotesSaysWhatItAlwaysSaid() {
         let naming = NeckEditorVoice.naming
-        XCTAssertEqual(naming.whereLabel, "Where did you play it?")
         XCTAssertEqual(naming.asOneNote, "heard as one note")
         XCTAssertEqual(naming.asTwoNotes, "heard as two notes")
         XCTAssertEqual(naming.oneNoteOffer, "Heard as one note?")
@@ -21,13 +20,12 @@ final class NeckEditorVoiceTests: XCTestCase {
 
     func testTheWriterNeverTalksAboutHearing() {
         let writing = NeckEditorVoice.writing
-        let said = [writing.whereLabel, writing.asOneNote, writing.asTwoNotes, writing.oneNoteOffer,
+        let said = [writing.asOneNote, writing.asTwoNotes, writing.oneNoteOffer,
                     writing.startedElsewhere, writing.intoInfo, writing.chordsInfo]
         for line in said {
             XCTAssertFalse(line.localizedCaseInsensitiveContains("heard"), line)
             XCTAssertFalse(line.localizedCaseInsensitiveContains("By ear"), line)
         }
-        XCTAssertEqual(writing.whereLabel, "Where do you play it?")
         XCTAssertNotEqual(writing, NeckEditorVoice.naming)
     }
 }

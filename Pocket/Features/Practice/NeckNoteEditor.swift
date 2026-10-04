@@ -10,8 +10,8 @@ import SwiftUI
 /// the owner's history each; where the neck is comes in as `cursor`; and a tap on the neck goes to `onPlace`,
 /// since placing means something different to each owner: Name the notes names the note it's on, the writer
 /// fills its + with a new note. The rules themselves are `NeckEditing`'s. What it says that differs between
-/// hearing and writing is `voice`.
-struct NeckNoteEditor: View {
+/// hearing and writing is `voice`. The instrument row's right-hand end is the owner's (`trailing`).
+struct NeckNoteEditor<Trailing: View>: View {
     /// One per note, `nil` where there's none. For the writer, its + is an empty note here.
     let answers: [PieceLabel?]
     @Binding var cursor: NeckCursor
@@ -29,17 +29,20 @@ struct NeckNoteEditor: View {
     let write: ([PieceLabel?]) -> Void
     /// A tap on the neck.
     let onPlace: (_ string: Int, _ fret: Int) -> Void
-    /// *Where did you play it?* tapped: the owner opens its instrument sheet.
+    /// *Guitar · Standard ›* tapped: the owner opens its instrument sheet.
     let onInstrument: () -> Void
+    /// What the owner puts at the right of the instrument row: Name the notes' ↶ ↷ (ADR 0252 D3). The tab
+    /// writer's sit above the neck already, so it passes nothing.
+    let trailing: Trailing
     /// Name the notes' practice teal, unless the owner sets another (`neckAccent`).
     @Environment(\.neckAccent) var accent
 
     var body: some View {
         let neighbours = NeckNeighbours.marks(labels, active: active)
         return VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                pickerLabel(voice.whereLabel)
-                Spacer()
+            // The instrument on the left, the owner's on the right. The question over it went (0252 D3):
+            // the row says what the strings are, and the neck under it is where you place.
+            HStack(spacing: 8) {
                 Button {
                     onInstrument()
                 } label: {
@@ -48,6 +51,8 @@ struct NeckNoteEditor: View {
                 }
                 .tint(accent)
                 .accessibilityLabel("Instrument and tuning, \(tuning.label)")
+                Spacer(minLength: 8)
+                trailing
             }
             FretNeckBoard(stringNames: stringNames, maxFret: PieceLabel.maxFret, scrollTarget: scrollTarget,
                           headroom: Self.marksHeadroom) { string, fret in
@@ -195,7 +200,6 @@ extension NeckNoteEditor {
     /// The note the marks go on: the one just placed while the owner has moved past it, else `active`.
     var marked: Int { cursor.marked(count: labels.count) }
 
-    func pickerLabel(_ text: String) -> some View { NamingControls.pickerLabel(text) }
     func hint(_ text: String) -> some View { NamingControls.hint(text) }
     func link(_ title: String, action: @escaping () -> Void) -> some View {
         NamingControls.link(title, tint: accent, action: action)

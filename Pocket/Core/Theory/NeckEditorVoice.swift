@@ -4,8 +4,6 @@ import Foundation
 /// note is what you **heard**, or writing a tab, where it's what you **play**. Everything else it says is
 /// the same for both. Name the notes' words are kept byte for byte (`NeckEditorVoiceTests`).
 struct NeckEditorVoice: Equatable, Sendable {
-    /// Over the neck, beside the instrument.
-    let whereLabel: String
     /// A note that started inside itself: *Started at fret 5, heard as one note.*
     let asOneNote: String
     /// A join from the note before: *From note 3 (G5), heard as two notes.*
@@ -20,7 +18,6 @@ struct NeckEditorVoice: Equatable, Sendable {
     let chordsInfo: String
 
     static let naming = NeckEditorVoice(
-        whereLabel: "Where did you play it?",
         asOneNote: "heard as one note",
         asTwoNotes: "heard as two notes",
         oneNoteOffer: "Heard as one note?",
@@ -29,7 +26,6 @@ struct NeckEditorVoice: Equatable, Sendable {
         chordsInfo: NamingInfo.chords)
 
     static let writing = NeckEditorVoice(
-        whereLabel: "Where do you play it?",
         asOneNote: "as one note",
         asTwoNotes: "as two notes",
         oneNoteOffer: "Write it as one note?",
