@@ -56,7 +56,7 @@ struct ExerciseShapeSheet: View {
         _strum = State(initialValue: exercise.strumPattern
                        ?? .downstrokes(beatsPerBar: exercise.beatsPerBar))
         let content = exercise.fretboardContent
-        _run = State(initialValue: content?.runValue ?? .chromaticWarmup)
+        _run = State(initialValue: content?.runValue ?? exercise.template.starterRun)
         _scale = State(initialValue: content?.scaleValue ?? .aMinorPentatonic)
         _arpeggio = State(initialValue: content?.arpeggioValue ?? .aMinorSeventh)
         // A Scales, run-family, *or* Arpeggios drill drawn by hand opens the empty canvas; the
@@ -258,11 +258,11 @@ private extension ExerciseShapeSheet {
 
             switch runMode {
             case .generate:
-                FretboardRunEditor(run: $run, instrument: exercise.instrument)
+                FretboardRunEditor(run: $run, instrument: exercise.instrument, template: exercise.template)
                     .listRowBackground(Color.clear)
             case .draw:
                 FretboardDrillEditor(beatsPerBar: exercise.beatsPerBar, drill: $customDrill,
-                                     referenceEnabled: true)
+                                     referenceEnabled: true, template: exercise.template)
                     .listRowBackground(Color.clear)
             }
         } header: {

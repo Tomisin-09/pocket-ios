@@ -15,6 +15,9 @@ struct FretboardRunEditor: View {
     /// The exercise's instrument (ADR 0116) — guitar (default) is unchanged; bass draws four strings and
     /// offers only the four bass strings in the span picker.
     var instrument: Instrument = .guitar
+    /// The drill's template, so the preview plays the run the way the drill will (ADR 0251): a Legato
+    /// run walks with its hammer-ons and pull-offs. Any template that doesn't articulate shows it plain.
+    var template: ExerciseTemplate = .warmup
     var tint: Color = PocketColor.practice
 
     /// Whether the demoted subdivision control is revealed — eighths suits nearly every run, so it
@@ -49,8 +52,8 @@ struct FretboardRunEditor: View {
         VStack(alignment: .leading, spacing: 18) {
             FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
                                        playToken: $playOnceToken, tint: tint, hasRoot: false)
-            FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
-                                  labelMode: labelMode, playOnceToken: playOnceToken)
+            FretboardDrillPreview(drill: template.articulating(run.expanded(instrument: instrument)),
+                                  tint: tint, labelMode: labelMode, playOnceToken: playOnceToken)
             patternField
             baseFretField
             StringSpanStrip(from: $run.fromString, to: $run.toString,

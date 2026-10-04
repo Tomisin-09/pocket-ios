@@ -4,6 +4,26 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## The Legato template needs a review (parked 2026-10-04, ADR 0251)
+
+Tomisin, after trying ADR 0251 on the device: *"I feel like this template will need a review at some
+point but for now, this is good enough."* No specific complaint was named, so a review starts by
+asking what felt off, not by building.
+
+What 0251 settled, so a review doesn't reopen it by accident: the joins are **worked out** from the
+frets by Name the notes' rule (`NeckJoin.direction`), keyed off the template and never stored; they
+draw only on the step being played; the starter figure is 1-2-4-2 at the 5th fret, restated, **in
+quarters**, because sixteenths went by too fast to follow.
+
+What 0251 left out, **not decided against**, and the likeliest places to look:
+- a **tab line** under the run (`5h6h8p6 …`), so the joins read without watching it walk;
+- the **heard-note glow** that moves the way a note was played (`HaloMotion`, ADR 0234);
+- the joins **at rest**: today a still board (animation off, Reduce Motion) shows none, and only
+  VoiceOver reads them;
+- whether Legato should keep sharing the warm-up family's run editor at all, or get controls of its
+  own (trills, one-string figures, three notes a string);
+- the draw-your-own slot strip, which shows no joins because its width budget can't fit them.
+
 ## A *Receive a song…* door in the song library (parked 2026-10-01, ADR 0236)
 
 A song someone sends arrives as a `.redmoonpack`. Tapping it wherever it landed opens Red Moon, but

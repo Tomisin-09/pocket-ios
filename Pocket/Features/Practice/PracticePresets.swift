@@ -63,11 +63,14 @@ enum PracticePresets {
              notes: "Skip a string between each note. Accuracy over speed — every note clean before "
                   + "you push the tempo.",
              template: .picking),
-        Spec(name: "Legato", slug: "legato", command: 85, noteRate: 4,
+        // A real board since ADR 0251 — it used to ship prose alone and run on the bare click. The
+        // payload states the rate (quarters), so `noteRate` is nil like every payload batch (ADR 0121).
+        Spec(name: "Legato", slug: "legato", command: 85,
              tags: ["legato", "fretting"],
-             notes: "Pick only the first note; hammer and pull the rest. Keep all four notes even "
-                  + "in volume.",
-             template: .legato)
+             notes: "Pick only the first note on each string; hammer and pull the rest. Keep all four "
+                  + "notes even in volume.",
+             template: .legato,
+             fretboard: .run(.hammerOnPullOff))
     ]
 
     /// The **content-template** batch (ADR 0065 T9) — seeded under a *second* key so an existing

@@ -23,6 +23,10 @@ struct FretboardDrillEditor: View {
     /// the symmetric scales the box generator can't produce), or the **arpeggio** chord-tone shapes for
     /// the Arpeggios "draw your own" surface. Only consulted when `referenceEnabled`.
     var guideCatalog: [ScaleReference] = ScaleReference.all
+    /// The drill's template, so the preview plays the hand-placed run the way the drill will (ADR 0251):
+    /// a drawn Legato run walks with its hammer-ons and pull-offs. Only the preview reads it — the
+    /// placement board and slot strip show *where*, and a join is about *how*.
+    var template: ExerciseTemplate = .basic
 
     /// The slot the next placed note lands in — highlighted in the strip and reflected on the board.
     /// Non-private so the board half of this editor (`+Board.swift`) can read it.
@@ -96,7 +100,7 @@ struct FretboardDrillEditor: View {
         VStack(alignment: .leading, spacing: 14) {
             FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
                                        playToken: $playOnceToken, tint: tint, hasRoot: hasRoot)
-            FretboardDrillPreview(drill: drill, tint: tint, labelMode: labelMode,
+            FretboardDrillPreview(drill: template.articulating(drill), tint: tint, labelMode: labelMode,
                                   playOnceToken: playOnceToken)
             resolutionPicker
             barsStepper

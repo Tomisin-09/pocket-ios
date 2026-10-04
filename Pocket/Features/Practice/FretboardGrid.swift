@@ -136,7 +136,8 @@ struct FretboardGrid: View {
     /// whatever the sequence — the clutter outweighed the cue. A seam now draws the same `SlideCue`
     /// arrowhead, but *as* the trail: only while it's the step being played, when the instruction
     /// "slide into this one" is actually actionable. The technique survives outside the walk in the
-    /// accessibility summary, which reads it per note.
+    /// accessibility summary, which reads it per note. A Legato drill's hammer-ons and pull-offs follow
+    /// the same rule (ADR 0251, `LegatoCue`).
     @ViewBuilder
     private func walkTrail(width: CGFloat, height: CGFloat) -> some View {
         if let activeIndex, activeIndex > 0,
@@ -153,6 +154,11 @@ struct FretboardGrid: View {
                     SlideCue(fromX: fromPoint.x, toX: toPoint.x, midY: toPoint.y)
                         .stroke(tint.opacity(0.95),
                                 style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                } else if from.string == to.string, let technique = to.technique,
+                          LegatoCue.letter(for: technique) != nil {
+                    // A hammer-on or pull-off (ADR 0251) is a move along one string too: its curve and letter.
+                    LegatoCue(technique: technique, fromX: fromPoint.x, toX: toPoint.x, stringY: toPoint.y,
+                              tint: tint)
                 } else {
                     Path { path in
                         path.move(to: fromPoint)
