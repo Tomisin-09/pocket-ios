@@ -35,7 +35,7 @@ struct SongMapView: View {
     /// The loop whose tab is showing.
     @State private var viewing: StableRef<Loop>?
     /// A mode picked on the tab sheet, opened once the sheet has gone: a push can't start under a sheet.
-    @State private var openAfterSheet: Opening?
+    @State var openAfterSheet: Opening?
     @State private var editingMarker: StableRef<Marker>?
     /// The gap *Make a piece here* is being offered for (D9).
     @State var makingPiece: SongMap.Gap?
@@ -45,7 +45,11 @@ struct SongMapView: View {
     /// The piece *Copy to…* is finding places for (D16). By uid, never the model (ADR 0090).
     @State var copying: CopySource?
     /// *Copy to…* picked on the tab sheet, opened once the sheet has gone.
-    @State private var copyAfterSheet: UUID?
+    @State var copyAfterSheet: UUID?
+    /// *Watch it on the neck* picked on the tab sheet (ADR 0254), opened once the sheet has gone, and the
+    /// loop it's open on.
+    @State var watchAfterSheet: UUID?
+    @State var watching: StableRef<Loop>?
     /// What the map just made, which Undo takes back (D17), until the player does something else.
     @State var made: Made?
     /// Picking pieces to put together (D11): the ones picked, or `nil` when not picking.
@@ -170,9 +174,14 @@ struct SongMapView: View {
                                   onCopy: piece.canCopy ? {
                                       copyAfterSheet = ref.value.uid
                                       viewing = nil
+                                  } : nil,
+                                  onWatch: PieceNeck.canWatch(ref.value) ? {
+                                      watchAfterSheet = ref.value.uid
+                                      viewing = nil
                                   } : nil)
             }
         }
+        .sheet(item: $watching) { WatchOnNeckSheet(loop: $0.value) }
         .sheet(item: $askingCommands, onDismiss: beginAfterAsking) { ask in
             SongMapCommandSheet(answers: ask.answers) { commands in
                 beginAfterSheet = TogetherBegin(plan: ask.plan, commands: commands)
@@ -265,22 +274,11 @@ struct SongMapView: View {
         viewing = StableRef(value: loop)
     }
 
-    private func open(_ uid: UUID, in mode: LoopRunMode) {
+    func open(_ uid: UUID, in mode: LoopRunMode) {
         guard let loop = song.loops.first(where: { $0.uid == uid }), LoopModeAccess.allows(mode, loop) else { return }
         made = nil
         onOpenNestedAudio()
         opening = Opening(uid: uid, mode: mode)
-    }
-
-    /// A mode or *Copy to…* picked on the tab sheet, once the sheet has gone.
-    private func openPicked() {
-        if let uid = copyAfterSheet {
-            copyAfterSheet = nil
-            copying = CopySource(uid: uid)
-        }
-        guard let picked = openAfterSheet else { return }
-        openAfterSheet = nil
-        open(picked.uid, in: picked.mode)
     }
 
     private func openMarker(_ uid: UUID) {

@@ -71,6 +71,29 @@ final class PieceNeckTests: XCTestCase {
         XCTAssertFalse(PieceNeck.canWatch(hasFrettedLabels: false, audioResolves: false))
     }
 
+    /// A loop holding `labels` as its piece, uninserted (docs/swiftdata-gotchas.md), on a song from `source`.
+    private func loop(_ labels: [PieceLabel?], source: SongRef.Source? = .localFile) -> Loop {
+        let loop = Loop(name: "Verse riff", start: 0.1, end: 0.2, speed: 0.8, repeats: 3)
+        if let source {
+            loop.song = Song(title: "Test", duration: 120, ref: SongRef(id: "s1", source: source, bookmark: nil))
+        }
+        let taps = labels.enumerated().map { PieceTranscription.Tap(seconds: Double($0.offset), label: $0.element) }
+        loop.transcription = PieceTranscription(taps: taps, openMidi: standard)
+        return loop
+    }
+
+    func testEveryDoorAsksTheLoopTheSameQuestion() {
+        XCTAssertTrue(PieceNeck.canWatch(loop(lick)))
+        XCTAssertFalse(PieceNeck.canWatch(loop([.pitchClass(5), nil])), "named by ear only: nothing to light")
+        XCTAssertFalse(PieceNeck.canWatch(loop([])), "no piece")
+        XCTAssertFalse(PieceNeck.canWatch(loop(lick, source: .appleMusic)), "Apple Music audio can't play here")
+        XCTAssertFalse(PieceNeck.canWatch(loop(lick, source: nil)), "no song, no audio")
+
+        let held = loop(lick)
+        XCTAssertTrue(PieceNeck.canWatch(held.transcription, on: held), "the Journal's form, with the piece decoded")
+        XCTAssertFalse(PieceNeck.canWatch(nil, on: held))
+    }
+
     // MARK: - In words
 
     func testTheLineSaysWhereAndHowEachTapWasPlayed() {

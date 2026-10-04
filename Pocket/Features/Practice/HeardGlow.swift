@@ -5,7 +5,9 @@ import SwiftUI
 /// shakes, a hammer-on or pull-off lights where it started and snaps across, a slide travels along the
 /// string. It sits under the dots, in the board's coordinates (`FretNeckBoard.beneath`), and stays lit while
 /// the note is heard, fading as the next takes over. With Reduce Motion it only fades in, where the note is.
-/// The neck never scrolls to follow it, so the board can't move under a finger that's naming.
+/// Name the notes' neck never scrolls to follow it, so the board can't move under a finger that's naming
+/// (0227 D2). *Watch it on the neck* draws it too, and there, where nothing is placed, the board follows the
+/// heard note when it leaves the frets in view (ADR 0254 D5).
 struct HeardGlows: View {
     /// One per note of the chip being heard (a shape glows on every string).
     let motions: [HaloMotion]

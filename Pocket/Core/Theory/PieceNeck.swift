@@ -94,6 +94,18 @@ enum PieceNeck {
     private static func fretWord(_ fret: Int) -> String { fret == 0 ? "the open string" : "\(fret)" }
 }
 
+extension PieceNeck {
+    /// The gate read off a live loop: **the one place the five doors ask**, so none of them can come to show
+    /// for a loop another hides. Its audio resolves as ear training's does (`LoopModeAccess.Facts`).
+    static func canWatch(_ loop: Loop) -> Bool { canWatch(loop.transcription, on: loop) }
+
+    /// The same, for a caller already holding the loop's piece decoded: the Journal's piece rows.
+    static func canWatch(_ piece: PieceTranscription?, on loop: Loop) -> Bool {
+        canWatch(hasFrettedLabels: piece?.hasFrettedLabels ?? false,
+                 audioResolves: LoopModeAccess.Facts(loop).audioResolves)
+    }
+}
+
 /// **Following** (ADR 0254 D5): the board opens centred on the lick, then moves only when the note being
 /// heard leaves the frets in view, so it doesn't swing on every note. Name the notes never scrolls under a
 /// finger that's placing a note (0227 D2); nothing is placed here, so the board is free to move.

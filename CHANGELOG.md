@@ -56,6 +56,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Watch it on the neck.** Once you've named a lick on the neck in Name the notes, watch it play
+  back there while the loop's own recording plays. Every spot the lick uses is drawn on the neck, and
+  the note being heard lights up and glows the way you played it, with the notes in order underneath
+  and the one being heard ringed. The neck moves only when the note leaves the frets in view. Slow it
+  down with − and +, and the screen stays awake so you can play along. Find it in the loop's edit sheet,
+  holding a loop in Practice ▸ Loops, on the song map's tab sheet, under *Saved on this loop* in Train
+  your ear, and on the piece in the Journal. It shows once a note is on the neck and the song's audio
+  plays on this phone. Only the recording sounds: Red Moon never plays your answers back. (ADR 0254)
 - **The first-run questions start with what you play.** Guitar, Bass, Piano or keys, Singing,
   Producing, Drums, Ukulele, Violin or Something else. The next question asks where you are with it,
   in its own words: a singer is asked whether they *know a few songs*, not a few chords. Guitar and

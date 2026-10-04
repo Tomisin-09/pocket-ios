@@ -217,7 +217,7 @@ extension JournalTabView {
         case .piece(let piece):
             // No hold menu: a piece isn't pinned or deleted from the feed (ADR 0229).
             JournalPieceRow(piece: piece, ownerLabel: JournalTimeline.ownerLabel(for: item),
-                            onOpen: openAction(for: item))
+                            onOpen: openAction(for: item), onWatch: watchAction(for: piece))
         }
     }
 }

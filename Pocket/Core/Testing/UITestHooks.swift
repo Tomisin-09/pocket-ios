@@ -64,6 +64,10 @@ enum UITestHooks {
     /// back out, so the rest of the suite starts from the library it expects. Read app-side through
     /// `NamingPieceSeed.action(for:)`.
     static let namingPieceArgument = "-seedNamingPiece"
+    /// `-seedWatchPiece`: the same song, with its six notes placed on the neck, so a test can open **Watch
+    /// it on the neck** (ADR 0254), whose doors stay hidden for a piece with nothing on the neck. Read
+    /// app-side through `NamingPieceSeed.action(for:)`.
+    static let watchPieceArgument = "-seedWatchPiece"
     /// `-receiveSongPack`: at launch, builds a `.redmoonpack` holding a short song (*Pack test*, sent by
     /// *Tester*) and opens it on the receive door, the way a tapped file arrives (ADR 0236 D8). A UI test
     /// can't hand the app a file, and this is the whole receive path from that point on. Without it, a

@@ -10,7 +10,7 @@ there).
 | Branch | State |
 |---|---|
 | `pocket-363-hear-out-of-exercises` | **Part A, ADR 0253, done.** Commit `832c5fc`. Verified on the Mac: strict lint, the build, 3,913 unit tests, the UI tests (13/13 on a clean install), ManualExerciseShots 6/6, `check-manual.py`. **No PR yet**: Tomisin hasn't asked for one. |
-| `pocket-364-watch-it-on-the-neck` | **Part B, this plan, half built.** Stacked on `pocket-363`, because 363 isn't merged. It contains 363's commit. |
+| `pocket-364-watch-it-on-the-neck` | **Part B, this plan, written in full; none of it built yet.** Stacked on `pocket-363`, because 363 isn't merged. It contains 363's commit. C2 and C3 are the WIP commit; C1 and C4–C7 were written in a cloud session (no Xcode there), so the whole branch is owed the **Verification** list below, on the Mac, before any PR. |
 
 **After 363 squash-merges into main:**
 `git fetch && git rebase --onto origin/main pocket-363-hear-out-of-exercises pocket-364-watch-it-on-the-neck`
@@ -43,7 +43,31 @@ that run anywhere. Write code in the cloud, then verify on the Mac before any PR
 
 The mockup is at https://claude.ai/artifact/Gy8BPuBrSiMhxd9QQFZfz1 (private to Tomisin).
 
-## What ADR 0254 records (C1, not written yet)
+## Written in the cloud session (2026-10-04), not yet built
+
+Read in review only, against the types each file uses; nothing was compiled. Lint-shaped checks done by
+hand: every line ≤ 120, every file ≤ 400, and the three type bodies that grew (`LoopEditSheet` 213,
+`LoopLibraryView` 207, `SongMapView` 242) under 250. `openPicked()` and a new `watch(_:)` moved from
+`SongMapView` into `SongMapView+Actions.swift` to keep it there, which made `openAfterSheet`,
+`copyAfterSheet` and `open(_:in:)` internal.
+
+- **C1:** `docs/decisions/0254-watch-it-on-the-neck.md`, as below. No `Amends`: only a `Relates to`.
+- **C4:** `PieceNeckView.swift` and `WatchOnNeckSheet.swift`, as designed below, with two additions: the
+  chip row shows the joins between chips as Fret & string's strip does, and `WatchOnNeckSheet.title` and
+  `.symbol` (`eye`, used nowhere else in the app) are what every door uses.
+- **C5:** all five doors, each behind `PieceNeck.canWatch(_ loop:)`. The Journal's rows use
+  `canWatch(_:on:)` with the piece they already decoded. Identifiers: `loopEdit.watch`,
+  `count.saved.watch`, `journal.piece.watch`. `PieceNeckTests` gains a gate test on uninserted loops.
+- **C6:** `-seedWatchPiece` (`UITestHooks.watchPieceArgument`), `NamingPieceSeed.Action.seedFretted`,
+  `NamingPieceSeed.placedLabels` (G5, G7 hammered from 5, B5, B8 bent a whole step, B5, G7),
+  `NamingPieceSeedTests` extended, and `PocketUITests/WatchOnNeckUITests.swift` (Edit loop route).
+- **C7:** CHANGELOG, PROJECT, architecture, design brief, the manual (`reference/practice.md` gains
+  the section and figure marker `reference/watch-on-neck`, pending, on the reshoot list;
+  `reference/song-player.md`, `songs.md`, `journal-and-practice-log.md`), `shots.md` regenerated.
+  `check-manual.py` passes. `gestures.md` needed nothing: the hold-menu table doesn't list items, and no
+  `onLongPressGesture` was added.
+
+## What ADR 0254 records (C1)
 
 `docs/decisions/0254-watch-it-on-the-neck.md`:
 

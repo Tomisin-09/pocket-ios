@@ -82,6 +82,7 @@ marker grammar in [README.md](README.md).
 | `reference/tempo-editor` | `screen` | `song-player` | seeded library, Binta, tempo editor open |  |
 | `reference/toolkit` | `screen` | `tools-and-journal` | Toolkit open |  |
 | `reference/tuner` | `screen` | `tools-and-journal` | Toolkit ▸ Tuner, microphone allowed | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
+| `reference/watch-on-neck` | `screen` | `practice` | map seed, Slow Bend ▸ Verse riff ▸ Edit loop ▸ Watch it on the neck, stopped |  |
 | `references/editor` | `screen` | `references` | seeded library, an exercise detail sheet, Add a link tapped |  |
 | `references/section` | `panel` | `references` | seeded library, an exercise detail sheet with two links and one picture saved, one link carrying a note, scrolled to the section |  |
 | `routines/block-done` | `screen` | `routines` | seeded library, a routine mid-session, a block just finished |  |
@@ -122,4 +123,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped, top of the sheet |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 
-106 shots across 18 pages.
+107 shots across 18 pages.

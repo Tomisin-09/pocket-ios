@@ -18,6 +18,9 @@ struct SongMapPieceSheet: View {
     var repeatLine: String?
     /// *Copy to…* (D16), or `nil` for a loop with nothing counted to copy. The map closes this sheet first.
     var onCopy: (() -> Void)?
+    /// *Watch it on the neck* (ADR 0254), or `nil` when there's nothing to watch (its D2). The map closes this
+    /// sheet first.
+    var onWatch: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
     /// The piece's **Versions** (ADR 0233 D4): the map is where you see what each reading does to the song.
@@ -99,6 +102,12 @@ struct SongMapPieceSheet: View {
             ForEach(modes) { mode in
                 Button { onOpen(mode) } label: {
                     Label(mode.label, systemImage: mode.symbolName)
+                        .foregroundStyle(PocketColor.practice)
+                }
+            }
+            if let onWatch {
+                Button(action: onWatch) {
+                    Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
                         .foregroundStyle(PocketColor.practice)
                 }
             }

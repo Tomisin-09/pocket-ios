@@ -38,6 +38,8 @@ struct LoopLibraryView: View {
     @State private var launch: LoopLaunch?
     /// The loop on its way into a routine from its row (ADR 0222), or `nil`.
     @State private var routineRequest: AddToRoutineRequest?
+    /// The loop opened in *Watch it on the neck* from its hold menu (ADR 0254), by its stable uid (ADR 0090).
+    @State private var watching: StableRef<Loop>?
 
     /// A loop opened in one of its practice modes (ADR 0104 / 0135). Deliberately a **mode + loop**
     /// pair rather than one case per mode: the row buttons, the long-press menu and this destination
@@ -169,6 +171,7 @@ struct LoopLibraryView: View {
         }
         // Item-bound safely: the request is a value with its own id, not the model (ADR 0090).
         .sheet(item: $routineRequest) { AddToRoutineSheet(request: $0) }
+        .sheet(item: $watching) { WatchOnNeckSheet(loop: $0.value) }
         .navigationDestination(item: $launch) { launch in
             switch launch.mode {
             case .trainer:
@@ -304,13 +307,19 @@ struct LoopLibraryView: View {
     /// buttons can't disagree about what a loop can do — and so a mode added later appears in both
     /// the moment its precondition is stated.
     private func menuItems(for loop: Loop) -> [PocketRowMenuItem] {
-        let modes = LoopModeAccess.modes(for: loop).map { mode in
+        var items = LoopModeAccess.modes(for: loop).map { mode in
             PocketRowMenuItem(mode.label, systemImage: mode.symbolName) {
                 launch = LoopLaunch(mode: mode, loop: loop)
             }
         }
-        guard let request = AddToRoutineRequest.loop(loop, named: displayName(loop)) else { return modes }
-        return modes + [PocketRowMenuItem("Add to routine…", systemImage: "text.badge.plus") {
+        // After the modes, since it isn't one: it never goes in a routine (ADR 0254 D1).
+        if PieceNeck.canWatch(loop) {
+            items.append(PocketRowMenuItem(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol) {
+                watching = StableRef(value: loop)
+            })
+        }
+        guard let request = AddToRoutineRequest.loop(loop, named: displayName(loop)) else { return items }
+        return items + [PocketRowMenuItem("Add to routine…", systemImage: "text.badge.plus") {
             addToRoutine(request)
         }]
     }

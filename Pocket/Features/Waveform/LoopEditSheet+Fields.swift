@@ -50,6 +50,11 @@ extension LoopEditSheet {
             // ungated by command tempo (unlike Practice now), since ear training needs only audio,
             // not a measured practice target. Opens in place (not a staged full-screen run).
             earTrainingButton
+            // "Watch it on the neck" (ADR 0254): the piece named on the neck, lit as the loop plays. Shown
+            // only when there's something to watch: a note on the neck, and audio that plays here (D2).
+            if PieceNeck.canWatch(loop) {
+                watchButton
+            }
             // "Improvise" (ADR 0135 B2): the loop as a backing track to solo over. A sibling row to
             // ear training in every respect — ungated by command tempo, since a bed needs audio and
             // not a measured target, and shown on **every** loop: the flag governs where the loop is
@@ -118,6 +123,18 @@ extension LoopEditSheet {
                 .foregroundStyle(PocketColor.journal)
         }
         .accessibilityLabel("Train your ear on this loop")
+    }
+
+    private var watchButton: some View {
+        Button {
+            // Its own engine too, so the host pauses first (ADR 0254 D6).
+            onOpenNestedAudio()
+            showingWatch = true
+        } label: {
+            Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
+                .foregroundStyle(PocketColor.practice)
+        }
+        .accessibilityIdentifier("loopEdit.watch")
     }
 
     private var improviseButton: some View {

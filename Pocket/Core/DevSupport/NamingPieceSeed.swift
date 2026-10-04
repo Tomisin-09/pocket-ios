@@ -2,7 +2,8 @@
 import Foundation
 import SwiftData
 
-/// A loop with a saved piece, for the one UI test that opens *Name the notes* (ADR 0235, build order 4).
+/// A loop with a saved piece, for the UI tests that open *Name the notes* (ADR 0235, build order 4) and
+/// *Watch it on the neck* (ADR 0254).
 ///
 /// Nothing drove the sheet before this, so a change to it could only be checked by eye, and ADR 0235
 /// moves its neck into a shared editor. The route in needs a song with a loop that has a piece, and the
@@ -10,6 +11,8 @@ import SwiftData
 ///
 /// - under `-uiTesting -seedNamingPiece` it is put in, or put back as it was: six unnamed notes on
 ///   *Verse riff*, no snags, and no notes in its loops' Journals (the snag line test writes one, ADR 0238);
+/// - under `-uiTesting -seedWatchPiece` the same, with the six placed on the neck, since *Watch it on the
+///   neck* has no door for a piece with nothing on it;
 /// - under `-uiTesting` alone it is **taken out**. The *Start here* card shows only in an empty library,
 ///   and two tests start from it, so a song left behind by a naming run that failed halfway would fail
 ///   them too. Every other test's launch cleans up, whatever the last run did.
@@ -22,23 +25,38 @@ enum NamingPieceSeed {
     static let loopName = "Verse riff"
     static let noteCount = 6
 
-    enum Action: Equatable { case seed, remove, none }
+    enum Action: Equatable { case seed, seedFretted, remove, none }
 
     /// What this launch does with the seed. Split out so it's tested: the removal is what keeps the rest
     /// of the suite clean, and nothing else would notice if it stopped.
     static func action(for arguments: [String]) -> Action {
         guard arguments.contains(UITestHooks.launchArgument) else { return .none }
+        if arguments.contains(UITestHooks.watchPieceArgument) { return .seedFretted }
         return arguments.contains(UITestHooks.namingPieceArgument) ? .seed : .remove
     }
 
-    /// The piece it starts from: `noteCount` unnamed notes inside *Verse riff*, on a guitar in standard
-    /// tuning whatever the tuner says, so a fret reads the same on every run.
-    static func piece(duration: TimeInterval, start: Double, end: Double) -> PieceTranscription {
+    /// The six notes on the neck, for *Watch it on the neck*: G5, hammered on to G7, B5, B8 bent a whole
+    /// step, B5, G7. Strings highest-first, so the G is 2 and the B is 1.
+    static let placedLabels: [PieceLabel] = [
+        .fretted(string: 2, fret: 5),
+        .fretted([FrettedNote(string: 2, fret: 7)], into: .legato),
+        .fretted(string: 1, fret: 5),
+        .fretted([FrettedNote(string: 1, fret: 8, bend: 2)], into: nil),
+        .fretted(string: 1, fret: 5),
+        .fretted(string: 2, fret: 7)
+    ]
+
+    /// The piece it starts from: `noteCount` notes inside *Verse riff*, unnamed or placed on the neck
+    /// (`placedLabels`), on a guitar in standard tuning whatever the tuner says, so a fret reads the same on
+    /// every run.
+    static func piece(duration: TimeInterval, start: Double, end: Double, placed: Bool = false) -> PieceTranscription {
         let from = start * duration
         let step = (end - start) * duration / Double(noteCount + 1)
         let standard = NamingTuning(instrument: .guitar, tuning: Instrument.guitar.standardTuning)
-        var piece = PieceTranscription(taps: (1...noteCount).map { .init(seconds: from + step * Double($0)) },
-                                       openMidi: standard.openMidi, tuningLabel: standard.label)
+        let taps = (1...noteCount).map { note in
+            PieceTranscription.Tap(seconds: from + step * Double(note), label: placed ? placedLabels[note - 1] : nil)
+        }
+        var piece = PieceTranscription(taps: taps, openMidi: standard.openMidi, tuningLabel: standard.label)
         piece.changedAt = .now
         return piece
     }
@@ -59,12 +77,13 @@ enum NamingPieceSeed {
         switch action {
         case .remove:
             seeded.forEach(context.delete)
-        case .seed:
+        case .seed, .seedFretted:
             let song = seeded.first ?? insertSong(into: context)
             song.snags.forEach(context.delete)
             song.snags = []
             if let loop = song.loops.first(where: { $0.name == loopName }) {
-                loop.transcription = piece(duration: song.duration, start: loop.start, end: loop.end)
+                loop.transcription = piece(duration: song.duration, start: loop.start, end: loop.end,
+                                           placed: action == .seedFretted)
             }
         case .none:
             return
