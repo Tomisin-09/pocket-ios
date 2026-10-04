@@ -38,6 +38,9 @@
   player's *Snags* panel, by holding a row, and it's read from every loop on the song, not only the one
   being named. A new line written there goes to the loop the snag was made under, and is 🧗 Struggle for
   a stumble. The rest of D7 stands.
+- **Amended by:** ADR 0252 (One note moves inside a chord, 2026-10-04) — **D6**: ↶ ↷ move from the
+  strip's bottom row to the right of the picker's first row, in the same spot on Fret & string and By
+  ear. The bottom row keeps *Next unnamed*. The history, the keys and the rest of D6 stand.
 
 ## Context
 
@@ -126,7 +129,8 @@ marks a note while naming too.
 - **Every change goes through one commit**, which tidies the joins and then records, so a change and
   the tidy it causes are one step.
 - ↶ and ↷ sit in the strip's bottom row beside *Next unnamed*. With a keyboard, ⌘Z, ⇧⌘Z and ⌘Y work.
-  The top bar, *Cancel* · title · *Done*, has no room.
+  The top bar, *Cancel* · title · *Done*, has no room. *(Amended by 0252: they moved up to the right of
+  the picker's first row, beside the instrument on Fret & string and *What did you hear?* on By ear.)*
 - An undo or redo makes the first note that changed current, and plays nothing.
 - The history lasts for the visit. *Cancel* still drops everything.
 - Snags are not in it (D7).

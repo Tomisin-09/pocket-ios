@@ -12,6 +12,7 @@ final class NeckEditorVoiceTests: XCTestCase {
         XCTAssertEqual(naming.asTwoNotes, "heard as two notes")
         XCTAssertEqual(naming.oneNoteOffer, "Heard as one note?")
         XCTAssertEqual(naming.startedElsewhere, " Heard as one note that started elsewhere? Pick how.")
+        XCTAssertEqual(naming.shapeStartedElsewhere, " Did any of its notes start elsewhere? Pick how.")
         XCTAssertEqual(naming.intoInfo, NamingInfo.into)
         XCTAssertEqual(naming.chordsInfo, NamingInfo.chords)
         XCTAssertTrue(NamingInfo.chords.hasSuffix("A chord you heard but didn't play is named on By ear."))
@@ -21,7 +22,7 @@ final class NeckEditorVoiceTests: XCTestCase {
     func testTheWriterNeverTalksAboutHearing() {
         let writing = NeckEditorVoice.writing
         let said = [writing.asOneNote, writing.asTwoNotes, writing.oneNoteOffer,
-                    writing.startedElsewhere, writing.intoInfo, writing.chordsInfo]
+                    writing.startedElsewhere, writing.shapeStartedElsewhere, writing.intoInfo, writing.chordsInfo]
         for line in said {
             XCTAssertFalse(line.localizedCaseInsensitiveContains("heard"), line)
             XCTAssertFalse(line.localizedCaseInsensitiveContains("By ear"), line)

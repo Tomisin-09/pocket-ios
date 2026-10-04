@@ -145,6 +145,51 @@ final class NeckEditingTests: XCTestCase {
         XCTAssertNil(edit.cursor.awaitingStart)
     }
 
+    // MARK: - One note in a chord (ADR 0252)
+
+    /// The Dmaj7 from the A string: A5 D7 G6 B7 e5.
+    private let dmaj7 = PieceLabel.fretted([FrettedNote(string: 4, fret: 5), FrettedNote(string: 3, fret: 7),
+                                            FrettedNote(string: 2, fret: 6), FrettedNote(string: 1, fret: 7),
+                                            FrettedNote(string: 0, fret: 5)], into: nil)
+
+    func testAChordsHammerOnIsOneTapAndMovesOneNote() throws {
+        let cursor = NeckCursor(active: 0, ringed: 1, chordsOn: true)
+        let asked = NeckEditing.choose(.hammerOn, labels: [dmaj7, nil], cursor: cursor)
+        XCTAssertEqual(asked.cursor.awaitingStart, LeadInRequest(join: .legato, direction: .upward))
+        let done = NeckEditing.place(string: 1, fret: 5, labels: asked.labels, cursor: asked.cursor)
+        let notes = try XCTUnwrap(done.labels[0]?.frettedNotes)
+        XCTAssertEqual(notes.filter { $0.leadIn != nil }, [note(1, 7, leadIn: LeadIn(from: .fret(5), join: .legato))])
+        XCTAssertNil(done.cursor.awaitingStart, "one tap, and it's done")
+        XCTAssertEqual(done.cursor.active, 0)
+    }
+
+    func testASlideAndMovedIntoPlaceAsOneMoveTheWholeShape() throws {
+        let slide = NeckEditing.choose(.slide, labels: [dmaj7],
+                                       cursor: NeckCursor(active: 0, ringed: 1, chordsOn: true))
+        let slid = try XCTUnwrap(NeckEditing.place(string: 1, fret: 6, labels: [dmaj7], cursor: slide.cursor)
+            .labels[0]?.frettedNotes)
+        XCTAssertEqual(slid.map(\.leadIn), dmaj7.frettedNotes.map { LeadIn(from: .fret($0.fret - 1), join: .slide) })
+
+        let asOne = NeckCursor(active: 0, chordsOn: true,
+                               awaitingStart: LeadInRequest(join: .legato, direction: .upward, together: true))
+        let moved = try XCTUnwrap(NeckEditing.place(string: 1, fret: 5, labels: [dmaj7], cursor: asOne)
+            .labels[0]?.frettedNotes)
+        XCTAssertEqual(moved.map(\.leadIn), dmaj7.frettedNotes.map { LeadIn(from: .fret($0.fret - 2), join: .legato) })
+    }
+
+    func testTheWholeChordMovedMovesThemAllOrNothing() throws {
+        let hammered = NeckEditing.place(string: 1, fret: 5, labels: [dmaj7], cursor: NeckCursor(
+            active: 0, chordsOn: true, awaitingStart: LeadInRequest(join: .legato, direction: .upward))).labels
+        let all = NeckEditing.moveTogether(labels: hammered, cursor: NeckCursor(active: 0, chordsOn: true))
+        XCTAssertEqual(try XCTUnwrap(all.labels[0]?.frettedNotes).map(\.leadIn),
+                       dmaj7.frettedNotes.map { LeadIn(from: .fret($0.fret - 2), join: .legato) })
+
+        let low: [PieceLabel?] = [.fretted([note(2, 1), note(1, 3, leadIn: LeadIn(from: .fret(1), join: .legato))],
+                                           into: nil)]
+        let refused = NeckEditing.moveTogether(labels: low, cursor: NeckCursor(active: 0, chordsOn: true))
+        XCTAssertEqual(refused.labels, low, "the G would start off the neck")
+    }
+
     func testWaitingForAStartOnANoteNotOnTheNeckGivesUp() {
         let cursor = NeckCursor(active: 0, awaitingStart: LeadInRequest(join: .slide, direction: nil))
         let edit = NeckEditing.takeStart(string: 2, fret: 5, for: LeadInRequest(join: .slide, direction: nil),

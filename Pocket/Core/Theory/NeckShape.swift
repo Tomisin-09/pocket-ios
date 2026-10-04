@@ -93,9 +93,11 @@ enum NeckPlacement {
     /// With **Chords** off a tap replaces the note, and the note keeps its marks, its lead-in too while it
     /// stays on its string; tapping the placed note changes nothing. With Chords on, one note per string:
     /// a tap on an empty string adds a note, on a string with one moves it, and on a note rings it, then,
-    /// tapped again, takes it out (unless it's the last). In a shape, a note moved or added takes the
-    /// shape's lead-in, so it keeps moving as one (ADR 0230 D6). A join is kept, for the sheet's tidy to
-    /// drop if it no longer fits.
+    /// tapped again, takes it out (unless it's the last). In a shape moving as one, a note moved or added
+    /// takes the shape's lead-in, so it keeps moving as one (ADR 0230 D6); a lone note with one passes it
+    /// on as it grows. In a shape where one note moves and the rest are held (ADR 0252 D1), each note
+    /// keeps what it had, as a lone note does: the moving note its start, a held note none, and a note
+    /// added is held. A join is kept, for the sheet's tidy to drop if it no longer fits.
     static func tap(string: Int, fret: Int, on current: PieceLabel?, ringed: Int?, chords: Bool) -> Outcome {
         guard case .fretted(var notes, let into) = current, !notes.isEmpty else {
             return Outcome(label: .fretted(string: string, fret: fret), ringed: string)
@@ -112,11 +114,13 @@ enum NeckPlacement {
                                            into: into),
                            ringed: string)
         }
+        let asOne = NeckJoin.movesAsOne(notes)
         if let onString = notes.firstIndex(where: { $0.string == string }) {
             if notes[onString].fret != fret {
                 notes[onString].fret = fret
-                // A lone note keeps the fret it started from; in a shape the start moves with the shape.
-                if notes.count > 1 { notes = NeckJoin.carryingLeadIn(notes, to: onString) }
+                // A lone note keeps the fret it started from; in a shape moving as one the start moves
+                // with the shape.
+                if notes.count > 1, asOne { notes = NeckJoin.carryingLeadIn(notes, to: onString) }
             } else if onString == ring, notes.count > 1 {
                 notes.remove(at: onString)
                 return Outcome(label: .fretted(notes, into: into), ringed: notes[notes.count - 1].string)
@@ -124,7 +128,7 @@ enum NeckPlacement {
             return Outcome(label: .fretted(notes, into: into), ringed: string)
         }
         notes.append(FrettedNote(string: string, fret: fret))
-        notes = NeckJoin.carryingLeadIn(notes, to: notes.count - 1)
+        if asOne { notes = NeckJoin.carryingLeadIn(notes, to: notes.count - 1) }
         return Outcome(label: .fretted(notes, into: into), ringed: string)
     }
 }

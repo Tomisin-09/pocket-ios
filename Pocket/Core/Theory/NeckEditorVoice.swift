@@ -12,6 +12,8 @@ struct NeckEditorVoice: Equatable, Sendable {
     let oneNoteOffer: String
     /// Said after why a note can't join the one before, for one note.
     let startedElsewhere: String
+    /// The same, for a shape: one of its notes, or all of them, can start elsewhere (ADR 0252 D1).
+    let shapeStartedElsewhere: String
     /// The ⓘ beside *Into it*.
     let intoInfo: String
     /// The ⓘ beside *Chords*.
@@ -22,6 +24,7 @@ struct NeckEditorVoice: Equatable, Sendable {
         asTwoNotes: "heard as two notes",
         oneNoteOffer: "Heard as one note?",
         startedElsewhere: " Heard as one note that started elsewhere? Pick how.",
+        shapeStartedElsewhere: " Did any of its notes start elsewhere? Pick how.",
         intoInfo: NamingInfo.into,
         chordsInfo: NamingInfo.chords)
 
@@ -30,6 +33,7 @@ struct NeckEditorVoice: Equatable, Sendable {
         asTwoNotes: "as two notes",
         oneNoteOffer: "Write it as one note?",
         startedElsewhere: " One note that starts elsewhere? Pick how.",
+        shapeStartedElsewhere: " Do any of its notes start elsewhere? Pick how.",
         intoInfo: WritingInfo.into,
         chordsInfo: WritingInfo.chords)
 }
@@ -45,12 +49,13 @@ enum WritingInfo {
         "How you get to this note: picked, a hammer-on or pull-off (fretted from a lower or higher fret on "
         + "the same string, without picking it), or a slide.\n\nFrom the note before? It joins from that "
         + "note. One note that starts elsewhere, like a grace note? Pick how it starts, then tap the fret it "
-        + "comes from; a slide can also come in From below or From above. A double-stop that moves as one "
-        + "works the same way. The tab reads the same either way."
+        + "comes from; a slide can also come in From below or From above.\n\nIn a chord, a hammer-on or "
+        + "pull-off moves the note on the string you tap, and the rest of the chord is held. If the whole "
+        + "chord moves, say so under it. A slide moves the whole chord. The tab reads the same either way."
 }
 
-/// What the ⓘ beside *Chords* and *Into it* say (ADR 0227 D4, D5; ADR 0230), kept together so the two read
-/// as one voice.
+/// What the ⓘ beside *Chords* and *Into it* say (ADR 0227 D4, D5; ADR 0230, 0252), kept together so the two
+/// read as one voice.
 enum NamingInfo {
     static let chords =
         "One tap can hold more than one note: a double-stop, a triad or a whole chord, one note per "
@@ -61,6 +66,8 @@ enum NamingInfo {
         "How you got to this note: picked, a hammer-on or pull-off (fretted from a lower or higher fret on "
         + "the same string, without picking it), or a slide.\n\nTapped twice, heard as two notes? It "
         + "joins from the note before. Tapped once, heard as one? Pick how it started, then tap the fret "
-        + "it came from; a slide can also come in From below or From above. A double-stop that moves as "
-        + "one works the same way. The tab reads the same however you tapped it."
+        + "it came from; a slide can also come in From below or From above.\n\nIn a chord, a hammer-on or "
+        + "pull-off moves the note on the string you tap, and the rest of the chord is held. If the whole "
+        + "chord moved, say so under it. A slide moves the whole chord. The tab reads the same however you "
+        + "tapped it."
 }

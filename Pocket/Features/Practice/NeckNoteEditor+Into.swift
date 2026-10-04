@@ -3,7 +3,8 @@ import SwiftUI
 // **Into it** (ADR 0227 D5, amended by ADR 0230): how the note being named was reached. From the tap
 // before, when the two were heard as two notes; or from a start inside this note, a **lead-in**, when they
 // were heard as one: a grace note hammered, pulled or slid from another fret, or a slide in from nowhere,
-// for one note or a shape moving as one (a double-stop slid into place).
+// for one note or a shape moving as one (a double-stop slid into place). In a chord a hammer-on or
+// pull-off moves one note and the rest are held (ADR 0252 D1); *The whole chord moved?* moves them all.
 // All four ways in are always shown, so a pull-off is there to be seen before a note goes down to one.
 // Split out for file length.
 extension NeckNoteEditor {
@@ -48,26 +49,44 @@ extension NeckNoteEditor {
             }
         } else {
             if let line = intoText { hint(line) }
-            if let offer = intoOffer { link(offer.title, action: offer.action) }
+            let offers = intoOffers
+            if !offers.isEmpty {
+                // Side by side where they fit; one under the other at the larger text sizes.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 18) { offerLinks(offers) }
+                    VStack(alignment: .leading, spacing: 4) { offerLinks(offers) }
+                }
+            }
         }
     }
 
-    /// Where to tap for the start: on the note's own string, or for a shape on any of its strings, the
-    /// others following.
+    private func offerLinks(_ offers: [Offer]) -> some View {
+        ForEach(offers.indices, id: \.self) { index in
+            link(offers[index].title, action: offers[index].action)
+        }
+    }
+
+    /// Where to tap for the start: on the note's own string; in a chord, on the string of the note that
+    /// moved, the rest held (0252 D1); or for a shape moving as one, on any of its strings, the others
+    /// following.
     private func startPrompt(_ request: LeadInRequest, _ notes: [FrettedNote]) -> String {
         guard notes.count == 1, let note = notes.first else {
-            switch (request.join, request.direction) {
-            case (.legato, .upward?):
+            switch (request.join, request.direction, request.together) {
+            case (.legato, .upward?, false):
+                return "Tap the fret it was hammered on from, below it, on the string of the note that moved. "
+                    + "The rest of the chord is held."
+            case (.legato, _, false):
+                return "Tap the fret it was pulled off from, above it, on the string of the note that moved. "
+                    + "The rest of the chord is held."
+            case (.legato, .upward?, true):
                 return "Tap the fret one of its notes was hammered on from, below it. The others move with it."
-            case (.legato, _):
+            case (.legato, _, true):
                 return "Tap the fret one of its notes was pulled off from, above it. The others move with it."
-            case (.slide, _):
+            case (.slide, _, _):
                 return "Tap the fret one of its notes slid from; the others move with it. Or it slid in from nowhere:"
             }
         }
-        let names = TabLine.stringNames(openMidi: tuning.openMidi)
-        let string = names.indices.contains(note.string)
-            ? names[note.string].trimmingCharacters(in: .whitespaces) + " string" : "same string"
+        let string = stringWords(note.string)
         switch (request.join, request.direction) {
         case (.legato, .upward?): return "Tap the fret it was hammered on from, below it on the \(string)."
         case (.legato, _): return "Tap the fret it was pulled off from, above it on the \(string)."
@@ -79,13 +98,14 @@ extension NeckNoteEditor {
     /// join could go here and none has.
     private var intoText: String? {
         guard let notes = labels[marked]?.frettedNotes, !notes.isEmpty else { return "Place the note first." }
-        if let leadIn = notes[0].leadIn {
+        if let moving = notes.first(where: { $0.leadIn != nil }), let leadIn = moving.leadIn {
+            if notes.count > 1, !NeckJoin.movesAsOne(notes) { return heldText(moving, leadIn) }
             let heard = notes.count == 1 ? voice.asOneNote : "moving as one"
             switch leadIn.from {
             case .fret(let start) where notes.count == 1: return "Started at fret \(start), \(heard)."
             case .fret(let start):
-                let frets = abs(start - notes[0].fret)
-                let side = start < notes[0].fret ? "lower" : "higher"
+                let frets = abs(start - moving.fret)
+                let side = start < moving.fret ? "lower" : "higher"
                 return "Started \(frets) fret\(frets == 1 ? "" : "s") \(side), \(heard)."
             case .below: return "Slid in from below, \(heard)."
             case .above: return "Slid in from above, \(heard)."
@@ -114,21 +134,51 @@ extension NeckNoteEditor {
         if marked + 1 < labels.count, NeckJoin.direction(into: marked + 1, of: labels) != nil {
             return reason + " A hammer-on or slide into note \(marked + 2) goes on that note."
         }
-        return reason + (notes.count == 1 ? voice.startedElsewhere
-            : " Moved into place as one? Pick how.")
+        return reason + (notes.count == 1 ? voice.startedElsewhere : voice.shapeStartedElsewhere)
     }
 
-    /// The one thing to do from here: move a lead-in's start, or say a join from the tap before was really
-    /// heard as one note.
-    private var intoOffer: (title: String, action: () -> Void)? {
-        guard case .fretted(let notes, let into) = labels[marked], !notes.isEmpty else { return nil }
-        if let leadIn = notes[0].leadIn {
-            let way = leadIn.join == .legato ? leadIn.direction(into: notes[0].fret) : nil
-            return ("Change where it started", { awaitingStart = LeadInRequest(join: leadIn.join, direction: way) })
+    /// One note of a chord moving, the rest held (0252 D1): *B string hammered on from fret 5; the others
+    /// held.*
+    private func heldText(_ note: FrettedNote, _ leadIn: LeadIn) -> String {
+        let string = stringWords(note.string)
+        switch (leadIn.join, leadIn.from) {
+        case (.legato, .fret(let start)):
+            let how = leadIn.direction(into: note.fret) == .downward ? "pulled off" : "hammered on"
+            return "\(string) \(how) from fret \(start); the others held."
+        case (.slide, .fret(let start)): return "\(string) slid from fret \(start); the others held."
+        case (_, .below): return "\(string) slid in from below; the others held."
+        case (_, .above): return "\(string) slid in from above; the others held."
         }
-        guard let into, NeckJoin.symbol(into: marked, of: labels) != nil else { return nil }
+    }
+
+    /// A string as the line says it: "B string".
+    private func stringWords(_ string: Int) -> String {
+        let names = TabLine.stringNames(openMidi: tuning.openMidi)
+        return names.indices.contains(string)
+            ? names[string].trimmingCharacters(in: .whitespaces) + " string" : "same string"
+    }
+
+    typealias Offer = (title: String, action: () -> Void)
+
+    /// What to do from here: move a lead-in's start, and for one note of a chord hammered or pulled, say
+    /// the whole chord moved (0252 D2); or say a join from the tap before was really heard as one note.
+    private var intoOffers: [Offer] {
+        guard case .fretted(let notes, let into) = labels[marked], !notes.isEmpty else { return [] }
+        if let moving = notes.first(where: { $0.leadIn != nil }), let leadIn = moving.leadIn {
+            let way = leadIn.join == .legato ? leadIn.direction(into: moving.fret) : nil
+            // A shape moving as one moves again as one; one note moving picks its note again.
+            let request = LeadInRequest(join: leadIn.join, direction: way, together: NeckJoin.movesAsOne(notes))
+            var offers: [Offer] = [("Change where it started", { awaitingStart = request })]
+            if NeckJoin.movedAsOne(notes) != nil {
+                offers.append(("The whole chord moved?", {
+                    apply(NeckEditing.moveTogether(labels: labels, cursor: cursor))
+                }))
+            }
+            return offers
+        }
+        guard let into, NeckJoin.symbol(into: marked, of: labels) != nil else { return [] }
         let way = into == .legato ? NeckJoin.direction(into: marked, of: labels) : nil
         let title = notes.count == 1 ? voice.oneNoteOffer : "Moved into place as one?"
-        return (title, { awaitingStart = LeadInRequest(join: into, direction: way) })
+        return [(title, { awaitingStart = LeadInRequest(join: into, direction: way, together: true) })]
     }
 }

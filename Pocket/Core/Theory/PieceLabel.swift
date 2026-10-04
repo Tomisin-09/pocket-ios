@@ -103,7 +103,9 @@ struct FrettedNote: Equatable, Hashable, Sendable {
     var bend: Int = 0
     var vibrato = false
     /// A grace note hammered, pulled or slid into this one, or a slide in from nowhere, when the player
-    /// heard the two as one note and tapped once. Only on a single note (`NeckJoin.tidied`).
+    /// heard the two as one note and tapped once. On a single note, on every note of a shape moving as
+    /// one (ADR 0230 D6), or on the notes moving in a chord whose rest are held (ADR 0252 D1);
+    /// `NeckJoin.leadInsFit` says which can be played, and `NeckJoin.tidied` drops the rest.
     var leadIn: LeadIn?
 
     /// The bends the neck offers, in semitones.

@@ -298,6 +298,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **In a chord, a hammer-on or pull-off moves one note.** In Name the notes and the tab writer, with
+  Chords on, pick Hammer-on or Pull-off and tap the fret the note started on, on its own string. That
+  note moves and the rest of the chord is held, so a B string hammered from the barre writes *5h7*
+  while the other strings ring. Before, every note moved. The start is the fret you tap, whether
+  that's the barre or the middle finger of an m7. *The whole chord moved?* under it moves them all. A
+  slide still moves the whole chord. (ADR 0252)
+- **↶ ↷ moved up in Name the notes.** They sit at the right of the row over the neck, which no longer
+  asks *Where did you play it?*, and beside *What did you hear?* on By ear. *Next unnamed* stays at the
+  bottom. The tab writer's neck drops its *Where do you play it?* title too. (ADR 0252)
 - **A Legato drill shows its hammer-ons and pull-offs.** The first note on each string is picked,
   and every note after it on that string is hammered on going up or pulled off coming down. As the
   board walks, each one is drawn as a curve under the string marked *h* or *p*, the way Name the notes
