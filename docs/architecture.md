@@ -357,10 +357,12 @@ A re-tap cancels any in-flight preview and retriggers cleanly (tracked note-on/o
 ringing-note set). The *what-sounds-when* arithmetic — block vs melodic timing, rests keeping their walk
 slot, absolute onset deadlines — is a pure, Foundation-only `HearPlan` (unit-tested), so the sequencer
 stays a thin dispatcher over it. `start()` never reconfigures the audio session off `.playAndRecord`, so
-a Hear tap can't steal the session from an in-flight recording take (ADR 0069). **Every reference surface
-now drives it** — block-chord Hear on My Chords / the movable & custom chord sheets, sequenced Hear on the
-scale, arpeggio, picking-run and custom-drill editors — through the shared `ChordHearButton` and the
-`FretboardDisplayOptionsBar` in `FretboardEditorChrome`.
+a Hear tap can't steal the session from an in-flight recording take (ADR 0069). **The chord surfaces
+drive it** — block-chord Hear on My Chords and the custom chord sheet, through the shared
+`ChordHearButton` — and so does the tuner's reference tone. The scale, arpeggio, picking-run and
+custom-drill editors sounded their runs through it as well, until ADR 0253 took that out pending real
+guitar audio; `FretboardDisplayOptionsBar` in `FretboardEditorChrome` is now *Display*, plus *Watch* when the
+board isn't already walking (ADR 0077).
 
 **Deactivating the shared session is reference-counted** (`AudioPlumbing.retainSession` /
 `releaseSession` over the pure `AudioSessionLease`, plus the paired-by-construction

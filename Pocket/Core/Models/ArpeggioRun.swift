@@ -246,12 +246,6 @@ extension ArpeggioRun {
         return ascent + Array(ascent.dropFirst().dropLast().reversed())
     }
 
-    /// MIDI notes the editor's **Hear** sounds, in playing order, for `instrument`.
-    func heardMidi(for instrument: Instrument) -> [Int] {
-        let notes = instrument == .guitar ? sequence : bassSequence(openMidi: instrument.engineOpenMidi)
-        return notes.map { instrument.midi(of: $0) }
-    }
-
     /// How many neck positions the editor offers for `instrument` — the five CAGED boxes, or bass's single
     /// canonical box (ADR 0116).
     func positionCount(for instrument: Instrument) -> Int {

@@ -810,6 +810,12 @@ changes are fine as blocks.
 real recording the synth doesn't sound close enough for the player to judge a match. They come back
 with this, not before.
 
+**So does the exercise editors' Hear** ([ADR 0253](decisions/0253-hear-comes-out-of-the-exercise-editors.md),
+2026-10-04). Scales, arpeggios, the warm-up and picking runs, and *Draw your own* sounded their run
+through the same tone; it came out of all four. It was fed MIDI like every other Hear surface, so
+bringing it back is a revert of that change's code (`FretboardHearButton`, the `heardMidi(for:)`
+helpers, `Instrument.midi(of:)`), once the bank below exists.
+
 ### Recording: ~32 WAVs, not every note
 
 Recording every note is hundreds of takes and `AVAudioUnitSampler` **cannot use most of them** — it
@@ -870,8 +876,8 @@ file called `HearGuitar.sf2`**, at GM program 24 (nylon guitar), bank MSB `0x79`
 only because no such file exists. Build the SF2 in Polyphone, drop it in `Pocket/Resources/`
 (`project.yml`'s `- path: Pocket` already covers it), `xcodegen generate`.
 
-Every Hear surface improves at once with **no Swift changes** — `ChordHearButton`,
-`FretboardHearButton`, and the tuner. Check the tuner deliberately: `TunerView:375` shares the engine
+Every Hear surface improves at once with **no Swift changes** — `ChordHearButton` and the tuner.
+(`FretboardHearButton` was the third until ADR 0253; restoring it is the revert above.) Check the tuner deliberately: `TunerView:375` shares the engine
 for its reference pitch, and a nylon-guitar reference tone is a different proposition from a neutral
 one.
 

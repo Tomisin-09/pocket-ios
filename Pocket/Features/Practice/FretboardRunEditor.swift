@@ -37,12 +37,6 @@ struct FretboardRunEditor: View {
     /// preview below. The walking-highlight preference itself lives only in Settings ("Animate
     /// exercises") now; Watch covers "see it move once" here without a redundant local toggle.
     @State private var playOnceToken: Date?
-    /// Per-note duration matching the preview walk, so Hear stays locked to the highlight (ADR 0097 S4).
-    private var secondsPerNote: Double {
-        60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, run.notesPerBeat))
-    }
-    /// The run's notes as MIDI, in playing order — what Hear sounds (a generated picking run has no rests).
-    private var heardNotes: [Int?] { run.heardMidi(for: instrument).map { Optional($0) } }
 
     private static let maxBaseFret = 15
     private static let maxShiftPerPass = 5
@@ -50,8 +44,7 @@ struct FretboardRunEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
-                                       playToken: $playOnceToken, tint: tint, hasRoot: false)
+            FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint, hasRoot: false)
             FretboardDrillPreview(drill: template.articulating(run.expanded(instrument: instrument)),
                                   tint: tint, labelMode: labelMode, playOnceToken: playOnceToken)
             patternField
@@ -65,7 +58,6 @@ struct FretboardRunEditor: View {
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
-        .hearStopsOnDisappear()
     }
 
     // MARK: - Advanced

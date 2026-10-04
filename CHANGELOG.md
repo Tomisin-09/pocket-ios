@@ -298,6 +298,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Hear is gone from the exercise editors, until there are real guitar sounds.** The scale,
+  arpeggio, warm-up and picking-run editors, and Draw your own, no longer sound the run with the
+  built-in tone. The board still walks the shape, and with **Animate exercises** off, **Watch** walks
+  it once. Hear on a saved chord, and the tuner's reference tone, are unchanged. (ADR 0253)
 - **In a chord, a hammer-on or pull-off moves one note.** In Name the notes and the tab writer, with
   Chords on, pick Hammer-on or Pull-off and tap the fret the note started on, on its own string. That
   note moves and the rest of the chord is held, so a B string hammered from the barre writes *5h7*

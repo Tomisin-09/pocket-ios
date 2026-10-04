@@ -69,15 +69,6 @@ extension Instrument {
 
     /// How many strings this instrument's board draws — the length of its standard tuning (6 / 4).
     var stringCount: Int { standardTuning.stringCount }
-
-    /// The MIDI pitch a `FretNote` sounds on this instrument's standard tuning — the instrument-aware
-    /// counterpart of `CAGEDShape.midi` / `BassNeckLayout.midi`, used where the neck's actual pitches are
-    /// needed (Hear playback of a generated run).
-    func midi(of note: FretNote) -> Int {
-        let open = engineOpenMidi
-        guard !open.isEmpty else { return note.fret }
-        return open[min(max(0, note.string), open.count - 1)] + note.fret
-    }
 }
 
 /// How the tuner interprets a detected pitch (ADR 0115). **Guided** (default) knows the selected

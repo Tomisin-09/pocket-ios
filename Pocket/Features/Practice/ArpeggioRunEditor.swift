@@ -31,20 +31,13 @@ struct ArpeggioRunEditor: View {
         let preference = NoteSpelling(rawValue: accidentalRaw) ?? .default
         return (NoteSpelling.forArpeggio(run.quality, root: pitchClass) ?? preference).name(pitchClass: pitchClass)
     }
-    /// Per-note duration matching the preview walk, so Hear stays locked to the highlight (ADR 0097 S3).
-    private var secondsPerNote: Double {
-        60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, run.notesPerBeat))
-    }
-    /// The run's notes as MIDI, in playing order — what Hear sounds (no rests in a generated arpeggio).
-    private var heardNotes: [Int?] { run.heardMidi(for: instrument).map { Optional($0) } }
-    /// A one-shot "watch it" request (ADR 0065) — set by the options bar's Hear/Watch, read by the
-    /// preview below.
+    /// A one-shot "watch it" request (ADR 0065) — set by the options bar's Watch, read by the preview
+    /// below.
     @State private var playOnceToken: Date?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
-                                       playToken: $playOnceToken, tint: tint)
+            FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint)
             FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
                                   labelMode: labelMode, playOnceToken: playOnceToken)
             titleField
@@ -56,7 +49,6 @@ struct ArpeggioRunEditor: View {
             if run.positionCount(for: instrument) > 1 { positionRow }
             advanced
         }
-        .hearStopsOnDisappear()
     }
 
     // MARK: - Advanced
