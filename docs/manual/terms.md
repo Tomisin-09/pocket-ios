@@ -85,11 +85,18 @@ you recognise.
 
 ## Mastery, on a song
 
-> Averaged from this song's loops — rate individual loops to set it. “Unrated” until at least one loop has a mastery.
+> Averaged from this song's loops, each at its current tempo — rate individual loops to set it. “Unrated” until at least one loop has a mastery. Beside it is your slowest loop's tempo: the song only goes as fast as that.
 
 **Where you find it.** Hold a song's title in the player, or open the song's details from the
 library, and **Mastery** appears among its details. You cannot set it directly — it is derived, and
 the way to move it is to rate the loops underneath it.
+
+**It counts each loop at the tempo it is at now.** A loop you have just raised has no rating yet, so
+it drops out of the average until you rate it again — the details say how many loops the dots stand
+for, as in *2 of 3 loops rated*. The speed sits beside it rather than inside it: under the dots in
+the player's title strip, *slowest 60%*, or *full speed* once every loop you have measured is at the
+record's own tempo. Song details name the loop that sets it, under **Slowest loop**. Mastery and
+speed stay two separate facts here too; the app never folds one into the other.
 
 ## Your command tempo, on an exercise
 

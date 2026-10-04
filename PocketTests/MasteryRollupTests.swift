@@ -47,4 +47,11 @@ final class MasteryRollupTests: XCTestCase {
         // A real 0 still counts; an adjacent nil is skipped — so this averages just the 0.
         XCTAssertEqual(MasteryRollup.rollup([0, nil]), 0)
     }
+
+    func testTheRatedLabelSaysWhatTheAverageIsMadeOf() {
+        // ADR 0250 D9: a raised loop drops out of the average, so the details say how many remain.
+        XCTAssertEqual(MasteryRollup.ratedLabel(rated: 2, of: 3), "2 of 3 loops rated")
+        XCTAssertEqual(MasteryRollup.ratedLabel(rated: 1, of: 1), "1 of 1 loop rated")
+        XCTAssertEqual(MasteryRollup.ratedLabel(rated: 0, of: 2), "0 of 2 loops rated")
+    }
 }

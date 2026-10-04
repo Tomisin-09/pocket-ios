@@ -61,7 +61,7 @@ struct PracticeLogView: View {
     /// The derived inventory counts the achievement wall shows — the existing `PracticeStats` roll-up,
     /// reused rather than recounted so the two can't drift.
     private var inventory: PracticeStats.Summary {
-        PracticeStats.summarize(loopMasteryValues: loops.map(\.mastery),
+        PracticeStats.summarize(loops: loops.map { .init(mastery: $0.mastery, command: $0.command) },
                                 exerciseCount: exercises.count,
                                 totalNotes: journalEntries.count)
     }

@@ -305,6 +305,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   drill you've just raised now comes round sooner in your sessions, because the new tempo is the one
   to work on. Changing an exercise's rhythm while keeping the same note speed keeps the rating.
   (ADR 0250)
+- **A song shows how fast you can play it, beside its mastery.** Under the dots in the song player's
+  title, *slowest 60%* is your slowest loop's command tempo, because you can only play the whole song
+  as fast as that. Once every loop you've measured is at the record's own speed, it says *full speed*.
+  Song details name the loop that sets it, and say how many loops the mastery dots are made of, e.g.
+  *2 of 3 loops rated*. Mastery and speed stay two separate facts. (ADR 0250)
+- **"Mastered" means a 5 at full speed.** The Practice log's *What you've built* count of mastered
+  loops now counts a loop only when it's rated 5 at 100% or faster. A 5 at a slower tempo is the cue
+  to raise it. (ADR 0250)
 - **A song's mastery is shown as dots.** The song player's title and Song details used stars, while
   every loop row used dots. Now they all use dots.
 - **Marking a snag no longer suggests a tighter loop.** The *Tighten to …* offer that replaced Loop

@@ -111,12 +111,17 @@ extension ManualShotCase {
     /// The song player's title strip, which a hold opens Song details from. `SongStrip` combines the
     /// title, the artist and, on a rated song, its mastery dots, so Feels reads `Feels, Jack Trader,
     /// Mastery 3 of 5` and an unrated song stops at the artist; an exact match on the first missed Feels
-    /// (2026-10-03). Never a bare prefix: the library row under the player starts with the same words.
+    /// (2026-10-03). Since ADR 0250 a song with a measured loop adds its speed after that — `Slowest
+    /// loop at 75 percent` or `All loops at full speed` — which on a song with no rated loop comes
+    /// straight after the artist. Never a bare prefix: the library row under the player starts with
+    /// the same words.
     @MainActor
     func playerTitle(_ title: String, in app: XCUIApplication) -> XCUIElement {
         let strip = "\(title), Jack Trader"
-        return app.buttons.matching(NSPredicate(format: "label == %@ OR label BEGINSWITH %@",
-                                                strip, strip + ", Mastery")).firstMatch
+        let after = [", Mastery", ", Slowest loop at", ", All loops at full speed"].map { strip + $0 }
+        return app.buttons.matching(NSPredicate(
+            format: "label == %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@",
+            strip, after[0], after[1], after[2])).firstMatch
     }
 
     /// Scroll the song player's panels up until `reached`. The drag runs from near the bottom of the

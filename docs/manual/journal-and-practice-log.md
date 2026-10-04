@@ -396,9 +396,10 @@ started noting which song they were are listed together as *Song not recorded*.
 - **The hours wall** — marks at 10, 50, 100 and 500 hours. Every mark is always drawn, reached or
   not, so the wall does not rearrange as you pass them. Nothing here says *by when*: an unreached
   mark is neutral, not outstanding.
-- **What you've built** — how many exercises, loops, mastered loops and notes you have. Deliberately
-  at the bottom: it measures the size of your library rather than the work, and it can go *down*
-  when you delete a drill.
+- **What you've built** — how many exercises, loops, mastered loops and notes you have. A loop counts
+  as mastered when it is rated 5 **at full speed**: a 5 at a slower tempo is the cue to raise it.
+  Deliberately at the bottom: it measures the size of your library rather than the work, and it can
+  go *down* when you delete a drill.
 
 ### What the practice log does not do
 

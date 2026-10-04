@@ -55,8 +55,8 @@ final class ManualLibraryShots: ManualShotCase {
     /// 5 put the resulting frame in front of a pair of eyes: its `Audio` section read `File:
     /// Missing`. Slow Bend is the bundled tone-generator demo, the one seeded song with no bookmark
     /// and no file behind it, so the figure that exists to show the audio section was showing that
-    /// section's failure state — a true picture of the wrong song. The marker's alt text names the
-    /// file row, so this must be a song that has one.
+    /// section's failure state — a true picture of the wrong song. The figure shows the top of that
+    /// section, so this must be a song that has a file.
     ///
     /// Feels is second of six by title and therefore already in the tree, which is also why the
     /// swipe that Slow Bend needed is gone.
@@ -83,14 +83,18 @@ final class ManualLibraryShots: ManualShotCase {
 
         // The File row's value, `WAV ·`, and not just the row: `SongAudioLabel.describe` returns
         // `Missing` for a song with no copy behind it, and the row is present and correct-looking either
-        // way. The row's `LabeledContent` once read as one element, `File, WAV · 8.9 MB`, and reads as
-        // two since (2026-10-03), so each half is asserted. The size is left off because it moves with
-        // the seed audio; the format does not. Map the song (ADR 0232) sits above Audio and leaves the
-        // File row the last whole one in frame, which the alt text says.
+        // way. The size is left off because it moves with the seed audio; the format does not.
+        //
+        // **Asserted in the tree, not in the frame**, since ADR 0250 D9 gave the facts card a Slowest
+        // loop row: the File row now sits half under the bottom edge, below Map the song (ADR 0232).
+        // The frame is about the facts card, so the rows it must hold are the two D9 added.
+        let format = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "WAV ·")).firstMatch
+        XCTAssertTrue(format.exists, "the File row doesn't read `WAV ·` — is Feels missing its file?\n\(stepLog)")
         capture(app, slug: "reference/song-details",
                 assertingOnScreen: "Song details",
-                alsoRequiring: ["File", "Map the song"],
-                orBeginningWith: ["Feels", "WAV ·"])
+                alsoRequiring: ["1 of 1 loop rated", "Slowest loop", "Chorus lift · 75%", "Map the song"],
+                orBeginningWith: ["Feels"])
     }
 
     /// `reference/song-edit` · `songs/song-edit` — the Edit song sheet, top and scrolled.

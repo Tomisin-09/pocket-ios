@@ -194,9 +194,25 @@ struct SongDetailsSheet: View {
             }
             DetailLabeledContent(label: "Mastery", info: PracticeFieldInfo.songMastery) {
                 if let mastery = song.mastery {
-                    MasteryDots(filled: mastery, size: 8)
+                    // What the average is made of (ADR 0250 D9): a raised loop drops out until
+                    // it is rated again, so the dots alone can't say how many they stand for.
+                    HStack(spacing: 8) {
+                        Text(MasteryRollup.ratedLabel(rated: song.ratedLoopCount, of: song.loops.count))
+                            .font(.futura(.footnote))
+                            .foregroundStyle(PocketColor.textSecondary)
+                        MasteryDots(filled: mastery, size: 8)
+                    }
                 } else {
                     Text("Unrated").foregroundStyle(PocketColor.textSecondary)
+                }
+            }
+            // The speed beside the mastery (ADR 0250 D8), naming the loop that sets it.
+            if let speed = song.speedReading {
+                DetailLabeledContent(label: "Slowest loop") {
+                    Text("\(speed.loopName) · \(speed.percent)%")
+                        .font(.futura(.body))
+                        .foregroundStyle(PocketColor.textPrimary)
+                        .lineLimit(1)
                 }
             }
             DetailLabeledContent(label: "Length") {

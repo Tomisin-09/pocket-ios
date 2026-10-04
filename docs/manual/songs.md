@@ -90,9 +90,11 @@ yourself later — a tuning, a capo position, what to listen for.
      | alt: The Edit song sheet scrolled to its key picker, the Collections section and the Notes field, with Practice stats beginning below
      | state: seeded library, song "Slow Bend", edit sheet open, scrolled to Collections -->
 
-The song's **details** show what the app knows and what it has worked out: **Tempo**, **Mastery**
-and **Length**, along with your practice stats for it. Mastery here is derived from the loops
-underneath it rather than set directly — see [the app's own words](terms.md).
+The song's **details** show what the app knows and what it has worked out: **Tempo**, **Mastery**,
+**Slowest loop** and **Length**, along with your practice stats for it. Mastery here is derived from
+the loops underneath it rather than set directly, and says how many of them are rated; **Slowest
+loop** names the loop with the lowest command tempo, which is as fast as you can play the whole song
+— see [the app's own words](terms.md).
 
 **Exercises for this song** lists the drills you have linked to it, and each one is a way through:
 tap it to run it, and the back arrow brings you back to the song. Swipe a row to unlink it —

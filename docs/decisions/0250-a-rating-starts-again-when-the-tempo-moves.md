@@ -106,12 +106,17 @@ Unmeasured loops are skipped, as the rollup skips unrated ones, and backing-trac
 because you play along to them, not practise them. **The two axes stay two** (ADR 0036): they sit
 side by side and are never folded into one number.
 
-**D9 — Song details say what the dots are made of.** The Mastery row adds *(2 of 3 loops rated)*,
-and a new row names the slowest loop: *Slowest loop · Intro riff · 60%*.
+**D9 — Song details say what the dots are made of.** The Mastery row adds *2 of 3 loops rated*
+(`MasteryRollup.ratedLabel`; *1 of 1 loop rated* agrees with its total), and a new **Slowest loop**
+row names the loop that sets the speed: *Intro riff · 60%*. The row is there only when a loop is
+measured.
 
 **D10 — *Mastered* means 5 at full speed.** The Practice log's tile counts loops rated 5 whose
 command is at 100% or above. Under D1 a 5 always means *at the current tempo*, so a 5 at 60% is
-the cue to raise, not a loop finished.
+the cue to raise, not a loop finished. It reads the **effective** command (`Loop.command`), which
+for an unmeasured loop is its practice speed, because that is the tempo an unmeasured loop's rating
+was given at. Full speed is one rule, `SongSpeed.isFullSpeed`: the loop badge's rounded percent is
+100 or more, so the tile never disagrees with the badge it sits beside.
 
 ## Alternatives rejected
 

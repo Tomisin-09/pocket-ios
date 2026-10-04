@@ -40,14 +40,18 @@ enum ScreenshotSeed {
         let speed: Double
         let repeats: Int
         let mastery: Int
+        /// The measured command tempo (`×`), or `nil` for a loop never measured. Set on the loop the
+        /// Song details figure shows, so its *Slowest loop* row (ADR 0250 D9) is in frame.
+        let command: Double?
         init(_ name: String, _ start: Double, _ end: Double,
-             _ speed: Double, _ repeats: Int, _ mastery: Int) {
+             _ speed: Double, _ repeats: Int, _ mastery: Int, command: Double? = nil) {
             self.name = name
             self.start = start
             self.end = end
             self.speed = speed
             self.repeats = repeats
             self.mastery = mastery
+            self.command = command
         }
     }
 
@@ -90,7 +94,7 @@ enum ScreenshotSeed {
         "Feels": Meta(
             artist: "Jack Trader", genre: "Neo-Soul", bpm: 88, key: "A Minor",
             collections: ["chill", "needs-work"],
-            loops: [LoopSpec("Chorus lift", 0.34, 0.48, 0.75, 5, 3)])
+            loops: [LoopSpec("Chorus lift", 0.34, 0.48, 0.75, 5, 3, command: 0.75)])
     ]
 
     static let launchArgument = "-seedScreenshots"
@@ -168,6 +172,7 @@ enum ScreenshotSeed {
                 let loop = Loop(name: spec.name, start: spec.start, end: spec.end,
                                 speed: spec.speed, repeats: spec.repeats)
                 loop.mastery = spec.mastery
+                loop.commandTempo = spec.command
                 return loop
             }
             song.loops = loops

@@ -9,8 +9,9 @@ The waveform screen. Reached by tapping a song in the [library](home-and-library
 
 ## The title strip
 
-`Back to library` on the left. Beside it the song's title, artist and mastery. **Hold the title** to
-open [Song details](home-and-library.md#song-details) — there is no button for it.
+`Back to library` on the left. Beside it the song's title, artist and mastery, with the slowest
+loop's speed under the mastery — *slowest 60%*, or *full speed*. **Hold the title** to open
+[Song details](home-and-library.md#song-details) — there is no button for it.
 
 ## The speed bar
 

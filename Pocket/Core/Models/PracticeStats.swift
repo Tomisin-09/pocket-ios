@@ -9,14 +9,24 @@ import Foundation
 /// AGENTS.md. The view gathers the raw inputs from its `@Query`s and hands them here.
 enum PracticeStats {
 
-    /// Top of the 0–5 mastery scale (`MasteryDots`) — a loop counts as **mastered** at this value.
+    /// Top of the 0–5 mastery scale (`MasteryDots`) — a loop counts as **mastered** at this value,
+    /// **at full speed** (ADR 0250 D10).
     static let masteryCeiling = 5
+
+    /// One loop, as the counts need it: its rating and the command it was given at. Under ADR 0250 a
+    /// rating is always at the loop's *current* command — the effective one (`Loop.command`), which
+    /// for an unmeasured loop is its practice speed.
+    struct LoopFacts: Equatable {
+        var mastery: Int?
+        var command: Double
+    }
 
     /// The four headline numbers the home card shows. `Equatable` so the view diffs cheaply.
     struct Summary: Equatable {
         var loops: Int
         var exercises: Int
-        /// Loops sitting at the top of the mastery scale — the "Mastered" tile.
+        /// Loops rated at the top of the scale **at full speed** — the "Mastered" tile. A 5 below
+        /// full speed is the cue to raise the tempo, not a loop finished (ADR 0250 D10).
         var fullMasteryCount: Int
         var notes: Int
 
@@ -25,15 +35,19 @@ enum PracticeStats {
         var isEmpty: Bool { loops == 0 && exercises == 0 }
     }
 
-    /// Roll the raw inputs into the summary. `loopMasteryValues` is one entry per loop (its
-    /// `mastery`, `nil` when unrated); `totalNotes` is the journal-entry count across every loop
-    /// and exercise.
-    static func summarize(loopMasteryValues: [Int?],
+    /// Roll the raw inputs into the summary. `loops` is one entry per loop; `totalNotes` is the
+    /// journal-entry count across every loop and exercise.
+    static func summarize(loops: [LoopFacts],
                           exerciseCount: Int,
                           totalNotes: Int) -> Summary {
-        Summary(loops: loopMasteryValues.count,
+        Summary(loops: loops.count,
                 exercises: exerciseCount,
-                fullMasteryCount: loopMasteryValues.lazy.filter { $0 == masteryCeiling }.count,
+                fullMasteryCount: loops.lazy.filter(hasFullMastery).count,
                 notes: totalNotes)
+    }
+
+    /// Rated 5, at full speed — the one place the threshold is decided.
+    static func hasFullMastery(_ loop: LoopFacts) -> Bool {
+        loop.mastery == masteryCeiling && SongSpeed.isFullSpeed(loop.command)
     }
 }

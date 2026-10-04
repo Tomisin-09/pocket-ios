@@ -24,13 +24,25 @@ extension ScreenshotSeed {
         let speed: Double
         let repeats: Int
         let mastery: Int
+        /// The command tempo it is measured at, `×` of original — `nil` for unmeasured.
+        var command: Double?
+        /// Where the rating was given, when the command has since been raised off it — so the rating
+        /// is set aside (ADR 0250) and the edit sheet reads *Last rated 4 at 70%*. `nil`: rated at
+        /// the loop's command, measured or not.
+        var ratedAt: Double?
     }
 
     /// Binta's loops, by bar: the author's own four-bar Chords loop (ADR 0220 D2) slowed to 0.75×, and
     /// the two bars the solo opens on at full speed.
+    ///
+    /// Chords is measured, so the title strip shows the song's speed beside its dots (*slowest 75%*,
+    /// ADR 0250 D8). It was rated 4 at 70% and then raised to 75%, so its rating is set aside — the
+    /// state the loop-sheet figures show. The solo opener is the terms page's own example: full
+    /// speed, rated 2, fast but scrappy. It is left **unmeasured**: a row carrying dots, a command
+    /// badge and a snag count runs out of width and cuts its own time range to `0:3…`.
     private static let bintaLoops: [BarLoop] = [
         BarLoop(name: "Chords", from: StarterTrack.chordsStart.bar, to: StarterTrack.soloStart.bar,
-                speed: 0.75, repeats: 4, mastery: 4),
+                speed: 0.75, repeats: 4, mastery: 4, command: 0.75, ratedAt: 0.7),
         BarLoop(name: "Solo opener", from: StarterTrack.soloStart.bar, to: StarterTrack.soloStart.bar + 2,
                 speed: 1.0, repeats: 2, mastery: 2)
     ]
@@ -46,7 +58,14 @@ extension ScreenshotSeed {
                             start: StarterTrack.barStart(spec.from) / song.duration,
                             end: StarterTrack.barStart(spec.to) / song.duration,
                             speed: spec.speed, repeats: spec.repeats)
-            loop.mastery = spec.mastery
+            loop.commandTempo = spec.command
+            // Written directly, not through `rateMastery`/`moveCommand`: a seed states an end state.
+            loop.masteryAtSpeed = spec.ratedAt ?? spec.command ?? spec.speed
+            if spec.ratedAt == nil {
+                loop.mastery = spec.mastery
+            } else {
+                loop.previousMastery = spec.mastery
+            }
             return loop
         }
         song.loops = loops
@@ -61,7 +80,8 @@ extension ScreenshotSeed {
             let late = Snag(markedAt: yesterday, seconds: StarterTrack.barStart(11), speed: 0.75, loopUID: chords.uid)
             let again = Snag(markedAt: yesterday, seconds: StarterTrack.barStart(12) + 2 * beat, speed: 0.75,
                              loopUID: chords.uid)
-            let line = JournalEntry.forLoop(text: bintaSnagLine, kind: .struggle, masteryAtEntry: chords.mastery,
+            let line = JournalEntry.forLoop(text: bintaSnagLine, kind: .struggle,
+                                            masteryAtEntry: chords.mastery ?? chords.previousMastery,
                                             commandTempoAtEntry: nil, createdAt: yesterday)
             line.snagUID = late.uid
             chords.journal.append(line)

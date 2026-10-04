@@ -1000,7 +1000,10 @@ the write, so the loop editor shows the dots it will save. `rateMastery` writes 
 unchanged value, so a completion screen handing back its pre-filled row on Continue can neither wipe
 the set-aside rating nor re-stamp an old one at a new tempo. `MasteryStaleBackfill` runs every launch
 beside `PieceDateBackfill` and sets aside any rating 0169 left stale; the stale reading and its
-`DueScore` floor remain as the fallback.
+`DueScore` floor remain as the fallback. Slice 2 adds the pure `SongSpeed` (Foundation-only): the
+slowest measured loop's command, shown beside a song's mastery on the title strip and in Song
+details, never folded into it. Its `isFullSpeed` (the loop badge's rounded percent ≥ 100) is the one
+full-speed rule, and `PracticeStats.hasFullMastery` reads it too, so *Mastered* is a 5 at full speed.
 into `[SessionBlock]` honouring the ADR 0014 pacing (≤20-min blocks, U-shape with the top-due drill
 last, warm-up LRU-picked / unbudgeted). **A preset denominates focused *blocks*, not minutes
 (ADR 0129):** `SessionLength` is `blocks × itemsPerBlock` — Quick 1×3, Focused 2×3, Full 4×3 — each
