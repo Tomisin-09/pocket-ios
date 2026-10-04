@@ -6,7 +6,7 @@ down: *mastery* and *command tempo* in particular are two different questions ab
 and mixing them up is the fastest way to make the numbers useless to you.
 
 Everywhere one of these appears in the app it carries a small **ⓘ**
-<!-- shot: terms/info-button | role: glyph | alt: | crop: 246,1710,84,94 -->
+<!-- shot: terms/info-button | role: glyph | alt: | crop: 284,1556,76,94 -->
 next to its label. Tap it and the definition appears in a popover. The definitions below are those
 same popovers, word for word — if the two ever differ, the app is right and this page is stale.
 
@@ -20,7 +20,7 @@ the words Red Moon coined for its own practice model.
 
 ## Mastery
 
-> How cleanly you own this loop — feel, tone, accuracy. Separate from speed: you can play something fast but scrappy, or slow but perfect. A rating is kept with the tempo you gave it at, so it still means something after you move on.
+> How cleanly you own this loop — feel, tone, accuracy. Separate from speed: you can play something fast but scrappy, or slow but perfect. A rating is for the tempo you gave it at. Move the command tempo and it starts again; your last one is kept.
 
 **Where you set it.** Open a song, hold a loop in the **Loops** panel to open its edit sheet, and
 set **Mastery** there. It is a rating out of five and it is yours to set — nothing in Red Moon
@@ -28,22 +28,22 @@ listens to you play or assigns it for you.
 
 <!-- shot: terms/mastery-info | role: detail
      | alt: The Mastery row in the loop edit sheet with its ⓘ popover open, showing the definition
-     | state: seeded library, Slow Bend, loop "Verse riff" edit sheet, ⓘ tapped on Mastery
+     | state: seeded library, Binta, loop "Chords" edit sheet, ⓘ tapped on Mastery
      | crop: 60,1335,1140,555 -->
 
 An untouched loop shows no rating at all rather than a zero. That is deliberate: a loop you have
 never assessed and a loop you have assessed as poor are different things, and only one of them
 should look like a problem.
 
-**A rating remembers the tempo you gave it at.** Under the rating you will see a line like
-*Rated at 85%* — on an exercise, *Rated at 90 BPM · 8ths*. Once you move the command tempo past
-that, the line adds *command has moved since*: your rating is still yours and still stands, but
-it describes a speed you have since left behind.
+**A rating belongs to a tempo.** Under the rating you will see a line like *Rated at 85%* — on
+an exercise, *Rated at 90 BPM · 8ths*. When you move the command tempo — raising it after a run,
+settling it lower, or changing it in the edit sheet — the dots go back to unrated, and the line
+under them becomes *Last rated 5 at 85%*. Your old rating is kept, not erased: it describes a
+speed you have since left.
 
-That matters most when you raise your command tempo straight after rating something 5. Without
-the tempo attached, a 5 would take the drill out of rotation entirely — at a speed you had not
-actually rated it at yet. With it, the drill comes back round instead, so you get a chance to
-say whether the new tempo is really clean.
+That is the cycle the two numbers are for. Rate a loop until it is a 5, raise the command tempo,
+and rate it again at the new speed. A drill you have just raised comes back round in your
+sessions, because a tempo nobody has rated yet is exactly the one worth working on.
 
 ## Command tempo
 
@@ -54,8 +54,8 @@ percentage of the song's original speed, so 100% means you have it at the tempo 
 
 <!-- shot: terms/command-tempo-info | role: detail
      | alt: The Command tempo row in the loop edit sheet with its ⓘ popover open
-     | state: seeded library, Slow Bend, loop "Verse riff" edit sheet, ⓘ tapped on Command tempo
-     | crop: 60,1650,1080,490 -->
+     | state: seeded library, Binta, loop "Chords" edit sheet, ⓘ tapped on Command tempo
+     | crop: 60,1780,1080,500 -->
 
 Because the two axes are independent, a loop can sit at a high command tempo and a low mastery —
 you can get through it at full speed, but it is scrappy. That combination is a useful thing to be
@@ -85,11 +85,18 @@ you recognise.
 
 ## Mastery, on a song
 
-> Averaged from this song's loops — rate individual loops to set it. “Unrated” until at least one loop has a mastery.
+> Averaged from this song's loops, each at its current tempo — rate individual loops to set it. “Unrated” until at least one loop has a mastery. Beside it is your slowest loop's tempo: the song only goes as fast as that.
 
 **Where you find it.** Hold a song's title in the player, or open the song's details from the
 library, and **Mastery** appears among its details. You cannot set it directly — it is derived, and
 the way to move it is to rate the loops underneath it.
+
+**It counts each loop at the tempo it is at now.** A loop you have just raised has no rating yet, so
+it drops out of the average until you rate it again — the details say how many loops the dots stand
+for, as in *2 of 3 loops rated*. The speed sits beside it rather than inside it: under the dots in
+the player's title strip, *slowest 60%*, or *full speed* once every loop you have measured is at the
+record's own tempo. Song details name the loop that sets it, under **Slowest loop**. Mastery and
+speed stay two separate facts here too; the app never folds one into the other.
 
 ## Your command tempo, on an exercise
 

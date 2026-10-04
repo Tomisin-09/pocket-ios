@@ -90,9 +90,11 @@ yourself later — a tuning, a capo position, what to listen for.
      | alt: The Edit song sheet scrolled to its key picker, the Collections section and the Notes field, with Practice stats beginning below
      | state: seeded library, song "Slow Bend", edit sheet open, scrolled to Collections -->
 
-The song's **details** show what the app knows and what it has worked out: **Tempo**, **Mastery**
-and **Length**, along with your practice stats for it. Mastery here is derived from the loops
-underneath it rather than set directly — see [the app's own words](terms.md).
+The song's **details** show what the app knows and what it has worked out: **Tempo**, **Mastery**,
+**Slowest loop** and **Length**, along with your practice stats for it. Mastery here is derived from
+the loops underneath it rather than set directly, and says how many of them are rated; **Slowest
+loop** names the loop with the lowest command tempo, which is as fast as you can play the whole song
+— see [the app's own words](terms.md).
 
 **Exercises for this song** lists the drills you have linked to it, and each one is a way through:
 tap it to run it, and the back arrow brings you back to the song. Swipe a row to unlink it —
@@ -142,6 +144,10 @@ opens a screen that says what goes and what stays before anything is sent:
 - **Sent as** shows your artist name from **Settings ▸ You**, which goes with the song. With no name
   set, none is sent.
 
+<!-- shot: songs/send-song | role: screen
+     | alt: Send this song for Feels, listing what goes with it and what stays with you, with Send in the top corner
+     | state: seeded library, Feels played once, Song details ▸ Send this song… -->
+
 **Send…** in the top corner opens the share sheet on one file, a *Red Moon practice pack*.
 
 **Export audio file only…** opens the share sheet on the song's audio file, as you imported it: into
@@ -158,6 +164,10 @@ Nothing you already have is changed. If you already have a song with the same ti
 named after whoever sent it, like *Low Road - Tomisin copy*, or *Low Road - copy* if they have no
 artist name, and the screen says so before you add it. Receive the same song again and it's numbered:
 *Low Road - Tomisin copy 2*.
+
+<!-- shot: songs/receive-song | role: screen
+     | alt: Add this song? for Slow Bend sent by Jack Trader, with its loops, markers and tempo, and a note that it will be added as a copy since the library already has a Slow Bend
+     | state: seeded library, a pack of Slow Bend from Jack Trader opened, before Add -->
 
 ## Mapping the song
 

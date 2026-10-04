@@ -310,6 +310,19 @@ enum PracticePresets {
         seedBatch(firstRunSpecs, key: seededDefaultsKey, into: context, defaults: defaults)
     }
 
+    /// The first run's seed, once the intake has said what the player plays (ADR 0248). Guitar, bass or
+    /// no answer gets `firstRunSpecs`. Anyone else came for songs, loops and the metronome, and seven
+    /// guitar drills would be the first thing they had to delete — so the batch is **marked done without
+    /// inserting**, and no later launch seeds it either. The Morning Routine then resolves nothing and
+    /// doesn't seed (`RoutinePresets.makeRoutine`), which is right: its blocks are the same drills.
+    static func seedFirstRun(leansOnSongs: Bool, into context: ModelContext, defaults: UserDefaults = .standard) {
+        if leansOnSongs {
+            defaults.set(true, forKey: seededDefaultsKey)
+        } else {
+            seedIfNeeded(into: context, defaults: defaults)
+        }
+    }
+
     /// `UserDefaults` key guarding the one-time provenance backfill (ADR 0112).
     static let presetSlugBackfillKey = "practicePresetSlugBackfill.v1"
 

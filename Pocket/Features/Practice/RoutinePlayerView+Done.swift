@@ -18,53 +18,69 @@ extension RoutinePlayerView {
     func commitDone(_ stage: RoutineStage, mastery: Int?, note: String, kind: EntryKind,
                     revision: CommandOffer.Revision?) {
         if let owner = owner(for: stage) {
-            switch owner {
-            case .exercise(let exercise):
-                // Stamped **before** the revision below, which is what makes the ordering truthful
-                // (ADR 0169): the rating records the command the block just ran at, and an accepted
-                // raise then moves the command off it. That gap is the staleness `DueScore` reads —
-                // without it a 5 that earned a promote also retired the drill, at a tempo never rated.
-                exercise.rateMastery(mastery)
-                // The chosen value is already clamped by the Done screen's stepper. Both setters carry
-                // their own invariants — `promoteCommand` drops a caught-up reach pin, `settleCommand`
-                // pulls the warm-up floor down and drops a caught-up backoff pin (ADR 0134 §6).
-                switch revision {
-                case .raise(let tempo): exercise.promoteCommand(to: tempo)
-                case .settle(let tempo): exercise.settleCommand(to: tempo)
-                case .none: break
-                }
-            case .loop(let loop):
-                loop.rateMastery(mastery)   // stamped before the revision, as above (ADR 0169)
-                // Loops by symmetry (ADR 0134 §8), differing only in unit: the screen works in whole
-                // percent and the model in `×`, the same conversion the standalone screen makes.
-                //
-                // **No `speed` pull-down on a settle**, unlike the exercise floor. `LoopRunView`
-                // lowers its local `working` because that is `@State` its own steppers keep at or
-                // below command; the *model* needs nothing, because `Loop.rampFloor` is
-                // `min(command - measuredWarmupGap, speed)` and so forces its own gap. A loop's
-                // warm-up cannot invert the way an exercise's can (ADR 0134 §8, `Loop.settleCommand`).
-                switch revision {
-                case .raise(let percent): loop.promoteCommand(to: Double(percent) / 100)
-                case .settle(let percent): loop.settleCommand(to: Double(percent) / 100)
-                case .none: break
-                }
-            case .session, .standalone, .metronome:
-                // All three unreachable: `owner(for:)` only ever builds a unit owner from a stage. A
-                // session owner belongs to the whole sitting and is written from the summary screen
-                // (ADR 0143); a standalone owner is never built from a stage at all, since a stage is
-                // exactly the unit a standalone note declines to have (ADR 0155); and a metronome
-                // owner exists only on the free-play screen, which no routine runs through (ADR
-                // 0160). None has a
-                // mastery or a command to revise — so there is nothing here to do but let the note
-                // below be written.
-                break
-            }
+            // Three steps, in this order. The rating first, stamped at the command the block just ran
+            // at (ADR 0169); an untouched row writes nothing (`rateMastery`'s own guard, ADR 0250).
+            rate(owner, mastery: mastery)
+            // Then the note, **before** the revision, so its snapshot is the run as played — the
+            // rating just given and the tempo it was given at — not the tempo an accepted raise moves
+            // to, by which point the rating has been set aside (ADR 0250). The standalone run
+            // screens already commit in this order.
             _ = JournalWriter.add(to: owner, text: note, kind: kind, into: modelContext)
+            // The revision last. An accepted raise moves the command off the rating just given, which
+            // sets it aside: the drill reads unrated at its new tempo, "Last rated…" at the old one.
+            revise(owner, with: revision)
             try? modelContext.save()
         }
         doneStage = nil
         haptic(.light)
         player.advance()
+    }
+
+    /// Write the Done screen's rating to the unit it rates. Only a unit owner carries one.
+    private func rate(_ owner: JournalOwner, mastery: Int?) {
+        switch owner {
+        case .exercise(let exercise): exercise.rateMastery(mastery)
+        case .loop(let loop): loop.rateMastery(mastery)
+        case .session, .standalone, .metronome: break
+        }
+    }
+
+    /// Land an accepted revision through the model's own setter.
+    private func revise(_ owner: JournalOwner, with revision: CommandOffer.Revision?) {
+        switch owner {
+        case .exercise(let exercise):
+            // The chosen value is already clamped by the Done screen's stepper. Both setters carry
+            // their own invariants — `promoteCommand` drops a caught-up reach pin, `settleCommand`
+            // pulls the warm-up floor down and drops a caught-up backoff pin (ADR 0134 §6).
+            switch revision {
+            case .raise(let tempo): exercise.promoteCommand(to: tempo)
+            case .settle(let tempo): exercise.settleCommand(to: tempo)
+            case .none: break
+            }
+        case .loop(let loop):
+            // Loops by symmetry (ADR 0134 §8), differing only in unit: the screen works in whole
+            // percent and the model in `×`, the same conversion the standalone screen makes.
+            //
+            // **No `speed` pull-down on a settle**, unlike the exercise floor. `LoopRunView`
+            // lowers its local `working` because that is `@State` its own steppers keep at or
+            // below command; the *model* needs nothing, because `Loop.rampFloor` is
+            // `min(command - measuredWarmupGap, speed)` and so forces its own gap. A loop's
+            // warm-up cannot invert the way an exercise's can (ADR 0134 §8, `Loop.settleCommand`).
+            switch revision {
+            case .raise(let percent): loop.promoteCommand(to: Double(percent) / 100)
+            case .settle(let percent): loop.settleCommand(to: Double(percent) / 100)
+            case .none: break
+            }
+        case .session, .standalone, .metronome:
+            // All three unreachable: `owner(for:)` only ever builds a unit owner from a stage. A
+            // session owner belongs to the whole sitting and is written from the summary screen
+            // (ADR 0143); a standalone owner is never built from a stage at all, since a stage is
+            // exactly the unit a standalone note declines to have (ADR 0155); and a metronome
+            // owner exists only on the free-play screen, which no routine runs through (ADR
+            // 0160). None has a mastery or a command to revise — so the note is all there is to
+            // write.
+            break
+        }
     }
 
     @ViewBuilder

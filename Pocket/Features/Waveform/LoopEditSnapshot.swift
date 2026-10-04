@@ -11,6 +11,9 @@ struct LoopEditSnapshot: Equatable {
     /// The command speed that rating was given at (ADR 0169) — snapshotted so an Undo restores the
     /// reading's *conditions*, not just its number.
     var masteryAtSpeed: Double?
+    /// The rating a command move set aside (ADR 0250) — the editor can move the command, so Undo
+    /// has to put a set-aside rating back where it was.
+    var previousMastery: Int?
     var focus: Int?
     var commandTempo: Double?
     var loopType: LoopType
@@ -30,6 +33,7 @@ struct LoopEditSnapshot: Equatable {
         name = loop.name
         mastery = loop.mastery
         masteryAtSpeed = loop.masteryAtSpeed
+        previousMastery = loop.previousMastery
         focus = loop.focus
         commandTempo = loop.commandTempo
         loopType = loop.loopType
@@ -48,6 +52,7 @@ struct LoopEditSnapshot: Equatable {
         // silently re-date a rating the player is in the middle of *discarding* an edit to.
         loop.mastery = mastery
         loop.masteryAtSpeed = masteryAtSpeed
+        loop.previousMastery = previousMastery
         loop.focus = focus
         loop.commandTempo = commandTempo
         loop.loopType = loopType

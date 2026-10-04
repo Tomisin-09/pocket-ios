@@ -8,6 +8,9 @@ So exercises, songs, loops and routines each hold pointers back to wherever they
 downloaded, an ASCII tab in a `.txt`, your own notes in a `.md`. Whichever it is, it sits with the
 thing it explains until you delete it.
 
+A song's section is also a good home for the artist's own pages: their Instagram, their YouTube
+channel, wherever they post. The note under the section says so.
+
 ## Where the section is
 
 **Where you learned it** appears on four things, always on the screen where you *choose* what to

@@ -18,6 +18,9 @@
   three beats, §2's trigger, §4 and §5 stand.
 - **Constrained by:** ADR 0070 (Pocket never grades playing), ADR 0120 / 0147 (analytics are opt-in)
 - **Deliberately does not invoke:** ADR 0092 (the AI charter, still Proposed)
+- **Amended by:** ADR 0249 (2026-10-03) — beat 1 rings the Loop button on every song, not only at the
+  starter track's scripted stops. After the ceremony, a hint points at the saved loop's row and its
+  hold. Still three beats.
 
 ## Context
 

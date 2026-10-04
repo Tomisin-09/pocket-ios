@@ -19,18 +19,18 @@ struct ProfileCurationSection: View {
     @State private var genres: Set<MusicGenre> = []
     @State private var dream: MusicalDream?
     @State private var minutes: PracticeMinutes?
-    /// What you play (ADR 0116). Unlike the four curation fields this has **no "Not set"** — the
-    /// exercise model's instrument axis is non-optional and falls back to guitar, so an unanswered
-    /// question and an answer of "guitar" are the same state. Written through its own
-    /// `setPreferredInstrument`, not `setCuration`: it drives what a fresh drill *is*, not what the
-    /// planner suggests.
-    @State private var instrument: Instrument = .guitar
+    /// What you play (ADR 0248, widening ADR 0116's Guitar/Bass). Unlike the four curation fields this
+    /// has **no "Not set"**: a profile that never answered reads as the neck it has, which falls back to
+    /// guitar (`Profile.playsOrNeck`), so an unanswered question and an answer of "guitar" are the same
+    /// state. Written through its own `setPlays`, not `setCuration`: Guitar or Bass also sets what a fresh
+    /// drill *is* drawn on, and changing it adds or removes nothing in the library.
+    @State private var plays: PlayedInstrument = .guitar
     @State private var seeded = false
 
     var body: some View {
         Section {
-            Picker("Instrument", selection: $instrument) {
-                ForEach(Instrument.allCases) { option in
+            Picker("You play", selection: $plays) {
+                ForEach(PlayedInstrument.allCases) { option in
                     Text(option.displayName).tag(option)
                 }
             }
@@ -38,7 +38,7 @@ struct ProfileCurationSection: View {
             Picker("Experience", selection: $experience) {
                 Text("Not set").tag(ArtistExperience?.none)
                 ForEach(ArtistExperience.allCases) { option in
-                    Text(option.displayName).tag(ArtistExperience?.some(option))
+                    Text(option.displayName(for: plays)).tag(ArtistExperience?.some(option))
                 }
             }
 
@@ -72,15 +72,15 @@ struct ProfileCurationSection: View {
             Text("Your sound")
         } footer: {
             Text("Shapes what the app suggests — starting tempo, session length, and what surfaces "
-                 + "first. Optional, and it stays on this device. New exercises open on your "
-                 + "instrument; each drill keeps its own, so changing this never rewrites one you "
-                 + "already made.")
+                 + "first. Optional, and it stays on this device. New exercises on the neck open on "
+                 + "your guitar or bass; each drill keeps its own, so changing this never rewrites one "
+                 + "you already made.")
         }
         .onAppear(perform: seedFromProfile)
         .onChange(of: experience) { commit() }
         .onChange(of: dream) { commit() }
         .onChange(of: minutes) { commit() }
-        .onChange(of: instrument) { commitInstrument() }
+        .onChange(of: plays) { commitPlays() }
     }
 
     /// A one-line summary of the chosen genres for the row's trailing value.
@@ -100,7 +100,7 @@ struct ProfileCurationSection: View {
         genres = Set(profile?.genres ?? [])
         dream = profile?.dream
         minutes = profile?.minutesPerDay
-        instrument = profile?.preferredInstrument ?? .guitar
+        plays = profile?.playsOrNeck ?? .guitar
         seeded = true
     }
 
@@ -111,11 +111,11 @@ struct ProfileCurationSection: View {
                             dream: dream, minutesPerDay: minutes, in: context)
     }
 
-    /// Persist the instrument on its own — `setCuration` overwrites the four curation fields as a
+    /// Persist what you play on its own — `setCuration` overwrites the four curation fields as a
     /// set, so folding this into it would make an instrument change able to clear them.
-    private func commitInstrument() {
+    private func commitPlays() {
         guard seeded else { return }
-        Profile.setPreferredInstrument(instrument, in: context)
+        Profile.setPlays(plays, in: context)
     }
 }
 

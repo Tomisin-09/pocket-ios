@@ -22,13 +22,15 @@ marker grammar in [README.md](README.md).
 | `exercises/run-setup` | `screen` | `exercises` | seeded library, Exercises, "Alternate Picking" opened, stopped |  |
 | `exercises/staircase` | `band` | `exercises` | seeded library, an exercise run screen, staircase visible |  |
 | `exercises/use-a-progression` | `screen` | `exercises` | New exercise sheet, Chords template chosen, Use a progression tapped |  |
-| `gestures/carry-tempo` | `panel` | `gestures` | seeded library, Slow Bend, player idle at full speed, BPM readout held |  |
-| `gestures/loop-controls-popover` | `panel` | `gestures` | seeded library, Slow Bend, player idle, Loop controls tapped |  |
-| `gestures/speed-bar` | `band` | `gestures` | seeded library, Slow Bend, player idle |  |
-| `getting-started/first-run` | `screen` | `getting-started` | fresh install, first launch, step 1 of 5 |  |
+| `gestures/carry-tempo` | `panel` | `gestures` | seeded library, Binta, player idle at full speed, BPM readout held |  |
+| `gestures/loop-controls-popover` | `panel` | `gestures` | seeded library, Binta, player idle, Loop controls tapped |  |
+| `gestures/speed-bar` | `band` | `gestures` | seeded library, Binta, player idle |  |
+| `getting-started/first-run` | `screen` | `getting-started` | fresh install, first launch, step 1 of 6 |  |
+| `getting-started/goals-card` | `screen` | `getting-started` | fresh install, first launch, step 5 of 6, Guitar, dream Play songs I love, two goals picked |  |
 | `getting-started/home` | `screen` | `getting-started` | seeded library, Home, morning greeting |  |
-| `getting-started/loop-active` | `band` | `getting-started` | seeded library, Slow Bend, a loop active and repeating |  |
+| `getting-started/loop-active` | `band` | `getting-started` | seeded library, Binta, a loop active and repeating |  |
 | `journal/month-heatmap` | `panel` | `journal-and-practice-log` | seeded library, Practice log, scrolled to This month, two or more weeks of history in the current month |  |
+| `journal/pieces` | `screen` | `journal-and-practice-log` | map seed, Journal, scope Pieces |  |
 | `journal/progress` | `screen` | `journal-and-practice-log` | seeded library, Home, This week strip tapped, several weeks of practice history |  |
 | `journal/quick-note` | `screen` | `journal-and-practice-log` | an exercise run screen, quick note tapped |  |
 | `journal/quick-note-button` | `glyph` | `journal-and-practice-log` | — |  |
@@ -40,13 +42,13 @@ marker grammar in [README.md](README.md).
 | `journal/take-trim` | `screen` | `journal-and-practice-log` | seeded library, Journal, a take opened, Trim tapped |  |
 | `journal/timeline` | `screen` | `journal-and-practice-log` | seeded library, Journal, several notes and one take across two days |  |
 | `journal/what-you-played` | `panel` | `journal-and-practice-log` | seeded library, Practice log, a practised day tapped on This week's chart, its first kind opened |  |
-| `looping/ab-forming` | `band` | `looping` | seeded library, Slow Bend, playing, loop start dropped, end not set |  |
-| `looping/automator` | `screen` | `looping` | seeded library, Slow Bend, loop "Verse riff", automator open |  |
-| `looping/loop-active` | `band` | `looping` | seeded library, Slow Bend, loop "Verse riff" active and repeating |  |
-| `looping/loop-edit-practice` | `panel` | `looping` | seeded library, Slow Bend, loop "Verse riff" edit sheet, scrolled to Practice |  |
-| `looping/multi-select` | `panel` | `looping` | seeded library, Slow Bend, Loops panel header held, two loops selected |  |
-| `looping/speed-bar` | `band` | `looping` | seeded library, Slow Bend, speed reduced below 100% |  |
-| `looping/tempo-editor` | `screen` | `looping` | seeded library, Slow Bend, tempo editor open |  |
+| `looping/ab-forming` | `band` | `looping` | seeded library, Binta, playing, loop start dropped, end not set |  |
+| `looping/automator` | `screen` | `looping` | seeded library, Binta, loop "Chords", automator open |  |
+| `looping/loop-active` | `band` | `looping` | seeded library, Binta, loop "Chords" active and repeating |  |
+| `looping/loop-edit-practice` | `panel` | `looping` | seeded library, Binta, loop "Chords" edit sheet, scrolled to Practice |  |
+| `looping/multi-select` | `panel` | `looping` | seeded library, Binta, Loops panel header held, two loops selected |  |
+| `looping/speed-bar` | `band` | `looping` | seeded library, Binta, speed reduced below 100% |  |
+| `looping/tempo-editor` | `screen` | `looping` | seeded library, Binta, tempo editor open |  |
 | `metronome/automator` | `panel` | `metronome` | Metronome open, automator armed By Bars |  |
 | `metronome/screen` | `screen` | `metronome` | Metronome open, 96 BPM, 4/4, stopped |  |
 | `metronome/settings-sheet` | `screen` | `metronome` | Metronome open, meter control tapped, scrolled to the top |  |
@@ -56,24 +58,28 @@ marker grammar in [README.md](README.md).
 | `reference/journal` | `screen` | `tools-and-journal` | seeded library, Journal, notes and a take across two days |  |
 | `reference/library` | `screen` | `home-and-library` | seeded library, Library, sorted by title |  |
 | `reference/long-term-goals` | `screen` | `practice` | seeded library, Practice ▸ Long-term goals, two goals ranked |  |
-| `reference/loop-automator` | `screen` | `song-player` | seeded library, Slow Bend, automator opened on "Verse riff" |  |
-| `reference/loop-edit` | `screen` | `song-player` | seeded library, Slow Bend, loop "Verse riff" held, Edit loop, top of the sheet |  |
-| `reference/loops-library` | `screen` | `practice` | fresh library with no measured loops, Practice ▸ Loops |  |
-| `reference/loops-panel` | `panel` | `song-player` | seeded library, Slow Bend, Loops expanded |  |
+| `reference/loop-automator` | `screen` | `song-player` | seeded library, Binta, automator opened on "Chords" |  |
+| `reference/loop-edit` | `screen` | `song-player` | seeded library, Binta, loop "Chords" held, Edit loop, top of the sheet |  |
+| `reference/loops-library` | `screen` | `practice` | seeded library, two loops measured, Practice ▸ Loops |  |
+| `reference/loops-panel` | `panel` | `song-player` | seeded library, Binta, Loops expanded |  |
 | `reference/metronome` | `screen` | `tools-and-journal` | Metronome open, stopped |  |
 | `reference/metronome-settings` | `screen` | `tools-and-journal` | Metronome open, meter control tapped, scrolled to the top |  |
-| `reference/player` | `screen` | `song-player` | seeded library, Slow Bend, idle, Loops panel expanded |  |
+| `reference/name-by-ear` | `screen` | `practice` | map seed, the same sheet switched to By ear |  |
+| `reference/name-the-notes` | `screen` | `practice` | map seed, Slow Bend ▸ Verse riff ▸ Train your ear ▸ Name the notes |  |
+| `reference/player` | `screen` | `song-player` | seeded library, Binta, idle, Loops panel expanded |  |
 | `reference/practice-hub` | `screen` | `practice` | seeded library, Practice hub, goals and routines present |  |
 | `reference/progress` | `screen` | `tools-and-journal` | seeded library, Home, This week strip tapped, several weeks of history |  |
 | `reference/quick-note` | `screen` | `tools-and-journal` | an exercise run screen, quick note tapped |  |
 | `reference/routines-library` | `screen` | `practice` | seeded library, Practice ▸ Routines, at least one routine run before |  |
+| `reference/saved-piece` | `screen` | `practice` | map seed, Slow Bend ▸ Verse riff ▸ Train your ear, scrolled to the saved piece |  |
 | `reference/settings-hub` | `screen` | `settings` | Settings open |  |
 | `reference/settings-routines` | `panel` | `settings` | Settings ▸ Routines |  |
 | `reference/settings-sound` | `panel` | `settings` | Settings ▸ Sound & feel |  |
 | `reference/settings-you` | `screen` | `settings` | Settings ▸ You |  |
+| `reference/snags-panel` | `screen` | `song-player` | seeded library, Binta, Loops folded, Snags opened |  |
 | `reference/song-details` | `screen` | `home-and-library` | seeded library, song "Feels", Details from the row hold menu |  |
 | `reference/song-edit` | `screen` | `home-and-library` | seeded library, Slow Bend, Edit from the row hold menu |  |
-| `reference/tempo-editor` | `screen` | `song-player` | seeded library, Slow Bend, tempo editor open |  |
+| `reference/tempo-editor` | `screen` | `song-player` | seeded library, Binta, tempo editor open |  |
 | `reference/toolkit` | `screen` | `tools-and-journal` | Toolkit open |  |
 | `reference/tuner` | `screen` | `tools-and-journal` | Toolkit ▸ Tuner, microphone allowed | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 | `references/editor` | `screen` | `references` | seeded library, an exercise detail sheet, Add a link tapped |  |
@@ -84,29 +90,36 @@ marker grammar in [README.md](README.md).
 | `routines/history` | `detail` | `routines` | seeded history, Practice ▸ Routines ▸ Morning Routine, read-only |  |
 | `routines/library` | `screen` | `routines` | seeded library, Practice ▸ Routines, several routines saved |  |
 | `routines/player-block` | `screen` | `routines` | seeded library, a routine playing, second block of four |  |
+| `routines/receive-routine` | `screen` | `routines` | seeded library, a routine pack with its song opened, before Add |  |
 | `routines/repeat-block` | `detail` | `routines` | routine editor, a unit block tapped, repeat set to 3 |  |
 | `routines/rest-insert` | `panel` | `routines` | routine editor, Insert rest held |  |
+| `routines/send-routine` | `screen` | `routines` | seeded library, the received routine Low Road, start to finish added, its share control |  |
 | `routines/session-complete` | `screen` | `routines` | seeded library, a routine played to the end |  |
 | `sessions/goal-editor` | `screen` | `sessions` | seeded library, Today's session, an existing goal reopened |  |
 | `sessions/goals` | `panel` | `sessions` | seeded library, Today's session, goals present |  |
 | `sessions/planner` | `screen` | `sessions` | seeded library, Today's session, two active goals |  |
 | `sessions/review` | `screen` | `sessions` | seeded library, Today's session, Generate tapped, result showing |  |
-| `song-player/landscape` | `band` | `looping` | seeded library, Slow Bend, landscape, drawer open | iPhone — the simulator does not render this layout honestly |
-| `song-player/portrait-idle` | `screen` | `looping` | seeded library, Slow Bend, idle at full speed, no loop active |  |
+| `song-player/landscape` | `band` | `looping` | seeded library, Binta, landscape, drawer open | iPhone — the simulator does not render this layout honestly |
+| `song-player/portrait-idle` | `screen` | `looping` | seeded library, Binta, idle at full speed, no loop active |  |
 | `songs/empty-library` | `screen` | `songs` | fresh install, Song library, no songs |  |
 | `songs/library-row` | `detail` | `songs` | seeded library, Library screen, row "Feels" |  |
 | `songs/missing-audio` | `panel` | `songs` | seeded library, a song whose file cannot be found, opened for practice |  |
+| `songs/receive-song` | `screen` | `songs` | seeded library, a pack of Slow Bend from Jack Trader opened, before Add |  |
+| `songs/send-song` | `screen` | `songs` | seeded library, Feels played once, Song details ▸ Send this song… |  |
 | `songs/song-edit` | `screen` | `songs` | seeded library, song "Slow Bend", edit sheet open, scrolled to Collections |  |
 | `songs/song-map` | `screen` | `songs` | seeded song with sections, counted and named pieces, map open full screen |  |
 | `songs/song-tab` | `screen` | `songs` | seeded song with sections, counted and named pieces, map open full screen on Tab |  |
-| `terms/command-tempo-info` | `detail` | `terms` | seeded library, Slow Bend, loop "Verse riff" edit sheet, ⓘ tapped on Command tempo |  |
+| `terms/command-tempo-info` | `detail` | `terms` | seeded library, Binta, loop "Chords" edit sheet, ⓘ tapped on Command tempo |  |
 | `terms/info-button` | `glyph` | `terms` | — |  |
-| `terms/mastery-info` | `detail` | `terms` | seeded library, Slow Bend, loop "Verse riff" edit sheet, ⓘ tapped on Mastery |  |
+| `terms/mastery-info` | `detail` | `terms` | seeded library, Binta, loop "Chords" edit sheet, ⓘ tapped on Mastery |  |
 | `toolkit/faq` | `screen` | `toolkit` | Toolkit ▸ Help & FAQs, one question expanded |  |
 | `toolkit/glossary` | `screen` | `toolkit` | Toolkit ▸ Glossary, no search |  |
 | `toolkit/hub` | `screen` | `toolkit` | Toolkit open, some saved chords present |  |
 | `toolkit/my-chords` | `screen` | `toolkit` | Toolkit ▸ My chords, three or more saved chords |  |
+| `toolkit/my-tabs` | `screen` | `toolkit` | the tab the writer figure wrote, Done, back on My tabs |  |
+| `toolkit/tab-read` | `screen` | `toolkit` | the written tab, tapped in My tabs |  |
+| `toolkit/tab-writer` | `screen` | `toolkit` | Toolkit ▸ My tabs ▸ +, fifteen notes written in two sections |  |
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped, top of the sheet |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 
-93 shots across 18 pages.
+106 shots across 18 pages.

@@ -56,6 +56,20 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **The first-run questions start with what you play.** Guitar, Bass, Piano or keys, Singing,
+  Producing, Drums, Ukulele, Violin or Something else. The next question asks where you are with it,
+  in its own words: a singer is asked whether they *know a few songs*, not a few chords. Guitar and
+  bass start with the seven drills and Morning Routine as before. Anything else starts with an empty
+  Practice library and no goals question, because you came for the looping, the slowing down and the
+  metronome. Practice fills up from the loops you save. You can change your answer in
+  **Settings ▸ You**, where *Instrument* is now *You play*. (ADR 0248)
+- **The first song's guide points at Loop, and then at where to change the loop.** On any song, not
+  just *Binta*, the Loop button is ringed while the guide asks you to tap it. Once you've saved the
+  loop and closed *That's your first loop*, its row is ringed: hold it to change its name, its range or
+  how you practise it. (ADR 0249)
+- **A song's "Where you learned it" suggests the artist's pages.** The note under the section now
+  names the artist's Instagram or YouTube alongside lessons and tab pages.
+
 - **The first-run questions ask what you're working toward.** After *What's the dream?* comes a list of
   goals, with the ones closest to your answer at the top. Pick up to three, most important first, and
   they become your long-term goals, so Today's session builds from them from the first day. You can
@@ -284,6 +298,27 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Mastery starts again when you move the command tempo.** Rate a drill or loop up to 5, raise its
+  command tempo, and it now reads unrated at the new tempo instead of carrying the 5 along. Your old
+  rating isn't lost: under the dots it says *Last rated 5 at 70 BPM*. This applies whichever way the
+  tempo moves, whether you raise it after a run, settle it lower, or change it in the edit sheet. A
+  drill you've just raised now comes round sooner in your sessions, because the new tempo is the one
+  to work on. Changing an exercise's rhythm while keeping the same note speed keeps the rating.
+  (ADR 0250)
+- **A song shows how fast you can play it, beside its mastery.** Under the dots in the song player's
+  title, *slowest 60%* is your slowest loop's command tempo, because you can only play the whole song
+  as fast as that. Once every loop you've measured is at the record's own speed, it says *full speed*.
+  Song details name the loop that sets it, and say how many loops the mastery dots are made of, e.g.
+  *2 of 3 loops rated*. Mastery and speed stay two separate facts. (ADR 0250)
+- **"Mastered" means a 5 at full speed.** The Practice log's *What you've built* count of mastered
+  loops now counts a loop only when it's rated 5 at 100% or faster. A 5 at a slower tempo is the cue
+  to raise it. (ADR 0250)
+- **A song's mastery is shown as dots.** The song player's title and Song details used stars, while
+  every loop row used dots. Now they all use dots.
+- **Marking a snag no longer suggests a tighter loop.** The *Tighten to …* offer that replaced Loop
+  controls under the speed bar is gone. It was confusing, and it arrived while you were playing. Your
+  snags still show on the waveform, in the Snags panel and as a count on each loop. (ADR 0249)
+
 - **The return pill is gone from the speed bar.** It appeared beside the speed after you slowed down
   and took you back to where you started, but on a phone it cut off its own number and squeezed the
   slider. Use **Reset**, a preset, or tap the speed to type one in. (ADR 0245)
@@ -396,6 +431,16 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **Raising a drill no longer takes it out of your sessions.** After you raised the tempo on a 5, the
+  next completion screen showed your 5 again and leaned toward another raise. Tapping Continue
+  without touching the dots then saved that 5 at the new tempo, and the drill stopped being picked.
+  Now the dots open blank at the new tempo, and the tempo offer leans neither way. (ADR 0250)
+- **A note written on the Done screen records the run as you played it.** If you also raised the
+  tempo, the note used to record the new tempo. Now it records the tempo the run was at and the
+  rating you gave it. (ADR 0250)
+- **Writing a tab, the + stays in sight.** The strip of notes now follows the + as each note goes in.
+  Before, it stayed where it started, so on a tab longer than the screen is wide the + slid off the
+  right edge and you were writing note 16 without seeing where it would go.
 - **The Practice log no longer says "0 minutes" for a day you did practise.** A day with less than half
   a minute logged now reads **<1 minute**, and *Longest day* appears once a month has two days to
   compare instead of naming the only one.

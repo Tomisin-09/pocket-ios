@@ -11,6 +11,8 @@
 - **Relates to:** 0112 (the union that chose the six) · 0237 (the set kept as onboarding once the app
   was free) · 0065 (the strumming template and its pattern lane) · 0070 (the drill grades nothing)
 - **Schema:** none. The drill is an ordinary `Exercise`, built from a spec already in the catalog.
+- **Amended by:** ADR 0248 (2026-10-03) — the seventh drill seeds with the other six only for a
+  guitar, bass or skipped answer to the intake's new first card.
 
 ## Context
 

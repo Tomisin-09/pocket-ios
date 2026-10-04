@@ -17,4 +17,11 @@ enum MasteryRollup {
         let total = rated.reduce(0, +)
         return Int((Double(total) / Double(rated.count)).rounded())
     }
+
+    /// What the average is made of, said beside it on Song details (ADR 0250 D9) — "2 of 3 loops
+    /// rated". A raised loop drops out until it is rated again, so the dots alone can't say how many
+    /// loops they stand for. The noun agrees with the total: "1 of 1 loop rated".
+    static func ratedLabel(rated: Int, of total: Int) -> String {
+        "\(rated) of \(total) \(total == 1 ? "loop" : "loops") rated"
+    }
 }

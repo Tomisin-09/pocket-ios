@@ -162,11 +162,13 @@ screen; one you stop by hand does not log.
 ## `Loops`
 
 <!-- shot: reference/loops-library | role: screen
-     | alt: The Loops library, empty, explaining that measured loops appear here once set on a song
-     | state: fresh library with no measured loops, Practice ▸ Loops -->
+     | alt: The Loops library grouped by song, with Binta's Chords and Feels' Chorus lift, each showing its command tempo and the next step up, and an Ear button
+     | state: seeded library, two loops measured, Practice ▸ Loops -->
 
-Every loop you have marked, across all your songs, in one list — the practice-side view of what the
-[song player](song-player.md) creates. A search field above the list prompts `Loops and songs`.
+Every loop you have measured, across all your songs, in one list — the practice-side view of what the
+[song player](song-player.md) creates. A loop is measured once it has a command tempo.
+`Show all loops`, in the `List options` menu, adds the rest, for `Train your ear`, which needs no
+tempo. A search field above the list prompts `Loops and songs`.
 
 Hold a row for the ways it can run, `Add to routine…` and **Favourite**. There is **no delete
 here**: a loop belongs to its song, and is removed from the song player.
@@ -211,6 +213,11 @@ If you find a note you didn't count, or one you counted that isn't there, you do
 pad: tap it once where you hear the missing note, and it goes in where you tapped, unnamed. *Take note
 12 out* removes the note you're on, and its name. `Undo` puts either back until you change something
 else.
+
+<!-- shot: reference/name-the-notes | role: screen
+     | alt: Name the notes on Fret & string for the Verse riff: the strip of numbered notes, some named and one snagged, the neck with the notes before and after the current one, and Into it and Bend under it
+     | state: map seed, Slow Bend ▸ Verse riff ▸ Train your ear ▸ Name the notes -->
+
 Then say what it was on one of two sheets (the ⓘ beside `Chords` and `Into it` explains each): `Fret & string` for where you played it, or `By ear` for what
 you heard. Fret & string is the neck: tap where you played the note, and it moves straight on to the
 next one without playing anything; only tapping a note in the strip plays. The marks below stay on the
@@ -242,6 +249,10 @@ name, a note taken out or tapped in, a new tuning. With a keyboard, ⌘Z, ⇧⌘
 never plays your answer: tap the note in the strip, play it on your own instrument, and you decide
 whether they match.
 
+<!-- shot: reference/name-by-ear | role: screen
+     | alt: Name the notes on By ear: the strip of notes over the twelve note names and the kinds of chord grouped by how many notes they hold
+     | state: map seed, the same sheet switched to By ear -->
+
 Hold a note in the strip to **snag** it, somewhere you're stuck, and hold it again to take the snag off;
 a hold never plays the note. It's the same crimson snag you make on the practice screen while you play,
 so it shows on the waveform and in the `Snags` panel too, and a snag made while playing shows here on
@@ -256,3 +267,8 @@ dot, and four or more unnamed in a row are counted. A piece named only by ear is
 `Snags on this piece` lists where you got stuck, with your lines, and tapping one opens `Name the notes`
 on that note. The piece is listed in the journal under `Pieces`. Saving another pass keeps this one as
 an earlier version.
+
+<!-- shot: reference/saved-piece | role: screen
+     | alt: Train your ear for the Verse riff scrolled to Saved on this loop: the piece's line, its tab, Snags on this piece with a line under one, and Name the notes
+     | state: map seed, Slow Bend ▸ Verse riff ▸ Train your ear, scrolled to the saved piece -->
+

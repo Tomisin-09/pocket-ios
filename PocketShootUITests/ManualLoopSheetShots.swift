@@ -52,17 +52,21 @@ final class ManualLoopSheetShots: ManualShotCase {
 
         capture(app, slug: "looping/loop-edit-practice",
                 assertingOnScreen: "Edit loop",
-                alsoRequiring: ["Practice", "Mastery", "Focus", "Type", "Command tempo"])
+                alsoRequiring: ["Practice", "Mastery", "Focus", "Type", "Command tempo", "About Mastery"],
+                alsoServing: ["terms/info-button"])
     }
 
-    /// `terms/mastery-info` · `terms/info-button` — the Mastery row with its ⓘ popover open.
+    /// `terms/mastery-info` — the Mastery row with its ⓘ popover open.
     ///
     /// The ⓘ carries the label `About Mastery` (`FieldInfoLabel`), which is what makes it findable
     /// and also what makes it a good gate: the popover's own text is `PracticeFieldInfo.mastery`,
     /// app copy that the Help & FAQs catalogue quotes verbatim, so asserting a prefix of it here ties
     /// the figure to the same string the FAQ is pinned to.
     ///
-    /// `terms/info-button` needs only an ⓘ somewhere in the frame and is served by this one.
+    /// `terms/info-button` is **not** cut from this frame, though it used to be: on the 2026-10-04
+    /// shoot the popover opened beside the ⓘ and its arrow covered half the glyph, so no crop of
+    /// this frame shows it whole. It is cut from `looping/loop-edit-practice`, where the same ⓘ sits
+    /// with nothing open.
     @MainActor
     func testMasteryInfo() {
         let app = launchForShoot()
@@ -77,8 +81,7 @@ final class ManualLoopSheetShots: ManualShotCase {
         capture(app, slug: "terms/mastery-info",
                 assertingOnScreen: "Edit loop",
                 alsoRequiring: ["Mastery"],
-                orBeginningWith: ["How cleanly you own this loop"],
-                alsoServing: ["terms/info-button"])
+                orBeginningWith: ["How cleanly you own this loop"])
     }
 
     /// `terms/command-tempo-info` — the same, on Command tempo.
@@ -111,10 +114,10 @@ final class ManualLoopSheetShots: ManualShotCase {
     @MainActor
     func testAutomator() {
         let app = launchForShoot()
-        openSlowBend(in: app)
+        openHeroSong(in: app)
 
-        let automator = app.buttons["Set up automator for Verse riff"]
-        tap(automator, labelled: "the Verse riff automator button",
+        let automator = app.buttons["Set up automator for Chords"]
+        tap(automator, labelled: "the Chords automator button",
             revealing: app.navigationBars["Automator"], called: "the Automator sheet")
 
         capture(app, slug: "reference/loop-automator",
@@ -124,17 +127,18 @@ final class ManualLoopSheetShots: ManualShotCase {
 
     /// `reference/tempo-editor` · `looping/tempo-editor` — the tap-tempo / manual BPM sheet.
     ///
-    /// Reached from the metronome glyph in the speed bar, whose label is `Set tempo` — the same words
-    /// as the sheet's title, so the gate is the **navigation bar** rather than the phrase, which the
-    /// button already carries before anything opens.
+    /// Reached by **holding** the metronome glyph in the speed bar, as the manual says. Binta arrives
+    /// with its tempo and its 1 placed, so the glyph is `Metronome click` and a tap only toggles the
+    /// click; a tap opens the editor only on a song with no grid, where the glyph reads `Set tempo`.
+    /// That was Slow Bend's state, and this test tapped `Set tempo` until the player figures moved to
+    /// Binta (2026-10-03). The gate is the **navigation bar**, since the sheet's title is `Set tempo`.
     @MainActor
     func testTempoEditor() {
         let app = launchForShoot()
-        openSlowBend(in: app)
+        openHeroSong(in: app)
 
-        let setTempo = app.buttons["Set tempo"]
-        tap(setTempo, labelled: "Set tempo",
-            revealing: app.navigationBars["Set tempo"], called: "the tempo sheet")
+        hold(app.buttons["Metronome click"], labelled: "the metronome button",
+             revealing: app.navigationBars["Set tempo"], called: "the tempo sheet")
 
         capture(app, slug: "reference/tempo-editor",
                 assertingOnScreen: "Set tempo",
@@ -143,7 +147,7 @@ final class ManualLoopSheetShots: ManualShotCase {
 
     // MARK: - Navigation
 
-    /// Slow Bend, then **hold a loop row** — which opens the Edit loop sheet directly.
+    /// Binta, then **hold a loop row** — which opens the Edit loop sheet directly.
     ///
     /// **There is no menu in between, and the manual said there was.** `reference/song-player.md`
     /// read *"Hold a row for its menu, including `Edit loop`"*, and the row has no `contextMenu` at
@@ -161,8 +165,8 @@ final class ManualLoopSheetShots: ManualShotCase {
     /// the second attempt reports the row as unreachable.
     @MainActor
     private func openLoopEditor(in app: XCUIApplication) {
-        openSlowBend(in: app)
-        hold(app.buttons["Play Verse riff"], labelled: "the Verse riff row",
+        openHeroSong(in: app)
+        hold(app.buttons["Play Chords"], labelled: "the Chords row",
              revealing: app.navigationBars["Edit loop"], called: "the Edit loop sheet")
     }
 }

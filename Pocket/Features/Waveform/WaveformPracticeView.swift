@@ -143,7 +143,7 @@ struct WaveformPracticeView: View {
         }
         .sheet(item: $model.editingLoop, onDismiss: {
             model.launchPendingPractice()
-            model.walkthroughLoopEditClosed()   // the backing-track hint, taken (ADR 0220 D4)
+            model.walkthroughLoopEditClosed()   // a row hint, taken (ADR 0220 D4, ADR 0249 D3)
         }, content: { ref in
             loopEditSheet(ref.value)
         })
@@ -387,6 +387,6 @@ private extension WaveformPracticeView {
                       onSaved: { restore in model.presentUndo("Saved changes", undo: restore) },
                       onPracticeNow: { model.pendingPracticeLoop = loop },
                       onOpenNestedAudio: model.pauseForNestedAudio,
-                      pointsAtBackingTrack: loop.uid == model.walkthroughHintedLoopID)
+                      pointsAtBackingTrack: loop.uid == model.walkthroughBackingTrackLoopID)
     }
 }

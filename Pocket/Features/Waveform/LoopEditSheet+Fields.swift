@@ -156,18 +156,19 @@ extension LoopEditSheet {
     private var masteryRow: some View {
         LabeledContent {
             HStack(spacing: 10) {
-                if mastery == nil {
+                if shownMastery == nil {
                     Text("Unrated")
                         .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
                 ForEach(1...5, id: \.self) { value in
                     Circle()
-                        .fill(value <= (mastery ?? 0) ? PocketColor.mastery : PocketColor.barDefault)
+                        .fill(value <= (shownMastery ?? 0) ? PocketColor.mastery : PocketColor.barDefault)
                         .frame(width: 18, height: 18)
                         .onTapGesture {
                             // Tapping the current value walks down; below 1 → unrated (nil).
-                            mastery = (mastery == value) ? (value == 1 ? nil : value - 1) : value
+                            mastery = (shownMastery == value) ? (value == 1 ? nil : value - 1) : value
+                            masteryTouched = true
                         }
                         .accessibilityLabel("Set mastery to \(value)")
                 }
@@ -177,17 +178,40 @@ extension LoopEditSheet {
         }
     }
 
-    /// The conditions the **stored** rating was given under (ADR 0169) — "Rated at 85%", and whether
-    /// the command has since moved off it. Shown only while the edited `mastery` still matches the
-    /// rating it describes, so walking the dots doesn't leave a caption attached to a number that has
-    /// gone from the screen.
+    /// Whether the command on screen would set the stored rating aside when saved (ADR 0250) — the
+    /// model's own rule, asked ahead of the write so the dots show what Done will save.
+    private var commandSetsRatingAside: Bool {
+        loop.ratingWouldBeSetAside(movingTo: commandTempo)
+    }
+
+    /// The dots as they will be saved: a rating tapped in this edit, or else blank while the command
+    /// on screen would set the stored one aside. Moving the slider back brings the stored one back,
+    /// because nothing has been written yet.
+    private var shownMastery: Int? {
+        masteryTouched || !commandSetsRatingAside ? mastery : nil
+    }
+
+    /// The conditions the **stored** rating was given under (ADR 0169) — "Rated at 85%", or "Last
+    /// rated 5 at 85%" for one a command move set aside (ADR 0250), including a move still only on
+    /// screen. Shown only while it describes the dots showing, so walking the dots doesn't leave a
+    /// caption attached to a number that has gone from the screen. A rating tapped after a move gets
+    /// no caption until it is saved: it will be stamped at a speed the stored reading doesn't know.
     @ViewBuilder
     var masteryReadingRow: some View {
-        if let reading = loop.masteryReading, reading.rating == mastery {
+        if let reading = displayedReading {
             Text(reading.caption)
                 .font(.futura(.footnote))
                 .foregroundStyle(PocketColor.textSecondary)
         }
+    }
+
+    private var displayedReading: MasteryReading.Display? {
+        guard var reading = loop.masteryReading else { return nil }
+        guard commandSetsRatingAside else { return reading.describes(shownMastery) ? reading : nil }
+        guard !masteryTouched else { return nil }
+        reading.isPrevious = true
+        reading.isStale = false
+        return reading
     }
 
     /// Practice intent — Backburner / Active / Sharpening, or Not set (`nil`, ADR 0039). Stored as

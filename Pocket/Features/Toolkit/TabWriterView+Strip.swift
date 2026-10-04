@@ -45,7 +45,10 @@ extension TabWriterView {
                 .padding(.vertical, 4)
             }
             .onAppear { proxy.scrollTo(litID, anchor: .center) }
-            .onChange(of: litID) { withAnimation { proxy.scrollTo(litID, anchor: .center) } }
+            // On every edit, not only when the lit chip changes: writing keeps the + lit while moving it
+            // on a chip, so a strip that waited for a new lit chip stayed where it was and the + walked
+            // off its right edge (the manual shoot's fifteen-note tab, 2026-10-03).
+            .onChange(of: draft) { withAnimation { proxy.scrollTo(litID, anchor: .center) } }
         }
     }
 

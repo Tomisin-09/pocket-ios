@@ -221,6 +221,17 @@ final class Song {
     /// so there is no stored song-level proficiency. Pure-derived, no manual override.
     var mastery: Int? { MasteryRollup.rollup(loops.map(\.mastery)) }
 
+    /// How many loops that average is made of — "2 of 3 loops rated" beside it (ADR 0250 D9).
+    var ratedLoopCount: Int { loops.filter { $0.mastery != nil }.count }
+
+    /// How fast the song can be played: its slowest measured loop (ADR 0250 D8), or `nil` when no
+    /// loop has a command tempo. Shown beside `mastery`, never folded into it.
+    var speedReading: SongSpeed? {
+        SongSpeed.reading(loopsByStart.map {
+            .init(name: $0.name, command: $0.commandTempo, isBackingTrack: $0.isBackingTrack)
+        })
+    }
+
     /// The typed, validated view of `key` (ADR 0036): parses the stored string on read and
     /// rewrites it canonically on set, folding legacy free text (`"A minor"`, flats) onto the
     /// closed `MusicalKey` vocabulary. `.unknown` for unset or unrecognised values.

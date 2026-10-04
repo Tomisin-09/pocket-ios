@@ -4,6 +4,9 @@
   **device-verified** 2026-08-06 (`pocket-235-one-app-one-price`), v2 close-out workstream A. The device pass is what added the Journal to D2's free surface, and it
   caught a live App Store Connect inconsistency (annual on a 14-day intro offer, monthly on a
   2-month one) that D5's derived copy reported faithfully instead of papering over.
+- **Amended by:** ADR 0248 (2026-10-03) — D8's first-run seed (seven exercises since 0247, one
+  routine) now depends on the intake's first answer. Guitar, bass or no answer gets it; any other
+  answer gets an empty Practice library.
 
   **The price half is superseded by ADR 0187 D20 (2026-09-02).** £5.99/mo · £49.99/yr as one flat
   tier is replaced by two levels in one subscription group — **Practice £2.99/£19.99** and

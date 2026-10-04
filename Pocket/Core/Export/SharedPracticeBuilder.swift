@@ -164,6 +164,7 @@ enum SharedPracticeBuilder {
         record.mastery = nil
         record.masteryTempo = nil
         record.masteryNotesPerBeat = nil
+        record.previousMastery = nil
         record.commandTempo = nil
         record.commandNotesPerBeat = nil
         record.linkedSongIDs = []

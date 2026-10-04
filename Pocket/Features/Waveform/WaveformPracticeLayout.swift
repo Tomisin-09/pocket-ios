@@ -88,12 +88,6 @@ struct PracticeCockpit<Header: View>: View {
                             onMove: model.moveDownbeat,
                             onClearCorrections: model.clearDownbeatCorrections)
                     .transition(.opacity)
-            } else if model.offeringSnagTighten, let proposal = model.snagTightenProposal {
-                SnagTightenBar(count: model.snagsInActiveLoop.count,
-                               seconds: proposal.end - proposal.start,
-                               onTighten: model.tightenToSnags,
-                               onDismiss: model.dismissSnagTighten)
-                    .transition(.opacity)
             } else if model.abActive && !model.isDragSelecting {
                 ABSpanBar(isPlaying: model.engine.isPlaying,
                           isSet: model.abSpan.isSet,
@@ -114,7 +108,6 @@ struct PracticeCockpit<Header: View>: View {
             }
         }
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.abActive)
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.offeringSnagTighten)
         .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: model.isSettingDownbeat)
     }
 

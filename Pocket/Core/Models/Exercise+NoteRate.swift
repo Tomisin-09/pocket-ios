@@ -113,7 +113,12 @@ extension Exercise {
     /// **Keep the same note speed**: rescale every tempo so the notes-per-minute the player owns is
     /// unchanged (80 @ eighths → 40 @ sixteenths), and re-bind the command to the new rhythm. The
     /// achievement survives the change, restated in the new units.
+    ///
+    /// **So does the rating** (ADR 0250): the hands play the same notes at the same speed, so a
+    /// rating given at the command is still true, and its stamp is restated beside the command rather
+    /// than left to read as moved. This is not a command move, so it never sets a rating aside.
     func keepNoteSpeed(movingTo newPerBeat: Int, range: ClosedRange<Int>) {
+        let ratingHolds = mastery != nil && masteryTempo != nil && !masteryIsStale
         let rescaled = RhythmChange.keepingNoteSpeed(rhythmTempos,
                                                      from: commandNotesPerBeat ?? newPerBeat,
                                                      to: newPerBeat, clampedTo: range)
@@ -123,6 +128,10 @@ extension Exercise {
         backoffTempoOverride = rescaled.backoffOverride
         adoptOwnNoteRate(newPerBeat)
         commandNotesPerBeat = max(1, newPerBeat)
+        if ratingHolds {
+            masteryTempo = command
+            masteryNotesPerBeat = noteRate?.perBeat
+        }
     }
 
     /// **Re-measure**: clear the command and its binding, so the drill reads "not yet measured" until
@@ -138,6 +147,9 @@ extension Exercise {
         adoptOwnNoteRate(newPerBeat)
         commandTempo = nil
         commandNotesPerBeat = nil
+        // Nothing is measured at the new rhythm yet, so nothing is rated there either (ADR 0250):
+        // the rating moves to "Last rated…" with the conditions it was given under.
+        setRatingAside()
         // The pins are the player's own goal and floor, not part of the achievement — they're
         // restated in the new rhythm rather than thrown away. Both stay valid: the rescale keeps a
         // reach above command and a backoff at or below it, and the un-promoted command falls back to

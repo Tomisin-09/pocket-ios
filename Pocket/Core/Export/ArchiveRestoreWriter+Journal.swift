@@ -109,6 +109,7 @@ extension ArchiveRestoreWriter {
         profile.dreamRaw = record.dreamRaw
         profile.minutesPerDayRaw = record.minutesPerDayRaw
         profile.preferredInstrumentRaw = record.preferredInstrumentRaw
+        profile.playsRaw = record.playsRaw
         landing.profile = profile
     }
 

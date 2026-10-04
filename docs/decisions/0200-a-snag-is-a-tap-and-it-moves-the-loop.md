@@ -30,6 +30,10 @@
   is deliberately not), ADR 0187 (the Oracle, which reads these later but must not be why they exist)
 - **Schema:** additive. One new `@Model` (`Snag`) and one new cascade relationship on `Song`. No
   column retyped, renamed or removed — ADR 0189 D1's ordinary work.
+- **Amended by:** ADR 0249 (2026-10-03) — D1 is reversed. The *Tighten to …* offer, `SnagCluster` and
+  `offeringSnagTighten` are removed. It confused people while they were playing, and by then a mark
+  already paid its way through the panel, the row count, *Snags on this piece* and the export. The
+  tap and the marks stand.
 
 ## Context
 

@@ -120,7 +120,7 @@ extension OracleContextBuilder {
     /// The marks inside this loop's **current** span, as offsets from its start (ADR 0204 D1).
     ///
     /// Filtered by **position, not by `Snag.loopUID`** — the rule ADR 0203 D1 settled for the
-    /// waveform's fade and `SnagCluster.proposal` has always used. A mark made under a wider version
+    /// waveform's fade and the Loops panel's count. A mark made under a wider version
     /// of this loop, or under a neighbouring one, is still a mark on this passage; the loop it was
     /// tapped under is an accident of which one happened to be armed. Reading it the other way would
     /// put a different set of marks in the payload than the one the player can see on the canvas.

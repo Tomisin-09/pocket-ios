@@ -128,7 +128,7 @@ final class SongWalkthroughTests: XCTestCase {
             .compactMap { $0 }
         copy += [SongWalkthrough.offerTitle, SongWalkthrough.offerBody, SongWalkthrough.ceremonyTitle,
                  SongWalkthrough.ceremonyBody(songTitle: "Binta")]
-        let hints: [StarterTrackHints.Hint] = [.click, .backingTrack]    // ADR 0220 D4
+        let hints: [StarterTrackHints.Hint] = [.click, .backingTrack, .editLoop]    // 0220 D4, 0249 D3
         copy += hints.flatMap { [$0.title, $0.body(loopName: "Loop 1"), $0.dismissLabel] }
         for line in copy {
             XCTAssertFalse(line.contains("Pocket"), line)

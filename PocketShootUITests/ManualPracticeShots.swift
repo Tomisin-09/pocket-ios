@@ -123,22 +123,15 @@ final class ManualPracticeShots: ManualShotCase {
                 orBeginningWith: ["Play Slow Bend end to end"])
     }
 
-    /// `reference/loops-library` — the Loops library with nothing measured in it yet.
+    /// `reference/loops-library` — the Loops library listing the seed's measured loops.
     ///
-    /// **This figure was on the bare-device list and does not belong there.** It was grouped with
-    /// `songs/empty-library` as one of two shots needing a device with nothing on it, and the source
-    /// does not bear that out: `LoopLibraryView.emptyStateMessage` has *two* empty states, and which
-    /// one it draws turns on `hasAnyLoops`, not on whether any are measured.
+    /// **It was the empty state until ADR 0250.** The list holds measured loops by default, and the
+    /// seed measured none, so the figure showed *"No measured loops yet."* ADR 0250's figures need a
+    /// measured loop (the strip's *slowest 75%*, Song details' *Slowest loop*), so the seed now
+    /// measures Binta's Chords and Feels' Chorus lift, and the list shows the two of them: the
+    /// screen the manual's prose describes, rather than the sentence it gives for when it's empty.
     ///
-    /// A bare device has no songs and therefore no loops, so it draws *"No loops yet. Open a song,
-    /// draw a loop on the waveform"* — while the marker's alt text promises the other one, the copy
-    /// that explains loops appear **once a command tempo is set**. That sentence only exists when
-    /// there are unmeasured loops for it to be about, which is exactly the seeded device: six songs,
-    /// one loop each, none measured. The Practice hub says as much on the way past — `Loops, 0`.
-    ///
-    /// So the figure is shot here, on the seeded device, and the bare pass is left with the one shot
-    /// that genuinely needs it. Asserted on the copy rather than on emptiness, because "the list is
-    /// empty" is true of both states and this figure is about which of them is showing.
+    /// The search prompt is asserted as well, since the prose names it.
     @MainActor
     func testLoopsLibrary() {
         let app = launchForShoot()
@@ -147,7 +140,8 @@ final class ManualPracticeShots: ManualShotCase {
                arrivingAt: app.navigationBars["Loops"], called: "the Loops library")
         capture(app, slug: "reference/loops-library",
                 assertingOnScreen: "Loops",
-                orBeginningWith: ["No measured loops yet."])
+                alsoRequiring: ["Loops and songs"],
+                orBeginningWith: ["Chords, Binta", "Chorus lift, Feels"])
     }
 
     // MARK: - Navigation

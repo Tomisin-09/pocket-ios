@@ -89,16 +89,20 @@ struct SongCard: View {
     }
 }
 
-/// Mastery as up to five small dots (0–5), the brand teal when filled.
+/// Mastery as up to five small dots (0–5), the brand teal when filled. The one way the app draws
+/// mastery: the song player's title and Song details used stars until the 2026-10-03 review, beside
+/// loop rows that already used these.
 struct MasteryDots: View {
     let filled: Int
+    /// 6 pt in a row; larger where the dots stand alone, as beside the song player's title.
+    var size: CGFloat = 6
 
     var body: some View {
-        HStack(spacing: 3) {
+        HStack(spacing: size / 2) {
             ForEach(0..<5, id: \.self) { index in
                 Circle()
                     .fill(index < filled ? PocketColor.mastery : PocketColor.barDefault)
-                    .frame(width: 6, height: 6)
+                    .frame(width: size, height: size)
             }
         }
         .accessibilityLabel("Mastery \(filled) of 5")

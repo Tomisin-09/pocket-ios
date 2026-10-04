@@ -13,10 +13,6 @@ func timecode(_ seconds: TimeInterval) -> String {
     return String(format: "%d:%02d", total / 60, total % 60)
 }
 
-func stars(_ filled: Int) -> String {
-    String(repeating: "★", count: filled) + String(repeating: "☆", count: max(0, 5 - filled))
-}
-
 // MARK: - 1. Song strip
 
 struct SongStrip: View {
@@ -25,8 +21,11 @@ struct SongStrip: View {
     /// Defaulted to a no-op for previews and standalone use.
     var onHoldTitle: () -> Void = {}
 
+    /// The slowest-loop reading, read once per body.
+    private var speed: SongSpeed? { song.speedReading }
+
     var body: some View {
-        // P1a: a tight two-line title/artist stack with the proficiency stars beside it on
+        // P1a: a tight two-line title/artist stack with the mastery dots beside it on
         // the right (rather than stacked below), so the header stays two lines tall and the
         // waveform + loops move up. The song length used to sit on the right; it's dropped
         // (`song.duration` is still used for marker/minimap math, just not shown here).
@@ -44,14 +43,23 @@ struct SongStrip: View {
             // The hold covers the whole strip; the tip (ADR 0244) rings the name, which is what it says to hold.
             .gestureHintTarget(.songTitle)
             Spacer(minLength: 12)
-            // Derived song mastery (ADR 0036) — shown only when the song has loops to
-            // roll up. An unrated song simply omits it (no length fallback anymore).
-            if let mastery = song.mastery {
-                Text(stars(mastery))
-                    .font(.futura(.subheadline))
-                    .foregroundStyle(PocketColor.mastery)
-                    .padding(.trailing, 4)   // nudge off the screen edge
-                    .accessibilityLabel("Mastery \(mastery) of 5")
+            // Derived song mastery (ADR 0036) and, under it, the speed the song can be played at
+            // (ADR 0250 D8) — each shown only when there is something to show, so an unrated,
+            // unmeasured song simply omits both. Two lines, like the title stack beside them.
+            if song.mastery != nil || speed != nil {
+                VStack(alignment: .trailing, spacing: 4) {
+                    if let mastery = song.mastery {
+                        MasteryDots(filled: mastery, size: 8)
+                    }
+                    if let speed {
+                        Text(speed.stripLabel)
+                            .font(.futura(.caption))
+                            .foregroundStyle(PocketColor.textSecondary)
+                            .lineLimit(1)
+                            .accessibilityLabel(speed.accessibilityLabel)
+                    }
+                }
+                .padding(.trailing, 4)   // nudge off the screen edge
             }
         }
         .frame(maxWidth: .infinity)

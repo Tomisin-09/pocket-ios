@@ -105,6 +105,7 @@ extension ArchiveRestoreWriter {
         // and dropping them would make a backup lose the record of how far they had got.
         made.mastery = record.mastery
         made.masteryAtSpeed = record.masteryAtSpeed
+        made.previousMastery = record.previousMastery
         made.focus = record.focus
         made.commandTempo = record.commandTempo
         made.targetSpeedOverride = record.targetSpeedOverride
@@ -213,6 +214,7 @@ extension ArchiveRestoreWriter {
             drill.mastery = record.mastery
             drill.masteryTempo = record.masteryTempo
             drill.masteryNotesPerBeat = record.masteryNotesPerBeat
+            drill.previousMastery = record.previousMastery
             drill.awayFromInstrument = record.awayFromInstrument
             drill.clickEnabled = record.clickEnabled
             drill.clickBPM = record.clickBPM

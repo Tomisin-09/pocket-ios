@@ -31,15 +31,17 @@ and the app differ, the app is right.
 ## `You`
 
 <!-- shot: reference/settings-you | role: screen
-     | alt: The You screen with the artist name field and the Your sound section holding instrument, experience, genres, dream and time most days
+     | alt: The You screen with the artist name field and the Your sound section holding what you play, experience, genres, dream and time most days
      | state: Settings ▸ You -->
 
 - **`Artist name`** — *Your artist name greets you on the home screen and signs a song you send.
   Optional, and it only leaves this device in what you send.*
-- **`Your sound`** — `Instrument`, `Experience`, `Genres`, `Dream` and `Time most days`. Its footer:
-  *Shapes what the app suggests — starting tempo, session length, and what surfaces first. Optional,
-  and it stays on this device. New exercises open on your instrument; each drill keeps its own, so
-  changing this never rewrites one you already made.*
+- **`Your sound`** — `You play`, `Experience`, `Genres`, `Dream` and `Time most days`. `You play` is
+  the intake's first question: Guitar, Bass, Piano or keys, Singing, Producing, Drums, Ukulele, Violin
+  or Something else. Changing it later adds and takes away nothing. Its footer: *Shapes what the app
+  suggests — starting tempo, session length, and what surfaces first. Optional, and it stays on this
+  device. New exercises on the neck open on your guitar or bass; each drill keeps its own, so changing
+  this never rewrites one you already made.*
 
 Every one of these is optional, and none of it leaves the device.
 

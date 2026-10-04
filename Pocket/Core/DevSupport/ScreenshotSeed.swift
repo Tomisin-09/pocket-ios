@@ -12,8 +12,9 @@ import SwiftData
 /// Real audio: drop `.mp3`/`.m4a` files into the app's `Documents/SeedAudio/` folder
 /// (copy them in from the Mac via `simctl get_app_container … data`). Each is imported
 /// with a genuine extracted waveform + bookmark, so it renders like a real import.
-/// The bundled `Song.sample()` ("Slow Bend") is added too — it plays via the tone
-/// generator and ships with loops, so it drives the "loop playing" hero shot.
+/// The bundled `Song.sample()` ("Slow Bend") is added too — it plays via the tone generator and
+/// ships with loops. The song player's figures open *Binta* instead (`ScreenshotSeed+Binta`), whose
+/// waveform is real; Slow Bend stays for the figures that name it (a goal, the received-song copy).
 ///
 /// Idempotent: skips entirely if the library already has songs.
 enum ScreenshotSeed {
@@ -39,14 +40,18 @@ enum ScreenshotSeed {
         let speed: Double
         let repeats: Int
         let mastery: Int
+        /// The measured command tempo (`×`), or `nil` for a loop never measured. Set on the loop the
+        /// Song details figure shows, so its *Slowest loop* row (ADR 0250 D9) is in frame.
+        let command: Double?
         init(_ name: String, _ start: Double, _ end: Double,
-             _ speed: Double, _ repeats: Int, _ mastery: Int) {
+             _ speed: Double, _ repeats: Int, _ mastery: Int, command: Double? = nil) {
             self.name = name
             self.start = start
             self.end = end
             self.speed = speed
             self.repeats = repeats
             self.mastery = mastery
+            self.command = command
         }
     }
 
@@ -80,14 +85,16 @@ enum ScreenshotSeed {
         // Jack Trader's two tracks round the library out to five. Without entries here
         // they import with a blank artist, which reads as a bug in the library shot
         // rather than as a real library.
+        // Binta's loops sit on its bar lines, which a fraction can't say: `dressBinta` adds them, with
+        // its markers and snags, once the import knows how long it is.
         "Binta": Meta(
             artist: "Jack Trader", genre: "Afrobeat", bpm: StarterTrack.bpm, key: "F# Minor",
             collections: ["chill"],
-            loops: [LoopSpec("Head", 0.12, 0.27, 1.0, 4, 2)]),
+            loops: []),
         "Feels": Meta(
             artist: "Jack Trader", genre: "Neo-Soul", bpm: 88, key: "A Minor",
             collections: ["chill", "needs-work"],
-            loops: [LoopSpec("Chorus lift", 0.34, 0.48, 0.75, 5, 3)])
+            loops: [LoopSpec("Chorus lift", 0.34, 0.48, 0.75, 5, 3, command: 0.75)])
     ]
 
     static let launchArgument = "-seedScreenshots"
@@ -114,11 +121,18 @@ enum ScreenshotSeed {
         guard existing == 0 else { return }
 
         // Playable hero: Slow Bend (tone-generator audio + pre-made loops).
-        context.insert(Song.sample())
+        context.insert(heroSong())
 
         // Real-file imports with genuine waveforms, in a stable display order.
-        for url in seedAudioURLs() {
+        let staged = seedAudioURLs()
+        for url in staged {
             importReal(url, into: context)
+        }
+        // A phone has no staged masters, but it has Binta in the bundle, and the player's figures are
+        // Binta's — so the landscape hand shot can be taken on the same song as the rest.
+        let bintaStaged = staged.contains { $0.deletingPathExtension().lastPathComponent == StarterTrack.title }
+        if !bintaStaged, let bundled = StarterTrack.bundledURL {
+            importReal(bundled, into: context)
         }
         try? context.save()
     }
@@ -158,11 +172,13 @@ enum ScreenshotSeed {
                 let loop = Loop(name: spec.name, start: spec.start, end: spec.end,
                                 speed: spec.speed, repeats: spec.repeats)
                 loop.mastery = spec.mastery
+                loop.commandTempo = spec.command
                 return loop
             }
             song.loops = loops
             for loop in loops where loop.song == nil { loop.song = song }
         }
+        if title == StarterTrack.title { dressBinta(song) }
         context.insert(song)
     }
 }

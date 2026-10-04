@@ -21,6 +21,9 @@
   body)
 - **Schema:** none. Everything here is values written at adoption, onto attributes that already
   exist (`Song.bpm`, `preciseBPM`, `downbeatSeconds`, `showsGridlines`, `Marker`).
+- **Amended by:** ADR 0249 (2026-10-03) — D6's "starter track only" no longer covers every hint. A
+  third hint, *Change it later*, points at the kept loop's row on every song after the ceremony. The
+  click and backing-track hints stay the starter track's, and nothing still shows during the ceremony.
 
 ---
 

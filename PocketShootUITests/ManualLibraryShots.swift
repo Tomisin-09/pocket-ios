@@ -55,8 +55,8 @@ final class ManualLibraryShots: ManualShotCase {
     /// 5 put the resulting frame in front of a pair of eyes: its `Audio` section read `File:
     /// Missing`. Slow Bend is the bundled tone-generator demo, the one seeded song with no bookmark
     /// and no file behind it, so the figure that exists to show the audio section was showing that
-    /// section's failure state — a true picture of the wrong song. The marker's alt text names the
-    /// file row, so this must be a song that has one.
+    /// section's failure state — a true picture of the wrong song. The figure shows the top of that
+    /// section, so this must be a song that has a file.
     ///
     /// Feels is second of six by title and therefore already in the tree, which is also why the
     /// swipe that Slow Bend needed is gone.
@@ -68,19 +68,33 @@ final class ManualLibraryShots: ManualShotCase {
         let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Feels,")).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: Self.shootTimeout),
                       "no Feels row to hold.\n\(stepLog)")
+
+        // Played once first. The seed links each song to its file the pre-0148 way, and a linked song
+        // gets Red Moon's own copy the first time it plays; until then the Audio row reads `Linked
+        // file`, a state only a library from before 0148 is ever in. Played, it reads as an import does.
+        let back = app.buttons["Back to library"]
+        tap(row, labelled: "Feels", revealing: back, called: "the song player")
+        tap(back, labelled: "Back to library", revealing: app.navigationBars["Library"], called: "the library")
+
         hold(row, labelled: "the Feels row",
              revealing: app.buttons["Details"], called: "the row menu")
         tap(app.buttons["Details"], labelled: "Details",
             revealing: app.navigationBars["Song details"], called: "the Song details sheet")
 
-        // `File, WAV` rather than `File`: the row is a `LabeledContent`, so the label and its value
-        // combine into one element reading "File, WAV · 8.9 MB". Asserting the value and not just
-        // the row is the point — `SongAudioLabel.describe` returns `Missing` for a song with no
-        // copy behind it, and that row is present and correct-looking either way. The size is left
-        // off because it moves with the seed audio; the format does not.
+        // The File row's value, `WAV ·`, and not just the row: `SongAudioLabel.describe` returns
+        // `Missing` for a song with no copy behind it, and the row is present and correct-looking either
+        // way. The size is left off because it moves with the seed audio; the format does not.
+        //
+        // **Asserted in the tree, not in the frame**, since ADR 0250 D9 gave the facts card a Slowest
+        // loop row: the File row now sits half under the bottom edge, below Map the song (ADR 0232).
+        // The frame is about the facts card, so the rows it must hold are the two D9 added.
+        let format = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "WAV ·")).firstMatch
+        XCTAssertTrue(format.exists, "the File row doesn't read `WAV ·` — is Feels missing its file?\n\(stepLog)")
         capture(app, slug: "reference/song-details",
                 assertingOnScreen: "Song details",
-                orBeginningWith: ["Feels", "File, WAV"])
+                alsoRequiring: ["1 of 1 loop rated", "Slowest loop", "Chorus lift · 75%", "Map the song"],
+                orBeginningWith: ["Feels"])
     }
 
     /// `reference/song-edit` · `songs/song-edit` — the Edit song sheet, top and scrolled.
@@ -118,28 +132,16 @@ final class ManualLibraryShots: ManualShotCase {
 
         // Then the same sheet, scrolled. Aimed at `Add a collection`, the last row of the section —
         // stopping at the header would leave the chips the figure is of below the fold.
-        scrollIntoFrame(element(in: app, labelStartingWith: "Add a collection"),
-                        called: "the Add a collection row", in: app)
+        //
+        // Found by its **placeholder**, the same trap as the four above: `Add a collection` is the
+        // prompt of an empty `TextField`, not its label, so a label query never finds it and the
+        // scroll used to run out of swipes on a row that was on screen. Gated on the row's own `Add`.
+        let addRow = app.textFields
+            .matching(NSPredicate(format: "placeholderValue == %@", "Add a collection")).firstMatch
+        scrollIntoFrame(addRow, called: "the Add a collection row", in: app)
 
         capture(app, slug: "songs/song-edit",
                 assertingOnScreen: "Edit song",
-                alsoRequiring: ["Collections", "Add a collection"])
-    }
-
-    // MARK: - Navigation
-
-    /// Home ▸ `Song library`.
-    ///
-    /// The card's label carries the song count (`Song library, 6 songs`), so it is matched by prefix
-    /// — pinning the number here would make every library figure fail on a seed change rather than
-    /// on the thing it is about. Arrival is the **Library** navigation bar: Home's card says the
-    /// words "Song library", and a gate the screen you are leaving already satisfies is not a gate.
-    @MainActor
-    func openLibrary(in app: XCUIApplication) {
-        let card = app.buttons
-            .matching(NSPredicate(format: "label BEGINSWITH %@", "Song library,")).firstMatch
-        XCTAssertTrue(card.waitForExistence(timeout: Self.shootTimeout),
-                      "no Song library card on Home.\n\(stepLog)")
-        tapHomeCard(card.label, in: app, arrivingAt: app.navigationBars["Library"])
+                alsoRequiring: ["Collections", "Add"])
     }
 }

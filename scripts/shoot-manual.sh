@@ -84,7 +84,7 @@ TEST_PLAN="${POCKET_SHOOT_PLAN:-PocketShoot}"
 # per figure in the shoot, since both of them wrote to the store and so bought a whole erased device
 # between them. `ManualImportShots` went with them; its notes on which process hosts the system
 # document picker are in the commit that removed it, should an import figure ever be wanted again.
-PASSES=(base library player exercises routines sessions broken bare)
+PASSES=(base library player exercises routines sessions broken bare map tabs send)
 
 # The classes each pass drives. `base` is the read-only set the first shoot filed; the rest are the
 # areas that had to build their own state.
@@ -99,6 +99,11 @@ pass_classes() {
         sessions)  echo "ManualSessionShots" ;;
         broken)    echo "ManualMissingAudioShots" ;;
         bare)      echo "ManualBareShots" ;;
+        # The song map's Slow Bend (`-seedSongMap`), a written tab, and a received routine: each is a
+        # state no other figure may see, so each is a device of its own.
+        map)       echo "ManualSongMapShots" ;;
+        tabs)      echo "ManualTabShots" ;;
+        send)      echo "ManualSendShots" ;;
         # `POCKET_SHOOT_ONLY`'s ad-hoc pass — whatever was asked for, on its own erased device.
         adhoc)     echo "${POCKET_SHOOT_ONLY:-}" ;;
         *)         return 1 ;;
@@ -106,8 +111,8 @@ pass_classes() {
 }
 
 # `POCKET_SHOOT_ONLY` narrows the run to one class (or a space-separated few) while a new area is
-# being written. The full set is ~6 minutes and a single class is well under one, and the difference
-# is not convenience: a six-minute turn on a missed tap encourages guessing at the next selector
+# being written. The full set is about an hour and a single class a few minutes, and the difference
+# is not convenience: an hour's turn on a missed tap encourages guessing at the next selector
 # instead of reading the step log. Always finish with a full run — the filed set is only coherent
 # when every figure came from the same seed on the same erased device.
 if [ -n "${POCKET_SHOOT_ONLY:-}" ]; then

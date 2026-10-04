@@ -34,13 +34,15 @@ final class Loop {
     /// to `nil` (= never touched) with no store wipe — which is exactly the truth.
     var mastery: Int?
 
-    /// The command speed (`×` of original) the current `mastery` was given at (ADR 0169) — `nil`
-    /// when there is no rating, or when the rating predates this field. The loop mirror of
-    /// `Exercise.masteryTempo`, in the `×` unit a loop's command lives in, and with no rhythm term:
-    /// a fraction of the recording's own tempo carries the material's rhythm with it. Written by
-    /// `rateMastery` at every mastery write. Additive optional — pre-0169 loops migrate to `nil`
-    /// (CoreData 134110 exempt), which reads as "conditions unrecorded", not as a claim.
+    /// The command speed (`×` of original) the rating was given at (ADR 0169) — the current
+    /// `mastery`'s, or the `previousMastery`'s (ADR 0250). The loop mirror of `Exercise.masteryTempo`,
+    /// with no rhythm term: a fraction of the recording's own tempo carries its rhythm with it.
+    /// Additive optional — pre-0169 loops migrate to `nil`, read as "conditions unrecorded".
     var masteryAtSpeed: Double?
+
+    /// The rating the command moved off (ADR 0250) — "Last rated 5 at 85%". Never set alongside
+    /// `mastery`; the stamp describes it. Additive optional.
+    var previousMastery: Int?
 
     /// Deliberate practice intent — `1` Backburner · `2` Active · `3` Sharpening — or `nil`
     /// when never triaged (ADR 0036 / 0039). Kept separate from `mastery` (the planner reads
@@ -353,7 +355,7 @@ final class Loop {
     /// derived, so promotion is a single write — but a **pinned** reach that the new command has
     /// caught up to is auto-cleared (a reach must stay above command), reverting to the auto value.
     func promoteCommand(to speed: Double) {
-        commandTempo = speed
+        moveCommand(to: speed)   // sets aside a rating the move leaves behind (ADR 0250)
         if let pinned = targetSpeedOverride, pinned <= command { targetSpeedOverride = nil }
     }
 
@@ -390,7 +392,7 @@ final class Loop {
     /// `backoff < command`, so a pin at or above the settled command deletes it outright. A pinned
     /// *reach* is left alone — still above command, so the invariant holds.
     func settleCommand(to speed: Double) {
-        commandTempo = speed
+        moveCommand(to: speed)   // sets aside a rating the move leaves behind (ADR 0250)
         backoffSpeedOverride = CommandOffer.survivingBackoffPin(backoffSpeedOverride, command: speed)
     }
 }

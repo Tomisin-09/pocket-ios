@@ -41,6 +41,7 @@ enum SharedSongBuilder {
         loop.lastPracticedSpeed = nil
         loop.mastery = nil
         loop.masteryAtSpeed = nil
+        loop.previousMastery = nil
         loop.focus = nil
         loop.commandTempo = nil
         loop.skillIDs = nil

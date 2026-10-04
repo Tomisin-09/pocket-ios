@@ -989,6 +989,21 @@ on `priority`, not score, so a 0 sorts *last* rather than being excluded.) The r
 conditions moved is new. The stamp is read back as a caption under the mastery row on the exercise
 detail's Progress section and the loop edit sheet ("Rated at 90 BPM · 8ths"), never on the Done
 screen, which is a commit beat rather than a read-back.
+
+**A command move sets the rating aside (ADR 0250).** Each model writes `commandTempo` through
+`moveCommand(to:)` — the path `promoteCommand`, `settleCommand` and the loop editor share — which moves
+the rating to the additive `previousMastery: Int?` when the stamp no longer matches the new command
+(or, for an unstamped rating, when the effective value actually changed). The unit then reads
+unrated at its new tempo, which `DueScore` treats as most due, and the read-back caption becomes
+"Last rated 5 at 70 BPM · 8ths". `ratingWouldBeSetAside(movingTo:)` is the same rule asked ahead of
+the write, so the loop editor shows the dots it will save. `rateMastery` writes nothing for an
+unchanged value, so a completion screen handing back its pre-filled row on Continue can neither wipe
+the set-aside rating nor re-stamp an old one at a new tempo. `MasteryStaleBackfill` runs every launch
+beside `PieceDateBackfill` and sets aside any rating 0169 left stale; the stale reading and its
+`DueScore` floor remain as the fallback. Slice 2 adds the pure `SongSpeed` (Foundation-only): the
+slowest measured loop's command, shown beside a song's mastery on the title strip and in Song
+details, never folded into it. Its `isFullSpeed` (the loop badge's rounded percent ≥ 100) is the one
+full-speed rule, and `PracticeStats.hasFullMastery` reads it too, so *Mastered* is a 5 at full speed.
 into `[SessionBlock]` honouring the ADR 0014 pacing (≤20-min blocks, U-shape with the top-due drill
 last, warm-up LRU-picked / unbudgeted). **A preset denominates focused *blocks*, not minutes
 (ADR 0129):** `SessionLength` is `blocks × itemsPerBlock` — Quick 1×3, Focused 2×3, Full 4×3 — each
@@ -1619,20 +1634,12 @@ empty, because that line was Home's only word about adding a first song.
   is a named landmark you stop to write, a snag is anonymous and costs one tap, which is the only
   price payable while playing.
 
-  **It is not an Oracle pipe.** The consumer that justifies it ships in the same slice: `SnagCluster`
-  (pure, no model call) turns marks into a proposed tighter loop, and `tightenToSnags` lands that as
-  an **A/B span** (ADR 0041) rather than writing `Loop.start`/`end` — so the player auditions a
-  suggestion built from taps made while distracted, and Save commits it through the ordinary
-  `saveABSpan` path, recorded by ADR 0199 with no second write site. It composes with that ADR in
-  both directions: a cluster is usually under a second wide, and a loop that tight was unreachable
-  until the floor moved to half a second.
-
-  `SnagCluster` **declines** more often than it fires — scattered marks (past `scatterRatio`, 0.6 of
-  the loop) propose nothing, because an even spread is a true reading that the trouble is not in one
-  place, and a suggestion there would move a loop the player deliberately set. The offer is a
-  transient tenant of the status line's ZStack, gated on a flag rather than on "a proposal exists":
-  the latter is true for as long as the marks are, and would evict Loop controls / Follow / Grid
-  permanently.
+  **It is not an Oracle pipe.** 0200 shipped it with a consumer in the same slice, `SnagCluster`,
+  which turned marks into a proposed tighter loop that `tightenToSnags` lifted into an A/B span.
+  **ADR 0249 took that offer out** (2026-10-03): it arrived the moment a snag was marked, took over the
+  status line, and proposed a loop length in seconds while the player was busy playing. By then a mark
+  already paid its way without it — the panel, the count on the loop's row (0206), *Snags on this
+  piece* and the export — so `SnagCluster`, `SnagTightenBar` and the status line's flag were deleted.
 
   **ADR 0202** answers the two things 0200 shipped without.
 
@@ -1654,10 +1661,9 @@ empty, because that line was Home's only word about adding a first song.
 
   **ADR 0203** then makes the ticks state-bearing: marks inside the **armed loop's span** draw at
   full strength, the rest at `snagFadedOpacity`. The test is **position, not `loopUID`** — and that
-  is the whole decision. `SnagCluster.proposal` and `snagsInActiveLoop` filter by position, so
-  fading by the recorded loop would dim a mark that is still being counted in *"3 snags close
-  together"* and still driving the offer in the line directly above it. Keyed on position the two
-  agree: the bright marks **are** the offer's input. With no loop armed everything draws full —
+  is the whole decision. The Loops panel's count on each row (0206) filters by position, so fading by
+  the recorded loop would dim a mark the row is still counting. Keyed on position the two agree: the
+  bright marks **are** the counted ones. (Until ADR 0249 the tighten offer read the same set.) With no loop armed everything draws full —
   deliberately the opposite of `drawLoopLines`, which dims all lines when none is active, because
   that dimming exists to make one line pop out of many rather than to mark a work area. The contrast
   is made **upward** (in-loop to 1.0) rather than by pushing the rest below the old flat 0.85, since
@@ -1876,15 +1882,23 @@ empty, because that line was Home's only word about adding a first song.
   enum-attribute migration rule). They're written by `Profile.setCuration` (a fetch-or-create that
   *does* legitimately create a still-nameless row — the first-launch intake runs before a name is
   earned). Collected by the **first-launch intake** (`ArtistIntakeView`, a skippable full-screen flow of
-  five cards — four after *Just unwind* — gated once by `artistIntakeSeen`; its goals card writes
-  ranked `LongTermGoal`s rather than a profile field, ADR 0246; Home shows the intake *or* the naming prompt,
-  never both, via `maybeOfferProfileMoment`) and editable any time in **Settings ▸ You**
+  six cards — five after *Just unwind* or for an answer without a neck, the order a pure `IntakeStep` —
+  gated once by `artistIntakeSeen`; its goals card writes ranked `LongTermGoal`s rather than a profile
+  field, ADR 0246; Home shows the intake *or* the naming prompt, never both, via
+  `maybeOfferProfileMoment`) and editable any time in **Settings ▸ You**
   (`ProfileCurationSection` — its own "Your sound" top-level section until ADR 0162 folded it in with
-  the artist name, since both answer the same question). That section also holds the ADR-0116 **Instrument** row (Guitar/Bass,
-  no "Not set" — the exercise axis is non-optional and falls back to guitar, so an unanswered
-  question and "guitar" are the same state). It commits through `setPreferredInstrument`, *not*
-  `setCuration`, because that writer overwrites its four fields as a set and would let an instrument
-  change clear them. The row is what makes `Profile.preferredInstrument` reachable at all: the field,
+  the artist name, since both answer the same question). That section also holds **You play** (ADR
+  0248; the ADR-0116 Guitar/Bass **Instrument** row until then): the intake's first answer,
+  `Profile.playsRaw` over the pure `PlayedInstrument` (nine answers, guitar and bass first). It is
+  deliberately not a wider `Instrument`, which is the neck a drill is drawn on: `PlayedInstrument.fretboard`
+  is the bridge, non-nil for guitar and bass only. No "Not set" — `playsOrNeck` falls back on the neck,
+  then guitar. It commits through `setPlays` (which also sets `preferredInstrument` when the answer has a
+  neck), *not* `setCuration`, because that writer overwrites its four fields as a set and would let an
+  instrument change clear them. **The answer decides the first run's seed (ADR 0248 D4):** on the
+  launch the intake shows, `seedFirstRunContent` skips the drills and routine, and the cover's
+  `onDismiss` runs `seedAfterIntake` — the first-run set for guitar, bass or no answer, and for any
+  other answer `PracticePresets.seedFirstRun(leansOnSongs: true)`, which marks the v1 key without
+  inserting (Morning Routine then resolves nothing and does not seed). The row is what makes `Profile.preferredInstrument` reachable at all: the field,
   accessor and writer shipped with ADR 0116 while nothing in the app could write it, so both readers
   (`ExerciseLibraryView`, and `MetronomeAutomatorPanel` since ADR 0128) saw the guitar fallback
   unconditionally. Two more consumers exist, both pure and both *defaults only*:

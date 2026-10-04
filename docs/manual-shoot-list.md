@@ -16,10 +16,14 @@ disk, so it is the one number that cannot go stale. Prefer it to any figure writ
 ## Shooting it
 
 ```sh
-./scripts/shoot-manual.sh                                  # every pass, ~40 min
+./scripts/shoot-manual.sh                                  # every pass, ~1 hour on a quiet machine
 POCKET_SHOOT_PASS=player ./scripts/shoot-manual.sh         # one area, while writing it
 POCKET_SHOOT_PASS="routines sessions" ./scripts/shoot-manual.sh
 ```
+
+**One simulator, nothing else running.** On this 8-core, 8 GB Mac a second simulator beside the shoot
+drove the load average past 100: taps were lost, accessibility queries timed out, and five passes
+took two hours. Alone, all eleven took 57 minutes (2026-10-03).
 
 **A pass is one erased device**, staged, driven, and filed. The shoot is several of them in order
 rather than one long run, because most of the manual's second half *writes to the store*: a finished
@@ -32,12 +36,15 @@ order XCTest chooses and nothing here controls.
 |---|---|---|
 | `base` | `ManualShotsUITests` · `ManualSettingsShots` · `ManualToolkitShots` · `ManualMetronomeShots` · `ManualReferenceShots` · `ManualPracticeShots` | the read-only set |
 | `library` | `ManualLibraryShots` | library, sort, filter, song details/edit |
-| `player` | `ManualPlayerShots` · `ManualLoopSheetShots` | the song player and its sheets |
+| `player` | `ManualPlayerShots` · `ManualLoopSheetShots` | the song player, its sheets and its Snags panel, all on Binta (its real waveform, markers, two loops, three snags) |
 | `exercises` | `ManualExerciseShots` | drills, runs, the freeform block |
 | `routines` | `ManualRoutineShots` | the editor and a play-through |
 | `sessions` | `ManualSessionShots` | the planner and goal authoring |
 | `broken` | `ManualMissingAudioShots` | a song whose file is gone |
 | `bare` | `ManualBareShots` | an unseeded device |
+| `map` | `ManualSongMapShots` | Slow Bend laid out for the song map (`-seedSongMap`): the map and its tab, the saved piece, Name the notes, the Journal's Pieces |
+| `tabs` | `ManualTabShots` | a tab written in My tabs, then read |
+| `send` | `ManualSendShots` | a song and a routine sent and received (the routine is added, so its song can go) |
 
 Passes settle cross-area ordering by construction — the exercises library is shot on a device where
 the `sessions` pass has never saved a goal. What a pass still owes is ordering *inside* itself: a figure whose
@@ -113,16 +120,17 @@ the phone down, not after.
 scheme's arguments and run from Xcode on the device.
 
 `ScreenshotSeed.seedIfNeeded` only fires on an empty library, which the first-run set still is (ADR
-0112 ships six exercises and one routine and **no song**). On a phone there is no `Documents/SeedAudio`
-for it to import from, so `seedAudioURLs()` returns nothing and you get **Slow Bend** alone — the
-tone-generator demo, with its loops. That is exactly what `song-player/landscape` asks for.
+0112 ships seven exercises and one routine and **no song**). On a phone there is no `Documents/SeedAudio`
+for it to import from, so you get **Slow Bend**, the tone-generator demo, and **Binta** from the app's
+bundle, dressed as in the simulator: its two markers, *Chords* and *Solo opener*, and three snags. Binta
+is what `song-player/landscape` asks for, as every other player figure is shot on it.
 
 - **The tuner.** Toolkit ▸ Tuner, allow the microphone, play a string and let it ring. The frame
   wants the disc naming the note, the cents needle, the flat/sharp end labels, the string circles and
   the reference-pitch caption. Taking a screenshot while holding a guitar is the actual difficulty:
   turn on **Settings ▸ Accessibility ▸ Touch ▸ Back Tap ▸ Double Tap ▸ Screenshot** and knock the
   back of the phone instead of reaching for two buttons.
-- **Landscape.** A **seeded** song in the player, rotation lock **off**, turn the phone, open the
+- **Landscape.** The **seeded** Binta in the player, rotation lock **off**, turn the phone, open the
   drawer. Not one of your own: the manual names no artist anywhere in its prose and every seeded song
   is by the invented *Jack Trader*, so a figure taken on a personal library would put a real artist's
   name into the documentation, in the largest type on the screen, and nothing in the toolchain checks

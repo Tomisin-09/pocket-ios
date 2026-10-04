@@ -54,8 +54,8 @@ struct FieldInfoLabel: View {
 enum PracticeFieldInfo {
     static let mastery =
         "How cleanly you own this loop — feel, tone, accuracy. Separate from speed: you can "
-        + "play something fast but scrappy, or slow but perfect. A rating is kept with the tempo "
-        + "you gave it at, so it still means something after you move on."
+        + "play something fast but scrappy, or slow but perfect. A rating is for the tempo you "
+        + "gave it at. Move the command tempo and it starts again; your last one is kept."
     static let commandTempo =
         "The fastest speed you own this loop at, as a % of the original. Command is speed; "
         + "Mastery is cleanliness — deliberately two axes."
@@ -66,8 +66,9 @@ enum PracticeFieldInfo {
         "What kind of loop: Lick (melodic) · Riff (melody + rhythm) · Chords (rhythmic) · "
         + "Passage (a longer span covering several)."
     static let songMastery =
-        "Averaged from this song's loops — rate individual loops to set it. \u{201C}Unrated\u{201D} "
-        + "until at least one loop has a mastery."
+        "Averaged from this song's loops, each at its current tempo — rate individual loops to set "
+        + "it. \u{201C}Unrated\u{201D} until at least one loop has a mastery. Beside it is your slowest "
+        + "loop's tempo: the song only goes as fast as that."
     static let exerciseCommandTempo =
         "The fastest you can play it cleanly and repeatably right now. The warm-up floor and the "
         + "reach derive from it — tune them when you run the drill. Command is speed, separate "
@@ -78,7 +79,7 @@ enum PracticeFieldInfo {
     Form {
         Section("Practice") {
             LabeledContent {
-                Text("★★★☆☆").foregroundStyle(PocketColor.marker)
+                MasteryDots(filled: 3)
             } label: {
                 FieldInfoLabel(title: "Mastery", info: PracticeFieldInfo.mastery)
             }

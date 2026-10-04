@@ -16,6 +16,9 @@
   · 0015 S1 and 0171 D5 (the shared goal templates the card draws from) · 0113 S3 (`dreamLift`, which
   stays — D6) · 0171 D10 (the `Build from` control, which now appears on day one)
 - **Schema:** none. The card writes ordinary `LongTermGoal` rows.
+- **Amended by:** ADR 0248 (2026-10-03) — the goals card is also left out for an answer without a
+  neck (piano, singing…), by D4's own rule. The intake is now five cards or six. On the intake's
+  launch, the seed this ADR's *Rejected* section raced now waits for the cover to close.
 
 ## Context
 

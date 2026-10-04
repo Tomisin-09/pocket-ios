@@ -57,6 +57,10 @@ struct LoopEditSheet: View {
     // Structured practice fields (ADR 0036 slice 3) — edited as local copies, written
     // back on Done so Cancel discards. Optional: `nil` = never set (ADR 0039).
     @State var mastery: Int?
+    /// Whether the dots were tapped in this edit (ADR 0250). Only a touched rating is written: an
+    /// untouched one still holds the number the sheet opened with, and writing it after a command
+    /// move would re-stamp an old rating at a speed it was never given at.
+    @State var masteryTouched = false
     @State var focus: Int?
     @State var commandTempo: Double?
     @State var loopType: LoopType
@@ -160,9 +164,10 @@ struct LoopEditSheet: View {
         // rating is given about the run that just happened and an accepted raise then moves the
         // command off it, so the gap is real. Here the editor commits one coherent declaration — "I
         // own this at 85%, and I rate it 4" — so the rating is about the command being set in the
-        // same breath, and stamping the value it is replacing would invent staleness.
-        loop.commandTempo = commandTempo
-        loop.rateMastery(mastery)
+        // same breath. Through `moveCommand`, so a move sets the old rating aside (ADR 0250); a
+        // rating tapped in this edit then lands on top of it, at the new speed, and stands.
+        loop.moveCommand(to: commandTempo)
+        if masteryTouched { loop.rateMastery(mastery) }
         loop.loopType = loopType
         loop.tags = tags
         loop.skillIDs = skillIDs

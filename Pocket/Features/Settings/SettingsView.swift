@@ -104,11 +104,11 @@ struct SettingsView: View {
         usage.map { StorageUsage.formatted(bytes: $0.total) }
     }
 
-    /// "Tomisin · Guitar", or just the instrument before a name has been set. The instrument always
-    /// has a value (the model's axis is non-optional and falls back to guitar, ADR 0116), so the row
-    /// is never blank.
+    /// "Tomisin · Guitar", or just the instrument before a name has been set. What you play always
+    /// has a value (`Profile.playsOrNeck` falls back on the neck, then guitar — ADR 0116, 0248), so the
+    /// row is never blank.
     private var youSummary: String {
-        let instrument = (profiles.first?.preferredInstrument ?? .guitar).displayName
+        let instrument = (profiles.first?.playsOrNeck ?? .guitar).displayName
         guard let name = profiles.first?.artistName, !name.isEmpty else { return instrument }
         return "\(name) · \(instrument)"
     }

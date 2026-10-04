@@ -5,12 +5,13 @@ The waveform screen. Reached by tapping a song in the [library](home-and-library
 
 <!-- shot: reference/player | role: screen
      | alt: The song player with the title strip, the speed bar, the status line, the waveform, the transport and the Loops panel
-     | state: seeded library, Slow Bend, idle, Loops panel expanded -->
+     | state: seeded library, Binta, idle, Loops panel expanded -->
 
 ## The title strip
 
-`Back to library` on the left. Beside it the song's title, artist and mastery. **Hold the title** to
-open [Song details](home-and-library.md#song-details) — there is no button for it.
+`Back to library` on the left. Beside it the song's title, artist and mastery, with the slowest
+loop's speed under the mastery — *slowest 60%*, or *full speed*. **Hold the title** to open
+[Song details](home-and-library.md#song-details) — there is no button for it.
 
 ## The speed bar
 
@@ -116,7 +117,7 @@ that opens the loop automator.
 
 <!-- shot: reference/loops-panel | role: panel
      | alt: The Loops panel expanded, each row showing the loop name, its range, its mastery and the play, adjust and automator controls
-     | state: seeded library, Slow Bend, Loops expanded -->
+     | state: seeded library, Binta, Loops expanded -->
 
 **Hold the panel header** to start selecting, then tap rows to act on several at once.
 
@@ -130,6 +131,10 @@ sheet. Marker names can also float over the timeline as you play up to them — 
 One row per snag, in the order they fall in the song: the time, the loop you were running when you
 marked it, and the speed you were playing at if it was not full tempo. Tapping a row goes there and
 plays. The ✕ removes it.
+
+<!-- shot: reference/snags-panel | role: screen
+     | alt: The song player's Snags panel open with three snags, each with its time and loop, two at 75%, and a line under the first
+     | state: seeded library, Binta, Loops folded, Snags opened -->
 
 **Hold a row** to leave yourself a line about that snag, for when you come back: *What’s stopping you
 here?* It saves to the Journal of the loop the row names, or, if that loop is gone, of the loop the
@@ -154,7 +159,7 @@ starts collapsed.
 
 <!-- shot: reference/loop-edit | role: screen
      | alt: The top of the Edit loop sheet, showing Name, Favourite and Range with the Practice section beginning beneath them
-     | state: seeded library, Slow Bend, loop "Verse riff" held, Edit loop, top of the sheet -->
+     | state: seeded library, Binta, loop "Chords" held, Edit loop, top of the sheet -->
 
 `Cancel` discards, `Done` keeps.
 
@@ -178,7 +183,7 @@ starts collapsed.
 
 <!-- shot: reference/loop-automator | role: screen
      | alt: The loop automator sheet with the Start, Target, Steps and Loops per step fields above the ramp summary
-     | state: seeded library, Slow Bend, automator opened on "Verse riff" -->
+     | state: seeded library, Binta, automator opened on "Chords" -->
 
 A ramp for one loop, expressed in percentages of the song's speed: `Start`, `Target`, `Steps` and
 `Loops / step`, with a summary of the climb above them and the BPM it works out to below.
@@ -191,7 +196,7 @@ to open this too; it now carries the tempo out instead.)
 
 <!-- shot: reference/tempo-editor | role: screen
      | alt: The tempo sheet with the Tap and Manual segments, the tap pad, Estimate from audio, and the downbeat section
-     | state: seeded library, Slow Bend, tempo editor open -->
+     | state: seeded library, Binta, tempo editor open -->
 
 - **`Tap`** — `Tap to the beat`. The app's own explanation: *Play the song and tap along. Tapping
   reads the playhead, so a loop or slowed speed still reads the true tempo. The reading follows your

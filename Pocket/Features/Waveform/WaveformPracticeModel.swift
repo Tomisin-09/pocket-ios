@@ -232,16 +232,12 @@ final class WaveformPracticeModel {
     /// `nil` on any other song. Behaviour in `+Walkthrough.swift`.
     var walkthrough: SongWalkthrough?
     var starterScript: StarterTrackScript?
-    /// The starter track's two hints (ADR 0220 D4), beside the beats. Outlives both the script and
-    /// the last beat: the backing-track hint arrives after the ceremony, when no beat is left.
+    /// The session's hints (ADR 0220 D4, ADR 0249 D3), beside the beats, on any song the walkthrough
+    /// runs on. Outlives both the script and the last beat: a row hint arrives after the ceremony, when
+    /// no beat is left.
     var starterHints: StarterTrackHints?
     /// The playhead on the previous frame, for the script's crossing test. Never observed.
     @ObservationIgnored var lastWalkthroughTick: TimeInterval = 0
-
-    /// True while the *tighten to your snags* offer is showing (ADR 0200 D4). A flag rather than
-    /// "a proposal exists" — the latter is true for as long as the marks are, and would evict
-    /// `ModeDescriptionLine` (Loop controls · Follow · Grid) from the status line permanently.
-    var offeringSnagTighten = false
 
     /// Hold-drag spatial set (ADR 0041, secondary to play-along): the anchor fraction
     /// (the playhead) where the hold fired; the drag extends A↔B from here.

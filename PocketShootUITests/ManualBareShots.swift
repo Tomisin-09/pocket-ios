@@ -67,7 +67,7 @@ final class ManualBareShots: ManualShotCase {
         app.launch()
         note("launched without -uiTesting, so the intake is not suppressed")
 
-        let question = app.staticTexts["Where are you with the guitar?"]
+        let question = app.staticTexts["What do you play?"]
         XCTAssertTrue(question.waitForExistence(timeout: Self.seedingTimeout), """
             the first-run intake never appeared. It is suppressed by `-uiTesting`, so check first \
             that this launch does not carry it.
@@ -75,12 +75,53 @@ final class ManualBareShots: ManualShotCase {
             """)
 
         // `A few quick things` is the intake's own header and is on no other screen; the question is
-        // step one specifically, which is the step the marker asks for. `Question 1 of 4` is the
-        // progress dots' label — the "first of four dots" the shoot list names, and the only thing
-        // in the frame that distinguishes step 1 from the three steps after it.
+        // step one specifically, which is the step the marker asks for. `Question 1 of 6` is the
+        // progress dots' label — five since ADR 0246 added the goals card, six since ADR 0248 asked
+        // what you play first — and the only thing in the frame that distinguishes step 1 from the rest.
         captureChromeless(app, slug: "getting-started/first-run",
                           screen: "the first-run intake",
-                          ownedBy: ["A few quick things", "Where are you with the guitar?"],
-                          alsoRequiring: ["Question 1 of 4", "Skip setup"])
+                          ownedBy: ["A few quick things", "What do you play?"],
+                          alsoRequiring: ["Question 1 of 6", "Skip setup", "Guitar", "Bass", "Piano or keys"])
+
+        // On to the goals card (ADR 0246), in the same test because it is the same launch further on.
+        // A dream is answered, since the card orders its goals by it; two goals are picked, so the
+        // figure shows the order the page describes. Never finished, so `artistIntakeSeen` stays false.
+        // Continue stays put when it works, so it is tapped once a step by hand rather than through
+        // `tap(_:revealing:)`, whose retry would read a slow redraw as a swallowed tap and skip a card.
+        let next = app.buttons["Continue"]
+        func advance(to step: Int) {
+            awaitHittable(next)
+            next.tap()
+            let dots = app.descendants(matching: .any)
+                .matching(NSPredicate(format: "label == %@", "Question \(step) of 6")).firstMatch
+            XCTAssertTrue(dots.waitForExistence(timeout: Self.shootTimeout),
+                          "Continue didn't move on to question \(step).\n\(stepLog)")
+            note("on question \(step)")
+        }
+        // Guitar, so the goals card is asked: anything without a neck leans on songs and skips it (ADR 0248).
+        let guitar = app.buttons["Guitar"]
+        awaitHittable(guitar)
+        guitar.tap()
+        note("picked Guitar")
+        advance(to: 2)
+        advance(to: 3)
+        advance(to: 4)
+        let dream = app.buttons["Play songs I love"]
+        XCTAssertTrue(dream.waitForExistence(timeout: Self.shootTimeout), "no dream to pick.\n\(stepLog)")
+        dream.tap()
+        note("picked Play songs I love")
+        advance(to: 5)
+
+        let offered = app.scrollViews.buttons
+        for rank in 0..<2 {
+            let goal = offered.element(boundBy: rank)
+            awaitHittable(goal)
+            goal.tap()
+            note("picked goal \(rank + 1): \(goal.label)")
+        }
+        captureChromeless(app, slug: "getting-started/goals-card",
+                          screen: "the first-run goals card",
+                          ownedBy: ["What are you working toward?"],
+                          alsoRequiring: ["Question 5 of 6"])
     }
 }

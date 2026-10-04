@@ -78,26 +78,29 @@ final class MasteryConditionsTests: XCTestCase {
         XCTAssertEqual(loop.masteryAtSpeed ?? 0, 0.85, accuracy: 1e-9)
         XCTAssertEqual(loop.masteryReading?.conditions, "85%")
         loop.promoteCommand(to: 0.95)
-        XCTAssertTrue(loop.masteryIsStale)
+        // The move sets the rating aside (ADR 0250) and the stamp goes with it, still describing it.
+        XCTAssertEqual(loop.previousMastery, 5)
+        XCTAssertEqual(loop.masteryAtSpeed ?? 0, 0.85, accuracy: 1e-9)
     }
 
     // MARK: - The sequence: a raise must not retire the drill
 
     func testAcceptedRaiseResurfacesRatherThanRetires() {
         // `commitDone`'s exact order, which is the whole point: the rating lands first, then the
-        // accepted raise moves the command off it.
+        // accepted raise moves the command off it. Under ADR 0250 the move sets the rating aside, so
+        // the drill reads unrated at its new tempo — which the planner treats as most due.
         let exercise = Exercise(name: "Spider walk", currentTempo: 60, commandTempo: 70,
                                 notesPerBeat: 2)
         exercise.lastPracticed = now.addingTimeInterval(-7 * 86_400)
         exercise.rateMastery(5)
         exercise.promoteCommand(to: 90)
 
-        XCTAssertEqual(exercise.mastery, 5, "The player's number is never rewritten (ADR 0070)")
+        XCTAssertNil(exercise.mastery, "Unrated at a tempo nobody has rated")
+        XCTAssertEqual(exercise.previousMastery, 5, "The player's number is set aside, never wiped")
         XCTAssertEqual(exercise.masteryTempo, 70, "…and it still records the tempo it was earned at")
-        XCTAssertTrue(exercise.masteryIsStale)
 
         let candidate = PracticePlanner.candidate(for: exercise)
-        XCTAssertTrue(candidate.masteryIsStale, "Staleness must survive the projection to the planner")
+        XCTAssertNil(candidate.mastery)
         XCTAssertGreaterThan(DueScore.score(candidate, now: now), 0,
                              "A drill promoted on a 5 must come back, not vanish at a tempo it has "
                              + "never been rated at")
@@ -117,12 +120,13 @@ final class MasteryConditionsTests: XCTestCase {
 
     func testSettleWasAlreadyCoherentAndStaysSo() {
         // `CommandOffer` only leans `.settle` on mastery 0–2, whose terms are already positive — the
-        // bug bit upward only. Settling still marks the reading stale (the command did move), and the
-        // floor is a floor, so a low rating's larger term is untouched.
+        // bug bit upward only. A settle is a command move too, so it sets the rating aside (ADR 0250);
+        // and the stale floor is a floor, so a low rating's larger term is untouched by it.
         let exercise = Exercise(name: "Spider walk", currentTempo: 60, commandTempo: 90)
         exercise.rateMastery(1)
         exercise.settleCommand(to: 75)
-        XCTAssertTrue(exercise.masteryIsStale)
+        XCTAssertNil(exercise.mastery)
+        XCTAssertEqual(exercise.previousMastery, 1)
         XCTAssertEqual(DueScore.masteryTerm(1, isStale: true), DueScore.masteryTerm(1), accuracy: 1e-9)
     }
 

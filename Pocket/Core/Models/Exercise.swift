@@ -253,13 +253,11 @@ final class Exercise {
     /// job, not this number's (the planner never silently lowers a rating the player set).
     var mastery: Int?
 
-    /// The command tempo the current `mastery` was given at (ADR 0169) — `nil` when there is no
-    /// rating, or when the rating predates this field. Written by `rateMastery` at every mastery
-    /// write, in the sibling position `commandNotesPerBeat` occupies for the command itself: a
-    /// rating without the tempo it describes is half a fact by ADR 0121's own argument, and without
-    /// it the planner cannot tell a 5 earned at today's command from one earned two promotes ago.
-    /// Additive optional — pre-0169 exercises migrate to `nil` (CoreData 134110 exempt), which reads
-    /// correctly as "conditions unrecorded" rather than as a claim.
+    /// The command tempo the rating was given at (ADR 0169) — the current `mastery`'s, or the
+    /// `previousMastery`'s once a command move set it aside (ADR 0250). Written by `rateMastery`: a
+    /// rating without the tempo it describes is half a fact (ADR 0121's argument). `nil` with no
+    /// rating, or one that predates this field — additive optional (CoreData 134110 exempt), read as
+    /// "conditions unrecorded" rather than as a claim.
     var masteryTempo: Int?
 
     /// The rhythm that rating was given in — notes per beat (ADR 0169 / 0121). Stored beside
@@ -267,6 +265,10 @@ final class Exercise {
     /// "5 at 90" is unreadable the moment the drill's rhythm moves. `nil` when the drill states no
     /// rhythm — the honest record of "rated, rhythm unstated", never "quarters".
     var masteryNotesPerBeat: Int?
+
+    /// The rating the command moved off (ADR 0250), kept so "Last rated 5 at 70 BPM" can still be
+    /// said. Never set alongside `mastery`; the stamp above describes it. Additive optional.
+    var previousMastery: Int?
 
     /// When this exercise was last practised (a run started) — or `nil` when never run.
     /// Feeds the planner on **two** axes from one field: *dueness* on the focused axis (an

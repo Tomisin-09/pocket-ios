@@ -117,6 +117,10 @@ happen here.
 The tabs you have written on the neck, the one you changed last at the top. Each row shows the title,
 when it last changed, and how many notes and sections it has, on which instrument.
 
+<!-- shot: toolkit/my-tabs | role: screen
+     | alt: My tabs with one tab, Pentatonic run, its row giving when it changed, its notes and sections, and Guitar · Standard
+     | state: the tab the writer figure wrote, Done, back on My tabs -->
+
 - **+** in the toolbar writes a new tab. Empty, the screen says **No tabs yet** and offers **Write a
   tab**.
 - Tap a tab to read it: the tab drawn section by section, with **Edit** to write more. The share
@@ -131,6 +135,10 @@ as text or a PDF: nothing reads a tab file back into Red Moon.
 ### Writing a tab
 
 The writer is the same neck as Name the notes, in the Toolkit's colour.
+
+<!-- shot: toolkit/tab-writer | role: screen
+     | alt: Writing a tab called Pentatonic run: Note 16, new · Verse over the end of the strip, numbered notes with a bar line between them and the lit + slot last, then undo and redo, Bar line and Section, and the neck with the latest notes numbered on it
+     | state: Toolkit ▸ My tabs ▸ +, fifteen notes written in two sections -->
 
 - Name it at the top, or leave it: an unnamed tab is called *Untitled tab*.
 - The strip shows your notes as chips, with a **+** where the next one goes. **Tap the neck** and the
@@ -149,6 +157,10 @@ The writer is the same neck as Name the notes, in the Toolkit's colour.
 
 A tab with sections is drawn a section at a time, each under its heading, with its bar lines, and rows
 that keep whole bars together.
+
+<!-- shot: toolkit/tab-read | role: screen
+     | alt: Pentatonic run open to read, drawn as tab under its Intro and Verse headings with bar lines, and Edit at the top
+     | state: the written tab, tapped in My tabs -->
 
 ## Glossary
 

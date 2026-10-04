@@ -157,8 +157,25 @@ final class ManualExerciseShots: ManualShotCase {
             .matching(NSPredicate(format: "label BEGINSWITH %@", "Practice settings,")).firstMatch
         XCTAssertTrue(summary.waitForExistence(timeout: Self.shootTimeout),
                       "no Practice Settings header on the run screen.\n\(stepLog)")
-        awaitHittable(summary)
-        summary.tap()
+        //
+        // **Except when that tap is lost**, as on 2026-10-03: the screen after it was one page with no
+        // rows. So the rows are looked for — waited on, then swiped down to, since the panel opens
+        // below the fold — and the header is tapped again, back at the top, only once they are
+        // nowhere. A tap that worked is never followed by another, so the toggle can't undo it.
+        let raise = app.buttons["Raise Command"]
+        var open = false
+        for attempt in 1...3 where !open {
+            awaitHittable(summary)
+            summary.tap()
+            note("tapped the Practice Settings header" + (attempt > 1 ? " (attempt \(attempt))" : ""))
+            open = raise.waitForExistence(timeout: 5)
+            for _ in 0..<3 where !open {
+                app.swipeUp(velocity: .slow)
+                open = raise.exists
+            }
+            if !open { for _ in 0..<3 { app.swipeDown(velocity: .slow) } }
+        }
+        XCTAssertTrue(open, "the Practice Settings panel never opened.\n\(stepLog)")
         note("expanded the Practice Settings panel")
 
         // The panel opens *below the fold*, and an element off the bottom of a scroll view is not in
@@ -166,7 +183,7 @@ final class ManualExerciseShots: ManualShotCase {
         // however many times the header was tapped. `scrollIntoFrame` handles the absent case
         // (`element.exists ? element.frame : .zero`, then swipe) and is the only thing that can
         // distinguish "not scrolled to" from "not there", which its failure message then says.
-        scrollIntoFrame(app.buttons["Raise Command"], called: "the open Command row", in: app)
+        scrollIntoFrame(raise, called: "the open Command row", in: app)
 
         // The three switches are the optional phases' own labels; Command has none (D2), so its row
         // is matched by the start of its label and its open controls by name.

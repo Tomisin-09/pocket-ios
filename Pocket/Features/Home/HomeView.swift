@@ -212,7 +212,10 @@ struct HomeView: View {
             // earned; dismissing (Done or Skip) marks it seen so it never returns. The fields stay
             // editable in Settings. Mutually exclusive with the name prompt (see maybeOfferProfileMoment).
             .fullScreenCover(isPresented: $showingIntake,
-                             onDismiss: { artistIntakeSeen = true },
+                             onDismiss: {
+                                 artistIntakeSeen = true
+                                 seedAfterIntake()       // ADR 0248: the first run follows the answers
+                             },
                              content: { ArtistIntakeView() })
             .onAppear(perform: maybeOfferProfileMoment)
             // Seeding first, then the reminder sweep — the ordering is load-bearing, see

@@ -342,41 +342,6 @@ enum PracticeHistorySeed {
         }
     }
 
-    // MARK: - Where you learned it (ADR 0167)
-
-    /// Two reference links on the first seeded exercise — one of them carrying a note — for
-    /// `references/section`.
-    ///
-    /// Seeded rather than driven. Typing two URLs through the keyboard would add a minute to a run
-    /// that is already six, and a URL field is exactly where a UI test's typing goes wrong —
-    /// autocorrect, a missed keyboard dismissal, a `.` that lands as `,`. The editor sheet itself is
-    /// still driven (`references/editor`), so the flow a player takes is photographed, not simulated.
-    ///
-    /// **Deliberately generic hosts.** A figure in a published manual is an implicit endorsement and
-    /// an implicit permission claim, so these name no real teacher's channel and no real tab site.
-    /// They read as what a player would save without being anybody's actual page.
-    /// Pinned to **Alternate Picking** by name, not to `exercises.first`. A `FetchDescriptor` with no
-    /// sort returns store order, so "first" is whatever the preset seed happened to insert first —
-    /// stable today and silently re-pointable by an unrelated change to `PracticePresets`. A figure
-    /// whose subject can move is a figure that goes wrong without anything failing.
-    @MainActor
-    private static func seedReferences(exercises: [Exercise], into context: ModelContext) {
-        guard let exercise = exercises.first(where: { $0.name == "Alternate Picking" })
-                ?? exercises.first else { return }
-        // **One noted, one not** — on purpose. The note is optional, so a figure showing only
-        // noted rows would promise a third line that most rows do not have, and a figure showing
-        // none could not illustrate the field at all. Two rows is exactly enough to show both.
-        let sources = [("The lesson this came from",
-                        "https://example.com/lessons/alternate-picking",
-                        "The down-up bit starts about four minutes in — the rest is theory."),
-                       ("Tab for the whole run",
-                        "https://tabs.example.org/alternate-picking",
-                        "")]
-        for (title, url, note) in sources {
-            ReferenceLinkStore.add(title: title, url: url, note: note, to: exercise, in: context)
-        }
-    }
-
     // MARK: - Dates
 
     /// Midnight, `daysAgo` days back. Everything here is anchored to the start of a day so a shoot

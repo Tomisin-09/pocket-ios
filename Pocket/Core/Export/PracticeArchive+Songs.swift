@@ -86,6 +86,9 @@ struct LoopRecord: Codable, Equatable, Sendable {
     var lastPracticedSpeed: Double?
     var mastery: Int?
     var masteryAtSpeed: Double?
+    /// The rating a command move set aside (ADR 0250). `Optional`, so an archive written before 0250
+    /// decodes with no key.
+    var previousMastery: Int?
     var focus: Int?
     var commandTempo: Double?
     var targetSpeedOverride: Double?

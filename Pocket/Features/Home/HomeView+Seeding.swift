@@ -17,7 +17,11 @@ extension HomeView {
     /// and 2.6 MB in every download — to hand every player the same song none of them chose. The
     /// library starts empty and fills with music they actually practise.
     func seedFirstRunContent() async {
-        PracticePresets.seedIfNeeded(into: context)
+        // On the launch the intake shows, what the first run seeds is the intake's to decide (ADR 0248),
+        // so the drills and the routine wait for its cover to close (`seedAfterIntake`). Every other
+        // launch is as before: the seeders' own keys make them no-ops once they've run.
+        let waitForTheIntake = !artistIntakeSeen && !UITestRuntime.isActive
+        if !waitForTheIntake { PracticePresets.seedIfNeeded(into: context) }
         // Stamp provenance onto drills seeded before the slug existed (ADR 0112). Both
         // backfills run once, then no-op.
         PracticePresets.backfillPresetSlugsIfNeeded(into: context)
@@ -27,8 +31,12 @@ extension HomeView {
         // Date every piece saved before the Journal listed pieces (ADR 0229). Every launch: a piece
         // restored from an older archive arrives undated too. Writes only to an undated piece.
         PieceDateBackfill.run(into: context)
+        // Set aside every rating a command has already moved off (ADR 0250), so a store from before
+        // it reads the way a command move reads now. Every launch, for restored archives; a re-run
+        // writes nothing.
+        MasteryStaleBackfill.run(into: context)
         await Task.yield()
-        RoutinePresets.seedIfNeeded(into: context)
+        if !waitForTheIntake { RoutinePresets.seedIfNeeded(into: context) }
         await Task.yield()
         RoutinePresets.backfillPresetSlugsIfNeeded(into: context)
         #if DEBUG
@@ -41,6 +49,16 @@ extension HomeView {
         ReceivedPackSeed.removeLeftovers(from: context)
         #endif
         seedingComplete = true
+    }
+
+    /// The intake's cover has closed: seed the first run from what it learned (ADR 0248). Someone who
+    /// plays guitar or bass, or skipped the question, gets the drills and Morning Routine as every install
+    /// did; anyone else starts with an empty Practice library and fills it from the loops they save.
+    /// Read from the store rather than `profiles`, which the `@Query` may not have caught up with yet.
+    func seedAfterIntake() {
+        let leansOnSongs = Profile.existing(in: context)?.plays?.leansOnSongs == true
+        PracticePresets.seedFirstRun(leansOnSongs: leansOnSongs, into: context)
+        RoutinePresets.seedIfNeeded(into: context)
     }
 
     /// The readiness signal the UI tests wait on (ADR 0146 pass 2).

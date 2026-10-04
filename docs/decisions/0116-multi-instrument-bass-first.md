@@ -8,6 +8,10 @@
   `Profile.setPreferredInstrument` had no caller, so every install read the guitar fallback. The
   automator now reads the profile through the shared insert, and a Settings **Instrument** row writes
   it.
+- **Amended by:** ADR 0248 (2026-10-03) — D3's "set at intake" is now true: the intake's first card
+  writes `preferredInstrument` for a guitar or bass answer. The wider answer (piano, singing…) is a
+  separate field, `Profile.playsRaw`, and `Instrument` keeps its two cases. The Settings row described
+  above is now *You play*.
 
 ## Context
 

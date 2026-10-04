@@ -75,12 +75,14 @@ final class StarterTrackHintsTests: XCTestCase {
         XCTAssertNil(hints.showing, "The replaced click hint came back")
     }
 
-    /// The hint says "four bars of chords", so it is offered only for the loop the script closes.
+    /// The hint says "four bars of chords", so it is offered only for the loop the script closes. Any
+    /// other loop is told where it is edited instead (ADR 0249 D3).
     func testALoopKeptElsewhereIsNotCalledABed() {
         var hints = StarterTrackHints()
-        hints.loopKept(id: UUID(), start: StarterTrack.barStart(5), end: chords)
-        XCTAssertNil(hints.showing)
-        XCTAssertNil(hints.keptLoopID)
+        let elsewhere = UUID()
+        hints.loopKept(id: elsewhere, start: StarterTrack.barStart(5), end: chords)
+        XCTAssertEqual(hints.showing, .editLoop)
+        XCTAssertEqual(hints.keptLoopID, elsewhere)
         XCTAssertFalse(hints.spent.contains(.backingTrack), "A loop that doesn't qualify spends nothing")
     }
 
@@ -108,5 +110,62 @@ final class StarterTrackHintsTests: XCTestCase {
         let body = StarterTrackHints.Hint.backingTrack.body(loopName: "Chords")
         XCTAssertTrue(body.contains("Hold Chords"), body)
         XCTAssertTrue(body.contains("Backing track"), "It must name the toggle as the sheet labels it")
+    }
+
+    // MARK: - Where to edit it, on every song (ADR 0249 D3)
+
+    /// The player's own song: the loop kept is pointed at, by name, and the hold is what it teaches.
+    func testAnySongPointsAtTheKeptLoop() {
+        var hints = StarterTrackHints(onStarterTrack: false)
+        let loop = UUID()
+        hints.loopKept(id: loop, start: 12, end: 18)
+        XCTAssertEqual(hints.showing, .editLoop)
+        XCTAssertEqual(hints.keptLoopID, loop)
+        let body = StarterTrackHints.Hint.editLoop.body(loopName: "Verse")
+        XCTAssertTrue(body.hasPrefix("Hold Verse"), body)
+        // What the sheet holds, named as the hold tip names it (ADR 0244), not the sheet's title.
+        XCTAssertTrue(body.contains("its name, its range"), body)
+        XCTAssertTrue(body.contains("how you practise it"), body)
+    }
+
+    /// Only the starter track has a click known to run from bar 1, and four bars of chords.
+    func testAnySongHasNoClickAndNoBackingTrack() {
+        var hints = StarterTrackHints(onStarterTrack: false)
+        hints.loopStarted(click: .off)
+        XCTAssertNil(hints.showing, "The click hint is the starter track's (0220 D1)")
+        hints.loopKept(id: UUID(), start: chords, end: solo)
+        XCTAssertEqual(hints.showing, .editLoop, "Bars 9–12 of another song are not the starter's chords")
+    }
+
+    /// Opening a loop's sheet is the hold found: the hint goes, and a second loop doesn't bring it back.
+    func testEditingALoopRetiresTheHint() {
+        var hints = StarterTrackHints(onStarterTrack: false)
+        hints.loopKept(id: UUID(), start: 12, end: 18)
+        hints.loopEdited()
+        XCTAssertNil(hints.showing)
+        hints.loopKept(id: UUID(), start: 30, end: 34)
+        XCTAssertNil(hints.showing, "Shown once")
+    }
+
+    /// Deleting the loop it points at takes it away.
+    func testDeletingTheKeptLoopEndsTheEditHint() {
+        var hints = StarterTrackHints(onStarterTrack: false)
+        hints.loopKept(id: UUID(), start: 12, end: 18)
+        hints.keptLoopRemoved()
+        XCTAssertNil(hints.showing)
+    }
+
+    /// The backing-track hint already says "Hold Chords": a second loop kept after it is not taught the
+    /// hold again, whether that hint is still up or was taken.
+    func testTheBackingTrackHintTeachesTheHoldOnce() {
+        var hints = StarterTrackHints()
+        let chordsLoop = UUID()
+        hints.loopKept(id: chordsLoop, start: chords, end: solo)
+        hints.loopKept(id: UUID(), start: StarterTrack.barStart(5), end: chords)
+        XCTAssertEqual(hints.showing, .backingTrack, "The edit hint replaced the backing-track hint")
+        XCTAssertEqual(hints.keptLoopID, chordsLoop)
+        hints.backingTrackUsed()
+        hints.loopKept(id: UUID(), start: StarterTrack.barStart(5), end: chords)
+        XCTAssertNil(hints.showing)
     }
 }
