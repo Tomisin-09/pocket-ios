@@ -162,11 +162,13 @@ screen; one you stop by hand does not log.
 ## `Loops`
 
 <!-- shot: reference/loops-library | role: screen
-     | alt: The Loops library, empty, explaining that measured loops appear here once set on a song
-     | state: fresh library with no measured loops, Practice ▸ Loops -->
+     | alt: The Loops library grouped by song, with Binta's Chords and Feels' Chorus lift, each showing its command tempo and the next step up, and an Ear button
+     | state: seeded library, two loops measured, Practice ▸ Loops -->
 
-Every loop you have marked, across all your songs, in one list — the practice-side view of what the
-[song player](song-player.md) creates. A search field above the list prompts `Loops and songs`.
+Every loop you have measured, across all your songs, in one list — the practice-side view of what the
+[song player](song-player.md) creates. A loop is measured once it has a command tempo.
+`Show all loops`, in the `List options` menu, adds the rest, for `Train your ear`, which needs no
+tempo. A search field above the list prompts `Loops and songs`.
 
 Hold a row for the ways it can run, `Add to routine…` and **Favourite**. There is **no delete
 here**: a loop belongs to its song, and is removed from the song player.

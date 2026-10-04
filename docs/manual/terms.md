@@ -6,7 +6,7 @@ down: *mastery* and *command tempo* in particular are two different questions ab
 and mixing them up is the fastest way to make the numbers useless to you.
 
 Everywhere one of these appears in the app it carries a small **ⓘ**
-<!-- shot: terms/info-button | role: glyph | alt: | crop: 246,1710,84,94 -->
+<!-- shot: terms/info-button | role: glyph | alt: | crop: 284,1556,76,94 -->
 next to its label. Tap it and the definition appears in a popover. The definitions below are those
 same popovers, word for word — if the two ever differ, the app is right and this page is stale.
 
@@ -55,7 +55,7 @@ percentage of the song's original speed, so 100% means you have it at the tempo 
 <!-- shot: terms/command-tempo-info | role: detail
      | alt: The Command tempo row in the loop edit sheet with its ⓘ popover open
      | state: seeded library, Binta, loop "Chords" edit sheet, ⓘ tapped on Command tempo
-     | crop: 60,1650,1080,490 -->
+     | crop: 60,1780,1080,500 -->
 
 Because the two axes are independent, a loop can sit at a high command tempo and a low mastery —
 you can get through it at full speed, but it is scrappy. That combination is a useful thing to be

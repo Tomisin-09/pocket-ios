@@ -60,7 +60,7 @@ marker grammar in [README.md](README.md).
 | `reference/long-term-goals` | `screen` | `practice` | seeded library, Practice ▸ Long-term goals, two goals ranked |  |
 | `reference/loop-automator` | `screen` | `song-player` | seeded library, Binta, automator opened on "Chords" |  |
 | `reference/loop-edit` | `screen` | `song-player` | seeded library, Binta, loop "Chords" held, Edit loop, top of the sheet |  |
-| `reference/loops-library` | `screen` | `practice` | fresh library with no measured loops, Practice ▸ Loops |  |
+| `reference/loops-library` | `screen` | `practice` | seeded library, two loops measured, Practice ▸ Loops |  |
 | `reference/loops-panel` | `panel` | `song-player` | seeded library, Binta, Loops expanded |  |
 | `reference/metronome` | `screen` | `tools-and-journal` | Metronome open, stopped |  |
 | `reference/metronome-settings` | `screen` | `tools-and-journal` | Metronome open, meter control tapped, scrolled to the top |  |

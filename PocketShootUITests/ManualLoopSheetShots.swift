@@ -52,17 +52,21 @@ final class ManualLoopSheetShots: ManualShotCase {
 
         capture(app, slug: "looping/loop-edit-practice",
                 assertingOnScreen: "Edit loop",
-                alsoRequiring: ["Practice", "Mastery", "Focus", "Type", "Command tempo"])
+                alsoRequiring: ["Practice", "Mastery", "Focus", "Type", "Command tempo", "About Mastery"],
+                alsoServing: ["terms/info-button"])
     }
 
-    /// `terms/mastery-info` · `terms/info-button` — the Mastery row with its ⓘ popover open.
+    /// `terms/mastery-info` — the Mastery row with its ⓘ popover open.
     ///
     /// The ⓘ carries the label `About Mastery` (`FieldInfoLabel`), which is what makes it findable
     /// and also what makes it a good gate: the popover's own text is `PracticeFieldInfo.mastery`,
     /// app copy that the Help & FAQs catalogue quotes verbatim, so asserting a prefix of it here ties
     /// the figure to the same string the FAQ is pinned to.
     ///
-    /// `terms/info-button` needs only an ⓘ somewhere in the frame and is served by this one.
+    /// `terms/info-button` is **not** cut from this frame, though it used to be: on the 2026-10-04
+    /// shoot the popover opened beside the ⓘ and its arrow covered half the glyph, so no crop of
+    /// this frame shows it whole. It is cut from `looping/loop-edit-practice`, where the same ⓘ sits
+    /// with nothing open.
     @MainActor
     func testMasteryInfo() {
         let app = launchForShoot()
@@ -77,8 +81,7 @@ final class ManualLoopSheetShots: ManualShotCase {
         capture(app, slug: "terms/mastery-info",
                 assertingOnScreen: "Edit loop",
                 alsoRequiring: ["Mastery"],
-                orBeginningWith: ["How cleanly you own this loop"],
-                alsoServing: ["terms/info-button"])
+                orBeginningWith: ["How cleanly you own this loop"])
     }
 
     /// `terms/command-tempo-info` — the same, on Command tempo.
