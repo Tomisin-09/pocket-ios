@@ -13,6 +13,15 @@ final class NamingPieceSeedTests: XCTestCase {
         XCTAssertEqual(NamingPieceSeed.action(for: ["/path/to/Pocket.app", seed, "-seedHistory", uiTesting]), .seed)
     }
 
+    /// *Watch it on the neck* (ADR 0254) asks for the same song with its notes placed, and gets that even
+    /// alongside the naming argument.
+    func testTheWatchTestAsksForItPlaced() {
+        let watch = UITestHooks.watchPieceArgument
+        XCTAssertEqual(NamingPieceSeed.action(for: [uiTesting, watch]), .seedFretted)
+        XCTAssertEqual(NamingPieceSeed.action(for: [uiTesting, seed, watch]), .seedFretted)
+        XCTAssertEqual(NamingPieceSeed.action(for: [watch]), NamingPieceSeed.Action.none)
+    }
+
     /// The case the removal is for: every other UI test, and the shoot, clean up after a naming run.
     func testEveryOtherTestLaunchTakesItOut() {
         XCTAssertEqual(NamingPieceSeed.action(for: [uiTesting]), .remove)
@@ -35,5 +44,17 @@ final class NamingPieceSeedTests: XCTestCase {
         XCTAssertNotNil(piece.changedAt, "dated, as a saved piece is (ADR 0229)")
         XCTAssertEqual(piece.openMidi, Instrument.guitar.standardTuning.engineOpenMidi,
                        "standard guitar, whatever the tuner says, so the test's frets read the same every run")
+    }
+
+    /// Every note on the neck, so every door shows and the sheet says "6 on the neck"; the same taps as the
+    /// unnamed piece, so the loop plays them in the same places.
+    func testThePlacedPieceIsTheSameTapsAllOnTheNeck() {
+        let placed = NamingPieceSeed.piece(duration: 30, start: 0.29, end: 0.47, placed: true)
+        let unnamed = NamingPieceSeed.piece(duration: 30, start: 0.29, end: 0.47)
+        XCTAssertEqual(placed.taps.map(\.seconds), unnamed.taps.map(\.seconds))
+        XCTAssertEqual(placed.labels.compactMap { $0 }, NamingPieceSeed.placedLabels)
+        XCTAssertTrue(placed.labels.allSatisfy { $0?.isOnTheNeck == true })
+        XCTAssertEqual(NamingPieceSeed.placedLabels.count, NamingPieceSeed.noteCount)
+        XCTAssertEqual(PieceNeck.spots(of: placed.labels).count, 4, "G5 G7 B5 B8: two of the six are repeats")
     }
 }

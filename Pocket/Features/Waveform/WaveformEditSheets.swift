@@ -86,6 +86,8 @@ struct LoopEditSheet: View {
     @State var showingEarTraining = false
     // "Improvise" over this loop as a backing track (ADR 0135) — continuous playback + journal capture.
     @State var showingImprovise = false
+    // "Watch it on the neck" (ADR 0254) — the piece lit on the neck while the loop plays.
+    @State var showingWatch = false
     // Focus / Type pick via a bottom action sheet off a plain Button — a Menu/Picker in a
     // `LabeledContent` value slot needs several taps to register and won't commit at this sheet's
     // partial detent (device bug 2026-07-10). A Button + confirmationDialog is reliable at any detent.
@@ -312,6 +314,9 @@ struct LoopEditSheet: View {
             // The loop as a backing track (ADR 0135) — the same real audio on repeat as a bed to solo
             // over, with "what you played" notes through the same `JournalWriter` path, tagged 🎸.
             ImproviseSheet(loop: loop)
+        }
+        .sheet(isPresented: $showingWatch) {
+            WatchOnNeckSheet(loop: loop)
         }
     }
 }

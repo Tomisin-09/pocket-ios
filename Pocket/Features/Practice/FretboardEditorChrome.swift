@@ -10,8 +10,9 @@ import SwiftUI
 
 extension View {
     /// Silence the shared `ToneEngine` when the view leaves the screen, so a Hear preview never keeps
-    /// ringing after its editor (or chord sheet) is dismissed. Replaces a hand-repeated
-    /// `.onDisappear { ToneEngine.shared.stop() }` across every Hear surface (ADR 0097).
+    /// ringing after its chord sheet is dismissed. Replaces a hand-repeated
+    /// `.onDisappear { ToneEngine.shared.stop() }` across every Hear surface (ADR 0097). The exercise
+    /// editors no longer sound anything, so they no longer carry it (ADR 0253).
     func hearStopsOnDisappear() -> some View {
         onDisappear { ToneEngine.shared.stop() }
     }
@@ -36,19 +37,17 @@ enum FretboardSubdivisions {
     }
 }
 
-// MARK: - Display options bar (Hear · Watch · Display)
+// MARK: - Display options bar (Watch · Display)
 
-/// The header row every fretboard-family editor carries: **Hear** (sound the run, locked to the
-/// walking highlight), **Watch** (a one-shot walk-through when the board isn't already animating), and
-/// a **Display** menu for the note-caption mode. Owns the caption preference through `@AppStorage` so
-/// the menu label stays correct; each editor reads the same key for its own preview, and SwiftUI keeps
-/// the two in step.
+/// The header row every fretboard-family editor carries: **Watch** (a one-shot walk-through when the
+/// board isn't already animating) and a **Display** menu for the note-caption mode. Owns the caption
+/// preference through `@AppStorage` so the menu label stays correct; each editor reads the same key for
+/// its own preview, and SwiftUI keeps the two in step.
+///
+/// There was a **Hear** button first, sounding the run through the built-in tone; it came out until the
+/// app has real guitar audio (ADR 0253).
 struct FretboardDisplayOptionsBar: View {
-    /// The run's notes as MIDI in playing order (a `nil` entry is a rest) — what Hear sounds.
-    let heardNotes: [Int?]
-    /// Seconds per note on the preview walk, so tone and highlight advance together (ADR 0097 S3/S4).
-    let secondsPerNote: Double
-    /// The shared one-shot token — Hear and Watch both set it to restart the synced walk from note 0.
+    /// The one-shot token Watch sets to restart the walk from note 0.
     @Binding var playToken: Date?
     var tint: Color = PocketColor.practice
     /// Whether this surface's drill names a tonal centre. `false` hides the **Interval** caption mode,
@@ -69,8 +68,6 @@ struct FretboardDisplayOptionsBar: View {
 
     var body: some View {
         HStack(spacing: 16) {
-            FretboardHearButton(notes: heardNotes, secondsPerNote: secondsPerNote,
-                                playToken: $playToken, tint: tint)
             FretboardPlayOnceButton(playToken: $playToken, tint: tint)
             Spacer()
             Menu {

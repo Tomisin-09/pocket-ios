@@ -19,7 +19,8 @@ extension JournalTabView {
                     // The song is the heading, so the caption is the loop alone, and the stamp is the
                     // day: there is no day heading above it any more.
                     JournalPieceRow(piece: piece, ownerLabel: piece.loop.name.isEmpty ? "Loop" : piece.loop.name,
-                                    onOpen: openAction(for: .piece(piece)), stamp: dayHeader(piece.date))
+                                    onOpen: openAction(for: .piece(piece)), stamp: dayHeader(piece.date),
+                                    onWatch: watchAction(for: piece))
                         .listRowBackground(PocketColor.background)
                 }
             } header: {

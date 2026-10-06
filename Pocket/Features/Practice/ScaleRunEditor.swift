@@ -7,7 +7,7 @@ import SwiftUI
 ///
 /// A thin skin over `ScaleRun` — each control rebuilds the bound recipe (whose init clamps the
 /// position/octaves), and the preview reads `run.expanded()`; no timing logic here (T5). **T10** —
-/// every colour is a semantic `PocketColor` role. Shared chrome (Hear/Watch/Display bar, field labels,
+/// every colour is a semantic `PocketColor` role. Shared chrome (Watch/Display bar, field labels,
 /// stepper, root picker, badge, subdivision row) lives in `FretboardEditorChrome`.
 struct ScaleRunEditor: View {
     @Binding var run: ScaleRun
@@ -31,21 +31,13 @@ struct ScaleRunEditor: View {
         let preference = NoteSpelling(rawValue: accidentalRaw) ?? .default
         return (NoteSpelling.forScale(run.scale, root: pitchClass) ?? preference).name(pitchClass: pitchClass)
     }
-    /// Per-note duration matching the preview walk, so Hear stays locked to the highlight (ADR 0097 S3).
-    private var secondsPerNote: Double {
-        60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, run.notesPerBeat))
-    }
-    /// The run's notes as MIDI, in playing order — what Hear sounds (no rests in a generated scale run).
-    /// Resolved through the instrument so a bass run sounds an octave lower on the right strings.
-    private var heardNotes: [Int?] { run.heardMidi(for: instrument).map { Optional($0) } }
-    /// A one-shot "watch it" request (ADR 0065) — set by the options bar's Hear/Watch, read by the
-    /// preview below.
+    /// A one-shot "watch it" request (ADR 0065) — set by the options bar's Watch, read by the preview
+    /// below.
     @State private var playOnceToken: Date?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
-                                       playToken: $playOnceToken, tint: tint)
+            FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint)
             FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
                                   labelMode: labelMode, playOnceToken: playOnceToken)
             titleField
@@ -59,7 +51,6 @@ struct ScaleRunEditor: View {
             if run.positionCount(for: instrument) > 1 { positionRow }
             advanced
         }
-        .hearStopsOnDisappear()
     }
 
     // MARK: - Advanced

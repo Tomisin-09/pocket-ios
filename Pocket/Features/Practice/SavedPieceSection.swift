@@ -8,7 +8,8 @@ import SwiftUI
 /// **Name the notes** opens on it, the only way in since ADR 0234 D1: a pass is saved first and named
 /// here, so names can't be left on scratch paper. A new pass saved over it keeps it as an earlier version
 /// (ADR 0233), and **Versions** appears to use one again. The Journal shows the one in use under Pieces
-/// (ADR 0229).
+/// (ADR 0229). Once something is named on the neck, *Watch it on the neck* sits under Name the notes, to see
+/// it back as the loop plays (ADR 0254).
 struct SavedPieceSection: View {
     let loop: Loop
     let spelling: NoteSpelling
@@ -16,6 +17,9 @@ struct SavedPieceSection: View {
     let onEdit: (Int) -> Void
     /// Open **Versions** (ADR 0233 D4). Offered once there's an earlier version.
     let onVersions: () -> Void
+    /// Open *Watch it on the neck* (ADR 0254), or `nil` to leave it out: the host passes one only when
+    /// there's something to watch (its D2).
+    var onWatch: (() -> Void)?
 
     var body: some View {
         if let piece = loop.transcription {
@@ -23,11 +27,21 @@ struct SavedPieceSection: View {
                 PieceDrawing(piece: piece, spelling: spelling)
                 let snags = loop.snagsOnPiece
                 if !snags.isEmpty { snagRows(snags) }
-                Button("Name the notes") { onEdit(0) }
-                    .font(.futura(.subheadline))
-                    .buttonStyle(.bordered)
-                    .tint(PocketColor.practice)
-                    .accessibilityIdentifier("count.saved.name")
+                // One row for the ways to work on the piece, naming it and watching it back: as two rows, the
+                // Form drew a divider between them at an inset of its own.
+                VStack(alignment: .leading, spacing: 10) {
+                    Button("Name the notes") { onEdit(0) }
+                        .accessibilityIdentifier("count.saved.name")
+                    if let onWatch {
+                        Button(action: onWatch) {
+                            Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
+                        }
+                        .accessibilityIdentifier("count.saved.watch")
+                    }
+                }
+                .font(.futura(.subheadline))
+                .buttonStyle(.bordered)
+                .tint(PocketColor.practice)
                 let kept = loop.keptTranscriptions.count
                 if kept > 0 {
                     PieceVersionsRow(count: kept + 1, action: onVersions)

@@ -96,9 +96,10 @@ struct NeckNoteEditor<Trailing: View>: View {
         TabLine.stringNames(openMidi: tuning.openMidi).map { $0.trimmingCharacters(in: .whitespaces) }
     }
 
-    /// A dot with its note name, spelled for the key (ADR 0123). **A faint name is a map, not a hint:** it
-    /// reads the same whatever you heard, so it can't point at the answer. A placed note is drawn by where
-    /// it sits in the pass from the note being named (`NeckNeighbours`).
+    /// A dot with its note name, spelled for the key (ADR 0123): `NeckSpotDot`, which *Watch it on the neck*
+    /// draws too (ADR 0254). **A faint name is a map, not a hint:** it reads the same whatever you heard, so
+    /// it can't point at the answer. A placed note is drawn by where it sits in the pass from the note being
+    /// named (`NeckNeighbours`).
     private func neckSpot(string: Int, fret: Int, mark: NeckNeighbours.Mark?) -> some View {
         let isPlaced = mark?.tier == .current
         // In a shape, the ringed note is the one bend and vibrato go on.
@@ -106,7 +107,6 @@ struct NeckNoteEditor<Trailing: View>: View {
         let isRinged = markedNotes.count > 1 && string == ringed
             && markedNotes.contains { $0.string == string && $0.fret == fret }
         let name = spelling.name(pitchClass: ((tuning.openMidi[string] + fret) % 12 + 12) % 12)
-        let style = SpotStyle(mark?.tier, accent: accent)
         // While *Into it* waits for a start, only the frets it could have come from stay bright.
         let dimmed = awaitingStart.map { request in
             !markedNotes.contains { $0.string == string && $0.fret == fret }
@@ -115,21 +115,8 @@ struct NeckNoteEditor<Trailing: View>: View {
         return Button {
             onPlace(string, fret)
         } label: {
-            Text(name)
-                .font(.futura(size: isPlaced ? 10 : 9, weight: mark == nil ? .regular : .bold))
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .foregroundStyle(style.ink)
-                .frame(width: 24, height: 24)
-                .background(Circle().fill(style.fill))
-                .overlay(Circle().inset(by: style.ringWidth / 2).stroke(style.ring, lineWidth: style.ringWidth))
-                .overlay(Circle().inset(by: -3.5).stroke(isRinged ? accent : .clear, lineWidth: 1.5))
-                .overlay(alignment: .topTrailing) {
-                    if let mark, style.numbered { NeighbourNumber(note: mark.note + 1) }
-                }
-                .opacity(dimmed ? 0.3 : 1)
-                .frame(width: 30, height: 30)
-                .contentShape(Rectangle())
+            NeckSpotDot(name: name, tier: mark?.tier, number: mark.map { $0.note + 1 }, isRinged: isRinged,
+                        isDimmed: dimmed)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(stringNames[string]) string, \(fret == 0 ? "open" : "fret \(fret)"), \(name)"
@@ -240,71 +227,6 @@ extension NeckNoteEditor {
         case .current: return ", this \(noun)"
         case .other: return ", \(note)"
         }
-    }
-}
-
-/// How a spot is drawn for its tier. The note being named is solid; the three before are **filled** and
-/// the three after **ringed**, both fading with distance, so they differ in shape as well as colour and
-/// read with colour filters on; any other placed note is in ink (0227 D3); an empty spot is faint.
-private struct SpotStyle {
-    let fill: Color
-    let ink: Color
-    let ring: Color
-    let ringWidth: CGFloat
-    /// Neighbours carry their note number, so the line reads in order where it crosses itself.
-    let numbered: Bool
-
-    private static let fades: [Double] = [0.64, 0.38, 0.2]
-    private static let rings: [Double] = [0.95, 0.6, 0.32]
-
-    init(_ tier: NeckNeighbours.Tier?, accent: Color) {
-        switch tier {
-        case .current?:
-            self.init(fill: accent, ink: PocketColor.background, ring: .clear, ringWidth: 1,
-                      numbered: false)
-        case .before(let steps)?:
-            let fade = Self.fades[min(max(steps, 1), 3) - 1]
-            self.init(fill: accent.opacity(fade),
-                      ink: steps == 1 ? PocketColor.background : PocketColor.textPrimary,
-                      ring: .clear, ringWidth: 1, numbered: true)
-        case .after(let steps)?:
-            self.init(fill: .clear, ink: accent,
-                      ring: accent.opacity(Self.rings[min(max(steps, 1), 3) - 1]), ringWidth: 2,
-                      numbered: true)
-        case .other?:
-            self.init(fill: PocketColor.textPrimary.opacity(0.18), ink: PocketColor.textPrimary, ring: .clear,
-                      ringWidth: 1, numbered: false)
-        case nil:
-            self.init(fill: PocketColor.surfaceSubtle.opacity(0.5), ink: PocketColor.textSecondary.opacity(0.55),
-                      ring: PocketColor.surfaceBorder, ringWidth: 1, numbered: false)
-        }
-    }
-
-    private init(fill: Color, ink: Color, ring: Color, ringWidth: CGFloat, numbered: Bool) {
-        self.fill = fill
-        self.ink = ink
-        self.ring = ring
-        self.ringWidth = ringWidth
-        self.numbered = numbered
-    }
-}
-
-/// A neighbour's note number, tucked on its top right corner.
-private struct NeighbourNumber: View {
-    let note: Int
-    @Environment(\.neckAccent) private var accent
-
-    var body: some View {
-        Text("\(note)")
-            .font(.futura(size: 8, weight: .bold))
-            .monospacedDigit()
-            .foregroundStyle(accent)
-            .padding(.horizontal, 3)
-            .frame(minWidth: 14, minHeight: 13)
-            .background(Capsule().fill(PocketColor.background))
-            .overlay(Capsule().stroke(accent, lineWidth: 1))
-            .offset(x: 6, y: -5)
-            .accessibilityHidden(true)
     }
 }
 

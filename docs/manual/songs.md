@@ -188,7 +188,8 @@ you named them. There is no score and no percentage: it's your pieces, laid out.
 Tap a loop to see its tab: the notes you placed on the neck, in the tuning you named them in, in rows
 that fit the screen, with any name you gave by ear above the strings where it falls. Hold the tab to
 copy it. From there, **Train your ear** is where you count it and name it; the map fills
-in as you go. Saving a new count over one keeps the one before, and **Versions** on the tab lists them
+in as you go. Once a note is on the neck, **Watch it on the neck** plays the loop with the lick lit on the
+neck. Saving a new count over one keeps the one before, and **Versions** on the tab lists them
 all, the one in use first: **Use this version** swaps another in, and the map and its tab follow. The one
 it replaces is kept, so you can always go back. Hold a loop instead to skip the tab: the menu offers **View tab**, **Train your ear**,
 and **Practice** or **Improvise** when the loop can do them.

@@ -7,7 +7,8 @@ import SwiftUI
 /// **Folded to its count** since ADR 0234 D8: "98 notes · Guitar · Standard", and *See the notes* opens
 /// the piece in place (`PieceDrawing`), tab or names alike, so a long piece is one line on the feed until
 /// it's asked for. The loop's caption opens it in *Train your ear*, where **Name the notes** opens on it.
-/// No hold menu: a piece isn't pinned or deleted from here, and it has no text of its own to edit.
+/// No hold menu: a piece isn't pinned or deleted from here, and it has no text of its own to edit. So
+/// *Watch it on the neck* is a link under the caption (ADR 0254), once something is named on the neck.
 struct JournalPieceRow: View {
     let piece: JournalPiece
     let ownerLabel: String?
@@ -16,6 +17,8 @@ struct JournalPieceRow: View {
     /// When it last changed, as the header shows it: the time under a day's heading, or the day under a
     /// song's (ADR 0232 D20). `nil` means the time.
     var stamp: String?
+    /// Open *Watch it on the neck*; `nil` when there's nothing to watch (ADR 0254 D2).
+    var onWatch: (() -> Void)?
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -26,9 +29,33 @@ struct JournalPieceRow: View {
                 if let ownerLabel {
                     JournalOwnerCaption(label: ownerLabel, onOpen: onOpen)
                 }
+                if let onWatch { watchLink(onWatch) }
             }
         }
         .padding(.vertical, 6)
+    }
+
+    /// Styled as the caption above it, a link in the Journal's colour. Its icon sits beside the words, as the
+    /// caption's chevron does: a `Label` in a List row takes the List's icon column, which left a gap before
+    /// the words and moved the row's divider in to meet them.
+    private func watchLink(_ action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+            haptic(.light)
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: WatchOnNeckSheet.symbol)
+                    .font(.futura(.caption2, weight: .semibold))
+                    .accessibilityHidden(true)
+                Text(WatchOnNeckSheet.title)
+            }
+            .font(.futura(.caption))
+            .foregroundStyle(PocketColor.journal)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(WatchOnNeckSheet.title)
+        .accessibilityAddTraits(.isLink)
+        .accessibilityIdentifier("journal.piece.watch")
     }
 
     /// 🧩 *Piece* and when it last changed, laid out as a note's kind and time are.

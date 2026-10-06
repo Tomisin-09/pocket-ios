@@ -357,10 +357,12 @@ A re-tap cancels any in-flight preview and retriggers cleanly (tracked note-on/o
 ringing-note set). The *what-sounds-when* arithmetic — block vs melodic timing, rests keeping their walk
 slot, absolute onset deadlines — is a pure, Foundation-only `HearPlan` (unit-tested), so the sequencer
 stays a thin dispatcher over it. `start()` never reconfigures the audio session off `.playAndRecord`, so
-a Hear tap can't steal the session from an in-flight recording take (ADR 0069). **Every reference surface
-now drives it** — block-chord Hear on My Chords / the movable & custom chord sheets, sequenced Hear on the
-scale, arpeggio, picking-run and custom-drill editors — through the shared `ChordHearButton` and the
-`FretboardDisplayOptionsBar` in `FretboardEditorChrome`.
+a Hear tap can't steal the session from an in-flight recording take (ADR 0069). **The chord surfaces
+drive it** — block-chord Hear on My Chords and the custom chord sheet, through the shared
+`ChordHearButton` — and so does the tuner's reference tone. The scale, arpeggio, picking-run and
+custom-drill editors sounded their runs through it as well, until ADR 0253 took that out pending real
+guitar audio; `FretboardDisplayOptionsBar` in `FretboardEditorChrome` is now *Display*, plus *Watch* when the
+board isn't already walking (ADR 0077).
 
 **Deactivating the shared session is reference-counted** (`AudioPlumbing.retainSession` /
 `releaseSession` over the pure `AudioSessionLease`, plus the paired-by-construction
@@ -579,9 +581,10 @@ each note you hear, then name them. The pieces, from the audio up:
   taps are seconds, a 0154 anchor re-divides the same taps with nothing rewritten.
 - **The render path.** Two leaves read the clock every frame (`TimelineView`s, ADR 0153), and each
   reports only a change: `LivePassRow` tells the model when the pass changes, and the naming strip's
-  `HeardChipTracker`, there only while the sheet plays the loop or a phrase (`NamingStrip.Following`),
+  `HeardTapTracker`, there only while the sheet plays the loop or a phrase (`NamingStrip.Following`),
   says which chip is being heard (`NamingStrip.heard`). The neck lights that chip's placed notes from
-  the same state, with no clock of its own, and never scrolls to follow. Since ADR 0234 D5 the glow
+  the same state, with no clock of its own, and never scrolls to follow (*Watch it on the neck*'s does,
+  below). Since ADR 0234 D5 the glow
   moves the way the note was played: the pure `HaloMotion` (`Core/Theory`) reads the note and the one
   before it (a lead-in or join first, then a bend, then vibrato, else a pop), and `HeardGlows` animates
   it with `keyframeAnimator` in `FretNeckBoard`'s `beneath` slot, under the dots; Reduce Motion fades
@@ -626,6 +629,22 @@ each note you hear, then name them. The pieces, from the audio up:
     change to it through `write`, so a change is still one `commit`; the rules are the pure
     `NeckEditing`. The `.naming` voice keeps every string, and `neckAccent` (practice teal by default)
     is the only colour it takes.
+- **Watching** (ADR 0254). `WatchOnNeckSheet` plays a named piece back on the neck while the loop's own
+  audio plays: a viewing sheet, not a `LoopRunMode`, so it has no routine block, no log and no takes. It
+  holds its own `ContinuousLoopPlayer` (starting at `loop.ramp.command`) and the same one clock leaf as
+  the strip (`HeardTapTracker` over `NamingStrip.heard`). `PieceNeckView` is a read-only
+  `FretNeckBoard`: every spot the piece uses in ink (`PieceNeck.spots`) and the heard tap's solid
+  (`heardSpots`), drawn with the editor's `NeckSpotDot`, plus `NeckMarksLayer` and `HeardGlows` for
+  the heard tap only. Under it, a read-only row of `PieceChip`s (the strip's chip face, with
+  `NamingStrip.chipText` and `.heardRing`), then a `LoopPlayButton` at 52 points beside a smaller
+  `LoopTempoControl` (both lifted out of the naming strip and `ContinuousLoopControls` for it). The
+  board follows: it opens on `PieceNeck.span`'s centre, and `NeckFollow.target` moves it only when the
+  heard tap's frets (`PieceNeck.frets`, bend and lead-in included) leave `NeckFollow.window`, the frets
+  wholly in view at the board's width (the sheet's width less `NeckGeometry.namesWidth` and
+  `namesSpacing`). `PieceNeck.words` says the heard tap for the line over the chips and VoiceOver. All
+  of `PieceNeck` and `NeckFollow` is pure (`Core/Theory`). Five doors (Edit loop, the Loops hold menu,
+  the map's tab sheet, *Saved on this loop*, the Journal's piece row) ask one gate,
+  `PieceNeck.canWatch`: a tap on the neck and `LoopModeAccess.Facts.audioResolves`.
 - **Storage.** `Loop.transcriptionData: Data?` (additive, Optional) holds a `PieceTranscription`: taps
   with optional `PieceLabel`s (pitch class · notes on the neck · chord root + `ChordQuality` suffix),
   plus the open strings any fret was placed against and, since ADR 0229, `changedAt` (set by a save or a

@@ -111,6 +111,8 @@ struct JournalTabView: View {
     /// The song being mapped from the Pieces scope (ADR 0232 D20), by the uid of its first piece's loop:
     /// `Song` has no `uid` of its own to present it by (ADR 0090).
     @State var mappingFrom: StableRef<Loop>?
+    /// The loop a piece row opened in *Watch it on the neck* (ADR 0254), by its stable uid (ADR 0090).
+    @State var watching: StableRef<Loop>?
 
     /// Whether the journal holds anything at all, **before** any filter. Gates the month rail: a
     /// fresh install should not meet a filter control before it has met an entry (ADR 0207 D6).
@@ -219,6 +221,7 @@ struct JournalTabView: View {
         .fullScreenCover(item: $mappingFrom) { ref in
             if let song = ref.value.song { SongMapView(song: song) }
         }
+        .sheet(item: $watching) { WatchOnNeckSheet(loop: $0.value) }
         .onDisappear { player.stop() }
     }
 
@@ -243,6 +246,16 @@ struct JournalTabView: View {
         guard let route = JournalOwnerRoute.route(for: ref, exercises: exercises, loops: loops)
         else { return nil }
         return { open(route) }
+    }
+
+    /// A piece row's *Watch it on the neck* (ADR 0254), or `nil` when there's nothing to watch (its D2).
+    /// The feed's take stops first. Not `private`, for the same reason as `openAction`.
+    func watchAction(for piece: JournalPiece) -> (() -> Void)? {
+        guard PieceNeck.canWatch(piece.piece, on: piece.loop) else { return nil }
+        return {
+            player.stop()
+            watching = StableRef(value: piece.loop)
+        }
     }
 
     /// Follow a resolved route.

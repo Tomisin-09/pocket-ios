@@ -168,6 +168,8 @@ starts collapsed.
 - **`Practice`** — `Mastery`, `Focus`, `Type` and `Command tempo`, each with an ⓘ. These four are
   defined in [the app's own words](../terms.md).
 - **`Train your ear`** and **`Improvise`** — the two alternative ways to run this loop.
+- **`Watch it on the neck`** — once the loop's piece has a note on the neck: the lick on the neck, lit
+  as the loop plays. See [practice](practice.md#watch-it-on-the-neck).
 - **`Backing track`** — marks the span as something to solo over.
 - **`Journal`** — notes written against this loop, showing a count or `None`.
 - **`Where you learned it`** — links out to whatever explains this passage, with an `Add a link`
@@ -218,6 +220,7 @@ tips' `Show hold tips` and `Show the tips again`.
 - **Bulk edit** — `Type` and `Focus` across every loop you have selected.
 - **Journal** — notes for this loop, from the `Journal` row of its edit sheet.
 - **Ear training** and **Improvise** — the two alternative run modes, opened from the same sheet.
+- **Watch it on the neck** — the loop's piece lit on the neck as it plays, from the same sheet.
 - **The practice run** takes over the whole screen; it is covered in [practice](practice.md).
 
 ## Landscape

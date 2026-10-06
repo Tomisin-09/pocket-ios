@@ -56,6 +56,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Watch it on the neck.** Once you've named a lick on the neck in Name the notes, watch it play
+  back there while the loop's own recording plays. Every spot the lick uses is drawn on the neck, and
+  the note being heard lights up and glows the way you played it, with the notes in order underneath
+  and the one being heard ringed. The neck moves only when the note leaves the frets in view. Slow it
+  down with − and +, and the screen stays awake so you can play along. Find it in the loop's edit sheet,
+  holding a loop in Practice ▸ Loops, on the song map's tab sheet, under *Saved on this loop* in Train
+  your ear, and on the piece in the Journal. It shows once a note is on the neck and the song's audio
+  plays on this phone. Only the recording sounds: Red Moon never plays your answers back. (ADR 0254)
 - **The first-run questions start with what you play.** Guitar, Bass, Piano or keys, Singing,
   Producing, Drums, Ukulele, Violin or Something else. The next question asks where you are with it,
   in its own words: a singer is asked whether they *know a few songs*, not a few chords. Guitar and
@@ -298,6 +306,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Hear is gone from the exercise editors, until there are real guitar sounds.** The scale,
+  arpeggio, warm-up and picking-run editors, and Draw your own, no longer sound the run with the
+  built-in tone. The board still walks the shape, and with **Animate exercises** off, **Watch** walks
+  it once. Hear on a saved chord, and the tuner's reference tone, are unchanged. (ADR 0253)
 - **In a chord, a hammer-on or pull-off moves one note.** In Name the notes and the tab writer, with
   Chords on, pick Hammer-on or Pull-off and tap the fret the note started on, on its own string. That
   note moves and the rest of the chord is held, so a B string hammered from the barre writes *5h7*

@@ -327,13 +327,6 @@ extension ScaleRun {
         return notes.filter { BassNeckLayout.midi($0, openMidi: openMidi) <= low + 12 }
     }
 
-    /// MIDI notes the editor's **Hear** sounds, in playing order, for `instrument` — guitar and bass both
-    /// resolve through `Instrument.midi(of:)` (guitar's is byte-identical to `CAGEDShape.midi`).
-    func heardMidi(for instrument: Instrument) -> [Int] {
-        let notes = instrument == .guitar ? sequence : bassSequence(openMidi: instrument.engineOpenMidi)
-        return notes.map { instrument.midi(of: $0) }
-    }
-
     /// How many neck positions the editor offers for `instrument` — the guitar layout's count, or bass's
     /// single canonical box (ADR 0116). Drives the position stepper's range.
     func positionCount(for instrument: Instrument) -> Int {

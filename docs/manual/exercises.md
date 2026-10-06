@@ -218,7 +218,8 @@ The second step is titled for what you picked — **New warm-up**, **New scales*
 - **The shape** — if your template has an editor, it opens here, seeded so there is always something
   to run. Scales, Arpeggios and the warm-up family offer **Generate** or **Draw your own**: generate
   and you set a finger pattern, where on the neck it starts, how far across it travels and whether
-  it moves; draw and you place the notes yourself. **Hear** plays it back to you either way.
+  it moves; draw and you place the notes yourself. Either way the board above walks it through, or,
+  with **Animate exercises** off, **Watch** walks it once.
   A **Legato** drill works out its own hammer-ons and pull-offs: the first note on each string is
   picked, and every note after it on that string is hammered on going up or pulled off coming down.
   As the board walks, each one is drawn as a curve under the string marked *h* or *p*.

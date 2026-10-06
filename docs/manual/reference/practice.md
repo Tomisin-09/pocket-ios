@@ -170,14 +170,16 @@ Every loop you have measured, across all your songs, in one list — the practic
 `Show all loops`, in the `List options` menu, adds the rest, for `Train your ear`, which needs no
 tempo. A search field above the list prompts `Loops and songs`.
 
-Hold a row for the ways it can run, `Add to routine…` and **Favourite**. There is **no delete
-here**: a loop belongs to its song, and is removed from the song player.
+Hold a row for the ways it can run, `Watch it on the neck` once its piece has a note on the neck,
+`Add to routine…` and **Favourite**. There is **no delete here**: a loop belongs to its song, and is
+removed from the song player.
 
 Empty, it explains that loops appear once you have set one on a song.
 
 ## The other run modes
 
-A loop can be run three ways, all launched from its edit sheet in the song player:
+A loop can be run three ways, launched from its edit sheet in the song player or from its row in
+`Loops`:
 
 - **The ordinary loop run** — play it, slow it, ramp it. Its `Practice Settings` are the drill run
   screen's four phase rows, with every tempo a percentage of the song's speed and every hold a
@@ -277,3 +279,26 @@ an earlier version.
      | alt: Train your ear for the Verse riff scrolled to Saved on this loop: the piece's line, its tab, Snags on this piece with a line under one, and Name the notes
      | state: map seed, Slow Bend ▸ Verse riff ▸ Train your ear, scrolled to the saved piece -->
 
+### `Watch it on the neck`
+
+Once a piece has a note placed on the neck, `Watch it on the neck` plays the loop and shows you the lick
+on the neck as it goes. It sits under `Name the notes` in `Saved on this loop`, in the loop's edit sheet
+after `Train your ear`, in the loop's hold menu in `Loops`, on the song map's tab for the loop, and on the
+piece in the journal. It doesn't show for a piece named only by ear, which has nothing to light, or for a
+song whose audio can't play on this phone.
+
+<!-- shot: reference/watch-on-neck | role: screen
+     | alt: Watch it on the neck for the Verse riff, stopped: every spot the lick uses drawn on the neck, the notes in order under it, and the play button beside the tempo
+     | state: map seed, Slow Bend ▸ Verse riff ▸ Edit loop ▸ Watch it on the neck, stopped -->
+
+Every spot the lick uses is drawn on the neck, so you can see its shape before anything plays. Tap play,
+and the note being heard turns solid and glows the way you played it, with its marks: a bend's arrow, a
+hammer-on's curve, a slide's arrow. The notes in order sit under the neck, the one being heard ringed,
+and the line over them says which it is and how you played it: *Note 3 of 11*, *G string, fret 5,
+hammered on from 3*. A note you named by ear has nothing to light, so only its chip is ringed. The neck
+opens on the lick and moves only when the note being heard goes past the frets on screen. When the loop
+stops, the map stays.
+
+The tempo starts at the loop's command tempo, and − and + move it in steps of 5%. The screen stays awake
+while it's open, so you can play along without touching the phone. Only the recording sounds: Red Moon
+never plays your answers back. Nothing is logged and nothing is recorded here. `Done` closes it.

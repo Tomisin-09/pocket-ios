@@ -7,6 +7,9 @@
 - **Resolves:** ADR 0096 D4 ("*Hear* is deferred to Slice 2 with its own ADR"). **Builds on:** ADR 0001
   (audio-source reality), ADR 0093 (chord-naming engine), ADR 0085/0091 (scale/mode catalog + CAGED
   boxes), ADR 0092 (AI layer sits *on top of* this free, deterministic floor).
+- **Amended by:** ADR 0253 (2026-10-04) — **D4.6**: the scale-pattern, arpeggio and fretboard /
+  picking-run rows lose their surface. The exercise editors no longer sound a run, until there is real
+  guitar audio. D4.1–D4.5, the chord row and the tuner's reference tone stand.
 
 ## Decision
 

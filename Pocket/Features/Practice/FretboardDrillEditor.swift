@@ -79,13 +79,6 @@ struct FretboardDrillEditor: View {
     var referencePitchClasses: Set<Int> {
         referenceScale?.pitchClasses(root: referenceRoot) ?? []
     }
-    /// Per-note duration matching the preview walk, so Hear stays locked to the highlight (ADR 0097 S4).
-    private var secondsPerNote: Double {
-        60.0 / Double(FretboardDrillPreview.previewBPM) / Double(max(1, drill.notesPerBeat))
-    }
-    /// The hand-placed grid as MIDI, in slot order — empty cells stay `nil` (rests) so Hear keeps its
-    /// slots aligned to the walking highlight (ADR 0097 S4).
-    private var heardNotes: [Int?] { drill.notes.map { $0.map(CAGEDShape.midi) } }
 
     /// The full neck the scrollable board draws — frets 0…`maxFret`. Wide enough for any hand position;
     /// the board scrolls horizontally rather than paging a 5-fret window (device feedback 2026-07-23).
@@ -98,8 +91,7 @@ struct FretboardDrillEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            FretboardDisplayOptionsBar(heardNotes: heardNotes, secondsPerNote: secondsPerNote,
-                                       playToken: $playOnceToken, tint: tint, hasRoot: hasRoot)
+            FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint, hasRoot: hasRoot)
             FretboardDrillPreview(drill: template.articulating(drill), tint: tint, labelMode: labelMode,
                                   playOnceToken: playOnceToken)
             resolutionPicker
@@ -113,7 +105,6 @@ struct FretboardDrillEditor: View {
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
-        .hearStopsOnDisappear()
         .task(id: pulseToken) {
             guard pulsingCell != nil else { return }
             try? await Task.sleep(for: .seconds(Self.pulseSeconds))

@@ -46,6 +46,8 @@ struct EarTrainingView: View {
     @State private var showingTakes = false
     /// The saved piece's **Versions** (ADR 0233), presented from this body's root, never from a row.
     @State private var showingVersions = false
+    /// *Watch it on the neck* (ADR 0254), from *Saved on this loop*, presented from this body's root too.
+    @State private var showingWatch = false
     /// Count the notes (ADR 0225). Held here rather than in its section so the naming sheet can sit at this
     /// body's root, never on a row.
     @State private var counting: CountTheNotesModel
@@ -86,7 +88,11 @@ struct EarTrainingView: View {
                 SavedPieceSection(loop: loop, spelling: counting.spelling, onEdit: { note in
                     stopForNaming()
                     counting.nameSaved(at: note)
-                }, onVersions: { showingVersions = true })
+                }, onVersions: { showingVersions = true }, onWatch: PieceNeck.canWatch(loop) ? {
+                    // Quiet first, as for naming: the sheet plays the loop itself.
+                    stopForNaming()
+                    showingWatch = true
+                } : nil)
             }
         }
         .onAppear {
@@ -104,6 +110,9 @@ struct EarTrainingView: View {
         }
         .sheet(isPresented: $showingVersions) {
             PieceVersionsSheet(loop: loop, spelling: counting.spelling)
+        }
+        .sheet(isPresented: $showingWatch) {
+            WatchOnNeckSheet(loop: loop)
         }
         .sheet(item: Bindable(counting).naming, onDismiss: player.stop) { request in
             NameTheNotesSheet(request: request, loop: loop, player: player, spelling: counting.spelling) { result in

@@ -210,7 +210,8 @@ because the day is part of what the entry says.
 - The **All · Notes · Takes · Pieces** control at the top narrows the feed to one of them. **Pieces**
   are the loops you've transcribed with Count the notes, one row per loop, showing the version in use.
   Saving a new count keeps the one before; **Versions**, under *Saved on this loop* in Train your ear,
-  can use it again or delete it.
+  can use it again or delete it. Once a piece has a note on the neck, **Watch it on the neck** under the
+  loop's name plays it back on the neck with the loop.
 - **Pieces** is grouped by song rather than by day. Each song has a heading with **Map the song**
   beside it, which lays that song's pieces out where they play. Its pieces are listed in the order they
   play, each with the day it last changed, and the song you changed most recently comes first. Under

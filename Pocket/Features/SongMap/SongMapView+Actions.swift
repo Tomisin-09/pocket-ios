@@ -1,8 +1,34 @@
 import SwiftUI
 
-/// The song map's actions (ADR 0232): sections and repeats (D7, D8, D14, D15), and what the map makes and
-/// takes back (D9, D16, D17). Apart from `SongMapView` only to keep each file within its length budget.
+/// The song map's actions (ADR 0232): what's picked on a piece's tab sheet, sections and repeats (D7, D8,
+/// D14, D15), and what the map makes and takes back (D9, D16, D17). Apart from `SongMapView` only to keep
+/// each file within its length budget.
 extension SongMapView {
+
+    // MARK: - Picked on the tab sheet
+
+    /// A mode, *Watch it on the neck* or *Copy to…* picked on the tab sheet, once the sheet has gone.
+    func openPicked() {
+        if let uid = copyAfterSheet {
+            copyAfterSheet = nil
+            copying = CopySource(uid: uid)
+        }
+        if let uid = watchAfterSheet {
+            watchAfterSheet = nil
+            watch(uid)
+        }
+        guard let picked = openAfterSheet else { return }
+        openAfterSheet = nil
+        open(picked.uid, in: picked.mode)
+    }
+
+    /// *Watch it on the neck* (ADR 0254). The song player pauses first, as it does for a mode (its D6).
+    func watch(_ uid: UUID) {
+        guard let loop = song.loops.first(where: { $0.uid == uid }), PieceNeck.canWatch(loop) else { return }
+        made = nil
+        onOpenNestedAudio()
+        watching = StableRef(value: loop)
+    }
 
     // MARK: - Sections and repeats
 

@@ -251,20 +251,13 @@ extension FretboardRun {
 
     /// A copy of this run with its string span pulled into `stringCount` strings — a `low E → high e`
     /// guitar run becomes `low E → G` on a four-string bass (ADR 0116). Pure; the shared adjustment behind
-    /// bass expansion and Hear.
+    /// bass expansion and the editor's bass default.
     func stringClamped(to stringCount: Int) -> FretboardRun {
         let maxIndex = max(0, stringCount - 1)
         var clamped = self
         clamped.fromString = min(max(0, fromString), maxIndex)
         clamped.toString = min(max(0, toString), maxIndex)
         return clamped
-    }
-
-    /// MIDI notes the editor's **Hear** sounds, in playing order, for `instrument` — bass clamps the span
-    /// and sounds an octave lower on the four strings; guitar is unchanged.
-    func heardMidi(for instrument: Instrument) -> [Int] {
-        let run = instrument == .guitar ? self : stringClamped(to: instrument.stringCount)
-        return run.sequence.map { instrument.midi(of: $0) }
     }
 
     /// The cap on `passCount` so the **top** pass still fits a real neck (S10): the highest finger of

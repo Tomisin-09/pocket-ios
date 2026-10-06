@@ -22,13 +22,15 @@ enum LoopTransport {
 /// The **small play button**: a 30-point circle in a 44-point target, ▶ or ■, and a spinner while the
 /// audio loads. Name the notes' strip plays the loop with it (ADR 0227 D2). Count the notes puts one beside
 /// *Show beats* (ADR 0234 D2), so the loop starts from where the counting is, not from the big button a
-/// scroll above it.
+/// scroll above it. *Watch it on the neck* draws it larger (ADR 0254), as the one control in its row.
 struct LoopPlayButton: View {
     /// Filled with ■ while something plays.
     let isOn: Bool
     let isLoading: Bool
     let isDisabled: Bool
     let label: String
+    /// The circle's size. Never touched at less than 44 points, however small it's drawn.
+    var diameter: CGFloat = 30
     let action: () -> Void
 
     var body: some View {
@@ -41,13 +43,13 @@ struct LoopPlayButton: View {
                         .controlSize(.mini)
                 } else {
                     Image(systemName: isOn ? "stop.fill" : "play.fill")
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: diameter * 0.4, weight: .bold))
                         .foregroundStyle(isOn ? PocketColor.background : PocketColor.practice)
                         .offset(x: isOn ? 0 : 1)   // optical-centre the play triangle
                 }
             }
-            .frame(width: 30, height: 30)
-            .frame(width: 44, height: 44)
+            .frame(width: diameter, height: diameter)
+            .frame(width: max(diameter, 44), height: max(diameter, 44))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
