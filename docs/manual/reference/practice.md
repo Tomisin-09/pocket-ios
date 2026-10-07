@@ -276,7 +276,7 @@ on that note. The piece is listed in the journal under `Pieces`. Saving another 
 an earlier version.
 
 <!-- shot: reference/saved-piece | role: screen
-     | alt: Train your ear for the Verse riff scrolled to Saved on this loop: the piece's line, its tab, Snags on this piece with a line under one, and Name the notes
+     | alt: Train your ear for the Verse riff scrolled to Saved on this loop: the piece's line, its tab, Snags on this piece with a line under one, then Name the notes with Watch it on the neck under it
      | state: map seed, Slow Bend ▸ Verse riff ▸ Train your ear, scrolled to the saved piece -->
 
 ### `Watch it on the neck`

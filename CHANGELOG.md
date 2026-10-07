@@ -499,6 +499,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **CI gets an hour, not 45 minutes.** Green runs had grown to 33–42 minutes, and `main`'s run after
+  #358 was cut off at 45 with its UI tests nearly done and nothing failing. The manual shoot gains
+  the figure for *Watch it on the neck*. `shoot-manual.sh` now accepts one test as well as one class
+  (`POCKET_SHOOT_ONLY=Class/testMethod`); before, a passing test run that way was refused and filed
+  nothing.
 - **A song playing to its end no longer crashes CI's build.** The closure `PracticeAudioEngine` gives
   AVFoundation for a song's natural end is now marked `@Sendable`, as the slice player's and the tuner's
   already were. Xcode 26 imports that handler as `@Sendable` itself, so the app built for phones never
