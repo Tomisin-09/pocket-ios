@@ -42,7 +42,7 @@ order XCTest chooses and nothing here controls.
 | `sessions` | `ManualSessionShots` | the planner and goal authoring |
 | `broken` | `ManualMissingAudioShots` | a song whose file is gone |
 | `bare` | `ManualBareShots` | an unseeded device |
-| `map` | `ManualSongMapShots` | Slow Bend laid out for the song map (`-seedSongMap`): the map and its tab, the saved piece, Name the notes, the Journal's Pieces |
+| `map` | `ManualSongMapShots` | Slow Bend laid out for the song map (`-seedSongMap`): the map and its tab, the saved piece, Name the notes, Watch it on the neck, the Journal's Pieces |
 | `tabs` | `ManualTabShots` | a tab written in My tabs, then read |
 | `send` | `ManualSendShots` | a song and a routine sent and received (the routine is added, so its song can go) |
 
@@ -64,6 +64,24 @@ tail log` reports *tail's* status. A failing shoot has twice been read as a gree
 
 A failing pass no longer aborts the rest — the names are collected and reported together at the end,
 and the shoot still exits non-zero.
+
+**After a reshoot, the site holds the only copy of the current figures that's sure to last.** `shots/`
+is gitignored, so its masters and `shots/figures/` exist only in the checkout that shot them. The
+2026-10-03 reshoot ran in a worktree; when that worktree was removed, the 106 published figures
+survived only as `uk-site`'s `public/redmoon/manual/*.png`, and the main checkout's `shots/figures/` was
+a September set. `export-manual.py --figures` publishes whatever `shots/figures/` holds, so a partial
+republish from there would have put September images back over current ones. Before a partial
+republish, restore the live set first:
+
+```sh
+mv shots/figures shots/figures-old && mkdir shots/figures
+cd SITE && for f in $(git ls-tree --name-only origin/uk-site public/redmoon/manual/ | grep '\.png$'); do
+  git show "origin/uk-site:$f" > "POCKET/shots/figures/${f:t}"; done
+```
+
+They're already 640px wide, so the export copies them byte for byte. Then build the re-shot figures into
+a scratch folder (`build-figures.py --out`), because building into `shots/figures/` rebuilds every
+figure from whatever `filed/` holds, and copy across only the slugs that were shot.
 
 ---
 

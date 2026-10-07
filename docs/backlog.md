@@ -55,7 +55,13 @@ What it would take: one item in the library's options menu calling the existing
 `practiceFileImporter` (`RoutineLibraryView+Receive.swift`) and `\.receivePracticeFile`, the same as
 the other two doors. No new reading path. The owner chose to leave it off for now (2026-10-01).
 
-## `uk-site` needs a route for `/redmoon/manual/references` (logged 2026-08-17) — BLOCKING
+## `uk-site` needs a route for `/redmoon/manual/references` — **DONE 2026-09-11** (logged 2026-08-17)
+
+> **Closed by uk-site #74 (`e51ece1`, ADR 0217), noticed 2026-10-07.** The site now renders every manual
+> page from its markdown through one `[...slug]` route, so `references` has had a page since then.
+> It's listed in `content/manual/index.json`, which `export-manual.py` writes from the spine, so the
+> nav isn't a hand-kept list either. The site build fails on a broken link, so the four pages that
+> link to it can't 404 quietly again. The entry below is kept as it was logged.
 
 **One page of the user manual currently has no way to be read.** ADR 0167 added
 `docs/manual/references.md` ("Where you learned it"), and this repo is the canonical author of the

@@ -1,7 +1,7 @@
 import XCTest
 
-/// The manual's figures of a song worked out note by note: the song map, the saved piece, Name the notes
-/// and the Journal's Pieces (ADRs 0225–0238). None of them draws the player's waveform; the Snags panel,
+/// The manual's figures of a song worked out note by note: the song map, the saved piece, Name the notes,
+/// Watch it on the neck and the Journal's Pieces (ADRs 0225–0238, 0254). None of them draws the player's waveform; the Snags panel,
 /// which does, moved to the player pass on Binta (2026-10-03).
 ///
 /// **Its own pass, `map`, launched with `-seedSongMap`.** Every figure here is of the Slow Bend that
@@ -54,15 +54,7 @@ final class ManualSongMapShots: ManualShotCase {
     @MainActor
     func testSavedPieceAndNaming() {
         let app = launchForShoot(seeding: [UITestHooks.songMapArgument])
-        openSong("Slow Bend", in: app)
-
-        // The riff is the third of six loops, which leaves its row on the bottom edge, where a hold
-        // opened nothing and the row then wasn't hittable (2026-10-03). Raised clear of it first.
-        let loop = app.buttons["Play Verse riff"]
-        XCTAssertTrue(loop.waitForExistence(timeout: Self.shootTimeout), "no Verse riff row.\n\(stepLog)")
-        let bottom = app.windows.firstMatch.frame.maxY - 80
-        raisePanels(until: { loop.isHittable && loop.frame.maxY < bottom }, called: "the Verse riff row", in: app)
-        hold(loop, labelled: "Verse riff", revealing: app.navigationBars["Edit loop"], called: "Edit loop")
+        openVerseRiff(in: app)
 
         let train = app.buttons["Train your ear on this loop"]
         scrollIntoFrame(train, called: "Train your ear on this loop", in: app)
@@ -92,6 +84,38 @@ final class ManualSongMapShots: ManualShotCase {
 
         app.navigationBars["Name the notes"].buttons["Cancel"].tap()
         note("cancelled Name the notes")
+    }
+
+    /// `reference/watch-on-neck` — the riff's Edit loop ▸ Watch it on the neck, stopped (ADR 0254). Stopped
+    /// is the state the marker asks for: the neck holds the whole lick, where a playing frame would light
+    /// one note at whatever instant the shutter fell on.
+    @MainActor
+    func testWatchOnTheNeck() {
+        let app = launchForShoot(seeding: [UITestHooks.songMapArgument])
+        openVerseRiff(in: app)
+
+        let title = "Watch it on the neck"
+        let watch = app.buttons["loopEdit.watch"]
+        scrollIntoFrame(watch, called: title, in: app)
+        tap(watch, labelled: title, revealing: app.navigationBars[title], called: title)
+        capture(app, slug: "reference/watch-on-neck", assertingOnScreen: title,
+                alsoRequiring: ["watch.neck", "Play the loop"])
+
+        app.navigationBars[title].buttons["Done"].tap()
+        note("closed \(title)")
+    }
+
+    /// Slow Bend ▸ hold *Verse riff* ▸ Edit loop. The riff is the third of six loops, which leaves its row
+    /// on the bottom edge, where a hold opened nothing and the row then wasn't hittable (2026-10-03).
+    /// Raised clear of it first.
+    @MainActor
+    private func openVerseRiff(in app: XCUIApplication) {
+        openSong("Slow Bend", in: app)
+        let loop = app.buttons["Play Verse riff"]
+        XCTAssertTrue(loop.waitForExistence(timeout: Self.shootTimeout), "no Verse riff row.\n\(stepLog)")
+        let bottom = app.windows.firstMatch.frame.maxY - 80
+        raisePanels(until: { loop.isHittable && loop.frame.maxY < bottom }, called: "the Verse riff row", in: app)
+        hold(loop, labelled: "Verse riff", revealing: app.navigationBars["Edit loop"], called: "Edit loop")
     }
 
     /// `journal/pieces` — the Journal on **Pieces**, grouped by song with Map the song beside it.
