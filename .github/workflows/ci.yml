@@ -44,7 +44,9 @@ jobs:
     # A backstop for a hung run, not a budget. Was 30 from the scaffold; by 2026-09-30 a green run took
     # 25–29 minutes (about 11 building, 16 in UI tests), so one slow runner or one retry cancels the
     # job before it can report (pocket-341's first run was cut off 26 s after its last test).
-    timeout-minutes: 45
+    # Raised from 45 on 2026-10-07: green runs had grown to 33–42 minutes, and main's run on d70c54e
+    # was cut off at 45 with the UI tests nearly done and nothing failing.
+    timeout-minutes: 60
     steps:
       - name: Docs-only change
         if: needs.scope.outputs.docs_only == 'true'
