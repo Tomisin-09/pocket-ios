@@ -13,6 +13,7 @@
 #   POCKET_SIM="iPhone 17 Pro" ./scripts/shoot-manual.sh
 #   POCKET_SEED_AUDIO=/path/to/masters ./scripts/shoot-manual.sh
 #   POCKET_SHOOT_ONLY=ManualToolkitShots ./scripts/shoot-manual.sh    # one class while writing it
+#   POCKET_SHOOT_ONLY=ManualExerciseShots/testConfigure ./scripts/shoot-manual.sh   # one test
 #   POCKET_SHOOT_KEEP_RUNS=20 ./scripts/shoot-manual.sh               # keep more logs than the last 5
 #   POCKET_SHOOT_PREPARE=1 ./scripts/shoot-manual.sh                  # stage the device, then stop
 #
@@ -547,7 +548,14 @@ grep -qE "TEST SUCCEEDED|TEST EXECUTE SUCCEEDED" "$RUN_LOG" || {
 # satisfied by reading nothing is not a check.
 missing=()
 for class in "${classes[@]}"; do
-    grep -qE "Test Case '-\[PocketShootUITests\.$class " "$RUN_LOG" || missing+=("$class")
+    # One test (`POCKET_SHOOT_ONLY=Class/testMethod`) reports as `-[PocketShootUITests.Class testMethod]`,
+    # so the slash form is matched as that pair. Matched as a class name, it never appears, and a passing
+    # test was refused and filed nothing (2026-10-07).
+    case "$class" in
+        */*) reported="${class%%/*} ${class#*/}\]" ;;
+        *)   reported="$class " ;;
+    esac
+    grep -qE "Test Case '-\[PocketShootUITests\.$reported" "$RUN_LOG" || missing+=("$class")
 done
 if [ ${#missing[@]} -gt 0 ]; then
     echo "❌ pass '$pass' passed, but these classes never executed a single test: ${missing[*]}" >&2
