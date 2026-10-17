@@ -11,8 +11,9 @@ import SwiftUI
 /// tests and the manual's shoot find each library by it (D8), and because it says what opens.
 struct ShelfHeader<Destination: View>: View {
     let title: String
-    /// What the link reads: `All 11`, or `All` when there is nothing to count. `nil` draws no link.
-    let linkText: String?
+    /// What the link reads: `All 11`, or `All` when there is nothing to count. Every shelf has one,
+    /// so the library behind it is reachable even before the shelf has anything on it.
+    let linkText: String
     let linkAccessibilityLabel: String
     @ViewBuilder let destination: () -> Destination
 
@@ -23,17 +24,15 @@ struct ShelfHeader<Destination: View>: View {
                 .foregroundStyle(PocketColor.textPrimary)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 8)
-            if let linkText {
-                NavigationLink(destination: destination) {
-                    Text("\(linkText) ›")
-                        .font(.futura(.subheadline))
-                        .foregroundStyle(PocketColor.practice)
-                        // A 44 pt target on a one-line link (design-brief: touch targets).
-                        .frame(minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel(linkAccessibilityLabel)
+            NavigationLink(destination: destination) {
+                Text("\(linkText) ›")
+                    .font(.futura(.subheadline))
+                    .foregroundStyle(PocketColor.practice)
+                    // A 44 pt target on a one-line link (design-brief: touch targets).
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
             }
+            .accessibilityLabel(linkAccessibilityLabel)
         }
         .padding(.horizontal, 16)
     }

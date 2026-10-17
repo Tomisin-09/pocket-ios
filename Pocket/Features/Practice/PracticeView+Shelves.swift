@@ -104,9 +104,10 @@ extension PracticeView {
         let groups = PracticeHubShelves.songGroups(measured, song: \.song, id: \.persistentModelID,
                                                    title: \.title, lastPractised: \.lastPracticed)
         return VStack(alignment: .leading, spacing: 12) {
-            // The link shows whenever there is any loop at all: the library's *Show all loops* is the
-            // way to an unmeasured one (ADR 0138), so it must be reachable before anything is measured.
-            ShelfHeader(title: "Loops", linkText: allLoops.isEmpty ? nil : allLinkText(measured.count),
+            // The link shows even with nothing measured, as on every shelf: the library's *Show all
+            // loops* is the way to an unmeasured one (ADR 0138), so it must be reachable before
+            // anything is measured.
+            ShelfHeader(title: "Loops", linkText: allLinkText(measured.count),
                         linkAccessibilityLabel: "Loops, \(measured.count)") {
                 LoopLibraryView()
             }

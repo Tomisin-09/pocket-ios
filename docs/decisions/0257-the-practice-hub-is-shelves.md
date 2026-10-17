@@ -97,8 +97,10 @@ gone, Jump back in and the Today's session card show it.
 
 One shelf of song tiles, each with its loop count, built from the loops the Loops library lists by
 default (the measured ones). A tile opens the Loops library narrowed to that song. **All N ›** shows
-whenever there is any loop at all, even with none measured, because the library's *Show all loops*
-is the way to train your ear on an unmeasured one (ADR 0138).
+even with none measured — reading just **All** at zero, as every shelf's link does — because the
+library's *Show all loops* is the way to train your ear on an unmeasured one (ADR 0138). *Built:* it
+was first hidden until a loop existed; that left a fresh install's Loops library unreachable from
+the hub, which `LibrarySearchUITests` caught on iOS 18.5.
 
 ### D7 — The New exercise picker loses its noise
 
