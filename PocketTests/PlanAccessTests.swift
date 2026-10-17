@@ -163,6 +163,83 @@ final class PlanAccessTests: XCTestCase {
         XCTAssertTrue(text.contains("Cancel any time"))
     }
 
+    // MARK: - D1: the free week
+
+    private let week = PlanTrial(unit: .week, value: 1)
+
+    func testAWeekReadsAsAWeek() {
+        XCTAssertEqual(week?.length, "a week")
+        XCTAssertEqual(week?.span, "week")
+    }
+
+    /// StoreKit can report a week as seven days. The copy says a week either way.
+    func testWholeWeeksOfDaysReadAsWeeks() {
+        XCTAssertEqual(PlanTrial(unit: .day, value: 7), week)
+        XCTAssertEqual(PlanTrial(unit: .day, value: 14)?.length, "2 weeks")
+        XCTAssertEqual(PlanTrial(unit: .day, value: 3)?.length, "3 days")
+    }
+
+    /// The length is App Store Connect's (0144 D5's rule), so changing it there changes the copy.
+    func testOtherLengthsAreWrittenAsTheyAre() {
+        XCTAssertEqual(PlanTrial(unit: .month, value: 1)?.length, "a month")
+        XCTAssertEqual(PlanTrial(unit: .week, value: 2)?.span, "2 weeks")
+    }
+
+    func testAPeriodThatIsNotPositiveClaimsNoTrial() {
+        XCTAssertNil(PlanTrial(unit: .week, value: 0))
+        XCTAssertNil(PlanTrial(unit: .day, value: -7))
+    }
+
+    func testTheMonthlyButtonLeadsWithTheFreeWeekWhileItIsOnOffer() {
+        let offered = PlanWallCopy.monthlyOption(monthly: "£1", trial: week)
+        XCTAssertEqual(offered.title, "Try it free for a week")
+        XCTAssertEqual(offered.detail, "Then £1 a month. Cancel any time.")
+        let usedUp = PlanWallCopy.monthlyOption(monthly: "£1", trial: nil)
+        XCTAssertEqual(usedUp.title, "£1 a month")
+        XCTAssertEqual(usedUp.detail, "Renews monthly. Cancel any time.")
+    }
+
+    /// Guideline 3.1.2 with a free trial: how long it is, what it becomes, and how to leave first.
+    func testTheDisclosureSaysWhatTheFreeWeekBecomes() {
+        let text = PlanWallCopy.renewalDisclosure(monthly: "£1", trial: week)
+        XCTAssertTrue(text.contains("free for a week, then renews automatically at £1 a month"))
+        XCTAssertTrue(text.contains("before the free week ends and you pay nothing"))
+        XCTAssertTrue(text.contains("Pay once is a single payment"))
+        XCTAssertFalse(PlanWallCopy.renewalDisclosure(monthly: "£1").contains("free"),
+                       "The disclosure offered a free week nobody can have")
+    }
+
+    // MARK: - D10: Your plan on the monthly
+
+    private let day = "Friday 24 October"
+
+    func testYourPlanNamesTheFreeWeeksEndAndWhatFollows() {
+        XCTAssertEqual(PlanWallCopy.monthlyStatus(endsOn: day, freeSpan: "week", renews: true, monthly: "£1"),
+                       "Your free week ends on Friday 24 October. Then it's £1 a month until you cancel, and "
+                        + "everything in Red Moon is open.")
+        XCTAssertEqual(PlanWallCopy.monthlyStatus(endsOn: day, freeSpan: "week", renews: false, monthly: "£1"),
+                       "Your free week ends on Friday 24 October. You've cancelled, so you won't be charged, "
+                        + "and everything you made stays.")
+    }
+
+    func testAPaidMonthSaysWhenItRenewsOrEnds() {
+        XCTAssertEqual(PlanWallCopy.monthlyStatus(endsOn: day, freeSpan: nil, renews: true, monthly: "£1"),
+                       "Your plan renews on Friday 24 October, and everything in Red Moon is open.")
+        XCTAssertEqual(PlanWallCopy.monthlyStatus(endsOn: day, freeSpan: nil, renews: false, monthly: "£1"),
+                       "Your plan ends on Friday 24 October and won't renew. Everything you made stays.")
+    }
+
+    /// A family-shared monthly isn't the player's own, so its end isn't known and nothing is claimed.
+    func testWithoutAnEndYourPlanClaimsNoDate() {
+        XCTAssertEqual(PlanWallCopy.monthlyStatus(endsOn: nil, freeSpan: nil, renews: false, monthly: "£1"),
+                       "You're on the monthly plan, and everything in Red Moon is open.")
+    }
+
+    func testBeforeThePriceLoadsTheFreeWeekStillSaysWhatFollows() {
+        let text = PlanWallCopy.monthlyStatus(endsOn: day, freeSpan: "week", renews: true, monthly: nil)
+        XCTAssertTrue(text.contains("Then it renews monthly until you cancel"))
+    }
+
     // MARK: - D1: round prices stay round
 
     private func pence(_ amount: Int) -> Decimal { Decimal(amount) / 100 }

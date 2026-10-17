@@ -14,7 +14,8 @@
   third row, *Cancel your monthly plan*, while D5's condition holds.
 - **Relates to:** 0112 (whose free line, "play-along tools beside a paid workbench", this mostly
   restores, without the Journal) · 0219 (the starter track: no longer the only open door, still the
-  onboarding) · 0187 and 0211 (the Oracle stays parked, and its price is not decided here; D11) ·
+  onboarding) · 0144 (its D5 rule, that the trial's length is read from the product, holds again for
+  the free week; D1) · 0187 and 0211 (the Oracle stays parked, and its price is not decided here; D11) ·
   0070 (never grades, at every tier) · 0181 (Your data) · 0255 (no release build until main's UI job
   is green)
 - **Schema:** none. Nothing about the plan is stored on a model; access is read live from StoreKit
@@ -54,8 +55,19 @@ ADR 0112's free line. D2 is that line, with the Journal moved behind the plan.
 - **No annual plan.** At £8.99 a year against £15 once, Pay once costs less than two years of annual,
   so the annual's only buyer is someone who doesn't believe the promise. Three tiers is also the
   standard paywall playbook (the compromise effect, decoy pricing), which is selling.
-- **No free trial and no intro offer.** £1 for the first month is the trial, and it needs no trial
-  machinery.
+- **The monthly starts with a free week.** It is an introductory offer on the monthly in App Store
+  Connect: *Free*, one week. Apple decides who is eligible: an Apple Account that hasn't had an
+  introductory offer in the group before. Tomisin, later the same day, replacing this ADR's first
+  "no trial": the month's trial of 0144 D5, shortened to a week. Pay once has none: introductory
+  offers belong to subscriptions, and the week on the monthly already lets a player try the whole
+  plan before paying anything.
+  - **The length is read from the product, never written in the app** (0144 D5's rule, kept). The
+    wall says *free for a week* because the product says a week. Change it in App Store Connect and
+    the copy follows. Help & FAQs names no length (0145 D6).
+  - **No trial reminder.** 0144 D6's notification is not restored. *Your plan* says when the free
+    week ends and what follows (D10), and the disclosure beside the buttons says how to cancel. A
+    reminder would be a decision of its own, and it would need a new notification id, because 0237
+    D5 deletes the old one, `…trial-ending`, on every launch.
 - **Other storefronts:** use App Store Connect's conversion from the base price and adjust later by
   ear. Don't set them by hand up front.
 - **New product ids.** The old `…pocket.pro.monthly` / `…pro.annual` (£5.99 / £49.99, never sold) are
@@ -167,6 +179,10 @@ An app cannot cancel a subscription, and buying Pay once doesn't cancel one eith
 Family-shared Pay once counts as Pay once here (D6). The monthly counts only if it is the player's
 own (`ownershipType == .purchased`), because a shared subscription isn't theirs to cancel.
 
+The monthly's free week is a renewing monthly too: unless it is cancelled, its first payment falls
+when the week ends. So steps 1 to 3 hold through it unchanged. Step 4 doesn't: nothing has been
+paid, so there is nothing to refund, and *Ask Apple for a refund* stays hidden.
+
 ### D6 — Family Sharing is on for both
 
 Both products are family-shareable. That can't be undone in App Store Connect. Access ignores
@@ -222,12 +238,22 @@ Verbatim on the wall, in the App Store description and on the site:
   file. So the first proof is a run from Xcode, or re-syncing it from App Store Connect once the
   products exist. A `devicectl` launch (`scripts/run-device.sh`) never applies it, so that path always
   reads the real sandbox.
-- **Previews show the offer without StoreKit.** A preview store can carry the two prices, so the wall
-  and *Your plan* can be checked in Xcode with the offer drawn, and buying from one does nothing.
+- **The free week, from StoreKit** (D1). The wall offers it only while
+  `isEligibleForIntroOffer` says so. Eligibility is read again on every refresh, because a purchase
+  uses it up. Its length is the product's `introductoryOffer.period`, phrased by `PlanTrial`, which
+  is pure and reads seven days as a week. Whether the player is *in* the free week is the current
+  transaction's `offer` (a free-trial introductory offer). That property is iOS 17.2 or later; on
+  17.0 and 17.1 the app can't tell, so *Your plan* reads as an ordinary monthly. Sandbox and
+  TestFlight use a trial up once per account, so test it with a fresh sandbox tester. A missing week
+  on an old one is not a bug (0144's lesson).
+- **Previews show the offer without StoreKit.** A preview store can carry the two prices and the free
+  week, so the wall and *Your plan* can be checked in Xcode with the offer drawn, and buying from one
+  does nothing.
 - **Under test.** `-uiTesting` runs on Pay once, so the UI tests drive the whole app as before. Adding
-  `-plan free` runs without the plan. **One UI test walks the free path**: a song plays and keeps a
-  loop, then Practice shows the wall. 0237 D2's complaint was that the locked branch was the one no
-  test ran, and that test is the answer. The override exists only in Debug builds.
+  `-plan free` runs without the plan. **One UI test walks the free path**: the Song library and the
+  Glossary open, and Practice and the Journal show the wall. 0237 D2's complaint was that the locked
+  branch was the one no test ran, and that test is the answer. The override exists only in Debug
+  builds.
 
 ### D10 — Settings shows the plan
 
@@ -236,10 +262,13 @@ while D5's condition holds (this reverses 0237 D7 and amends 0162 D2).
 
 *Your plan* states its value (0162 D3): *Free*, *Monthly* or *Pay once*. Its screen shows:
 
-- with no plan: the two options;
-- on the monthly: Apple's subscription management, and the Pay-once option;
+- with no plan: the two options, the monthly's free week first if the player can still have it;
+- on the monthly: Apple's subscription management, and the Pay-once option. During the free week,
+  the status line names the day it ends and says what follows: £1 a month, or nothing if the player
+  has already cancelled;
 - on Pay once: a line saying it's done;
-- in every state: *Restore purchases*.
+- with no plan and on the monthly: *Restore purchases*. On Pay once there is nothing left to
+  restore.
 
 ### D11 — One plan, ever
 
@@ -265,8 +294,11 @@ ADR, not public copy. **The Oracle's future is not decided here.** It stays park
     - check the Paid Apps agreement and banking are still active;
     - take the old `…pro.*` products off sale;
     - create the two products in D1, with Family Sharing on for both and £1 / £15 base prices;
+    - give the monthly its introductory offer: *Free*, one week, in every territory;
     - set up a sandbox tester, and build to TestFlight.
   - **Sandbox device pass:**
+    - start the free week with a fresh sandbox tester (the wall offers it, *Your plan* names its
+      end), let it renew, and then check the wall no longer offers it;
     - buy the monthly, and buy Pay once;
     - buy Pay once while the monthly renews (warning → manage sheet → the Settings row appears,
       then clears after cancelling);
@@ -289,7 +321,10 @@ ADR, not public copy. **The Oracle's future is not decided here.** It stays park
   song player stops being worth opening twice, and the free half can no longer sell the paid half.
 - **The whole song screen free.** That puts takes, notes and the practice launches on the free side,
   which is the Journal and Practice wearing a song's clothes. It is not the line Tomisin drew.
-- **An annual plan, a trial, three options.** See D1.
+- **An annual plan, three options.** See D1.
+- **No trial at all** (this ADR's first draft: "£1 for the first month is the trial"), and **0144's
+  month**. Tomisin chose a week. See D1.
+- **A trial reminder notification** (0144 D6). See D1.
 - **A read-only mode for a lapsed player.** See D4.
 - **An automatic TestFlight grant.** It hides the real purchase path from the only people testing
   it, and the 2026-08 beta grant was removed for exactly that reason.

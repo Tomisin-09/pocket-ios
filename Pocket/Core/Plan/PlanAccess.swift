@@ -132,6 +132,47 @@ enum PlanPrice {
     }
 }
 
+/// The monthly's free period (ADR 0256 D1), as App Store Connect sets it: a week today. The app
+/// never states a length of its own (0144 D5's rule, kept). `PlanStore` maps the product's
+/// introductory offer onto this at the boundary, so the phrasing is a unit test, not a sandbox
+/// session.
+struct PlanTrial: Equatable, Sendable {
+    enum Unit: Equatable, Sendable {
+        case day, week, month, year
+    }
+
+    let unit: Unit
+    let value: Int
+
+    /// `nil` for a period that isn't positive, so a malformed offer claims no trial at all. Whole
+    /// weeks of days read as weeks, because StoreKit can report a week as seven days.
+    init?(unit: Unit, value: Int) {
+        guard value > 0 else { return nil }
+        if unit == .day, value.isMultiple(of: 7) {
+            self.unit = .week
+            self.value = value / 7
+        } else {
+            self.unit = unit
+            self.value = value
+        }
+    }
+
+    /// After *for*: "a week", "2 weeks", "a month".
+    var length: String { value == 1 ? "a \(noun)" : "\(value) \(noun)s" }
+
+    /// After *the free*: "week", "2 weeks", "month".
+    var span: String { value == 1 ? noun : "\(value) \(noun)s" }
+
+    private var noun: String {
+        switch unit {
+        case .day: "day"
+        case .week: "week"
+        case .month: "month"
+        case .year: "year"
+        }
+    }
+}
+
 /// The wall's words (ADR 0256 D3, D4, D8). Prices come in as the products' `displayPrice`, never as
 /// literals, so the copy can't disagree with the price sheet in any storefront.
 enum PlanWallCopy {
@@ -155,12 +196,49 @@ enum PlanWallCopy {
     static let promiseLine =
         "We'll never raise the price, and nothing you can do today will ever move behind a higher one."
 
-    /// Guideline 3.1.2's disclosure, beside the buttons.
-    static func renewalDisclosure(monthly: String) -> String {
-        "The monthly plan renews automatically at \(monthly) a month until you cancel it. Cancel any "
-            + "time in your Apple Account's Subscriptions, at least 24 hours before it renews. Pay once "
-            + "is a single payment and never renews. Both are shared with your family through Family "
-            + "Sharing."
+    /// The monthly button's two lines (D1): the free week first, while the player can still have it.
+    static func monthlyOption(monthly: String, trial: PlanTrial?) -> (title: String, detail: String) {
+        guard let trial else { return ("\(monthly) a month", "Renews monthly. Cancel any time.") }
+        return ("Try it free for \(trial.length)", "Then \(monthly) a month. Cancel any time.")
+    }
+
+    /// Guideline 3.1.2's disclosure, beside the buttons. With a free week on offer it also says what
+    /// the week becomes, and how to leave before it costs anything.
+    static func renewalDisclosure(monthly: String, trial: PlanTrial? = nil) -> String {
+        let monthlyTerms = if let trial {
+            "The monthly plan is free for \(trial.length), then renews automatically at \(monthly) a "
+                + "month until you cancel it. Cancel in your Apple Account's Subscriptions at least 24 "
+                + "hours before the free \(trial.span) ends and you pay nothing, or at least 24 hours "
+                + "before any later renewal."
+        } else {
+            "The monthly plan renews automatically at \(monthly) a month until you cancel it. Cancel any "
+                + "time in your Apple Account's Subscriptions, at least 24 hours before it renews."
+        }
+        return monthlyTerms + " Pay once is a single payment and never renews. Both are shared with your "
+            + "family through Family Sharing."
+    }
+
+    /// *Your plan*'s status line on the monthly (D10).
+    ///
+    /// - `endsOn`: the current period's last day, as the player reads it. `nil` when the monthly isn't
+    ///   the player's own (Family Sharing) or hasn't been read, so nothing can be said about its end.
+    /// - `freeSpan`: the free period's span ("week") while the player is in it, otherwise `nil`.
+    /// - `monthly`: the price, `nil` until the product loads.
+    static func monthlyStatus(endsOn day: String?, freeSpan: String?, renews: Bool, monthly: String?) -> String {
+        guard let day else { return "You're on the monthly plan, and everything in Red Moon is open." }
+        switch (freeSpan, renews) {
+        case (let span?, true):
+            let then = monthly.map { "Then it's \($0) a month" } ?? "Then it renews monthly"
+            return "Your free \(span) ends on \(day). \(then) until you cancel, and everything in Red Moon "
+                + "is open."
+        case (let span?, false):
+            return "Your free \(span) ends on \(day). You've cancelled, so you won't be charged, and "
+                + "everything you made stays."
+        case (nil, true):
+            return "Your plan renews on \(day), and everything in Red Moon is open."
+        case (nil, false):
+            return "Your plan ends on \(day) and won't renew. Everything you made stays."
+        }
     }
 
     /// The warning before Pay once while the monthly renews (D5 step 1).

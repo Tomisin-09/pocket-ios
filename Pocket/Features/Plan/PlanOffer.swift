@@ -60,14 +60,16 @@ struct PlanOffer: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             if let prices = plan?.offerPrices {
+                // The free week belongs to the monthly button, so it goes wherever that button goes.
+                let trial = offersMonthly ? prices.trial : nil
                 promise(monthly: prices.monthly, payOnce: prices.payOnce)
                 if offersMonthly {
-                    option(PlanProduct.monthly, title: "\(prices.monthly) a month",
-                           detail: "Renews monthly. Cancel any time.")
+                    let monthly = PlanWallCopy.monthlyOption(monthly: prices.monthly, trial: trial)
+                    option(PlanProduct.monthly, title: monthly.title, detail: monthly.detail)
                 }
                 option(PlanProduct.payOnce, title: "Pay once · \(prices.payOnce)",
                        detail: "One payment. It never renews.")
-                Text(PlanWallCopy.renewalDisclosure(monthly: prices.monthly))
+                Text(PlanWallCopy.renewalDisclosure(monthly: prices.monthly, trial: trial))
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
             } else if plan == nil || plan?.productsUnavailable == true {

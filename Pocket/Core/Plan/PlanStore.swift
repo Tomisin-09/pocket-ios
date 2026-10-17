@@ -31,7 +31,16 @@ final class PlanStore {
     /// product or transaction, because App Store Connect assigns it.
     private(set) var subscriptionGroupID: String?
     /// The monthly's latest payment, for *Ask Apple for a refund* on the overlapping month (D5 step 4).
+    /// `nil` during the free week, which has nothing to refund.
     private(set) var latestMonthlyTransactionID: Transaction.ID?
+    /// The last day of the player's own monthly period, for *Your plan*'s status line (D10).
+    private(set) var monthlyPeriodEnd: Date?
+    /// Whether the player's own monthly is in its free week (D1). Read from the transaction's `offer`,
+    /// which is iOS 17.2 or later; before that it stays `false` and the week reads as a paid month.
+    private(set) var inFreeWeek = false
+    /// Whether this Apple Account can still have the free week (D1). Read again on every refresh,
+    /// because buying the monthly uses it up.
+    private(set) var trialEligible = false
 
     /// The two products, by id. Empty until `loadProducts()` lands.
     private(set) var products: [String: Product] = [:]
@@ -77,10 +86,14 @@ final class PlanStore {
 
     /// A store that never asks the App Store, for previews of the wall and of a gated screen. Give it
     /// `prices` to see the offer as a player does; without them it draws the state where the products
-    /// didn't load. `ownMonthlyRenews` with `.payOnce` is the overlap D5 is about.
-    init(preview access: PlanAccess, prices: OfferPrices? = nil, ownMonthlyRenews: Bool = false) {
+    /// didn't load. `ownMonthlyRenews` with `.payOnce` is the overlap D5 is about, and `freeWeekEnds`
+    /// with `.monthly` is the free week (D1).
+    init(preview access: PlanAccess, prices: OfferPrices? = nil, ownMonthlyRenews: Bool = false,
+         freeWeekEnds: Date? = nil) {
         self.access = access
         self.ownMonthlyRenews = ownMonthlyRenews
+        monthlyPeriodEnd = freeWeekEnds
+        inFreeWeek = freeWeekEnds != nil
         hasResolved = true
         previewPrices = prices
         readsEntitlements = false
@@ -97,6 +110,8 @@ final class PlanStore {
         var renews = false
         var groupID: String?
         var monthlyID: Transaction.ID?
+        var periodEnd: Date?
+        var freeWeek = false
         for await result in Transaction.currentEntitlements {
             guard case .verified(let transaction) = result,
                   PlanProduct.all.contains(transaction.productID) else { continue }
@@ -107,7 +122,11 @@ final class PlanStore {
             guard transaction.productID == PlanProduct.monthly,
                   transaction.ownershipType == .purchased else { continue }
             groupID = transaction.subscriptionGroupID
-            monthlyID = transaction.id
+            periodEnd = transaction.expirationDate
+            if #available(iOS 17.2, *), let offer = transaction.offer {
+                freeWeek = offer.type == .introductory && offer.paymentMode == .freeTrial
+            }
+            monthlyID = freeWeek ? nil : transaction.id
             if let status = await transaction.subscriptionStatus,
                case .verified(let renewal) = status.renewalInfo {
                 renews = renewal.willAutoRenew
@@ -117,7 +136,10 @@ final class PlanStore {
         hasResolved = true
         ownMonthlyRenews = renews
         latestMonthlyTransactionID = monthlyID
+        monthlyPeriodEnd = periodEnd
+        inFreeWeek = freeWeek
         if let groupID { subscriptionGroupID = groupID }
+        await readTrialEligibility()
         if !owned.isEmpty {
             hasBoughtBefore = true
         } else if !access.isOn, !hasBoughtBefore {
@@ -141,19 +163,37 @@ final class PlanStore {
     var monthlyProduct: Product? { products[PlanProduct.monthly] }
     var payOnceProduct: Product? { products[PlanProduct.payOnce] }
 
-    /// Both prices, as the offer writes them (`Product.planPrice`).
+    /// Both prices, as the offer writes them (`Product.planPrice`), and the free week while this
+    /// player can still have it.
     struct OfferPrices: Equatable {
         let monthly: String
         let payOnce: String
+        var trial: PlanTrial?
     }
 
     /// What the offer states: both products' prices once they have loaded, a preview's otherwise, and
     /// `nil` while there is nothing honest to show.
     var offerPrices: OfferPrices? {
         if let monthly = monthlyProduct, let payOnce = payOnceProduct {
-            return OfferPrices(monthly: monthly.planPrice, payOnce: payOnce.planPrice)
+            return OfferPrices(monthly: monthly.planPrice, payOnce: payOnce.planPrice,
+                               trial: trialEligible ? trialOffer : nil)
         }
         return previewPrices
+    }
+
+    /// The monthly's free period as App Store Connect sets it (D1), whether or not this player can
+    /// still have it. *Your plan* names it during the week.
+    var trialOffer: PlanTrial? {
+        guard let offer = monthlyProduct?.subscription?.introductoryOffer else { return previewPrices?.trial }
+        return offer.paymentMode == .freeTrial ? PlanTrial(offer.period) : nil
+    }
+
+    /// Ask StoreKit whether this Apple Account can still have the free week. Needs the subscription
+    /// group, so it waits for the monthly product or a monthly transaction.
+    private func readTrialEligibility() async {
+        guard loadsProducts,
+              let groupID = monthlyProduct?.subscription?.subscriptionGroupID ?? subscriptionGroupID else { return }
+        trialEligible = await Product.SubscriptionInfo.isEligibleForIntroOffer(for: groupID)
     }
 
     /// Load both products once; a retry after a failure loads them again.
@@ -166,6 +206,7 @@ final class PlanStore {
             if subscriptionGroupID == nil {
                 subscriptionGroupID = monthlyProduct?.subscription?.subscriptionGroupID
             }
+            await readTrialEligibility()
         } catch {
             productsUnavailable = true
         }
@@ -219,6 +260,21 @@ extension Product {
     var planPrice: String {
         guard PlanPrice.isWhole(price) else { return displayPrice }
         return price.formatted(priceFormatStyle.precision(.fractionLength(0)))
+    }
+}
+
+extension PlanTrial {
+    /// StoreKit's period, mapped at the boundary so `PlanTrial` stays Foundation-only.
+    init?(_ period: Product.SubscriptionPeriod) {
+        let unit: Unit
+        switch period.unit {
+        case .day: unit = .day
+        case .week: unit = .week
+        case .month: unit = .month
+        case .year: unit = .year
+        @unknown default: return nil
+        }
+        self.init(unit: unit, value: period.value)
     }
 }
 

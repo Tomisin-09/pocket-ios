@@ -46,8 +46,8 @@
 │   Services — Persistence (SwiftData), Sync (CloudKit, planned), AIClient (→ proxy).
 │              MusicKit (browse) is PLANNED-ONLY and not shipped — no MusicKit import,
 │              no MPMediaLibrary, no NSAppleMusicUsageDescription
-│ Monetization — one plan (ADR 0256): `…plan.monthly` (£1/$1, auto-renewing) or `…plan.payonce` (£15/$15,
-│              non-consumable), both family-shareable. Playing is free; practising and the Journal are the plan.
+│ Monetization — one plan (ADR 0256): `…plan.monthly` (£1/$1, auto-renewing, a free week as its intro
+│              offer) or `…plan.payonce` (£15/$15, non-consumable), both family-shareable. Playing is free; practising and the Journal are the plan.
 │              `PlanStore` (Core/Plan, StoreKit 2) reads `currentEntitlements`, listens to `Transaction.updates`
 │              and refreshes on every return to the foreground (a plain expiry mints no transaction). Pure
 │              rules in `PlanAccess`. Gated screens wrap their own bodies in `PlanGated` (Features/Plan), so

@@ -8,8 +8,9 @@ import Foundation
 /// unit-tested. Answers describe **what the app does** — they never coach, grade or score the player
 /// (ADR 0070), and every word is ours (the content-strategy rule in `docs/backlog.md`).
 ///
-/// **No price and no trial length may appear in an answer** (ADR 0145 D6). Red Moon has neither since
-/// ADR 0237, so an answer naming one is simply wrong. `FAQEntryTests` pins this.
+/// **No price and no trial length may appear in an answer** (ADR 0145 D6). Both are App Store
+/// Connect's (ADR 0256 D1), and the wall states them as the storefront has them, so an answer naming
+/// one would go wrong the day either changes. `FAQEntryTests` pins this.
 struct FAQEntry: Identifiable, Equatable {
     /// The area an entry belongs to — drives the grouped sections in `FAQView`. Declaration order is
     /// the display order, and it is deliberately the order a new player meets the app in.
@@ -199,7 +200,8 @@ extension FAQEntry {
                 + "your loops and markers. So are the Metronome, the Tuner, the Glossary and this help. "
                 + "The plan is for practising: drills, routines, Today's session, the loop trainer, "
                 + "Train your ear, Improvise, Watch it on the neck, your Journal, and My chords, My "
-                + "progressions and My tabs. Pay monthly, or pay once.",
+                + "progressions and My tabs. Pay monthly, or pay once. The monthly starts with a free "
+                + "trial if you haven't had one, and the plan's screen says how long it lasts.",
               area: .plan),
         .init(question: "Will the price go up?",
               answer: "No. We'll never raise the price, and nothing you can do today will ever move "

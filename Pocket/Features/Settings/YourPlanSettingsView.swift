@@ -30,7 +30,10 @@ struct YourPlanSettingsView: View {
                     PlanOffer { managingSubscriptions = true }
                 case .monthly:
                     manageButton("Manage your subscription")
-                    Text("Or pay once, and the monthly can stop.")
+                    // Once the monthly won't renew, there is nothing left for Pay once to stop.
+                    Text(plan?.ownMonthlyRenews == false
+                         ? "Or pay once, and keep the plan for good."
+                         : "Or pay once, and the monthly can stop.")
                         .font(.futura(.headline))
                         .foregroundStyle(PocketColor.textPrimary)
                     PlanOffer(offersMonthly: false) { managingSubscriptions = true }
@@ -75,7 +78,11 @@ struct YourPlanSettingsView: View {
             "Your songs, loops and markers, the Metronome and the Tuner are free for good. The plan is for "
                 + "practising: drills, routines, Today's session, the loop trainer and your Journal."
         case .monthly:
-            "Your plan renews each month, and everything in Red Moon is open."
+            PlanWallCopy.monthlyStatus(
+                endsOn: plan?.monthlyPeriodEnd?.formatted(.dateTime.weekday(.wide).day().month(.wide)),
+                freeSpan: plan?.inFreeWeek == true ? plan?.trialOffer?.span ?? "trial" : nil,
+                renews: plan?.ownMonthlyRenews ?? true,
+                monthly: plan?.offerPrices?.monthly)
         case .payOnce:
             "You've paid once. Nothing renews, and everything in Red Moon is open for good."
         }
@@ -126,7 +133,18 @@ struct YourPlanSettingsView: View {
 
 #Preview("Your plan — free") {
     NavigationStack { YourPlanSettingsView() }
-        .environment(PlanStore(preview: .none, prices: PlanStore.OfferPrices(monthly: "£1", payOnce: "£15")))
+        .environment(PlanStore(preview: .none,
+                               prices: PlanStore.OfferPrices(monthly: "£1", payOnce: "£15",
+                                                             trial: PlanTrial(unit: .week, value: 1))))
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Your plan — the free week") {
+    NavigationStack { YourPlanSettingsView() }
+        .environment(PlanStore(preview: .monthly,
+                               prices: PlanStore.OfferPrices(monthly: "£1", payOnce: "£15",
+                                                             trial: PlanTrial(unit: .week, value: 1)),
+                               ownMonthlyRenews: true, freeWeekEnds: .now.addingTimeInterval(5 * 86_400)))
         .preferredColorScheme(.dark)
 }
 
