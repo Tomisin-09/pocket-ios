@@ -22,6 +22,11 @@ struct PocketApp: App {
     // retired trial reminder (ADR 0237 D5).
     @State private var practiceReminder = PracticeReminder()
 
+    // Red Moon's plan (ADR 0256 D9): the one type that talks to the App Store, created once for the
+    // app's lifetime so its `Transaction.updates` listener is never orphaned, and read by every
+    // gated screen through `PlanGated`.
+    @State private var plan = PlanStore()
+
     // The hold tips count openings of the app, not launches (ADR 0244 D5): iOS keeps a suspended app
     // for days, and a return after half an hour away is the player opening it again.
     @Environment(\.scenePhase) private var scenePhase
@@ -63,6 +68,7 @@ struct PocketApp: App {
                 .practiceReceiveHost()
                 .environment(diagnostics)
                 .environment(practiceReminder)
+                .environment(plan)
                 .preferredColorScheme(appearance.colorScheme)
         }
         .modelContainer(for: [Song.self, Loop.self, Marker.self, JournalEntry.self,
@@ -71,6 +77,11 @@ struct PocketApp: App {
                               PracticeRun.self, ReferenceLink.self, LoopSpanChange.self,
                               Snag.self, PracticeFolder.self, CustomSkill.self, SavedProgression.self,
                               WrittenTab.self])
-        .onChange(of: scenePhase) { _, phase in GestureHintOpening.current.sceneChanged(to: phase) }
+        .onChange(of: scenePhase) { _, phase in
+            GestureHintOpening.current.sceneChanged(to: phase)
+            // A lapse mints no transaction, so nothing else would notice it until a cold launch: the
+            // 2026-08 sandbox pass watched a lapsed monthly stay open (ADR 0256 D9).
+            if phase == .active { Task { await plan.refresh() } }
+        }
     }
 }
