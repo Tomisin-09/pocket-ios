@@ -2,6 +2,9 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-06 (`pocket-301-resume-and-snapping`)
+- **Since:** ADR 0257 (2026-10-17) removed the *Recent routines* rail this ADR's Context sets the card
+  beside. Jump back in is now Home's only "carry on" card; routines you played are on the Practice
+  hub's Routines shelf. Nothing decided here changes.
 - **Relates to:** widens the ADR 0044 follow-on home hub's resume card from songs to three kinds;
   places the setting under **ADR 0162 D2**'s Practice destination and gives it **ADR 0163**'s second
   door (the hold, with the Settings row kept). Gated with **ADR 0144 D4**. Reads the fields ADR 0066

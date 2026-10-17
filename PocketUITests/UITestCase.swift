@@ -129,6 +129,40 @@ class UITestCase: XCTestCase {
         return destination.exists
     }
 
+    // MARK: - The Practice hub (ADR 0257)
+
+    /// Open one of Practice's libraries from the hub, by its shelf's **All N ›** link.
+    ///
+    /// The hub is shelves, not a list, so there is no cell to find. The link keeps the label its row
+    /// had, `Exercises, 43` (ADR 0257 D8), and is found by that prefix. It is scrolled until the whole
+    /// link is clear of the home indicator first, because iOS 18 calls a sliver at the foot of the
+    /// screen hittable and gives the tap to the system.
+    @MainActor
+    func openPracticeLibrary(_ name: String, in app: XCUIApplication) {
+        let link = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "\(name), ")).firstMatch
+        XCTAssertTrue(link.waitForExistence(timeout: Self.uiTimeout), "no \(name) shelf on Practice")
+        XCTAssertTrue(scrollIntoReach(link, in: app), "the \(name) shelf's All link isn't reachable")
+        XCTAssertTrue(tap(link, until: app.navigationBars[name], in: app), "the \(name) library didn't open")
+    }
+
+    /// Scroll until `element` is wholly on screen and at least 40 pt above the bottom — not merely
+    /// `isHittable`, which on iOS 18 is true of a few points showing under the home indicator.
+    @MainActor
+    func scrollIntoReach(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
+        func inReach() -> Bool {
+            guard element.exists, element.isHittable else { return false }
+            let window = app.windows.firstMatch.frame
+            return element.frame.minY >= window.minY && element.frame.maxY <= window.maxY - 40
+        }
+        for _ in 0..<8 where !inReach() {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+                .press(forDuration: 0.05,
+                       thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45)),
+                       withVelocity: .default, thenHoldForDuration: 0.3)
+        }
+        return inReach()
+    }
+
     // MARK: - The create flow (shared by the instrument and progression tests)
 
     @MainActor
@@ -146,12 +180,7 @@ class UITestCase: XCTestCase {
                           "Practice hub did not open from Home")
         }
 
-        let exercisesRow = app.cells.containing(.staticText, identifier: "Exercises").firstMatch
-        XCTAssertTrue(exercisesRow.waitForExistence(timeout: Self.uiTimeout), "Exercises library row missing")
-        exercisesRow.tap()
-
-        XCTAssertTrue(app.navigationBars["Exercises"].waitForExistence(timeout: Self.uiTimeout),
-                      "Exercises library did not appear")
+        openPracticeLibrary("Exercises", in: app)
         let add = app.buttons["New exercise"]
         XCTAssertTrue(add.waitForExistence(timeout: Self.uiTimeout), "New exercise + missing from the library toolbar")
         add.tap()

@@ -240,8 +240,8 @@ Verbatim on the wall, in the App Store description and on the site:
   file. **It has not been seen to sell anything yet.** `SKTestSession` reports no storefront in this
   test host with any file (the 2026-08 finding again), and a UI test's app never receives the scheme's
   file. So the first proof is a run from Xcode, or re-syncing it from App Store Connect once the
-  products exist. A `devicectl` launch (`scripts/run-device.sh`) never applies it, so that path always
-  reads the real sandbox.
+  products exist. A `devicectl` launch (`scripts/run-device.sh`) never applies it: that path has the
+  plan unlocked, or with `-s` reads the real sandbox (*The developer's phone has the plan*, below).
 - **The free week, from StoreKit** (D1). The wall offers it only while
   `isEligibleForIntroOffer` says so. Eligibility is read again on every refresh, because a purchase
   uses it up. Its length is the product's `introductoryOffer.period`, phrased by `PlanTrial`, which
@@ -258,6 +258,15 @@ Verbatim on the wall, in the App Store description and on the site:
   Glossary open, and Practice and the Journal show the wall. 0237 D2's complaint was that the locked
   branch was the one no test ran, and that test is the answer. The override exists only in Debug
   builds.
+- **The developer's phone has the plan** (added 2026-10-17, on `pocket-368`). `scripts/run-device.sh`
+  builds with the `PLAN_UNLOCKED` compilation condition, and `PlanStore` then starts on Pay once
+  without asking StoreKit, as it does under `-uiTesting`. The condition is read only inside
+  `#if DEBUG`, so an archive, which is Release, can't carry it, and D7 still holds: TestFlight grants
+  nothing. `run-device.sh -s` builds without it and reads the real sandbox, which is how the sandbox
+  pass is run. Until App Store Connect has the products, the sandbox has nothing to sell, and the
+  phone the app is built on would otherwise sit behind its own wall. Not chosen: a launch argument,
+  because a launch from the home screen carries none; and a Debug switch in Settings, which is more
+  surface than one person's phone needs.
 
 ### D10 — Settings shows the plan
 

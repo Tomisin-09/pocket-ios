@@ -5,21 +5,30 @@ Reached from the `Practice` card on Home.
 ## The hub
 
 <!-- shot: reference/practice-hub | role: screen
-     | alt: The Practice hub with the Today section, the Routines and Long-term goals rows, and the Your units section holding Exercises and Loops
+     | alt: The Practice hub with the Today's session card holding goal chips, then the Routines, Exercises and Loops shelves, each with an All link
      | state: seeded library, Practice hub, goals and routines present -->
 
-Five rows in two sections, each carrying a count.
+A card and three shelves. Each shelf is one row; swipe it sideways for more, and its `All` link
+(with the count beside it) opens the whole library.
 
-| Row | Subtitle | Opens |
-|---|---|---|
-| `Today` | `A session shaped by your goals` | The planner |
-| `Routines` | `Hand-built practice sessions` | The routines library |
-| `Long-term goals` | `Standing outcomes, ranked` | The long-term goals list |
-| `Exercises` | `Click-only command drills` | The exercises library |
-| `Loops` | `Measured song loops` | The loops library |
+- **`Today's session`**, subtitled `Choose how long you have`, opens the planner. Under it,
+  `Shaped by your goals` shows your long-term goals as chips: tap one to edit it, or `Edit goals`
+  for the ranked list. With none, a single `Add your first goal`. When you have started a session
+  and not saved it, it has a line at the bottom of the card — its name over `Not saved yet` — which
+  opens it, with `Save` in its toolbar.
+- **`Routines`** — up to three of your saved routines, favourites first, then the ones you played
+  most recently, then `New routine`. The **play** button starts one; the rest of the card opens
+  it. Each shows its blocks and length, then its next reminder if one is on, otherwise how many
+  times you have practised it and when.
+- **`Exercises`** — a tile for each kind of drill you have, in the same order as the New exercise
+  list, with `New exercise` at the end. A tile opens that kind alone: a card with its one-line
+  description and `New`, which starts a drill of that kind without asking which kind, then the
+  drills themselves.
+- **`Loops`** — a tile for each song with measured loops, the song you practised most recently
+  first. A tile opens the loops library for that song alone.
 
-`Today`, `Routines` and `Long-term goals` sit together; `Exercises` and `Loops` group under
-`Your units`. Routines are sessions; exercises and loops are the units a session is built from.
+<!-- not-in-source: "Not saved yet" — the line is assembled with the session's length and when it
+     was started, so it is never one literal. -->
 
 ## `Today` — the planner
 
@@ -85,8 +94,9 @@ Once a routine has been run, a second line underneath carries how many times it 
 and when it last was.
 
 The list holds the routines you have saved. A session from Today's session or a quick session that
-you started and did not save is not on it, and not in the count on Practice; it is on Home until
-the next one replaces it. See [keeping one](../sessions.md#keeping-one).
+you started and did not save is not on it, and not in the count on Practice; it is on the Today's
+session card, and in Jump back in on Home, until the next one replaces it. See
+[keeping one](../sessions.md#keeping-one).
 
 <!-- not-in-source: "4 blocks · 2 rests" — counted per routine at render time, so the row's summary
      is never one literal. The words either side of the counts are. -->

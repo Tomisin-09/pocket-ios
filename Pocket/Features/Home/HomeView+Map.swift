@@ -15,8 +15,8 @@ import SwiftUI
 /// and the subtitles still earned their height. Six strips do not fit: Home became a scroll whose
 /// bottom half is a menu that has not changed since the app shipped and will not change again.
 /// ADR 0197 reverses that call on the stated grounds that the count moved, and spends the reclaimed
-/// height on `HomeStatsStrip` (ADR 0196) and the recent-routines rail — the two things on this
-/// screen that are different from yesterday.
+/// height on `HomeStatsStrip` (ADR 0196) and what was then the recent-routines rail (since moved to
+/// the Practice hub, ADR 0257) — the things on this screen that are different from yesterday.
 ///
 /// The subtitles go with the strips. That is the cost, and it is paid once: *"Your exercises &
 /// training runs"* was worth reading on day one and has been re-read every day since. A hue and a

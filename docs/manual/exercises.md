@@ -184,9 +184,9 @@ finished, because a run cut short has no honest length to claim.
 
 First **Guitar or bass**, which sets the neck for the scale, arpeggio and fretboard drills; the rest
 ignore it. Then the template itself. This is the one choice you cannot change afterwards — it fixes
-how the drill is built, how it runs, and which section it lives in — so the sheet says so plainly.
+how the drill is built, how it runs, and which section it lives in.
 
-Templates carrying their own editor are badged **Editor**. Bass is offered a shorter list: a lane of
+Bass is offered a shorter list: a lane of
 down and up strum arrows describes something bassists do not do, so Strumming and Chords & Strum are
 not offered there. Chords stays — bass chords are real.
 

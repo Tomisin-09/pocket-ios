@@ -81,12 +81,11 @@ extension RoutineLibraryView {
     /// **A routine with no runs returns `nil` rather than "Not yet."** The detail screen has room to
     /// say that kindly beside a date; a list does not, and thirty rows each announcing a thing not
     /// done reads as a nag however neutral the words are (design-brief §3.5).
+    ///
+    /// The words are `PracticeHubShelves.historyLine`'s, which the Practice hub's routine cards print
+    /// too (ADR 0257 D3).
     func history(for routine: Routine, facts: RoutineListFacts) -> String? {
-        guard let sessions = facts.counts[routine.uid], sessions > 0 else { return nil }
-        var parts = [sessions == 1 ? "Practised once" : "Practised \(sessions) times"]
-        if let last = facts.dates[routine.uid] {
-            parts.append(last.formatted(.relative(presentation: .named)))
-        }
-        return parts.joined(separator: " · ")
+        PracticeHubShelves.historyLine(sessions: facts.counts[routine.uid] ?? 0,
+                                       last: facts.dates[routine.uid])
     }
 }

@@ -135,7 +135,7 @@ final class PracticeReminder {
     ///     rather than stored, so a **rename** is picked up the next time this runs — the content of
     ///     a pending request is fixed at schedule time and cannot be edited in place.
     ///   - blockCount: how many blocks it has, for the body. A fact about the material, in the same
-    ///     grammar `RecentRoutineCard` uses.
+    ///     grammar Jump back in uses.
     func setSchedule(_ schedule: PracticeReminderPlan.Schedule,
                      for routineUID: UUID,
                      name: String,

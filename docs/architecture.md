@@ -53,7 +53,8 @@
 │              rules in `PlanAccess`. Gated screens wrap their own bodies in `PlanGated` (Features/Plan), so
 │              the gate is on the screen, not at its doors. Nothing is persisted; access is read live.
 │              0237's machinery stays deleted (`f3a4175` holds it); this is new code. Local products for the
-│              simulator: `Configuration/RedMoon.storekit`, on the run scheme only.
+│              simulator: `Configuration/RedMoon.storekit`, on the run scheme only. `scripts/run-device.sh`
+│              builds with `PLAN_UNLOCKED` (Debug only), so the developer's phone has the plan; `-s` omits it.
 │ Notifications — ADR 0186. `PracticeReminder` (`@MainActor @Observable`) schedules one repeating weekday
 │              request per routine, decided by the pure `PracticeReminderPlan`, whose inputs are the days
 │              and time the player chose plus `now` — and **nothing else**. It is handed no practice log,
@@ -872,10 +873,15 @@ built only from loops is exactly as good as the loop library and a brand-new pla
 
 The **Practice space** (`Features/Practice/`, ADR 0046) is a top-level destination pushed from
 the home hub's Practice card — the first-class home for trainable units, decoupling exercises
-from the metronome at the product level. `PracticeView` is a **hub**: the live "Build today's
-session" planner entry (V2 planner Slice 3 — pushes `PlannerView`) above two **unit libraries** — `ExerciseLibraryView`
-(command-anchored click drills) and `LoopLibraryView` (measured song `Loop`s) — each a row that
-pushes its own list. The split is for clarity/accessibility; the two models stay separate
+from the metronome at the product level. `PracticeView` is a **hub** of four shelves (ADR 0257): the
+Today's session card (pushes `PlannerView`, carries the long-term goal chips and the one unsaved
+temporary session), then Routines, Exercises and Loops shelves, each a fixed-height sideways row
+with an **All N ›** link to its library — `RoutineLibraryView`, `ExerciseLibraryView` (command-anchored
+click drills) and `LoopLibraryView` (measured song `Loop`s). A category tile opens
+`ExerciseLibraryView(category:)` and a song tile `LoopLibraryView(song:)`, the same screens narrowed.
+What goes on each shelf, and in what order, is the pure `PracticeHubShelves` (routine order from the
+practice log, category tiles in `ExerciseTemplate.displayOrder`, song groups by recency, a card's
+reminder-or-history line). The split is for clarity/accessibility; the two models stay separate
 (`Exercise` is audio-free, `Loop` is file-bound) but both are "things you train," the multi-source
 surface the planner composes from. The two are also **repertoire-linkable** now: a user-authored
 **`Exercise.linkedSongs` ↔ `Song.linkedExercises`** edge (ADR 0111) records which songs a drill is
@@ -1118,7 +1124,8 @@ save, through the review screen's sandbox** — the context that made the new bl
 the main context instead unlinked every block the two sessions shared (`Routine.deleteTemporaries`). "In the store" and "in Routines" are now different questions:
 `Routine.saved(_:)` (`Routine+Temporary`) is the filter every *what you keep* surface reads — the library's
 `presentRoutines`, Practice's count, Add to routine, the archive (`ArchiveBuilder`), name de-duplication
-— while Jump back in, the Recent routines rail and a session note's link read every routine as before. On
+— while Jump back in and a session note's link read every routine as before, and the Practice hub's
+Today's session card offers the one temporary session (ADR 0257 retired Home's Recent routines rail). On
 the routine screen `existsInStore` still means in the store and `isSaved` gates reminder, references and
 share; *Save as a routine* on the finish screen writes the main context, so the screen under the
 player rebuilds its sandbox on the cover's dismiss. Runs and notes already hold the routine by a loose

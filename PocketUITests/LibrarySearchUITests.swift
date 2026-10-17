@@ -19,10 +19,7 @@ final class LibrarySearchUITests: UITestCase {
                       "the Practice tap never landed")
 
         for library in ["Exercises", "Loops"] {
-            let row = app.cells.containing(.staticText, identifier: library).firstMatch
-            XCTAssertTrue(row.waitForExistence(timeout: Self.uiTimeout), "\(library) library row missing")
-            XCTAssertTrue(tap(row, until: app.navigationBars[library], in: app),
-                          "the \(library) tap never landed")
+            openPracticeLibrary(library, in: app)
 
             XCTAssertTrue(app.searchFields.firstMatch.waitForExistence(timeout: Self.uiTimeout),
                           "the \(library) library shows no search field until it is pulled down")

@@ -13,7 +13,18 @@ import SwiftUI
 /// Relies on an ambient `NavigationStack` (Practice → Home's stack), like the hub. Sort key +
 /// direction and the search query narrow the list in memory (ADR 0056) via the pure
 /// `PracticeLibrarySort`, so `@Query` stays unsorted and deletion indexes the *displayed* list.
+///
+/// **Narrowed to one template, it is a category screen** (ADR 0257 D5), opened from a tile on the
+/// Practice hub: the template's own drills, flat, under a card with its description and a **New**
+/// that skips the template step. See `+Category`.
 struct ExerciseLibraryView: View {
+    /// The template this screen is narrowed to, or `nil` for the whole library.
+    let category: ExerciseTemplate?
+
+    init(category: ExerciseTemplate? = nil) {
+        self.category = category
+    }
+
     // Internal, not private, so `ExerciseLibraryView+Folders` can reach it — a same-module
     // extension in another file cannot see `private` (the `+Row` precedent).
     @Environment(\.modelContext) var context
@@ -22,16 +33,9 @@ struct ExerciseLibraryView: View {
     /// inside `body` can only publish to its descendants.
     @State private var rowDeletion = RowDeletionCoordinator()
     @Query var exercises: [Exercise]
-    /// The local profile (ADR 0113 S2): its self-rated experience seeds a new exercise's default
-    /// command tempo, so a beginner starts near the floor and a seasoned player higher up.
-    @Query private var profiles: [Profile]
-    @State private var creating = false
-    /// The exercise just created by the sheet, staged for its run screen. Two states rather than one
-    /// because the push has to wait for the sheet to leave: `justCreated` is written by `create` while
-    /// the sheet is still up, then promoted to `opening` in `onDismiss` — presenting into a dismissing
-    /// sheet drops the push.
-    @State private var justCreated: Exercise?
-    @State private var opening: Exercise?
+    /// Whether the create sheet is up. The sheet, the insert and the push to the new drill all live in
+    /// `NewExerciseFlow`, shared with the Practice hub.
+    @State var creating = false
     /// The drill whose read-only reference sheet is open (Slice 3's "view info" row action) — the
     /// same `ExerciseDetailSheet` the run screen's ⓘ opens, now reachable without starting a run.
     @State var detailExercise: Exercise?
@@ -83,8 +87,11 @@ struct ExerciseLibraryView: View {
     /// The drills actually on screen — everything except rows whose delete is pending behind the
     /// Undo toast (Slice 3). The empty state reads from here too, so deleting your last drill says
     /// "no exercises yet" rather than "nothing matches your search".
+    ///
+    /// A category screen narrows it to its template here, so every count, filter and empty state
+    /// below speaks about that template alone.
     var presentExercises: [Exercise] {
-        exercises.filter { !rowDeletion.isPending($0.uid) }
+        exercises.filter { !rowDeletion.isPending($0.uid) && (category == nil || $0.template == category) }
     }
 
     /// The exercises narrowed by search **and** the active instrument filter, then grouped into
@@ -134,26 +141,28 @@ struct ExerciseLibraryView: View {
         ExerciseSortFields(name: exercise.name, command: exercise.command,
                            dateAdded: exercise.dateAdded,
                            notesPerBeat: exercise.noteRate?.perBeat ?? 1,
-                           templateName: exercise.template.displayName,
-                           templateIcon: exercise.template.iconName,
+                           template: exercise.template,
                            instrument: exercise.instrument)
     }
 
     var body: some View {
         List {
+            if let category { categoryHeader(category) }
             if presentExercises.isEmpty {
-                Text("No exercises yet. Tap + to create one — a named drill you push faster "
-                     + "over time.")
+                Text(emptyMessage)
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
             } else if !hasMatches {
-                folderRows
+                if category == nil { folderRows }
                 Text(noMatchMessage)
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
                     .listRowBackground(PocketColor.background)
-                searchAllFoldersButton
+                if category == nil { searchAllFoldersButton }
+            } else if category != nil {
+                // One template, so one section: its header would only repeat the title above.
+                ForEach(sections, id: \.title) { rows(of: $0) }
             } else {
                 folderRows
                 ForEach(sections, id: \.title) { section in
@@ -187,12 +196,12 @@ struct ExerciseLibraryView: View {
             // re-narrow the list if a second instrument is added again later.
             if !shows { instrumentFilter = nil }
         }
-        .navigationTitle("Exercises")
+        .navigationTitle(category?.displayName ?? "Exercises")
         .navigationBarTitleDisplayMode(.inline)
         // `.always`, as Routines (ADR 0178 D8): the default hides the bar under an inline title until
         // the list is pulled down, and differently by OS version (ADR 0226 D1).
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always),
-                    prompt: "Exercises")
+                    prompt: category?.displayName ?? "Exercises")
         // Leading is the back button alone; sort + favourites collapse into one fixed-width
         // trailing control so the inline title sits centred and stops moving with the sort key.
         // See `LibraryOptionsMenu`.
@@ -206,35 +215,32 @@ struct ExerciseLibraryView: View {
                 LibraryOptionsMenu(favoritesOnly: $favoritesOnly,
                                    showsFavoritesFilter: !presentExercises.isEmpty,
                                    actions: {
-                    newFolderButton
-                    receiveExerciseButton
+                    // Folders cut across kinds, and a received drill may be any kind: both belong to
+                    // the whole library, not to a category screen.
+                    if category == nil {
+                        newFolderButton
+                        receiveExerciseButton
+                    }
                 }, sortControls: {
                     LibrarySortPickers(sortKey: $sortKey, ascending: $sortAscending)
                 })
             }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { creating = true; haptic(.light) } label: {
-                    Image(systemName: "plus")
+            // A category screen's New is on its header card, where it says which kind it makes.
+            if category == nil {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { creating = true; haptic(.light) } label: {
+                        Image(systemName: "plus")
+                    }
+                    .tint(PocketColor.practice)
+                    .accessibilityLabel("New exercise")
                 }
-                .tint(PocketColor.practice)
-                .accessibilityLabel("New exercise")
             }
         }
         // The same picker the Routines library uses, handing off to the same door (ADR 0209 D4).
         .practiceFileImporter(isPresented: $importingExercise, onPick: receivePracticeFile)
-        .sheet(isPresented: $creating, onDismiss: openJustCreated) {
-            NewExerciseSheet(initialCommand: defaultCommand, defaultInstrument: defaultInstrument,
-                             onCreate: create)
-        }
-        // Open on create: a drill you just authored pushes straight to its run screen, so creating and
-        // playing are one move instead of "create, find it in the list, tap it". Presented by a Bool
-        // rather than `.navigationDestination(item:)` — a just-inserted model's `persistentModelID`
-        // flips temporary→permanent on the first autosave, and item-based presentation reads that as
-        // an identity change and pops the screen (ADR 0090; `docs/swiftdata-gotchas.md`).
-        .navigationDestination(isPresented: Binding(get: { opening != nil },
-                                                    set: { if !$0 { opening = nil } })) {
-            if let exercise = opening { ExerciseRunScreen(exercise: exercise) }
-        }
+        // Create, then open the new drill on its run screen (`NewExerciseFlow`). A category screen
+        // skips the template step.
+        .newExerciseFlow(isPresented: $creating, fixedTemplate: category)
         // Details, from the row's long-press menu. Bool-bound rather than `.sheet(item:)` for the
         // ADR 0090 reason the whole app now follows: a model's `persistentModelID` can flip on a
         // save mid-edit and dismiss an item-based sheet.
@@ -299,20 +305,6 @@ struct ExerciseLibraryView: View {
         }
     }
 
-    /// The command tempo a fresh exercise pre-fills (ADR 0113 S2 consumer): the profile's experience
-    /// default when declared, else the engine floor — the same value `NewExerciseSheet` uses by
-    /// default, so an untouched install is unchanged.
-    private var defaultCommand: Int {
-        profiles.first?.experience?.defaultCommandTempo ?? StandaloneMetronomeEngine.defaultCommandBPM
-    }
-
-    /// The instrument a fresh exercise picks up (ADR 0116 S2 consumer): the profile's preferred
-    /// instrument when declared, else guitar — invisible today (no create-step toggle until S3), so an
-    /// untouched install keeps making guitar drills exactly as before.
-    private var defaultInstrument: Instrument {
-        profiles.first?.preferredInstrument ?? .guitar
-    }
-
     /// The message shown when nothing matches — favourites-aware so an empty favourites view reads
     /// as a prompt to pin something, not a false "no search matches".
     private var noMatchMessage: String {
@@ -324,23 +316,6 @@ struct ExerciseLibraryView: View {
                  + "Hold a drill anywhere in your library and tap Add to folder…"
         }
         return "No exercises match “\(searchText)”."
-    }
-
-    /// Create an exercise from a confirmed `NewExercisePlan` (ADR 0046 / 0068) and stage it for its
-    /// run screen. The insert itself is `plan.finalise(in:)` — **shared with the metronome
-    /// automator's save seam**, the other host of this same sheet — so creation behaviour is written
-    /// once. Everything left here is this host's own: the confirmation haptic and the push.
-    private func create(_ plan: NewExercisePlan) {
-        guard let exercise = plan.finalise(in: context) else { return }
-        haptic(.medium)
-        justCreated = exercise
-    }
-
-    /// Promote the just-created drill into a push, once the create sheet is actually gone.
-    private func openJustCreated() {
-        guard let exercise = justCreated else { return }
-        justCreated = nil
-        opening = exercise
     }
 
 }

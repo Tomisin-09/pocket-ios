@@ -190,6 +190,13 @@ enum PracticeReminderPlan {
 
     // MARK: - Saying it
 
+    /// "Next: Tuesday 18:00" — the one sentence that may name a time, and only for `Status.next`.
+    /// The reminder footer and the Practice hub's routine cards (ADR 0257 D3) both print it, so the
+    /// two cannot word the same appointment differently.
+    static func nextText(_ date: Date) -> String {
+        "Next: \(date.formatted(.dateTime.weekday(.wide).hour().minute()))"
+    }
+
     /// "Mon, Wed & Fri at 18:00" — what the routine's row reads when the reminder is on, and `nil`
     /// when nothing is scheduled.
     ///

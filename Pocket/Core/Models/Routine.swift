@@ -28,7 +28,7 @@ final class Routine {
 
     /// When this routine was last *practised* — set on each run (ADR 0066 follow-on), distinct from
     /// `dateAdded` (creation) and from the ephemeral `RoutineSession` cursor (mid-run position, not
-    /// history). Drives the home hub's "recent routines" rail. `nil` until run once. Additive optional
+    /// history). Read by Home's Jump back in (ADR 0193). `nil` until run once. Additive optional
     /// (CoreData 134110 rule): a declaration default keeps SwiftData lightweight migration clean.
     var lastPracticed: Date?
 
