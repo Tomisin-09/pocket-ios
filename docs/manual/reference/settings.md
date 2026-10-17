@@ -9,12 +9,14 @@ out to where you were.
      | alt: The Settings hub with You above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Your data and Help & About in a group below
      | state: Settings open -->
 
-Eight destinations. **Each row states its current value on the right**, so most questions are
-answered without opening anything.
+Nine destinations, and a tenth row while it is needed. **Each row states its current value on the
+right**, so most questions are answered without opening anything.
 
 | Row | Holds |
 |---|---|
 | `You` | Your name, and what you play |
+| `Your plan` | Which way you pay, restoring a purchase, and managing the monthly |
+| `Cancel your monthly plan` | Appears only after paying once while the monthly still renews, and opens Apple's subscriptions |
 | `Appearance` | Theme, motion, and how notes are spelled |
 | `Sound & feel` | Haptics, and which click the metronome plays |
 | `Practice` | Count-in, screen, the strumming click, reminders, and what Home offers you |
@@ -23,7 +25,8 @@ answered without opening anything.
 | `Your data` | A copy of everything, and what it takes up |
 | `Help & About` | Version, help, contact, diagnostics, and the legal links |
 
-`You` sits above the rest because it is *state* — who you are — rather than a preference.
+`You` and `Your plan` sit above the rest because they are *state* — who you are, and how you pay —
+rather than preferences.
 
 Most rows carry an **ⓘ**. The explanations below are those popovers, word for word: where this page
 and the app differ, the app is right.
