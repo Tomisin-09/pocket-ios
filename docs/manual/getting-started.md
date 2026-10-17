@@ -66,6 +66,9 @@ here.
      | alt: The Home screen with Start today's session, the Practice and Metronome cards, and Song library, Journal and Toolkit
      | state: seeded library, Home, morning greeting -->
 
+- **Your free week ends in…** sits at the very top while the monthly plan's free week is set to
+  turn into a payment. Tap it to open your Apple Account's subscriptions. It goes once you've
+  cancelled.
 - **A song to start on** appears at the top while your library is empty, offering *Binta* — a track
   that comes with the app. Tapping it opens the practice screen straight away. It steps aside once
   you have imported a song of your own.

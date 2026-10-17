@@ -64,10 +64,14 @@ ADR 0112's free line. D2 is that line, with the Journal moved behind the plan.
   - **The length is read from the product, never written in the app** (0144 D5's rule, kept). The
     wall says *free for a week* because the product says a week. Change it in App Store Connect and
     the copy follows. Help & FAQs names no length (0145 D6).
-  - **No trial reminder.** 0144 D6's notification is not restored. *Your plan* says when the free
-    week ends and what follows (D10), and the disclosure beside the buttons says how to cancel. A
-    reminder would be a decision of its own, and it would need a new notification id, because 0237
-    D5 deletes the old one, `…trial-ending`, on every launch.
+  - **A countdown on Home, and no notification.** Tomisin asked for 0144 D6's in-app half back.
+    While the free week is set to turn into a payment, Home's first row reads *Your free week ends
+    in 3 days · Manage*, and a tap opens Apple's subscriptions. It counts calendar days, so the last
+    day reads *today*, never *0 days*. It needs no permission and can't be denied. Once the player
+    has cancelled it draws nothing, because nagging someone who has already cancelled is the opposite
+    of honest (0144 D6). *Your plan* names the day itself (D10). The notification half is not
+    restored: it would be a decision of its own, and it would need a new notification id, because
+    0237 D5 deletes the old one, `…trial-ending`, on every launch.
 - **Other storefronts:** use App Store Connect's conversion from the base price and adjust later by
   ear. Don't set them by hand up front.
 - **New product ids.** The old `…pocket.pro.monthly` / `…pro.annual` (£5.99 / £49.99, never sold) are
@@ -298,7 +302,9 @@ ADR, not public copy. **The Oracle's future is not decided here.** It stays park
     - set up a sandbox tester, and build to TestFlight.
   - **Sandbox device pass:**
     - start the free week with a fresh sandbox tester (the wall offers it, *Your plan* names its
-      end), let it renew, and then check the wall no longer offers it;
+      end, Home counts it down and its *Manage* opens Apple's subscriptions), cancel and check the
+      countdown goes, then start one on another tester, let it renew, and check the wall no longer
+      offers it;
     - buy the monthly, and buy Pay once;
     - buy Pay once while the monthly renews (warning → manage sheet → the Settings row appears,
       then clears after cancelling);

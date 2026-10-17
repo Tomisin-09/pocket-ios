@@ -240,6 +240,48 @@ final class PlanAccessTests: XCTestCase {
         XCTAssertTrue(text.contains("Then it renews monthly until you cancel"))
     }
 
+    // MARK: - D1: Home's countdown
+
+    private var london: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/London") ?? .gmt
+        return calendar
+    }
+
+    private func november(_ day: Int, _ hour: Int) -> Date {
+        london.date(from: DateComponents(year: 2026, month: 11, day: day, hour: hour)) ?? .distantPast
+    }
+
+    private func countdown(from now: Date, to end: Date?, span: String? = "week", renews: Bool = true) -> String? {
+        PlanCountdown.line(freeSpan: span, endsAt: end, renews: renews, now: now, calendar: london)
+    }
+
+    func testTheCountdownCountsDays() {
+        XCTAssertEqual(countdown(from: november(2, 20), to: november(9, 20)), "Your free week ends in 7 days")
+        XCTAssertEqual(countdown(from: november(7, 9), to: november(9, 20)), "Your free week ends in 2 days")
+    }
+
+    /// Calendar days, not 24-hour blocks: two hours before a week that ends at 1am, it ends tomorrow.
+    func testTheEveningBeforeReadsTomorrow() {
+        XCTAssertEqual(countdown(from: november(8, 23), to: november(9, 1)), "Your free week ends tomorrow")
+    }
+
+    /// The last day never reads "0 days".
+    func testTheLastDayReadsToday() {
+        XCTAssertEqual(countdown(from: november(9, 8), to: november(9, 20)), "Your free week ends today")
+    }
+
+    /// 0144 D6: nagging someone who has already cancelled is the opposite of honest.
+    func testNothingOnceCancelled() {
+        XCTAssertNil(countdown(from: november(2, 20), to: november(9, 20), renews: false))
+    }
+
+    func testNothingOutsideTheFreeWeek() {
+        XCTAssertNil(countdown(from: november(2, 20), to: november(9, 20), span: nil), "A paid month")
+        XCTAssertNil(countdown(from: november(9, 21), to: november(9, 20)), "A week already over")
+        XCTAssertNil(countdown(from: november(2, 20), to: nil), "No end read yet")
+    }
+
     // MARK: - D1: round prices stay round
 
     private func pence(_ amount: Int) -> Decimal { Decimal(amount) / 100 }

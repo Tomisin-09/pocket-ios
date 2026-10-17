@@ -65,7 +65,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   and the screen explains what the plan is, then opens where you were going once you've paid. We'll
   never raise the price, and nothing you can do today will ever move behind a higher one. If you
   stop paying nothing is deleted, and Settings ▸ Your data always exports everything. Settings
-  gains **Your plan**, which says the day your free week ends and what comes after it, and after
+  gains **Your plan**, which says the day your free week ends and what comes after it. While the
+  free week is set to renew, Home's top row counts it down (*Your free week ends in 3 days*) and
+  opens your subscriptions in one tap. After
   paying once while the monthly still renews, **Cancel your monthly plan** takes you to Apple's
   subscriptions. Help & FAQs has a new *Your plan* section.
 - **Watch it on the neck.** Once you've named a lick on the neck in Name the notes, watch it play

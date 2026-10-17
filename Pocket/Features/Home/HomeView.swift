@@ -110,6 +110,10 @@ struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     greeting
+                    // While the monthly's free week is set to turn into a payment, how long is left
+                    // and the way to cancel (ADR 0256 D1). First, because it is the one thing on Home
+                    // that costs money if missed. Draws nothing otherwise.
+                    FreeWeekCountdown()
                     // A song to start on, above the session CTA while the library is empty
                     // (ADR 0219, kept as onboarding by ADR 0237 D4). A fresh install has no song,
                     // and the first thing worth doing is hearing one. Retires itself the moment a

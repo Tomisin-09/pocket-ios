@@ -173,6 +173,27 @@ struct PlanTrial: Equatable, Sendable {
     }
 }
 
+/// Home's countdown during the free week (ADR 0256 D1, 0144 D6's in-app half brought back): the line
+/// that makes a free week hard to turn into a payment by accident.
+enum PlanCountdown {
+    /// The line, or `nil` when there is nothing to count down: not in the free week (`freeSpan` is
+    /// `nil`), already cancelled, or already over. Once cancelled it says nothing, because nagging
+    /// someone who has already cancelled is the opposite of honest (0144 D6).
+    ///
+    /// Counted in calendar days, not 24-hour blocks, so the last day reads *today* and a week that ends
+    /// at 1am reads *tomorrow* the evening before, which is when it ends.
+    static func line(freeSpan: String?, endsAt: Date?, renews: Bool, now: Date, calendar: Calendar) -> String? {
+        guard let freeSpan, renews, let endsAt, endsAt > now else { return nil }
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: now),
+                                           to: calendar.startOfDay(for: endsAt)).day ?? 0
+        switch days {
+        case ...0: return "Your free \(freeSpan) ends today"
+        case 1: return "Your free \(freeSpan) ends tomorrow"
+        default: return "Your free \(freeSpan) ends in \(days) days"
+        }
+    }
+}
+
 /// The wall's words (ADR 0256 D3, D4, D8). Prices come in as the products' `displayPrice`, never as
 /// literals, so the copy can't disagree with the price sheet in any storefront.
 enum PlanWallCopy {
