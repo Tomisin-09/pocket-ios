@@ -23,11 +23,10 @@ final class PracticeRunUITests: UITestCase {
         XCTAssertTrue(scrollIntoView(practiceCard, in: app), "Practice card not reachable by scrolling")
         practiceCard.tap()
 
-        // Practice is a hub (ADR 0046): open the Exercises library first.
-        let exercisesRow = app.cells.containing(.staticText, identifier: "Exercises").firstMatch
-        XCTAssertTrue(exercisesRow.waitForExistence(timeout: Self.uiTimeout),
-                      "Exercises library row missing")
-        exercisesRow.tap()
+        // Practice is a hub (ADR 0046, shelves since ADR 0257): open the Exercises library first.
+        XCTAssertTrue(app.navigationBars["Practice"].waitForExistence(timeout: Self.uiTimeout),
+                      "Practice hub did not open from Home")
+        openPracticeLibrary("Exercises", in: app)
 
         // Tapping a seeded unit must open its run screen without the freeze. Target **Alternate
         // Picking**: it's in `PracticePresets.firstRunSlugs`, so a genuinely clean install has it

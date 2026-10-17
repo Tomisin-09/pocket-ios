@@ -1,44 +1,15 @@
 import SwiftData
 import SwiftUI
 
-/// Home's **routine** surfaces, split out of `HomeView` to keep that file under the 400-line cap:
-/// the recent-routines rail, and — since ADR 0186 — the two things Home does for practice reminders
-/// that nowhere else can.
+/// Home's **routine** work, split out of `HomeView` to keep that file under the 400-line cap: the two
+/// things Home does for practice reminders (ADR 0186) that nowhere else can. (The recent-routines rail
+/// that also lived here moved to the Practice hub's Routines shelf, ADR 0257 D4.)
 ///
 /// **Why the reminder work is here and not in `PracticeReminder`.** Both jobs need to turn a `uid`
 /// into a routine, which needs a `ModelContext`. `PracticeReminder` is deliberately given only
 /// `uid`s: it schedules and cancels, and knows nothing about the store. Home is the first screen in
 /// the app and already owns the container, so it is where the two meet.
 extension HomeView {
-
-    /// The last few routines you actually **practised** (newest first). A tap **reopens the routine's
-    /// detail** (`RoutineDetailView` — blocks + Edit + Start), rather than replaying it straight into
-    /// the player, so you can glance at the blocks or tweak before starting (device feedback
-    /// 2026-07-11; supersedes ADR 0066's one-tap replay *from home* — the library ▶ still replays
-    /// directly). Reads `Routine.lastPracticed` (stamped on run); never-run routines don't appear.
-    var recentRoutinesRail: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Recent routines")
-                .font(.futura(.title3, weight: .semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(recentRoutines) { routine in
-                        NavigationLink {
-                            RoutineDetailView(container: context.container, existing: routine)
-                        } label: {
-                            RecentRoutineCard(routine: routine)
-                                .overlay(alignment: .topTrailing) {
-                                    if plan.showsPlanLocks { PlanLockBadge().padding(10) }
-                                }
-                        }
-                        .buttonStyle(.plain)
-                        .planLockedValue(plan.showsPlanLocks)
-                    }
-                }
-            }
-        }
-    }
 
     // MARK: - Reminders (ADR 0186)
 

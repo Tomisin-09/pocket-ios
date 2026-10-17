@@ -125,9 +125,7 @@ final class SkillsYouShapeUITests: UITestCase {
         let practice = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Practice,")).firstMatch
         XCTAssertTrue(practice.waitForExistence(timeout: Self.uiTimeout), "no Practice card on Home")
         XCTAssertTrue(tap(practice, until: app.navigationBars["Practice"], in: app), "the Practice tap never landed")
-        let exercises = app.cells.containing(.staticText, identifier: "Exercises").firstMatch
-        XCTAssertTrue(exercises.waitForExistence(timeout: Self.uiTimeout), "no Exercises row")
-        exercises.tap()
+        openPracticeLibrary("Exercises", in: app)
         let drill = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
         XCTAssertTrue(drill.waitForExistence(timeout: Self.uiTimeout), "no \(name) drill in the library")
         drill.tap()

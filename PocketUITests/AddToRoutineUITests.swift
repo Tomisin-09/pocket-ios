@@ -112,9 +112,6 @@ final class AddToRoutineUITests: UITestCase {
         XCTAssertTrue(tap(practiceCard, until: app.navigationBars["Practice"], in: app),
                       "the Practice tap never landed")
 
-        let exercisesRow = app.cells.containing(.staticText, identifier: "Exercises").firstMatch
-        XCTAssertTrue(exercisesRow.waitForExistence(timeout: Self.uiTimeout), "Exercises library row missing")
-        XCTAssertTrue(tap(exercisesRow, until: app.navigationBars["Exercises"], in: app),
-                      "the Exercises tap never landed")
+        openPracticeLibrary("Exercises", in: app)
     }
 }

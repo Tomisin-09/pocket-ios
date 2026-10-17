@@ -81,8 +81,8 @@ final class ExerciseShareUITests: UITestCase {
         XCTAssertTrue(scrollIntoView(practiceCard, in: app), "Practice card not reachable by scrolling")
         practiceCard.tap()
 
-        let exercisesRow = app.cells.containing(.staticText, identifier: "Exercises").firstMatch
-        XCTAssertTrue(exercisesRow.waitForExistence(timeout: Self.uiTimeout), "Exercises library row missing")
-        exercisesRow.tap()
+        XCTAssertTrue(app.navigationBars["Practice"].waitForExistence(timeout: Self.uiTimeout),
+                      "Practice hub did not open from Home")
+        openPracticeLibrary("Exercises", in: app)
     }
 }

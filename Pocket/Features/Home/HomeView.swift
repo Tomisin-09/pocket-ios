@@ -8,7 +8,7 @@ import SwiftUI
 /// Top to bottom — a time-of-day greeting, the starter-track card while the library is empty, the
 /// `Start today's session` CTA, the `Jump back in` card for whichever unit the player pinned
 /// (ADR 0193), the `This week` strip (ADR 0196), the six destinations as a tile grid
-/// (`HomeView+Map`), and the recent-routines rail. It is the app root in place of `LibraryView`
+/// (`HomeView+Map`). It is the app root in place of `LibraryView`
 /// and retires the temporary metronome toolbar button (ADR 0043).
 ///
 /// **The ordering is the argument.** Everything above the map is different from yesterday and
@@ -102,9 +102,6 @@ struct HomeView: View {
     /// for the walk back instead.
     @State var homeHasAppearedThisLaunch = false
 
-    /// How many routines the "recent routines" rail shows.
-    private let recentRoutineLimit = 3
-
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -138,7 +135,8 @@ struct HomeView: View {
                     // destinations accrue, and the tiles are what stop the map from owning the
                     // screen it is only the index to. It lives whole in `HomeView+Map`.
                     homeMap
-                    if !recentRoutines.isEmpty { recentRoutinesRail }
+                    // The Recent routines rail that sat here moved to the Practice hub's Routines
+                    // shelf (ADR 0257 D4); Jump back in is Home's one "carry on" card.
                 }
                 .padding(20)
                 // Cap the hub to a readable column so it doesn't stretch edge-to-edge at
@@ -266,12 +264,6 @@ struct HomeView: View {
     }
 
     // MARK: - Derived
-
-    /// The recent-routines rail contents: routines actually practised, newest first, capped.
-    var recentRoutines: [Routine] {
-        HomeFeed.recentlyPracticed(routines, limit: recentRoutineLimit,
-                                   practicedAt: \.lastPracticed, id: \.uid)
-    }
 
     private var importErrorBinding: Binding<Bool> {
         Binding(get: { importError != nil }, set: { if !$0 { importError = nil } })

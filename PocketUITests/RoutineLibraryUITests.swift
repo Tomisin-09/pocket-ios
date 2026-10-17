@@ -183,11 +183,9 @@ final class RoutineLibraryUITests: UITestCase {
         XCTAssertTrue(scrollIntoView(practiceCard, in: app), "Practice card not reachable by scrolling")
         tapWhenHittable(practiceCard, called: "the Practice card")
 
-        let routinesRow = app.cells.containing(.staticText, identifier: "Routines").firstMatch
-        XCTAssertTrue(routinesRow.waitForExistence(timeout: Self.uiTimeout), "Routines library row missing")
-        tapWhenHittable(routinesRow, called: "the Routines library row")
-        XCTAssertTrue(app.navigationBars["Routines"].waitForExistence(timeout: Self.uiTimeout),
-                      "the Routines library never appeared")
+        XCTAssertTrue(app.navigationBars["Practice"].waitForExistence(timeout: Self.uiTimeout),
+                      "Practice hub did not open from Home")
+        openPracticeLibrary("Routines", in: app)
     }
 
     /// The library's search field, revealing it first if the toolchain has not materialised it.

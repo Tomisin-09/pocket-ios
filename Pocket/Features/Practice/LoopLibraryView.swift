@@ -14,8 +14,25 @@ import SwiftUI
 /// **in-memory** filter, not a SwiftData optional `#Predicate` (which starves the main thread — see
 /// `PracticeRunUITests`). Sort key + direction and the search query narrow the list in memory too
 /// (ADR 0056), reusing the pure `PracticeLibrarySort`.
+///
+/// **Narrowed to one song** (ADR 0257 D6), it is what a song tile on the Practice hub opens: the same
+/// screen, its filters and modes intact, over that song's loops alone.
 struct LoopLibraryView: View {
-    @Query private var allLoops: [Loop]
+    /// The song this screen is narrowed to, or `nil` for every song.
+    let song: Song?
+
+    init(song: Song? = nil) {
+        self.song = song
+    }
+
+    @Query private var storedLoops: [Loop]
+
+    /// Every loop this screen may show, before any filter: all of them, or one song's. Each gate below
+    /// reads from here, so a song screen's empty states speak about that song.
+    private var allLoops: [Loop] {
+        guard let song else { return storedLoops }
+        return storedLoops.filter { $0.song == song }
+    }
     /// Sort key + direction, persisted across launches (ADR 0056).
     @AppStorage("loopLibrarySort") private var sortKey: LoopSortKey = .song
     @AppStorage("loopLibrarySortAscending") private var sortAscending = true
@@ -112,6 +129,18 @@ struct LoopLibraryView: View {
         + "a section with no vocal, over a whole number of bars, makes the best bed to solo over."
     }
 
+    /// One song section's rows, with the shared row actions.
+    @ViewBuilder private func rows(of section: LibrarySection<Loop>) -> some View {
+        ForEach(section.items) { loop in
+            loopRow(loop)
+                .listRowBackground(PocketColor.background)
+                .pocketRowActions(displayName(loop),
+                                  tint: PocketColor.practice,
+                                  menu: menuItems(for: loop),
+                                  favorite: favorite(for: loop))
+        }
+    }
+
     private func fields(for loop: Loop) -> LoopSortFields {
         LoopSortFields(name: loop.name, songTitle: loop.song?.title ?? "",
                        command: loop.command, mastery: loop.mastery)
@@ -131,16 +160,14 @@ struct LoopLibraryView: View {
                            : "No loops match “\(searchText)”.")
             } else {
                 ForEach(sections, id: \.title) { section in
-                    CollapsibleLibrarySection(title: section.title,
-                                              count: section.items.count,
-                                              isExpanded: expansion(of: section.title)) {
-                        ForEach(section.items) { loop in
-                            loopRow(loop)
-                                .listRowBackground(PocketColor.background)
-                                .pocketRowActions(displayName(loop),
-                                                  tint: PocketColor.practice,
-                                                  menu: menuItems(for: loop),
-                                                  favorite: favorite(for: loop))
+                    if song != nil {
+                        // One song, so one section: its header would only repeat the title above.
+                        rows(of: section)
+                    } else {
+                        CollapsibleLibrarySection(title: section.title,
+                                                  count: section.items.count,
+                                                  isExpanded: expansion(of: section.title)) {
+                            rows(of: section)
                         }
                     }
                 }
@@ -148,7 +175,7 @@ struct LoopLibraryView: View {
         }
         .scrollContentBackground(.hidden)
         .background(PocketColor.background.ignoresSafeArea())
-        .navigationTitle(backingOnly ? "Backing tracks" : "Loops")
+        .navigationTitle(backingOnly ? "Backing tracks" : (song?.title ?? "Loops"))
         .navigationBarTitleDisplayMode(.inline)
         // `.always`, as Routines and Exercises (ADR 0226 D1) — a search you have to pull down for is
         // one most players never find.
