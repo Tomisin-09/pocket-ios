@@ -134,8 +134,7 @@ struct ExerciseLibraryView: View {
         ExerciseSortFields(name: exercise.name, command: exercise.command,
                            dateAdded: exercise.dateAdded,
                            notesPerBeat: exercise.noteRate?.perBeat ?? 1,
-                           templateName: exercise.template.displayName,
-                           templateIcon: exercise.template.iconName,
+                           template: exercise.template,
                            instrument: exercise.instrument)
     }
 

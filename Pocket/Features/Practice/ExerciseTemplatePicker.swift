@@ -3,11 +3,14 @@ import SwiftUI
 /// The **template chooser** — step one of creating an exercise (ADR 0068, revised). A drill's
 /// template is a deliberate, first-class choice (not a buried setting), because it decides the
 /// authoring UI, the runtime surface, and the library section, and it can't be changed later. Each
-/// row is a curated `ExerciseTemplate`: icon, name, a one-line blurb, and a small badge on the ones
-/// with a bespoke editor today (only Strumming) so the menu is honest about what differs.
+/// row is a curated `ExerciseTemplate`: icon, name and a one-line blurb.
+///
+/// **No "Editor" badge and no footer under the list** (ADR 0257 D7). The badge once marked the one
+/// template with its own editor; by the time nine of ten carried it, it marked nothing. The footer
+/// repeated what the list's position in the flow already says.
 ///
 /// **T10** — colours resolve through semantic `PocketColor` roles; the practice tint carries the
-/// icons and the bespoke badge.
+/// icons.
 struct ExerciseTemplatePicker: View {
     /// The Guitar/Bass axis for the drill about to be created (ADR 0116 S6) — hoisted here from the
     /// configure form so the form stays uncrowded; seeded from the profile's preferred instrument and
@@ -46,11 +49,6 @@ struct ExerciseTemplatePicker: View {
                         // covered one and taps nothing.
                         .accessibilityIdentifier("template.\(template.rawValue)")
                 }
-            } footer: {
-                Text("Pick the kind of drill. This sets how you build and run it — and can't be "
-                     + "changed after, so choose the one that fits.")
-                    .font(.futura(.footnote))
-                    .foregroundStyle(PocketColor.textSecondary)
             }
         }
         .scrollContentBackground(.hidden)
@@ -72,12 +70,9 @@ struct ExerciseTemplatePicker: View {
                 .foregroundStyle(PocketColor.practice)
                 .frame(width: 30)
             VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(template.displayName)
-                        .font(.futura(.body, weight: .semibold))
-                        .foregroundStyle(PocketColor.textPrimary)
-                    if template.hasBespokeEditor { bespokeBadge }
-                }
+                Text(template.displayName)
+                    .font(.futura(.body, weight: .semibold))
+                    .foregroundStyle(PocketColor.textPrimary)
                 Text(template.blurb)
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
@@ -90,15 +85,6 @@ struct ExerciseTemplatePicker: View {
         .padding(.vertical, 4)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
-        .accessibilityHint(template.hasBespokeEditor ? "Has its own editor" : "")
-    }
-
-    private var bespokeBadge: some View {
-        Text("Editor")
-            .font(.futura(.caption2, weight: .bold))
-            .foregroundStyle(PocketColor.practice)
-            .padding(.horizontal, 6).padding(.vertical, 1)
-            .background(Capsule().fill(PocketColor.practice.opacity(0.16)))
     }
 }
 

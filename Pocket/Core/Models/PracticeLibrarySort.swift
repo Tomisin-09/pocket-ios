@@ -122,12 +122,10 @@ struct ExerciseSortFields {
     /// ranks on `notesPerMinute`, not on `command`: 80 BPM at sixteenths and 80 at quarters are a
     /// 4× difference the raw BPM reads as a tie (device pass 2026-07-29).
     var notesPerBeat: Int = 1
-    /// The exercise template's display name (ADR 0068, revised) — the library **section** key
-    /// (Strumming, Scales, Basic, …). Defaulted so sort-only call sites keep compiling.
-    var templateName: String = ExerciseTemplate.basic.displayName
-    /// The template's SF Symbol, drawn on the section header so a bucket is recognisable before it is
-    /// read. Defaulted alongside `templateName` so sort-only call sites keep compiling.
-    var templateIcon: String = ExerciseTemplate.basic.iconName
+    /// The exercise's template (ADR 0068, revised) — what decides its library **section**, the
+    /// section's place in the list (ADR 0257 D5) and its icon. Defaulted so sort-only call sites keep
+    /// compiling.
+    var template: ExerciseTemplate = .basic
     /// The exercise's instrument (ADR 0116 S4) — the axis the Library's progressive-disclosure filter
     /// narrows on. Defaulted to guitar so sort-only call sites keep compiling.
     var instrument: Instrument = .guitar
@@ -136,6 +134,13 @@ struct ExerciseSortFields {
     /// a difficulty score** (see `NoteRate`): it makes two commands rankable, it does not say which
     /// drill is harder.
     var commandNotesPerMinute: Int { max(0, command) * max(1, notesPerBeat) }
+
+    /// The section key: the template's display name (Strumming, Scales, Basic, …).
+    var templateName: String { template.displayName }
+
+    /// The template's SF Symbol, drawn on the section header so a bucket is recognisable before it is
+    /// read.
+    var templateIcon: String { template.iconName }
 }
 
 /// Pure ordering + search for the three Practice libraries — loops and exercises (ADR 0056), and
@@ -231,30 +236,36 @@ enum PracticeLibrarySort {
     }
 
     /// Group exercises into **template sections** (ADR 0068, revised), each section's items ordered
-    /// by the chosen sort `key`/`ascending`. Sections are ordered alphabetically by the template's
-    /// display name. Every exercise resolves to exactly one template (`.basic` is a real section,
-    /// not a leftover bucket), so there is no empty/"Uncategorized" case to special-case. Pure — the
-    /// bucket boundaries and ordering are the logic that breaks silently, so they're unit-tested
-    /// (mirrors `LibrarySectioning`).
+    /// by the chosen sort `key`/`ascending`. Sections follow the **New exercise picker's order**
+    /// (`ExerciseTemplate.displayOrder`, ADR 0257 D5), so the library, the Practice hub's category
+    /// tiles and the picker list the kinds the same way. They were A→Z, which put Your own practice
+    /// mid-list and Basic, the default, wherever its initial fell. Every exercise resolves to exactly
+    /// one template (`.basic` is a real section, not a leftover bucket), so there is no
+    /// empty/"Uncategorized" case to special-case. Pure — the bucket boundaries and ordering are the
+    /// logic that breaks silently, so they're unit-tested (mirrors `LibrarySectioning`).
     static func exerciseSections<Item>(_ items: [Item], sortedBy key: ExerciseSortKey,
                                        ascending: Bool,
                                        fields: (Item) -> ExerciseSortFields) -> [LibrarySection<Item>] {
         var buckets: [String: [Item]] = [:]
-        // The section's icon rides along with its name, keyed by the same bucket. Carrying it here
-        // beats reverse-mapping a display name back to a template at the view: the bucket key *is* a
-        // display name, so that lookup would break the moment two templates read alike.
-        var icons: [String: String] = [:]
+        // The section's template rides along with its name, keyed by the same bucket. Carrying it
+        // here beats reverse-mapping a display name back to a template at the view: the bucket key
+        // *is* a display name, so that lookup would break the moment two templates read alike.
+        var templates: [String: ExerciseTemplate] = [:]
         for item in items {
             let itemFields = fields(item)
             buckets[itemFields.templateName, default: []].append(item)
-            icons[itemFields.templateName] = itemFields.templateIcon
+            templates[itemFields.templateName] = itemFields.template
         }
         return buckets.keys
-            .sorted { $0.caseInsensitiveCompare($1) == .orderedAscending }
+            .sorted { lhs, rhs in
+                let left = templates[lhs].map(ExerciseTemplate.menuRank) ?? Int.max
+                let right = templates[rhs].map(ExerciseTemplate.menuRank) ?? Int.max
+                return left == right ? lhs.caseInsensitiveCompare(rhs) == .orderedAscending : left < right
+            }
             .map { title in
                 let ordered = sortedExercises(buckets[title] ?? [], by: key,
                                               ascending: ascending, fields: fields)
-                return LibrarySection(title: title, items: ordered, icon: icons[title])
+                return LibrarySection(title: title, items: ordered, icon: templates[title]?.iconName)
             }
     }
 

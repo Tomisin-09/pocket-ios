@@ -110,10 +110,10 @@ final class PracticeLibrarySortTests: XCTestCase {
     private func exercise(_ name: String, command: Int = 100,
                           dateAdded: Date = Date(timeIntervalSince1970: 0),
                           notesPerBeat: Int = 1,
-                          template: String = ExerciseTemplate.basic.displayName,
+                          template: ExerciseTemplate = .basic,
                           instrument: Instrument = .guitar) -> ExerciseSortFields {
         ExerciseSortFields(name: name, command: command, dateAdded: dateAdded,
-                           notesPerBeat: notesPerBeat, templateName: template,
+                           notesPerBeat: notesPerBeat, template: template,
                            instrument: instrument)
     }
 
@@ -225,27 +225,45 @@ final class PracticeLibrarySortTests: XCTestCase {
             .map { ($0.title, $0.items.map(\.name)) }
     }
 
-    func testSectionsGroupByTemplateAlphabeticallyWithItemsSortedWithin() {
-        let drills = [exercise("Down Up", template: "Strumming"),
-                      exercise("Major", template: "Scales"),
-                      exercise("All Down", template: "Strumming")]
+    func testSectionsGroupByTemplateWithItemsSortedWithin() {
+        let drills = [exercise("Down Up", template: .strumming),
+                      exercise("Major", template: .scales),
+                      exercise("All Down", template: .strumming)]
         let result = sections(drills, by: .name)
-        XCTAssertEqual(result.map(\.title), ["Scales", "Strumming"])
-        XCTAssertEqual(result[0].names, ["Major"])
-        XCTAssertEqual(result[1].names, ["All Down", "Down Up"])   // name-sorted within
+        XCTAssertEqual(result.map(\.title), ["Strumming", "Scales"])   // picker order, not A→Z
+        XCTAssertEqual(result[0].names, ["All Down", "Down Up"])   // name-sorted within
+        XCTAssertEqual(result[1].names, ["Major"])
     }
 
-    func testBasicTemplateIsAnOrdinaryAlphabeticalSection() {
-        // "Basic" is a real template section (no "Uncategorized" leftover bucket), ordered
-        // alphabetically with the rest — Basic < Chords < Warm-up.
-        let drills = [exercise("Loose"), exercise("Chorded", template: "Chords"),
-                      exercise("Warm", template: "Warm-up")]
-        XCTAssertEqual(sections(drills).map(\.title), ["Basic", "Chords", "Warm-up"])
+    /// Sections follow the New exercise picker (ADR 0257 D5): Basic first, then Warm-up and the
+    /// techniques, Your own practice last. Alphabetical would put Your own practice after Warm-up
+    /// and Chords & Strum before Picking.
+    func testSectionsFollowThePickerOrder() {
+        let drills = [exercise("Own", template: .freeform), exercise("Warm", template: .warmup),
+                      exercise("Legato run", template: .legato), exercise("Loose"),
+                      exercise("Strum chords", template: .strumChords),
+                      exercise("Alt", template: .picking)]
+        XCTAssertEqual(sections(drills).map(\.title),
+                       ["Basic", "Warm-up", "Picking", "Chords & Strum", "Legato", "Your own practice"])
+    }
+
+    /// A drill made under a template the picker no longer offers still sorts where `displayOrder`
+    /// keeps it, after the creatable techniques and before Your own practice.
+    func testARetiredTemplateKeepsItsDisplayOrderPlace() {
+        let drills = [exercise("Own", template: .freeform), exercise("Fingers", template: .fingerstyle),
+                      exercise("Hammer", template: .legato)]
+        XCTAssertEqual(sections(drills).map(\.title), ["Legato", "Fingerstyle", "Your own practice"])
+    }
+
+    func testMenuRankFollowsDisplayOrder() {
+        XCTAssertEqual(ExerciseTemplate.menuRank(.basic), 0)
+        XCTAssertLessThan(ExerciseTemplate.menuRank(.picking), ExerciseTemplate.menuRank(.scales))
+        XCTAssertEqual(ExerciseTemplate.menuRank(.freeform), ExerciseTemplate.displayOrder.count - 1)
     }
 
     func testSectionsHonorTheChosenSortKeyWithinSection() {
-        let drills = [exercise("Slow", command: 60, template: "Scales"),
-                      exercise("Fast", command: 140, template: "Scales")]
+        let drills = [exercise("Slow", command: 60, template: .scales),
+                      exercise("Fast", command: 140, template: .scales)]
         let result = sections(drills, by: .commandTempo)
         XCTAssertEqual(result[0].names, ["Slow", "Fast"])   // ascending command within the section
     }

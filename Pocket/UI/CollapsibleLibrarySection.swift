@@ -40,11 +40,17 @@ struct CollapsibleLibrarySection<Content: View>: View {
                         .font(.futura(.caption2, weight: .semibold))
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                     if let icon {
+                        // A category, so it reads like the Practice hub's tile for it (ADR 0257 D5):
+                        // the teal glyph in its wash, the name in the primary ink.
                         Image(systemName: icon)
                             .font(.futura(.caption, weight: .semibold))
-                            .frame(width: 18)   // fixed, so titles line up whatever the glyph's width
+                            .foregroundStyle(PocketColor.practice)
+                            .frame(width: 26, height: 26)   // fixed, so titles line up whatever the glyph
+                            .background(Circle().fill(PocketColor.practiceCircleWash))
                     }
                     Text(title)
+                        .foregroundStyle(icon == nil ? AnyShapeStyle(.secondary)
+                                                     : AnyShapeStyle(PocketColor.textPrimary))
                     Spacer(minLength: 8)
                     Text("\(count)")
                         .font(.pocketMono(.caption))
