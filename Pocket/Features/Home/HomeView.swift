@@ -27,6 +27,9 @@ struct HomeView: View {
     /// a service type keep one; what it would be keeping is a handle to an environment that has since
     /// been rebuilt. Non-private because `HomeView+ProfileMoment` fires the ladder's last rung.
     @Environment(\.requestReview) var requestReview
+    /// Red Moon's plan (ADR 0256), read for the locks on the gated doors. The doors themselves don't
+    /// read it: each screen behind one carries its own gate.
+    @Environment(PlanStore.self) var plan: PlanStore?
     /// The mailbox `AppDelegate` posts a tapped reminder's routine into (ADR 0186 D6). A shared
     /// instance rather than an environment value because the delegate that fills it lives outside
     /// the SwiftUI environment entirely; `@Observable` still tracks it from here.
@@ -107,6 +110,10 @@ struct HomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     greeting
+                    // While the monthly's free week is set to turn into a payment, how long is left
+                    // and the way to cancel (ADR 0256 D1). First, because it is the one thing on Home
+                    // that costs money if missed. Draws nothing otherwise.
+                    FreeWeekCountdown()
                     // A song to start on, above the session CTA while the library is empty
                     // (ADR 0219, kept as onboarding by ADR 0237 D4). A fresh install has no song,
                     // and the first thing worth doing is hearing one. Retires itself the moment a

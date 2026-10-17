@@ -11,7 +11,8 @@ import SwiftUI
 /// its reminder, and offers no way into the routine itself: a Settings row is for changing the
 /// appointment, and the routine screen is one tap away from Practice. The shape was first argued
 /// while routines sat behind a paywall, so that switching a reminder off could never be the gated
-/// half; Red Moon is free now (ADR 0237), and the shape stays for the first reason.
+/// half. Routines are behind the plan again (ADR 0256), and Settings never is, so this is how a lapsed
+/// player switches off a reminder whose routine now opens onto the wall.
 struct RoutineReminderSheet: View {
     let routineUID: UUID
     let routineName: String

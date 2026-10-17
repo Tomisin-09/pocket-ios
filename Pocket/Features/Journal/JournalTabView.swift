@@ -152,7 +152,13 @@ struct JournalTabView: View {
         }
     }
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.journal) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         VStack(spacing: 0) {
             scopePicker
             // Above the practice-log row and always on when there is history, because it carries the

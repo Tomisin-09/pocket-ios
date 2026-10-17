@@ -181,7 +181,13 @@ struct EarTrainingSheet: View {
         _player = State(initialValue: ContinuousLoopPlayer(loop: loop))
     }
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.earTraining, presentation: .modal) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         NavigationStack {
             EarTrainingView(loop: loop, player: player, recorder: recorder,
                             routineContext: nil)

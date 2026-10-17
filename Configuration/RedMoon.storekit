@@ -1,0 +1,74 @@
+{
+  "identifier" : "6C3F1A2E-7B4D-4E5F-9A61-2B3C4D5E6F70",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "15.00",
+      "familyShareable" : true,
+      "internalID" : "1000000101",
+      "localizations" : [
+        {
+          "description" : "Red Moon's plan with one payment. It never renews.",
+          "displayName" : "Pay once",
+          "locale" : "en_GB"
+        }
+      ],
+      "productID" : "click.decooperations.pocket.plan.payonce",
+      "referenceName" : "Red Moon Pay once",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_GB",
+    "_storefront" : "GBR",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "20261017",
+      "localizations" : [
+        {
+          "description" : "Practising in Red Moon: drills, routines, Today's session, the loop trainer and the Journal.",
+          "displayName" : "Red Moon",
+          "locale" : "en_GB"
+        }
+      ],
+      "name" : "Red Moon",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "1.00",
+          "familyShareable" : true,
+          "groupNumber" : 1,
+          "internalID" : "1000000102",
+          "introductoryOffer" : {
+            "displayPrice" : "0",
+            "internalID" : "1000000103",
+            "numberOfPeriods" : 1,
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "Red Moon's plan, renewing monthly.",
+              "displayName" : "Monthly",
+              "locale" : "en_GB"
+            }
+          ],
+          "productID" : "click.decooperations.pocket.plan.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Red Moon Monthly",
+          "subscriptionGroupID" : "20261017",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : []
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

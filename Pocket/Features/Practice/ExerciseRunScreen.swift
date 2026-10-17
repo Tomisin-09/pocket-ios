@@ -14,7 +14,13 @@ struct ExerciseRunScreen: View {
     /// Routine-session chrome when this is a block in a routine; `nil` standalone.
     var routineContext: RoutineRunContext?
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.drill) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         if exercise.template == .freeform {
             FreeformRunView(exercise: exercise, routineContext: routineContext)
         } else {

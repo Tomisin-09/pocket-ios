@@ -68,15 +68,18 @@ final class FAQEntryTests: XCTestCase {
     // MARK: - D6: no price, no trial length (ADR 0145 D6)
 
     func testNoAnswerHardcodesAPriceOrTrialLength() {
-        // Red Moon is free (ADR 0237): there is no price and no trial, so help copy that names either
-        // is wrong. Kept as a check because a price is the kind of sentence that creeps back in.
-        let forbidden = try? NSRegularExpression(pattern: "\\d+[- ]day|£|\\$|€")
+        // The plan's prices and the monthly's free week are App Store Connect's (ADR 0256 D1): the
+        // wall and Settings ▸ Your plan write them as the storefront has them. So help copy that names
+        // either goes wrong when they change. Kept as a check because a price is the kind of sentence
+        // that creeps back in.
+        let forbidden = try? NSRegularExpression(
+            pattern: "\\d+[- ](day|week|month)|free (day|week|month)|(a|one) (week|month) free|£|\\$|€")
         XCTAssertNotNil(forbidden)
         for entry in FAQEntry.all {
             let range = NSRange(entry.answer.startIndex..., in: entry.answer)
             let hit = forbidden?.firstMatch(in: entry.answer, range: range)
             XCTAssertNil(hit, "“\(entry.question)” names a price or trial length — ADR 0145 D6 "
-                         + "forbids it, and Red Moon has neither (ADR 0237).")
+                         + "forbids it, and the plan's prices are the storefront's (ADR 0256).")
         }
     }
 

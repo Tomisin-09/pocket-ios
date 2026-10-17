@@ -4,7 +4,7 @@ The reference shelf: a tuner, the chord shapes you have saved, the progressions 
 written, a glossary of the words, and the help catalogue. Nothing here practises anything or keeps score — it is the stuff you reach for *around*
 playing.
 
-<!-- faq-entries: 18 -->
+<!-- faq-entries: 22 -->
 
 Reach it from **Toolkit** on Home. Six sections:
 

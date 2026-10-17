@@ -56,6 +56,20 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Red Moon has one plan: £1 a month, or £15 once** (ADR 0256), and the monthly starts with a
+  free week the first time you take it. Your songs are free for good:
+  import them, play them, slow them down and keep your loops and markers, and the Metronome, the
+  Tuner, the Glossary and Help & FAQs are free too. The plan is for practising: drills, routines,
+  Today's session, the loop trainer, Train your ear, Improvise, Watch it on the neck, the Journal,
+  and My chords, My progressions and My tabs. A door behind the plan wears a small lock; tap it
+  and the screen explains what the plan is, then opens where you were going once you've paid. We'll
+  never raise the price, and nothing you can do today will ever move behind a higher one. If you
+  stop paying nothing is deleted, and Settings ▸ Your data always exports everything. Settings
+  gains **Your plan**, which says the day your free week ends and what comes after it. While the
+  free week is set to renew, Home's top row counts it down (*Your free week ends in 3 days*) and
+  opens your subscriptions in one tap. After
+  paying once while the monthly still renews, **Cancel your monthly plan** takes you to Apple's
+  subscriptions. Help & FAQs has a new *Your plan* section.
 - **Watch it on the neck.** Once you've named a lick on the neck in Name the notes, watch it play
   back there while the loop's own recording plays. Every spot the lick uses is drawn on the neck, and
   the note being heard lights up and glows the way you played it, with the notes in order underneath

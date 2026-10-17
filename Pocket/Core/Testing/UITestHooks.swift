@@ -86,6 +86,18 @@ enum UITestHooks {
     /// `ScreenshotSeed.heroSong()`.
     static let songMapArgument = "-seedSongMap"
 
+    /// `-plan free`: runs a `-uiTesting` launch **without** Red Moon's plan (ADR 0256 D9), so a test can
+    /// meet the wall. `-uiTesting` alone runs on Pay once, the way every test drove the unlocked app
+    /// before, because the suite tests features rather than the gate. `-plan monthly` is the third
+    /// state. Read app-side through `UITestRuntime.planOverride`, in Debug builds only.
+    static let planArgument = "-plan"
+    /// `-plan`'s values.
+    static let planFree = "free"
+    static let planMonthly = "monthly"
+    /// The wall's headline (ADR 0256 D3). Its words change for a returning player (D4), so a test
+    /// finds the wall by this rather than by what it says.
+    static let planWallHeadline = "plan.wallHeadline"
+
     /// Marks Home as **finished seeding**, not merely rendered.
     ///
     /// First-launch seeding is a `.task` that paints Home before it completes, so "Home is on

@@ -109,7 +109,8 @@ enum HomeFeed {
     /// hand-off — the starter track exists to be outgrown.
     ///
     /// The question is only ever "is this library empty". ADR 0219 D6 said so while the song was
-    /// also a free taste, and since Red Moon became free (ADR 0237 D4) it is the card's whole reason.
+    /// also a free taste, and it is still the card's whole reason now that every song is free to play
+    /// (ADR 0237 D4, ADR 0256 D2).
     static func shouldOfferStarterTrack(totalSongs: Int, hasStarterTrack: Bool) -> Bool {
         hasStarterTrack ? totalSongs == 1 : totalSongs == 0
     }

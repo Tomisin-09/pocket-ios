@@ -121,7 +121,13 @@ struct NewExerciseSheet: View {
         _instrument = State(initialValue: defaultInstrument)
     }
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.newDrill, presentation: .modal) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         NavigationStack {
             Group {
                 if let fixedTemplate {

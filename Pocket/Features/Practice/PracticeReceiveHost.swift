@@ -58,12 +58,19 @@ private struct PracticeReceiveHost: ViewModifier {
             #endif
             .sheet(item: $pending, onDismiss: discardUnpacked) { arrival in
                 switch arrival.practice {
+                // A shared routine or drill is practice, so it waits behind the plan; a shared song is
+                // the library's, and free (ADR 0256 D2). Closing the wall discards the arrival, as
+                // closing the preview always has.
                 case let .routine(received):
-                    ReceivedRoutinePreviewSheet(received: received, songTitles: arrival.songTitles) {
-                        add(received, songTitles: arrival.songTitles)
+                    PlanGated(.routine, presentation: .modal) {
+                        ReceivedRoutinePreviewSheet(received: received, songTitles: arrival.songTitles) {
+                            add(received, songTitles: arrival.songTitles)
+                        }
                     }
                 case let .exercise(received):
-                    ReceivedExercisePreviewSheet(received: received) { add(received) }
+                    PlanGated(.drill, presentation: .modal) {
+                        ReceivedExercisePreviewSheet(received: received) { add(received) }
+                    }
                 case let .song(received):
                     let title = arrival.songTitles.first ?? received.displayTitle
                     ReceivedSongPreviewSheet(received: received, title: title) { add(received, as: title) }

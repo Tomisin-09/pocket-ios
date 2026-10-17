@@ -46,10 +46,14 @@
 │   Services — Persistence (SwiftData), Sync (CloudKit, planned), AIClient (→ proxy).
 │              MusicKit (browse) is PLANNED-ONLY and not shipped — no MusicKit import,
 │              no MPMediaLibrary, no NSAppleMusicUsageDescription
-│ Monetization — none. Red Moon is free with no in-app purchase (ADR 0237); StoreKit is not linked.
-│              The paywall, `AccessPolicy`, `StoreManager` and the trial reminder were deleted, not left
-│              dormant (0237 D2); `f3a4175` is the last commit holding them. If the Oracle is ever priced it
-│              is strictly additive (0237 D3) and brings its own StoreKit code.
+│ Monetization — one plan (ADR 0256): `…plan.monthly` (£1/$1, auto-renewing, a free week as its intro
+│              offer) or `…plan.payonce` (£15/$15, non-consumable), both family-shareable. Playing is free; practising and the Journal are the plan.
+│              `PlanStore` (Core/Plan, StoreKit 2) reads `currentEntitlements`, listens to `Transaction.updates`
+│              and refreshes on every return to the foreground (a plain expiry mints no transaction). Pure
+│              rules in `PlanAccess`. Gated screens wrap their own bodies in `PlanGated` (Features/Plan), so
+│              the gate is on the screen, not at its doors. Nothing is persisted; access is read live.
+│              0237's machinery stays deleted (`f3a4175` holds it); this is new code. Local products for the
+│              simulator: `Configuration/RedMoon.storekit`, on the run scheme only.
 │ Notifications — ADR 0186. `PracticeReminder` (`@MainActor @Observable`) schedules one repeating weekday
 │              request per routine, decided by the pure `PracticeReminderPlan`, whose inputs are the days
 │              and time the player chose plus `now` — and **nothing else**. It is handed no practice log,
@@ -2192,8 +2196,10 @@ true (ADR 0150 §118-121).
     `PracticeReceiveHost` and `\.receiveRoutineFile` became `\.receivePracticeFile`; both doors and
     both library pickers accept either kind, since the kind lives *inside* the file and the system
     filters on type.
-  - **There is no gate on receiving** since ADR 0237. (0209 D5 had moved the Pro gate behind the
-    read.) A drill on a template this build cannot name is added like any other, its raw template
+  - **A received routine or drill waits behind the plan** (ADR 0256 D2): the host wraps their
+    preview sheets in `PlanGated`, so the file is still read and closing the wall discards it as
+    closing the preview always has. A received song never waits. (0237 had removed the old Pro gate,
+    which 0209 D5 had moved behind the read.) A drill on a template this build cannot name is added like any other, its raw template
     kept for a build that can read it, and sends no `exercise_received` rather than a guessed one.
   - **The send control is ungated and reads the sheet's in-flight description.**
     `ExerciseDetailSheet` keeps `notes` in `@State` until Done, so the payload takes it as a
@@ -2530,8 +2536,7 @@ root beside `practiceReminder`, injected via `.environment`. Both readers take i
 
 ## Asking for a review (Core/Review, ADR 0214)
 
-The app's only StoreKit use since ADR 0237 deleted `StoreManager`, and it presents nothing of its
-own. Two types, the split ADR 0186 D4 established:
+StoreKit's other use besides `PlanStore` (ADR 0256), and it presents nothing of its own. Two types, the split ADR 0186 D4 established:
 
 - **`ReviewPromptPlan`** — pure, Foundation-only, unit-tested. Holds every gate: **five completed
   sittings** (a sitting, not a run — `PracticeLog.sittings(_:gap:)` merges an evening's runs), at most

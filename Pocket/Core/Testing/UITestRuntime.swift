@@ -50,6 +50,26 @@ enum UITestRuntime {
             || arguments.contains(UITestHooks.gestureHintsArgument)
     }
 
+    /// The plan a `-uiTesting` launch runs on (ADR 0256 D9): **Pay once**, unless `-plan` names
+    /// another. `nil` outside UI testing, where StoreKit decides. `PlanStore` reads it in Debug
+    /// builds only, so no launch argument can open the plan on a build a player holds.
+    static let planOverride = parsePlan(in: CommandLine.arguments)
+
+    /// Split out to be tested, like `parseShotHour`. Anything after `-plan` that isn't a known value
+    /// falls back to Pay once rather than to no plan: a typo should cost one test its wall, not stop
+    /// fifty tests at it.
+    static func parsePlan(in arguments: [String]) -> PlanAccess? {
+        guard arguments.contains(UITestHooks.launchArgument) else { return nil }
+        guard let flag = arguments.firstIndex(of: UITestHooks.planArgument),
+              arguments.index(after: flag) < arguments.endIndex
+        else { return .payOnce }
+        switch arguments[arguments.index(after: flag)] {
+        case UITestHooks.planFree: return PlanAccess.none
+        case UITestHooks.planMonthly: return .monthly
+        default: return .payOnce
+        }
+    }
+
     /// Split out from the `static let` for the same reason `parseShotHour` is, and named the same
     /// way: the argument that must *also* be present is the entire guarantee here, and a guarantee
     /// nothing checks is a comment.

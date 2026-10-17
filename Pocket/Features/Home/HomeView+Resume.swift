@@ -62,8 +62,9 @@ extension HomeView {
                 NavigationLink {
                     RoutineDetailView(container: context.container, existing: routine)
                 } label: {
-                    JumpBackInCard(content: Self.content(routine))
+                    JumpBackInCard(content: Self.content(routine), locked: plan.showsPlanLocks)
                 }
+                .planLockedValue(plan.showsPlanLocks)
             case .exercise(let exercise):
                 NavigationLink {
                     // Through `ExerciseRunScreen`, never `ExerciseRunView` — it is the one place
@@ -71,8 +72,9 @@ extension HomeView {
                     // (ADR 0136).
                     ExerciseRunScreen(exercise: exercise)
                 } label: {
-                    JumpBackInCard(content: Self.content(exercise))
+                    JumpBackInCard(content: Self.content(exercise), locked: plan.showsPlanLocks)
                 }
+                .planLockedValue(plan.showsPlanLocks)
             }
         }
         .buttonStyle(.plain)

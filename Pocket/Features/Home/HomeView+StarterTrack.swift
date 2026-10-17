@@ -3,9 +3,9 @@ import SwiftUI
 
 /// Home's **Start here** card (ADR 0219) — a song to practise on before the player has added one.
 ///
-/// It was built as the one door a player without Pro could walk through. Red Moon is free now
-/// (ADR 0237), and the card stays as onboarding (0237 D4): a fresh install has no song, and the
-/// first thing worth doing in this app is hearing one.
+/// It was built as the one door a player without Pro could walk through. Since ADR 0256 every song is
+/// free to play, so the card is onboarding and nothing more (0237 D4): a fresh install has no song,
+/// and the first thing worth doing in this app is hearing one.
 ///
 /// Split out of `HomeView.swift` for the same reason `HomeView+Resume` is — the 400-line file cap
 /// and SwiftLint's `type_body_length`.

@@ -30,7 +30,13 @@ struct SnagLineSheet: View {
     /// The loop whose Journal holds the line, or will.
     private var journalLoop: Loop? { line?.loop ?? home }
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.journal, presentation: .modal) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         NavigationStack {
             Form {
                 if let loop = journalLoop {

@@ -72,6 +72,9 @@ struct HomeTile: View {
     /// nudge with the subtitles would have been a silent regression in the one state that needs it,
     /// so the exception is the instruction, not the description: it goes as soon as it is followed.
     var caption: String?
+    /// Whether the door opens onto the plan's wall (ADR 0256 D3: locked, not hidden). A corner lock
+    /// rather than a changed glyph or a dimmed tile, so the map reads the same either way.
+    var locked = false
 
     var body: some View {
         VStack(spacing: 8) {
@@ -105,6 +108,9 @@ struct HomeTile: View {
         .padding(.vertical, 16)
         .padding(.horizontal, 10)
         .background(RoundedRectangle(cornerRadius: 16).fill(cardWash))
+        .overlay(alignment: .topTrailing) {
+            if locked { PlanLockBadge().padding(10) }
+        }
     }
 }
 
@@ -164,13 +170,19 @@ struct JumpBackInCard: View {
     /// does not have. Parameterising the one string beats a near-duplicate card — the layout and
     /// `MasteryReadout` handling are worth sharing.
     var eyebrow: String = "JUMP BACK IN"
+    /// Whether the unit opens onto the plan's wall: a routine or a drill, for a player whose plan has
+    /// lapsed (ADR 0256 D3, D4). A song never is.
+    var locked = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(eyebrow)
-                .font(.futura(.caption2, weight: .semibold))
-                .tracking(1.5)
-                .foregroundStyle(PocketColor.textSecondary)
+            HStack(spacing: 6) {
+                Text(eyebrow)
+                    .font(.futura(.caption2, weight: .semibold))
+                    .tracking(1.5)
+                    .foregroundStyle(PocketColor.textSecondary)
+                if locked { PlanLockBadge() }
+            }
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(content.title)

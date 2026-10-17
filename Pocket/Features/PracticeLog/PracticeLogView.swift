@@ -66,7 +66,13 @@ struct PracticeLogView: View {
                                 totalNotes: journalEntries.count)
     }
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.practiceLog) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         ScrollView {
             // Mapped once per pass and handed down: both sections and every page read this array.
             let records = runs.map(\.record)

@@ -52,7 +52,13 @@ struct WatchOnNeckSheet: View {
         _centre = State(initialValue: PieceNeck.span(of: labels).map { PieceNeck.centre(of: $0) })
     }
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.watchOnNeck, presentation: .modal) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {

@@ -32,13 +32,29 @@ struct SettingsView: View {
     /// a confident "Zero KB" in the moment before the measurement lands.
     @State private var usage: StorageUsage?
 
+    /// Red Moon's plan (ADR 0256 D10): the *Your plan* row's value, and whether the cancel row shows.
+    @Environment(PlanStore.self) private var plan: PlanStore?
+    @State private var managingSubscriptions = false
+
     var body: some View {
         Form {
-            // State — who you are — rather than a preference, so it sits above them. It shared this
-            // group with the subscription row until the app went free (ADR 0237 D7).
+            // State — who you are, and how you pay — rather than a preference, so it sits above them.
+            // The plan's row left with the free build (ADR 0237 D7) and came back with the plan (0256 D10).
             Section {
                 NavigationLink { YouSettingsView() } label: {
                     SettingsHubRow(icon: "person.crop.circle", title: "You", value: youSummary)
+                }
+                NavigationLink { YourPlanSettingsView() } label: {
+                    SettingsHubRow(icon: "moon.stars", title: "Your plan",
+                                   value: (plan?.access ?? PlanStore.accessWithoutStore).summary)
+                }
+                // Only while Pay once is owned and the player's own monthly still renews (D5 step 3).
+                // It goes away by itself when the renewal stops.
+                if PlanAccess.offersCancelMonthly(access: plan?.access ?? .none,
+                                                  ownMonthlyRenews: plan?.ownMonthlyRenews ?? false) {
+                    Button { managingSubscriptions = true } label: {
+                        SettingsHubRow(icon: "xmark.circle", title: "Cancel your monthly plan")
+                    }
                 }
             }
 
@@ -95,6 +111,9 @@ struct SettingsView: View {
             #endif
         }
         .settingsScreen(title: "Settings")
+        .background {
+            SubscriptionManagement(isPresented: $managingSubscriptions, groupID: plan?.subscriptionGroupID)
+        }
         .task { usage = await Task.detached(priority: .utility) { StorageUsage.measure() }.value }
     }
 
