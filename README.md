@@ -92,14 +92,15 @@ See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild te
 
 `xcodebuild test -scheme Pocket` runs the default **`PocketLogic`** test plan —
 the ~498 unit tests, no coverage — for a fast local loop (~59s vs ~123s for the
-full suite). CI runs the full **`PocketAll`** plan (`-testPlan PocketAll`, adds
-the UI tests + coverage). A third plan, **`PocketShoot`**, holds the user manual's
-screenshot classes; it is driven only by `scripts/shoot-manual.sh` and is skipped
-by `PocketAll`. See `docs/decisions/0053`.
+full suite). **`PocketAll`** is both suites, for running everything locally. CI runs
+`PocketLogic` in its required job and **`PocketUI`**, the UI tests alone, in a second
+job beside it (`docs/decisions/0255`). A fourth plan, **`PocketShoot`**, holds the user
+manual's screenshot classes; it is driven only by `scripts/shoot-manual.sh` and no
+other plan reaches it. See `docs/decisions/0053`.
 
 The split is a **boundary, not a list**: the shoot classes live in their own target,
 `PocketShootUITests`, so `PocketAll` — which contains `PocketUITests` — has no route
-to them and neither plan carries a skip list. It was a skip list until 2026-08-28,
+to them and no plan carries a skip list. It was a skip list until 2026-08-28,
 and that is a policy two files have to keep in step: Phase 5 grew one of them and CI
 ran ten shoot classes on a device nothing had staged, surfacing as sixteen assertions
 about missing rows rather than as anything pointing at a plan. `check-manual.py`'s
@@ -124,10 +125,16 @@ docs/          architecture.md, positioning.md (who we're up against and the lin
 
 ## CI/CD
 
-- **On PR:** SwiftLint + build + test — full `PocketAll` plan (`.github/workflows/ci.yml`).
+- **On PR and on `main`:** two jobs side by side (`.github/workflows/ci.yml`,
+  `docs/decisions/0255`). **`Lint · Build · Test`**, the one required check, runs the manual check,
+  SwiftLint, the build and the unit tests (`PocketLogic`). **`UI tests`** runs `PocketUI` on a
+  second runner and is *not* required, so a PR can merge before it finishes. The guard is on the
+  release instead: **no release build until main's UI job is green** (`scripts/main-ui-green.sh`,
+  run by `/ready-to-ship`). Both jobs test on a pinned simulator, iPhone 16 Pro on iOS 18.5
+  (`scripts/ci-simulator.sh`), and each fails if its plan ran no tests (`scripts/assert-tests-ran.sh`).
   A documentation-only change (`**/*.md`, `docs/**`, `LICENSE`) skips all three and finishes in
-  ~20s on a Linux runner — the required check still reports, it just has nothing to do. The rule
-  lives in `scripts/docs-only.sh` and is shared with the pre-push hook. See `docs/decisions/0133`;
+  ~20s on a Linux runner — the required check still reports, it just has nothing to do, and the
+  UI job is skipped. The rule lives in `scripts/docs-only.sh` and is shared with the pre-push hook. See `docs/decisions/0133`;
   note in particular why the workflow must *not* grow a `paths-ignore` filter.
 - **The manual check** (`docs/decisions/0165`): `scripts/check-manual.py` holds `docs/manual/` to
   what the app's compiled catalogs actually say. It is the one step with no `if:` on it — a
@@ -144,11 +151,13 @@ docs/          architecture.md, positioning.md (who we're up against and the lin
   `scripts/report-test-retries.sh` annotates the PR with every test that needed one — **a green run
   with retries in it is not a clean run.** The pre-push hook pre-boots too but deliberately does not
   retry.
-- **Debugging a CI-only failure:** every run uploads a **`TestResults`** artifact — the
-  `.xcresult` bundle plus the raw `xcodebuild` log — and it uploads on red runs too, which are the
-  ones worth downloading. Grab it from the run's summary page and open the bundle in Xcode for the
+- **Debugging a CI-only failure:** every run uploads a **`TestResults`** artifact (unit) and a
+  **`UITestResults`** artifact (UI), each the `.xcresult` bundle plus the raw `xcodebuild` log, and
+  they upload on red runs too, which are the ones worth downloading. Grab one from the run's summary page and open the bundle in Xcode for the
   failure's screenshots and attachments. Without it the only way to chase a test that passes locally
   and fails on the runner is a guess per ~11-minute round, which is how one UI test came to be
   deleted rather than fixed.
-- **On merge to `main`:** TestFlight via Fastlane (`.github/workflows/testflight.yml`).
+- **TestFlight:** Fastlane (`.github/workflows/testflight.yml`), run by hand (`workflow_dispatch`),
+  never on merge, because it distributes to the external beta group. Release builds are archived by
+  hand in Xcode's Organizer.
 - Backend prod is AWS (Lambda + API Gateway); dev runs locally / off-AWS.

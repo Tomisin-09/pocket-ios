@@ -499,6 +499,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **The UI tests run beside the required check, not inside it** (ADR 0255). `Lint · Build · Test` now
+  runs the unit tests only, and a second job, `UI tests`, runs the new `PocketUI` plan on its own
+  runner. The second job is not required, so a PR can merge in about the time the build and unit
+  tests take (6 of the old 28 minutes) instead of waiting on the UI tests. In exchange, **no release
+  build until main's UI job is green**: `scripts/main-ui-green.sh` checks it and `/ready-to-ship` runs
+  it. Both jobs test on a pinned iPhone 16 Pro on iOS 18.5 rather than the first iPhone listed. Both
+  fail if their plan ran no tests. `check-manual.py` C14 now keeps the shoot out of every plan, not
+  just `PocketAll`. The README's "TestFlight on merge to `main`" was wrong (the lane is run by hand)
+  and now says so.
 - **CI gets an hour, not 45 minutes.** Green runs had grown to 33–42 minutes, and `main`'s run after
   #358 was cut off at 45 with its UI tests nearly done and nothing failing. The manual shoot gains
   the figure for *Watch it on the neck*. `shoot-manual.sh` now accepts one test as well as one class
