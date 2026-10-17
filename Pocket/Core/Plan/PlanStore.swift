@@ -51,7 +51,8 @@ final class PlanStore {
     /// The two prices as the offer writes them, for a preview that has no App Store to ask.
     private let previewPrices: OfferPrices?
 
-    /// `false` for a preview's store and a UI test's override: neither touches StoreKit's entitlements.
+    /// `false` for a preview's store, a UI test's override and the developer's unlock: none of them
+    /// touches StoreKit's entitlements.
     private let readsEntitlements: Bool
     /// `false` only for a preview's store, which has no App Store to ask.
     private let loadsProducts: Bool
@@ -60,7 +61,8 @@ final class PlanStore {
         #if DEBUG
         // Under `-uiTesting` the plan is fixed by the launch (D9), so a test drives the same app on
         // every run. Products still load, so the wall under `-plan free` draws what it really draws.
-        if let forced = UITestRuntime.planOverride {
+        // A build for the developer's phone is fixed the same way (`developerUnlock`).
+        if let forced = UITestRuntime.planOverride ?? Self.developerUnlock {
             access = forced
             hasResolved = true
             previewPrices = nil
@@ -83,6 +85,20 @@ final class PlanStore {
         }
         Task { await refresh() }
     }
+
+    #if DEBUG
+    /// The plan on the phone the app is developed on (D9): Pay once in a build compiled with
+    /// `PLAN_UNLOCKED`, which `scripts/run-device.sh` sets, and `nil` in every other build. So that
+    /// phone opens Practice without an App Store purchase. Debug only, so an archive can't carry it,
+    /// and TestFlight still grants nothing (D7).
+    private static var developerUnlock: PlanAccess? {
+        #if PLAN_UNLOCKED
+        return .payOnce
+        #else
+        return nil
+        #endif
+    }
+    #endif
 
     /// A store that never asks the App Store, for previews of the wall and of a gated screen. Give it
     /// `prices` to see the offer as a player does; without them it draws the state where the products

@@ -53,7 +53,8 @@
 │              rules in `PlanAccess`. Gated screens wrap their own bodies in `PlanGated` (Features/Plan), so
 │              the gate is on the screen, not at its doors. Nothing is persisted; access is read live.
 │              0237's machinery stays deleted (`f3a4175` holds it); this is new code. Local products for the
-│              simulator: `Configuration/RedMoon.storekit`, on the run scheme only.
+│              simulator: `Configuration/RedMoon.storekit`, on the run scheme only. `scripts/run-device.sh`
+│              builds with `PLAN_UNLOCKED` (Debug only), so the developer's phone has the plan; `-s` omits it.
 │ Notifications — ADR 0186. `PracticeReminder` (`@MainActor @Observable`) schedules one repeating weekday
 │              request per routine, decided by the pure `PracticeReminderPlan`, whose inputs are the days
 │              and time the player chose plus `now` — and **nothing else**. It is handed no practice log,

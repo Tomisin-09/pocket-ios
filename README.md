@@ -63,7 +63,13 @@ on:
 ```sh
 scripts/run-device.sh        # incremental build → install → launch
 scripts/run-device.sh -n     # skip build; just install + launch the existing .app
+scripts/run-device.sh -s     # build without the plan unlock; the app asks the real sandbox
 ```
+
+A build from the script has Red Moon's plan unlocked, so Practice opens on your
+phone without an App Store purchase. The unlock is Debug only and never reaches
+TestFlight or the App Store (ADR 0256 D9). Use `-s` to see the wall and buy
+from the sandbox instead.
 
 First launch needs a one-time Trust: Settings → General → VPN & Device
 Management → Developer App → Trust.

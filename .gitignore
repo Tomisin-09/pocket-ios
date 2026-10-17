@@ -6,6 +6,8 @@ xcuserdata/
 DerivedData/
 build/
 build-device/
+# `scripts/run-device.sh -s`: the device build without the plan unlock (ADR 0256 D9).
+build-device-sandbox/
 # Simulator derived data, used to verify a genuine fresh install (clean install →
 # inspect the seeded store) without disturbing the device build products above.
 build-sim/
