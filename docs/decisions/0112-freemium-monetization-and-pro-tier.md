@@ -4,6 +4,8 @@
   now realised by ADR 0187 D20 (2026-09-02)** at **£9.99/mo · £79.99/yr**, not the ~£10–12 sketched
   below. This ADR remains the record of why a free line existed, what it cost, and why it was
   withdrawn before it met a user. **Superseded in full by ADR 0237 (2026-10-01): Red Moon is free.**
+  Its free line came back, without the Journal, in 0256 (2026-10-17): playing is free and practising
+  is the plan.
 - **Superseded by:** ADR 0237 — the app has no in-app purchase (0237 D1). The Pro tier, its trial,
   its gates, `AccessPolicy`, `StoreManager` and the paywall are deleted, not left dormant (0237 D2).
   The Oracle tier reserved below is now bound by 0237 D3: if it is ever priced it is strictly

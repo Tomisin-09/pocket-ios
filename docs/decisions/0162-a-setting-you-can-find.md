@@ -10,6 +10,8 @@
   rule and D3 stand.
 - **Amended by:** ADR 0239 (2026-10-02) — **D2**'s *Privacy* row and its screen go with analytics,
   and **D7** with them. The hub has eight destinations.
+- **Amended by:** ADR 0256 (2026-10-17) — **D2**: the group above PREFERENCES holds *You* and *Your
+  plan* again, and *Cancel your monthly plan* while Pay once is owned and the monthly still renews.
 - **Relates to:** ADR 0114 (metronome timbres — D5/D6 restyle the picker) · ADR 0147 (analytics
   inform-and-object — D7 checks the hub against the objection mechanism the exception is conditional
   on) · ADR 0145 (Help & FAQs, the second door) · ADR 0096 (the Toolkit hub, the pattern this copies)

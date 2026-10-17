@@ -3,6 +3,12 @@
 - **Status:** Accepted. Built on `pocket-343-free` (2026-10-01). Still owed: App Store
   Connect and `uk-site`, both outside the repo (Consequences), and the reshoot.
 - **Date:** 2026-10-01 (decided 2026-09-24; the removal scoped in Q&A on 2026-10-01)
+- **Superseded by:** ADR 0256 (2026-10-17), before the free build ever shipped — **D1** and **D7**:
+  Red Moon has one plan, £1 a month or £15 once, and Settings shows it again. **D3**'s promise is
+  replaced while no player had yet been given it: 0256 D2 draws the free line (the Song library and
+  the song player stay free) and its D8 promises that nothing free moves behind a higher price.
+  **D2** stands as history: the old machinery stays deleted, and StoreKit returns as new code. D4,
+  D5, D6 and D8 stand.
 - **Supersedes:** ADR 0112 — the Pro tier, its trial, its gates and its StoreKit design are gone
   (D1, D2). Its reason for existing, a free set of play-along tools beside a paid workbench, is moot,
   because there is no paid workbench. The Oracle tier it reserved is now governed by D3.
