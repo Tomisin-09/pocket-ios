@@ -16,7 +16,6 @@ struct PlanOffer: View {
     let onPayOnceOverRenewal: () -> Void
 
     @Environment(PlanStore.self) private var plan: PlanStore?
-    @Environment(\.purchase) private var purchase
 
     /// The product being bought, so its button shows progress and neither can be tapped twice.
     @State private var buying: String?
@@ -186,6 +185,11 @@ struct PlanOffer: View {
     /// Buy a product. Pay once while the player's own monthly renews asks first (D5 step 1), and
     /// afterwards hands over to Apple's manage sheet (step 2). The product is looked up at the tap, so
     /// a preview's offer, which has prices and no products, draws everything and buys nothing.
+    ///
+    /// `Product.purchase`, not SwiftUI's `\.purchase` action. CI's iOS 18 SDK doesn't put that action on
+    /// the main actor, so awaiting it from here sends a non-`Sendable` value off it: a Swift 6 error
+    /// there, and none on Xcode 26, whose SDK does. A `Product` is `Sendable` in both. The app has one
+    /// scene, so the sheet has only one place to appear.
     private func buy(_ productID: String, confirmed: Bool = false) {
         guard let product = plan?.products[productID] else { return }
         let overRenewal = productID == PlanProduct.payOnce && plan?.ownMonthlyRenews == true
@@ -197,7 +201,7 @@ struct PlanOffer: View {
             buying = product.id
             defer { buying = nil }
             do {
-                let result = try await purchase(product)
+                let result = try await product.purchase()
                 guard let plan else { return }
                 switch await plan.complete(result) {
                 case .bought: if overRenewal { onPayOnceOverRenewal() }
