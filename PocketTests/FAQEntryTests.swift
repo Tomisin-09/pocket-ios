@@ -68,7 +68,8 @@ final class FAQEntryTests: XCTestCase {
     // MARK: - D6: no price, no trial length (ADR 0145 D6)
 
     func testNoAnswerHardcodesAPriceOrTrialLength() {
-        // Red Moon is free (ADR 0237): there is no price and no trial, so help copy that names either
+        // The plan's prices are the storefront's (ADR 0256 D3): the wall and Settings ▸ Your plan write
+        // them in the player's own currency, and there is no trial (D1). So help copy that names either
         // is wrong. Kept as a check because a price is the kind of sentence that creeps back in.
         let forbidden = try? NSRegularExpression(pattern: "\\d+[- ]day|£|\\$|€")
         XCTAssertNotNil(forbidden)
@@ -76,7 +77,7 @@ final class FAQEntryTests: XCTestCase {
             let range = NSRange(entry.answer.startIndex..., in: entry.answer)
             let hit = forbidden?.firstMatch(in: entry.answer, range: range)
             XCTAssertNil(hit, "“\(entry.question)” names a price or trial length — ADR 0145 D6 "
-                         + "forbids it, and Red Moon has neither (ADR 0237).")
+                         + "forbids it, and the plan's prices are the storefront's (ADR 0256).")
         }
     }
 

@@ -17,6 +17,7 @@ struct FAQEntry: Identifiable, Equatable {
         case gettingStarted = "Getting started"
         case audio = "Audio & files"
         case concepts = "How practice works"
+        case plan = "Your plan"
         case privacy = "Your data"
 
         var id: String { rawValue }
@@ -190,6 +191,31 @@ extension FAQEntry {
                 + "minutes shown are an estimate derived from the blocks; edit a session and the "
                 + "estimate follows.",
               area: .concepts),
+
+        // MARK: Your plan (ADR 0256). No price is written here: the prices are the storefront's, and the
+        // wall and Settings ▸ Your plan state them in the player's own currency.
+        .init(question: "What's free, and what is the plan for?",
+              answer: "Your songs are free for good: import them, play them, slow them down, and keep "
+                + "your loops and markers. So are the Metronome, the Tuner, the Glossary and this help. "
+                + "The plan is for practising: drills, routines, Today's session, the loop trainer, "
+                + "Train your ear, Improvise, Watch it on the neck, your Journal, and My chords, My "
+                + "progressions and My tabs. Pay monthly, or pay once.",
+              area: .plan),
+        .init(question: "Will the price go up?",
+              answer: "No. We'll never raise the price, and nothing you can do today will ever move "
+                + "behind a higher one. There is one plan, and new features join it.",
+              area: .plan),
+        .init(question: "What happens if I stop paying?",
+              answer: "Nothing you made is deleted. Your songs, loops and markers stay open, and the "
+                + "practice screens wait behind the plan, just as you left them. Settings ▸ Your data "
+                + "can always export everything, plan or not.",
+              area: .plan),
+        .init(question: "I paid once, but my monthly plan is still renewing",
+              answer: "Paying once doesn't cancel a subscription, and Red Moon can't cancel one for you. "
+                + "Settings ▸ Cancel your monthly plan opens your Apple Account's subscriptions, where "
+                + "you can turn it off. Settings ▸ Your plan can also ask Apple for a refund of the "
+                + "month that overlapped. Apple decides refunds.",
+              area: .plan),
 
         // MARK: Your data
         .init(question: "Where is my practice data stored?",

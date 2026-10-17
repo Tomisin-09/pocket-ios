@@ -132,8 +132,11 @@ gate. About twenty screens carry a gate. Their callers do not change.
   - **Restore purchases**;
   - the auto-renewal disclosure;
   - Terms of Use (Apple's standard EULA) and the Privacy Policy, as Guideline 3.1.2 requires.
-- **Prices are never hard-coded.** Every amount on screen is the product's `displayPrice`, so an
-  American player reads $1 and the copy can't disagree with the price sheet. If the products don't
+- **Prices are never hard-coded.** Every amount on screen comes from the product (`Product.planPrice`),
+  so an American player reads $1 and the copy can't disagree with the price sheet. A whole amount
+  drops its pence (*£1*, not StoreKit's *£1.00*), because round was the point (D1). A storefront whose
+  conversion isn't whole keeps them (*€1.09*), because rounding it in copy would state a price nobody
+  charges. If the products don't
   load, the wall says it couldn't reach the App Store and offers *Try again*. It never shows a button
   that can't work.
 
@@ -196,6 +199,9 @@ Verbatim on the wall, in the App Store description and on the site:
 - **`PlanStore`** (`@Observable`, main actor) is the only type that talks to StoreKit. It loads
   products, buys, restores, reads `Transaction.currentEntitlements`, listens to `Transaction.updates`
   for the life of the app, and is injected at the app root.
+- **A gate waits for StoreKit's first answer.** `access` starts at no plan, and the first read is
+  async, so for a moment "no plan" and "not asked yet" look the same. In that moment a gate shows a
+  spinner and no lock draws, so a paying player never meets the wall at launch.
 - **It refreshes when the app returns to the foreground.** The 2026-08 sandbox pass found that a
   lapse didn't re-lock until a cold launch, because a plain expiry mints no transaction and so never
   reaches `updates`. A `scenePhase → .active` refresh at the root closes that.
@@ -204,12 +210,20 @@ Verbatim on the wall, in the App Store description and on the site:
   cancel row shows, and which headline the wall leads with.
 - **Gate at read time.** Nothing is persisted. A lapse closes the doors and a purchase opens them,
   with no migration.
-- **No store in the environment means no plan.** A view outside the root (a preview, a hosted test
-  window) fails closed. Previews that need the open state inject one.
-- **A local StoreKit configuration** (`Configuration/RedMoon.storekit`) serves both products to the
-  simulator and to Xcode-launched device runs. Once the products exist in App Store Connect it can be
-  re-synced from Xcode. A `devicectl` launch (`scripts/run-device.sh`) never applies it, so that path
-  always reads the real sandbox.
+- **No store in the environment means no plan.** A view outside the root, such as a hosted test
+  window, fails closed. An Xcode preview is the one exception: it draws the screen, because the
+  previews are where screens get checked, and a wall in each of them would hide the thing being
+  checked. A preview of the wall injects a store that has no plan.
+- **A local StoreKit configuration** (`Configuration/RedMoon.storekit`) is set on the run scheme only,
+  for the simulator and for Xcode-launched device runs. It is a local file, not a synced one: the old
+  file carried App Store Connect's sync keys, which makes Xcode read products from ASC instead of the
+  file. **It has not been seen to sell anything yet.** `SKTestSession` reports no storefront in this
+  test host with any file (the 2026-08 finding again), and a UI test's app never receives the scheme's
+  file. So the first proof is a run from Xcode, or re-syncing it from App Store Connect once the
+  products exist. A `devicectl` launch (`scripts/run-device.sh`) never applies it, so that path always
+  reads the real sandbox.
+- **Previews show the offer without StoreKit.** A preview store can carry the two prices, so the wall
+  and *Your plan* can be checked in Xcode with the offer drawn, and buying from one does nothing.
 - **Under test.** `-uiTesting` runs on Pay once, so the UI tests drive the whole app as before. Adding
   `-plan free` runs without the plan. **One UI test walks the free path**: a song plays and keeps a
   loop, then Practice shows the wall. 0237 D2's complaint was that the locked branch was the one no
