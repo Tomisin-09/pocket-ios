@@ -2579,8 +2579,8 @@ No analytics event: ADR 0214 D7's `review_requested` went with analytics (ADR 02
   `scripts/ax-audit.py` reads the filed set for four absences: a control with no label, a label that
   is an SF Symbol name, a target under 44pt, and two controls sharing a name. It rides the shoot
   rather than walking the app itself, because a second copy of that navigation is one nothing would
-  notice breaking. Off by default and not reachable from CI — `PocketAll` cannot see
-  `PocketShootUITests`, and the audit needs a device the script has staged. **It proves absence
+  notice breaking. Off by default and not reachable from CI — no plan but `PocketShoot` can see
+  `PocketShootUITests` (C14), and the audit needs a device the script has staged. **It proves absence
   only:** XCUITest exposes no accessibility traits and nothing at all about VoiceOver's focus order,
   so a clean report is not evidence the app is usable, and the device pass stays a step.
   `POCKET_SHOOT_CONTENT_SIZE` drives the same states at an accessibility text size, and forces a

@@ -9,6 +9,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# The simulator both macOS jobs test on, pinned by name and iOS version (ADR 0255).
+# `scripts/ci-simulator.sh` fails and lists what the runner has if the image drops it.
+env:
+  SIM_NAME: iPhone 16 Pro
+  SIM_OS: "18.5"
+
 jobs:
   # Decide whether this change can skip the expensive checks. Kept as a separate
   # job so the answer can pick the runner: a docs-only PR never claims a macOS
@@ -41,12 +47,10 @@ jobs:
     name: Lint · Build · Test
     needs: scope
     runs-on: ${{ needs.scope.outputs.docs_only == 'true' && 'ubuntu-latest' || 'macos-15' }}
-    # A backstop for a hung run, not a budget. Was 30 from the scaffold; by 2026-09-30 a green run took
-    # 25–29 minutes (about 11 building, 16 in UI tests), so one slow runner or one retry cancels the
-    # job before it can report (pocket-341's first run was cut off 26 s after its last test).
-    # Raised from 45 on 2026-10-07: green runs had grown to 33–42 minutes, and main's run on d70c54e
-    # was cut off at 45 with the UI tests nearly done and nothing failing.
-    timeout-minutes: 60
+    # A backstop for a hung run, not a budget. Since ADR 0255 this job runs the unit tests only (the
+    # UI tests moved to `ui-tests` below), and on main's last combined run the build and unit tests
+    # took about 6 minutes of its 28. Was 60 while it carried the UI tests too.
+    timeout-minutes: 30
     steps:
       - name: Docs-only change
         if: needs.scope.outputs.docs_only == 'true'
@@ -87,29 +91,18 @@ jobs:
         if: needs.scope.outputs.docs_only != 'true'
         run: swiftlint --strict
 
+      # Booted and settled before the timed run (ADR 0146), on the pinned device (ADR 0255).
+      - name: Boot the simulator
+        if: needs.scope.outputs.docs_only != 'true'
+        run: scripts/ci-simulator.sh "$SIM_NAME" "$SIM_OS"
+
+      # The unit tests, `PocketLogic`. The UI tests run beside this job, in `ui-tests`, so the
+      # required check reports in minutes rather than waiting on them (ADR 0255).
       - name: Build & test
         if: needs.scope.outputs.docs_only != 'true'
         shell: bash
         run: |
           set -euo pipefail   # without pipefail, '| xcbeautify' masks xcodebuild failures
-          # Pick an installed iPhone simulator dynamically rather than pinning an
-          # OS version that may not be present on the runner image.
-          UDID=$(xcrun simctl list devices available \
-            | grep -E 'iPhone' \
-            | grep -oE '[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}' \
-            | head -n 1)
-          if [ -z "$UDID" ]; then
-            echo "No available iPhone simulator found:"; xcrun simctl list devices; exit 1
-          fi
-          echo "Using simulator UDID: $UDID"
-          # Boot and settle the simulator BEFORE the timed run (ADR 0146). Handing a cold
-          # UDID straight to `xcodebuild test` puts boot + SpringBoard settling inside the
-          # window the UI tests' own waits are budgeted against, which is a large part of
-          # why those waits had to be guesses. `bootstatus -b` blocks until the device
-          # reports fully booted; `boot` is tolerated failing because an already-booted
-          # device exits non-zero.
-          xcrun simctl boot "$UDID" || true
-          xcrun simctl bootstatus "$UDID" -b
           # `-retry-tests-on-failure -test-iterations 2` re-runs only what failed, so a
           # genuine break still fails both attempts while a one-off timing loss does not
           # redden `main`. This deliberately trades "every red is real" away, so the raw
@@ -124,13 +117,14 @@ jobs:
           # that wants a stretch of retry-free runs behind it first.
           xcodebuild test \
             -scheme Pocket \
-            -testPlan PocketAll \
-            -destination "id=$UDID" \
+            -testPlan PocketLogic \
+            -destination "id=$SIM_UDID" \
             -resultBundlePath TestResults.xcresult \
             -retry-tests-on-failure \
             -test-iterations 2 \
             CODE_SIGNING_ALLOWED=NO \
             2>&1 | tee xcodebuild-raw.log | xcbeautify
+          scripts/assert-tests-ran.sh xcodebuild-raw.log
         env:
           NSUnbufferedIO: YES
 
@@ -157,5 +151,74 @@ jobs:
       # Runs even when the tests failed, so a red run also names what was retried.
       - name: Report retried tests
         if: always() && needs.scope.outputs.docs_only != 'true'
+        shell: bash
+        run: scripts/report-test-retries.sh xcodebuild-raw.log
+
+  ui-tests:
+    # The UI tests, beside the required job rather than inside it (ADR 0255). They were 22 of
+    # the 28 minutes of main's last combined run, and every PR waited on them to merge.
+    #
+    # NOT a required check, deliberately: a UI test that flakes on this runner no longer holds
+    # a PR. What it costs is a rule instead of a gate — **no release build until main's UI job
+    # is green**, which `scripts/main-ui-green.sh` checks and `/ready-to-ship` runs. That is why
+    # this job runs on pushes to `main` as well as on PRs.
+    #
+    # A job-level `if:` is safe here and would not be on the required job (ADR 0133): a skipped
+    # job reports as skipped, and nothing waits on this one. A docs-only change skips it.
+    name: UI tests
+    needs: scope
+    if: needs.scope.outputs.docs_only != 'true'
+    runs-on: macos-15
+    # A backstop for a hung run. The UI tests alone took 22 minutes on main's last run, and the
+    # build adds about 5.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode
+        run: xcodebuild -version
+
+      - name: Install tools
+        run: brew install xcodegen xcbeautify
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Boot the simulator
+        run: scripts/ci-simulator.sh "$SIM_NAME" "$SIM_OS"
+
+      # Same retry allowance and the same reasons as the unit tests above (ADR 0146): one
+      # retry, and every retry named by the report step.
+      - name: Build & UI test
+        shell: bash
+        run: |
+          set -euo pipefail   # without pipefail, '| xcbeautify' masks xcodebuild failures
+          xcodebuild test \
+            -scheme Pocket \
+            -testPlan PocketUI \
+            -destination "id=$SIM_UDID" \
+            -resultBundlePath UITestResults.xcresult \
+            -retry-tests-on-failure \
+            -test-iterations 2 \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee xcodebuild-raw.log | xcbeautify
+          scripts/assert-tests-ran.sh xcodebuild-raw.log
+        env:
+          NSUnbufferedIO: YES
+
+      # Named apart from the unit job's `TestResults`: two artifacts in one run can't share a name.
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: UITestResults
+          path: |
+            UITestResults.xcresult
+            xcodebuild-raw.log
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Report retried tests
+        if: always()
         shell: bash
         run: scripts/report-test-retries.sh xcodebuild-raw.log

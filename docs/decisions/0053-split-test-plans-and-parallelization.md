@@ -2,6 +2,10 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-01
+- **Amended by:** ADR 0255 (2026-10-17) — CI no longer runs `PocketAll`. The required job runs
+  `PocketLogic`, and a second, non-required job runs a fourth plan, `PocketUI` (the UI tests alone).
+  `PocketAll` stays as the local "run everything" plan. The plans, the target boundary and the
+  rejection of parallel testing stand.
 
 ## Context
 
@@ -24,7 +28,8 @@ deferred.
     runs it. Fast inner loop.
   - **`PocketAll.xctestplan`** — `PocketTests` + `PocketUITests`, `codeCoverage: true`.
     CI selects it explicitly with `-testPlan PocketAll`, so both suites and coverage
-    still gate merges. It carries **no skip list**: the shoot is a separate target — see
+    still gate merges. *(Amended by 0255: CI now runs `PocketLogic` in the required job and
+    `PocketUI` in a job beside it, and only the first gates a merge.)* It carries **no skip list**: the shoot is a separate target — see
     the amendment below.
   - **`PocketShoot.xctestplan`** *(added 2026-08-16, ADR 0165 Phase 5)* — the four
     `Manual*` classes and nothing else, `codeCoverage: false`. They are not tests: they

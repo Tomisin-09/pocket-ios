@@ -1,0 +1,27 @@
+{
+  "configurations": [
+    {
+      "id": "4C1E7A52-9D3B-4F0A-8E21-6B7D2F5A9C13",
+      "name": "UI",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {
+    "codeCoverage": false,
+    "targetForVariableExpansion": {
+      "containerPath": "container:Pocket.xcodeproj",
+      "identifier": "7D169845C7D92117E36B994A",
+      "name": "Pocket"
+    }
+  },
+  "testTargets": [
+    {
+      "target": {
+        "containerPath": "container:Pocket.xcodeproj",
+        "identifier": "23D16638A9045581F3F038B5",
+        "name": "PocketUITests"
+      }
+    }
+  ],
+  "version": 1
+}

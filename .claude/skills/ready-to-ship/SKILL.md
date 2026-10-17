@@ -36,7 +36,12 @@ xcodebuild test -scheme Pocket -destination 'platform=iOS Simulator,name=iPhone 
 - **Build:** 0 warnings / 0 errors. The "No AppIntents.framework dependency
   found" metadata note is harmless — ignore it.
 - **Tests:** `** TEST SUCCEEDED **`, 0 failures. A green suite is part of "no
-  paper tape" — don't skip it.
+  paper tape" — don't skip it. That command runs the default plan, the unit
+  tests only.
+- **Main's UI tests:** `scripts/main-ui-green.sh` must exit 0. The UI tests run
+  in a CI job that is not required (ADR 0255), so a red one can sit on `main`,
+  and the release rule is **no release build until main's UI job is green**. A
+  non-zero exit is a 🔴 Blocker, whatever else passes.
 - Sim destination is **iPhone 17** (iPhone 15 Pro from AGENTS.md isn't installed).
 
 ### Phase 2 — Fragility audit (static)

@@ -27,8 +27,8 @@ Checks implemented here (0165's Phase 0b set):
     C9  inside reference/**, every backticked token is a real Swift string literal
     C13 every `capture()` in the shoot harness names a marker that exists, and no
         `device:` shot is driven; shots still unshot report pending, not fail
-    C14 every shoot class is selected by `PocketShoot` and skipped by `PocketAll`,
-        so CI never runs one on a device nothing has staged
+    C14 every shoot class is in `PocketShoot` and in no other plan, so CI never
+        runs one on a device nothing has staged
 
 C3/C4/C5 (FAQ citation, no-copied-answers, byte-for-byte quoting) arrive with
 Slice A, when there is prose for them to check; C9 arrives with the reference
@@ -978,7 +978,7 @@ def check_c14():
     problems = []
     if os.path.isdir(UITESTS):
         for stray in sorted(c for c in classes_in(UITESTS) if c.startswith("Manual")):
-            problems.append("%s is in PocketUITests, which PocketAll runs — a shoot class there "
+            problems.append("%s is in PocketUITests, which CI runs — a shoot class there "
                             "is driven by CI on a device nothing has staged" % stray)
 
     def plan_targets(name):
@@ -988,19 +988,25 @@ def check_c14():
         return {target.get("target", {}).get("name")
                 for target in json.loads(read(path)).get("testTargets", [])}
 
-    everyday, shoot_plan = plan_targets("PocketAll.xctestplan"), plan_targets("PocketShoot.xctestplan")
-    if everyday is None or shoot_plan is None:
+    # Every plan but the shoot's, not a named few: since ADR 0255 CI runs `PocketLogic` and
+    # `PocketUI`, not `PocketAll`, and a plan added later is covered without anyone
+    # remembering to add it here.
+    everyday = sorted(name for name in os.listdir(REPO)
+                      if name.endswith(".xctestplan") and name != "PocketShoot.xctestplan")
+    shoot_plan = plan_targets("PocketShoot.xctestplan")
+    if "PocketAll.xctestplan" not in everyday or shoot_plan is None:
         return PENDING, ["a test plan is missing"]
-    if "PocketShootUITests" in everyday:
-        problems.append("PocketAll includes PocketShootUITests — that is the boundary gone, "
-                        "and CI will drive the shoot")
+    for name in everyday:
+        if "PocketShootUITests" in plan_targets(name):
+            problems.append("%s includes PocketShootUITests — that is the boundary gone, "
+                            "and CI or a local run will drive the shoot" % name[:-len(".xctestplan")])
     if "PocketShootUITests" not in shoot_plan:
         problems.append("PocketShoot does not include PocketShootUITests, so the shoot drives nothing")
 
     if problems:
         return FAIL, problems
-    return OK, ["%d shoot classes, all in PocketShootUITests and unreachable from PocketAll"
-                % len(shoot)]
+    return OK, ["%d shoot classes, all in PocketShootUITests and unreachable from the %d other plans"
+                % (len(shoot), len(everyday))]
 
 
 # --- C15: a claim stated in more than one place -----------------------------
