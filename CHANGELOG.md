@@ -320,6 +320,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **The Practice screen shows what you have, not how many.** It is now a card and three shelves
+  (ADR 0257). **Today's session** carries the long-term goals that shape it, as chips you can tap to
+  edit, and a line back to the last session you started and didn't save. **Routines** come next:
+  up to three of yours, favourites first, then the ones you played most recently, each with a play
+  button, its length, and its next reminder or how often you've practised it. **Exercises** are a
+  tile for each kind of drill you have, in the New exercise list's order; a tile opens just that
+  kind, with a **New** that skips choosing the kind. **Loops** are a tile per song. Swipe a shelf
+  sideways for more; **All** opens the whole library. The recent-routines row on Home has gone: the
+  Routines shelf does its job.
+- **The Exercises library lists kinds in the New exercise order**, not A to Z, with each kind's
+  icon in teal. The New exercise list loses its *Editor* badges and the note under the list.
 - **Hear is gone from the exercise editors, until there are real guitar sounds.** The scale,
   arpeggio, warm-up and picking-run editors, and Draw your own, no longer sound the run with the
   built-in tone. The board still walks the shape, and with **Animate exercises** off, **Watch** walks

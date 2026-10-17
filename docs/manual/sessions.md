@@ -134,7 +134,7 @@ to end, getting your picking faster, building a vocabulary to improvise with. Un
 Today's session, it stays put: you set it once and it keeps steering sessions until you mark it met.
 
 The ones you pick on the [first run](getting-started.md#the-first-run) start this list. They live
-in their own list, in **Practice ▸ Long-term goals**, and they are authored exactly like
+in their own list, in **Practice ▸ Edit goals**, and they are authored exactly like
 the goals above — same four starting points, same skill trimming, same target song, same **Mark as
 met**. What they do not have is a priority control, and what they do not have is a deadline.
 
@@ -155,8 +155,8 @@ your ranked list underneath, read-only.
 
 Whichever you pick, the other list **disappears from the screen** — the control above already says
 which one you are using, so leaving a greyed-out copy on screen would only be something to scroll
-past. Editing the long-term list still happens in **Practice ▸ Long-term goals**; the copy on
-Today's session is there to be read, not changed.
+past. Editing the long-term list still happens on the Practice hub — **Edit goals**, or a goal's
+chip on its Today's session card; the copy in the planner is there to be read, not changed.
 
 Like **Away from your instrument**, this resets each time. It is a decision about this afternoon,
 not a setting.
@@ -201,8 +201,9 @@ log, what you played, your note about it and any takes. Saving keeps the plan.
 
 ### Keeping one
 
-A session you started stays on Home — in **Recent routines**, and in **Jump back in** while it is
-the last thing you played — until you start the next one, which takes its place. You can run it
+A session you started stays at the bottom of the **Today's session** card in Practice, under its
+name and *Not saved yet* — and on Home in **Jump back in** while it is the last thing you played —
+until you start the next one, which takes its place. You can run it
 again from there as often as you like. To keep it for good, save it at either of two moments:
 
 - **Save as a routine**, on **Session complete**, just above **Done**.
