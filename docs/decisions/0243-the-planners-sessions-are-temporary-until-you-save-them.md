@@ -6,6 +6,10 @@
   real routines is still owed. Notes on what the build learned are marked *Built:* in D3 (why the
   one save has to be the sandbox's) and D8 (where the archive filter lives).
 - **Date:** 2026-10-02
+- **Amended by:** ADR 0257 (2026-10-17) — **D2**: Home's Recent routines rail is gone, so its row
+  leaves the table; Jump back in and the new Today's session card on Practice show a temporary
+  session. **D4**: *any time later* now reaches the session's screen from a line on that card (its
+  name over *Not saved yet · ~N min · when*) instead of from the rail. The rest stands.
 - **Amends:** ADR 0072 — its *First surface* has the Quick session materialise "a real `Routine`" and
   hand it to the player. It still does, but that routine is now **temporary** (D2) and reaches
   Routines only if it is saved (D4). The same now holds for Today's session, which came after 0072

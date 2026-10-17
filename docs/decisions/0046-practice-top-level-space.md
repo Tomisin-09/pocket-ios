@@ -2,6 +2,10 @@
 
 - **Status:** Accepted (architecture); built in phases — **Phase A and Phase B built**; Phase C (planner) is V2, not yet built
 - **Date:** 2026-06-27
+- **Amended by:** ADR 0257 (the Practice hub is shelves, 2026-10-17) — §1's two ways in become four
+  shelves: Today's session, Routines, Exercises and Loops, each one fixed-height row with an *All N*
+  link to its library. The words *Your units* leave the screen. The planner still nests inside
+  Practice (§3) and the unit aggregation (§2) is unchanged.
 - **Amended by:** ADR 0128 (one insert path, 2026-07-30) — the *single creation path* below held for
   the derivation (`Exercise.commandAnchored`) but not for the insert: the library's **+** and the
   metronome automator's **Save as exercise** each inserted on their own, and the automator silently
