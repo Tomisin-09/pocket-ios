@@ -125,7 +125,13 @@ struct ImproviseSheet: View {
         _player = State(initialValue: .improvising(over: loop))
     }
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.improvise, presentation: .modal) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         NavigationStack {
             ImproviseView(loop: loop, player: player, recorder: recorder,
                           routineContext: nil)

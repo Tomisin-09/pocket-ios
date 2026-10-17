@@ -3,9 +3,10 @@ import SwiftUI
 /// When the routine editor's blocks can be **added, removed and reordered**. Split into its own file
 /// to keep `RoutineDetailView.swift` under the 400-line cap.
 ///
-/// This was `RoutineDetailView+Access`, the editor's entitlement seam. Red Moon is free (ADR 0237),
-/// so the entitlement half is gone and what is left is what these properties were always really
-/// about: edit mode, and a provisional generated session.
+/// This was `RoutineDetailView+Access`, the editor's entitlement seam. The entitlement half went
+/// with ADR 0237 and did not come back with the plan: since ADR 0256 the whole screen gates itself
+/// (`PlanGated`), so what is left here is what these properties were always really about: edit
+/// mode, and a provisional generated session.
 extension RoutineDetailView {
     /// Whether the block-adding affordances (add unit / insert rest, empty-routine hint) show. True
     /// in edit mode **and** on a provisional generated session (`!existsInStore`) — a generated

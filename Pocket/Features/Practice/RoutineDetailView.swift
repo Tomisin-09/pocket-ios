@@ -152,7 +152,13 @@ struct RoutineDetailView: View {
     // ADR 0118) before the single Save commits it — while drag-reorder needs edit mode on a stored
     // routine.
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.routine) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         List {
             // The routine's own words — its name and what the session is for (ADR 0177). Both live
             // in `RoutineDetailView+Prose.swift` and share one edit gate: edit mode, or a

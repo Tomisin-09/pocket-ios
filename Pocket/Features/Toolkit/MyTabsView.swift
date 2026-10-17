@@ -17,7 +17,13 @@ struct MyTabsView: View {
 
     private var visible: [WrittenTab] { tabs.filter { !rowDeletion.isPending($0.uid) } }
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.myTabs) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         Group {
             if visible.isEmpty { emptyState } else { list }
         }

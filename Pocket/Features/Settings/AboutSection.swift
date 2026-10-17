@@ -138,13 +138,13 @@ struct AboutSection: View {
 
     /// Apple's standard Licensed Application End User License Agreement — the licence that
     /// governs use of the app when we ship no custom terms. A valid compile-time literal.
-    private static let appleStandardEULA =
+    static let appleStandardEULA =
         URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
 
     /// Red Moon Practice's privacy policy. Points at the live section on the Deco Operations
     /// site. When the standalone page ships (docs/site/redmoon-privacy.html), repoint this at
     /// its dedicated URL. A valid compile-time literal.
-    private static let privacyPolicy =
+    static let privacyPolicy =
         URL(string: "https://decooperations.co.uk/privacy#red-moon-practice")!
 
     /// The App Store's **write a review** sheet for Red Moon (ADR 0214).

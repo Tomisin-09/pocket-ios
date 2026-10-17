@@ -27,6 +27,9 @@ struct HomeView: View {
     /// a service type keep one; what it would be keeping is a handle to an environment that has since
     /// been rebuilt. Non-private because `HomeView+ProfileMoment` fires the ladder's last rung.
     @Environment(\.requestReview) var requestReview
+    /// Red Moon's plan (ADR 0256), read for the locks on the gated doors. The doors themselves don't
+    /// read it: each screen behind one carries its own gate.
+    @Environment(PlanStore.self) var plan: PlanStore?
     /// The mailbox `AppDelegate` posts a tapped reminder's routine into (ADR 0186 D6). A shared
     /// instance rather than an environment value because the delegate that fills it lives outside
     /// the SwiftUI environment entirely; `@Observable` still tracks it from here.

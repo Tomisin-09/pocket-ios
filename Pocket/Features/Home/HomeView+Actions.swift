@@ -26,6 +26,7 @@ extension HomeView {
         NavigationLink { PlannerView() } label: { startTodaySessionLabel }
         .buttonStyle(.plain)
         .accessibilityLabel("Start today's session")
+        .planLockedValue(plan.showsPlanLocks)
         .accessibilityHint("A fresh session generated from your goals and practice history")
     }
 
@@ -43,7 +44,8 @@ extension HomeView {
                     .foregroundStyle(PocketColor.background.opacity(0.85))
             }
             Spacer(minLength: 8)
-            Image(systemName: "chevron.right")
+            // The chevron says "goes somewhere"; the lock says where it goes is the plan's (ADR 0256 D3).
+            Image(systemName: plan.showsPlanLocks ? "lock.fill" : "chevron.right")
                 .font(.futura(.footnote, weight: .semibold))
                 .foregroundStyle(PocketColor.background.opacity(0.85))
         }

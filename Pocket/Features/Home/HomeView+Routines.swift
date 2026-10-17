@@ -28,8 +28,12 @@ extension HomeView {
                             RoutineDetailView(container: context.container, existing: routine)
                         } label: {
                             RecentRoutineCard(routine: routine)
+                                .overlay(alignment: .topTrailing) {
+                                    if plan.showsPlanLocks { PlanLockBadge().padding(10) }
+                                }
                         }
                         .buttonStyle(.plain)
+                        .planLockedValue(plan.showsPlanLocks)
                     }
                 }
             }

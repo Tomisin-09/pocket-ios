@@ -89,7 +89,13 @@ struct LoopRunView: View {
     }
     private var title: String { loop.name.isEmpty ? "Loop" : loop.name }
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.loopTrainer) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         // The wrapper is what lets the running note card scroll clear of the keyboard (N5) — the
         // composer is nested two levels down and reaches its scroll container through the environment.
         KeyboardFollowingScroll {

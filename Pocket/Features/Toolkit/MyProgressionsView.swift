@@ -12,7 +12,13 @@ struct MyProgressionsView: View {
 
     @AppStorage(AppSettings.Key.accidentalPreference) private var accidentalRaw = NoteSpelling.default.rawValue
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.myProgressions) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         Group {
             if progressions.isEmpty { emptyState } else { list }
         }

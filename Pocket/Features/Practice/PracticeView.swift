@@ -25,7 +25,13 @@ struct PracticeView: View {
     /// SwiftData optional `#Predicate`, which starves the main thread; see `PracticeRunUITests`).
     private var measuredLoopCount: Int { allLoops.lazy.filter { $0.commandTempo != nil }.count }
 
+    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
+    /// until the plan is on.
     var body: some View {
+        PlanGated(.practice) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         List {
             Section {
                 plannerCard
