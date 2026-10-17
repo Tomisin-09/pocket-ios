@@ -258,7 +258,7 @@ Verbatim on the wall, in the App Store description and on the site:
   Glossary open, and Practice and the Journal show the wall. 0237 D2's complaint was that the locked
   branch was the one no test ran, and that test is the answer. The override exists only in Debug
   builds.
-- **The developer's phone has the plan** (added 2026-10-17, `pocket-371`). `scripts/run-device.sh`
+- **The developer's phone has the plan** (added 2026-10-17, on `pocket-368`). `scripts/run-device.sh`
   builds with the `PLAN_UNLOCKED` compilation condition, and `PlanStore` then starts on Pay once
   without asking StoreKit, as it does under `-uiTesting`. The condition is read only inside
   `#if DEBUG`, so an archive, which is Release, can't carry it, and D7 still holds: TestFlight grants
