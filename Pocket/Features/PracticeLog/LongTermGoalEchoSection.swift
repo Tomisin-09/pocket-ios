@@ -14,7 +14,7 @@ import SwiftUI
 /// when something serving the goal was last practised. Never *"3 of 5 skills covered"*, a
 /// percentage, a bar, an ETA or a "behind" state — `PracticeLog` states the reason plainly:
 /// *"a denominator states a target, and a target is habit-pressure under another name."* The
-/// register is the milestone wall's: a wall you pass, not a ladder you're being timed on.
+/// register is of something you pass, not a ladder you're being timed on.
 ///
 /// Its own view, with its own queries, rather than an extension on `PracticeLogView` — that
 /// screen is already near the file-length cap, and the attribution here needs the song library and
@@ -78,8 +78,8 @@ struct LongTermGoalEchoSection: View {
     }
 
     /// Skills, then when something serving this goal was last practised. **"Not yet" is the honest
-    /// answer and it is not a reproach** — it is the same neutral register an unreached hour
-    /// milestone uses. Nothing here says *by when*.
+    /// answer and it is not a reproach** — a fact about where things stand, in a neutral register.
+    /// Nothing here says *by when*.
     private func factLine(for goal: LongTermGoal, reading: LongTermGoalReading?) -> String {
         let count = reading?.skillCount ?? goal.skillIDs.count
         let skills = count == 1 ? "1 skill" : "\(count) skills"

@@ -200,7 +200,7 @@ enum PracticeLog {
         /// the seconds instead made the two disagree on screen: a lifetime ten seconds short of two
         /// hours rounds to "120 minutes" in the month section and floored to "1 hour" right below it,
         /// which reads as all-time being *smaller* than the month inside it. Same input, one rounding
-        /// rule, one answer. The cost is that a milestone can light up to 30 seconds early — far
+        /// rule, one answer. The cost is that the hour can tick over up to 30 seconds early — far
         /// cheaper than a headline that contradicts the section above it.
         var hours: Int { minutes / 60 }
         /// Minutes past the whole hour, for the "2 hours 55 minutes" reading. Hours alone discard up

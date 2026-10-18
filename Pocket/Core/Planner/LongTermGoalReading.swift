@@ -1,8 +1,8 @@
 import Foundation
 
 /// What the **read-only Progress echo** says about one long-term goal (ADR 0171 D7) — facts, in the
-/// `PracticeProgress.hourMilestones` register: *"a wall you pass rather than a ladder you're being
-/// timed on."*
+/// register of something you pass rather than a ladder you're being timed on: nothing says *by
+/// when*, and "not yet" is neutral, not outstanding.
 ///
 /// **What is deliberately absent is the design.** There is no "3 of 5 skills covered", no
 /// percentage, no bar, no ETA and no "behind" state, because `PracticeLog` is blunt about why —
