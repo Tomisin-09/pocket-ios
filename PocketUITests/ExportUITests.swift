@@ -48,7 +48,7 @@ final class ExportUITests: UITestCase {
         assertShareSheetOpens(showing: NSPredicate(format: "label ENDSWITH %@", ".m4a"), in: app)
     }
 
-    /// Song details › Audio offers **Export audio file only…** for a song Red Moon holds a copy of, and
+    /// Song details › Audio file offers **Export audio file only…** for a song Red Moon holds a copy of, and
     /// it reaches the share sheet. The starter track is that song: it ships in the app, is the author's
     /// own recording, and arrives by one tap on a fresh install (ADR 0219).
     @MainActor
@@ -64,12 +64,13 @@ final class ExportUITests: UITestCase {
         XCTAssertTrue(tap(card, until: title, in: app) || title.waitForExistence(timeout: Self.uiTimeout),
                       "the starter track didn't open")
 
-        // Holding the title on the practice screen opens Song details: the door one hold from where a
-        // song is heard (`SongAudioSection`).
+        // Holding the title on the practice screen opens Song details: the door a hold and a tap from
+        // where a song is heard (`SongAudioScreen`, ADR 0258).
         title.press(forDuration: 1.0)
+        openAudioFile(in: app)
 
         let export = app.buttons["Export audio file only…"]
-        XCTAssertTrue(reveal(export, in: app), "Song details › Audio has no Export audio file only…")
+        XCTAssertTrue(reveal(export, in: app), "Song details › Audio file has no Export audio file only…")
         export.tap()
 
         // A file URL's sheet names it without its extension, so this is the song's title.
@@ -136,7 +137,7 @@ final class ExportUITests: UITestCase {
         assertShareSheetOpens(showing: NSPredicate(format: "label ENDSWITH %@", ".pdf"), in: app)
     }
 
-    /// Song details › Audio › **Send this song…** opens the send screen, and **Send…** builds the pack and
+    /// Song details › Audio file › **Send this song…** opens the send screen, and **Send…** builds the pack and
     /// opens the share sheet on it (ADR 0236 D4, D8).
     @MainActor
     func testASongSendsAsAPackFromSongDetails() throws {
@@ -148,9 +149,10 @@ final class ExportUITests: UITestCase {
         XCTAssertTrue(tap(card, until: title, in: app) || title.waitForExistence(timeout: Self.uiTimeout),
                       "the starter track didn't open")
         title.press(forDuration: 1.0)
+        openAudioFile(in: app)
 
         let send = app.buttons["Send this song…"]
-        XCTAssertTrue(reveal(send, in: app), "Song details › Audio has no Send this song…")
+        XCTAssertTrue(reveal(send, in: app), "Song details › Audio file has no Send this song…")
         // Tapped until it takes: a tap on a row in this sheet is now and then dropped, settled or not.
         XCTAssertTrue(tap(send, until: app.navigationBars["Send this song"], in: app),
                       "the send screen didn't open")
@@ -218,6 +220,26 @@ final class ExportUITests: UITestCase {
         app.cells.element(boundBy: 0).swipeLeft()
         let delete = app.buttons["Delete Untitled tab"].firstMatch
         if delete.waitForExistence(timeout: 3) { delete.tap() }
+    }
+
+    /// Song details › **Audio file** (ADR 0258): the row that holds the file's two ways out. Its label
+    /// carries the file's format and size after the title, so it is matched by its start.
+    ///
+    /// Not `reveal`: since the sheet regrouped, this row is at or near the end of a sheet barely taller
+    /// than the screen, and the list can't scroll its last row 100 pt clear of the bottom. 40 pt is what
+    /// keeps the tap off the home indicator (the iOS 18 sliver), and a last row can always reach it.
+    @MainActor
+    private func openAudioFile(in app: XCUIApplication) {
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Audio file")).firstMatch
+        let floor = app.windows.firstMatch.frame.maxY - 40
+        for _ in 0..<6 {
+            if row.waitForExistence(timeout: 2), row.isHittable, row.frame.maxY < floor { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(row.exists && row.isHittable && row.frame.maxY < floor && settled(row),
+                      "Song details has no Audio file row clear of the bottom edge")
+        XCTAssertTrue(tap(row, until: app.navigationBars["Audio file"], in: app),
+                      "the Audio file screen didn't open")
     }
 
     /// Swipe until `element` exists and sits **wholly clear of the bottom edge**. A `List` in a sheet

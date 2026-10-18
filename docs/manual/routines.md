@@ -55,7 +55,7 @@ whole list back.
 a routine you start and abandon leaves nothing behind.
 
 <!-- shot: routines/editor | role: screen
-     | alt: The routine editor in edit mode, with the Name field, the Description, the numbered blocks and the estimated length
+     | alt: The routine editor in edit mode, with the Name field, the About section, the numbered blocks under Practise and the estimated length under Progress
      | state: Practice ▸ Routines ▸ + , three blocks added -->
 
 - **Name it** — the field at the top. Naming is what keeps it in your routines to run again.
@@ -310,16 +310,17 @@ offers a way through to iOS Settings, the footer reads **Not being delivered** i
 next time, and the days and time fade. The switch itself stays live, because turning a reminder off
 is the one thing you must always be able to do. Everything else works exactly as it did.
 
-A routine also carries a **Description** — what the session is for, in as many words as you like.
-It is the thing that will not fit in a name: who it is for, which week of the course it covers, why
-the blocks are in the order they are. It sits behind the same **Edit** gate as the blocks, so you
-read it at any time and change it with Edit, and **Save** keeps it. A routine you have not described
-shows no Description at all until you add one. The starter **Morning Routine** arrives with one.
+A routine also carries a description, under **About** — what the session is for, in as many words as
+you like. It is the thing that will not fit in a name: who it is for, which week of the course it
+covers, why the blocks are in the order they are. It sits behind the same **Edit** gate as the
+blocks, so you read it at any time and change it with Edit, and **Save** keeps it. A routine you
+have not described shows no About section at all until you add one. The starter **Morning Routine**
+arrives with one.
 
-A saved routine also carries **Where you learned it**, and this is the one that matters most: a
-course, a teacher's assignment, a book chapter belongs to a whole session rather than to any single
-drill in it. It sits behind the same **Edit** gate as the blocks — you can read the links at any
-time, and adding or removing one is a change you keep with **Save**. A block's preview shows the
+A saved routine also carries **References** (where you learned it), and this is the one that matters
+most: a course, a teacher's assignment, a book chapter belongs to a whole session rather than to any
+single drill in it. It sits behind the same **Edit** gate as the blocks — you can read the links at
+any time, and adding or removing one is a change you keep with **Save**. A block's preview shows the
 drill's own links too, read-only. See [Where you learned it](references.md).
 
 ## Handing one to somebody else

@@ -190,7 +190,8 @@ struct RoutineDetailView: View {
                     .onDelete(perform: blockDeleteAction)
                 }
             } header: {
-                Text(insertingRests ? "Tap where a rest goes" : "Blocks")
+                // *Practise* since ADR 0258: the categories every detail sheet shares.
+                Text(insertingRests ? "Tap where a rest goes" : "Practise")
             }
 
             // How long it is, when you last did it, how many times (ADR 0173). Lives in

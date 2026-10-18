@@ -32,14 +32,19 @@ extension RoutineDetailView {
 
     @ViewBuilder
     var lengthAndHistorySection: some View {
+        // Headed **Progress** (ADR 0258), the category the detail sheets share; it had no header.
         if existsInStore {
             Section {
                 if hasPlayableBlock { estimatedLengthRow }
                 RoutineHistoryRows(routineUID: routine.uid)
+            } header: {
+                Text("Progress")
             }
         } else if hasPlayableBlock {
             Section {
                 estimatedLengthRow
+            } header: {
+                Text("Progress")
             } footer: {
                 if let budgetHint {
                     Text(budgetHint)

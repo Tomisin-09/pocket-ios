@@ -158,28 +158,34 @@ starts collapsed.
 ### `Edit loop`
 
 <!-- shot: reference/loop-edit | role: screen
-     | alt: The top of the Edit loop sheet, showing Name, Favourite and Range with the Practice section beginning beneath them
+     | alt: The top of the Edit loop sheet, showing About with the name, Favourite, Type and Range, and the Practise section beginning beneath it
      | state: seeded library, Binta, loop "Chords" held, Edit loop, top of the sheet -->
 
-`Cancel` discards, `Done` keeps.
+`Cancel` discards, `Done` keeps, including what you change on the screens its rows open.
 
-- **`Name`**, and a `Favourite` star.
-- **`Range`** — the span as times, with `Adjust range on waveform` to go back and drag it.
-- **`Practice`** — `Mastery`, `Focus`, `Type` and `Command tempo`, each with an ⓘ. These four are
-  defined in [the app's own words](../terms.md).
-- **`Train your ear`** and **`Improvise`** — the two alternative ways to run this loop.
-- **`Watch it on the neck`** — once the loop's piece has a note on the neck: the lick on the neck, lit
-  as the loop plays. See [practice](practice.md#watch-it-on-the-neck).
-- **`Backing track`** — marks the span as something to solo over.
-- **`Journal`** — notes written against this loop, showing a count or `None`.
-- **`Where you learned it`** — links out to whatever explains this passage, with an `Add a link`
-  button. See [where you learned it](../references.md).
-- **`Works on`** — the skills this loop serves, so the goals that can bring it into a session.
-  `Add skills` states them, from the whole catalogue or your own. A tag that names a kind of drill
-  adds that kind's skills too, each saying which tag it came from, and they go when the tag does.
-- **`Tags`** — your own labels, plus a row of suggestions.
-- **`Colour`** — how the span is drawn on the waveform, including `Custom colour`.
-- **`Delete loop`** at the bottom.
+- **`About`** — the name, a `Favourite` star, `Type` (with its ⓘ) and **`Range`**, the span as
+  times. Tap `Range` for `Adjust range on waveform`, to go back and drag it, and **`How it got here`**
+  once the range has changed.
+- **`Practise`** — `Practice now` (once the loop has a command tempo), **`Train your ear`**,
+  **`Watch it on the neck`** (once the loop's piece has a note on the neck: the lick on the neck,
+  lit as the loop plays; see [practice](practice.md#watch-it-on-the-neck)), **`Improvise`**, and the
+  **`Backing track`** switch, which marks the span as something to solo over.
+- **`Progress`** — `Mastery`, `Command tempo` and `Focus`, each with an ⓘ, defined in
+  [the app's own words](../terms.md); then **`Journal`**, notes written against this loop, showing a
+  count or `None`.
+
+The rest is behind a row each:
+
+- **`References`** — **`Where you learned it`**: links out to whatever explains this passage, with
+  an `Add a link` button. See [where you learned it](../references.md).
+- **`Works on & tags`** — **`Works on`**: the skills this loop serves, so the goals that can bring
+  it into a session. `Add skills` states them, from the whole catalogue or your own. A tag that names
+  a kind of drill adds that kind's skills too, each saying which tag it came from, and they go when
+  the tag does. **`Tags`**: your own labels, plus a row of suggestions.
+- **`Colour`** — how the span is drawn on the waveform, including `Custom colour`. The row shows the
+  colour, and says `Auto` when it follows the loop's place in the song.
+
+`Delete loop` is at the bottom.
 
 ### The loop automator
 

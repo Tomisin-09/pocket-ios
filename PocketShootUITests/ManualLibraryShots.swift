@@ -81,20 +81,23 @@ final class ManualLibraryShots: ManualShotCase {
         tap(app.buttons["Details"], labelled: "Details",
             revealing: app.navigationBars["Song details"], called: "the Song details sheet")
 
-        // The File row's value, `WAV ·`, and not just the row: `SongAudioLabel.describe` returns
-        // `Missing` for a song with no copy behind it, and the row is present and correct-looking either
-        // way. The size is left off because it moves with the seed audio; the format does not.
-        //
-        // **Asserted in the tree, not in the frame**, since ADR 0250 D9 gave the facts card a Slowest
-        // loop row: the File row now sits half under the bottom edge, below Map the song (ADR 0232).
-        // The frame is about the facts card, so the rows it must hold are the two D9 added.
-        let format = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label BEGINSWITH %@", "WAV ·")).firstMatch
-        XCTAssertTrue(format.exists, "the File row doesn't read `WAV ·` — is Feels missing its file?\n\(stepLog)")
+        // The header's mastery line carries the rating and the speed side by side (ADR 0250 D8); the
+        // Slowest loop row itself is one tap down, on Progress (ADR 0258).
         capture(app, slug: "reference/song-details",
                 assertingOnScreen: "Song details",
-                alsoRequiring: ["1 of 1 loop rated", "Slowest loop", "Chorus lift · 75%", "Map the song"],
+                alsoRequiring: ["Map the song"],
                 orBeginningWith: ["Feels"])
+
+        // The Audio file row's value, `WAV ·`, and not just the row: `SongAudioLabel.describe` returns
+        // `Missing` for a song with no copy behind it, and the row is present and correct-looking either
+        // way. The size is left off because it moves with the seed audio; the format does not. Checked
+        // after the frame, scrolled to: since ADR 0258 the row is below the fold, and a list builds a row
+        // only as it nears the screen. Matched with CONTAINS: the value rides in the row's label.
+        app.swipeUp()
+        let format = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "WAV ·")).firstMatch
+        XCTAssertTrue(format.waitForExistence(timeout: Self.shootTimeout),
+                      "the Audio file row doesn't read `WAV ·` — is Feels missing its file?\n\(stepLog)")
     }
 
     /// `reference/song-edit` · `songs/song-edit` — the Edit song sheet, top and scrolled.

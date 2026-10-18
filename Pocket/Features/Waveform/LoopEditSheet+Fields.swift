@@ -2,7 +2,8 @@ import SwiftData
 import SwiftUI
 
 // `LoopEditSheet`'s field-building sections, split into this file to keep each file under the
-// 400-line cap (the sheet's core lives in `WaveformEditSheets.swift`).
+// 400-line cap (the sheet's core lives in `WaveformEditSheets.swift`): **Practise** and **Progress**
+// (ADR 0258). The rows that open a screen are in `+Categories`.
 extension LoopEditSheet {
 
     // MARK: - Journal (ADR 0067 / 0088)
@@ -10,35 +11,31 @@ extension LoopEditSheet {
     /// The loop's practice journal — now **authorable** from here (ADR 0088, reversing 0058's
     /// waveform read-only), so a song loop can be journalled without launching a run; moved off the
     /// waveform loop row into settings (ADR 0067). The row reads simply **Journal**, with the count
-    /// as the unrated-style absence signal (ADR 0039): "None" until there's something to see.
-    var journalSection: some View {
-        Section("Journal") {
-            Button {
-                showingJournal = true
+    /// as the unrated-style absence signal (ADR 0039): "None" until there's something to see. The last
+    /// row of Progress since ADR 0258, where it was a section of its own.
+    private var journalRow: some View {
+        Button {
+            showingJournal = true
+        } label: {
+            LabeledContent {
+                Text(loop.journal.isEmpty ? "None" : "\(loop.journal.count)")
+                    .foregroundStyle(PocketColor.textSecondary)
             } label: {
-                LabeledContent {
-                    Text(loop.journal.isEmpty ? "None" : "\(loop.journal.count)")
-                        .foregroundStyle(PocketColor.textSecondary)
-                } label: {
-                    Label("Journal", systemImage: "book.closed")
-                }
+                Label("Journal", systemImage: "book.closed")
             }
-            .accessibilityLabel(loop.journal.isEmpty
-                                ? "Journal, no entries"
-                                : "Journal, \(loop.journal.count) "
-                                    + "entr\(loop.journal.count == 1 ? "y" : "ies")")
         }
+        .accessibilityLabel(loop.journal.isEmpty
+                            ? "Journal, no entries"
+                            : "Journal, \(loop.journal.count) "
+                                + "entr\(loop.journal.count == 1 ? "y" : "ies")")
     }
 
-    // MARK: - Practice fields (ADR 0036)
+    // MARK: - Practise: the ways to play it (ADR 0258)
 
-    var practiceSection: some View {
-        Section("Practice") {
-            masteryRow
-            masteryReadingRow
-            focusRow
-            typeRow
-            commandTempoRow
+    /// The four ways to play this loop, out of the fields they used to sit among, and the Backing track
+    /// switch beside Improvise, whose shelf it puts the loop on.
+    var practiseSection: some View {
+        Section {
             // "Practice now" (ADR 0082): appears once a command tempo is set — the same gate that
             // surfaces a loop into Practice → Loops — so setting a command tempo both makes the loop a
             // practice item and reveals the launch. Commits edits (writeEdits) so the just-set value
@@ -60,6 +57,27 @@ extension LoopEditSheet {
             // not a measured target, and shown on **every** loop: the flag governs where the loop is
             // *resurfaced*, not permission to jam over the one you're looking at.
             improviseButton
+            backingTrackRow
+        } header: {
+            Text("Practise")
+        } footer: {
+            // Names the switch it advises on: under the launches, advice that began "Mark a section…"
+            // would read as being about all of them (ADR 0135's reason for a section of its own).
+            Text("Turn on Backing track for a section you want to solo over. It'll show up under Backing "
+                + "tracks in your loops library, with an Improvise button on its row. Works best over a "
+                + "whole number of bars, with no vocal.")
+        }
+    }
+
+    // MARK: - Progress fields (ADR 0036)
+
+    var progressSection: some View {
+        Section("Progress") {
+            masteryRow
+            masteryReadingRow
+            commandTempoRow
+            focusRow
+            journalRow
         }
     }
 
@@ -68,36 +86,35 @@ extension LoopEditSheet {
     /// The toggle's scroll anchor, for the backing-track hint (ADR 0220 D4).
     static let backingTrackRowID = "loop-edit-backing-track"
 
-    /// The backing-track flag and its guidance. Its **own** section because the caption is advice
-    /// about this one claim — a footer under Practice would read as applying to mastery, focus and
-    /// command tempo as well.
+    /// The backing-track flag, the last row of Practise (ADR 0258); its guidance is that section's
+    /// footer, which names it.
     ///
     /// The copy is deliberately *musical*, not technical: the audio seam already crossfades, so there
     /// is no click to warn about; what ruins a bed is a phrase that lands mid-bar or resolves where
     /// the next repeat can't follow. And it is **advice** — the app verifies nothing about the claim
     /// (B4a), so the wording must not imply that it does.
-    var backingTrackSection: some View {
-        Section {
-            Toggle(isOn: $isBackingTrack) {
-                Label("Backing track", systemImage: "guitars")
+    private var backingTrackRow: some View {
+        Toggle(isOn: $isBackingTrack) {
+            // The icon in the secondary grey: it is a setting among launches, and right under Improvise's
+            // teal guitars the system blue it fell back to read as a mistake (pocket-369 screenshot).
+            Label {
+                Text("Backing track")
+            } icon: {
+                Image(systemName: "guitars").foregroundStyle(PocketColor.textSecondary)
             }
-            .tint(PocketColor.practice)
-            .accessibilityHint("Shows this loop on the backing-tracks shelf in your loops library")
-            // Rung until it is switched on, while the first session's hint points here (ADR 0220 D4).
-            .overlay {
-                if pointsAtBackingTrack && !isBackingTrack {
-                    HintRing(color: PocketColor.practice,
-                             shape: RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        .padding(.horizontal, -10)
-                        .padding(.vertical, -6)
-                }
-            }
-            .id(Self.backingTrackRowID)
-        } footer: {
-            Text("Mark a section you want to solo over. It'll show up under Backing tracks in your "
-                + "loops library, with an Improvise button on its row. Works best over a whole "
-                + "number of bars, with no vocal.")
         }
+        .tint(PocketColor.practice)
+        .accessibilityHint("Shows this loop on the backing-tracks shelf in your loops library")
+        // Rung until it is switched on, while the first session's hint points here (ADR 0220 D4).
+        .overlay {
+            if pointsAtBackingTrack && !isBackingTrack {
+                HintRing(color: PocketColor.practice,
+                         shape: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .padding(.horizontal, -10)
+                    .padding(.vertical, -6)
+            }
+        }
+        .id(Self.backingTrackRowID)
     }
 
     private var practiceNowButton: some View {
@@ -153,7 +170,7 @@ extension LoopEditSheet {
     /// an interactive `Picker`/`Menu`, which in a `LabeledContent` value slot needs multiple taps and
     /// won't commit at this sheet's partial detent (device bug 2026-07-10). Each dialog Button's explicit
     /// `loopType =` write always lands; ⓘ stays in the independently-tappable label slot.
-    private var typeRow: some View {
+    var typeRow: some View {
         LabeledContent {
             Button(loopType.label) { showingTypeOptions = true }
                 .foregroundStyle(PocketColor.textSecondary)
@@ -285,66 +302,6 @@ extension LoopEditSheet {
                 }
             }
         }
-    }
-
-    // MARK: - Tags (ADR 0034)
-
-    /// The loop's descriptive tags: those already applied render as removable `selected` chips in a
-    /// wrapping cloud; below sits an add field and `suggestion` chips drawn from tags used on any
-    /// loop in the library (the convergence mechanism). One vocabulary, add/remove symmetric (ADR 0034).
-    var tagsSection: some View {
-        Section("Tags") {
-            if !tags.isEmpty {
-                FlowLayout(spacing: 6) {
-                    ForEach(tags, id: \.self) { tag in
-                        TagChip(text: tag, style: .selected) {
-                            tags.removeAll { $0 == tag }
-                        }
-                    }
-                }
-                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
-            }
-            HStack {
-                TextField("Add a tag", text: $newTag)
-                    .submitLabel(.done)
-                    .onSubmit(addTag)
-                Button("Add", action: addTag)
-                    .disabled(Labels.canonical(newTag) == nil)
-            }
-            // The ✨ skill-bucket chips that used to sit here are gone (ADR 0216 D6): Works on above
-            // says what a loop is for directly. A tag that spells a kind of drill still counts
-            // (ADR 0074) — it just isn't the way in any more.
-            if !tagSuggestions.isEmpty {
-                tagSuggestionChips
-            }
-        }
-    }
-
-    /// Tappable chips of tags used on other loops — tap to add; horizontally scrolling since long.
-    private var tagSuggestionChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 6) {
-                ForEach(tagSuggestions, id: \.self) { suggestion in
-                    TagChip(text: suggestion, style: .suggestion) {
-                        tags = Labels.adding(suggestion, to: tags)
-                    }
-                }
-            }
-        }
-        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-    }
-
-    /// Distinct, normalised tags used across every loop in the library, excluding those already on
-    /// this loop. `Labels.suggestions` does the distinct/normalise/exclude/sort (shared, ADR 0034).
-    private var tagSuggestions: [String] {
-        Labels.suggestions(from: tagPool, excluding: tags)
-    }
-
-    /// Canonicalise and de-dup case-insensitively through the shared normaliser (ADR 0034,
-    /// reusing ADR 0033's machinery) so the tag set never fragments into needs-work / Needs-work.
-    private func addTag() {
-        tags = Labels.adding(newTag, to: tags)
-        newTag = ""
     }
 }
 

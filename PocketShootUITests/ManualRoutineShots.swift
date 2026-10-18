@@ -49,7 +49,9 @@ final class ManualRoutineShots: ManualShotCase {
         // satisfy its own caption is a figure of somewhere the reader never is.
         capture(app, slug: "routines/editor",
                 assertingOnScreen: "Routine",
-                alsoRequiring: ["Name", "Description", "Blocks"],
+                // The headers the detail sheets share since ADR 0258: About was Description, Practise
+                // was Blocks.
+                alsoRequiring: ["Name", "About", "Practise"],
                 orBeginningWith: ["Estimated length"])
 
         // A block tap opens the reps editor (ADR 0076). It is a detent sheet with no navigation bar,

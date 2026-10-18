@@ -103,31 +103,35 @@ Hold a row for `Details`, `Edit` and `Delete`. There is no delete swipe here, an
 A read-only summary, with `Edit` in its toolbar.
 
 <!-- shot: reference/song-details | role: screen
-     | alt: The Song details sheet showing the title and artist, an empty Notes section, key, tempo, mastery with how many loops are rated, the slowest loop and length, Map the song, and the top of the Audio section
+     | alt: The Song details sheet showing the title and artist with the key, tempo and length on one line and the mastery under it, an empty About section, Practise with Map the song, and the Progress, References, Audio file and Collections rows
      | state: seeded library, song "Feels", Details from the row hold menu -->
 
-- The title, artist, and album with its year.
-- `Notes` — free text about the song, with `Edit notes`.
-- `Key`, `Tempo`, `Mastery` (with its ⓘ, and how many loops are rated), `Slowest loop` (when a loop
-  has a command tempo) and `Length`.
-- `Map the song` — *your loops laid out where they play, section by section*. See
-  [mapping the song](../songs.md#mapping-the-song).
-- **`Audio`** — the `File` row, which reads *Missing* when the audio no longer resolves, and
-  `Replace audio file…` beneath it. The app's own words for what that does: *Points this song at a
-  different file — for a song whose audio is missing, or one linked to the wrong track. Your loops,
-  markers, takes and practice history all stay with the song.* Under it, `Send this song…` opens
-  `Send this song` (`Sent as`, `Goes with it`, `Stays with you`, with `Cancel` and `Send…` in the bar),
-  and `Export audio file only…` opens the share sheet on the file itself, as you imported it — *for a
-  DAW or another device*. Neither is offered until Red Moon holds its own copy of the song, which an
-  older linked song gets the first time it plays. A song someone sends you opens on `Add this song?`,
-  with `Cancel` and `Add`.
-- `Collections`.
-- **`Where you learned it`** — links out to the transcription or breakdown you worked from, with an
-  `Add a link` button. See [where you learned it](../references.md).
-- **`Exercises for this song`** — drills linked to it, each opening its run screen when tapped and
-  unlinking on a swipe, with `Link exercises` and `Build a routine for this song`. Empty, it reads
-  *No drills linked yet — link the exercises that help you play this song.*
-- **`Practice stats`** — counts of `Loops`, `Markers` and `Annotations`.
+- The title, artist, and album with its year. Under them, the key, tempo and length on one line
+  and, once the song has a loop, its mastery dots, how many loops are rated and the slowest loop's
+  speed.
+- `About` — free text about the song, with `Edit notes`.
+- **`Practise`** — `Map the song`, *your loops laid out where they play* (see
+  [mapping the song](../songs.md#mapping-the-song)), then the drills linked to the song, each
+  opening its run screen when tapped and unlinking on a swipe, with `Link exercises` and
+  `Build a routine for this song`. With none linked it reads *No drills linked yet.*
+
+The rest is behind a row each, and each row says what is behind it:
+
+- **`Progress`** — how many loops the song has. Inside: `Mastery`, with how many loops are rated,
+  and `Slowest loop` (when a loop has a command tempo), then **`Practice stats`**: counts of
+  `Loops`, `Markers` and `Annotations`.
+- **`References`** — **`Where you learned it`**: links out to the transcription or breakdown you
+  worked from, with an `Add a link` button. See [where you learned it](../references.md).
+- **`Audio file`** — the file's format and size, or *Missing* when the audio no longer resolves.
+  Inside: the `File` row and `Replace audio file…` beneath it. The app's own words for what that
+  does: *Points this song at a different file — for a song whose audio is missing, or one linked to
+  the wrong track. Your loops, markers, takes and practice history all stay with the song.* Under
+  them, `Send this song…` opens `Send this song` (`Sent as`, `Goes with it`, `Stays with you`, with
+  `Cancel` and `Send…` in the bar), and `Export audio file only…` opens the share sheet on the file
+  itself, as you imported it — *for a DAW or another device*. Neither is offered until Red Moon holds
+  its own copy of the song, which an older linked song gets the first time it plays. A song someone
+  sends you opens on `Add this song?`, with `Cancel` and `Add`.
+- **`Collections`** — their names. Shown only when the song is in one.
 
 ### `Edit song`
 

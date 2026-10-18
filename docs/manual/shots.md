@@ -45,7 +45,7 @@ marker grammar in [README.md](README.md).
 | `looping/ab-forming` | `band` | `looping` | seeded library, Binta, playing, loop start dropped, end not set |  |
 | `looping/automator` | `screen` | `looping` | seeded library, Binta, loop "Chords", automator open |  |
 | `looping/loop-active` | `band` | `looping` | seeded library, Binta, loop "Chords" active and repeating |  |
-| `looping/loop-edit-practice` | `panel` | `looping` | seeded library, Binta, loop "Chords" edit sheet, scrolled to Practice |  |
+| `looping/loop-edit-practice` | `panel` | `looping` | seeded library, Binta, loop "Chords" edit sheet, scrolled to Progress |  |
 | `looping/multi-select` | `panel` | `looping` | seeded library, Binta, Loops panel header held, two loops selected |  |
 | `looping/speed-bar` | `band` | `looping` | seeded library, Binta, speed reduced below 100% |  |
 | `looping/tempo-editor` | `screen` | `looping` | seeded library, Binta, tempo editor open |  |
@@ -84,7 +84,7 @@ marker grammar in [README.md](README.md).
 | `reference/tuner` | `screen` | `tools-and-journal` | Toolkit ▸ Tuner, microphone allowed | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 | `reference/watch-on-neck` | `screen` | `practice` | map seed, Slow Bend ▸ Verse riff ▸ Edit loop ▸ Watch it on the neck, stopped |  |
 | `references/editor` | `screen` | `references` | seeded library, an exercise detail sheet, Add a link tapped |  |
-| `references/section` | `panel` | `references` | seeded library, an exercise detail sheet with two links and one picture saved, one link carrying a note, scrolled to the section |  |
+| `references/section` | `panel` | `references` | seeded library, an exercise detail sheet ▸ References, with two links and one picture saved, one link carrying a note |  |
 | `routines/block-done` | `screen` | `routines` | seeded library, a routine mid-session, a block just finished |  |
 | `routines/block-record` | `detail` | `routines` | seeded library, Practice ▸ Routines ▸ Morning Routine, first block opened |  |
 | `routines/editor` | `screen` | `routines` | Practice ▸ Routines ▸ + , three blocks added |  |
@@ -106,7 +106,7 @@ marker grammar in [README.md](README.md).
 | `songs/library-row` | `detail` | `songs` | seeded library, Library screen, row "Feels" |  |
 | `songs/missing-audio` | `panel` | `songs` | seeded library, a song whose file cannot be found, opened for practice |  |
 | `songs/receive-song` | `screen` | `songs` | seeded library, a pack of Slow Bend from Jack Trader opened, before Add |  |
-| `songs/send-song` | `screen` | `songs` | seeded library, Feels played once, Song details ▸ Send this song… |  |
+| `songs/send-song` | `screen` | `songs` | seeded library, Feels played once, Song details ▸ Audio file ▸ Send this song… |  |
 | `songs/song-edit` | `screen` | `songs` | seeded library, song "Slow Bend", edit sheet open, scrolled to Collections |  |
 | `songs/song-map` | `screen` | `songs` | seeded song with sections, counted and named pieces, map open full screen |  |
 | `songs/song-tab` | `screen` | `songs` | seeded song with sections, counted and named pieces, map open full screen on Tab |  |

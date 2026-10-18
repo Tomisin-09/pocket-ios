@@ -110,7 +110,7 @@ def read(path):
 def strip_debug(text):
     """Drop `#if DEBUG` regions.
 
-    Load-bearing for C1: `SettingsView` has eleven `SettingsHubRow`s and only
+    Load-bearing for C1: `SettingsView` has eleven `HubRow`s and only
     ten of them ship. The eleventh is the Developer row (ADR 0162 D8), which no
     player can reach — requiring the manual to name it would be requiring a lie.
     """
@@ -210,8 +210,8 @@ def names_appear_in(names, target, owner):
 def check_c1():
     """The ten shipping Settings destinations are named in reference/settings.md."""
     text = strip_debug(read(os.path.join(SOURCE, "Features/Settings/SettingsView.swift")))
-    names = labelled_arguments(text, "SettingsHubRow", "title")
-    return names_appear_in(names, page("reference", "settings.md"), "SettingsHubRow (ADR 0162)")
+    names = labelled_arguments(text, "HubRow", "title")
+    return names_appear_in(names, page("reference", "settings.md"), "HubRow in SettingsView (ADR 0162)")
 
 
 def check_c2():

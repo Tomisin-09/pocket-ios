@@ -152,24 +152,24 @@ plays like Verse 1: the map heads it *as Verse 1*, so there's nothing to work ou
 
 Hold a loop's row to open **Edit loop**. It carries:
 
-- **Name** — what to call it, a colour, and a **Favourite** star.
-- **Range** — its start and end as times, and **Adjust range on waveform** to go back and drag the
-  ends.
-- **Practice** — **Type**, **Mastery**, **Focus** and **Command tempo**. These four are the app's
-  own vocabulary and are defined in [the app's own words](terms.md).
-- **Journal** — a note about this loop.
-- **Where you learned it** — links to whatever explains this passage. A loop is usually the most
-  specific thing to hang one on: the video covers *these* eight bars. See
+- **About** — what to call it, a **Favourite** star, its **Type**, and its **Range**: its start and
+  end as times. Tap **Range** for **Adjust range on waveform**, to go back and drag the ends.
+- **Practise** — the ways to play it, and **Backing track**, which marks the span as a bed to solo
+  over and files it under Backing tracks elsewhere in the app.
+- **Progress** — **Mastery**, **Command tempo** and **Focus**, and the loop's **Journal**. These and
+  Type are the app's own vocabulary, defined in [the app's own words](terms.md).
+- **References** — **Where you learned it**: links to whatever explains this passage. A loop is
+  usually the most specific thing to hang one on: the video covers *these* eight bars. See
   [Where you learned it](references.md).
-- **Backing track** — mark the span as a bed to solo over, which files it under Backing tracks
-  elsewhere in the app.
-- **Tags** — your own labels, for finding loops across songs later.
+- **Works on & tags** — what the loop works on, and your own labels, for finding loops across songs
+  later.
+- **Colour** — how it's drawn on the waveform.
 
 **Cancel** discards your changes; **Done** keeps them.
 
 <!-- shot: looping/loop-edit-practice | role: panel
-     | alt: The Practice section of the loop edit sheet showing Type, Mastery, Focus and Command tempo, each with an ⓘ
-     | state: seeded library, Binta, loop "Chords" edit sheet, scrolled to Practice -->
+     | alt: The Progress section of the loop edit sheet showing Mastery, Command tempo and Focus, each with an ⓘ, and the Journal row
+     | state: seeded library, Binta, loop "Chords" edit sheet, scrolled to Progress -->
 
 ## Working on several loops at once
 

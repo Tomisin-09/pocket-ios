@@ -65,8 +65,6 @@ struct ExerciseProgressSection: View {
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             }
-        } header: {
-            Text("Progress")
         } footer: {
             Text("How cleanly you own this drill — you set it, the app never scores you. The planner "
                  + "resurfaces well-learned drills over time on its own.")

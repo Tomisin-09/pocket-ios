@@ -95,7 +95,7 @@ extension RoutineDetailView {
             Section {
                 descriptionField
             } header: {
-                Text("Description")
+                Text("About")
             } footer: {
                 Text("A note to yourself about the session — saved with the routine.")
                     .font(.futura(.caption))
@@ -108,7 +108,7 @@ extension RoutineDetailView {
                     .foregroundStyle(PocketColor.textPrimary)
                     .listRowBackground(PocketColor.background)
             } header: {
-                Text("Description")
+                Text("About")
             }
         }
     }

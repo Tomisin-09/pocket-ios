@@ -4,6 +4,10 @@ import SwiftUI
 // Edit sheets for loops and markers (native system sheets), presented by tapping a row in the
 // Loops/Markers panels. They edit local copies and write straight to the @Model on Done (Cancel
 // discards), with an Undo snapshot handed back via `onSaved`.
+//
+// Edit loop is grouped in the categories every detail sheet shares (ADR 0258): **About**, **Practise**
+// and **Progress** on the sheet, and References, Works on & tags and Colour behind rows. Its
+// field-editing sections live in `LoopEditSheet+Fields.swift`, its rows in `+Categories`.
 
 struct LoopEditSheet: View {
     /// The persisted loop — edits apply straight to it on Done (so Cancel discards).
@@ -42,18 +46,12 @@ struct LoopEditSheet: View {
     // `@Query` of every `Loop`: this sheet opens over playing audio, and fetching (and
     // faulting) the whole loop table during presentation is what made that open feel slow.
     @State var tagPool: [String] = []
-    /// The skills the player made (ADR 0216 D7), for the Works on section's names and ⓘ text. A
-    /// `@Query` is fine here where one of every `Loop` was not: this table holds a handful of rows.
+    /// The skills the player made (ADR 0216 D7), for Works on's names and ⓘ text. A `@Query` is fine
+    /// here where one of every `Loop` was not: this table holds a handful of rows.
     @Query var customSkills: [CustomSkill]
-    /// The reference link being added or edited (ADR 0167). Held at this level, like the journal
-    /// sheet below it — a sheet presented from inside this `Form` dismisses *this* sheet instead of
-    /// opening. See `ReferenceLinkEditing`.
-    @State var editingReference: ReferenceLinkDraft?
-    /// The picture being viewed, or the picker being opened (ADR 0167 phase 2) — held here for the
-    /// same reason as `editingReference`: `.photosPicker` and `.fileImporter` are presentations too.
-    @State var referenceAttachments: ReferenceAttachmentPresentation?
     @State private var name: String
-    @State private var colorChoice: LoopColorChoice
+    /// Internal, not private: the Colour row in `+Categories` binds it.
+    @State var colorChoice: LoopColorChoice
     // Structured practice fields (ADR 0036 slice 3) — edited as local copies, written
     // back on Done so Cancel discards. Optional: `nil` = never set (ADR 0039).
     @State var mastery: Int?
@@ -68,18 +66,12 @@ struct LoopEditSheet: View {
     @State var tags: [String]
     // The skills the loop states (ADR 0216 D1) — local copy, written back on Done.
     @State var skillIDs: [String]
-    /// Whether the skills picker is up, and the working copy it edits (ADR 0216 D6). Presented from
-    /// `body` for `editingReference`'s reason.
-    @State var editingSkills = false
-    @State var skillOffered: [String] = []
-    @State var skillKept: Set<String> = []
     // The favourite pin (ADR 0119). It was only settable from the Loops library's star until
     // ADR 0125 gave the selection bar a bulk star — leaving the *single* loop you're already
     // editing as the one place you couldn't set it.
     @State private var isFavorite: Bool
     // The backing-track flag (ADR 0135) — a local copy like every other field, written on Done.
     @State var isBackingTrack: Bool
-    @State var newTag = ""
     // The loop's journal now lives here in settings (read-only), off the waveform row (ADR 0067).
     @State var showingJournal = false
     // "Train your ear" ear-training mode on this loop (ADR 0104) — ears-only playback + journal capture.
@@ -132,14 +124,6 @@ struct LoopEditSheet: View {
         return .auto
     }
 
-    /// True when the chosen custom colour is low-contrast on the dark background — an
-    /// advisory warning only; the colour is still allowed (ADR 0031).
-    private var lowContrast: Bool {
-        guard case .custom(let hex) = colorChoice, let color = HexColor.color(from: hex) else { return false }
-        return !ColorContrast.isLegible(foreground: HexColor.components(of: color),
-                                        background: HexColor.components(of: PocketColor.background))
-    }
-
     /// Write the picked choice back to the loop's colour fields (custom and palette are
     /// mutually exclusive; auto clears both).
     private func applyColorChoice() {
@@ -178,76 +162,46 @@ struct LoopEditSheet: View {
         applyColorChoice()
     }
 
+    /// What the loop is: its name, the pin, its type, and where it sits. The pin sits with the name, not
+    /// in Progress beside mastery: it changes where the loop is shown and feeds nothing (ADR 0119).
+    private var aboutSection: some View {
+        Section("About") {
+            ClearableTextField("Loop name", text: $name)
+            favouriteRow
+            typeRow
+            rangeRow
+        }
+    }
+
+    /// **The star is the control**, tapped on and off: a switch is the wrong weight for a one-bit pin,
+    /// and the filled star is the same glyph the libraries already use to mean "favourited."
+    private var favouriteRow: some View {
+        LabeledContent("Favourite") {
+            Button {
+                isFavorite.toggle()
+                haptic(.light)
+            } label: {
+                Image(systemName: isFavorite ? "star.fill" : "star")
+                    .font(.futura(.title3))
+                    .foregroundStyle(isFavorite ? PocketColor.practice : PocketColor.textSecondary)
+                    .frame(width: 44, height: 34)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isFavorite ? "Remove from favourites" : "Add to favourites")
+            .accessibilityAddTraits(isFavorite ? .isSelected : [])
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
-                Section("Name") {
-                    ClearableTextField("Loop name", text: $name)
-                    // A pin, not a grade (ADR 0119): it changes where the loop is shown — the
-                    // Loops library's Favourites filter — and feeds nothing. So it sits with
-                    // the name, not in Practice beside mastery and focus. **The star is the
-                    // control**, tapped on and off: a switch is the wrong weight for a
-                    // one-bit pin, and the filled star is the same glyph the libraries
-                    // already use to mean "favourited."
-                    LabeledContent("Favourite") {
-                        Button {
-                            isFavorite.toggle()
-                            haptic(.light)
-                        } label: {
-                            Image(systemName: isFavorite ? "star.fill" : "star")
-                                .font(.futura(.title3))
-                                .foregroundStyle(isFavorite ? PocketColor.practice
-                                                            : PocketColor.textSecondary)
-                                .frame(width: 44, height: 34)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(isFavorite ? "Remove from favourites" : "Add to favourites")
-                        .accessibilityAddTraits(isFavorite ? .isSelected : [])
-                    }
-                }
-                Section("Range") {
-                    LabeledContent("Loop") {
-                        Text("\(timecode(loop.startSeconds))–\(timecode(loop.endSeconds))")
-                            .font(.pocketMono(.body))
-                    }
-                    Button {
-                        dismiss()
-                        onAdjustRange()
-                    } label: {
-                        Label("Adjust range on waveform", systemImage: "slider.horizontal.below.rectangle")
-                    }
-                }
-                // How the span got where it is (ADR 0201), reading back what ADR 0199 records.
-                // Directly under Range because it is the same subject — where this loop sits, and
-                // how it came to sit there. Absent entirely until there is a history to show.
-                LoopSpanSection(loop: loop, onWiden: { start, end in
-                    dismiss()
-                    onWiden(start, end)
-                })
-                practiceSection
-                backingTrackSection
-                journalSection
-                // Where this passage is explained (ADR 0167). Beside the journal on purpose: both
-                // are things you read about the loop rather than settings you tune, and both write
-                // straight through rather than waiting for Done — a link is a discrete add, like a
-                // journal entry, not part of the local-copy edit Cancel discards.
-                ReferencesSection(owner: loop, accent: PocketColor.practice,
-                                  editing: $editingReference, presenting: $referenceAttachments)
-                // Directly above Tags, because a recognised tag still puts a skill here (ADR 0074)
-                // alongside the ones stated (ADR 0216 D6) — the two read as one subject.
-                worksOnSection
-                tagsSection
-                Section {
-                    LoopColorPicker(autoColor: autoColor, choice: $colorChoice)
-                } header: {
-                    Text("Colour")
-                } footer: {
-                    if lowContrast {
-                        Label("Low contrast on the dark background", systemImage: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                    }
-                }
+                aboutSection
+                // The four ways to play the loop, out of the fields they used to sit among, and the
+                // Backing track switch beside Improvise, whose shelf it puts the loop on (ADR 0258).
+                practiseSection
+                progressSection
+                categoriesSection
                 Section {
                     Button("Delete loop", role: .destructive) {
                         onDelete()
@@ -281,10 +235,6 @@ struct LoopEditSheet: View {
             }
         }
         .presentationDetents([.medium, .large])
-        .referenceLinkEditing($editingReference, owner: loop, accent: PocketColor.practice)
-        .referenceAttachments($referenceAttachments, naming: $editingReference, owner: loop,
-                              accent: PocketColor.practice)
-        .sheet(isPresented: $editingSkills, onDismiss: applyPickedSkills) { skillsPicker }
         .sheet(isPresented: $showingJournal) {
             // Authorable again from song loops (ADR 0088, reversing 0058's waveform read-only) —
             // the same `JournalWriter` path the Practice run screen uses, each entry snapshotting

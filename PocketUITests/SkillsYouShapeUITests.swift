@@ -72,6 +72,10 @@ final class SkillsYouShapeUITests: UITestCase {
     func testNarrowingADrillSaysSetByYouAndTheResetGoesBack() {
         let app = launchApp()
         openExerciseDetail(named: "Alternate Picking", in: app)
+        // Works on is one tap down since ADR 0258, on Feel & skills; the row's label carries its value.
+        let feel = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Feel & skills")).firstMatch
+        XCTAssertTrue(reveal(feel, in: app), "the ⓘ sheet has no Feel & skills row")
+        XCTAssertTrue(tap(feel, until: app.navigationBars["Feel & skills"], in: app), "Feel & skills didn't open")
 
         let change = app.buttons["Change skills"]
         XCTAssertTrue(reveal(change, in: app), "no Works on section on a Picking drill")
@@ -95,6 +99,8 @@ final class SkillsYouShapeUITests: UITestCase {
         let fromType = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "From its type")).firstMatch
         XCTAssertTrue(fromType.waitForExistence(timeout: Self.uiTimeout), "the reset didn't go back to the type")
         XCTAssertFalse(reset.exists, "the reset is still offered after resetting")
+        // Back to the sheet, whose Done closes it: a pushed screen carries no Done of its own.
+        app.navigationBars["Feel & skills"].buttons.firstMatch.tap()
         app.buttons["Done"].tap()
     }
 

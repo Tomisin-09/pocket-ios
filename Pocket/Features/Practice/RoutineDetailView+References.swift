@@ -36,12 +36,12 @@ extension RoutineDetailView {
         if isSaved {
             if isEditing {
                 ReferencesSection(owner: routine, accent: PocketColor.practice,
-                                  context: editContext, savesImmediately: false,
+                                  context: editContext, savesImmediately: false, header: "References",
                                   editing: $editingReference, presenting: $referenceAttachments)
             } else {
                 // Outside edit mode a picture can still be **looked at** — that is reading, which
                 // this screen does. What it cannot do is add or rename one.
-                ReferencesReadOnlySection(owner: routine, accent: PocketColor.practice,
+                ReferencesReadOnlySection(owner: routine, accent: PocketColor.practice, header: "References",
                                           presenting: $referenceAttachments)
             }
         }

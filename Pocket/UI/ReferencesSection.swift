@@ -37,6 +37,10 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
     /// Save keeps. Saving its child context here would commit whatever block rearrangement happened
     /// to be pending — an unrelated edit made permanent by adding a link.
     var savesImmediately: Bool = true
+    /// The section's header. *Where you learned it* everywhere it is a screen of its own; Routine detail,
+    /// which keeps its sections on one screen, heads it **References**, the category it belongs to
+    /// (ADR 0258).
+    var header: String = "Where you learned it"
 
     @Environment(\.modelContext) private var environmentContext
     @Environment(\.openURL) private var openURL
@@ -137,7 +141,7 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
             }
             .disabled(!owner.canAddAttachment)
         } header: {
-            Text("Where you learned it")
+            Text(header)
         } footer: {
             Text(footer)
         }
@@ -198,13 +202,15 @@ struct ReferencesReadOnlySection<Owner: ReferenceLinkOwner & AnyObject>: View {
     let accent: Color
     /// Looking at a picture is **reading**, so it belongs on a read-only surface — presented by the
     /// host through `.referenceAttachmentViewing(…)`, which carries the viewer without the pickers.
+    /// See `ReferencesSection.header`.
+    var header: String = "Where you learned it"
     @Binding var presenting: ReferenceAttachmentPresentation?
 
     @Environment(\.openURL) private var openURL
 
     var body: some View {
         if owner.hasReferences {
-            Section("Where you learned it") {
+            Section(header) {
                 ForEach(owner.referencesInOrder, id: \.uid) { link in
                     // No menu: this surface reads, it does not edit.
                     ReferenceLinkRow(link: link, accent: accent) {
