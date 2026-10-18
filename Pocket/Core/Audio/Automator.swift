@@ -54,3 +54,33 @@ struct AutomatorConfig: Equatable {
         (max(0, stepCount) + 1) * max(1, loopsPerStep)
     }
 }
+
+/// Where a ramp stands at a loop pass (ADR 0260 D3) — what the automator sheet lights while the ramp
+/// plays. Read off the same `loopIteration` that `speed(atLoopIteration:)` reads, so the plateau lit
+/// and the speed shown can't disagree, and the sheet needs no state of its own to follow the run.
+struct AutomatorProgress: Equatable {
+    /// The plateau being played, 0-based: `0` is the start and `stepCount` the held target.
+    let plateau: Int
+    /// The pass within that plateau, 1-based: `1…loopsPerStep`.
+    let pass: Int
+    /// Whether the ramp has played its last automated pass — where playback stops (ADR 0013) and the
+    /// ramp disarms itself (ADR 0260 D3).
+    let isFinished: Bool
+}
+
+extension AutomatorConfig {
+    /// How many plateaus the ramp holds: the start, each intermediate step, and the target. The
+    /// staircase draws **one bar per plateau**, the convention the metronome's tracker already uses.
+    var plateauCount: Int { max(0, stepCount) + 1 }
+
+    /// The ramp's position at a 0-based loop iteration. Once `iteration` reaches `totalLoops` the
+    /// ramp is finished, and the position holds on the target's last pass rather than running on.
+    func progress(atLoopIteration iteration: Int) -> AutomatorProgress {
+        let passes = max(1, loopsPerStep)
+        let played = max(0, iteration)
+        guard played < totalLoops else {
+            return AutomatorProgress(plateau: plateauCount - 1, pass: passes, isFinished: true)
+        }
+        return AutomatorProgress(plateau: played / passes, pass: played % passes + 1, isFinished: false)
+    }
+}

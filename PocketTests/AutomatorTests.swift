@@ -86,4 +86,89 @@ final class AutomatorTests: XCTestCase {
     func testTotalLoopsTreatsComponentsAsAtLeastOne() {
         XCTAssertEqual(config(steps: 0, loops: 0).totalLoops, 1)   // 1 plateau × 1 pass
     }
+
+    // MARK: - Progress (ADR 0260 D3) — what the sheet lights while the ramp plays
+
+    func testPlateauCountIsOnePerHeldTempo() {
+        XCTAssertEqual(config(steps: 6).plateauCount, 7, "start, five intermediate, the target")
+        XCTAssertEqual(config(steps: 0).plateauCount, 1)
+    }
+
+    func testProgressStartsOnTheFirstPassOfTheFirstPlateau() {
+        XCTAssertEqual(config().progress(atLoopIteration: 0),
+                       AutomatorProgress(plateau: 0, pass: 1, isFinished: false))
+    }
+
+    func testProgressCountsPassesWithinAPlateau() {
+        let cfg = config(steps: 6, loops: 2)
+        XCTAssertEqual(cfg.progress(atLoopIteration: 1), AutomatorProgress(plateau: 0, pass: 2, isFinished: false))
+        XCTAssertEqual(cfg.progress(atLoopIteration: 2), AutomatorProgress(plateau: 1, pass: 1, isFinished: false))
+        XCTAssertEqual(cfg.progress(atLoopIteration: 5), AutomatorProgress(plateau: 2, pass: 2, isFinished: false))
+    }
+
+    /// The target is a plateau of its own and plays all its passes before the ramp is done — the stop
+    /// `testTargetPlateauGetsItsLoopsThenTotalLoopsIsTheStop` pins, read from the other side.
+    func testTheTargetPlaysEveryPassBeforeTheRampFinishes() {
+        let cfg = config(steps: 6, loops: 2)
+        XCTAssertEqual(cfg.progress(atLoopIteration: 12), AutomatorProgress(plateau: 6, pass: 1, isFinished: false))
+        XCTAssertEqual(cfg.progress(atLoopIteration: 13), AutomatorProgress(plateau: 6, pass: 2, isFinished: false))
+        XCTAssertTrue(cfg.progress(atLoopIteration: 14).isFinished, "totalLoops is the stop")
+    }
+
+    /// Finished holds on the target's last pass rather than counting on past the end, so the sheet
+    /// never reads "Step 8/7".
+    func testAFinishedRampHoldsOnTheTargetsLastPass() {
+        let cfg = config(steps: 6, loops: 2)
+        for iteration in [14, 15, 100] {
+            XCTAssertEqual(cfg.progress(atLoopIteration: iteration),
+                           AutomatorProgress(plateau: 6, pass: 2, isFinished: true), "iteration \(iteration)")
+        }
+    }
+
+    /// The lit plateau and the speed shown are read off one iteration, and must name the same tempo:
+    /// every pass plays its plateau's speed.
+    func testTheLitPlateauPlaysTheSpeedShown() {
+        let cfg = config(start: 1.0, target: 0.62, steps: 7, loops: 3)
+        for iteration in 0..<cfg.totalLoops {
+            let plateau = cfg.progress(atLoopIteration: iteration).plateau
+            XCTAssertEqual(cfg.speed(atLoopIteration: iteration),
+                           cfg.speed(atLoopIteration: plateau * 3), accuracy: 1e-9, "iteration \(iteration)")
+        }
+    }
+
+    func testProgressTreatsANegativeIterationAsTheStart() {
+        XCTAssertEqual(config().progress(atLoopIteration: -3),
+                       AutomatorProgress(plateau: 0, pass: 1, isFinished: false))
+    }
+
+    func testProgressTreatsLoopsPerStepZeroAsOne() {
+        let cfg = config(steps: 2, loops: 0)
+        XCTAssertEqual(cfg.progress(atLoopIteration: 1), AutomatorProgress(plateau: 1, pass: 1, isFinished: false))
+        XCTAssertTrue(cfg.progress(atLoopIteration: 3).isFinished)
+    }
+
+    // MARK: - The staircase's lit bar
+
+    func testOneBarPerPlateauLightsThePlateauItself() {
+        for plateau in 0..<7 {
+            XCTAssertEqual(RampStairs.litBar(plateau: plateau, of: 7, across: 7), plateau)
+        }
+    }
+
+    /// A ramp with more plateaus than the 12 bars drawn still lights the first bar at the start and the
+    /// **last** bar at the target. It used to divide by the plateau count, so 13 plateaus lit bar 11 of
+    /// 12 on *Done*.
+    func testALongRampLightsTheEndBarsAtItsEnds() {
+        for plateaus in [13, 17, 21] {
+            XCTAssertEqual(RampStairs.litBar(plateau: 0, of: plateaus, across: 12), 0, "\(plateaus) plateaus")
+            XCTAssertEqual(RampStairs.litBar(plateau: plateaus - 1, of: plateaus, across: 12), 11,
+                           "\(plateaus) plateaus")
+        }
+    }
+
+    func testTheLitBarIsClampedToTheStaircase() {
+        XCTAssertEqual(RampStairs.litBar(plateau: -1, of: 7, across: 7), 0)
+        XCTAssertEqual(RampStairs.litBar(plateau: 9, of: 7, across: 7), 6)
+        XCTAssertEqual(RampStairs.litBar(plateau: 30, of: 21, across: 12), 11)
+    }
 }

@@ -264,11 +264,12 @@ import SwiftUI
                   onDelete: {}, onAdjustRange: {}, onSaved: { _ in })
 }
 
+// Idle only: the running states need an engine that is actually playing, which a preview has no file
+// for. See them on the simulator (ADR 0260 D3).
 #Preview("Automator sheet") {
     let song = Song.sample()
-    let loop = song.loops[0]
-    loop.automatorEnabled = true   // so the red "Turn off ramp" button renders too
-    return AutomatorSheet(loop: loop, song: song, onSet: {}, onTurnOff: {})
+    return AutomatorSheet(loop: song.loops[0], song: song, engine: PracticeAudioEngine(),
+                          onSet: {}, onStop: {}, onResume: {})
 }
 
 #Preview("Loading overlay") {
