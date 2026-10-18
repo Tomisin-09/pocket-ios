@@ -326,6 +326,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   row each that says what's behind it: **Progress** (mastery, slowest loop and the counts),
   **References**, **Audio file** (it reads *Missing* when the file won't load, so you can see it
   without opening anything; Replace, Send and Export are inside) and **Collections**.
+- **Edit loop leads with the ways to play it** (ADR 0258). **About** holds the name, the star, the
+  type and the range; **Practise** holds Practice now, Train your ear, Watch it on the neck and
+  Improvise, with the Backing track switch beside Improvise; **Progress** holds mastery, command
+  tempo, focus and the journal. References, Works on & tags, and Colour are a row each, and the
+  Colour row shows the colour. Cancel still takes back anything you changed on those screens.
 - **The Practice screen shows what you have, not how many.** It is now a card and three shelves
   (ADR 0257). **Today's session** carries the long-term goals that shape it, as chips you can tap to
   edit, and a line back to the last session you started and didn't save. **Routines** come next:

@@ -31,15 +31,17 @@ final class ManualLoopSheetShots: ManualShotCase {
         let app = launchForShoot()
         openLoopEditor(in: app)
 
+        // About opens the sheet since ADR 0258: the name, the pin, the type and the Range row.
         capture(app, slug: "reference/loop-edit",
                 assertingOnScreen: "Edit loop",
-                alsoRequiring: ["Name", "Favourite", "Range", "Loop", "Practice"])
+                alsoRequiring: ["About", "Favourite", "Range"])
     }
 
-    /// `looping/loop-edit-practice` — the Practice section, scrolled into the frame.
+    /// `looping/loop-edit-practice` — the Progress section (the Practice fields until ADR 0258),
+    /// scrolled into the frame.
     ///
     /// A `role: panel` crop, so the section has to be **in the picture**, not merely on the screen.
-    /// `scrollIntoFrame` is aimed at `Command tempo`, the *last* of the four rows the marker names —
+    /// `scrollIntoFrame` is aimed at `Focus`, the *last* of the rows the marker names with an ⓘ —
     /// stopping at the section header would leave the rest below the fold, which is how the
     /// references figure failed twice before this rule was written down.
     @MainActor
@@ -47,12 +49,12 @@ final class ManualLoopSheetShots: ManualShotCase {
         let app = launchForShoot()
         openLoopEditor(in: app)
 
-        scrollIntoFrame(element(in: app, labelStartingWith: "About Command tempo"),
-                        called: "the Command tempo row", in: app)
+        scrollIntoFrame(element(in: app, labelStartingWith: "About Focus"),
+                        called: "the Focus row", in: app)
 
         capture(app, slug: "looping/loop-edit-practice",
                 assertingOnScreen: "Edit loop",
-                alsoRequiring: ["Practice", "Mastery", "Focus", "Type", "Command tempo", "About Mastery"],
+                alsoRequiring: ["Progress", "Mastery", "Focus", "Command tempo", "About Mastery"],
                 alsoServing: ["terms/info-button"])
     }
 

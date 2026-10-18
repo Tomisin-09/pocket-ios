@@ -45,7 +45,7 @@ marker grammar in [README.md](README.md).
 | `looping/ab-forming` | `band` | `looping` | seeded library, Binta, playing, loop start dropped, end not set |  |
 | `looping/automator` | `screen` | `looping` | seeded library, Binta, loop "Chords", automator open |  |
 | `looping/loop-active` | `band` | `looping` | seeded library, Binta, loop "Chords" active and repeating |  |
-| `looping/loop-edit-practice` | `panel` | `looping` | seeded library, Binta, loop "Chords" edit sheet, scrolled to Practice |  |
+| `looping/loop-edit-practice` | `panel` | `looping` | seeded library, Binta, loop "Chords" edit sheet, scrolled to Progress |  |
 | `looping/multi-select` | `panel` | `looping` | seeded library, Binta, Loops panel header held, two loops selected |  |
 | `looping/speed-bar` | `band` | `looping` | seeded library, Binta, speed reduced below 100% |  |
 | `looping/tempo-editor` | `screen` | `looping` | seeded library, Binta, tempo editor open |  |

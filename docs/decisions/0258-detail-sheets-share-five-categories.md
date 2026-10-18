@@ -13,7 +13,9 @@
 - **Relates to:** 0162 (the Settings hub, whose D3 row is the row used here) · 0038 (the notes, still
   edited in place) · 0232 (Map the song, still on the sheet) · 0172 (a linked drill is a route, still
   one tap) · 0167 (where you learned it) · 0039 (unrated is not zero) · 0220 D4 (the backing-track
-  hint, unchanged) · 0165 (the manual quotes the app)
+  hint, unchanged) · 0082 and 0135 (Practice now and Improvise, still in the loop sheet's Practise
+  section, which was *Practice*) · 0201 (*How it got here*, still under the range it explains) ·
+  0216 D6 (Works on, still beside Tags) · 0165 (the manual quotes the app)
 - **Schema:** none.
 
 ## Context
