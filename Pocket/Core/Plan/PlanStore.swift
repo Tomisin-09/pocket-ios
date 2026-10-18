@@ -132,7 +132,6 @@ final class PlanStore {
             guard case .verified(let transaction) = result,
                   PlanProduct.all.contains(transaction.productID) else { continue }
             owned.append(OwnedPurchase(productID: transaction.productID,
-                                       isFamilyShared: transaction.ownershipType == .familyShared,
                                        revokedAt: transaction.revocationDate,
                                        expiresAt: transaction.expirationDate))
             guard transaction.productID == PlanProduct.monthly,

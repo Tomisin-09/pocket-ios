@@ -19,10 +19,7 @@ enum PlanProduct {
 /// One verified transaction, reduced to the facts the rules read.
 struct OwnedPurchase: Equatable, Sendable {
     let productID: String
-    /// Shared by a family organiser rather than bought by this player (D6). Access ignores it; the
-    /// cancel row does not, because a shared subscription is not this player's to cancel (D5).
-    var isFamilyShared = false
-    /// Set by a refund, or by the organiser ending Family Sharing (D6).
+    /// Set by a refund. Neither product is family-shareable (ADR 0259), so nothing else revokes one.
     var revokedAt: Date?
     /// The monthly's period end. `nil` for Pay once, which never expires.
     var expiresAt: Date?
@@ -63,8 +60,8 @@ enum PlanAccess: String, Equatable, Sendable {
         return .none
     }
 
-    /// Whether Settings shows *Cancel your monthly plan* (D5 step 3): Pay once is owned, by purchase
-    /// or through the family, **and** the player's own monthly will renew again.
+    /// Whether Settings shows *Cancel your monthly plan* (D5 step 3): Pay once is owned **and** the
+    /// player's own monthly will renew again.
     static func offersCancelMonthly(access: PlanAccess, ownMonthlyRenews: Bool) -> Bool {
         access == .payOnce && ownMonthlyRenews
     }
@@ -235,14 +232,13 @@ enum PlanWallCopy {
             "The monthly plan renews automatically at \(monthly) a month until you cancel it. Cancel any "
                 + "time in your Apple Account's Subscriptions, at least 24 hours before it renews."
         }
-        return monthlyTerms + " Pay once is a single payment and never renews. Both are shared with your "
-            + "family through Family Sharing."
+        return monthlyTerms + " Pay once is a single payment and never renews."
     }
 
     /// *Your plan*'s status line on the monthly (D10).
     ///
-    /// - `endsOn`: the current period's last day, as the player reads it. `nil` when the monthly isn't
-    ///   the player's own (Family Sharing) or hasn't been read, so nothing can be said about its end.
+    /// - `endsOn`: the current period's last day, as the player reads it. `nil` when it hasn't been
+    ///   read, so nothing can be said about its end.
     /// - `freeSpan`: the free period's span ("week") while the player is in it, otherwise `nil`.
     /// - `monthly`: the price, `nil` until the product loads.
     static func monthlyStatus(endsOn day: String?, freeSpan: String?, renews: Bool, monthly: String?) -> String {
