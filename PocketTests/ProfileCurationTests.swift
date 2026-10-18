@@ -125,7 +125,7 @@ final class ProfileCurationTests: XCTestCase {
     /// `setPreferredInstrument` had **no caller at all** until the Settings row landed: the field, its
     /// accessor and this writer all existed while nothing in the app could reach them, so every
     /// consumer read the guitar fallback forever. Pins the writer end-to-end so the readers in
-    /// `ExerciseLibraryView` / `MetronomeAutomatorPanel` have something real to read.
+    /// `ExerciseLibraryView` / `MetronomeView` have something real to read.
     func testSetPreferredInstrumentCreatesTheSingletonAndPersists() throws {
         let context = try makeContext()
 

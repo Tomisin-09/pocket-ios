@@ -6,6 +6,11 @@ import Foundation
 /// its 400-line ceiling, and this is one concern. Everything the context holds is a value the engine
 /// already publishes, so the snapshot is a read and nothing more — no state, no side effect on the
 /// click, which is what lets the composer open mid-run without touching the transport (ADR 0142).
+///
+/// **No screen opens that composer today.** The metronome's toolbar pencil became *Save as exercise*
+/// (ADR 0260), and nothing else writes a metronome note. This, the `.metronome` owner kind and
+/// `JournalWriter`'s path stay — notes already written still need them to render and to filter — and
+/// whether metronome journalling comes back somewhere else is **not decided here**.
 extension StandaloneMetronomeEngine {
 
     /// The sitting as it stands **right now**, for `QuickJournalSheet(owner: .metronome(…))`.

@@ -1,4 +1,3 @@
-import SwiftData
 import SwiftUI
 
 /// The inline tempo-automator panel on the standalone metronome screen (ADR 0043, slice 4),
@@ -8,27 +7,13 @@ import SwiftUI
 /// tempo (set it on the main controls, then arm); the live ramp runs in the engine.
 ///
 /// The automator's stated job (ADR 0046) is **command-tempo discovery** — ramp until your hands
-/// break down, and that tempo *is* your command. The **"Save as exercise"** action is the
-/// one-directional seam that realises it: it captures the current (breakdown) tempo and hands it
-/// into Practice's create flow, prefilled. The automator *feeds* Practice; it never owns an
-/// exercise.
+/// break down, and that tempo *is* your command. Keeping it is the screen's toolbar bookmark,
+/// **Save as exercise** (ADR 0260), not a control in here: it used to sit in this header and showed
+/// only while the automator was armed, and one door that is always visible replaced it.
 struct MetronomeAutomatorPanel: View {
     let engine: StandaloneMetronomeEngine
 
-    @Environment(\.modelContext) private var modelContext
-    /// The local profile (ADR 0113 S2), read for the same reason the exercise library reads it: a
-    /// drill saved out of the automator should open on the instrument you actually play.
-    @Query private var profiles: [Profile]
-    @State private var saving = false
-
     private typealias Mode = StandaloneMetronomeEngine.AutomatorMode
-
-    /// The instrument a drill saved from here picks up (ADR 0116) — the profile's preferred
-    /// instrument when declared, else guitar. Mirrors `ExerciseLibraryView`: before this, the seam
-    /// passed nothing, so a bass player's breakdown was silently saved as a guitar drill.
-    private var defaultInstrument: Instrument {
-        profiles.first?.preferredInstrument ?? .guitar
-    }
 
     var body: some View {
         VStack(spacing: 12) {
@@ -50,18 +35,6 @@ struct MetronomeAutomatorPanel: View {
         }
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.metronomeCardWash))
-        .sheet(isPresented: $saving) {
-            // Captures the tempo live at the moment of the tap (the breakdown point), prefilled as
-            // the new exercise's command. Funnels through `plan.finalise(in:)` — the same insert
-            // Practice's own `+` runs, so creation behaviour added there lands here too rather than
-            // needing a second edit in this file (ADR 0046's "single creation path").
-            NewExerciseSheet(initialCommand: engine.bpm,
-                             initialSignature: engine.timeSignature,
-                             fixedTemplate: .basic,
-                             defaultInstrument: defaultInstrument) { plan in
-                plan.finalise(in: modelContext)
-            }
-        }
     }
 
     /// The explicit **Start / Stop** for the climb (ADR 0048) — arming the segmented control
@@ -129,40 +102,13 @@ struct MetronomeAutomatorPanel: View {
         }
     }
 
-    /// The discovery → Practice seam, as a compact **bookmark** button in the header (the
-    /// user's note: the old full-width capsule became a rounded icon). Captures the live tempo
-    /// at the tap — "this is the tempo I broke down at — keep it as a drill".
-    private var saveAsExerciseButton: some View {
-        Button {
-            saving = true
-            haptic(.medium)
-        } label: {
-            Image(systemName: "bookmark.fill")
-                .font(.futura(.subheadline, weight: .semibold))
-                .foregroundStyle(PocketColor.metronome)
-                .frame(width: 36, height: 36)
-                .background(Circle().fill(PocketColor.metronomeCircleWash))
-                // Drawn at 36, touched at 44 — see `nudge`.
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Save \(engine.bpm) beats per minute as an exercise in Practice")
-    }
-
-    /// Names the feature and houses the compact "save as exercise" bookmark (when armed) so it
-    /// doesn't crowd the controls.
+    /// Names the feature.
     private var header: some View {
-        HStack {
-            Text("AUTOMATOR")
-                .font(.futura(.caption2, weight: .semibold))
-                .tracking(1.5)
-                .foregroundStyle(PocketColor.textSecondary)
-            Spacer()
-            if engine.automatorMode != .off {
-                saveAsExerciseButton
-            }
-        }
+        Text("AUTOMATOR")
+            .font(.futura(.caption2, weight: .semibold))
+            .tracking(1.5)
+            .foregroundStyle(PocketColor.textSecondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var fields: some View {

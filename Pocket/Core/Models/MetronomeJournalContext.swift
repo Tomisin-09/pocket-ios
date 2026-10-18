@@ -13,6 +13,9 @@ import Foundation
 /// meter, subdivision and withdrawal together are a full description of a real thing, on an entry that
 /// declares what it is — so there is nowhere wrong left to attach it.
 ///
+/// **Nothing writes a new one today.** The metronome's pencil gave its slot to *Save as exercise*
+/// (ADR 0260). Notes written before that still decode through this type, which is why it stays.
+///
 /// Pure and Foundation-only (AGENTS.md): the raw-column round trip and the caption are exactly the
 /// kind of thing that breaks silently, so both are unit-tested without a `ModelContainer` or an engine.
 struct MetronomeJournalContext: Equatable {

@@ -139,23 +139,15 @@ struct QuickJournalSheet: View {
 
 /// The nav-bar way in, so every run screen opens capture the same way and from the same place.
 /// A pencil, not a book: the review bar's 📕 *Journal* pill opens the history, this writes.
+///
+/// Run screens only. The metronome had one too (ADR 0160) and gave its slot to *Save as exercise*
+/// (ADR 0260), which is why the closure-taking initialiser it needed is gone.
 struct QuickJournalButton: View {
-    /// What the tap does. A closure rather than only a `Binding<Bool>` because the metronome has to
-    /// **pin its snapshot at the tap** (ADR 0160 §5) and then present by item — one button, two ways
-    /// to open it, rather than a second button that would have to be kept looking identical.
-    private let action: () -> Void
-
-    init(isPresented: Binding<Bool>) {
-        self.action = { isPresented.wrappedValue = true }
-    }
-
-    init(action: @escaping () -> Void) {
-        self.action = action
-    }
+    @Binding var isPresented: Bool
 
     var body: some View {
         Button {
-            action()
+            isPresented = true
             haptic(.light)
         } label: {
             Image(systemName: "square.and.pencil")

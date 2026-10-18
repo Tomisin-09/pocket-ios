@@ -4,7 +4,7 @@ import SwiftData
 extension Exercise {
     /// The **single creation path** for a command-anchored exercise (ADR 0046): build one from a
     /// name and the **command** tempo, deriving the warm-up **working** floor and the **reach**
-    /// from it via pure `TempoStretch`. Both Practice's create sheet and the metronome automator's
+    /// from it via pure `TempoStretch`. Both Practice's create sheet and the metronome's
     /// "Save as exercise" discovery seam funnel through here, so the derivation lives in one place
     /// and the two entry points can never drift (the ADR's "single creation path" risk).
     ///
@@ -12,7 +12,7 @@ extension Exercise {
     /// stays a pure factory and the same call works from any screen.
     ///
     /// `notesPerBeat` / `template` / `tags` / `notes` default to the bare values the two interactive
-    /// entry points (Practice's create sheet, the automator seam) use; the **preset seeder** passes
+    /// entry points (Practice's create sheet, the metronome's save) use; the **preset seeder** passes
     /// them to give each curated drill its template, feel, and how-to note while still deriving
     /// working/reach identically.
     ///
@@ -58,7 +58,7 @@ extension NewExercisePlan {
     /// command the create step never shows and nothing reads (F3).
     ///
     /// **Both hosts of `NewExerciseSheet` call this**: Practice's `+` (`ExerciseLibraryView`) and the
-    /// metronome automator's "Save as exercise" seam (`MetronomeAutomatorPanel`). They share the
+    /// metronome's "Save as exercise" (`MetronomeView`'s toolbar, ADR 0260). They share the
     /// sheet, so they must share the insert too — before this existed each wrote its own, and
     /// anything creation gained had to be written twice in two files. The song link was added to one
     /// and silently missing from the other, which is invisible: the shared form still showed the
@@ -90,6 +90,13 @@ extension NewExercisePlan {
         // A drill made from a goal skill's fix arrives already saying what it is for (ADR 0216 D4);
         // every other plan states nothing, so the drill follows its type.
         exercise.skillIDs = skillIDs
+        // A tempo saved at the metronome plays that tempo and nothing else (ADR 0260 D1). The phases
+        // stay switchable in the run's Practice Settings, so this is a starting shape, not a lock.
+        if commandOnly {
+            exercise.includeWarmup = false
+            exercise.includeReach = false
+            exercise.includeBackoff = false
+        }
         if let strum { exercise.setStrumPattern(strum) }
         if let fretboard { exercise.setFretboardContent(fretboard) }
         if let chords { exercise.setChordProgression(chords) }
