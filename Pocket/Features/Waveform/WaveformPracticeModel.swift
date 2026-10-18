@@ -155,8 +155,8 @@ final class WaveformPracticeModel {
     var showingPlayerSettings = false
     /// The tempo the BPM callout was holding when it was held (ADR 0170) — drives the carry
     /// chooser. **A snapshot, not a live read.** The number is captured at the hold and carried on
-    /// this value, for the reason `PendingMetronomeNote` captures the metronome's sitting at the tap
-    /// (ADR 0160 §5): a sheet's content closure re-runs on every body pass, so a tempo read *there*
+    /// this value, for the reason `PendingDrill` captures the metronome's tempo at the tap
+    /// (ADR 0260): a sheet's content closure re-runs on every body pass, so a tempo read *there*
     /// would be whatever the last re-render saw rather than what the player reached for. Nothing on
     /// the screen can move the speed while the chooser is up, which is exactly why an accident here
     /// would be silent.

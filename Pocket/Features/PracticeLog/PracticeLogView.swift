@@ -139,7 +139,6 @@ struct PracticeLogView: View {
         HomeSection(title: "All-time") {
             VStack(alignment: .leading, spacing: 16) {
                 lifetimeLine(allTime.lifetime)
-                milestoneWall(allTime.milestones)
                 inventoryWall(allTime.inventory)
             }
         }
@@ -170,31 +169,6 @@ struct PracticeLogView: View {
                 Text("Since you started, \(since.formatted(.dateTime.day().month(.wide).year()))")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
-            }
-        }
-    }
-
-    /// The hours wall. Every mark is always shown — the ones ahead sit unfilled rather than hidden, so
-    /// the wall doesn't rearrange as you pass them. Stated as a wall you walk past, never as a set of
-    /// goals: nothing here says *by when*, and an unreached mark is neutral, not outstanding.
-    private func milestoneWall(_ milestones: [PracticeProgress.HoursMilestone]) -> some View {
-        HStack(spacing: 8) {
-            ForEach(milestones) { milestone in
-                VStack(spacing: 3) {
-                    Text("\(milestone.hours)")
-                        .font(.pocketMono(.subheadline).weight(.semibold))
-                    Text("hours")
-                        .font(.futura(.caption2))
-                }
-                .foregroundStyle(milestone.isReached ? PocketColor.practice : PocketColor.textSecondary)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(RoundedRectangle(cornerRadius: 10)
-                    .fill(milestone.isReached ? PocketColor.practiceCircleWash : PocketColor.surfaceSubtle))
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(milestone.isReached
-                                    ? "\(milestone.hours) hours, reached"
-                                    : "\(milestone.hours) hours, not yet")
             }
         }
     }

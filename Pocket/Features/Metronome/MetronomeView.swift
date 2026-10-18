@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 import QuartzCore
 #if canImport(UIKit)
@@ -12,8 +13,9 @@ import UIKit
 ///
 /// A pure **free-play tool** (ADR 0046): exercises and command-anchored training routines now
 /// live in the top-level **Practice** space, not here. The automator's role is *discovery* —
-/// ramp until your hands break down — and a later slice adds a "Save as exercise" seam that
-/// hands a discovered tempo into Practice's create flow.
+/// ramp until your hands break down — and the toolbar's **Save as exercise** (ADR 0260) hands
+/// whatever tempo is on screen into Practice's create flow, as a drill that plays that tempo and
+/// nothing else. The metronome feeds Practice; it never owns an exercise.
 struct MetronomeView: View {
     @State private var engine: StandaloneMetronomeEngine
     /// Wall-clock times of recent taps for tap-tempo (`TempoMath.bpm(fromTapTimes:)`).
@@ -21,15 +23,18 @@ struct MetronomeView: View {
     @Environment(\.dismiss) private var dismiss
     /// Whether the meter/withdrawal sheet is showing — everything that shapes how the bar is filled.
     @State private var showingSettings = false
-    /// The note being composed, **carrying the snapshot taken when the pencil was tapped** (ADR 0160
-    /// §5). Presenting it leaves the click running — the sheet touches no transport, which is the
-    /// whole reason ADR 0142 built it, and the reason the tempo can move while it is open.
+    /// The drill being saved, **carrying the tempo and meter as they stood at the tap** (ADR 0260).
+    /// During a ramp the live tempo *is* the discovery, and the click keeps running under the sheet,
+    /// so the tempo can move while it is open.
     ///
-    /// Held in `@State` and presented by item rather than rebuilt in the sheet's content closure: that
-    /// closure re-runs on every body pass, and this body reads `engine.bpm`, so a snapshot taken there
-    /// would be whichever tempo the last re-render saw — neither the moment the player reached for the
-    /// pencil nor the moment they saved.
-    @State private var composing: PendingMetronomeNote?
+    /// Held in `@State` and presented by item rather than read in the sheet's content closure: that
+    /// closure re-runs on every body pass, and this body reads `engine.bpm`, so a tempo read there
+    /// would be whichever one the last re-render saw — neither the moment the player reached for the
+    /// bookmark nor the moment they saved. The same reasoning ADR 0160 §5 gave the metronome's note.
+    @State private var saving: PendingDrill?
+    /// The local profile (ADR 0113 S2), read for the same reason the exercise library reads it: a
+    /// drill saved from here should open on the instrument you actually play.
+    @Query private var profiles: [Profile]
     /// Whether the keyboard is up, for the tempo or an automator field. The pinned transport steps
     /// aside while it is: the field being typed into otherwise ends up squeezed against the Start
     /// button, half hidden, and the keyboard's checkmark floats over Start's trailing edge.
@@ -92,7 +97,7 @@ struct MetronomeView: View {
             .background(PocketColor.background.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                // Back arrow + title + pencil — one control either side, so the title sits centred.
+                // Back arrow + title + bookmark — one control either side, so the title sits centred.
                 // The meter used to be the second trailing control, and the pair was wide enough
                 // that iOS moved the title off centre to fit it; it now sits under the beat dots.
                 ToolbarItem(placement: .topBarLeading) {
@@ -108,12 +113,11 @@ struct MetronomeView: View {
                         .foregroundStyle(PocketColor.textPrimary)
                         .accessibilityAddTraits(.isHeader)
                 }
-                // The second door onto the journal (ADR 0155 §8), now writing a **metronome** note
-                // rather than a bare standalone one (ADR 0160). The sitting is snapshotted here, at
-                // the tap, because that is the moment the player is reacting to. The button itself
-                // is the one `ExerciseRunView` and `LoopRunView` use.
+                // **Save as exercise** (ADR 0260) — the journal pencil's old slot. It used to sit in
+                // the automator's header and showed only while the automator was armed, but a tempo
+                // worth keeping is as often found with the slider or by tapping as by a ramp.
                 ToolbarItem(placement: .topBarTrailing) {
-                    QuickJournalButton { composing = PendingMetronomeNote(sitting: engine.journalContext) }
+                    saveAsExerciseButton
                 }
             }
         }
@@ -132,14 +136,41 @@ struct MetronomeView: View {
         .sheet(isPresented: $showingSettings) {
             MetronomeSettingsSheet(engine: engine)
         }
-        // ADR 0155 §8 refused a `.metronome` owner kind and any snapshot of the live BPM, on the
-        // grounds that half a snapshot — a tempo with no unit attached to it — is false context.
-        // **ADR 0160 reverses both**, conditionally: the objection was to a *fragment* of a unit's
-        // context, and tempo + meter + subdivision + withdrawal on an entry that says it was written
-        // at the click is a full description of a real thing, with nowhere wrong to attach it.
-        .sheet(item: $composing) { pending in
-            QuickJournalSheet(owner: .metronome(pending.sitting))
+        .sheet(item: $saving) { pending in
+            // Always a **Basic** drill, so the template picker is skipped. Behind the plan, like
+            // every way into the create sheet: `NewExerciseSheet` gates itself (ADR 0256 D3).
+            NewExerciseSheet(initialCommand: pending.command,
+                             initialSignature: pending.signature,
+                             fixedTemplate: .basic,
+                             defaultInstrument: defaultInstrument) { plan in
+                // **Command only** (ADR 0260 D1): the tempo you found, with no warm-up, reach or
+                // back-off around it. Through `finalise(in:)`, the one insert path (ADR 0046).
+                var flat = plan
+                flat.commandOnly = true
+                flat.finalise(in: modelContext)
+            }
         }
+    }
+
+    /// The instrument a drill saved from here picks up (ADR 0116) — the profile's preferred
+    /// instrument when declared, else guitar. Mirrors `ExerciseLibraryView`, so a bass player's
+    /// tempo isn't silently saved as a guitar drill.
+    private var defaultInstrument: Instrument {
+        profiles.first?.preferredInstrument ?? .guitar
+    }
+
+    /// The bookmark: "keep this tempo as a drill". The tempo goes in the **value**, not the label,
+    /// so the label stays fixed for VoiceOver's rotor and for UI tests to find.
+    private var saveAsExerciseButton: some View {
+        Button {
+            saving = PendingDrill(command: engine.bpm, signature: engine.timeSignature)
+            haptic(.medium)
+        } label: {
+            Image(systemName: "bookmark")
+        }
+        .tint(PocketColor.metronome)
+        .accessibilityLabel("Save as exercise")
+        .accessibilityValue("\(engine.bpm) beats per minute")
     }
 
     // MARK: - Tempo readout
@@ -304,15 +335,14 @@ struct MetronomeView: View {
     }
 }
 
-/// A composer that has been opened, holding the sitting as it stood at that instant (ADR 0160 §5).
+/// A save that has been started, holding the tempo and meter as they stood at the tap (ADR 0260).
 ///
-/// The identity is the *presentation*, not the snapshot — a fresh `UUID` per tap — so `.sheet(item:)`
-/// presents once and never re-presents itself when a value inside the snapshot happens to repeat. It
-/// lives here rather than on `MetronomeJournalContext` so that type stays a pure, `Equatable` value
-/// with no identity of its own to confuse a test.
-private struct PendingMetronomeNote: Identifiable {
+/// The identity is the *presentation*, not the tempo — a fresh `UUID` per tap — so `.sheet(item:)`
+/// presents once and never re-presents itself when the same tempo is saved twice.
+private struct PendingDrill: Identifiable {
     let id = UUID()
-    let sitting: MetronomeJournalContext
+    let command: Int
+    let signature: TimeSignature
 }
 
 // MARK: - Meter (time signature + subdivision + click withdrawal)
@@ -323,10 +353,10 @@ extension MetronomeView {
     /// glyph in the accent colour when one is active ("4/4 ♫"). In a same-file extension so it doesn't
     /// bloat the main view body (SwiftLint type_body_length).
     ///
-    /// **Under the beat dots, not in the nav bar.** It sat at the bar's trailing edge beside the
-    /// journal pencil, and the pair was wider than the back button by enough that iOS could not centre
-    /// the title between them and slid it left — on a 402pt phone it missed by about 2pt, on a 375pt
-    /// one the two would have overlapped. Under the dots it also sits with the thing it changes: pick
+    /// **Under the beat dots, not in the nav bar.** It sat at the bar's trailing edge beside what was
+    /// then the journal pencil, and the pair was wider than the back button by enough that iOS could
+    /// not centre the title between them and slid it left — on a 402pt phone it missed by about 2pt,
+    /// on a 375pt one the two would have overlapped. Under the dots it also sits with the thing it changes: pick
     /// 3/4 and the row above it becomes three dots.
     ///
     /// It **opens a sheet, not a menu.** As a menu this had reached fifteen rows across three groups:

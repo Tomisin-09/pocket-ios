@@ -2,6 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-17
+- **Amended by:** ADR 0260 (2026-10-18) — the setup sheet's bullet below. *Set ramp* still arms the
+  ramp and starts the loop, but no longer dismisses: the sheet stays up showing the current plateau,
+  the live speed, the step and the pass. *Turn off ramp* is gone. *Stop ramp* disarms and pauses,
+  and leaving the sheet always disarms (and pauses too, if the sheet started the run). The finite
+  ramp's stop also disarms now. The stepping maths, the finite ramp and the per-loop config stand.
 
 ## Context
 

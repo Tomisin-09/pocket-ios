@@ -141,24 +141,20 @@ count-in turned on in Settings, it counts you in first so you can settle before 
 
 ### Keeping the tempo you found
 
-When the ramp has told you something, the **🔖** in the panel's header saves the *current* tempo
-straight into Practice as a new exercise, prefilled with that tempo and the meter you were in. It
-opens the same create sheet the Exercises library uses, so the drill you get is an ordinary one — see
-[Exercises](exercises.md).
+The **🔖** at the top right saves the tempo on screen as a new exercise in Practice, with the meter
+you were in. It is there whenever the metronome is open, whether the tempo came from a ramp, the
+slider or tapping. It keeps the tempo from the moment you tap it, so a ramp can carry on climbing
+while you name the drill.
+
+It opens the create sheet the Exercises library uses, already on a basic drill, so the drill you get
+is an ordinary one — see [Exercises](exercises.md). One thing is different: it plays **that tempo
+and nothing else**, with **Warm-up**, **Reach** and **Back off** all switched off. Switch them on in
+the drill's **Practice Settings** if you want the full climb. Like every new drill, it needs Red
+Moon's plan.
 
 That is a one-way seam. The metronome hands a tempo to Practice; it never owns a drill.
 
-## Writing it down
-
-The **✏️** in the toolbar writes a journal note without stopping the click. What it records is the
-click you were playing to at the moment you tapped the pencil — *96 BPM · 4/4 · ♫ · gentle
-withdrawal* — pinned then, not when you save, so the tempo can move under you while you type.
-
-Because a click is not a drill, the note belongs to no unit and offers the four general tags rather
-than all seven. It lands in the [journal](journal-and-practice-log.md) like any other.
-
 ## Next
 
-- [Where the notes you write here end up](journal-and-practice-log.md)
 - [Turn a discovered tempo into a drill](exercises.md)
 - [The click over a song, which is a different control](looping.md)

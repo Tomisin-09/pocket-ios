@@ -166,9 +166,12 @@ struct WaveformPracticeView: View {
         .modifier(PanelRowSheets(model: model))     // a marker's edit sheet, a snag's line (ADR 0238)
         .sheet(item: $model.editingAutomatorLoop) { ref in
             let loop = ref.value
-            AutomatorSheet(loop: loop, song: model.song,
+            // The ramp runs with the sheet up (ADR 0260 D3), so the sheet reads the engine's pass
+            // count and transport directly; the speed itself still moves through `automatorAdvance`.
+            AutomatorSheet(loop: loop, song: model.song, engine: model.engine,
                            onSet: { model.startAutomator(for: loop) },
-                           onTurnOff: { model.turnOffAutomator(for: loop) })
+                           onStop: { model.stopAutomator(for: loop) },
+                           onResume: { model.engine.play() })
         }
         .sheet(isPresented: $model.showingSongDetails) {
             // Routed through the model rather than `SongRelinker` directly (ADR 0152): the engine

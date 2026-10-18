@@ -40,6 +40,12 @@ struct NewExercisePlan {
     /// (a freeform block for a skill no type works on). Empty everywhere else, so the drill follows
     /// its type.
     var skillIDs: [String] = []
+    /// Whether the drill is created **command only** — no warm-up, reach or back-off, the run shape
+    /// ADR 0221 calls `RunShape.isCommandOnly` (ADR 0260 D1). Set only by the metronome's *Save as
+    /// exercise*: what was found there is one tempo, and a ramp around it is something the player
+    /// adds in the run's Practice Settings, not something saving decides for them. `false` everywhere
+    /// else, so a drill made in Practice keeps all three phases.
+    var commandOnly = false
 }
 
 /// Create a new exercise from within **Practice** (ADR 0046 / 0068 revised). Two steps: **pick a
@@ -47,17 +53,17 @@ struct NewExercisePlan {
 /// library section and can't be changed later — then **configure** the name, command tempo, meter,
 /// and (for a strumming template) the arrow pattern itself.
 ///
-/// The automator's "Save as exercise" seam sets `fixedTemplate` to `.basic` to skip the picker and
-/// open straight on the configure step — a metronome breakdown is always a plain tempo drill.
+/// The metronome's "Save as exercise" sets `fixedTemplate` to `.basic` to skip the picker and open
+/// straight on the configure step — a tempo found at the metronome is always a plain tempo drill.
 struct NewExerciseSheet: View {
-    /// Pre-fills the command stepper — the discovered tempo from the automator seam, the engine
+    /// Pre-fills the command stepper — the tempo the metronome was on when saved, the engine
     /// default when created fresh in Practice.
     var initialCommand: Int = StandaloneMetronomeEngine.defaultCommandBPM
-    /// Pre-fills the meter picker — the metronome's current signature from the automator seam,
+    /// Pre-fills the meter picker — the metronome's current signature when saved from there,
     /// 4/4 when created fresh in Practice.
     var initialSignature: TimeSignature = .standard
     /// When set, skips the template picker and opens directly on the configure step for this
-    /// template (the automator "Save as exercise" seam, which is always a `.basic` drill).
+    /// template (the metronome's "Save as exercise", which is always a `.basic` drill).
     var fixedTemplate: ExerciseTemplate?
     /// The instrument the create step opens on (ADR 0116) — the profile's preferred instrument, defaulting
     /// to guitar so an untouched install is unchanged.

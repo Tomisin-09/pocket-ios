@@ -160,34 +160,6 @@ final class PracticeProgressTests: XCTestCase {
         XCTAssertEqual(allTime.inventory, inventory)
     }
 
-    // MARK: - Milestones
-
-    func testEveryMilestoneIsAlwaysPresentSoTheWallDoesNotRearrange() {
-        let milestones = PracticeProgress.milestones(forHours: 0)
-        XCTAssertEqual(milestones.map(\.hours), PracticeProgress.hourMilestones)
-        XCTAssertTrue(milestones.allSatisfy { !$0.isReached })
-    }
-
-    func testAMilestoneIsReachedAtItsExactHour() {
-        XCTAssertEqual(PracticeProgress.milestones(forHours: 10).filter(\.isReached).map(\.hours), [10])
-        XCTAssertEqual(PracticeProgress.milestones(forHours: 9).filter(\.isReached), [])
-    }
-
-    func testNextMilestoneIsNilOnceEveryOneIsBehindYou() {
-        let allTime = PracticeProgress.AllTime(
-            lifetime: .init(totalSeconds: 600 * 3600, sittingCount: 400, runCount: 900, since: .now),
-            inventory: emptyInventory,
-            milestones: PracticeProgress.milestones(forHours: 600))
-        XCTAssertNil(allTime.nextMilestone)
-    }
-
-    func testNextMilestoneIsTheNearestOneAhead() {
-        let allTime = PracticeProgress.allTime(records: [run(6, 3, minutes: 60 * 12)],
-                                               inventory: emptyInventory)
-        XCTAssertEqual(allTime.lifetime.hours, 12)
-        XCTAssertEqual(allTime.nextMilestone, 50)
-    }
-
     // MARK: - Figures (ADR 0241)
 
     func testPracticeThatRoundsToNothingReadsAsUnderAMinute() {

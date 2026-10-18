@@ -9,8 +9,9 @@ Reached from the `Metronome` card on Home, and it takes the whole screen. Proced
      | alt: The metronome screen with the beat dots, the BPM readout, the tempo slider between two TAP buttons, the automator panel and Start
      | state: Metronome open, stopped -->
 
-**Top bar.** A back chevron on the left. The title in the middle. On the right, the ✏️ that writes a
-journal note.
+**Top bar.** A back chevron on the left. The title in the middle. On the right, the 🔖
+`Save as exercise`, which saves the tempo on screen into Practice as a drill that plays that tempo
+and nothing else.
 
 **The beat dots** run across the top, one per beat in the bar. Accented beats are larger, and the
 dots dim in step with a withdrawn bar rather than carrying on. **The meter control** sits under
@@ -23,8 +24,7 @@ them, showing the time signature and a note glyph when a subdivision is on.
 slider sits between two `Tap to set tempo` buttons, one under each thumb.
 
 **`AUTOMATOR`** — `Off`, `By Bars` or `By Time`. Armed, it shows `Increase by`, `Every`, `Up to`, a
-`No limit` switch, the ramp staircase, and `Start ramp`. Its header carries the bookmark that saves
-the current tempo into Practice as a drill.
+`No limit` switch, the ramp staircase, and `Start ramp`.
 
 **The transport** is pinned at the bottom: `Start`, becoming `Pause` and then `Resume`, with
 `Stop and reset` appearing beside it once anything is running.
@@ -123,7 +123,7 @@ been practised, so neither is the way in.
 - **`What you played`** — under both, the period's time by kind, largest first; tap a kind to open it
   onto the exercises, loops or songs. Tap a practised bar or day to narrow it to that day, and the
   date beside the title to widen it again.
-- **`All-time`** — time played and sessions with the date you started, the hours wall, and
+- **`All-time`** — time played and sessions with the date you started, and
   **`What you've built`**: counts of `Exercises`, `Loops`, `Mastered` and `Notes`.
 
 With no finished runs it says `Nothing here yet` and describes what will fill it.

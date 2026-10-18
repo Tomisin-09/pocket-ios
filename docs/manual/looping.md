@@ -102,8 +102,21 @@ What it carries is the number you can see — the effective tempo, not the recor
 
 A loop can step its own speed up (or down) as it repeats. Open the automator with the **A** control
 on the loop's row and set where it starts, where it is heading, how many steps to take, and how many
-times round to stay on each one. The per-step change is worked out for you. **Set ramp** arms it;
-**Turn off** disarms it.
+times round to stay on each one. The per-step change is worked out for you.
+
+**Set ramp** plays the loop from the top at the start speed, and the sheet stays open while the ramp
+runs. The staircase lights the step you are on. Under it are the speed (and the BPM, if the song has
+a tempo) and where you are, such as *Step 3/7 · loop 1 of 2*. The fields lock while it plays.
+
+- **Stop ramp** ends it and pauses the song. The speed stays where the ramp had got to.
+- If something else pauses the song, such as a call or headphones coming out, the sheet says
+  *paused* and offers **Resume**.
+- When the ramp has played its last pass, the song stops and goes back to the loop's start, and the
+  sheet says **Done**. **Run again** plays it from the top. Change a field first and the button goes
+  back to **Set ramp**.
+
+**Leaving the sheet ends the ramp**, whether with **Close** or by swiping it down, and pauses the
+song if the ramp was playing. If you only opened it to look, **Cancel** leaves the song as it was.
 
 <!-- shot: looping/automator | role: screen
      | alt: The automator sheet with a start speed, a target, the number of steps and loops per step, and the derived per-step change

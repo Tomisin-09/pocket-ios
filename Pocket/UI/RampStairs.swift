@@ -32,9 +32,10 @@ enum RampShape: Equatable {
 
 /// The hero ramp graphic: a row of bars rising, falling, or flat left→right to show the
 /// ramp's shape. `tint` lets each feature theme it (loop = green, metronome = teal) while
-/// keeping the identical layout. `currentStep` (when set) lights the bar the live ramp has
-/// climbed to — the metronome's in-progress staircase; left `nil` it's a static preview
-/// (the loop config sheet).
+/// keeping the identical layout. Both callers pass `steps` as the ramp's **plateau** count (start,
+/// each step, target), so a lit bar is a plateau. `currentStep` (when set) is the 0-based plateau the
+/// live ramp is on — the metronome's tracker, and the song automator while its ramp runs (ADR 0260);
+/// left `nil` it's a static preview.
 struct RampStairs: View {
     let shape: RampShape
     let steps: Int
@@ -61,15 +62,25 @@ struct RampStairs: View {
         .accessibilityHidden(true)
     }
 
-    /// Map the live step onto a bar index. When one bar is drawn per step (the common case),
-    /// the current step *is* the bar index — so a 5-step ramp lights bars 1…5 exactly. Only a
-    /// long ramp that overflows the 12-bar cap falls back to a proportional position.
     private func isActive(bar index: Int, of barCount: Int) -> Bool {
         guard let currentStep, steps > 0 else { return false }
-        if barCount == steps {
-            return index == min(max(currentStep, 0), barCount - 1)
-        }
-        let progress = Double(min(currentStep, steps)) / Double(steps)
-        return Int((progress * Double(barCount - 1)).rounded()) == index
+        return Self.litBar(plateau: currentStep, of: steps, across: barCount) == index
+    }
+
+    /// The bar that lights for a 0-based `plateau` of `plateaus`, drawn as `bars` bars. When one bar is
+    /// drawn per plateau (the common case) the plateau *is* the bar index. Only a long ramp that
+    /// overflows the 12-bar cap falls back to a proportional position, and that maps **first plateau
+    /// to first bar and last to last**.
+    ///
+    /// It used to divide by the plateau count rather than by the gaps between plateaus, so the last
+    /// plateau of a long ramp never reached the last bar: 13 plateaus lit bar 11 of 12 at the target.
+    /// Invisible while a ramp climbs, and wrong exactly where the song automator now shows *Done*
+    /// (ADR 0260 D3).
+    nonisolated static func litBar(plateau: Int, of plateaus: Int, across bars: Int) -> Int {
+        let last = max(plateaus - 1, 0)
+        let clamped = min(max(plateau, 0), last)
+        if bars == plateaus { return clamped }
+        guard last > 0 else { return 0 }
+        return Int((Double(clamped) / Double(last) * Double(bars - 1)).rounded())
     }
 }

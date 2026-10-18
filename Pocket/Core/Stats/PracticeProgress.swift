@@ -17,10 +17,6 @@ import Foundation
 /// Every number below describes what happened.
 enum PracticeProgress {
 
-    /// Lifetime-hours marks worth noticing. Deliberately sparse and far apart — a wall you pass rather
-    /// than a ladder you're being timed on — and expressed in hours, which only ever accumulate.
-    static let hourMilestones = [10, 50, 100, 500]
-
     // MARK: - Horizons
 
     /// **This week** — the shape of seven days. Legible on day two, which is why it leads.
@@ -68,22 +64,14 @@ enum PracticeProgress {
     /// **All-time** — meaningful from the second session, which is why it ships with the near
     /// horizons. Activity leads; the inventory counts are supporting texture, never the headline,
     /// because they measure library size and can go *down* when a drill is deleted.
+    ///
+    /// **No hours wall.** It held 10, 50, 100 and 500 hours as marks passed or not yet, and ADR 0260
+    /// D2 removed it: it sat directly under the lifetime figure and restated it.
     struct AllTime: Equatable, Sendable {
         let lifetime: PracticeLog.Lifetime
         let inventory: PracticeStats.Summary
-        let milestones: [HoursMilestone]
 
         var isEmpty: Bool { lifetime.isEmpty }
-        /// The next mark ahead, or `nil` once every one is behind you. Stated as a fact about the
-        /// wall, never as a goal the player has been set.
-        var nextMilestone: Int? { milestones.first { !$0.isReached }?.hours }
-    }
-
-    /// One mark on the hours wall.
-    struct HoursMilestone: Equatable, Identifiable, Sendable {
-        let hours: Int
-        let isReached: Bool
-        var id: Int { hours }
     }
 
     /// The three horizons together.
@@ -135,15 +123,6 @@ enum PracticeProgress {
     }
 
     static func allTime(records: [SessionRecord], inventory: PracticeStats.Summary) -> AllTime {
-        let lifetime = PracticeLog.lifetime(records)
-        return AllTime(lifetime: lifetime,
-                       inventory: inventory,
-                       milestones: milestones(forHours: lifetime.hours))
-    }
-
-    /// The hours wall at a given lifetime total. Every mark is always present — the ones ahead are
-    /// shown unreached rather than hidden, so the wall doesn't rearrange itself as you pass them.
-    static func milestones(forHours hours: Int) -> [HoursMilestone] {
-        hourMilestones.map { HoursMilestone(hours: $0, isReached: hours >= $0) }
+        AllTime(lifetime: PracticeLog.lifetime(records), inventory: inventory)
     }
 }

@@ -3,7 +3,7 @@ import XCTest
 @testable import Pocket
 
 /// `NewExercisePlan.finalise(in:)` — the **one** insert path both hosts of `NewExerciseSheet` run:
-/// Practice's `+` and the metronome automator's "Save as exercise" seam.
+/// Practice's `+` and the metronome's "Save as exercise" (ADR 0260).
 ///
 /// Worth its own file because of how this seam fails. The sheet was always shared but the insert
 /// wasn't, so each host wrote its own — and a field the plan gained could simply go unread on one of
@@ -63,6 +63,32 @@ final class ExercisePlanFinaliseTests: XCTestCase {
         XCTAssertEqual(exercise.commandTempo, 96)
         XCTAssertEqual(exercise.commandNoteRate?.perBeat, 2,
                        "the command is measured at the pattern's rhythm, not left unstated")
+    }
+
+    /// The metronome's save (ADR 0260 D1): a `commandOnly` plan makes a drill that plays its command
+    /// and nothing else — the run shape ADR 0221 calls command-only.
+    func testACommandOnlyPlanCreatesACommandOnlyDrill() throws {
+        let context = try makeContext()
+        var plan = makePlan(name: "Found at the metronome", command: 132)
+        plan.commandOnly = true
+
+        let exercise = try XCTUnwrap(plan.finalise(in: context))
+
+        XCTAssertTrue(exercise.runShape.isCommandOnly)
+        XCTAssertEqual(exercise.commandTempo, 132, "the tempo found is still the command")
+        XCTAssertEqual(exercise.summitTempo, 132, "with Reach off the run summits at command (ADR 0221 D6)")
+    }
+
+    /// The default stays what it was: a drill made in Practice keeps all three optional phases, so
+    /// `commandOnly` can only ever be a choice a host makes, never a change of the default.
+    func testADefaultPlanKeepsEveryPhaseOn() throws {
+        let context = try makeContext()
+
+        let shape = try XCTUnwrap(makePlan(name: "From Practice").finalise(in: context)).runShape
+
+        XCTAssertTrue(shape.includeWarmup)
+        XCTAssertTrue(shape.includeReach)
+        XCTAssertTrue(shape.includeBackoff)
     }
 
     /// A nameless plan creates nothing at all — the guard lives on the shared path so it can't be

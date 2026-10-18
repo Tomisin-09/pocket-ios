@@ -321,6 +321,23 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **The metronome's top-right button saves the tempo as a drill** (ADR 0260). The 🔖 **Save as
+  exercise** is there whenever the metronome is open, not only while the automator is armed, and
+  it takes the tempo at the moment you tap it, so a ramp can keep climbing while you name the drill.
+  The drill it makes plays that tempo and nothing else: no warm-up, reach or back off, which you can
+  switch on in its Practice Settings. The metronome no longer writes journal notes. Notes you
+  wrote there before still show the click they were written at, and the Journal's **Metronome**
+  filter still finds them.
+- **The Practice log's All-time section drops the 10/50/100/500-hours row** (ADR 0260). It repeated
+  the time played shown directly above it.
+- **A loop's automator stays open while the ramp plays** (ADR 0260). **Set ramp** starts the loop
+  as before, and the sheet now shows where the ramp is: the step lit on the staircase, the speed
+  (and BPM, if the song has a tempo), and the step and pass. **Stop ramp** ends it and pauses the
+  song, and **Resume** appears if a call or unplugged headphones paused it. When the ramp finishes
+  the sheet says **Done** and offers **Run again**. Leaving the sheet ends the ramp, and pauses the
+  song if the ramp was playing. Finishing a ramp now also turns it off, so pressing play again plays
+  the loop at the speed it ended on rather than starting the ramp over. The staircase draws a bar
+  for each speed the ramp holds, and a long ramp now lights its last bar when it reaches the target.
 - **Song details fits on about one screen** (ADR 0258). The top shows the key, tempo and length on
   one line, with the mastery and the slowest loop's speed beside it. Your notes are headed
   **About**, and **Practise** holds Map the song and the drills linked to the song. The rest is a

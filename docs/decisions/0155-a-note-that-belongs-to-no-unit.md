@@ -9,6 +9,9 @@
   reads standalone notes **and standalone takes**: the Journal's ＋ became a menu with *Write a note*
   and *Record a take*, and a take recorded there carries `Recording.isStandalone` for §1's reason.
   §3a's owner-picker prohibition stands and covers takes too; nothing else here changes.
+- **Amended by:** ADR 0260 (2026-10-18) — §8's door is closed. The metronome's toolbar pencil became
+  *Save as exercise*, so the metronome is no longer a way into the journal. Notes written there
+  before still render. §1–§7 stand.
 - **Partly superseded:** §8's two refusals — *"No `.metronome` owner kind"* and *"No snapshot of the
   tempo"* — were reversed by **ADR 0160** on 2026-08-12. Everything else here stands, including §1's
   stored flag, §3a's owner-picker prohibition, and §8's decision to put the door on the metronome at
