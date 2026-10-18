@@ -95,7 +95,13 @@ extension LoopEditSheet {
     /// (B4a), so the wording must not imply that it does.
     private var backingTrackRow: some View {
         Toggle(isOn: $isBackingTrack) {
-            Label("Backing track", systemImage: "guitars")
+            // The icon in the secondary grey: it is a setting among launches, and right under Improvise's
+            // teal guitars the system blue it fell back to read as a mistake (pocket-369 screenshot).
+            Label {
+                Text("Backing track")
+            } icon: {
+                Image(systemName: "guitars").foregroundStyle(PocketColor.textSecondary)
+            }
         }
         .tint(PocketColor.practice)
         .accessibilityHint("Shows this loop on the backing-tracks shelf in your loops library")
