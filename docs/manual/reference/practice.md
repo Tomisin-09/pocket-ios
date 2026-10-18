@@ -105,11 +105,12 @@ session card, and in Jump back in on Home, until the next one replaces it. See
 `Order`, the `Favourites only` filter, and `Generate a quick session`, which skips the goals
 entirely. A search field above the list matches a routine's name and its description.
 
-Tapping a row opens the routine, where its blocks are listed and can be reordered, added to and
-removed. Above the blocks it carries a `Description` — read-only, and drawn only when there is one
-to draw, until `Edit` turns it into a field. Below the blocks, a saved routine states its
-`Estimated length`, its `Last practised` date and how many times it has been practised. Below that it carries a `Where you learned it` section — read-only until you
-tap `Edit`, which is what puts `Add a link` on it, the same gate the blocks are behind. See
+Tapping a row opens the routine, where its blocks are listed under `Practise` and can be reordered,
+added to and removed. Above the blocks it carries its description under `About` — read-only, and
+drawn only when there is one to draw, until `Edit` turns it into a field. Below the blocks, under
+`Progress`, a saved routine states its `Estimated length`, its `Last practised` date and how many
+times it has been practised. Below that it carries a `References` section — read-only until you tap
+`Edit`, which is what puts `Add a link` on it, the same gate the blocks are behind. See
 [where you learned it](../references.md). A generated session that has not been saved yet does not
 show the section at all. Procedure is in [routines](../routines.md).
 

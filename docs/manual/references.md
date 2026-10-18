@@ -21,7 +21,7 @@ practise:
 | An exercise | Its **ⓘ** detail sheet — from the run screen's header, or **Details** on a library row |
 | A song | **Details**, from the library row menu or by holding the title in the player |
 | A loop | **Edit loop**, from holding a row in the Loops panel |
-| A routine | Open it from the Routines library. Readable straight away; **Edit** is what lets you add or remove one, and **Save** keeps the change |
+| A routine | Open it from the Routines library: its **References** section. Readable straight away; **Edit** is what lets you add or remove one, and **Save** keeps the change |
 
 <!-- shot: references/section | role: panel
      | alt: The "Where you learned it" section on an exercise detail sheet, listing two links with their sites underneath, one of them carrying a note under its site, then a picture row with a thumbnail, and the "Add a link" and "Add a file" buttons

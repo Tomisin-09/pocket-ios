@@ -331,6 +331,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   Improvise, with the Backing track switch beside Improvise; **Progress** holds mastery, command
   tempo, focus and the journal. References, Works on & tags, and Colour are a row each, and the
   Colour row shows the colour. Cancel still takes back anything you changed on those screens.
+- **A routine's headings match the other detail screens** (ADR 0258): **About** (was Description),
+  **Practise** (was Blocks), **Progress** for its length and history, and **References** (was Where
+  you learned it). Nothing moved.
 - **The Practice screen shows what you have, not how many.** It is now a card and three shelves
   (ADR 0257). **Today's session** carries the long-term goals that shape it, as chips you can tap to
   edit, and a line back to the last session you started and didn't save. **Routines** come next:
