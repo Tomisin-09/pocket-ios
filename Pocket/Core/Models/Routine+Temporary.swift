@@ -7,8 +7,8 @@ import SwiftData
 /// resolves them from the main context and the run screens stamp them. They reach Routines only if
 /// the player saves one. So *in the store* no longer means *in Routines*, and each surface has to say
 /// which it means. A surface about **what you keep** lists `saved(_:)`. A surface about **what you
-/// practised** (Jump back in, the Recent routines rail, a session note's link) lists every routine,
-/// as it always has (D2).
+/// practised** (Jump back in, a session note's link) lists every routine, as it always has (D2). The
+/// Practice hub's Today's session card offers the one temporary session by itself (ADR 0257 D2).
 extension Routine {
 
     /// The routines a surface about what you keep shows (D2): the Routines library with its search,

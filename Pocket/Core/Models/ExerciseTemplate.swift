@@ -226,6 +226,13 @@ enum ExerciseTemplate: String, CaseIterable, Identifiable, Codable {
         .arpeggios, .legato, .fingerstyle, .rhythm, .earTraining, .theory, .freeform
     ]
 
+    /// Where `template` sits in `displayOrder` — the sort key for anything that lists the kinds in
+    /// menu order (the Exercises library's sections, the Practice hub's category tiles, ADR 0257 D5).
+    /// A template missing from the list sorts last rather than trapping.
+    static func menuRank(_ template: ExerciseTemplate) -> Int {
+        displayOrder.firstIndex(of: template) ?? displayOrder.count
+    }
+
     /// The templates offered in the **create** picker, in menu order (ADR 0087, 2026-07-13):
     /// **Basic** first (the default, no-fuss drill), then Warm-up and the techniques. **Fingerstyle**
     /// and **Rhythm** are dropped (fingerstyle out of scope; rhythm already covered by Strumming +

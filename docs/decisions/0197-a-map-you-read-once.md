@@ -14,6 +14,9 @@
   *Hold to change*, until it has been changed once; like the empty library's, it is an instruction
   that goes once followed. D2 and D6 stand: the tile's spoken label is its tool's row, and it lives in
   `HomeView+Map.swift`.
+- **Amended by:** ADR 0257 D4 (2026-10-17) — the recent-routines rail below the map is gone. Its job
+  passed to the Routines shelf on the Practice hub. Jump back in is Home's only "carry on" card. The
+  map, its sections and the labels-as-contract rule all stand.
 - **Relates to:** **reverses ADR 0102**'s rejection of a tile grid, on the stated grounds that it
   was decided at four cards. Keeps everything else 0102 established — the three titled sections, and
   §1's rule that a destination's accessibility label is the UI-test contract. Spends the height on

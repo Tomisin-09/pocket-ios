@@ -15,7 +15,7 @@ import XCTest
 /// dirty simulator can't match.
 ///
 /// **Every assertion is a delta**, for the reason `RoutineLibraryUITests` gives: the simulator keeps
-/// its store between runs. The count on Practice's Routines row is read before and compared after,
+/// its store between runs. The count on Practice's Routines shelf is read before and compared after,
 /// and the one routine this saves is deleted at the end, which the last count checks.
 ///
 /// **It never searches the library.** Leaving a screen whose search is active means ending the
@@ -33,6 +33,11 @@ final class TemporarySessionUITests: UITestCase {
 
         openPractice(in: app)
         let before = try routineCount(in: app)
+        // A session's name on Practice: the Today's session card's unsaved line (ADR 0257 D2), or a
+        // card on the Routines shelf.
+        let card = { (name: String) in
+            app.buttons.matching(NSPredicate(format: "label CONTAINS %@", name)).firstMatch
+        }
 
         // 1. Run a session and leave it unsaved. Its own screen offers Save, not Edit (D4).
         runPlannerSession(named: first, in: app)
@@ -48,6 +53,9 @@ final class TemporarySessionUITests: UITestCase {
         goBack(from: first, to: "Today's session", in: app)
         goBack(from: "Today's session", to: "Practice", in: app)
         XCTAssertEqual(try routineCount(in: app), before, "Routines counted a temporary session")
+        // ... and the Today's session card offers the way back to it, where Save is (ADR 0257 D2).
+        XCTAssertTrue(card(first).waitForExistence(timeout: Self.uiTimeout),
+                      "the unsaved session has no line on the Today's session card")
 
         // 3. Run a second one, and save it from the finish screen (D4).
         runPlannerSession(named: second, in: app)
@@ -69,19 +77,15 @@ final class TemporarySessionUITests: UITestCase {
         goBack(from: "Today's session", to: "Practice", in: app)
         XCTAssertEqual(try routineCount(in: app), before + 1, "Save as a routine didn't put it in Routines")
 
-        // 4. The first was deleted by the second Start, not just hidden (D3). Home's rail lists every
-        //    routine practised, temporary or not, so the first would still be on it.
-        goBack(from: "Practice", to: nil, in: app)
-        let card = { (name: String) in
-            app.buttons.matching(NSPredicate(format: "label CONTAINS %@", name)).firstMatch
-        }
-        XCTAssertTrue(card(second).waitForExistence(timeout: Self.uiTimeout),
-                      "the saved session isn't on Home")
-        XCTAssertFalse(card(first).exists, "the first temporary session survived the next Start")
+        // 4. The first was deleted by the second Start, not just hidden (D3). The Today's session card
+        //    offers any temporary session still in the store (ADR 0257 D2), and it offered the first
+        //    in step 2, so its line still being there would mean it survived. (Not asserted on the
+        //    Routines shelf: favourites left on a dirty simulator can fill its three cards.)
+        XCTAssertTrue(waitForDisappearance(of: card(first)),
+                      "the first temporary session survived the next Start")
 
         // 5. Put the simulator back. Newest first, so the saved session is the top row; the delete
         //    commits when the screen is left (`RowDeletionCoordinator`).
-        openPractice(in: app)
         openRoutines(in: app)
         let row = app.cells.containing(.staticText, identifier: second).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: Self.uiTimeout), "the saved session isn't in Routines")
@@ -157,11 +161,10 @@ final class TemporarySessionUITests: UITestCase {
 
     @MainActor
     private func openRoutines(in app: XCUIApplication) {
-        XCTAssertTrue(tap(routinesRow(in: app), until: app.navigationBars["Routines"], in: app),
-                      "Routines never opened")
+        openPracticeLibrary("Routines", in: app)
     }
 
-    /// Practice's **Routines** row, labelled `Routines, N` (`PracticeView.libraryRow`).
+    /// The Routines shelf's **All N ›** link, labelled `Routines, N` (ADR 0257 D8).
     @MainActor
     private func routinesRow(in app: XCUIApplication) -> XCUIElement {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Routines, ")).firstMatch

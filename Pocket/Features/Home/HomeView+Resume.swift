@@ -95,8 +95,7 @@ extension HomeView {
     }
 
     private static func content(_ routine: Routine) -> JumpBackInCard.Content {
-        // The same count `RecentRoutineCard` shows — playable blocks, rests excluded — so the two
-        // routine surfaces on one screen cannot state different sizes for one routine.
+        // Playable blocks, rests excluded: what the routine will actually have you play.
         let blocks = routine.orderedItems.filter { $0.kind != .rest && $0.hasResolvableUnit }.count
         return JumpBackInCard.Content(title: routine.name.isEmpty ? "Routine" : routine.name,
                                       subtitle: nil, practiced: routine.lastPracticed,

@@ -168,7 +168,8 @@ schemes:
       # The plan's two products (ADR 0256 D9) for the simulator and for device runs Xcode launches.
       # While this is set StoreKit serves the file and never asks the sandbox, so purchases "work"
       # without proving anything about App Store Connect. `scripts/run-device.sh` launches through
-      # `devicectl`, which never applies it, and so always reads the real sandbox.
+      # `devicectl`, which never applies it: its builds have the plan unlocked (`PLAN_UNLOCKED`),
+      # and with `-s` they read the real sandbox.
       storeKitConfiguration: Configuration/RedMoon.storekit
     test:
       # Four test plans (see docs/decisions/0053). The default is the fast

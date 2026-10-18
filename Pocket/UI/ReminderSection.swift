@@ -90,7 +90,7 @@ struct ReminderSection: View {
                 // this only states what the schedule above it currently amounts to.
                 Text("Not being delivered.")
             case .next(let date):
-                Text("Next: \(date.formatted(.dateTime.weekday(.wide).hour().minute()))")
+                Text(PracticeReminderPlan.nextText(date))
             }
         }
         .font(.futura(.caption))

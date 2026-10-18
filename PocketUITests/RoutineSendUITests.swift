@@ -91,9 +91,9 @@ final class RoutineSendUITests: UITestCase {
         XCTAssertTrue(scrollIntoView(practice, in: app), "the Practice card isn't reachable")
         practice.tap()
 
-        let routines = app.cells.containing(.staticText, identifier: "Routines").firstMatch
-        XCTAssertTrue(routines.waitForExistence(timeout: Self.uiTimeout), "no Routines row in Practice")
-        XCTAssertTrue(tap(routines, until: app.navigationBars["Routines"], in: app), "the Routines library didn't open")
+        XCTAssertTrue(app.navigationBars["Practice"].waitForExistence(timeout: Self.uiTimeout),
+                      "Practice hub did not open from Home")
+        openPracticeLibrary("Routines", in: app)
 
         let row = app.cells.containing(.staticText, identifier: "Pack routine").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: Self.uiTimeout), "the received routine isn't in the library")

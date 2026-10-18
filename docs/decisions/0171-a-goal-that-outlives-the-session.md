@@ -10,6 +10,10 @@
 - **Amended by:** ADR 0246 (2026-10-03) — D6's *"here and only here"* gains one exception for
   **adding**: the first-run intake can create up to three long-term goals from templates. Ranking,
   editing and deleting still happen only in the list, and the echo stays read-only.
+- **Amended by:** ADR 0257 D2 (2026-10-17) — D6's list moves from a row on Practice into the Today's
+  session card, as chips with an *Edit goals* link. A chip opens that goal's editor, so editing can
+  start there; ranking stays in the list, which is still the only place that shows the order. The
+  echo on Progress is untouched.
 - **Relates to:** ADR 0015 (the planner's goal model — S1 "the goals are *not equal*", S5 weight,
   S6 met, S7 "one near-term goal"), ADR 0014 (the session layout the goals feed),
   ADR 0129 (the block model that cut Quick to three items and forced round-robin),
