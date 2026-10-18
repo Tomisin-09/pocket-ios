@@ -18,14 +18,14 @@ practise:
 
 | On | How you get there |
 |---|---|
-| An exercise | Its **ⓘ** detail sheet — from the run screen's header, or **Details** on a library row |
-| A song | **Details**, from the library row menu or by holding the title in the player |
-| A loop | **Edit loop**, from holding a row in the Loops panel |
+| An exercise | Its **ⓘ** detail sheet ▸ **References** — from the run screen's header, or **Details** on a library row |
+| A song | **Details** ▸ **References**, from the library row menu or by holding the title in the player |
+| A loop | **Edit loop** ▸ **References**, from holding a row in the Loops panel |
 | A routine | Open it from the Routines library: its **References** section. Readable straight away; **Edit** is what lets you add or remove one, and **Save** keeps the change |
 
 <!-- shot: references/section | role: panel
-     | alt: The "Where you learned it" section on an exercise detail sheet, listing two links with their sites underneath, one of them carrying a note under its site, then a picture row with a thumbnail, and the "Add a link" and "Add a file" buttons
-     | state: seeded library, an exercise detail sheet with two links and one picture saved, one link carrying a note, scrolled to the section -->
+     | alt: The "Where you learned it" section on an exercise's References screen, listing two links with their sites underneath, one of them carrying a note under its site, then a picture row with a thumbnail, and the "Add a link" and "Add a file" buttons
+     | state: seeded library, an exercise detail sheet ▸ References, with two links and one picture saved, one link carrying a note -->
 
 A routine having one is the point of the whole feature. A course belongs to a *session*, not to a
 single drill, and until now a routine built around week three of something had nowhere to say so.

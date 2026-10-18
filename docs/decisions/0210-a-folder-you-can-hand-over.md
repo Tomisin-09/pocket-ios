@@ -4,6 +4,9 @@
   S3 (receive a bundle) are designed below and **not built**; D11 and D12 describe them and nothing
   in the app implements them yet.
 - **Date:** 2026-09-09 (`pocket-311-folders`)
+- **Amended by:** ADR 0258 (2026-10-18) — **D9**: the ⓘ sheet's Folders section is now a row that
+  opens it, *Exercise ⓘ › Folders*; the chips and *Add to folder…* are unchanged, and `+Folders.swift`
+  became `ExerciseFoldersScreen`. The rest stands.
 - **Amends:** ADR 0033 — its naming rule gains a **third scope** (D1): songs are Collections, loops
   are Tags, exercises and routines are **Folders**. 0033's three failure modes (no reuse, no
   normalisation, no payoff) are answered here rather than rediscovered, and its promotion trigger —

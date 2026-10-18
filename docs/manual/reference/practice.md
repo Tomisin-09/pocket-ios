@@ -160,9 +160,10 @@ Opened by tapping a drill.
 - **A `Journal` and `Takes` bar** holds what you have already written and recorded against this
   drill.
 - **`Start training`** commits and runs. Beside it, the **record** control arms a take.
-- **`Exercise details`** — the ⓘ — opens the drill's reference sheet, which carries its description,
-  progress, linked songs, a `Where you learned it` section with an `Add a link` button, the feel and
-  the template chip.
+- **`Exercise details`** — the ⓘ — opens the drill's reference sheet: its description under
+  `About`, then a row each for `Progress`, `Songs`, `References` (a `Where you learned it` section
+  with an `Add a link` button), `Folders` and `Feel & skills` (the feel, what it works on, and the
+  template chip). Each row says what is behind it.
 - **The ✏️** writes a [journal note](tools-and-journal.md#journal) without touching the run. It
   shows while running and inside a routine; stopped, the `Journal` bar writes notes.
 

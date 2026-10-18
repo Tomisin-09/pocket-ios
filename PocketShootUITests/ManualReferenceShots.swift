@@ -14,26 +14,23 @@ import XCTest
 /// data behind it is not typed.
 final class ManualReferenceShots: ManualShotCase {
 
-    /// `references/section` — the section on an exercise's detail sheet, with two links on it.
+    /// `references/section` — the section on an exercise's References screen, with two links on it.
     @MainActor
     func testReferencesSection() {
         let app = launchForShoot()
         openExerciseDetail(in: app)
+        openReferences(in: app)
 
-        // Fourth of six sections, so it opens below the fold. Two things this got wrong first:
-        // scrolling on hittability rather than frame containment (which returns happy with the
-        // section off-screen), and then scrolling to the section's *header*, which leaves the rest
-        // of it below the fold. Aim at the last element the figure needs — the button.
-        // The last of it is now *Add a file* (ADR 0167 phase 2), under the seeded picture.
+        // The section is the References screen's only one since ADR 0258, so it is in frame as it opens.
+        // It used to be fourth of six on the sheet, which took a scroll aimed at its last element and then
+        // a drag to settle the heading back into frame; a drag on a screen this short pulls the sheet
+        // down instead, so neither is done. Waited for, because the screen is still arriving.
         let addFile = app.buttons["Add a file"]
-        scrollIntoFrame(addFile, called: "Add a file", in: app)
-        // And the third: the picture made the section taller than a swipe's step, so the swipe that
-        // brought Add a file up carried the heading under the bar (2026-10-03). Settled with Add a file
-        // two-thirds of the way down, which leaves the whole section above it in frame.
-        settle(addFile, at: 0.68, in: app)
+        XCTAssertTrue(addFile.waitForExistence(timeout: Self.shootTimeout),
+                      "the References screen has no Add a file.\n\(stepLog)")
 
         capture(app, slug: "references/section",
-                assertingOnScreen: "Alternate Picking",
+                assertingOnScreen: "References",
                 alsoRequiring: ["Where you learned it",
                                 "The lesson this came from",
                                 "Tab for the whole run",
@@ -54,6 +51,7 @@ final class ManualReferenceShots: ManualShotCase {
         let app = launchForShoot()
         UIPasteboard.general.string = "https://example.com/lessons/legato-runs"
         openExerciseDetail(in: app)
+        openReferences(in: app)
 
         let addLink = app.buttons["Add a link"]
         scrollIntoFrame(addLink, called: "Add a link", in: app)
@@ -87,8 +85,10 @@ final class ManualReferenceShots: ManualShotCase {
                       "no Practice card on Home. \(stepLog)")
         tapHomeCard(card.label, in: app, arrivingAt: app.navigationBars["Practice"])
 
-        tapRow(labelStartingWith: "Exercises", in: app,
-               arrivingAt: app.navigationBars["Exercises"], called: "the exercise library")
+        // The Practice hub is shelves since ADR 0257: the Exercises shelf's *All* link opens the
+        // library, through the UI tests' own helper.
+        note("open the Exercises library from its shelf")
+        openPracticeLibrary("Exercises", in: app)
 
         // Pinned by name to the drill the seed hangs its links on. A prefix match on the row rather
         // than an exact label, because the row carries its tempo and template after the name.
@@ -98,29 +98,16 @@ final class ManualReferenceShots: ManualShotCase {
         // Gated on the sheet's *Folders* row, which sits near the top. *Where you learned it* used to
         // be the gate, until sections above it (Songs among them) pushed it below the fold, where a
         // lazy list hasn't built it: the sheet opened every time and the gate could never see it.
-        // Each caller scrolls to what its figure needs.
+        // Since ADR 0258 Folders is a row whose label carries its value, so it is matched by its start.
         let info = app.buttons["Exercise details"]
         tap(info, labelled: "Exercise details",
-            revealing: app.buttons["Add to folder…"], called: "the detail sheet")
+            revealing: element(in: app, labelStartingWith: "Folders"), called: "the detail sheet")
     }
 
-    /// Drag the sheet until `element` sits `fraction` of the way down the window. Slow, and held at the
-    /// end, so the list stops where the finger does instead of flinging on; then measured again and
-    /// corrected, because the drag loses a few points to the touch slop.
+    /// The detail sheet's **References** row (ADR 0258), where *Where you learned it* now lives.
     @MainActor
-    private func settle(_ element: XCUIElement, at fraction: CGFloat, in app: XCUIApplication) {
-        let window = app.windows.firstMatch.frame
-        let origin = app.coordinate(withNormalizedOffset: .zero)
-        for pass in 0..<3 {
-            let shift = window.height * fraction - element.frame.maxY
-            guard abs(shift) > 24 else { return }
-            // Down from under the bar, or up from above the home indicator: room either way.
-            let start = window.height * (shift > 0 ? 0.3 : 0.75)
-            origin.withOffset(CGVector(dx: window.midX, dy: start))
-                .press(forDuration: 0.1,
-                       thenDragTo: origin.withOffset(CGVector(dx: window.midX, dy: start + shift)),
-                       withVelocity: .slow, thenHoldForDuration: 0.1)
-            note("dragged the sheet \(Int(shift)) pt to settle '\(element.label)' (\(pass + 1))")
-        }
+    private func openReferences(in app: XCUIApplication) {
+        tap(element(in: app, labelStartingWith: "References"), labelled: "References",
+            revealing: app.navigationBars["References"], called: "the References screen")
     }
 }

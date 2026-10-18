@@ -54,8 +54,8 @@ Make one at the top of the library and it sits at the top; open a folder first a
 inside it. That is the only way to nest, and it is why a name with a `/` in it makes one folder with
 a slash-shaped gap in the name rather than two levels you did not ask for.
 
-**Filing something.** Hold a drill and tap **Add to folder…**, or open its **ⓘ** sheet and use the
-**Folders** section. Either way you get the folders you already have, offered so you reuse them
+**Filing something.** Hold a drill and tap **Add to folder…**, or open its **ⓘ** sheet and tap
+**Folders**. Either way you get the folders you already have, offered so you reuse them
 instead of retyping them.
 
 **A drill can be in more than one folder.** That is why the verb is *add* and never *move*. A

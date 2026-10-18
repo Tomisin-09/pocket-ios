@@ -2,14 +2,17 @@
 
 - **Status:** Accepted — design signed off with Tomisin on 2026-10-18 (the canvas *Practice hub
   revamp*, rows *Song details*, *Edit loop* and *Exercise ⓘ*, and the board *Tap a routine: detail*
-  from 2026-10-17). Built on `pocket-369-detail-sheets`, one commit per sheet: song details first.
+  from 2026-10-17). Built on `pocket-369-detail-sheets`, one commit per sheet: song details
+  (`eb773bd`), Edit loop (`f0c2174`), routine headers, then the exercise ⓘ sheet.
 - **Date:** 2026-10-18
 - **Amends:** ADR 0152 §1–§2 — the **Audio** section leaves the sheet for *Song details › Audio
   file*, a screen one tap down. It is still the per-song inspector's door, now a hold and a tap from
   where a wrong track is heard, and its rows and words are unchanged. ADR 0236 D3 and D4 — *Export
   audio file only…* and *Send this song…* move with it. ADR 0250 D9 — the **Mastery** and **Slowest
   loop** rows move to *Song details › Progress*; the sheet's header keeps the dots, what they are made
-  of and the slowest speed side by side, so D8 holds on the sheet too.
+  of and the slowest speed side by side, so D8 holds on the sheet too. ADR 0210 D9 — the ⓘ sheet's
+  **Folders** section becomes a row that opens it (*Exercise ⓘ › Folders*), its chips and *Add to
+  folder…* unchanged.
 - **Relates to:** 0162 (the Settings hub, whose D3 row is the row used here) · 0038 (the notes, still
   edited in place) · 0232 (Map the song, still on the sheet) · 0172 (a linked drill is a route, still
   one tap) · 0167 (where you learned it) · 0039 (unrated is not zero) · 0220 D4 (the backing-track

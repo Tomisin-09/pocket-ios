@@ -331,6 +331,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   Improvise, with the Backing track switch beside Improvise; **Progress** holds mastery, command
   tempo, focus and the journal. References, Works on & tags, and Colour are a row each, and the
   Colour row shows the colour. Cancel still takes back anything you changed on those screens.
+- **A drill's ⓘ sheet fits on one screen** (ADR 0258). Your description, headed **About**, is on
+  it; **Progress** (showing the mastery dots), **Songs**, **References**, **Folders** and **Feel &
+  skills** are a row each that says what's behind it. Rating a drill from here is now two taps.
 - **A routine's headings match the other detail screens** (ADR 0258): **About** (was Description),
   **Practise** (was Blocks), **Progress** for its length and history, and **References** (was Where
   you learned it). Nothing moved.

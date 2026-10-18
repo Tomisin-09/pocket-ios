@@ -84,7 +84,7 @@ marker grammar in [README.md](README.md).
 | `reference/tuner` | `screen` | `tools-and-journal` | Toolkit ▸ Tuner, microphone allowed | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 | `reference/watch-on-neck` | `screen` | `practice` | map seed, Slow Bend ▸ Verse riff ▸ Edit loop ▸ Watch it on the neck, stopped |  |
 | `references/editor` | `screen` | `references` | seeded library, an exercise detail sheet, Add a link tapped |  |
-| `references/section` | `panel` | `references` | seeded library, an exercise detail sheet with two links and one picture saved, one link carrying a note, scrolled to the section |  |
+| `references/section` | `panel` | `references` | seeded library, an exercise detail sheet ▸ References, with two links and one picture saved, one link carrying a note |  |
 | `routines/block-done` | `screen` | `routines` | seeded library, a routine mid-session, a block just finished |  |
 | `routines/block-record` | `detail` | `routines` | seeded library, Practice ▸ Routines ▸ Morning Routine, first block opened |  |
 | `routines/editor` | `screen` | `routines` | Practice ▸ Routines ▸ + , three blocks added |  |
