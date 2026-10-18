@@ -1,12 +1,13 @@
 import SwiftUI
 
-/// The song's **Exercises for this song** section (ADR 0111), split out of `SongDetailsSheet` to
-/// keep that file under the 400-line cap — the same move `RoutineDetailView+References.swift` makes
-/// for the same reason.
+/// The song's **Practise** section (ADR 0258): **Map the song**, then the drills linked to it (ADR
+/// 0111), split out of `SongDetailsSheet` to keep that file under the 400-line cap — the same move
+/// `RoutineDetailView+References.swift` makes for the same reason. It was headed *Exercises for this
+/// song*, with the map in a section of its own above it.
 ///
-/// The section shows the song side of the `Song.linkedExercises` ↔ `Exercise.linkedSongs` edge, and
-/// hosts the two actions that act on it: **Link exercises** (the multi-select picker) and **Build a
-/// routine for this song** (the generator). Link changes persist immediately, matching the inline
+/// The drills are the song side of the `Song.linkedExercises` ↔ `Exercise.linkedSongs` edge, and the
+/// section hosts the two actions that act on it: **Link exercises** (the multi-select picker) and
+/// **Build a routine for this song** (the generator). Link changes persist immediately, matching the inline
 /// notes save on this sheet — a discrete, intentional edit, unlike the staged metadata form behind
 /// **Edit**.
 ///
@@ -15,12 +16,13 @@ import SwiftUI
 /// exercise library. Tapping one now opens its run screen.
 extension SongDetailsSheet {
 
-    /// The exercises that **serve** this song. Each row opens its run screen; each unlinks with a
-    /// swipe.
-    var linkedExercisesSection: some View {
+    /// The map, then the exercises that **serve** this song. Each drill row opens its run screen; each
+    /// unlinks with a swipe.
+    var practiseSection: some View {
         Section {
+            mapRow
             if song.linkedExercises.isEmpty {
-                Text("No drills linked yet — link the exercises that help you play this song.")
+                Text("No drills linked yet.")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             } else {
@@ -43,10 +45,10 @@ extension SongDetailsSheet {
             }
             buildRoutineButton
         } header: {
-            Text("Exercises for this song")
+            Text("Practise")
         } footer: {
-            Text("Exercises that help you play this song — they show on the exercise too. "
-                 + "Tap one to run it. Build a routine strings these together with your saved "
+            Text("Link the exercises that help you play this song — they show on the exercise too. "
+                 + "Tap one to run it. Build a routine strings them together with your saved "
                  + "loops and a full play-through, ready to review and save.")
         }
     }

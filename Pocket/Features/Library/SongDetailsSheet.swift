@@ -2,9 +2,11 @@ import SwiftData
 import SwiftUI
 
 /// A read-first **song details** view, opened by holding the title on the practice
-/// screen (workstream 5). It reads as a descriptive overview — title/artist header,
-/// the song's musical facts, collections, notes, and practice stats — rather than a
-/// form of editable fields. Editing the structured facts is one tap away via **Edit**,
+/// screen (workstream 5). It reads as a descriptive overview rather than a form of editable
+/// fields, in the categories every detail sheet shares (ADR 0258): what you glance at stays on
+/// the sheet — the title, a key · tempo · length line, the mastery, **About** (the notes) and
+/// **Practise** — and the rest sits behind rows that each say what is behind them: **Progress**,
+/// **References**, **Audio file**, **Collections**. Editing the structured facts is one tap away via **Edit**,
 /// which presents the existing `SongEditSheet`; on save the values flow back through
 /// the observed `Song`. **Notes are the exception** (ADR 0038): they're editable inline
 /// here, behind a deliberate edit affordance — tap the pencil in the Notes header to
@@ -51,40 +53,24 @@ struct SongDetailsSheet: View {
     /// The map asked for the waveform: once it has closed, this sheet goes too.
     @State private var showWaveformAfterMap = false
     @State private var editing = false
-    @State private var sendingSong = false
     // Inline notes editing: a local draft committed on Update, so the read view only
     // changes when you explicitly save (not keystroke-by-keystroke).
     @State private var editingNotes = false
     @State private var draftComment = ""
     @FocusState private var notesFocused: Bool
     @State private var savedPulse = false
-    /// The reference link being added or edited (ADR 0167). Held here rather than in
-    /// `ReferencesSection` — a sheet presented from inside this `Form` dismisses *this* sheet
-    /// instead of opening. See `ReferenceLinkEditing`.
-    @State private var editingReference: ReferenceLinkDraft?
-    /// The picture being viewed, or the picker being opened (ADR 0167 phase 2) — held here for the
-    /// same reason as `editingReference`: `.photosPicker` and `.fileImporter` are presentations too.
-    @State private var referenceAttachments: ReferenceAttachmentPresentation?
 
     var body: some View {
         NavigationStack {
             KeyboardFollowingScroll {
                 Form {
                     headerSection
-                    // Notes sit directly under the title/artist/album box — the song's
-                    // free-text standing facts (tuning, capo…), the song-scope half of the
-                    // notes/journal feature (ADR 0038). Always shown so they're discoverable.
+                    // The notes sit directly under the header — the song's free-text standing
+                    // facts (tuning, capo…), the song-scope half of the notes/journal feature
+                    // (ADR 0038). Always shown so they're discoverable. Headed **About** (ADR 0258).
                     notesSection
-                    detailsSection
-                    mapSection
-                    // Which file this song plays, and the way to change it (ADR 0152) — the
-                    // relink door that doesn't depend on the audio being broken.
-                    SongAudioSection(song: song, replace: replace, onSend: { sendingSong = true })
-                    if !song.collections.isEmpty { collectionsSection }
-                    linkedExercisesSection
-                    ReferencesSection(owner: song, accent: PocketColor.library,
-                                      editing: $editingReference, presenting: $referenceAttachments)
-                    statsSection
+                    practiseSection
+                    categoriesSection
                 }
             }
             .navigationTitle("Song details")
@@ -146,19 +132,11 @@ struct SongDetailsSheet: View {
             }
         }
         .presentationDetents([.large])
-        .referenceLinkEditing($editingReference, owner: song, accent: PocketColor.library)
-        .referenceAttachments($referenceAttachments, naming: $editingReference, owner: song,
-                              accent: PocketColor.library)
         // Edit is a nested sheet over the details so dismissing it returns here; the
         // edited values write straight back to the persisted `Song`, which this view
         // observes, so the read view refreshes on save.
         .sheet(isPresented: $editing) {
             SongEditSheet(song: song)
-        }
-        // Send this song (ADR 0236 D4), at the sheet's root for `editing`'s reason: raised from the Audio
-        // row inside the `Form`, it would be lost.
-        .sheet(isPresented: $sendingSong) {
-            SendSongSheet(song: song)
         }
     }
 
@@ -180,53 +158,31 @@ struct SongDetailsSheet: View {
                         .font(.futura(.footnote))
                         .foregroundStyle(PocketColor.textSecondary)
                 }
+                if !factsLine.isEmpty {
+                    Text(factsLine)
+                        .font(.futura(.subheadline))
+                        .foregroundStyle(PocketColor.textPrimary)
+                        .padding(.top, 6)
+                }
+                // Nothing to rate until there is a loop, so a song without one says nothing here;
+                // Progress still says *Unrated*.
+                if !song.loops.isEmpty { masteryLine }
             }
             .padding(.vertical, 4)
             .accessibilityElement(children: .combine)
         }
     }
 
-    private var detailsSection: some View {
-        Section {
-            detailRow("Key", song.musicalKey == .unknown ? "—" : song.musicalKey.displayName)
-            DetailLabeledContent(label: "Tempo") {
-                Text(tempoText).font(.pocketMono(.body)).foregroundStyle(PocketColor.textPrimary)
-            }
-            DetailLabeledContent(label: "Mastery", info: PracticeFieldInfo.songMastery) {
-                if let mastery = song.mastery {
-                    // What the average is made of (ADR 0250 D9): a raised loop drops out until
-                    // it is rated again, so the dots alone can't say how many they stand for.
-                    HStack(spacing: 8) {
-                        Text(MasteryRollup.ratedLabel(rated: song.ratedLoopCount, of: song.loops.count))
-                            .font(.futura(.footnote))
-                            .foregroundStyle(PocketColor.textSecondary)
-                        MasteryDots(filled: mastery, size: 8)
-                    }
-                } else {
-                    Text("Unrated").foregroundStyle(PocketColor.textSecondary)
-                }
-            }
-            // The speed beside the mastery (ADR 0250 D8), naming the loop that sets it.
-            if let speed = song.speedReading {
-                DetailLabeledContent(label: "Slowest loop") {
-                    Text("\(speed.loopName) · \(speed.percent)%")
-                        .font(.futura(.body))
-                        .foregroundStyle(PocketColor.textPrimary)
-                        .lineLimit(1)
-                }
-            }
-            DetailLabeledContent(label: "Length") {
-                Text(timecode(song.duration)).font(.pocketMono(.body)).foregroundStyle(PocketColor.textPrimary)
-            }
+    /// The dots, what they're made of and the speed beside them — two axes side by side, never one
+    /// number (ADR 0250 D8). Unrated is a word, not five empty dots (ADR 0039).
+    private var masteryLine: some View {
+        HStack(spacing: 8) {
+            if let mastery = song.mastery { MasteryDots(filled: mastery, size: 8) }
+            Text(masteryCaption)
+                .font(.futura(.footnote))
+                .foregroundStyle(PocketColor.textSecondary)
         }
-    }
-
-    private var collectionsSection: some View {
-        Section("Collections") {
-            ForEach(song.collections, id: \.self) { tag in
-                Text(tag).foregroundStyle(PocketColor.textPrimary)
-            }
-        }
+        .padding(.top, 2)
     }
 
     private var notesSection: some View {
@@ -258,7 +214,7 @@ struct SongDetailsSheet: View {
             }
         } header: {
             HStack {
-                Text("Notes")
+                Text("About")
                 Spacer()
                 if savedPulse {
                     Label("Saved", systemImage: "checkmark.circle.fill")
@@ -297,34 +253,11 @@ struct SongDetailsSheet: View {
             withAnimation { savedPulse = false }
         }
     }
-
-    private var statsSection: some View {
-        Section("Practice stats") {
-            statRow("Loops", song.loops.count)
-            statRow("Markers", song.markers.count)
-            statRow("Annotations", song.annotationCount)
-        }
-    }
-
 }
 
 /// Row builders, derived text and the replace seam — in an extension so they don't count against
 /// the view's body-length cap.
 extension SongDetailsSheet {
-
-    // MARK: - Row builders
-
-    func detailRow(_ label: String, _ value: String) -> some View {
-        DetailLabeledContent(label: label) {
-            Text(value).foregroundStyle(PocketColor.textPrimary)
-        }
-    }
-
-    func statRow(_ label: String, _ value: Int) -> some View {
-        DetailLabeledContent(label: label) {
-            Text("\(value)").font(.pocketMono(.body)).foregroundStyle(PocketColor.textPrimary)
-        }
-    }
 
     // MARK: - Derived text
 
@@ -335,8 +268,19 @@ extension SongDetailsSheet {
             .joined(separator: " · ")
     }
 
-    var tempoText: String {
-        song.bpm.map { "\($0) BPM" } ?? "—"
+    /// `F# Minor · 83 BPM · 3:24` — whatever of the three is known (`DetailSheetText.facts`).
+    var factsLine: String {
+        DetailSheetText.facts(key: song.musicalKey == .unknown ? nil : song.musicalKey.displayName,
+                              tempo: song.bpm.map { "\($0) BPM" },
+                              length: song.duration > 0 ? timecode(song.duration) : nil)
+    }
+
+    /// `3 of 4 loops rated · slowest 70%`, or `Unrated` before any loop has a mastery.
+    var masteryCaption: String {
+        let rating = song.mastery == nil
+            ? "Unrated"
+            : MasteryRollup.ratedLabel(rated: song.ratedLoopCount, of: song.loops.count)
+        return [rating, song.speedReading?.stripLabel].compactMap { $0 }.joined(separator: " · ")
     }
 
     /// The injected replacer, or the plain one for a caller with no audio engine to quiet first
@@ -344,28 +288,5 @@ extension SongDetailsSheet {
     func replace(_ url: URL) async throws -> SongRelinker.Outcome {
         if let replaceAudio { return try await replaceAudio(url) }
         return try await SongRelinker.replace(audioAt: url, on: song, in: modelContext)
-    }
-}
-
-/// A details row: a secondary label on the left, the supplied value view trailing.
-/// Mirrors the edit sheet's row rhythm so details and edit feel like one place.
-private struct DetailLabeledContent<Value: View>: View {
-    let label: String
-    /// Optional explainer — when set, the label gains a tappable ⓘ (used on the derived Mastery
-    /// row, where "why can't I set this?" is the common confusion).
-    var info: String?
-    @ViewBuilder let value: () -> Value
-
-    var body: some View {
-        LabeledContent {
-            value()
-        } label: {
-            if let info {
-                FieldInfoLabel(title: label, info: info)
-                    .foregroundStyle(PocketColor.textSecondary)
-            } else {
-                Text(label).foregroundStyle(PocketColor.textSecondary)
-            }
-        }
     }
 }

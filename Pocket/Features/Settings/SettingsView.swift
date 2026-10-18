@@ -42,10 +42,10 @@ struct SettingsView: View {
             // The plan's row left with the free build (ADR 0237 D7) and came back with the plan (0256 D10).
             Section {
                 NavigationLink { YouSettingsView() } label: {
-                    SettingsHubRow(icon: "person.crop.circle", title: "You", value: youSummary)
+                    HubRow(icon: "person.crop.circle", title: "You", value: youSummary)
                 }
                 NavigationLink { YourPlanSettingsView() } label: {
-                    SettingsHubRow(icon: "moon.stars", title: "Your plan",
+                    HubRow(icon: "moon.stars", title: "Your plan",
                                    value: (plan?.access ?? PlanStore.accessWithoutStore).summary)
                 }
                 // Only while Pay once is owned and the player's own monthly still renews (D5 step 3).
@@ -53,32 +53,32 @@ struct SettingsView: View {
                 if PlanAccess.offersCancelMonthly(access: plan?.access ?? .none,
                                                   ownMonthlyRenews: plan?.ownMonthlyRenews ?? false) {
                     Button { managingSubscriptions = true } label: {
-                        SettingsHubRow(icon: "xmark.circle", title: "Cancel your monthly plan")
+                        HubRow(icon: "xmark.circle", title: "Cancel your monthly plan")
                     }
                 }
             }
 
             Section("Preferences") {
                 NavigationLink { AppearanceSettingsView() } label: {
-                    SettingsHubRow(icon: "paintbrush", title: "Appearance", value: appearance.label)
+                    HubRow(icon: "paintbrush", title: "Appearance", value: appearance.label)
                 }
                 NavigationLink { SoundFeelSettingsView() } label: {
-                    SettingsHubRow(icon: "speaker.wave.2", title: "Sound & feel",
+                    HubRow(icon: "speaker.wave.2", title: "Sound & feel",
                                    value: clickTimbre.displayName)
                 }
                 NavigationLink { PracticeSettingsView() } label: {
                     // "timer", not "guitars" — the six-string glyph collapses into an illegible
                     // tangle at row size (caught on the device pass).
-                    SettingsHubRow(icon: "timer", title: "Practice",
+                    HubRow(icon: "timer", title: "Practice",
                                    value: countInEnabled ? "Count-in on" : "Count-in off")
                 }
                 NavigationLink { RoutineSettingsView() } label: {
-                    SettingsHubRow(icon: "list.bullet.rectangle", title: "Routines",
+                    HubRow(icon: "list.bullet.rectangle", title: "Routines",
                                    value: routineAutoStart ? "Auto-start on" : "Auto-start off")
                 }
                 // No trailing value on purpose (D3) — four unranked toggles, none of them the answer.
                 NavigationLink { SongPlayerSettingsView() } label: {
-                    SettingsHubRow(icon: "waveform", title: "Song player")
+                    HubRow(icon: "waveform", title: "Song player")
                 }
             }
 
@@ -87,10 +87,10 @@ struct SettingsView: View {
                 // nothing (ADR 0162 D2). The value is a real measurement, so it starts blank and
                 // fills in — a hub row that guessed would be worse than one that waits.
                 NavigationLink { YourDataSettingsView() } label: {
-                    SettingsHubRow(icon: "externaldrive", title: "Your data", value: storageSummary)
+                    HubRow(icon: "externaldrive", title: "Your data", value: storageSummary)
                 }
                 NavigationLink { AboutSettingsView() } label: {
-                    SettingsHubRow(icon: "info.circle", title: "Help & About")
+                    HubRow(icon: "info.circle", title: "Help & About")
                 }
             }
 
@@ -102,7 +102,7 @@ struct SettingsView: View {
             if !ScreenshotSeed.isShooting {
                 Section {
                     NavigationLink { DeveloperSettingsView() } label: {
-                        SettingsHubRow(icon: "hammer", title: "Developer")
+                        HubRow(icon: "hammer", title: "Developer")
                     }
                 } footer: {
                     Text("DEBUG only — never present in a shipping build.")

@@ -11,7 +11,7 @@ import SwiftData
 ///
 /// The second case is the first one's own failure mode: a relink that lands on the wrong file
 /// **succeeds**, so the song resolves, the failure notice never appears, and the only door back
-/// closes behind the player. Same operation, second entry point — see `SongAudioSection`.
+/// closes behind the player. Same operation, second entry point — see `SongAudioScreen`.
 ///
 /// **The invariant:** `sourceID` never changes (ADR 0148 §4). It is what loops, markers, takes and
 /// `PracticeRun` rows are attached to, so a relink that minted a fresh id would repair the sound and

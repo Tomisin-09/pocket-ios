@@ -108,7 +108,7 @@ helpers in `AudioMath` and `StretchQuality` (unit-tested). Stages 1–2 (file im
 `SongImporter` (the `LibraryView` file picker) **copies the file into the app's own
 storage** (`SongFileStore`) and keeps a security-scoped bookmark as provenance and legacy
 fallback; `SongAudioResolver` prefers the copy, so a library restored from a device backup
-still plays (ADR 0148); `SongRelinker` repairs a song whose audio is gone by re-pointing it at a file under its existing `sourceID`, so nothing attached to it is lost — offered both at the failure (`AudioUnavailableNotice`) and, since **ADR 0152**, unconditionally from the **Audio** section of `SongDetailsSheet` (`SongAudioSection`), because a relink onto a readable-but-*wrong* file succeeds and so never raises the failure the only other door hung on. The generated arpeggio (`SampleToneGenerator`) remains only as the
+still plays (ADR 0148); `SongRelinker` repairs a song whose audio is gone by re-pointing it at a file under its existing `sourceID`, so nothing attached to it is lost — offered both at the failure (`AudioUnavailableNotice`) and, since **ADR 0152**, unconditionally from `SongDetailsSheet` (*Song details › Audio file*, `SongAudioScreen`, a screen one tap down since ADR 0258), because a relink onto a readable-but-*wrong* file succeeds and so never raises the failure the only other door hung on. The generated arpeggio (`SampleToneGenerator`) remains only as the
 preview/dev sample — the bundled demo song was dropped with ADR 0148 §7. Tap-to-seek, scrub,
 A/B-span set, and edge-drag are driven by the waveform **gesture engine** (pure math
 in `WaveformGesture` + the pure `ABSpan` state machine, ADR 0005 / 0041). Loop creation
@@ -2356,7 +2356,7 @@ disk use. Surfaced as *Settings ▸ Your data ▸ Storage*, under Export on the 
   store URL comes off the live `ModelContainer`'s configuration, never a guessed
   `Application Support/default.store`, which keeps the type free of SwiftData. `.file` count style so
   the figure is comparable with *iPhone Storage*. It is also the app's **one** `ByteCountFormatter`:
-  `SongAudioSection` and `TakeDetailView` both call `StorageUsage.formatted` now.
+  `SongAudioScreen` (then `SongAudioSection`) and `TakeDetailView` both call `StorageUsage.formatted` now.
 - **`SongDeletion`** — deletes a song's audio, then its row. Its own type rather than two lines in
   the view because the bug was an **absence** (the app's only song-delete path was a bare
   `context.delete`, leaking every deleted song's audio forever), and an absence survives every build

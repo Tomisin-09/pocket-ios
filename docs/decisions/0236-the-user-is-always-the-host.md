@@ -3,6 +3,8 @@
 - **Status:** Accepted. Built on `pocket-342-export`, all five slices of the build order (2026-10-01).
 - **Date:** 2026-10-01 (decided 2026-09-30 and 2026-10-01; the design sketch is the artifact
   *Red Moon Export*)
+- **Amended by:** ADR 0258 (2026-10-18) — **D3** and **D4**: both rows now sit on *Song details ›
+  Audio file* rather than in a section of the sheet. The rest stands.
 - **Supersedes:** ADR 0150 — its parked proposal is decided. Export is accepted on the tool-not-host frame
   (D1), without the legal review it waited on. Its proposed points 1 (export only, hosting closed),
   2 (a share action on the take rows), 4 (one take at a time) and 5 (mic-only) are taken as written.

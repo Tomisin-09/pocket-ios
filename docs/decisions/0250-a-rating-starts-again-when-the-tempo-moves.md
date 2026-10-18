@@ -3,6 +3,9 @@
 - **Status:** Accepted — decided with Tomisin, 2026-10-03/04. Built on `pocket-360-manual-reshoot`
   in two slices: the reset (D1–D7), then the speed beside a song's dots (D8–D10).
 - **Date:** 2026-10-04
+- **Amended by:** ADR 0258 (2026-10-18) — **D9**: the Mastery and Slowest loop rows move to *Song
+  details › Progress*. The sheet's header keeps the dots, *N of M loops rated* and the slowest speed
+  side by side, so D8 holds there too. The rest stands.
 - **Amends:** ADR 0169 — D3 (*staleness, not wiping*) no longer answers a command move: the move sets
   the rating aside (D1). Its rejected alternative, *clear it on every promote*, is adopted in a form
   that keeps the old rating. D5's caption gains *Last rated…* (D5). D8's rollup gains a speed line

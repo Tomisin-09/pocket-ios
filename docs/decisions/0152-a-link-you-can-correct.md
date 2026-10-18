@@ -2,6 +2,9 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-09 (`pocket-247-replace-song-audio`)
+- **Amended by:** ADR 0258 (2026-10-18) — **§1–§2**: the **Audio** section is now *Song details ›
+  Audio file*, a screen one tap down. Its rows and words are unchanged, and the door is still the
+  per-song inspector, a hold and a tap from the player's title. The rest stands.
 - **Extends:** ADR 0148 §6 (relink is the repair path)
 
 ## Context

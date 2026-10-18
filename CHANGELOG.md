@@ -138,10 +138,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   **Export take…** hands the recording to the share sheet: into a DAW, to your teacher, or into Files.
   It goes as the file it is, named for what it was recorded against and the day, like
   *Slow Bend · Chorus · 1 Oct 2026.m4a*.
-- **Export a song's audio.** **Song details** ▸ **Audio** ▸ **Export audio file only…** sends the file
+- **Export a song's audio.** **Song details** ▸ **Audio file** ▸ **Export audio file only…** sends the file
   the song plays, as you imported it, for a DAW or another device. Your loops, markers and pieces stay
   in Red Moon.
-- **Send a song to another Red Moon.** **Song details** ▸ **Audio** ▸ **Send this song…** sends the song
+- **Send a song to another Red Moon.** **Song details** ▸ **Audio file** ▸ **Send this song…** sends the song
   with its loops, markers and tempo grid as one *Red Moon practice pack*, signed with your artist name.
   Your pieces, mastery and practice history stay with you. Tap a pack you're sent and **Add this song?**
   shows what's in it before it lands. It always arrives as a new song; if you already have one with that
@@ -320,6 +320,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Song details fits on about one screen** (ADR 0258). The top shows the key, tempo and length on
+  one line, with the mastery and the slowest loop's speed beside it. Your notes are headed
+  **About**, and **Practise** holds Map the song and the drills linked to the song. The rest is a
+  row each that says what's behind it: **Progress** (mastery, slowest loop and the counts),
+  **References**, **Audio file** (it reads *Missing* when the file won't load, so you can see it
+  without opening anything; Replace, Send and Export are inside) and **Collections**.
 - **The Practice screen shows what you have, not how many.** It is now a card and three shelves
   (ADR 0257). **Today's session** carries the long-term goals that shape it, as chips you can tap to
   edit, and a line back to the last session you started and didn't save. **Routines** come next:

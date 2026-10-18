@@ -121,9 +121,9 @@ than re-importing: a re-import creates a new song, and your loops, markers, take
 history stay attached to the old one. Pointing the song at a file again keeps the row and replaces
 only the sound underneath it.
 
-There is a second door that doesn't need the audio to be broken. **Song details** ▸ **Audio** ▸
-**Replace audio file…** does the same job at any time, and its **File** row reads **Missing** for a
-song with nothing left to play. That is also how you fix a song pointed at the *wrong* file — worth
+There is a second door that doesn't need the audio to be broken. **Song details** ▸ **Audio file** ▸
+**Replace audio file…** does the same job at any time, and the **Audio file** row reads **Missing**
+for a song with nothing left to play, before you open it. That is also how you fix a song pointed at the *wrong* file — worth
 knowing about, because pointing a song at the wrong file succeeds quietly: it plays, just not the
 song you expected. Check the audio is what you think it is afterwards.
 
@@ -131,7 +131,7 @@ song you expected. Check the audio is what you think it is afterwards.
 
 ## Taking a song somewhere else
 
-**Song details** ▸ **Audio** has two ways out. Both need Red Moon's own copy of the song, which an
+**Song details** ▸ **Audio file** has two ways out. Both need Red Moon's own copy of the song, which an
 older song linked to a file elsewhere gets the first time it plays.
 
 **Send this song…** is for someone else with Red Moon: a teacher, a bandmate, your other phone. It
@@ -146,7 +146,7 @@ opens a screen that says what goes and what stays before anything is sent:
 
 <!-- shot: songs/send-song | role: screen
      | alt: Send this song for Feels, listing what goes with it and what stays with you, with Send in the top corner
-     | state: seeded library, Feels played once, Song details ▸ Send this song… -->
+     | state: seeded library, Feels played once, Song details ▸ Audio file ▸ Send this song… -->
 
 **Send…** in the top corner opens the share sheet on one file, a *Red Moon practice pack*.
 

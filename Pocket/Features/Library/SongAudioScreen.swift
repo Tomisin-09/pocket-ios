@@ -2,8 +2,10 @@ import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// The **Audio** section of `SongDetailsSheet`: what file this song is playing, the way to
-/// point it at a different one (ADR 0152), and the way to take the file out (ADR 0236 D3).
+/// **Song details › Audio file** (ADR 0258): what file this song is playing, the way to point it at
+/// a different one (ADR 0152), and the ways to take it out (ADR 0236 D3, D4). It was the sheet's
+/// **Audio** section until the sheet's categories moved behind rows; it is now a screen pushed inside
+/// the sheet's `NavigationStack`, and every presentation it raises hangs off its own `Form`.
 ///
 /// ADR 0148 §6 put relink behind the failure itself — "Find the file" on `AudioUnavailableNotice`,
 /// offered at the moment the problem is discovered. That is still the right door for a *broken*
@@ -14,10 +16,8 @@ import UniformTypeIdentifiers
 ///
 /// So the repair needs a second door that does not depend on anything being broken. It lives here,
 /// in the per-song inspector, reachable both from the library row menu and by holding the title on
-/// the practice screen — one hold from where a wrong track is actually heard.
-///
-/// Lives in its own file because `SongDetailsSheet` is already near the 400-line cap.
-struct SongAudioSection: View {
+/// the practice screen — a hold and a tap from where a wrong track is actually heard.
+struct SongAudioScreen: View {
     let song: Song
 
     /// Performs the swap. Injected because the two callers have different obligations: the library
@@ -26,11 +26,9 @@ struct SongAudioSection: View {
     /// the bytes under a live `AVAudioFile` otherwise. Same two halves either way.
     let replace: (URL) async throws -> SongRelinker.Outcome
 
-    /// Open *Send this song* (ADR 0236 D4). A closure into the sheet's `NavigationStack`, never a sheet
-    /// raised here: a presentation from a row in this `Form` is lost. `nil` hides the row.
-    var onSend: (() -> Void)?
-
     @State private var confirming = false
+    /// *Send this song* (ADR 0236 D4), presented from this screen's `Form`.
+    @State private var sendingSong = false
     @State private var picking = false
     @State private var busy = false
     @State private var alert: ReplaceAlert?
@@ -49,52 +47,13 @@ struct SongAudioSection: View {
     }
 
     var body: some View {
-        Section {
-            LabeledContent {
-                Text(fileDescription)
-                    .font(.pocketMono(.body))
-                    .foregroundStyle(PocketColor.textPrimary)
-            } label: {
-                Text("File").foregroundStyle(PocketColor.textSecondary)
-            }
-
-            Button { confirming = true } label: {
-                HStack(spacing: 8) {
-                    Label("Replace audio file…", systemImage: "waveform.badge.plus")
-                        .foregroundStyle(PocketColor.library)
-                    if busy {
-                        Spacer()
-                        ProgressView()
-                    }
-                }
-            }
-            // A second pick landing mid-replace would race two decodes onto one `sourceID` and the
-            // loser would overwrite the winner's copy — the same guard the practice screen keeps.
-            .disabled(busy)
-
-            // Both doors out need the copy Red Moon keeps (`Song.exportedAudioFile`). To another Red Moon
-            // with its loops and markers (ADR 0236 D4), and the DAW door, the audio and nothing else (D3).
-            // Buttons, not `ShareLink`s: a presentation raised from a row in this sheet's form is lost.
-            if let file = song.exportedAudioFile() {
-                if let onSend {
-                    Button(action: onSend) {
-                        Label("Send this song…", systemImage: "square.and.arrow.up")
-                            .foregroundStyle(PocketColor.library)
-                    }
-                }
-                Button { export(file) } label: {
-                    Label("Export audio file only…", systemImage: "waveform")
-                        .foregroundStyle(PocketColor.library)
-                }
-            }
-        } header: {
-            Text("Audio")
-        } footer: {
-            Text("Points this song at a different file — for a song whose audio is missing, or one "
-                 + "linked to the wrong track. Your loops, markers, takes and practice history all "
-                 + "stay with the song. Send this song gives another Red Moon the song with its loops and "
-                 + "markers. Export sends the file alone, as you imported it, for a DAW or another device.")
+        Form {
+            replaceSection
+            if let file = song.exportedAudioFile() { leaveSection(file) }
         }
+        .navigationTitle("Audio file")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $sendingSong) { SendSongSheet(song: song) }
         // Single selection: this repairs *this* song, unlike the library's multi-select import.
         .fileImporter(isPresented: $picking, allowedContentTypes: [.audio],
                       allowsMultipleSelection: false, onCompletion: handlePick)
@@ -115,15 +74,58 @@ struct SongAudioSection: View {
         }
     }
 
-    private var fileDescription: String {
-        SongAudioLabel.describe(audioFileName: song.audioFileName,
-                                hasBookmark: song.bookmark != nil,
-                                sizeInBytes: song.audioFileName.flatMap {
-                                    SongFileStore.fileSize(fileName: $0)
-                                },
-                                copyExists: song.audioFileName.map {
-                                    SongFileStore.exists(fileName: $0)
-                                } ?? false)
+    /// The file, and the way to point the song at a different one.
+    private var replaceSection: some View {
+        Section {
+            LabeledContent {
+                Text(SongAudioLabel.describe(song))
+                    .font(.pocketMono(.body))
+                    .foregroundStyle(PocketColor.textPrimary)
+            } label: {
+                Text("File").foregroundStyle(PocketColor.textSecondary)
+            }
+            replaceButton
+        } footer: {
+            Text("Points this song at a different file — for a song whose audio is missing, or one "
+                 + "linked to the wrong track. Your loops, markers, takes and practice history all "
+                 + "stay with the song.")
+        }
+    }
+
+    private var replaceButton: some View {
+        Button { confirming = true } label: {
+            HStack(spacing: 8) {
+                Label("Replace audio file…", systemImage: "waveform.badge.plus")
+                    .foregroundStyle(PocketColor.library)
+                if busy {
+                    Spacer()
+                    ProgressView()
+                }
+            }
+        }
+        // A second pick landing mid-replace would race two decodes onto one `sourceID` and the
+        // loser would overwrite the winner's copy — the same guard the practice screen keeps.
+        .disabled(busy)
+    }
+
+    /// Both doors out need the copy Red Moon keeps (`Song.exportedAudioFile`), so the section is there
+    /// only when it is. To another Red Moon with its loops and markers (ADR 0236 D4), and the DAW
+    /// door, the audio and nothing else (D3). Buttons, not `ShareLink`s: the send screen is a sheet of
+    /// its own, and the export stages its file on the tap.
+    private func leaveSection(_ file: ExportedAudioFile) -> some View {
+        Section {
+            Button { sendingSong = true } label: {
+                Label("Send this song…", systemImage: "square.and.arrow.up")
+                    .foregroundStyle(PocketColor.library)
+            }
+            Button { export(file) } label: {
+                Label("Export audio file only…", systemImage: "waveform")
+                    .foregroundStyle(PocketColor.library)
+            }
+        } footer: {
+            Text("Send this song gives another Red Moon the song with its loops and markers. Export "
+                 + "sends the file alone, as you imported it, for a DAW or another device.")
+        }
     }
 
     /// Stage the file under its name and open the share sheet on it. Staging is a hard link, so it is
@@ -210,5 +212,17 @@ enum SongAudioLabel {
         }
         let size = StorageUsage.formatted(bytes: bytes)
         return format.isEmpty ? size : "\(format) · \(size)"
+    }
+}
+
+extension SongAudioLabel {
+    /// The label for `song` as it stands on disk now — the Audio file screen's **File** row and the
+    /// details sheet's **Audio file** row read the same words.
+    @MainActor
+    static func describe(_ song: Song) -> String {
+        describe(audioFileName: song.audioFileName,
+                 hasBookmark: song.bookmark != nil,
+                 sizeInBytes: song.audioFileName.flatMap { SongFileStore.fileSize(fileName: $0) },
+                 copyExists: song.audioFileName.map { SongFileStore.exists(fileName: $0) } ?? false)
     }
 }
