@@ -9,13 +9,12 @@ final class PlanAccessTests: XCTestCase {
     private var tomorrow: Date { now.addingTimeInterval(86_400) }
     private var yesterday: Date { now.addingTimeInterval(-86_400) }
 
-    private func monthly(expires: Date? = nil, shared: Bool = false, revoked: Date? = nil) -> OwnedPurchase {
-        OwnedPurchase(productID: PlanProduct.monthly, isFamilyShared: shared, revokedAt: revoked,
-                      expiresAt: expires ?? tomorrow)
+    private func monthly(expires: Date? = nil, revoked: Date? = nil) -> OwnedPurchase {
+        OwnedPurchase(productID: PlanProduct.monthly, revokedAt: revoked, expiresAt: expires ?? tomorrow)
     }
 
-    private func payOnce(shared: Bool = false, revoked: Date? = nil) -> OwnedPurchase {
-        OwnedPurchase(productID: PlanProduct.payOnce, isFamilyShared: shared, revokedAt: revoked)
+    private func payOnce(revoked: Date? = nil) -> OwnedPurchase {
+        OwnedPurchase(productID: PlanProduct.payOnce, revokedAt: revoked)
     }
 
     // MARK: - D1: two products, new ids
@@ -55,17 +54,10 @@ final class PlanAccessTests: XCTestCase {
         XCTAssertEqual(PlanAccess.resolve([payOnce(), monthly()], now: now), .payOnce)
     }
 
-    /// D6: a family-shared purchase opens the plan exactly as a bought one does.
-    func testFamilySharedOpensThePlan() {
-        XCTAssertEqual(PlanAccess.resolve([payOnce(shared: true)], now: now), .payOnce)
-        XCTAssertEqual(PlanAccess.resolve([monthly(shared: true)], now: now), .monthly)
-    }
-
-    /// D6: a refund, or the organiser ending Family Sharing, closes the plan.
+    /// A refund closes the plan.
     func testARevokedPurchaseOpensNothing() {
         XCTAssertEqual(PlanAccess.resolve([payOnce(revoked: yesterday)], now: now), .none)
         XCTAssertEqual(PlanAccess.resolve([monthly(revoked: yesterday)], now: now), .none)
-        XCTAssertEqual(PlanAccess.resolve([payOnce(shared: true, revoked: yesterday)], now: now), .none)
     }
 
     /// The 2026-08 sandbox pass: a lapse that nothing re-reads leaves the plan open. The rule itself
@@ -161,6 +153,12 @@ final class PlanAccessTests: XCTestCase {
         XCTAssertTrue(text.contains("£1.00 a month"))
         XCTAssertTrue(text.contains("renews automatically"))
         XCTAssertTrue(text.contains("Cancel any time"))
+    }
+
+    /// ADR 0259: neither product is family-shareable, so the wall never says they are.
+    func testTheDisclosureDoesNotOfferFamilySharing() {
+        XCTAssertFalse(PlanWallCopy.renewalDisclosure(monthly: "£1").contains("Family"))
+        XCTAssertFalse(PlanWallCopy.renewalDisclosure(monthly: "£1", trial: week).contains("Family"))
     }
 
     // MARK: - D1: the free week

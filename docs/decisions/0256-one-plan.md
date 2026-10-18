@@ -4,6 +4,9 @@
   (pricing, the Practice hub, the detail sheets). Built on `pocket-367-one-plan`. Still owed, outside
   the repo: App Store Connect, the sandbox device pass and the site (Consequences).
 - **Date:** 2026-10-17
+- **Amended by:** ADR 0259 (2026-10-18) — **D6** is reversed: Family Sharing is **off** for both
+  products. D5's paragraph on family-shared Pay once, the App Store Connect list's "Family Sharing on
+  for both" and the sandbox pass's family-shared purchase go with it. Everything else stands.
 - **Supersedes:** ADR 0237 — **D1** (the app is free, with no in-app purchase) and **D7** (Settings
   loses its plan row): Red Moon has one plan again (D1 here), and Settings shows it (D10). **D3**'s
   promise that nothing free may ever move behind a price is replaced, before anyone held the free
@@ -180,14 +183,18 @@ An app cannot cancel a subscription, and buying Pay once doesn't cancel one eith
 4. While both are owned, *Your plan* offers *Ask Apple for a refund* (`refundRequestSheet`) on the
    monthly's latest payment, for the month that overlaps. Apple decides; Red Moon promises nothing.
 
-Family-shared Pay once counts as Pay once here (D6). The monthly counts only if it is the player's
-own (`ownershipType == .purchased`), because a shared subscription isn't theirs to cancel.
+Family-shared Pay once counts as Pay once here (D6; with Family Sharing off since 0259, there is
+none). The monthly counts only if it is the player's own (`ownershipType == .purchased`), because a
+shared subscription isn't theirs to cancel.
 
 The monthly's free week is a renewing monthly too: unless it is cancelled, its first payment falls
 when the week ends. So steps 1 to 3 hold through it unchanged. Step 4 doesn't: nothing has been
 paid, so there is nothing to refund, and *Ask Apple for a refund* stays hidden.
 
 ### D6 — Family Sharing is on for both
+
+> **Reversed by 0259 (2026-10-18):** Family Sharing is off for both products. What follows is the
+> decision as it was made.
 
 Both products are family-shareable. That can't be undone in App Store Connect. Access ignores
 ownership: a family-shared transaction opens the plan just as a purchase does. A revocation
@@ -306,7 +313,8 @@ ADR, not public copy. **The Oracle's future is not decided here.** It stays park
   - **App Store Connect:**
     - check the Paid Apps agreement and banking are still active;
     - take the old `…pro.*` products off sale;
-    - create the two products in D1, with Family Sharing on for both and £1 / £15 base prices;
+    - create the two products in D1, with Family Sharing **off** for both (0259) and £1 / £15 base
+      prices;
     - give the monthly its introductory offer: *Free*, one week, in every territory;
     - set up a sandbox tester, and build to TestFlight.
   - **Sandbox device pass:**
@@ -318,8 +326,7 @@ ADR, not public copy. **The Oracle's future is not decided here.** It stays park
     - buy Pay once while the monthly renews (warning → manage sheet → the Settings row appears,
       then clears after cancelling);
     - restore after a reinstall;
-    - a lapse (the free set and the wall, with Your data reachable);
-    - a family-shared purchase, if a second Apple ID is available.
+    - a lapse (the free set and the wall, with Your data reachable).
   - Then **buy Pay once on TestFlight** and write the testers' note (D7).
 - **Release work (step 5 of the plan):** the listing copy for paid (the promise, and the EULA link
   in the description), the IAPs attached to the submission, App Privacy re-checked for purchases,

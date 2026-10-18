@@ -69,7 +69,8 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   free week is set to renew, Home's top row counts it down (*Your free week ends in 3 days*) and
   opens your subscriptions in one tap. After
   paying once while the monthly still renews, **Cancel your monthly plan** takes you to Apple's
-  subscriptions. Help & FAQs has a new *Your plan* section.
+  subscriptions. Help & FAQs has a new *Your plan* section. The plan is for the Apple Account that
+  buys it: neither way to pay is shared through Family Sharing (ADR 0259).
 - **Watch it on the neck.** Once you've named a lick on the neck in Name the notes, watch it play
   back there while the loop's own recording plays. Every spot the lick uses is drawn on the neck, and
   the note being heard lights up and glows the way you played it, with the notes in order underneath
