@@ -195,7 +195,12 @@ The rest is behind a row each:
 
 A ramp for one loop, expressed in percentages of the song's speed: `Start`, `Target`, `Steps` and
 `Loops / step`, with a summary of the climb above them and the BPM it works out to below.
-**`Set ramp`** arms it.
+
+**`Set ramp`** starts it, and the sheet stays open while it plays. The staircase lights the current
+step, with the live speed, the step and the pass under it, and the fields lock. **`Stop ramp`** ends
+it and pauses the song. **`Resume`** appears above it if something else paused the song. A ramp that
+has played out reads *Done*, with **`Run again`**. `Cancel` becomes `Close` once a ramp has started,
+and leaving the sheet either way ends the ramp.
 
 ### The tempo editor
 

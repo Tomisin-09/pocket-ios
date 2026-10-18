@@ -327,10 +327,12 @@ halts it leaving the click at the tempo reached (`automatorRunning` is what `isR
 the free-play ramp on). A **No limit** toggle drops the target and ramps to the system ceiling
 (infinite mode, *derived* from `ceiling == bpmRange.upperBound`), and a finished free-play ramp
 holds at its ceiling rather than stopping the session (`finishRamp`; a Practice training run
-still ends the session). Its job is *discovery* — ramp until your hands break down — and an
-armed automator offers a one-directional **"Save as exercise"** seam (a compact bookmark) that
-captures the current (breakdown) tempo and presents Practice's
-`NewExerciseSheet` prefilled with it as the command. Both that seam and Practice's own create flow
+still ends the session). Its job is *discovery* — ramp until your hands break down — and the screen's toolbar carries a one-directional **"Save as
+exercise"** seam (a bookmark in the slot the journal pencil had, visible whether or not the
+automator is armed, ADR 0260) that pins the current tempo and meter at the tap (`PendingDrill`) and
+presents Practice's `NewExerciseSheet` on a Basic drill, prefilled with that tempo as the command.
+The drill it saves is **command-only**: the host sets `NewExercisePlan.commandOnly`, and
+`finalise(in:)` turns off warm-up, reach and back off before the insert. Both that seam and Practice's own create flow
 funnel through the single `Exercise.commandAnchored(name:command:)` factory **and the single
 `NewExercisePlan.finalise(in:)` insert** (ADR 0128), so the two entry points can't drift. The insert
 is deliberately hung off the *plan* rather than the factory: only the two interactive entry points
@@ -494,7 +496,10 @@ stops. The owner filter buckets it with standalone notes, and the archive carrie
 optional (`nil` = written before 0224, when every take had an owner).
 
 A note written at the **Metronome** is the sixth kind (ADR 0160), and reverses ADR 0155 §8's refusal
-of one. That refusal was aimed at recording a bare BPM — a fragment of a *unit's* context with no
+of one. **Nothing writes one any more**: ADR 0260 gave the metronome's toolbar pencil to *Save as
+exercise*. The kind, its columns, `JournalWriter`'s path and the journal's **Metronome** filter all
+stay, so notes already written still render and filter; whether metronome journalling comes back is
+not decided. That refusal was aimed at recording a bare BPM — a fragment of a *unit's* context with no
 unit behind it, which invites the reader to attach it to a drill that was never there. A metronome
 sitting is not a fragment: it has a complete context of its own, so `.metronome` snapshots **tempo,
 meter, subdivision and click withdrawal** and renders them as a settings caption
@@ -1145,8 +1150,8 @@ on-target by construction — so it only speaks up once blocks are added or remo
 seeded skills, with no free-text (search only narrows the fixed `TechniqueTaxonomy`). `Exercise` gained self-rated
 **`mastery: Int?`** + **`lastPracticed: Date?`** (mirroring `Loop`/`Song`; the app never grades
 playing — ADR 0070/0072), stamped on run and rated on the detail sheet. `ExerciseLibraryView` owns exercise **create**
-(`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired — note the automator's
-"Save as exercise" seam is still a **second host** of that sheet, sharing its insert via
+(`NewExerciseSheet`, Practice's own path now the metronome's save UI is retired — note the metronome's
+toolbar "Save as exercise" seam (ADR 0260) is still a **second host** of that sheet, sharing its insert via
 `NewExercisePlan.finalise(in:)`, ADR 0128), **duplicate** and **delete**;
 tapping one pushes `ExerciseRunView`. `LoopLibraryView` is read-through — loops are made
 and removed on the waveform screen, not here — and lists those with a measured command
@@ -1368,9 +1373,14 @@ in *source* frames, so it's stable across rate changes), the view feeds it to
 `AutomatorConfig.speed(atLoopIteration:)` (interpolates start→target over N steps, a few
 loops each, up *or* down — or level when start = target). The ramp is **finite**: it runs
 `AutomatorConfig.totalLoops` passes — the `stepCount + 1` plateaus (start, the steps, and
-the target) × `loopsPerStep` — then `automatorAdvance` **pauses and rewinds** the engine to
-the loop start, so it can be replayed. **Set ramp** arms the config and *starts the loop
-playing* from the top (`startAutomator`). Setting `speed` reuses the existing
+the target) × `loopsPerStep` — then `automatorAdvance` **pauses, rewinds** the engine to
+the loop start, and **disarms** the ramp (ADR 0260), so it can be replayed. **Set ramp** arms the
+config and *starts the loop playing* from the top (`startAutomator`), and the sheet **stays up**
+while the ramp runs (ADR 0260): `AutomatorSheet` reads the engine's `loopIteration` and
+`isPlaying` directly (the engine is `@Observable`) and lights the current plateau from the pure
+`AutomatorConfig.progress(atLoopIteration:)`, so it holds no progress state of its own. Its states
+are Idle → Running → (Paused) → Finished; **Stop ramp** is `stopAutomator` (disarm + pause), and the
+sheet's `onDisappear` always disarms, pausing too only if the sheet started the run. Setting `speed` reuses the existing
 speed→engine path; grabbing the slider disables the loop's ramp. Arming a loop is
 **command-anchored** (`Loop.armingSpeed` = `commandTempo`, else 100%, ADR 0089): it arms at the
 tempo you own the loop at, never the previous loop's rate, so a no-command loop resets to full tempo

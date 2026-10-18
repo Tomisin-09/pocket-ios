@@ -6,6 +6,10 @@
   thing in-memory tests structurally cannot prove — a custom-type attribute crashes on device only.
   The write seam, the feed caption and §5's mid-ramp case were checked by hand and all hold.
 - **Date:** 2026-08-12
+- **Amended by:** ADR 0260 (2026-10-18) — the door is gone. The metronome's pencil became *Save as
+  exercise*, so nothing writes a metronome note now. The owner kind (§1), the snapshot (§2–§5) and
+  the feed caption and filter (§6) all stand, so notes already written render and filter as before.
+  Whether metronome journalling comes back is not decided there.
 - **Supersedes:** ADR 0155 §8's two refusals — *"No `.metronome` owner kind"* and *"No snapshot of the
   tempo"*. Everything else in ADR 0155 stands, including §1's flag, §3a's owner-picker prohibition,
   and §8's decision to put the door on the metronome at all.

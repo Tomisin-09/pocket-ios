@@ -1,5 +1,9 @@
 # 0117 — Practice stats & the Progress screen: measure effort, never performance; streaks are opt-in
 
+> **Amended by ADR 0260 (2026-10-18).** The hours milestones (10/50/100/500) are gone from All-time.
+> The wall sat directly under the lifetime figure and restated it. All-time is now the lifetime
+> figure, then the inventory counts. Every constraint below stands.
+>
 > **Amended by ADR 0250 (2026-10-04).** A loop counts among *loops mastered* only when it is rated 5
 > **and** its command is at full speed (100% or above). A rating now always means *at the current
 > tempo* — moving the command sets it aside — so a 5 at 60% is the cue to raise, not a loop finished.

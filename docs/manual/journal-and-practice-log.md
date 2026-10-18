@@ -15,8 +15,8 @@ strip, the three numbers under your last session.
 
 The **✏️** in the toolbar
 <!-- shot: journal/quick-note-button | role: glyph | alt: | crop: 878,203,100,100 -->
-opens **Quick note** — one field, the kind chips, **Save**. It is on the metronome, and on an
-exercise or loop run screen while the run plays or inside a routine. A stopped run screen has its
+opens **Quick note** — one field, the kind chips, **Save**. It is on an exercise or loop run screen
+while the run plays or inside a routine. A stopped run screen has its
 **Journal** bar instead, which writes notes too. On the journal itself it sits under the **＋**, as
 **Write a note**. Opening it over a run **touches
 nothing**: the audio carries on, the click keeps time, and the note costs the run nothing.
@@ -52,7 +52,7 @@ happened.
 | 🎸 **Improv** | What you played over a backing loop. |
 
 The last three assert that the note was written *during* something, so they are offered only where
-that is true. A note written from the journal or at the metronome gets the first five.
+that is true. A note written from the journal gets the first five.
 
 The tag is worth picking, because you can filter by it later — see **Finding something again**.
 
@@ -66,8 +66,12 @@ afterwards. What it copies depends on what you were doing:
 | A loop | Its mastery and its command tempo. |
 | An exercise | Its command tempo and the rhythm you were playing — *90 BPM · 16ths*. |
 | A whole session | Which units you practised, as tappable pills. |
-| The metronome | The click — tempo, time signature, subdivision, and the withdrawal setting if one was on. |
+| The metronome (older notes) | The click — tempo, time signature, subdivision, and the withdrawal setting if one was on. |
 | The journal itself | Nothing. There is no subject to snapshot. |
+
+The metronome has no **✏️** now: a tempo you find there is [kept as a drill](metronome.md#keeping-the-tempo-you-found)
+instead. Notes written there before still carry the click, and the **Metronome** filter still finds
+them.
 
 That is the point of writing where you played. Six months later the note still says what the drill
 was like *then*, not what it is like now.
@@ -394,9 +398,6 @@ started noting which song they were are listed together as *Song not recorded*.
 
 - **Time played and sessions**, with the date you started. Under an hour it reads in minutes; past
   that, hours and the minutes past the hour.
-- **The hours wall** — marks at 10, 50, 100 and 500 hours. Every mark is always drawn, reached or
-  not, so the wall does not rearrange as you pass them. Nothing here says *by when*: an unreached
-  mark is neutral, not outstanding.
 - **What you've built** — how many exercises, loops, mastered loops and notes you have. A loop counts
   as mastered when it is rated 5 **at full speed**: a 5 at a slower tempo is the cue to raise it.
   Deliberately at the bottom: it measures the size of your library rather than the work, and it can
@@ -416,6 +417,6 @@ week beside another for you. All of those turn a record into a debt, and this sc
 
 ## Next
 
-- [The click on its own](metronome.md), which can be journalled too
+- [The click on its own](metronome.md), where a tempo you find can become a drill
 - [Running a drill, where most notes get written](exercises.md)
 - [Where your data lives](privacy.md)

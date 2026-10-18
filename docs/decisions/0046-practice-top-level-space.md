@@ -11,6 +11,10 @@
   metronome automator's **Save as exercise** each inserted on their own, and the automator silently
   dropped a picked song and the instrument. Both now call `NewExercisePlan.finalise(in:)`. The preset
   seeder still calls `commandAnchored` directly, which is why creation behaviour hangs off the plan.
+- **Amended by:** ADR 0260 (the metronome saves a drill, 2026-10-18) — §4's seam moves from the
+  automator's header to the metronome's toolbar as *Save as exercise*, visible whether or not the
+  automator is armed, and the drill it saves is command-only: no warm-up, reach or back-off. It is
+  still one-directional and still goes through `NewExercisePlan.finalise(in:)`.
 
 ## Context
 
