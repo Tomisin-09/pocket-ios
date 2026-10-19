@@ -2,6 +2,9 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-19 (`pocket-274-bpm-callout-gateway`)
+- **Amended by:** ADR 0261 (the metronome carries its tempo into any drill, 2026-10-19) — D6's
+  contrast with the metronome no longer holds: its *Save as exercise* runs the template picker too,
+  so a metronome tempo is not always a plain tempo drill. The song link and the rest of D6 stand.
 - **Relates to:** ADR 0024 (tap-tempo / the BPM sheet — the route this hold held until now),
   ADR 0124 (the transport redesign that moved tempo entry onto the metronome control),
   ADR 0163 (settings where you are using them — and its standing objection to the *next* hold),

@@ -2,6 +2,9 @@
 
 - **Status:** Accepted (2026-07-05), **revised same day** before merge (see "Revision" below)
 - **Date:** 2026-07-05
+- **Amended by:** ADR 0261 (the metronome carries its tempo into any drill, 2026-10-19) — the
+  metronome's *Save as exercise* no longer passes `fixedTemplate: .basic`. It runs the picker, so a
+  tempo found there can seed any template. Template-first creation and T3 stand.
 
 ## Context
 

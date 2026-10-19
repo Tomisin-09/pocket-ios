@@ -324,8 +324,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **The metronome's top-right button saves the tempo as a drill** (ADR 0260). The 🔖 **Save as
   exercise** is there whenever the metronome is open, not only while the automator is armed, and
   it takes the tempo at the moment you tap it, so a ramp can keep climbing while you name the drill.
-  The drill it makes plays that tempo and nothing else: no warm-up, reach or back off, which you can
-  switch on in its Practice Settings. The metronome no longer writes journal notes. Notes you
+  You pick what kind of drill it is, as you do when you carry a tempo out of the song player
+  (ADR 0261): a basic drill, a scale, a chord change, any template. The drill it makes plays that
+  tempo and nothing else: no warm-up, reach or back off, which you can switch on in its Practice
+  Settings. The metronome no longer writes journal notes. Notes you
   wrote there before still show the click they were written at, and the Journal's **Metronome**
   filter still finds them.
 - **The Practice log's All-time section drops the 10/50/100/500-hours row** (ADR 0260). It repeated

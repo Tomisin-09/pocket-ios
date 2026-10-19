@@ -12,6 +12,9 @@
   writes `preferredInstrument` for a guitar or bass answer. The wider answer (piano, singing…) is a
   separate field, `Profile.playsRaw`, and `Instrument` keeps its two cases. The Settings row described
   above is now *You play*.
+- **Amended by:** ADR 0261 (the metronome carries its tempo into any drill, 2026-10-19) — the
+  metronome's *Save as exercise* no longer skips the picker, so it gets the picker's Guitar/Bass
+  control, seeded from the profile like every other host.
 
 ## Context
 

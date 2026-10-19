@@ -6,6 +6,9 @@
   (`Exercise.commandAnchored`) but never of the *insert*. Closes the gap
   **ADR 0111**'s song link and **ADR 0120**'s `exerciseCreated` event each hit separately, and fixes
   an **ADR 0116** instrument drop on the automator seam.
+- **Amended by:** ADR 0261 (the metronome carries its tempo into any drill, 2026-10-19) — the
+  metronome's sheet now has an instrument control, because the picker runs. The rhythm bind this
+  ADR added for that seam now meets real payloads. The one insert path stands.
 
 ## Context
 
