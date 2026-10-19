@@ -330,7 +330,7 @@ holds at its ceiling rather than stopping the session (`finishRamp`; a Practice 
 still ends the session). Its job is *discovery* — ramp until your hands break down — and the screen's toolbar carries a one-directional **"Save as
 exercise"** seam (a bookmark in the slot the journal pencil had, visible whether or not the
 automator is armed, ADR 0260) that pins the current tempo and meter at the tap (`PendingDrill`) and
-presents Practice's `NewExerciseSheet` on a Basic drill, prefilled with that tempo as the command.
+presents Practice's `NewExerciseSheet` on its template picker (ADR 0261, as the song player's tempo-carry does), prefilled with that tempo as the command.
 The drill it saves is **command-only**: the host sets `NewExercisePlan.commandOnly`, and
 `finalise(in:)` turns off warm-up, reach and back off before the insert. Both that seam and Practice's own create flow
 funnel through the single `Exercise.commandAnchored(name:command:)` factory **and the single

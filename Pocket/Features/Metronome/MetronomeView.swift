@@ -137,11 +137,11 @@ struct MetronomeView: View {
             MetronomeSettingsSheet(engine: engine)
         }
         .sheet(item: $saving) { pending in
-            // Always a **Basic** drill, so the template picker is skipped. Behind the plan, like
-            // every way into the create sheet: `NewExerciseSheet` gates itself (ADR 0256 D3).
+            // The template picker runs (ADR 0261): a tempo found here can seed any kind of drill, as
+            // one carried out of the song player can (ADR 0170). Behind the plan, like every way
+            // into the create sheet: `NewExerciseSheet` gates itself (ADR 0256 D3).
             NewExerciseSheet(initialCommand: pending.command,
                              initialSignature: pending.signature,
-                             fixedTemplate: .basic,
                              defaultInstrument: defaultInstrument) { plan in
                 // **Command only** (ADR 0260 D1): the tempo you found, with no warm-up, reach or
                 // back-off around it. Through `finalise(in:)`, the one insert path (ADR 0046).

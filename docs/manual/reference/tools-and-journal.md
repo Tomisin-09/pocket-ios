@@ -10,8 +10,8 @@ Reached from the `Metronome` card on Home, and it takes the whole screen. Proced
      | state: Metronome open, stopped -->
 
 **Top bar.** A back chevron on the left. The title in the middle. On the right, the 🔖
-`Save as exercise`, which saves the tempo on screen into Practice as a drill that plays that tempo
-and nothing else.
+`Save as exercise`, which saves the tempo on screen into Practice as a drill of whichever template
+you pick, playing that tempo and nothing else.
 
 **The beat dots** run across the top, one per beat in the bar. Accented beats are larger, and the
 dots dim in step with a withdrawn bar rather than carrying on. **The meter control** sits under

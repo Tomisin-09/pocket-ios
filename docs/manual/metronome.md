@@ -146,11 +146,13 @@ you were in. It is there whenever the metronome is open, whether the tempo came 
 slider or tapping. It keeps the tempo from the moment you tap it, so a ramp can carry on climbing
 while you name the drill.
 
-It opens the create sheet the Exercises library uses, already on a basic drill, so the drill you get
-is an ordinary one — see [Exercises](exercises.md). One thing is different: it plays **that tempo
-and nothing else**, with **Warm-up**, **Reach** and **Back off** all switched off. Switch them on in
-the drill's **Practice Settings** if you want the full climb. Like every new drill, it needs Red
-Moon's plan.
+It opens the create sheet the Exercises library uses, on its first step, so you choose what kind of
+drill the tempo is for: a basic drill on the click, a scale, a chord change, any template. The tempo
+and meter are already filled in on the next step. The drill you get is an ordinary one — see
+[Exercises](exercises.md#step-one--the-kind-of-drill). One thing is different: it plays **that
+tempo and nothing else**, with **Warm-up**, **Reach** and **Back off** all switched off. Switch them
+on in the drill's **Practice Settings** if you want the full climb. Like every new drill, it needs
+Red Moon's plan.
 
 That is a one-way seam. The metronome hands a tempo to Practice; it never owns a drill.
 

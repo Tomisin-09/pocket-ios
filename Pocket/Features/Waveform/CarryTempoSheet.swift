@@ -57,10 +57,10 @@ struct CarryTempoSheet: View {
                 // whole point of the route. Its own back chevron dismisses this sheet.
                 MetronomeView(initialBPM: bpm)
             case .exercise:
-                // The template picker runs: a song's tempo can seed any kind of drill, unlike the
-                // automator's seam, where a breakdown point is always a plain tempo drill. Funnels
-                // through `plan.finalise(in:)` — the shared insert (`ExerciseCreation`), never a
-                // third path of its own.
+                // The template picker runs: a song's tempo can seed any kind of drill, as the
+                // metronome's *Save as exercise* can (ADR 0261). Funnels through
+                // `plan.finalise(in:)` — the shared insert (`ExerciseCreation`), never a third path
+                // of its own.
                 NewExerciseSheet(initialCommand: bpm, initialSignature: signature,
                                  defaultInstrument: profiles.first?.preferredInstrument ?? .guitar,
                                  initialSongs: [song]) { plan in

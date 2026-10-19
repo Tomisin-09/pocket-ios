@@ -3,6 +3,10 @@
 - **Status:** Accepted — from Tomisin's device pass, 2026-10-18. Built on
   `pocket-372-metronome-saves-a-drill`.
 - **Date:** 2026-10-18
+- **Amended by:** ADR 0261 (the metronome carries its tempo into any drill, 2026-10-19) — D1's
+  *"opens the create sheet on a Basic drill"* is reversed: the template picker runs, as it does
+  for the song player's tempo-carry. The rest of D1 (the bookmark, the tempo pinned at the tap,
+  command-only, the plan wall, the fixed label) and D2–D4 stand.
 - **Amends:** ADR 0160 — the metronome's journal pencil is gone, so nothing writes a metronome note
   any more. The owner kind, the snapshot and how a stored note renders and filters all stand (D4).
 - **Amends:** ADR 0155 — §8's door on the metronome is closed. The metronome is no longer a way into
@@ -43,7 +47,7 @@ armed. The automator panel's header is just *AUTOMATOR* now.
   was (0160 §5): during a ramp the live tempo *is* the discovery, and the click keeps running under
   the sheet.
 - **It opens the create sheet on a Basic drill**, with the tempo and meter filled in and the
-  instrument from the profile, as the automator's bookmark did.
+  instrument from the profile, as the automator's bookmark did. *(Amended by 0261: the template picker runs.)*
 - **The drill is command-only.** No warm-up, reach or back-off, so it plays the tempo you found and
   nothing else. The phases can be switched on in the run's Practice Settings. `NewExercisePlan`
   carries `commandOnly`, and `finalise(in:)` (still the one insert path) turns the three phases off

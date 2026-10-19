@@ -79,6 +79,24 @@ final class ExercisePlanFinaliseTests: XCTestCase {
         XCTAssertEqual(exercise.summitTempo, 132, "with Reach off the run summits at command (ADR 0221 D6)")
     }
 
+    /// Since ADR 0261 the metronome's save runs the template picker, so command-only meets an
+    /// authored payload. The phases are switched off before the payload goes on and the rhythm is
+    /// bound, and neither step may switch them back on.
+    func testACommandOnlyPlanStaysCommandOnlyUnderAnAuthoredPayload() throws {
+        let context = try makeContext()
+        let eighths = StrumPattern(slotsPerBeat: 2, slots: [.down, .up, .down, .up])
+        var plan = makePlan(name: "Found at the metronome", command: 132,
+                            template: .strumming, strum: eighths)
+        plan.commandOnly = true
+
+        let exercise = try XCTUnwrap(plan.finalise(in: context))
+
+        XCTAssertEqual(exercise.template, .strumming, "the picked template, not Basic")
+        XCTAssertEqual(exercise.strumPattern, eighths)
+        XCTAssertEqual(exercise.commandNoteRate?.perBeat, 2)
+        XCTAssertTrue(exercise.runShape.isCommandOnly)
+    }
+
     /// The default stays what it was: a drill made in Practice keeps all three optional phases, so
     /// `commandOnly` can only ever be a choice a host makes, never a change of the default.
     func testADefaultPlanKeepsEveryPhaseOn() throws {
