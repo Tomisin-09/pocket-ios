@@ -53,8 +53,9 @@ struct NewExercisePlan {
 /// library section and can't be changed later — then **configure** the name, command tempo, meter,
 /// and (for a strumming template) the arrow pattern itself.
 ///
-/// The metronome's "Save as exercise" sets `fixedTemplate` to `.basic` to skip the picker and open
-/// straight on the configure step — a tempo found at the metronome is always a plain tempo drill.
+/// The library's category `+` and a goal skill's fix set `fixedTemplate` to skip the picker and open
+/// straight on the configure step. The metronome's "Save as exercise" and the song player's
+/// tempo-carry don't: a tempo can seed any kind of drill (ADR 0170, ADR 0261).
 struct NewExerciseSheet: View {
     /// Pre-fills the command stepper — the tempo the metronome was on when saved, the engine
     /// default when created fresh in Practice.
@@ -63,7 +64,7 @@ struct NewExerciseSheet: View {
     /// 4/4 when created fresh in Practice.
     var initialSignature: TimeSignature = .standard
     /// When set, skips the template picker and opens directly on the configure step for this
-    /// template (the metronome's "Save as exercise", which is always a `.basic` drill).
+    /// template (the library's category `+`, a goal skill's fix).
     var fixedTemplate: ExerciseTemplate?
     /// The instrument the create step opens on (ADR 0116) — the profile's preferred instrument, defaulting
     /// to guitar so an untouched install is unchanged.
