@@ -364,6 +364,22 @@ device as well.
 - **The picker's list takes values only** (`ReferencePlaceList`), with a store-side shell
   (`ReferenceAttachSheet`) that turns models into destinations and a pick back into a write, so slice
   4 can hand the same list its snapshot.
+- **Tests:** `ReferenceDestinationPickerTests` (16) and `ReferenceFilingTests` (16, 9 of them on an
+  in-memory store, 3 through `finalise(in:)`); `ReferenceFilingUITests` (2): on the plan, a link kept
+  for later starts a drill that takes it and is then attached to a second drill by search; and under
+  `-plan free`, the start button's lock, the picker's free words and footer, no drill under *Show all
+  songs and loops*, and the wall.
+- **Mutants:** 28 on the rules and the store, each with a witness test, and every one failed it. Two
+  batching lessons. Two mutants that together left a binding unused stopped the build, as warnings are
+  errors in Debug. And B5 with B6 made every attach a copy, so three move-path mutants were caught by
+  the wrong cause (or, for the own-place guard, passed); run apart, each failed its own assertion. One
+  more on the screen: the picker reading every resolved store as on the plan failed the free UI test at
+  its search prompt, the line aimed at. Reading for mutants first found a test that couldn't fail:
+  *Show everything*'s loops sorted the same by name as by song, so the song-first rule went unchecked
+  until its data changed.
+- **Seen on screen, not in a test:** a List draws a row's Label icon in the screen's indigo, ignoring
+  the button's tint, so the start button's glyph was indigo on teal. It is now white on the wide button
+  and teal on the plain one. Found by the UI test's screenshots.
 
 ## Alternatives rejected
 
