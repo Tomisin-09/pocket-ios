@@ -53,7 +53,8 @@ enum EarKind: Hashable, Sendable {
         switch label {
         case .pitchClass: self = .note
         case .chord(_, let suffix): self = .chord(suffix: suffix)
-        case .fretted: return nil
+        // A dead note has no root to hang a kind on (ADR 0262 D3); a placed one is read, never named.
+        case .fretted, .muted: return nil
         }
     }
 }
@@ -67,15 +68,18 @@ struct EarReading: Equatable, Sendable {
 extension PieceLabel {
     /// What this answer says at the By ear level. A placed note reads as the note it sounds and a shape as
     /// the chord it spells, so nothing is entered twice. `nil` when there's nothing to read: a fret past
-    /// the strings it was written against, or a shape that spells no chord.
+    /// the strings it was written against, a shape that spells no chord, or a dead note, which By ear
+    /// reads by `isMuted` instead (ADR 0262 D3).
     func earReading(openMidi: [Int]) -> EarReading? {
         switch self {
-        case .fretted(let notes, _) where notes.count > 1:
+        case .fretted(let notes, _, _) where notes.count > 1:
             return NeckShape.read(notes, openMidi: openMidi)?.chord
         case .pitchClass, .fretted:
             return pitchClass(openMidi: openMidi).map { EarReading(root: $0, kind: .note) }
         case .chord(let root, let suffix):
             return EarReading(root: root, kind: .chord(suffix: suffix))
+        case .muted:
+            return nil
         }
     }
 
@@ -105,6 +109,13 @@ enum EarPick: Equatable {
             return .save(current, advance: true)
         }
         return .askToReplace(named)
+    }
+
+    /// Tapping *Muted* (ADR 0262 D3): like a name, it saves and moves on. Over neck work it asks first,
+    /// unless the neck's answer is only ✕s, which already reads as muted and is kept.
+    static func muted(over current: PieceLabel?) -> EarPick {
+        guard let current, current.isOnTheNeck else { return .save(.muted, advance: true) }
+        return current.isMuted ? .save(current, advance: true) : .askToReplace(.muted)
     }
 
     /// Tapping a kind: it changes the current answer's kind **without moving on**. An empty tap has

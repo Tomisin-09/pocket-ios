@@ -97,6 +97,7 @@ extension NeckNoteEditor {
     /// What the note holds, or why it can't be joined to the tap before, naming that tap. `nil` when a
     /// join could go here and none has.
     private var intoText: String? {
+        if labels[marked]?.isMuted == true { return "A muted note has no way in." }
         guard let notes = labels[marked]?.frettedNotes, !notes.isEmpty else { return "Place the note first." }
         if let moving = notes.first(where: { $0.leadIn != nil }), let leadIn = moving.leadIn {
             if notes.count > 1, !NeckJoin.movesAsOne(notes) { return heldText(moving, leadIn) }
@@ -121,8 +122,10 @@ extension NeckNoteEditor {
         let reason: String
         switch blocker {
         case .notPlaced: return "Place the note first."
+        case .muted: return "A muted note has no way in."
         case .first: reason = "The first note has nothing before it."
         case .previousUnnamed: reason = "\(before) isn’t named yet."
+        case .previousMuted: reason = "\(before) is muted, so there’s no fret to come from."
         case .previousByEar: reason = "\(before) was named by ear, so it isn’t on the neck."
         case .otherStrings:
             reason = notes.count > 1 ? "\(before) isn’t on the same strings."
@@ -163,7 +166,7 @@ extension NeckNoteEditor {
     /// What to do from here: move a lead-in's start, and for one note of a chord hammered or pulled, say
     /// the whole chord moved (0252 D2); or say a join from the tap before was really heard as one note.
     private var intoOffers: [Offer] {
-        guard case .fretted(let notes, let into) = labels[marked], !notes.isEmpty else { return [] }
+        guard case .fretted(let notes, _, let into) = labels[marked], !notes.isEmpty else { return [] }
         if let moving = notes.first(where: { $0.leadIn != nil }), let leadIn = moving.leadIn {
             let way = leadIn.join == .legato ? leadIn.direction(into: moving.fret) : nil
             // A shape moving as one moves again as one; one note moving picks its note again.

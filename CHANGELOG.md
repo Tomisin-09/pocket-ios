@@ -56,6 +56,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Name the notes can name a muted note** (ADR 0262). A dead note, struck with no pitch, like the
+  chuck in a strummed part or the scratch between funk stabs, used to stay a `?` and count as left
+  to name. On Fret & string, each string now has a ✕ beside its letter. Tap it and the note is
+  muted on that string, and the sheet moves on as it does for a fret. With Chords on, ✕s go into
+  the chord, so a chuck across several strings, or a chord strummed through a muted string, is the
+  same taps. On By ear, **Muted** under the note names is for a click you heard but can't place.
+  The tab writes a muted note *x*, and the line of names ✕. A muted note counts as named, and a
+  strummed part of chords and chucks still counts in chords. My tabs has the ✕ too, and Watch it on
+  the neck lights it. A piece with muted notes, opened on an older build, shows those notes unnamed.
 - **Red Moon has one plan: £1 a month, or £15 once** (ADR 0256), and the monthly starts with a
   free week the first time you take it. Your songs are free for good:
   import them, play them, slow them down and keep your loops and markers, and the Metronome, the

@@ -65,15 +65,19 @@ extension NamingStrip {
                                      spelling: NoteSpelling) -> (text: String?, dim: Bool) {
         guard let label else { return (nil, false) }
         if onTheNeck {
-            // A chord of four notes or more is too long to spell out on a chip; its name says it.
-            if label.frettedNotes.count > 3 { return (label.name(openMidi: openMidi, spelling: spelling), false) }
+            // A chord of four notes or more, ✕s counted, is too long to spell out on a chip; its name says
+            // it, and a chuck across four strings is its ✕ (ADR 0262 D4).
+            if label.frettedNotes.count + label.mutedStrings.count > 3 {
+                return (label.name(openMidi: openMidi, spelling: spelling), false)
+            }
             if label.isOnTheNeck {
-                return (NeckNoteEditor<EmptyView>.fretText(label.frettedNotes, openMidi: openMidi), false)
+                return (NeckNoteEditor<EmptyView>.fretText(label, openMidi: openMidi), false)
             }
             return (label.name(openMidi: openMidi, spelling: spelling), true)
         }
-        // On By ear a shape that spells no chord shows its interval or notes, dimmed: nothing to name.
-        let unread = label.isOnTheNeck && label.earReading(openMidi: openMidi) == nil
+        // On By ear a shape that spells no chord shows its interval or notes, dimmed: nothing to name. A ✕
+        // reads as muted there (ADR 0262 D3), so it isn't dimmed.
+        let unread = label.isOnTheNeck && !label.isMuted && label.earReading(openMidi: openMidi) == nil
         return (label.name(openMidi: openMidi, spelling: spelling), unread)
     }
 }

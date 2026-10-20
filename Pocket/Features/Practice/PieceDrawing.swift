@@ -61,8 +61,7 @@ struct PieceDrawing: View {
     }
 
     private var noun: String {
-        let named = piece.labels.compactMap { $0 }
-        return !named.isEmpty && named.allSatisfy(\.isChord) ? "chord" : "note"
+        piece.countsChords ? "chord" : "note"
     }
 
     private var metaLine: some View {
@@ -73,7 +72,7 @@ struct PieceDrawing: View {
             .font(.futura(.subheadline))
             .foregroundStyle(PocketColor.textSecondary)
             // The names in full, for VoiceOver: the drawing below is read as a whole, not note by note.
-            .accessibilityLabel(piece.summary(spelling: spelling) ?? PieceStaff.meta(of: piece))
+            .accessibilityLabel(piece.summary(spelling: spelling).map(PieceLabel.spoken) ?? PieceStaff.meta(of: piece))
     }
 
     private func toggle(_ title: String) -> some View {
@@ -246,7 +245,7 @@ struct PieceDrawing: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(piece.summary(spelling: spelling) ?? "")
+        .accessibilityLabel(piece.summary(spelling: spelling).map(PieceLabel.spoken) ?? "")
         .accessibilityIdentifier("piece.names")
     }
 }

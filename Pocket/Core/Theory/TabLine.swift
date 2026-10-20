@@ -10,15 +10,17 @@ import Foundation
 /// marks are written the usual way: `7b9` a bend, `7~` vibrato, and a join between two columns as `h`,
 /// `p`, `/` or `\`. A note heard as one with its lead-in keeps the join inside its column (`11h13`, and
 /// `/13` for a slide in from nowhere), so the tab reads the same however it was counted. A shape stacks
-/// in one column. It is always **drawn from the piece**, never stored, so it can't be edited apart from
-/// it.
+/// in one column, and a string struck dead is an `x` in it (ADR 0262). It is always **drawn from the
+/// piece**, never stored, so it can't be edited apart from it.
 ///
 /// Pure and SwiftUI-free (AGENTS.md).
 enum TabLine {
 
-    /// One column: the notes one tap placed, and the join written into it from the column before.
+    /// One column: the notes one tap placed, the strings it struck dead (ADR 0262), and the join written
+    /// into it from the column before.
     struct Column: Equatable {
         let notes: [FrettedNote]
+        var muted: Set<Int> = []
         let join: String?
     }
 
@@ -30,8 +32,9 @@ enum TabLine {
             let notes = (labels[index]?.frettedNotes ?? []).filter {
                 openMidi.indices.contains($0.string) && $0.fret >= 0
             }
-            guard !notes.isEmpty else { return nil }
-            return Column(notes: notes, join: NeckJoin.symbol(into: index, of: labels))
+            let muted = (labels[index]?.mutedStrings ?? []).filter { openMidi.indices.contains($0) }
+            guard !notes.isEmpty || !muted.isEmpty else { return nil }
+            return Column(notes: notes, muted: muted, join: NeckJoin.symbol(into: index, of: labels))
         }
     }
 
@@ -45,13 +48,17 @@ enum TabLine {
         guard !columns.isEmpty else { return nil }
         var lines = stringNames(openMidi: openMidi).map { $0 + "|-" }
         for (position, column) in columns.enumerated() {
-            let cells = lines.indices.map { string in column.notes.first { $0.string == string }.map(cell) }
+            let cells = lines.indices.map { string in
+                column.notes.first { $0.string == string }.map(cell)
+                    ?? (column.muted.contains(string) ? PieceLabel.mutedTab : nil)
+            }
             let width = cells.compactMap { $0?.count }.max() ?? 1
             for string in lines.indices {
                 if position > 0 {
-                    // A join takes the place of the two dashes between columns, on the strings it joins.
+                    // A join takes the place of the two dashes between columns, on the strings it joins:
+                    // the notes', never a muted string's `x`.
                     if let join = column.join {
-                        lines[string] += cells[string] == nil ? "-" : join
+                        lines[string] += column.notes.contains { $0.string == string } ? join : "-"
                     } else {
                         lines[string] += "--"
                     }

@@ -10,6 +10,7 @@ extension NameTheNotesSheet {
                        voice: .naming, scrollTarget: neckTarget, hearing: hearing,
                        write: { labels = $0 },
                        onPlace: { string, fret in place(string: string, fret: fret) },
+                       onMute: { string in mute(string: string) },
                        onInstrument: { showingInstrument = true }, trailing: historyButtons)
     }
 
@@ -25,6 +26,15 @@ extension NameTheNotesSheet {
     private func place(string: Int, fret: Int) {
         if awaitingStart == nil { replacing = nil }
         let edit = NeckEditing.place(string: string, fret: fret, labels: labels, cursor: cursor)
+        if edit.labels != labels { labels = edit.labels }
+        cursor = edit.cursor
+    }
+
+    /// A tap on a string's ✕ (ADR 0262 D2), by `NeckEditing.mute`: with Chords off the answer is that string
+    /// muted and the strip moves on, as placing a note does; with Chords on it goes into the chord.
+    private func mute(string: Int) {
+        replacing = nil
+        let edit = NeckEditing.mute(string: string, labels: labels, cursor: cursor)
         if edit.labels != labels { labels = edit.labels }
         cursor = edit.cursor
     }

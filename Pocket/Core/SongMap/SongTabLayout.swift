@@ -141,28 +141,34 @@ enum SongTabLayout {
                        spelling: NoteSpelling) -> SongTab.Column {
         let tap = transcription.taps[index]
         let name = tap.label?.name(openMidi: transcription.openMidi ?? [], spelling: spelling)
+        // A dead note is drawn as tab's `x` and read aloud as muted, never "multiplication x" (ADR 0262).
+        let muted = tap.label?.isMuted == true
         let mark: SongTab.Mark
         if layer == .notes, let cells = cells(index, of: transcription) {
             mark = .frets(cells)
+        } else if muted {
+            mark = .name(PieceLabel.mutedTab)
         } else {
             mark = name.map(SongTab.Mark.name) ?? .slash
         }
-        return SongTab.Column(time: tap.seconds, piece: piece, mark: mark, name: name)
+        return SongTab.Column(time: tap.seconds, piece: piece, mark: mark, name: muted ? "muted" : name)
     }
 
     /// A tap's notes on the neck, a cell per string as `TabLine` writes it, with the join from the tap
-    /// before in front (`h7`, `/9`). `nil` when none of them sits on a string the tuning has.
+    /// before in front (`h7`, `/9`), and an `x` on each string struck dead (ADR 0262), which a join never
+    /// lands on. `nil` when none of them sits on a string the tuning has.
     static func cells(_ index: Int, of transcription: PieceTranscription) -> [SongTab.FretCell]? {
         let openMidi = transcription.openMidi ?? []
         let labels = transcription.labels
         let notes = (labels[index]?.frettedNotes ?? []).filter {
             openMidi.indices.contains($0.string) && $0.fret >= 0
         }
-        guard !notes.isEmpty else { return nil }
+        let muted = (labels[index]?.mutedStrings ?? []).filter { openMidi.indices.contains($0) }
+        guard !notes.isEmpty || !muted.isEmpty else { return nil }
         let join = NeckJoin.symbol(into: index, of: labels) ?? ""
-        return notes.sorted { $0.string < $1.string }.map {
-            SongTab.FretCell(string: $0.string, text: join + TabLine.cell($0))
-        }
+        let fretted = notes.map { SongTab.FretCell(string: $0.string, text: join + TabLine.cell($0)) }
+        let dead = muted.map { SongTab.FretCell(string: $0, text: PieceLabel.mutedTab) }
+        return (fretted + dead).sorted { $0.string < $1.string }
     }
 
     // MARK: - Fitting

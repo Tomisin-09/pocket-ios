@@ -44,7 +44,10 @@ enum WritingInfo {
     static let chords =
         "One tap can hold more than one note: a double-stop, a triad or a whole chord, one note per "
         + "string, as in My chords. Turn Chords on, then tap the other strings. Tap a note twice to take it "
-        + "out. Bend and vibrato go on the ringed note, and the neck names what you placed."
+        + "out. Bend and vibrato go on the ringed note, and the neck names what you placed.\n\nThe ✕ beside "
+        + "each string is a muted note: struck, with no pitch, as tab writes x. With Chords on, ✕s go into "
+        + "the chord. (In My chords, ✕ means a string isn't played; here an unplayed string just has "
+        + "nothing on it.)"
     static let into =
         "How you get to this note: picked, a hammer-on or pull-off (fretted from a lower or higher fret on "
         + "the same string, without picking it), or a slide.\n\nFrom the note before? It joins from that "
@@ -61,7 +64,10 @@ enum NamingInfo {
         "One tap can hold more than one note: a double-stop, a triad or a whole chord, one note per "
         + "string, as in My chords. Turn Chords on, then tap the other strings. Tap a note twice to take it "
         + "out. Bend and vibrato go on the ringed note, and the neck names what you placed. A chord you "
-        + "heard but didn't play is named on By ear."
+        + "heard but didn't play is named on By ear.\n\nThe ✕ beside each string is a muted note: struck, "
+        + "with no pitch, as tab writes x. With Chords on, ✕s go into the chord, and a click you heard but "
+        + "can't place is Muted on By ear. (In My chords, ✕ means a string isn't played; here an unplayed "
+        + "string just has nothing on it.)"
     static let into =
         "How you got to this note: picked, a hammer-on or pull-off (fretted from a lower or higher fret on "
         + "the same string, without picking it), or a slide.\n\nTapped twice, heard as two notes? It "

@@ -98,13 +98,24 @@ enum NeckPlacement {
     /// on as it grows. In a shape where one note moves and the rest are held (ADR 0252 D1), each note
     /// keeps what it had, as a lone note does: the moving note its start, a held note none, and a note
     /// added is held. A join is kept, for the sheet's tidy to drop if it no longer fits.
+    ///
+    /// Muted strings (ADR 0262 D2): with Chords off the note replaces them, as it replaces anything. With
+    /// Chords on, a fret on a muted string puts that string back on the neck, the rest stay muted, and the
+    /// last note can come out while a ✕ is left.
     static func tap(string: Int, fret: Int, on current: PieceLabel?, ringed: Int?, chords: Bool) -> Outcome {
-        guard case .fretted(var notes, let into) = current, !notes.isEmpty else {
+        guard case .fretted(var notes, var muted, let into) = current, !notes.isEmpty || !muted.isEmpty else {
             return Outcome(label: .fretted(string: string, fret: fret), ringed: string)
+        }
+        guard !notes.isEmpty else {
+            // Only ✕s: a note replaces them, or with Chords on joins them on its own string.
+            muted.remove(string)
+            return Outcome(label: .fretted([FrettedNote(string: string, fret: fret)], muted: chords ? muted : [],
+                                           into: nil),
+                           ringed: string)
         }
         let ring = notes.firstIndex { $0.string == ringed } ?? notes.count - 1
         guard chords else {
-            if notes.count == 1, notes[0].string == string, notes[0].fret == fret {
+            if notes.count == 1, muted.isEmpty, notes[0].string == string, notes[0].fret == fret {
                 return Outcome(label: .fretted(notes, into: into), ringed: string)
             }
             let kept = notes[ring]
@@ -114,6 +125,7 @@ enum NeckPlacement {
                                            into: into),
                            ringed: string)
         }
+        muted.remove(string)
         let asOne = NeckJoin.movesAsOne(notes)
         if let onString = notes.firstIndex(where: { $0.string == string }) {
             if notes[onString].fret != fret {
@@ -121,14 +133,34 @@ enum NeckPlacement {
                 // A lone note keeps the fret it started from; in a shape moving as one the start moves
                 // with the shape.
                 if notes.count > 1, asOne { notes = NeckJoin.carryingLeadIn(notes, to: onString) }
-            } else if onString == ring, notes.count > 1 {
+            } else if onString == ring, notes.count > 1 || !muted.isEmpty {
                 notes.remove(at: onString)
-                return Outcome(label: .fretted(notes, into: into), ringed: notes[notes.count - 1].string)
+                return Outcome(label: .fretted(notes, muted: muted, into: notes.isEmpty ? nil : into),
+                               ringed: notes.last?.string ?? string)
             }
-            return Outcome(label: .fretted(notes, into: into), ringed: string)
+            return Outcome(label: .fretted(notes, muted: muted, into: into), ringed: string)
         }
         notes.append(FrettedNote(string: string, fret: fret))
         if asOne { notes = NeckJoin.carryingLeadIn(notes, to: notes.count - 1) }
-        return Outcome(label: .fretted(notes, into: into), ringed: string)
+        return Outcome(label: .fretted(notes, muted: muted, into: into), ringed: string)
+    }
+
+    /// A tap on a string's ✕ (ADR 0262 D2). With **Chords** off it makes the answer that string muted,
+    /// whatever was there; tapping the ✕ already there changes nothing. With Chords on, one entry per string:
+    /// a ✕ on an empty string adds it, on a string with a note replaces the note, and on a ✕ takes it out,
+    /// unless it's all the tap holds. A ✕ has no marks, so the ring stays on a note, and a tap left with no
+    /// notes has no way in.
+    static func mute(string: Int, on current: PieceLabel?, ringed: Int?, chords: Bool) -> Outcome {
+        guard chords, case .fretted(var notes, var muted, let into) = current, !notes.isEmpty || !muted.isEmpty else {
+            return Outcome(label: .muted(strings: [string]), ringed: string)
+        }
+        if muted.contains(string) {
+            if muted.count > 1 || !notes.isEmpty { muted.remove(string) }
+        } else {
+            notes.removeAll { $0.string == string }
+            muted.insert(string)
+        }
+        let ring = notes.contains { $0.string == ringed } ? ringed : notes.last?.string
+        return Outcome(label: .fretted(notes, muted: muted, into: notes.isEmpty ? nil : into), ringed: ring ?? string)
     }
 }

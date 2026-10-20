@@ -22,9 +22,11 @@ enum NeckJoin {
 
     /// Why the tap at `index` can't be joined to the one before, for the line under *Into it*, or `nil`
     /// when it can. A join is valid only when the tap before is on the neck, on the same strings, with
-    /// every note moving the same way.
+    /// every note moving the same way. A dead note has no fret to come from or go to (ADR 0262 D2): muted
+    /// strings beside notes ride along, and the join reads only the notes.
     enum Blocker: Equatable {
-        case notPlaced, first, previousUnnamed, previousByEar, otherStrings, sameFret, mixedDirections
+        case notPlaced, muted, first, previousUnnamed, previousMuted, previousByEar, otherStrings, sameFret,
+             mixedDirections
     }
 
     /// The way the notes moved from tap `index - 1` into tap `index`, when a join could go there.
@@ -45,11 +47,13 @@ enum NeckJoin {
     }
 
     private static func check(into index: Int, of labels: [PieceLabel?]) -> Outcome {
+        if labels.indices.contains(index), labels[index]?.isMuted == true { return .blocked(.muted) }
         guard labels.indices.contains(index), let current = labels[index]?.frettedNotes, !current.isEmpty else {
             return .blocked(.notPlaced)
         }
         guard index > 0 else { return .blocked(.first) }
         guard let before = labels[index - 1] else { return .blocked(.previousUnnamed) }
+        guard !before.isMuted else { return .blocked(.previousMuted) }
         let previous = before.frettedNotes
         guard !previous.isEmpty else { return .blocked(.previousByEar) }
         guard previous.count == current.count, Set(previous.map(\.string)) == Set(current.map(\.string)) else {
@@ -66,7 +70,7 @@ enum NeckJoin {
     /// The join into tap `index` as written (`h`, `p`, `/`, `\`), or `nil` when it has none or one that
     /// no longer fits. A note heard as one carries its join inside it, as its lead-in, and has none here.
     static func symbol(into index: Int, of labels: [PieceLabel?]) -> String? {
-        guard labels.indices.contains(index), case .fretted(let notes, let into?) = labels[index],
+        guard labels.indices.contains(index), case .fretted(let notes, _, let into?) = labels[index],
               !notes.contains(where: { $0.leadIn != nil }),
               let direction = direction(into: index, of: labels) else { return nil }
         return direction.symbol(for: into)
@@ -78,14 +82,14 @@ enum NeckJoin {
     /// tap before as well; it was heard as one.
     static func tidied(_ labels: [PieceLabel?]) -> [PieceLabel?] {
         labels.indices.map { index in
-            guard case .fretted(var notes, var into) = labels[index] else { return labels[index] }
+            guard case .fretted(var notes, let muted, var into) = labels[index] else { return labels[index] }
             if notes.contains(where: { $0.leadIn != nil }), !leadInsFit(notes) {
                 for position in notes.indices { notes[position].leadIn = nil }
             }
             if notes.contains(where: { $0.leadIn != nil }) || direction(into: index, of: labels) == nil {
                 into = nil
             }
-            return .fretted(notes, into: into)
+            return .fretted(notes, muted: muted, into: into)
         }
     }
 }
@@ -259,7 +263,7 @@ extension NeckJoin {
     /// Whether a choice is the one the tap at `index` holds now, from the tap before or inside the note.
     /// Inside a shape it's the moving note's, wherever it is (0252 D1).
     static func holds(_ choice: IntoChoice, into index: Int, of labels: [PieceLabel?]) -> Bool {
-        guard labels.indices.contains(index), case .fretted(let notes, let into) = labels[index],
+        guard labels.indices.contains(index), case .fretted(let notes, _, let into) = labels[index],
               !notes.isEmpty else { return false }
         let moving = notes.first { $0.leadIn != nil } ?? notes[0]
         let leadIn = moving.leadIn

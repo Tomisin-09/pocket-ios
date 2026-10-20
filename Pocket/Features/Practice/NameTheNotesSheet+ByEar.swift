@@ -36,6 +36,19 @@ extension NameTheNotesSheet {
                     }
                 }
             }
+            // A dead note (ADR 0262 D3): a click heard with no pitch. Like a name, it saves and moves on.
+            HStack(spacing: 10) {
+                pickButton("\(PieceLabel.mutedName) Muted",
+                           state: current == .muted ? .picked : current?.isMuted == true ? .read : .plain) {
+                    apply(EarPick.muted(over: current), advancesOnReplace: true)
+                }
+                .frame(width: 112)
+                .accessibilityLabel("Muted")
+                .accessibilityIdentifier("ear.muted")
+                Text("A click with no note")
+                    .font(.futura(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
             // One note and Two notes hold a button each, so they share a row.
             HStack(alignment: .top, spacing: 16) {
                 ForEach(EarKind.groups.prefix(2), id: \.title) { kindRow($0, reading: reading, onTheNeck: onTheNeck) }
@@ -55,6 +68,17 @@ extension NameTheNotesSheet {
     /// for a shape that spells none, its interval and notes.
     private func readLine(_ current: PieceLabel?, reading: EarReading?, shape: ShapeReading?) -> Text? {
         let tint = PocketColor.practice
+        if let current, current.isMuted {
+            let muted = Text("muted").bold().foregroundStyle(tint)
+            let names = TabLine.stringNames(openMidi: tuning.openMidi)
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+            let strings = current.mutedStrings.sorted(by: >)
+                .compactMap { names.indices.contains($0) ? names[$0] : nil }
+            let list = strings.count > 1
+                ? strings.dropLast().joined(separator: ", ") + " and " + strings[strings.count - 1]
+                : strings.joined()
+            return Text("Read from the neck: \(muted), on the \(list) string\(strings.count == 1 ? "" : "s")")
+        }
         guard let shape else {
             guard let reading else { return nil }
             let name = Text(spelling.name(pitchClass: reading.root)).bold().foregroundStyle(tint)

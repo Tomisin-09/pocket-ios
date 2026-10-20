@@ -83,14 +83,31 @@ struct TabDraft: Equatable, Sendable {
             write(editorLabels: edit.labels)
             return
         }
+        let chords = chordsOn
+        apply { current, ringed in
+            NeckPlacement.tap(string: string, fret: fret, on: current, ringed: ringed, chords: chords)
+        }
+    }
+
+    /// A tap on a string's ✕ (ADR 0262 D2), as `place` but by `NeckPlacement.mute`. While *Into it* waits for
+    /// a start it does nothing: a start is a fret.
+    mutating func mute(string: Int) {
+        guard awaitingStart == nil else { return }
+        let chords = chordsOn
+        apply { current, ringed in
+            NeckPlacement.mute(string: string, on: current, ringed: ringed, chords: chords)
+        }
+    }
+
+    /// A placement on the selected note, or on the + as a new one, moving on as placing does.
+    private mutating func apply(_ placement: (PieceLabel?, Int?) -> NeckPlacement.Outcome) {
         guard let note = selected else {
-            let outcome = NeckPlacement.tap(string: string, fret: fret, on: nil, ringed: nil, chords: chordsOn)
+            let outcome = placement(nil, nil)
             ringed = outcome.ringed
             insert(outcome.label)
             return
         }
-        let outcome = NeckPlacement.tap(string: string, fret: fret, on: content.labels[note], ringed: ringed,
-                                        chords: chordsOn)
+        let outcome = placement(content.labels[note], ringed)
         ringed = outcome.ringed
         content.labels[note] = outcome.label
         content = content.normalised

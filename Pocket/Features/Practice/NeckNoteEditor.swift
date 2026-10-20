@@ -29,6 +29,8 @@ struct NeckNoteEditor<Trailing: View>: View {
     let write: ([PieceLabel?]) -> Void
     /// A tap on the neck.
     let onPlace: (_ string: Int, _ fret: Int) -> Void
+    /// A tap on a string's ✕, pinned beside the letters (ADR 0262 D2).
+    let onMute: (_ string: Int) -> Void
     /// *Guitar · Standard ›* tapped: the owner opens its instrument sheet.
     let onInstrument: () -> Void
     /// What the owner puts at the right of the instrument row: Name the notes' ↶ ↷ (ADR 0252 D3). The tab
@@ -39,6 +41,7 @@ struct NeckNoteEditor<Trailing: View>: View {
 
     var body: some View {
         let neighbours = NeckNeighbours.marks(labels, active: active)
+        let mutes = NeckNeighbours.mutes(labels, active: active)
         return VStack(alignment: .leading, spacing: 10) {
             // The instrument on the left, the owner's on the right. The question over it went (0252 D3):
             // the row says what the strings are, and the neck under it is where you place.
@@ -55,7 +58,7 @@ struct NeckNoteEditor<Trailing: View>: View {
                 trailing
             }
             FretNeckBoard(stringNames: stringNames, maxFret: PieceLabel.maxFret, scrollTarget: scrollTarget,
-                          headroom: Self.marksHeadroom) { string, fret in
+                          headroom: Self.marksHeadroom, showsPinned: true) { string, fret in
                 neckSpot(string: string, fret: fret, mark: neighbours[NeckSpot(string: string, fret: fret)])
             } marks: {
                 // The marks are drawn on the note they go on, which after a placement is the one just placed.
@@ -68,8 +71,16 @@ struct NeckNoteEditor<Trailing: View>: View {
                 // While the loop or a phrase plays, the note being heard glows, moving the way it was played.
                 HeardGlows(motions: hearing.map { HaloMotion.motions(into: $0, of: labels) } ?? [], token: hearing,
                            headroom: Self.marksHeadroom)
+            } pinned: { string in
+                muteSpot(string: string, mark: mutes[string])
             }
-            if let byEar = labels[active], !byEar.isOnTheNeck,
+            if labels[active] == .muted {
+                Text("Named by ear as \(Text("muted").bold()), with no string. Tap a ✕ to say which, or place a "
+                     + "note to replace it.")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if let byEar = labels[active], !byEar.isOnTheNeck,
                let name = byEar.name(openMidi: tuning.openMidi, spelling: spelling) {
                 Text("Named by ear as \(Text(name).bold()). It can’t be drawn here; placing a note replaces it.")
                     .font(.futura(.footnote))
@@ -125,6 +136,28 @@ struct NeckNoteEditor<Trailing: View>: View {
         .accessibilityHint(isRinged ? "Ringed. Tap again to take it out." : "")
     }
 
+    /// A string's ✕ (ADR 0262 D2), pinned beside the letters so it's in reach at any fret, and tapped like
+    /// any spot. Drawn as a dot is, by where the nearest tap that muted the string sits from the one being
+    /// named; a heard ✕ glows. While *Into it* waits for a start it's dimmed: a start is a fret.
+    private func muteSpot(string: Int, mark: NeckNeighbours.Mark?) -> some View {
+        let isPlaced = mark?.tier == .current
+        let isHeard = PieceNeck.heardMutes(hearing, of: labels).contains(string)
+        return Button {
+            onMute(string)
+        } label: {
+            NeckSpotDot(name: PieceLabel.mutedName, tier: mark?.tier, number: mark.map { $0.note + 1 },
+                        isDimmed: awaitingStart != nil)
+                .background {
+                    if isHeard { Circle().fill(accent.opacity(0.42)).frame(width: 36, height: 36) }
+                }
+        }
+        .buttonStyle(.plain)
+        .disabled(awaitingStart != nil)
+        .accessibilityLabel("\(stringNames[string]) string, muted" + Self.neighbourWords(mark, noun: noun))
+        .accessibilityAddTraits(isPlaced ? .isSelected : [])
+        .accessibilityIdentifier("neck.mute.\(string)")
+    }
+
     /// Write what a rule gave back: the answers as one step of the history (only when they changed), then
     /// where the neck is.
     func apply(_ edit: NeckEditing.Edit) {
@@ -149,8 +182,8 @@ struct NeckNoteEditor<Trailing: View>: View {
                     .tint(accent)
             }
             if chordsOn {
-                Text("Tap other strings to build a chord, one note per string, as in My chords. Tap a note "
-                     + "twice to take it out. Bend and vibrato go on the ringed note.")
+                Text("Tap other strings to build a chord, one note per string, as in My chords, or a ✕ to "
+                     + "mute a string. Tap a note twice to take it out. Bend and vibrato go on the ringed note.")
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -201,16 +234,22 @@ extension NeckNoteEditor {
     }
 
     /// Notes on the neck as tab says them, string then fret then marks, lowest string first: "B8",
-    /// "G7b9~".
+    /// "G7b9~", and a string struck dead as its name and a ✕ (ADR 0262 D4): "A✕·D5·G5".
     func fretText(_ notes: [FrettedNote]) -> String { Self.fretText(notes, openMidi: tuning.openMidi) }
 
-    nonisolated static func fretText(_ notes: [FrettedNote], openMidi: [Int]) -> String {
+    nonisolated static func fretText(_ notes: [FrettedNote], muted: Set<Int> = [], openMidi: [Int]) -> String {
         let names = TabLine.stringNames(openMidi: openMidi)
-        return notes.sorted { $0.string > $1.string }.map { note in
-            let name = names.indices.contains(note.string)
-                ? names[note.string].trimmingCharacters(in: .whitespaces) : "?"
-            return name + TabLine.cell(note)
-        }.joined(separator: "·")
+        func name(_ string: Int) -> String {
+            names.indices.contains(string) ? names[string].trimmingCharacters(in: .whitespaces) : "?"
+        }
+        let entries = notes.map { (string: $0.string, text: name($0.string) + TabLine.cell($0)) }
+            + muted.map { (string: $0, text: name($0) + PieceLabel.mutedName) }
+        return entries.sorted { $0.string > $1.string }.map(\.text).joined(separator: "·")
+    }
+
+    /// An answer's notes and ✕s as tab says them, or `""` for one that isn't on the neck.
+    nonisolated static func fretText(_ label: PieceLabel?, openMidi: [Int]) -> String {
+        fretText(label?.frettedNotes ?? [], muted: label?.mutedStrings ?? [], openMidi: openMidi)
     }
 }
 
