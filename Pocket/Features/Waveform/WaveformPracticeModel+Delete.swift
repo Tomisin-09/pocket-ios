@@ -43,7 +43,10 @@ extension WaveformPracticeModel {
         let message = targets.count == 1
             ? "Deleted \(targets[0].name)"
             : "Deleted \(targets.count) loops"
-        presentUndo(message) { [weak self] in
+        // Their references stay, not filed (ADR 0264 D2), and the toast says so.
+        let kept = ReferenceLibrary.keptLine(references: targets.reduce(0) { $0 + $1.references.count },
+                                             plural: targets.count > 1)
+        presentUndo(message, detail: kept) { [weak self] in
             guard let self else { return }
             withAnimation(.easeOut(duration: 0.2)) { self.pendingDeletedLoopUIDs.subtract(uids) }
             if wasActive {

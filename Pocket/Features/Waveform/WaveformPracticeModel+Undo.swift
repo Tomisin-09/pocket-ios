@@ -14,6 +14,8 @@ extension WaveformPracticeModel {
     struct UndoToast: Identifiable {
         let id = UUID()
         let message: String
+        /// A second line, for a delete that keeps something (ADR 0264 D2). `nil` for the rest.
+        var detail: String?
         let undo: () -> Void
         var commit: (() -> Void)?
     }
@@ -21,11 +23,12 @@ extension WaveformPracticeModel {
     /// Show an Undo toast, auto-dismissing after a few seconds. A second destructive
     /// action replaces it — the latest delete is the one you can undo — and **commits**
     /// the one it replaces, so a superseded delete still happens.
-    func presentUndo(_ message: String, undo: @escaping () -> Void, commit: (() -> Void)? = nil) {
+    func presentUndo(_ message: String, detail: String? = nil, undo: @escaping () -> Void,
+                     commit: (() -> Void)? = nil) {
         let outgoing = undoToast
         undoDismiss?.cancel()
         withAnimation(.easeOut(duration: 0.2)) {
-            undoToast = UndoToast(message: message, undo: undo, commit: commit)
+            undoToast = UndoToast(message: message, detail: detail, undo: undo, commit: commit)
         }
         outgoing?.commit?()
         undoDismiss = Task { [weak self] in

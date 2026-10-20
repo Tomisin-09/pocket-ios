@@ -6,7 +6,8 @@ teacher — and what this app is for is the stretch between watching that and be
 So exercises, songs, loops and routines each hold pointers back to wherever they came from. Either a
 **link** you paste, or a **file** you keep here — a screenshot, a photo of the page, the PDF you
 downloaded, an ASCII tab in a `.txt`, your own notes in a `.md`. Whichever it is, it sits with the
-thing it explains until you delete it.
+thing it explains, and every one you keep is also in **References**, in the Toolkit — including the
+ones you saved before you'd made the thing they're for.
 
 A song's section is also a good home for the artist's own pages: their Instagram, their YouTube
 channel, wherever they post. The note under the section says so.
@@ -93,14 +94,16 @@ later, hold the row and choose **Edit details**.
 
 ## Using them
 
-**Hold a row** and you get **Edit link** — **Edit details**, on a file — and **Delete**, the same
+**Hold a row** and you get **Edit link** — **Edit details**, on a file — and **Remove**, the same
 menu every other list in the app puts behind a hold. Editing opens it back up with everything you
 typed, so a name you'd change or a note you didn't write at the time is one gesture away. Swiping
-the row right opens the editor too; swiping left deletes.
+the row right opens the editor too; swiping left removes.
 
-Deleting is immediate — there is no undo toast here, unlike deleting a song or a routine. Deleting
-a file deletes the copy Red Moon kept, and the space comes back straight away. Nothing else goes
-with it: the exercise, song, loop or routine it was attached to is untouched.
+**Remove takes it off this place, and nothing you kept is lost.** If nothing else uses it, it moves
+to **Not filed** in References, with its note and its file. If the same link is on something else
+too, only this use goes, and the note you wrote here with it; the link stays in References through
+the other place. A file always moves to Not filed: removing one never deletes the copy Red Moon
+kept. Deleting for good happens in [References](#the-references-library), and only there.
 
 Tap a link row and the source opens **in its own app** — YouTube in YouTube, a tab site in your
 browser. Red Moon does not show it inside itself, and it never fetches anything from the address: no
@@ -111,7 +114,52 @@ reference that does not take you out of the app — which is the whole reason it
 here rather than a link to it. See [Privacy](privacy.md).
 
 On a routine, where the list is already in edit mode, you can also drag a reference into a
-different order.
+different order. A reference you add and then remove before tapping **Save** was never kept, so it
+goes rather than moving to Not filed.
+
+## The References library
+
+**Toolkit ▸ References** lists every reference you keep, wherever it is filed. A search at the top
+looks through the names, the sites, your notes and the names of the places they're used. Under it:
+
+<!-- shot: references/library | role: screen
+     | alt: The References library with a search field, a Not filed section holding two links and a PDF, each with its site or kind and when it was saved, then an Everything section whose rows each say On and the drill, song or routine they are filed on in its colour
+     | state: seeded library, Toolkit ▸ References, three references not filed and four filed -->
+
+- **Not filed** — the ones no exercise, song, loop or routine holds yet, newest first, with how many
+  there are. A lesson you found before you'd made the drill for it waits here, and so does anything
+  left behind when you deleted what it was on.
+- **Everything** — the rest, newest first.
+
+Each row is one source: its name, then the site or the kind of file and when you saved it, then
+*On Triad climb · Morning routine* in each place's colour, then the first line of your note. **A link
+used in two places is one row here**, though each place keeps its own note. A file is always its own
+row, since there is no address to match it to another by.
+
+**＋** offers **Add a link**, **Choose a photo** and **Choose a file**, the same fields and pickers
+as on an exercise. What you add is kept for later, under Not filed. There is no five-file limit here:
+that is per exercise, song, loop or routine.
+
+### One source
+
+Tap a row and it opens on its own:
+
+<!-- shot: references/source | role: screen
+     | alt: One reference's screen, with its name and site at the top, Open link, What you took from it with a note, Where it's used reading Not filed yet, and Delete
+     | state: seeded library, Toolkit ▸ References, a link not filed tapped -->
+
+- **Open link** — or **Open PDF**, **Open picture**, and so on for a file — as tapping it anywhere
+  else does.
+- **What you took from it** — your note, when the source isn't filed anywhere. If you kept the same
+  link more than once, each note is here.
+- **Where it's used** — each place, what it is, and the note that place keeps. A use that is kept for
+  later shows as **Kept for later**, with its own note. A source nobody has filed yet says **Not
+  filed yet**.
+- **Delete** — for good. It always asks first and names every place it will come off; once it is in
+  two places the button itself says **Delete from both places…**. A file's copy goes with it.
+
+**Edit** at the top changes the name and the link everywhere the source is used, since it is one
+source, and the note of one place only. When it's used in more than one place, Edit asks which.
 
 ## Three things it deliberately does not do
 
@@ -124,8 +172,9 @@ exercise. Nothing is scanned, no text is recognised, nothing is uploaded, and no
 device except in an export you ask for.
 
 **Deleting the thing keeps its references.** Where you learned something outlives what you made from
-it, so removing an exercise, song, loop or routine leaves its links and files, with their notes, as
-notes and takes are left. See [Journal and Practice log](journal-and-practice-log.md).
+it, so deleting an exercise, song, loop or routine leaves its links and files, with their notes, in
+References under Not filed, as notes and takes are left. The undo toast says so: *Its 2 references
+stay in References*. See [Journal and Practice log](journal-and-practice-log.md).
 
 ## Next
 

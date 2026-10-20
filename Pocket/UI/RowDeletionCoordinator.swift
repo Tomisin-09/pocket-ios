@@ -12,6 +12,9 @@ struct PocketRowDelete {
     let id: AnyHashable
     /// The item's display name — "Deleted Spider".
     let name: String
+    /// A second line under it, for a delete that keeps something: *"Its 2 references stay in
+    /// References"* (ADR 0264 D2). `nil` for the rest.
+    var detail: String?
     /// The real delete, deferred until the undo window closes.
     let perform: () -> Void
 }
@@ -37,6 +40,7 @@ final class RowDeletionCoordinator {
     struct Toast: Identifiable {
         let id = UUID()
         let message: String
+        var detail: String?
     }
 
     private(set) var toast: Toast?
@@ -67,7 +71,9 @@ final class RowDeletionCoordinator {
         commitPending()
         pending.insert(deletion.id)
         commits[deletion.id] = deletion.perform
-        withAnimation(.easeOut(duration: 0.2)) { toast = Toast(message: "Deleted \(deletion.name)") }
+        withAnimation(.easeOut(duration: 0.2)) {
+            toast = Toast(message: "Deleted \(deletion.name)", detail: deletion.detail)
+        }
         expiry = Task { [weak self] in
             try? await Task.sleep(for: Self.window)
             guard !Task.isCancelled else { return }
@@ -154,7 +160,7 @@ private struct PocketRowUndoHost: ViewModifier {
                                           isPending: { coordinator.isPending($0) }))
             .overlay(alignment: .bottom) {
                 if let toast = coordinator.toast {
-                    UndoToastView(message: toast.message) {
+                    UndoToastView(message: toast.message, detail: toast.detail) {
                         coordinator.undo()
                         haptic(.light)
                     }

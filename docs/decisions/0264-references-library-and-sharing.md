@@ -1,8 +1,9 @@
 # ADR 0264 — References: a library in the Toolkit, and sharing into Red Moon
 
 - **Status:** Accepted. **Slice 1 built** 2026-10-20 on `pocket-378-keep-references` (D1, D2's
-  delete rules, D7), with ADR 0263's free line on the same branch. Slices 2 to 4 are not built. See
-  §Build notes. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
+  delete rules, D7), with ADR 0263's free line on the same branch, merged as #370. **Slice 2 built**
+  2026-10-20 on `pocket-379-references-library` (D3, D4, D5 without its slice 3 actions, D6's rules as
+  pure logic, D11, D2's toast line). Slices 3 and 4 are not built. See §Build notes. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
   (canvas *Red Moon References*). The two questions it first left open were settled the same day,
   with the recommended answers (D11, D12). It lands **before 1.4**, all four slices including the
   share extension. Tomisin: *"we're in no rush to launch, I'd rather we have it in place before we
@@ -271,6 +272,55 @@ device as well.
   (2026-10-20: *"the simulator is fine"*).
 - **A side effect, as D2 intends:** a temporary session (ADR 0243) replaced by the next Start now
   leaves any references on it not filed, where it used to delete them.
+
+## Build notes — Slice 2 (2026-10-20, `pocket-379-references-library`)
+
+- **Built:** the Toolkit row (D4), `ReferencesLibraryView` and `ReferenceSourceView` (D4, D5 without
+  *Attach to…* and *Start an exercise from this*, which are slice 3), **Remove** on every owner's
+  References section (D11), and the toast's second line on all four owners' deletes (D2): the
+  Exercises, Routines and song libraries, and the loops panel, a song counting its loops' references.
+  The rules are pure: `ReferenceLibrary` (grouping, sections, search, the row's value, the toast line,
+  the delete dialog's words), `ReferenceRemoval` (D11's verdict), and `ReferenceAttachRules` over
+  `PlanStanding` (D6, unused by any screen until slice 3). The store gains `remove(_:from:in:)`,
+  `delete(_:in:)` for a whole source, and `KeepForLater`, a `ReferenceLinkOwner` with no list that lets
+  the library's ＋ reuse the owner sections' editor and pickers with no owner. The per-owner
+  `delete(_:from:in:)` is gone: nothing calls it once owners remove.
+- **Decided while building, from what D4 and D5 leave open.** Each is small; each is a call to check.
+  1. **A `bookmark`, not the books the mockup drew.** The Toolkit's own Home tile is
+     `books.vertical.fill`, and this row can be the tile beside it.
+  2. **No `ellipsis.circle` yet.** D4 names 0126's grammar but nothing for the menu to hold: the order
+     is fixed and search covers finding. ＋ stands alone, as on My tabs, until there is an option.
+  3. **Everything lists the sources not under Not filed**, as drawn, rather than every source again.
+  4. **Every row says when it was saved**, as D4's text has it; the drawing left the day off the
+     filed rows.
+  5. **Edit writes a source's name and link to every row of it, and the note to one row.** D3 makes a
+     source one name and one address with a note per place, so that is what Edit edits. With more
+     than one row, Edit is a menu naming the places, because the note is the place's.
+  6. **The delete button reads *Delete*, *Delete from both places…* or *Delete from all N places…***,
+     by distinct places. The dialog always opens, and its message names them.
+  7. **A row added and removed in one routine edit goes outright.** The routine editor holds every
+     change until Save (0167 phase 1, constraint 3), so a link added and then removed before Save was
+     never kept, and sending it to *Not filed* would keep it anyway. `remove` knows by the context's
+     unsaved inserts, which only the routine editor's sandbox ever has.
+  8. **Remove is a swipe as well as a hold**, red, as the other owners' row deletes are. The routine
+     editor's edit-mode minus then reveals that same red *Remove*, not a system *Delete*: a row with
+     swipe actions of its own shows them there. `.onDelete` stays for the editor's edit mode and calls
+     the same `remove`. Seen on the simulator, minus to Remove to the row gone.
+  9. **A source filed nowhere reads *Not filed yet*, however many rows it has, and lists each note
+     under *What you took from it*.** D5 drew one row, but two are easy to reach: the same link on two
+     drills, both deleted, keeps both rows and both notes (D2). Listing them under *Where it's used*
+     drew two identical *Kept for later* rows and no place; with no place to tell them apart, a row
+     with no note shows nothing, and Edit edits the newest. Found by a walk that saved one link twice.
+- **Tests:** `ReferenceLibraryTests` (19), `ReferenceRemovalTests` (15, 8 on an in-memory store),
+  `ReferenceAttachRulesTests` (5), with the two tests that called the per-owner delete moved onto
+  `remove` and the library's delete, a removed picture keeping its file, the coordinator carrying the
+  toast's line, and `ToolkitSectionTests` pinning the new row's place and stored name.
+- **Mutants:** 34. The first 31 ran in three batches with no two on one line, each with a witness test no other mutant
+  in its batch could fail. Every one failed its witness. Reading for mutants first found one line of
+  dead code (an unfiled row handed back to the "elsewhere" list, which never counts it) and two guards
+  that each hid the other; the line is gone and both guards have a test of their own. Three more
+  after the walks: two on item 9's rule, and one on the search, rewritten as typed statements for CI's
+  type-checker. All three failed their witness.
 
 ## Alternatives rejected
 

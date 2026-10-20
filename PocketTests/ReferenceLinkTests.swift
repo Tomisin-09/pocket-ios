@@ -178,7 +178,9 @@ final class ReferenceLinkTests: XCTestCase {
         XCTAssertEqual(link.note, "")
     }
 
-    func testDeleteRenumbersTheSurvivors() throws {
+    /// Remove (ADR 0264 D11) closes the hole it leaves, as every mutation does. The one it removed is
+    /// kept for later rather than deleted: it was used nowhere else.
+    func testRemoveRenumbersTheSurvivors() throws {
         let context = try makeContext()
         let song = makeSong("Little Wing")
         context.insert(song)
@@ -188,11 +190,13 @@ final class ReferenceLinkTests: XCTestCase {
         }
         try context.save()
 
-        let doomed = song.referencesInOrder[1]
-        ReferenceLinkStore.delete([doomed], from: song, in: context)
+        let removed = song.referencesInOrder[1]
+        ReferenceLinkStore.remove([removed], from: song, in: context)
         try context.save()
         XCTAssertEqual(song.referencesInOrder.map(\.title), ["Link 0", "Link 2", "Link 3"])
         XCTAssertEqual(song.referencesInOrder.map(\.order), [0, 1, 2])
+        XCTAssertEqual(try context.fetch(FetchDescriptor<ReferenceLink>()).count, 4)
+        XCTAssertFalse(removed.isFiled)
     }
 
     func testMoveRenumbersIntoTheNewOrder() throws {

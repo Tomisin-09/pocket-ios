@@ -10,16 +10,27 @@ import SwiftUI
 /// `.pocketRowActions`.
 struct UndoToastView: View {
     let message: String
+    /// A second line, for a delete that keeps something (ADR 0264 D2): *"Its 2 references stay in
+    /// References"*. The toast grows to two lines for it and stays one line without.
+    var detail: String?
     /// What Undo does, for VoiceOver. The song map's Undo takes back what it made (ADR 0232 D17).
     var hint = "Restores the deleted item"
     let onUndo: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(message)
-                .font(.futura(.footnote))
-                .foregroundStyle(PocketColor.textPrimary)
-                .lineLimit(1)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(message)
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textPrimary)
+                    .lineLimit(1)
+                if let detail {
+                    Text(detail)
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .lineLimit(2)
+                }
+            }
             Spacer(minLength: 8)
             Button(action: onUndo) {
                 Text("Undo")

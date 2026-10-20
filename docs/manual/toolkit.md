@@ -1,29 +1,31 @@
 # The Toolkit
 
 The reference shelf: a tuner, the chord shapes you have saved, the progressions and tabs you have
-written, a glossary of the words, and the help catalogue. Nothing here practises anything or keeps score — it is the stuff you reach for *around*
-playing.
+written, the lessons and files you learned from, a glossary of the words, and the help catalogue.
+Nothing here practises anything or keeps score — it is the stuff you reach for *around* playing.
 
 <!-- faq-entries: 22 -->
 
-Reach it from **Toolkit** on Home. Six sections:
+Reach it from **Toolkit** on Home. Seven sections:
 
 <!-- shot: toolkit/hub | role: screen
-     | alt: The Toolkit hub listing My chords, Tuner, Glossary and Help & FAQs, each with its purpose and a count or state
-     | state: Toolkit open, some saved chords present -->
+     | alt: The Toolkit hub listing My chords, My progressions, My tabs, References, Tuner, Glossary and Help & FAQs, each with its purpose and a count or state
+     | state: Toolkit open, some saved chords present, one reference not filed -->
 
 | Section | What it is |
 |---|---|
 | **My chords** | Your saved voicings |
 | **My progressions** | Progressions you've written |
 | **My tabs** | Tabs you write on the neck |
+| **References** | Where you learned it |
 | **Tuner** | Tune by ear or mic |
 | **Glossary** | Chord, scale & theory terms |
 | **Help & FAQs** | How Red Moon works |
 
 Each row carries its own count or state on the right — how many terms and answers there are, how many
 chords, progressions or tabs you have saved (**None yet** until you save one) — so the shelf tells you what is on it before
-you open anything. The tuner's says which instrument it is set for, **Guitar** or **Bass**.
+you open anything. The tuner's says which instrument it is set for, **Guitar** or **Bass**. References
+says how many are waiting to be filed, **3 to file**, and how many you keep once none are.
 
 ## Tuner
 
@@ -161,6 +163,13 @@ that keep whole bars together.
 <!-- shot: toolkit/tab-read | role: screen
      | alt: Pentatonic run open to read, drawn as tab under its Intro and Verse headings with bar lines, and Edit at the top
      | state: the written tab, tapped in My tabs -->
+
+## References
+
+Every lesson, tab page, picture and file you have kept, wherever it is filed, with a search at the
+top. The ones you haven't filed yet come first, under **Not filed**, so a video saved before its drill
+existed is the first thing you see. **＋** keeps a new one for later. How it all works is in
+[Where you learned it](references.md#the-references-library).
 
 ## Glossary
 

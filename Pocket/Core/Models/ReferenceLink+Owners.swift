@@ -134,36 +134,126 @@ enum ReferenceLinkStore {
         link.note = note.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// Remove `links` from `owner` and close the gaps in `order`.
-    ///
-    /// **An attachment's bytes go with its row**, on this path. They cannot go on every path: the owner
-    /// inverses cascade (ADR 0167), and a SwiftData cascade deletes rows without running a line of
-    /// ours — delete the exercise and these files are orphaned in place. That is what
-    /// `ReferenceAttachmentStore.orphanedFiles` and *Reclaim space* (ADR 0182) exist for. Deleting here
-    /// as well is not redundant: it is the difference between space coming back when the player
-    /// deletes a picture and space coming back the next time they visit Settings.
-    static func delete(_ links: [ReferenceLink],
-                       from owner: some ReferenceLinkOwner,
-                       in context: ModelContext,
-                       _ fileManager: FileManager = .default) {
-        let doomed = Set(links.map(\.uid))
-        for link in links {
-            if link.isAttachment {
-                // Swallowed like `SongDeletion`'s: a reference the player asked to remove must go
-                // whether or not its file could be reached, and what is left behind is exactly what
-                // the sweep is for.
-                try? ReferenceAttachmentStore.delete(fileName: link.attachmentFileName, fileManager)
-            }
-            context.delete(link)
-        }
-        ReferenceLink.renumber(owner.references.filter { !doomed.contains($0.uid) })
-    }
-
     /// Apply a list-edit move to `owner`'s links and renumber.
     static func move(from offsets: IndexSet, to destination: Int, in owner: some ReferenceLinkOwner) {
         var ordered = owner.referencesInOrder
         ordered.move(fromOffsets: offsets, toOffset: destination)
         for (index, link) in ordered.enumerated() where link.order != index { link.order = index }
+    }
+
+    // MARK: - Remove and delete (ADR 0264 D11, D5)
+
+    /// **Remove**, the owner section's hold and swipe (D11): take `links` off `owner` without losing
+    /// what the player kept. Each one is decided by `ReferenceRemoval`, one at a time, so a second
+    /// row of the same link sees the first one's outcome.
+    ///
+    /// A row this context inserted and never saved goes outright, file and all. That is the routine
+    /// editor, which holds every change until **Save** (0167 phase 1, constraint 3): a link added and
+    /// removed in one edit was never kept, and leaving it in *Not filed* would keep it anyway.
+    static func remove(_ links: [ReferenceLink],
+                       from owner: some ReferenceLinkOwner,
+                       in context: ModelContext,
+                       _ fileManager: FileManager = .default) {
+        let unsaved = Set(context.insertedModelsArray.compactMap { ($0 as? ReferenceLink)?.uid })
+        var others = (try? context.fetch(FetchDescriptor<ReferenceLink>())) ?? []
+        for link in links {
+            others.removeAll { $0.uid == link.uid }
+            if unsaved.contains(link.uid) {
+                deleteRow(link, in: context, fileManager)
+                continue
+            }
+            switch ReferenceRemoval.decide(for: link, among: others) {
+            case .unfile:
+                // Not handed back to `others`: a row kept for later is never somewhere else.
+                unfile(link)
+            case .delete:
+                // Only ever a link: a file always goes to *Not filed*, so there are no bytes here.
+                context.delete(link)
+            }
+        }
+        let gone = Set(links.map(\.uid))
+        ReferenceLink.renumber(owner.references.filter { !gone.contains($0.uid) })
+    }
+
+    /// **Delete**, from the source's screen (D5): every row of `source` goes, with its file. The one
+    /// place a source leaves Red Moon for good, and the screen confirms first, naming every place.
+    static func delete(_ source: ReferenceSource,
+                       in context: ModelContext,
+                       _ fileManager: FileManager = .default) {
+        let owners = source.rows.compactMap(\.owner)
+        let gone = Set(source.rows.map(\.uid))
+        for row in source.rows { deleteRow(row, in: context, fileManager) }
+        for owner in owners {
+            ReferenceLink.renumber(owner.references.filter { !gone.contains($0.uid) })
+        }
+    }
+
+    /// Keep `link` for later (D1): no owner, so it lives in *Not filed*. Its `order` means nothing
+    /// without an owner's list, so it goes back to zero.
+    private static func unfile(_ link: ReferenceLink) {
+        link.exercise = nil
+        link.song = nil
+        link.loop = nil
+        link.routine = nil
+        link.order = 0
+    }
+
+    /// One row and its file. **An attachment's bytes go with its row**: space comes back when the
+    /// player deletes the file, not the next time they visit Settings. The file's delete is swallowed,
+    /// as `SongDeletion`'s is: a row the player asked to delete must go whether or not its file could be
+    /// reached, and what is left behind is what `ReferenceAttachmentStore.orphanedFiles` and *Reclaim
+    /// space* (ADR 0182) are for.
+    private static func deleteRow(_ link: ReferenceLink, in context: ModelContext, _ fileManager: FileManager) {
+        if link.isAttachment {
+            try? ReferenceAttachmentStore.delete(fileName: link.attachmentFileName, fileManager)
+        }
+        context.delete(link)
+    }
+}
+
+/// What **Remove** does to one row on an owner's References section (ADR 0264 D11). Values in, a
+/// verdict out, so the rule is a test rather than a tap.
+enum ReferenceRemoval: Equatable {
+    /// The source is used nowhere else: the row moves to *Not filed*, note and file intact.
+    case unfile
+    /// The same link is filed somewhere else: this use goes, and its note with it. The source stays in
+    /// the library through its other places.
+    case delete
+
+    /// `others` is every other row in the library. A file is its own source (D3), so it always moves to
+    /// *Not filed*: its bytes are never deleted from an owner's section. Only a row that is **filed**
+    /// counts as somewhere else; one kept for later is not a place.
+    static func decide(for link: ReferenceLink, among others: [ReferenceLink]) -> ReferenceRemoval {
+        guard !link.isAttachment, !link.urlString.isEmpty else { return .unfile }
+        let usedElsewhere = others.contains { other in
+            other.uid != link.uid && other.isFiled && !other.isAttachment && other.urlString == link.urlString
+        }
+        return usedElsewhere ? .delete : .unfile
+    }
+}
+
+/// **Keep for later** as a place to add to (ADR 0264 D1): the References library's **＋** hands this to
+/// the same editor and pickers an owner's section uses, and what they add has no owner.
+///
+/// It has no list of its own, so `references` is empty. Two things follow, both intended: a new row's
+/// `order` is 0, which nothing reads without an owner, and the five-file cap
+/// (`ReferenceAttachmentStore.maxPerOwner`) never applies. That cap is per exercise, song, loop or
+/// routine, and the library is none of those.
+final class KeepForLater: ReferenceLinkOwner {
+    var references: [ReferenceLink] { [] }
+    func makeReference() -> ReferenceLink { ReferenceLink() }
+    var referenceOwnerNoun: String { "reference" }
+}
+
+extension ReferenceLink {
+    /// The owner holding this row, as the shape every References section reads. `nil` when kept for
+    /// later.
+    var owner: (any ReferenceLinkOwner)? {
+        if let exercise { return exercise }
+        if let song { return song }
+        if let loop { return loop }
+        if let routine { return routine }
+        return nil
     }
 }
 
@@ -180,6 +270,12 @@ extension Song: ReferenceLinkOwner {
     /// The artist's own pages belong with the song, and saying so costs one clause rather than a
     /// field of their own (Tomisin, 2026-10-03: the cheaper of the two ways to hold them).
     var referenceExamples: String { "A lesson, a tab page, the artist's Instagram or YouTube" }
+
+    /// How many references deleting this song leaves in the library (ADR 0264 D2): its own, and its
+    /// loops', since the loops go with it and theirs stay too.
+    var referencesLeftByDelete: Int {
+        references.count + loops.reduce(0) { $0 + $1.references.count }
+    }
 }
 
 extension Loop: ReferenceLinkOwner {

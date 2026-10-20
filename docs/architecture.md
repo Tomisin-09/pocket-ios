@@ -1454,6 +1454,21 @@ sections; **Slice 1** carries the two zero-dependency tenants and is **audio-fre
   (`EditHistory<TabStep>`), and the tab drawn a section at a time (`PieceDrawing(notes:)`). Silent, and
   never typed or imported. It saves as it goes: the tab is made on its first note or letter of title, and
   one the visit made and emptied is deleted on close.
+- **References** (`ReferencesLibraryView`, ADR 0264) is every `ReferenceLink` in the store, read by one
+  unfiltered `@Query` and grouped by the pure `ReferenceLibrary` (`Core/Models/ReferenceLibrary.swift`):
+  rows sharing a normalised `urlString` are **one source** (D3), and a file, or a row with no address, is
+  always its own. Sources split into *Not filed* (no row has an owner) and *Everything*, newest first by
+  their newest row; search, the Toolkit row's value, the toast's *stay in References* line and the
+  delete dialog's words are functions there too. **＋** reuses `.referenceLinkEditing` and
+  `.referenceAttachments` with a `KeepForLater` owner, whose empty `references` makes a new row's
+  `order` 0 and lifts the per-owner file cap. `ReferenceSourceView` is opened by a **row's uid**, not the
+  link, so an edit that changes the address doesn't lose the screen; its Edit writes the name and link
+  to every row of the source and the note to one. Writes go through `ReferenceLinkStore`: `remove`
+  (D11, an owner section's hold and swipe: `ReferenceRemoval` decides *unfile* or *delete this use*, and
+  a row the context never saved goes outright, which is the routine editor's Cancel/Save contract) and
+  `delete(_:in:)` (D5, every row of a source and its files). The per-owner `delete(_:from:in:)` is gone.
+  D6's line is pure in `ReferenceAttachRules` over `PlanStanding` (never bought, lapsed, on the plan),
+  waiting for slice 3's picker and slice 4's share extension.
 
 The rows come from `ToolkitSection`, pushed through `ToolkitDestination`, which sets the indigo tint
 itself so a tool opened from **the Home tile beside Toolkit** (ADR 0235 D6) looks as it does from here.

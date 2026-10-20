@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 /// **Where you learned it** (ADR 0167) — one `Section` shared by every owner surface, so the four
-/// places a player can attach a source cannot drift apart in wording, ordering or delete
+/// places a player can attach a source cannot drift apart in wording, ordering or remove
 /// behaviour. Drop it into a `Form`/`List` body:
 ///
 /// ```swift
@@ -89,17 +89,18 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
                     //
                     // A `.contextMenu` rather than a hand-rolled long press: it carries its own
                     // haptic and lift preview, and it does not fight the row's tap the way an
-                    // `onLongPressGesture` on a `Button` does. Delete is `role: .destructive` here
-                    // because this section deletes immediately — there is no deferred-delete seam
-                    // on these hosts, so nothing can disappear on a promise it doesn't keep.
+                    // `onLongPressGesture` on a `Button` does.
+                    //
+                    // **Remove, not Delete** (ADR 0264 D11): it takes the reference off this place
+                    // and keeps the source in References. Only the library deletes for good.
                     ReferenceLinkRow(link: link, accent: accent) { activate(link) }
                         .contextMenu {
                             Button { editing = .editing(link) } label: {
                                 Label(link.isAttachment ? "Edit details" : "Edit link",
                                       systemImage: "pencil")
                             }
-                            Button(role: .destructive) { delete(link) } label: {
-                                Label("Delete", systemImage: "trash")
+                            Button(role: .destructive) { remove(link) } label: {
+                                Label("Remove", systemImage: "minus.circle")
                             }
                         }
                         .swipeActions(edge: .leading, allowsFullSwipe: false) {
@@ -108,8 +109,18 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
                             }
                             .tint(accent)
                         }
+                        // The trailing swipe says Remove. `onDelete` below would say Delete. Red set
+                        // by hand, as `pocketRowActions` does: the host's accent tint otherwise wins
+                        // over the role and draws it blue beside a red Remove in the hold menu.
+                        .swipeActions(edge: .trailing) {
+                            Button(role: .destructive) { remove(link) } label: {
+                                Label("Remove", systemImage: "minus.circle")
+                            }
+                            .tint(PocketColor.danger)
+                        }
                 }
-                .onDelete(perform: delete)
+                // Kept for the routine editor, the one host in edit mode: its minus comes from here.
+                .onDelete(perform: remove)
                 // Only reachable where the host puts the list into edit mode, which today is the
                 // routine editor alone. Kept on every surface rather than conditionalised: it costs
                 // nothing where edit mode never arrives, and omitting it would make reordering
@@ -168,16 +179,17 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
         ReferenceRowAction.activate(link, presenting: $presenting, openURL: openURL)
     }
 
-    /// Delete one link — the menu's route in. The `IndexSet` overload below is the swipe's, and
-    /// both land on the same store call so the two cannot drift.
-    private func delete(_ link: ReferenceLink) {
-        ReferenceLinkStore.delete([link], from: owner, in: writeContext)
+    /// Remove one link (ADR 0264 D11): the menu's and the swipe's route in. The `IndexSet` overload
+    /// below is edit mode's, and both land on the same store call so the two cannot drift. A source
+    /// used nowhere else moves to *Not filed*, so nothing is lost and nothing needs confirming.
+    private func remove(_ link: ReferenceLink) {
+        ReferenceLinkStore.remove([link], from: owner, in: writeContext)
         persist()
     }
 
-    private func delete(at offsets: IndexSet) {
+    private func remove(at offsets: IndexSet) {
         let ordered = owner.referencesInOrder
-        ReferenceLinkStore.delete(offsets.map { ordered[$0] }, from: owner, in: writeContext)
+        ReferenceLinkStore.remove(offsets.map { ordered[$0] }, from: owner, in: writeContext)
         persist()
     }
 

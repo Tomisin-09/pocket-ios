@@ -135,7 +135,7 @@ struct WaveformPracticeView: View {
         .background(SwipeBackGuard(disabled: model.isScrubbing))
         .overlay(alignment: .bottom) {
             if let toast = model.undoToast {
-                UndoToastView(message: toast.message, onUndo: model.performUndo)
+                UndoToastView(message: toast.message, detail: toast.detail, onUndo: model.performUndo)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 8)
                     .transition(.move(edge: .bottom).combined(with: .opacity))

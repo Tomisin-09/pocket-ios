@@ -43,6 +43,17 @@ final class ToolkitUITests: UITestCase {
                       "Help & FAQs section missing in Toolkit")
         // My tabs (ADR 0235) — tabs written on the neck, after My progressions. `MyTabsUITests` drives it.
         XCTAssertTrue(firstElement(in: app, labelStartingWith: "My tabs,").exists, "My tabs section missing in Toolkit")
+        // References (ADR 0264 D4) — after My tabs. Opened, because a row the unit tests pin can still be
+        // pushed to the wrong screen, and only this sees `ToolkitDestination`. Its label carries a count
+        // that depends on what the simulator's store holds, so it is matched by its title alone.
+        let referencesRow = firstElement(in: app, labelStartingWith: "References,")
+        XCTAssertTrue(referencesRow.exists, "References section missing in Toolkit")
+        referencesRow.tap()
+        XCTAssertTrue(app.navigationBars["References"].waitForExistence(timeout: Self.uiTimeout),
+                      "the References library did not appear")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.navigationBars["Toolkit"].waitForExistence(timeout: Self.uiTimeout),
+                      "did not return to the Toolkit hub from References")
         // My progressions (ADR 0218) — the management home for written progressions, beside My chords.
         let myProgressionsRow = firstElement(in: app, labelStartingWith: "My progressions")
         XCTAssertTrue(myProgressionsRow.exists, "My progressions section missing in Toolkit")

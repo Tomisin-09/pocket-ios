@@ -17,11 +17,11 @@ struct ToolkitRowInfo: Equatable, Sendable {
 ///
 /// The raw values are what the tile's choice is stored as, so they never change.
 enum ToolkitSection: String, CaseIterable, Identifiable, Sendable {
-    case myChords, myProgressions, myTabs, tuner, glossary, help
+    case myChords, myProgressions, myTabs, references, tuner, glossary, help
 
     var id: String { rawValue }
 
-    /// The hub's order: the three things you make together, then the tools. `allCases` is this order.
+    /// The hub's order: the things you make and keep together, then the tools. `allCases` is this order.
     var info: ToolkitRowInfo {
         switch self {
         case .myChords:
@@ -34,6 +34,11 @@ enum ToolkitSection: String, CaseIterable, Identifiable, Sendable {
             ToolkitRowInfo(icon: "pencil.and.list.clipboard", title: "My tabs",
                            subtitle: "Tabs you write on the neck",
                            spoken: "My tabs, tabs you write on the neck")
+        case .references:
+            // ADR 0264 D4: a thing you keep, so after My tabs. A bookmark, not the books the mockup drew:
+            // the Toolkit's own Home tile is `books.vertical.fill`, and this row can be the tile beside it.
+            ToolkitRowInfo(icon: "bookmark", title: "References", subtitle: "Where you learned it",
+                           spoken: "References, where you learned it")
         case .tuner:
             ToolkitRowInfo(icon: "tuningfork", title: "Tuner", subtitle: "Tune by ear or mic",
                            spoken: "Tuner, tune by ear or mic")

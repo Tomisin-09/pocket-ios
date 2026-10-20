@@ -149,7 +149,8 @@ struct ReferenceLinkEditor: View {
                     // **Skip, not Cancel, while naming.** The bytes were copied in when the picker
                     // handed them over, so there is nothing here to cancel — what this button
                     // declines is the describing, and both fields below already say it is optional.
-                    // A file picked by mistake goes the way every other row goes: hold, Delete.
+                    // A file picked by mistake goes the way every other row goes: hold, Remove, and
+                    // then from References if it should go for good (ADR 0264 D11).
                     Button(isNaming ? "Skip" : "Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
