@@ -63,6 +63,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   to open it, read what you took from it, see every place it's used with that place's note, or delete
   it for good, which asks first and names every place it comes off. The Toolkit row says how many are
   waiting to be filed. Free, like the rest of the Toolkit.
+  A reference waiting to be filed offers **Start an exercise from this**: New exercise opens, and the
+  drill it makes already has the link (or the picture, or the PDF) attached, with your note. **Attach
+  to…** files it on an exercise, routine, song or loop instead, picked from the places you practised
+  most recently, from everything, or by search. Once it's filed, **Also attach to…** puts the same link
+  in one more place with a fresh note, and a file you kept somewhere can **Move to…** another. Without
+  the plan you can file onto songs and loops; if you've had the plan before, exercises and routines
+  are there too, with a lock, and open again with the plan.
 - **Name the notes can name a muted note** (ADR 0262). A dead note, struck with no pitch, like the
   chuck in a strummed part or the scratch between funk stabs, used to stay a `?` and count as left
   to name. On Fret & string, each string now has a ✕ beside its letter. Tap it and the note is

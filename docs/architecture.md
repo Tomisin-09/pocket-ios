@@ -1467,8 +1467,21 @@ sections; **Slice 1** carries the two zero-dependency tenants and is **audio-fre
   (D11, an owner section's hold and swipe: `ReferenceRemoval` decides *unfile* or *delete this use*, and
   a row the context never saved goes outright, which is the routine editor's Cancel/Save contract) and
   `delete(_:in:)` (D5, every row of a source and its files). The per-owner `delete(_:from:in:)` is gone.
-  D6's line is pure in `ReferenceAttachRules` over `PlanStanding` (never bought, lapsed, on the plan),
-  waiting for slice 3's picker and slice 4's share extension.
+  D6's line is pure in `ReferenceAttachRules` over `PlanStanding` (never bought, lapsed, on the plan).
+  **Filing (slice 3, D5).** A source's screen offers *Attach to…* and *Start an exercise from this*.
+  What either does to the rows is the pure `ReferenceFiling` (`Core/Models/ReferenceLink+Filing.swift`):
+  a row kept for later **moves** (with its note), a filed file moves (a file is in one place, so its
+  button reads *Move to…*), and a filed link is **copied** with no note, so the source is used in one
+  more place. `ReferenceLinkStore.attach` performs it through the owner protocol's `hold(_:)` and the
+  same read-the-order-first rule as `add`. The picker is `ReferenceAttachSheet`, a store-side shell
+  (`@Query` of the four owners, saved routines only) over **`ReferencePlaceList`**, which takes values
+  only: `ReferenceDestination` (a kind-prefixed key, a song by its `sourceID`, a name, a parent, and a
+  loop dated by its song) and `ReferenceDestinationPicker`'s rules (D6's hidden and locked kinds, *already
+  here* and a file's full places, *Recent*, *Show everything* by kind, search). It is the shape slice 4's
+  extension will be handed from its snapshot. *Start an exercise from this* is `newExerciseFlow(…,
+  startingFrom:)`: the row's uid rides on `NewExercisePlan.startedFromReference`, and `finalise(in:)`,
+  the one insert path (ADR 0128), attaches the source after the insert, read fresh from the store. The
+  sheet's own plan gate is the free player's wall.
 
 The rows come from `ToolkitSection`, pushed through `ToolkitDestination`, which sets the indigo tint
 itself so a tool opened from **the Home tile beside Toolkit** (ADR 0235 D6) looks as it does from here.

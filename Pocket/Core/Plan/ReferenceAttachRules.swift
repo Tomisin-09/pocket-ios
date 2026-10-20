@@ -61,8 +61,8 @@ enum ReferenceAttachRules {
         }
     }
 
-    /// What a locked row says under its name.
-    static let lockedCaption = "Opens with the plan"
+    /// What a locked row says under its name, after its kind: *Exercise · opens with the plan*, as drawn.
+    static let lockedCaption = "opens with the plan"
 
     /// The picker's footer. `nil` on the plan, where there is nothing to explain.
     static func footer(for standing: PlanStanding) -> String? {

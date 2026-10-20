@@ -145,7 +145,7 @@ that is per exercise, song, loop or routine.
 Tap a row and it opens on its own:
 
 <!-- shot: references/source | role: screen
-     | alt: One reference's screen, with its name and site at the top, Open link, What you took from it with a note, Where it's used reading Not filed yet, and Delete
+     | alt: One reference's screen, with its name and site at the top, Open link, What you took from it with a note, Where it's used reading Not filed yet, a wide Start an exercise from this button with its caption, Attach to, and Delete
      | state: seeded library, Toolkit ▸ References, a link not filed tapped -->
 
 - **Open link** — or **Open PDF**, **Open picture**, and so on for a file — as tapping it anywhere
@@ -155,8 +155,28 @@ Tap a row and it opens on its own:
 - **Where it's used** — each place, what it is, and the note that place keeps. A use that is kept for
   later shows as **Kept for later**, with its own note. A source nobody has filed yet says **Not
   filed yet**.
+- **Start an exercise from this** — the big button while a source isn't filed. New exercise opens as
+  it does in Practice, and the drill it makes already has this link or file attached, with your note.
+  Once the source is filed somewhere, the button reads **Start another exercise from this**, and the
+  new drill gets the link with a note of its own.
+- **Attach to…** — files it on an exercise, routine, song or loop, with its note. Once it's filed, it
+  reads **Also attach to…**: the same link goes in one more place, with a fresh note, and stays where
+  it was. A file is in one place at a time, so a filed one offers **Move to…** instead.
 - **Delete** — for good. It always asks first and names every place it will come off; once it is in
   two places the button itself says **Delete from both places…**. A file's copy goes with it.
+
+### Choosing where it goes
+
+**Attach to…** opens a list of places. **Recent** comes first: whatever you practised most lately.
+**Show everything** lists every exercise, routine, song and loop, by kind, and the search at the top
+looks through their names, and through the song a loop is in or a song's artist. Tap one and the
+reference is there; the list closes. A place it's already on is ticked, and greyed out. So is one
+that already holds five files, when what you're filing is a file.
+
+Without the plan, the list holds songs and loops, and says *Exercises and routines come with the
+plan*. **Start an exercise from this** shows what the plan adds, as New exercise does anywhere else.
+If you've had the plan before, exercises and routines are still offered, with a lock: the reference
+goes on, and the drill opens again with the plan.
 
 **Edit** at the top changes the name and the link everywhere the source is used, since it is one
 source, and the note of one place only. When it's used in more than one place, Edit asks which.

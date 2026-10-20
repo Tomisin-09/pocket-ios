@@ -3,7 +3,9 @@
 - **Status:** Accepted. **Slice 1 built** 2026-10-20 on `pocket-378-keep-references` (D1, D2's
   delete rules, D7), with ADR 0263's free line on the same branch, merged as #370. **Slice 2 built**
   2026-10-20 on `pocket-379-references-library` (D3, D4, D5 without its slice 3 actions, D6's rules as
-  pure logic, D11, D2's toast line). Slices 3 and 4 are not built. See §Build notes. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
+  pure logic, D11, D2's toast line). **Slice 3 built** 2026-10-20 on `pocket-380-references-attach`
+  (D5's *Attach to…* and *Start an exercise from this*, over D6's rules). Slice 4 is not built. See
+  §Build notes. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
   (canvas *Red Moon References*). The two questions it first left open were settled the same day,
   with the recommended answers (D11, D12). It lands **before 1.4**, all four slices including the
   share extension. Tomisin: *"we're in no rush to launch, I'd rather we have it in place before we
@@ -321,6 +323,47 @@ device as well.
   that each hid the other; the line is gone and both guards have a test of their own. Three more
   after the walks: two on item 9's rule, and one on the search, rewritten as typed statements for CI's
   type-checker. All three failed their witness.
+
+## Build notes — Slice 3 (2026-10-20, `pocket-380-references-attach`)
+
+- **Built:** the source screen's *Start an exercise from this* and *Attach to…* (D5), and the owner
+  picker they share with slice 4 (D8's list, D6's rules). The rules are pure: `ReferenceFiling` (move or
+  copy, and the screen's words), `ReferenceDestination` (a place as a value, the shape D9's snapshot
+  will hold) and `ReferenceDestinationPicker` (offered, locked, unavailable, *Recent*, *Show
+  everything*, search). The store gains `attach`, over a `hold(_:)` on the owner protocol. *Start an
+  exercise from this* runs `newExerciseFlow` with the row's uid on `NewExercisePlan`, and
+  `finalise(in:)`, 0128's one insert path, files the source after the insert.
+- **Decided while building, from what D5, D6 and D8 leave open.** Each is a call to check.
+  1. **A tap attaches and closes.** D8's picker holds a choice until *Save*, because what the extension
+     saves doesn't exist yet. Here it does, so the pick is the save, as a move-to-folder picker is.
+  2. **No *Keep for later* in the app's picker.** The source is either kept for later already, or
+     filed, where a second row with no place and no note would keep nothing.
+  3. **Moved or copied** (D5's *"moves… is copied"*, made exact). A row kept for later moves, with its
+     note. A filed link is copied as a new row with **no note**: each place keeps its own (D3), and
+     the note copied from was written about somewhere else. A filed source that also has a row kept for
+     later moves that row instead of copying a third. Of two rows kept for later (D2's two deleted
+     drills), the newest moves.
+  4. **A filed file reads *Move to…*, not *Also attach to…*, and offers no new drill.** A file is its
+     own source and never groups (D3), so it can't be in two places; copying its bytes would make a
+     second source that looks like the first. *Start another exercise from this* would take it off the
+     place it's on, which a button named *Start* shouldn't do. The way there is *Move to…*, or Remove
+     then *Start an exercise from this*.
+  5. **A place it's already on is shown ticked and greyed, not left out**, so a search for it doesn't
+     come back empty. A place with five files is greyed the same way for a file (0167 phase 2's cap).
+  6. **Recent is the five places practised most recently.** A loop keeps no date of its own and takes
+     its song's, as the routine editor's *Recently Added* does. A place never practised isn't recent,
+     so a new library opens on everything, by kind: exercises, routines, songs, loops, as the Practice
+     hub leads with drills. A song and its loops practised the same day list the song first.
+  7. **Temporary sessions (ADR 0243) are not offered**: the next Start replaces them.
+  8. **Before StoreKit has answered, the picker reads as on the plan**, as no lock draws in that
+     moment (`showsPlanLocks`): a paying player's drills must not vanish from the list.
+  9. **The start button wears the plan's lock while the plan is off**, as a gated door does (0256
+     D3), so a free player knows before the tap that New exercise will show the wall.
+  10. **The second line reads *Loop · Slow Bend*, not the mockup's *Loop in Slow Bend***, which is
+      *Where it's used*'s grammar on the next screen. A song adds its artist, *Song · Jack Trader*.
+- **The picker's list takes values only** (`ReferencePlaceList`), with a store-side shell
+  (`ReferenceAttachSheet`) that turns models into destinations and a pick back into a write, so slice
+  4 can hand the same list its snapshot.
 
 ## Alternatives rejected
 

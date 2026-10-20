@@ -13,6 +13,9 @@ protocol ReferenceLinkOwner: AnyObject {
     var references: [ReferenceLink] { get }
     /// A fresh, unsaved link already pointed at this owner. The caller fills in the rest.
     func makeReference() -> ReferenceLink
+    /// Hang an existing row on this owner: the move half of attaching (ADR 0264 D5). Only
+    /// `ReferenceLinkStore.attach` calls it, after unfiling the row, so it has at most one owner.
+    func hold(_ link: ReferenceLink)
     /// What the References section calls this owner in its footer, in the player's words.
     var referenceOwnerNoun: String { get }
     /// The kinds of link the footer names first, as examples. A requirement, so a song's own wins.
@@ -189,8 +192,8 @@ enum ReferenceLinkStore {
     }
 
     /// Keep `link` for later (D1): no owner, so it lives in *Not filed*. Its `order` means nothing
-    /// without an owner's list, so it goes back to zero.
-    private static func unfile(_ link: ReferenceLink) {
+    /// without an owner's list, so it goes back to zero. Also the first half of a move (`attach`).
+    static func unfile(_ link: ReferenceLink) {
         link.exercise = nil
         link.song = nil
         link.loop = nil
@@ -242,6 +245,8 @@ enum ReferenceRemoval: Equatable {
 final class KeepForLater: ReferenceLinkOwner {
     var references: [ReferenceLink] { [] }
     func makeReference() -> ReferenceLink { ReferenceLink() }
+    /// Nothing to hang it on: a row kept for later is one with no owner.
+    func hold(_ link: ReferenceLink) {}
     var referenceOwnerNoun: String { "reference" }
 }
 
@@ -261,11 +266,13 @@ extension ReferenceLink {
 
 extension Exercise: ReferenceLinkOwner {
     func makeReference() -> ReferenceLink { ReferenceLink(exercise: self) }
+    func hold(_ link: ReferenceLink) { link.exercise = self }
     var referenceOwnerNoun: String { "exercise" }
 }
 
 extension Song: ReferenceLinkOwner {
     func makeReference() -> ReferenceLink { ReferenceLink(song: self) }
+    func hold(_ link: ReferenceLink) { link.song = self }
     var referenceOwnerNoun: String { "song" }
     /// The artist's own pages belong with the song, and saying so costs one clause rather than a
     /// field of their own (Tomisin, 2026-10-03: the cheaper of the two ways to hold them).
@@ -280,10 +287,12 @@ extension Song: ReferenceLinkOwner {
 
 extension Loop: ReferenceLinkOwner {
     func makeReference() -> ReferenceLink { ReferenceLink(loop: self) }
+    func hold(_ link: ReferenceLink) { link.loop = self }
     var referenceOwnerNoun: String { "loop" }
 }
 
 extension Routine: ReferenceLinkOwner {
     func makeReference() -> ReferenceLink { ReferenceLink(routine: self) }
+    func hold(_ link: ReferenceLink) { link.routine = self }
     var referenceOwnerNoun: String { "routine" }
 }
