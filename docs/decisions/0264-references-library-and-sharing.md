@@ -267,7 +267,8 @@ device as well.
   installed over it and opened it. It was the same store: its oldest history transaction predates
   the launch. The app ran for 30 seconds with no crash. Deleting the drill, the song (and with it
   the loop) and the routine through this branch's model left all four rows on disk with every
-  owner key null. **D2 names a device check, and that has not been done.**
+  owner key null. D2 named a device check. Tomisin took the simulator check in its place
+  (2026-10-20: *"the simulator is fine"*).
 - **A side effect, as D2 intends:** a temporary session (ADR 0243) replaced by the next Start now
   leaves any references on it not filed, where it used to delete them.
 
