@@ -27,6 +27,11 @@
 - **Amended by:** ADR 0252 (One note moves inside a chord, 2026-10-04) — **D3**: the *Where did you play
   it?* title goes. The row is the instrument and tuning on the left and ↶ ↷ on the right. The rest of D3
   stands, the instrument sheet included.
+- **Amended by:** ADR 0262 (Muted notes, 2026-10-20) — dead notes can be named. **D3**: a ✕ per string,
+  pinned beside the string letters. **D4**: with Chords on a ✕ takes a string as a note does. **D6**: By
+  ear gains *Muted*. **D7**: a tap of only ✕s reads as *Muted* there. **D9**: a `muted` kind and an
+  optional `muted` key; an older build reads the kind as unnamed and drops the key. **D10**: palm muting
+  and rakes stay out. The rest stands.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the
   synth withdrawn here, and D4.3, the route back) · 0093 (the chord namer that names a shape) · 0095
   (My chords, whose one-note-per-string rule the Chords switch follows) · 0065 (exercise templates, whose scales editor
