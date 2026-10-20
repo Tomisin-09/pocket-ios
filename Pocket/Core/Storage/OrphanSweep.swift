@@ -33,11 +33,11 @@ enum OrphanSweep {
     ///     its row on purpose (ADR 0151), so a set built from any single owner would classify real
     ///     recordings as rubbish and delete them.
     ///   - referencedAttachmentFiles: every surviving `ReferenceLink.attachmentFileName`
-    ///     (ADR 0167 phase 2).
-    ///     **This directory is the one where the sweep is the primary collector, not the backstop.**
-    ///     A reference link's owner inverses *cascade*, and a SwiftData cascade deletes rows without
-    ///     running any code of ours — so deleting an exercise silently strands every file attached
-    ///     to it. Nothing else ever reclaims those.
+    ///     (ADR 0167 phase 2), filed or not.
+    ///     Until ADR 0264 this directory was the one where the sweep was the primary collector: the
+    ///     owner inverses cascaded, and a cascade deletes rows without running any code of ours, so
+    ///     deleting an exercise stranded its files. They nullify now (0264 D2), so the row and its
+    ///     file both stay, and the sweep is a backstop here as it is everywhere else.
     ///
     /// Sizes are read **before** the delete, because afterwards there is nothing left to measure. A
     /// file that fails to delete is left out of the total rather than counted optimistically.

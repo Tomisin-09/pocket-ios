@@ -46,16 +46,4 @@ enum ToolkitSection: String, CaseIterable, Identifiable, Sendable {
                            spoken: "Help and FAQs, how Red Moon works")
         }
     }
-
-    /// The plan's door, or `nil` for a tool that is free (ADR 0256 D2): the three things you make are
-    /// the plan's, and the three tools that remember nothing are free. The Toolkit's row and the Home
-    /// tile both read this, so they can't disagree about which row is locked.
-    var planDoor: PlanDoor? {
-        switch self {
-        case .myChords: .myChords
-        case .myProgressions: .myProgressions
-        case .myTabs: .myTabs
-        case .tuner, .glossary, .help: nil
-        }
-    }
 }

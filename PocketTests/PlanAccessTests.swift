@@ -106,25 +106,36 @@ final class PlanAccessTests: XCTestCase {
         XCTAssertEqual(PlanAccess.payOnce.summary, "Pay once")
     }
 
-    // MARK: - D2: the free line, where it is drawn in one list
+    // MARK: - D2: the free line (as ADR 0263 moved it)
 
-    /// The Toolkit is the one list holding both sides of D2. The three things you make are the
-    /// plan's; the three tools that remember nothing are free.
-    func testToolkitSplitsAlongTheFreeLine() {
-        XCTAssertEqual(ToolkitSection.myChords.planDoor, .myChords)
-        XCTAssertEqual(ToolkitSection.myProgressions.planDoor, .myProgressions)
-        XCTAssertEqual(ToolkitSection.myTabs.planDoor, .myTabs)
-        XCTAssertNil(ToolkitSection.tuner.planDoor)
-        XCTAssertNil(ToolkitSection.glossary.planDoor)
-        XCTAssertNil(ToolkitSection.help.planDoor)
+    /// The gated side, exactly: practising and nothing else (0263 D2). A door added here, or taken
+    /// away, is a change to the free line, and 0256 D8 makes taking one away permanent.
+    func testOnlyPractisingIsBehindThePlan() {
+        XCTAssertEqual(PlanDoor.allCases, [.practice, .todaysSession, .loopTrainer, .earTraining,
+                                           .watchOnNeck, .improvise, .drill, .newDrill, .routine])
     }
 
-    /// A Toolkit door's wall is titled with the row the player tapped.
-    func testToolkitDoorsAreTitledAsTheirRows() {
+    /// The Journal and the Practice log are free (0263 D1), so no wall is titled with either.
+    func testNoDoorIsTheJournalOrThePracticeLog() {
+        let titles = PlanDoor.allCases.map(\.title)
+        XCTAssertFalse(titles.contains("Journal"))
+        XCTAssertFalse(titles.contains("Practice log"))
+    }
+
+    /// The whole Toolkit is free (0263 D1), so no door carries a Toolkit row's name.
+    func testNoToolkitRowIsADoor() {
+        let titles = Set(PlanDoor.allCases.map(\.title))
         for section in ToolkitSection.allCases {
-            guard let door = section.planDoor else { continue }
-            XCTAssertEqual(door.title, section.info.title)
+            XCTAssertFalse(titles.contains(section.info.title), section.info.title)
         }
+    }
+
+    /// The wall's sentence names the free side as it now stands, and leaves the Journal off the plan's.
+    func testTheWallSaysTheJournalAndToolkitAreFree() {
+        let first = PlanWallCopy.explanation(returning: false)
+        XCTAssertTrue(first.contains("Journal and Toolkit are free for good"), first)
+        XCTAssertFalse(PlanWallCopy.explanation(returning: true).contains("Journal"),
+                       "A returning player was told their Journal waits behind the plan")
     }
 
     func testEveryDoorHasATitle() {

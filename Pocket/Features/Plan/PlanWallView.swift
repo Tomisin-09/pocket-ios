@@ -54,7 +54,7 @@ struct PlanWallView: View {
 }
 
 #Preview("Wall — free week already used") {
-    NavigationStack { PlanWallView(door: .journal) {} }
+    NavigationStack { PlanWallView(door: .routine) {} }
         .environment(PlanStore(preview: .none, prices: PlanStore.OfferPrices(monthly: "£1", payOnce: "£15")))
         .preferredColorScheme(.dark)
 }

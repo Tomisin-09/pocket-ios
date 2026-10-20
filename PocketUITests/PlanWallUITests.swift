@@ -1,6 +1,7 @@
 import XCTest
 
-/// **The free path** (ADR 0256 D2, D3, D9), the one UI test that runs without Red Moon's plan.
+/// **The free path** (ADR 0256 D2, D3, D9, as amended by ADR 0263), the one UI test that runs without
+/// Red Moon's plan.
 ///
 /// Every other test launches on Pay once, because the suite tests features, not the gate. That was
 /// 0237's complaint about the old gates: `-uiTesting` forced them open, so the locked branch a
@@ -33,20 +34,26 @@ final class PlanWallUITests: UITestCase {
         XCTAssertFalse(wall.exists, "The Song library showed the wall")
         app.navigationBars.buttons.element(boundBy: 0).tap()
 
-        // Gated: the Journal.
+        // Free since ADR 0263: the Journal opens to the Journal, with no wall and no lock.
         let journal = app.buttons["Journal, your notes and practice takes"]
-        XCTAssertTrue(tap(journal, until: wall, in: app), "The Journal opened without the plan")
+        XCTAssertTrue(journal.waitForExistence(timeout: Self.uiTimeout))
+        XCTAssertNotEqual(journal.value as? String, "Needs the plan", "The Journal drew a lock")
+        XCTAssertTrue(tap(journal, until: app.navigationBars["Journal"], in: app), "The Journal didn't open")
+        XCTAssertFalse(wall.exists, "The Journal showed the wall")
         app.navigationBars.buttons.element(boundBy: 0).tap()
 
-        // The Toolkit holds both sides of the line in one list: the Tuner is free and My chords is not.
+        // The whole Toolkit is free (0263 D1): no row draws a lock, and My chords opens.
         let toolkit = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Toolkit,'")).firstMatch
         XCTAssertTrue(tap(toolkit, until: app.navigationBars["Toolkit"], in: app), "The Toolkit didn't open")
         let myChords = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'My chords,'")).firstMatch
         XCTAssertTrue(myChords.waitForExistence(timeout: Self.uiTimeout))
-        XCTAssertEqual(myChords.value as? String, "Needs the plan", "My chords drew no lock without the plan")
+        XCTAssertNotEqual(myChords.value as? String, "Needs the plan", "My chords drew a lock")
         // Not opened: the Tuner asks for the microphone, and the prompt would outlive this test.
         let tuner = app.buttons["Tuner, tune by ear or mic"]
         XCTAssertNotEqual(tuner.value as? String, "Needs the plan", "The Tuner drew a lock")
+        XCTAssertTrue(tap(myChords, until: app.navigationBars["My chords"], in: app), "My chords didn't open")
+        XCTAssertFalse(wall.exists, "My chords showed the wall")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
         let glossary = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Glossary,'")).firstMatch
         XCTAssertTrue(tap(glossary, until: app.navigationBars["Glossary"], in: app), "The Glossary didn't open")
         XCTAssertFalse(wall.exists, "The Glossary showed the wall")

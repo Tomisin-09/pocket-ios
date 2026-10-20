@@ -26,6 +26,9 @@ struct RestoreExistingKeys: Sendable, Equatable {
     /// identified case-insensitively everywhere else, so a restore must not mint a second marker
     /// that draws as the same folder.
     var folderPaths: Set<String> = []
+    /// Every reference uid the library already has, filed or not, so a reference kept for later lands
+    /// once however many times the same archive is restored (ADR 0264 D7).
+    var referenceUIDs: Set<UUID> = []
 }
 
 /// What a restore will do, worked out before it does any of it (ADR 0188 D9).

@@ -171,6 +171,18 @@ extension ArchiveRestoreWriter {
         }
     }
 
+    /// References kept for later (ADR 0264 D7), landing with no owner, as they left. A uid the library
+    /// already has is skipped, filed or not, which is D6's rule that nothing is overwritten: a
+    /// reference filed since the export stays where the player filed it. A uid repeated inside the file
+    /// lands once.
+    static func addUnfiledReferences(_ records: [ReferenceLinkRecord],
+                                     existing: RestoreExistingKeys,
+                                     into landing: inout RestoredLibrary) {
+        var seen = existing.referenceUIDs
+        let fresh = records.filter { seen.insert($0.uid).inserted }
+        landing.unfiledReferences.append(contentsOf: references(fresh))
+    }
+
     static func addExercises(_ records: [ExerciseRecord],
                              existing: RestoreExistingKeys,
                              into landing: inout RestoredLibrary,

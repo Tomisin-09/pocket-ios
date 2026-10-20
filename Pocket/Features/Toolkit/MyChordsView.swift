@@ -27,13 +27,8 @@ struct MyChordsView: View {
     /// Two columns of diagrams read as a library without crowding the four-fret boxes.
     private let columns = [GridItem(.flexible(), spacing: 14), GridItem(.flexible(), spacing: 14)]
 
-    /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
-    /// until the plan is on.
+    /// Free for good (ADR 0263 D1), so the screen carries no `PlanGated`.
     var body: some View {
-        PlanGated(.myChords) { gatedScreen }
-    }
-
-    @ViewBuilder private var gatedScreen: some View {
         Group {
             if savedChords.isEmpty { emptyState } else { grid }
         }
