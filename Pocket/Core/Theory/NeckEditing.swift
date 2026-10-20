@@ -55,10 +55,29 @@ enum NeckEditing {
         }
         let active = cursor.active
         guard labels.indices.contains(active) else { return Edit(labels: labels, cursor: cursor) }
-        var labels = labels
-        var cursor = cursor
         let outcome = NeckPlacement.tap(string: string, fret: fret, on: labels[active], ringed: cursor.ringed,
                                         chords: cursor.chordsOn)
+        return placed(outcome, at: active, labels: labels, cursor: cursor)
+    }
+
+    /// A tap on a string's ✕ (ADR 0262 D2), by `NeckPlacement.mute`: with Chords off the answer becomes that
+    /// string muted and the editor **moves on**, as placing a note does; with Chords on it adds, swaps or
+    /// takes out a ✕ in the chord. While *Into it* waits for a start it does nothing: a start is a fret.
+    static func mute(string: Int, labels: [PieceLabel?], cursor: NeckCursor) -> Edit {
+        let active = cursor.active
+        guard cursor.awaitingStart == nil, labels.indices.contains(active) else {
+            return Edit(labels: labels, cursor: cursor)
+        }
+        let outcome = NeckPlacement.mute(string: string, on: labels[active], ringed: cursor.ringed,
+                                         chords: cursor.chordsOn)
+        return placed(outcome, at: active, labels: labels, cursor: cursor)
+    }
+
+    /// Write what a placement gave back, and move on as placing does.
+    private static func placed(_ outcome: NeckPlacement.Outcome, at active: Int, labels: [PieceLabel?],
+                               cursor: NeckCursor) -> Edit {
+        var labels = labels
+        var cursor = cursor
         labels[active] = outcome.label
         cursor.ringed = outcome.ringed
         guard outcome.label.isOnTheNeck else { return Edit(labels: labels, cursor: cursor) }
@@ -80,12 +99,12 @@ enum NeckEditing {
     static func mark(_ change: (inout FrettedNote) -> Void, labels: [PieceLabel?],
                      cursor: NeckCursor) -> [PieceLabel?] {
         let marked = cursor.marked(count: labels.count)
-        guard labels.indices.contains(marked), case .fretted(var notes, let into) = labels[marked],
+        guard labels.indices.contains(marked), case .fretted(var notes, let muted, let into) = labels[marked],
               !notes.isEmpty else { return labels }
         let index = notes.firstIndex { $0.string == cursor.ringed } ?? notes.count - 1
         change(&notes[index])
         var labels = labels
-        labels[marked] = .fretted(notes, into: into)
+        labels[marked] = .fretted(notes, muted: muted, into: into)
         return labels
     }
 
@@ -117,10 +136,12 @@ enum NeckEditing {
 
     /// Join from the tap before, or pick it: either way no lead-in. Never both (ADR 0230 D6).
     static func setInto(_ join: Join?, at index: Int, of labels: [PieceLabel?]) -> [PieceLabel?] {
-        guard labels.indices.contains(index), case .fretted(var notes, _) = labels[index] else { return labels }
+        guard labels.indices.contains(index), case .fretted(var notes, let muted, _) = labels[index] else {
+            return labels
+        }
         for position in notes.indices { notes[position].leadIn = nil }
         var labels = labels
-        labels[index] = .fretted(notes, into: join)
+        labels[index] = .fretted(notes, muted: muted, into: notes.isEmpty ? nil : join)
         return labels
     }
 
@@ -133,13 +154,14 @@ enum NeckEditing {
                           cursor: NeckCursor) -> Edit {
         let marked = cursor.marked(count: labels.count)
         var cursor = cursor
-        guard labels.indices.contains(marked), case .fretted(let notes, _) = labels[marked], !notes.isEmpty else {
+        guard labels.indices.contains(marked), case .fretted(let notes, let muted, _) = labels[marked],
+              !notes.isEmpty else {
             cursor.awaitingStart = nil
             return Edit(labels: labels, cursor: cursor)
         }
         if let started = NeckJoin.started(string: string, fret: fret, of: notes, for: request) {
             var labels = labels
-            labels[marked] = .fretted(started, into: nil)
+            labels[marked] = .fretted(started, muted: muted, into: nil)
             cursor.awaitingStart = nil
             return Edit(labels: labels, cursor: cursor)
         }
@@ -155,22 +177,23 @@ enum NeckEditing {
         let marked = cursor.marked(count: labels.count)
         var cursor = cursor
         cursor.awaitingStart = nil
-        guard labels.indices.contains(marked), case .fretted(let notes, _) = labels[marked],
+        guard labels.indices.contains(marked), case .fretted(let notes, let muted, _) = labels[marked],
               let moved = NeckJoin.movedAsOne(notes) else { return Edit(labels: labels, cursor: cursor) }
         var labels = labels
-        labels[marked] = .fretted(moved, into: nil)
+        labels[marked] = .fretted(moved, muted: muted, into: nil)
         return Edit(labels: labels, cursor: cursor)
     }
 
     /// A slide in from nowhere, for every note of the tap.
     static func slideIn(from start: LeadIn.Start, labels: [PieceLabel?], cursor: NeckCursor) -> Edit {
         let marked = cursor.marked(count: labels.count)
-        guard labels.indices.contains(marked), case .fretted(var notes, _) = labels[marked] else {
+        guard labels.indices.contains(marked), case .fretted(var notes, let muted, _) = labels[marked],
+              !notes.isEmpty else {
             return Edit(labels: labels, cursor: cursor)
         }
         for position in notes.indices { notes[position].leadIn = LeadIn(from: start, join: .slide) }
         var labels = labels
-        labels[marked] = .fretted(notes, into: nil)
+        labels[marked] = .fretted(notes, muted: muted, into: nil)
         var cursor = cursor
         cursor.awaitingStart = nil
         return Edit(labels: labels, cursor: cursor)

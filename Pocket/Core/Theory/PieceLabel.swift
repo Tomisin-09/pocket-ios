@@ -16,14 +16,36 @@ enum PieceLabel: Equatable, Hashable, Sendable {
     /// live on the note, and how the tap was reached from the one before. Strings are **highest-first**
     /// (0 = the thinnest), the fretboard engine's convention (ADR 0116), and index the open strings the
     /// piece was written against (`PieceTranscription.openMidi`).
-    case fretted([FrettedNote], into: Join?)
+    ///
+    /// `muted` is the strings struck dead (ADR 0262), a ✕ each: beside the notes in a chord strummed
+    /// through a muted string, or alone, with `notes` empty, for a chuck. Kept apart from the notes so
+    /// everything that reads a pitch, a join or a bend reads only what sounds. A string is fretted or
+    /// muted, never both.
+    case fretted([FrettedNote], muted: Set<Int> = [], into: Join?)
     /// A chord: a root pitch class and a `ChordQuality` suffix (`""` major, `"m"`, `"7"`, …). A chord
     /// is named the way it is heard, by root and quality, not by the grip that plays it.
     case chord(root: Int, suffix: String)
+    /// A dead note named by ear (ADR 0262): a click heard in time, with no pitch and no string said.
+    case muted
 
     /// One plain note on the neck, with no marks.
     static func fretted(string: Int, fret: Int) -> PieceLabel {
         .fretted([FrettedNote(string: string, fret: fret)], into: nil)
+    }
+
+    /// Strings struck dead on the neck and nothing else (ADR 0262): a ✕ on each.
+    static func muted(strings: Set<Int>) -> PieceLabel {
+        .fretted([], muted: strings, into: nil)
+    }
+
+    /// How a dead note is named in a line of names and on a chip (ADR 0262 D4).
+    static let mutedName = "✕"
+    /// How tab writes one: ASCII, so a fixed-width column stays one character wide.
+    static let mutedTab = "x"
+
+    /// Text with a ✕ in it as VoiceOver should say it: *"B muted"*, never "B multiplication x".
+    static func spoken(_ text: String) -> String {
+        text.replacingOccurrences(of: mutedName, with: " muted").trimmingCharacters(in: .whitespaces)
     }
 
     /// The highest fret the neck offers. A 22-fret neck is the common case; a note above it is a
@@ -32,8 +54,24 @@ enum PieceLabel: Equatable, Hashable, Sendable {
 
     /// The notes on the neck, or `[]` for an answer named by ear.
     var frettedNotes: [FrettedNote] {
-        guard case .fretted(let notes, _) = self else { return [] }
+        guard case .fretted(let notes, _, _) = self else { return [] }
         return notes
+    }
+
+    /// The strings struck dead on the neck (ADR 0262), or `[]`.
+    var mutedStrings: Set<Int> {
+        guard case .fretted(_, let muted, _) = self else { return [] }
+        return muted
+    }
+
+    /// True for a dead note: *Muted* named by ear, or only ✕s on the neck. A chord strummed through a
+    /// muted string is its chord, not this.
+    var isMuted: Bool {
+        switch self {
+        case .muted: return true
+        case .fretted(let notes, let muted, _): return notes.isEmpty && !muted.isEmpty
+        case .pitchClass, .chord: return false
+        }
     }
 
     /// The single note, when this is one note on the neck.
@@ -43,17 +81,20 @@ enum PieceLabel: Equatable, Hashable, Sendable {
     }
 
     /// The pitch class this label names, or `nil` when there isn't one: a fret past the strings it was
-    /// written against, or a shape that spells no chord. A placed note answers with the note it
-    /// **sounds**, its bend included (ADR 0227 D9); a chord, named or placed, answers with its **root**.
+    /// written against, a shape that spells no chord, or a dead note. A placed note answers with the note
+    /// it **sounds**, its bend included (ADR 0227 D9); a chord, named or placed, answers with its **root**.
+    /// Muted strings beside the notes sound no pitch, so they change nothing here.
     func pitchClass(openMidi: [Int]) -> Int? {
         switch self {
         case .pitchClass(let value):
             return Self.normalised(value)
-        case .fretted(let notes, _):
+        case .fretted(let notes, _, _):
             if notes.count > 1 { return NeckShape.read(notes, openMidi: openMidi)?.chord?.root }
             return midiNote(openMidi: openMidi).map(Self.normalised)
         case .chord(let root, _):
             return Self.normalised(root)
+        case .muted:
+            return nil
         }
     }
 
@@ -65,14 +106,15 @@ enum PieceLabel: Equatable, Hashable, Sendable {
 
     /// How the label reads in a line of names, e.g. `"D♯"`, `"Am7"`. A placed note reads as the note it
     /// sounds, and a shape as what it spells (`"Am/C"`, or `"4th"` for a double-stop that isn't a chord);
-    /// `nil` only when that can't be worked out.
+    /// a dead note as `✕`; `nil` only when that can't be worked out.
     func name(openMidi: [Int], spelling: NoteSpelling) -> String? {
+        if isMuted { return Self.mutedName }
         switch self {
         case .chord(let root, let suffix):
             return spelling.name(pitchClass: root) + suffix
-        case .fretted(let notes, _) where notes.count > 1:
+        case .fretted(let notes, _, _) where notes.count > 1:
             return NeckShape.read(notes, openMidi: openMidi)?.shortName(spelling: spelling)
-        case .pitchClass, .fretted:
+        case .pitchClass, .fretted, .muted:
             return pitchClass(openMidi: openMidi).map { spelling.name(pitchClass: $0) }
         }
     }
@@ -81,6 +123,13 @@ enum PieceLabel: Equatable, Hashable, Sendable {
     var isChord: Bool {
         if case .chord = self { return true }
         return false
+    }
+
+    /// Whether answers like these are counted as chords: every one that isn't a dead note is a chord, and
+    /// at least one is (ADR 0262 D4). A strummed part's chucks don't make it a part of notes.
+    static func countAsChords(_ named: [PieceLabel], _ isChord: (PieceLabel) -> Bool) -> Bool {
+        let sounding = named.filter { !$0.isMuted }
+        return !sounding.isEmpty && sounding.allSatisfy(isChord)
     }
 
     /// The chord qualities offered when naming a chord, most common first, **one per suffix**. The
@@ -164,13 +213,18 @@ struct LeadIn: Equatable, Hashable, Sendable {
 /// build keeps the fret and drops the marks: a note without its bend is still where it was played. **Two
 /// or more are a `shape`**, which an older build reads as an unnamed tap: a chord cut down to one note
 /// would be a wrong answer, and no answer is better than that (ADR 0227 D9).
+///
+/// **A dead note is the `muted` kind** (ADR 0262 D5): `{"kind": "muted"}` by ear, with `strings` when it
+/// was placed on the neck. An older build doesn't know it and reads the tap as unnamed, since a ✕ read as
+/// anything else would be wrong. Muted strings **beside** fretted notes are an optional `muted` key on the
+/// `fret` or `shape`, which an older build drops: the notes that sound are still right.
 extension PieceLabel: Codable {
     private enum CodingKeys: String, CodingKey {
-        case kind, pitchClass, string, fret, bend, vibrato, into, notes, root, suffix
+        case kind, pitchClass, string, fret, bend, vibrato, into, notes, root, suffix, muted, strings
     }
 
     private enum Kind: String, Codable {
-        case note, fret, shape, chord
+        case note, fret, shape, chord, muted
     }
 
     init(from decoder: Decoder) throws {
@@ -179,16 +233,31 @@ extension PieceLabel: Codable {
         case .note:
             self = .pitchClass(Self.normalised(try container.decode(Int.self, forKey: .pitchClass)))
         case .fret:
-            self = .fretted([try FrettedNote(from: decoder)], into: try Self.join(in: container))
+            let notes = [try FrettedNote(from: decoder)]
+            self = .fretted(notes, muted: try Self.muted(in: container, beside: notes),
+                            into: try Self.join(in: container))
         case .shape:
             let notes = try container.decode([FrettedNote].self, forKey: .notes)
             guard notes.count > 1 else { throw DecodingError.dataCorruptedError(
                 forKey: .notes, in: container, debugDescription: "A shape holds two notes or more.") }
-            self = .fretted(notes, into: try Self.join(in: container))
+            self = .fretted(notes, muted: try Self.muted(in: container, beside: notes),
+                            into: try Self.join(in: container))
         case .chord:
             self = .chord(root: Self.normalised(try container.decode(Int.self, forKey: .root)),
                           suffix: try container.decode(String.self, forKey: .suffix))
+        case .muted:
+            let strings = Set((try container.decodeIfPresent([Int].self, forKey: .strings) ?? []).filter { $0 >= 0 })
+            self = strings.isEmpty ? .muted : .muted(strings: strings)
         }
+    }
+
+    /// The strings muted beside `notes`. A string that also holds a note is the note's, and one below zero
+    /// is no string, so both are dropped (ADR 0262 D5).
+    private static func muted(in container: KeyedDecodingContainer<CodingKeys>,
+                              beside notes: [FrettedNote]) throws -> Set<Int> {
+        let fretted = Set(notes.map(\.string))
+        let strings = try container.decodeIfPresent([Int].self, forKey: .muted) ?? []
+        return Set(strings.filter { $0 >= 0 && !fretted.contains($0) })
     }
 
     /// A join this build doesn't know reads as no join, not a lost answer.
@@ -202,7 +271,14 @@ extension PieceLabel: Codable {
         case .pitchClass(let value):
             try container.encode(Kind.note, forKey: .kind)
             try container.encode(value, forKey: .pitchClass)
-        case .fretted(let notes, let into):
+        case .fretted(let notes, let muted, let into):
+            let strings = muted.sorted()
+            if notes.isEmpty {
+                // Only ✕s: a dead note with its strings, which has no way in to write.
+                try container.encode(Kind.muted, forKey: .kind)
+                try container.encode(strings, forKey: .strings)
+                return
+            }
             if notes.count == 1 {
                 try container.encode(Kind.fret, forKey: .kind)
                 try notes[0].encode(to: encoder)
@@ -210,11 +286,14 @@ extension PieceLabel: Codable {
                 try container.encode(Kind.shape, forKey: .kind)
                 try container.encode(notes, forKey: .notes)
             }
+            if !strings.isEmpty { try container.encode(strings, forKey: .muted) }
             try container.encodeIfPresent(into, forKey: .into)
         case .chord(let root, let suffix):
             try container.encode(Kind.chord, forKey: .kind)
             try container.encode(root, forKey: .root)
             try container.encode(suffix, forKey: .suffix)
+        case .muted:
+            try container.encode(Kind.muted, forKey: .kind)
         }
     }
 }

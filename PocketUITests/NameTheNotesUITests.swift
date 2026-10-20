@@ -35,6 +35,32 @@ final class NameTheNotesUITests: UITestCase {
         app.navigationBars["Name the notes"].buttons["Cancel"].tap()
     }
 
+    /// A ✕ beside a string names the note muted and moves on, as placing does; *Muted* on By ear does too
+    /// (ADR 0262 D2, D3). The chips say it aloud as muted, never "multiplication x".
+    @MainActor
+    func testACrossAndMutedByEarNameDeadNotes() {
+        let app = openNameTheNotes()
+        let first = app.descendants(matching: .any)["naming.chip.0"]
+        XCTAssertTrue(first.waitForExistence(timeout: Self.uiTimeout))
+
+        let cross = app.buttons["neck.mute.4"]
+        XCTAssertTrue(cross.waitForExistence(timeout: Self.uiTimeout), "no ✕ beside the A string")
+        cross.tap()
+        XCTAssertTrue(waitForLabel("Note 1, A muted", on: first), "the ✕ didn't name the note: \(first.label)")
+        let second = app.descendants(matching: .any)["naming.chip.1"]
+        XCTAssertTrue(second.isSelected, "a ✕ should move on to the next, as placing does")
+        attach(app, named: "naming-muted-on-the-neck")
+
+        app.buttons["By ear"].tap()
+        let muted = app.buttons["ear.muted"]
+        XCTAssertTrue(reveal(muted, in: app), "no Muted on By ear")
+        muted.tap()
+        XCTAssertTrue(waitForLabel("Note 2, muted", on: second), "Muted didn't name the note: \(second.label)")
+        attach(app, named: "naming-muted-by-ear")
+
+        app.navigationBars["Name the notes"].buttons["Cancel"].tap()
+    }
+
     /// A tap on a chip never snags it; a hold does, and a second hold takes it off (0234 D7). A Button with
     /// a hold would fire both, which is why the chip is a plain shape with two gestures.
     @MainActor

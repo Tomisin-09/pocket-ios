@@ -19,7 +19,7 @@ enum NamingMode: String, CaseIterable, Identifiable {
     static func opening(for labels: [PieceLabel?], loopType: LoopType) -> NamingMode {
         switch labels.compactMap({ $0 }).first {
         case .fretted: return .fret
-        case .pitchClass, .chord: return .ear
+        case .pitchClass, .chord, .muted: return .ear
         case nil: return loopType == .chords ? .ear : .fret
         }
     }
@@ -158,11 +158,11 @@ struct NameTheNotesSheet: View {
         _tuning = State(initialValue: NamingTuning(openMidi: request.openMidi ?? tuner.openMidi,
                                                    label: request.tuningLabel ?? tuner.label))
         _neckTarget = State(initialValue: labels.indices.contains(start) ? Self.fret(of: labels[start]) : nil)
-        // Chords starts on when the piece already holds a shape.
+        // Chords starts on when the piece already holds a shape, ✕s counted (ADR 0262).
         _cursor = State(initialValue: NeckCursor(
             active: start,
             ringed: labels.indices.contains(start) ? labels[start]?.frettedNotes.last?.string : nil,
-            chordsOn: labels.contains { ($0?.frettedNotes.count ?? 0) > 1 }))
+            chordsOn: labels.contains { ($0?.frettedNotes.count ?? 0) + ($0?.mutedStrings.count ?? 0) > 1 }))
     }
 
     var body: some View {
@@ -321,11 +321,12 @@ extension NameTheNotesSheet {
 
     /// Asked only when By ear would overwrite neck work (0227 D7). Every other change is one tap to redo.
     private func replacePrompt(_ label: PieceLabel) -> some View {
-        let placed = fretText(labels[active]?.frettedNotes ?? [])
-        let named = label.name(openMidi: tuning.openMidi, spelling: spelling) ?? ""
+        let current = labels[active]
+        let placed = NeckNoteEditor<EmptyView>.fretText(current, openMidi: tuning.openMidi)
+        let named = label.isMuted ? "Muted" : label.name(openMidi: tuning.openMidi, spelling: spelling) ?? ""
+        let what = current?.isMuted == true ? "✕" : (current?.frettedNotes.count ?? 0) > 1 ? "shape" : "note"
         return VStack(alignment: .leading, spacing: 10) {
-            Text("Replace the \(labels[active]?.frettedNotes.count ?? 0 > 1 ? "shape" : "note") you placed on the "
-                 + "neck (\(placed)) with \(named)?")
+            Text("Replace the \(what) you placed on the neck (\(placed)) with \(named)?")
                 .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)

@@ -42,12 +42,15 @@ struct PieceNotes: Equatable, Sendable {
         labels.map { $0?.name(openMidi: openMidi ?? [], spelling: spelling) }
     }
 
-    /// The line, *"11 notes. A C D D♯ E"*. A piece whose every answer is a chord counts chords.
+    /// The line, *"11 notes. A C D D♯ E"*. A piece whose every answer is a chord counts chords, its dead
+    /// notes aside (ADR 0262 D4).
     func summary(spelling: NoteSpelling) -> String? {
-        let named = labels.compactMap { $0 }
-        return TapTally.summary(count: count, names: names(spelling: spelling), perBeat: nil,
-                                countsChords: !named.isEmpty && named.allSatisfy(\.isChord))
+        TapTally.summary(count: count, names: names(spelling: spelling), perBeat: nil,
+                         countsChords: countsChords)
     }
+
+    /// Whether the piece is counted in chords: every answer that sounds is a chord (ADR 0262 D4).
+    var countsChords: Bool { PieceLabel.countAsChords(labels.compactMap { $0 }, \.isChord) }
 }
 
 extension PieceTranscription {

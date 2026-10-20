@@ -86,8 +86,9 @@ extension TabWriterView {
 
     private func noteChip(_ index: Int) -> some View {
         let lit = draft.selected == index
-        let notes = draft.content.labels[index]?.frettedNotes ?? []
-        let text = notes.isEmpty ? nil : NeckNoteEditor<EmptyView>.fretText(notes, openMidi: tuning.openMidi)
+        let label = draft.content.labels[index]
+        let text = label?.isOnTheNeck == true ? NeckNoteEditor<EmptyView>.fretText(label, openMidi: tuning.openMidi)
+            : nil
         return chipShape(lit: lit, marked: draft.marked == index && !lit) {
             VStack(spacing: 0) {
                 Text("\(index + 1)")
@@ -100,7 +101,7 @@ extension TabWriterView {
         }
         .onTapGesture { pick(index) }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Note \(index + 1), \(text ?? "not placed")")
+        .accessibilityLabel("Note \(index + 1), \(text.map(PieceLabel.spoken) ?? "not placed")")
         .accessibilityAddTraits(lit ? [.isButton, .isSelected] : .isButton)
         .id(StripID.note(index))
         .accessibilityIdentifier("tab.chip.\(index)")

@@ -96,6 +96,7 @@ struct NamingResultView: View {
                             .foregroundStyle(index == active ? PocketColor.practice
                                              : names[index] == nil ? PocketColor.textSecondary
                                              : PocketColor.textPrimary)
+                            .accessibilityLabel(names[index].map(PieceLabel.spoken) ?? "not named")
                     }
                 }
             }

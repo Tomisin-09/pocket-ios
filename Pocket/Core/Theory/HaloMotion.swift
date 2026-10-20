@@ -35,7 +35,7 @@ enum HaloMotion: Equatable, Sendable {
     /// The glow for each note of tap `index`, one per note: a note with a lead-in moves from where it
     /// started, and a note held in a chord (ADR 0252 D1) glows as its own marks say.
     static func motions(into index: Int, of labels: [PieceLabel?], maxFret: Int = PieceLabel.maxFret) -> [HaloMotion] {
-        guard labels.indices.contains(index), case .fretted(let notes, let into)? = labels[index] else { return [] }
+        guard labels.indices.contains(index), case .fretted(let notes, _, let into)? = labels[index] else { return [] }
         let before = index > 0 ? labels[index - 1]?.frettedNotes ?? [] : []
         // A join from the tap before counts only when it still fits, as the tab and the strip read it.
         let join = NeckJoin.direction(into: index, of: labels) == nil ? nil : into

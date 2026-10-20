@@ -53,7 +53,8 @@ enum SongMapLayout {
             let named = piece.taps.compactMap(\.label)
             if !named.isEmpty {
                 let openMidi = piece.openMidi ?? []
-                return named.allSatisfy { $0.readsAsChord(openMidi: openMidi) } ? .chords : .notes
+                // A strummed part's chucks don't move it out of the chords (ADR 0262 D4).
+                return PieceLabel.countAsChords(named) { $0.readsAsChord(openMidi: openMidi) } ? .chords : .notes
             }
         }
         return loop.type == .chords ? .chords : .notes

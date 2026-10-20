@@ -12,7 +12,7 @@ final class PassCorrectionTests: XCTestCase {
     }
 
     private func join(_ tap: Tap) -> Join? {
-        guard case .fretted(_, let into) = tap.label else { return nil }
+        guard case .fretted(_, _, let into) = tap.label else { return nil }
         return into
     }
 

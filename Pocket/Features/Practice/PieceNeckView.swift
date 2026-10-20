@@ -21,8 +21,11 @@ struct PieceNeckView: View {
 
     var body: some View {
         let lit = PieceNeck.heardSpots(heard, of: labels)
+        // The ✕s (ADR 0262 D4): a column only for a piece that strikes a string dead somewhere.
+        let muted = PieceNeck.mutedStrings(of: labels)
+        let heardMutes = PieceNeck.heardMutes(heard, of: labels)
         FretNeckBoard(stringNames: stringNames, maxFret: PieceLabel.maxFret, scrollTarget: centre,
-                      headroom: Self.headroom) { string, fret in
+                      headroom: Self.headroom, showsPinned: !muted.isEmpty) { string, fret in
             NeckSpotDot(name: name(string: string, fret: fret), tier: tier(string: string, fret: fret, lit: lit))
         } marks: {
             // The marks of the tap being heard only, as Name the notes draws the note being named's.
@@ -35,6 +38,9 @@ struct PieceNeckView: View {
         } beneath: {
             HeardGlows(motions: heard.map { HaloMotion.motions(into: $0, of: labels) } ?? [], token: heard,
                        headroom: Self.headroom)
+        } pinned: { string in
+            NeckSpotDot(name: PieceLabel.mutedName,
+                        tier: heardMutes.contains(string) ? .current : muted.contains(string) ? .other : nil)
         }
     }
 

@@ -21,6 +21,18 @@ enum PieceNeck {
         return Set((labels[index]?.frettedNotes ?? []).map { NeckSpot(string: $0.string, fret: $0.fret) })
     }
 
+    /// The strings tap `index` struck dead (ADR 0262), which light in the ✕ column while it's heard.
+    static func heardMutes(_ index: Int?, of labels: [PieceLabel?]) -> Set<Int> {
+        guard let index, labels.indices.contains(index) else { return [] }
+        return labels[index]?.mutedStrings ?? []
+    }
+
+    /// Every string the piece strikes dead somewhere: the ✕s of the map. Empty, and the board has no ✕
+    /// column, for a piece with none.
+    static func mutedStrings(of labels: [PieceLabel?]) -> Set<Int> {
+        labels.reduce(into: []) { strings, label in strings.formUnion(label?.mutedStrings ?? []) }
+    }
+
     /// The frets tap `index` covers: its notes, where a bend lands and where a lead-in starts, so following
     /// it keeps all of its glow in view. `nil` for a tap that isn't on the neck.
     static func frets(of index: Int, in labels: [PieceLabel?], maxFret: Int = PieceLabel.maxFret) -> ClosedRange<Int>? {
@@ -61,6 +73,8 @@ enum PieceNeck {
     /// frets 10 to 12"*, *"F, named by ear"*, *"Not named yet"*.
     static func words(for index: Int, of labels: [PieceLabel?], openMidi: [Int], spelling: NoteSpelling) -> String {
         guard labels.indices.contains(index), let label = labels[index] else { return "Not named yet" }
+        let strings = TabLine.stringNames(openMidi: openMidi).map { $0.trimmingCharacters(in: .whitespaces) }
+        if label.isMuted { return mutedWords(label.mutedStrings, strings: strings) }
         let name = label.name(openMidi: openMidi, spelling: spelling)
         let notes = label.frettedNotes
         guard let note = notes.first else { return name.map { "\($0), named by ear" } ?? "Named by ear" }
@@ -69,7 +83,6 @@ enum PieceNeck {
             let low = frets.min() ?? note.fret, high = frets.max() ?? note.fret
             return "\(name ?? "\(notes.count) notes"), " + (low == high ? "fret \(low)" : "frets \(low) to \(high)")
         }
-        let strings = TabLine.stringNames(openMidi: openMidi).map { $0.trimmingCharacters(in: .whitespaces) }
         let string = strings.indices.contains(note.string)
             ? "\(strings[note.string]) string" : "String \(note.string + 1)"
         var words = [string, note.fret == 0 ? "open" : "fret \(note.fret)"]
@@ -86,6 +99,14 @@ enum PieceNeck {
         if note.bend > 0 { words.append("bent " + bendSizes[min(note.bend, bendSizes.count - 1)]) }
         if note.vibrato { words.append("with vibrato") }
         return words.joined(separator: ", ")
+    }
+
+    /// A dead note in words, never "multiplication x" (ADR 0262 D4): *"A string, muted"*, *"Muted, 3
+    /// strings"*, or *"Muted, named by ear"* with no string.
+    private static func mutedWords(_ muted: Set<Int>, strings: [String]) -> String {
+        guard let string = muted.first else { return "Muted, named by ear" }
+        guard muted.count == 1 else { return "Muted, \(muted.count) strings" }
+        return strings.indices.contains(string) ? "\(strings[string]) string, muted" : "Muted"
     }
 
     /// A bend's size, by semitones, as the By ear line says it.

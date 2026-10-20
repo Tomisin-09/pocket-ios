@@ -66,4 +66,18 @@ enum NeckNeighbours {
         }
         return marks
     }
+
+    /// For every string a tap struck dead (ADR 0262 D2), what its ✕ shows, by the same rule: where several
+    /// taps mute one string, the nearest to the note being named is drawn.
+    static func mutes(_ labels: [PieceLabel?], active: Int) -> [Int: Mark] {
+        var marks: [Int: Mark] = [:]
+        for index in labels.indices {
+            let tier = tier(of: index, active: active)
+            for string in labels[index]?.mutedStrings ?? [] {
+                if let held = marks[string], rank(held.tier) <= rank(tier) { continue }
+                marks[string] = Mark(tier: tier, note: index)
+            }
+        }
+        return marks
+    }
 }

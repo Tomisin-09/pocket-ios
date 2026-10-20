@@ -66,7 +66,7 @@ extension NeckNoteEditor {
     /// Which note the marks are on, while the strip has moved past it (ADR 0234 D3): "Note 12 · G7, until
     /// you place 13". Said only then; otherwise the strip's own *Note 12 of 16* says it.
     private func markedLine(_ index: Int) -> some View {
-        let placed = fretText(labels[index]?.frettedNotes ?? [])
+        let placed = Self.fretText(labels[index], openMidi: tuning.openMidi)
         return HStack(alignment: .firstTextBaseline, spacing: 6) {
             Text("\(noun.capitalized) \(index + 1) · \(placed)")
                 .font(.futura(.footnote, weight: .bold))

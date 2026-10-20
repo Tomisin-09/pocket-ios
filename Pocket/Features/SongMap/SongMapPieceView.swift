@@ -131,7 +131,7 @@ struct SongMapPieceView: View {
         switch piece.content {
         case .empty: return "Not worked out yet"
         case .handTagged: return "Tagged transcribed in a note"
-        case .piece: return line ?? "Counted"
+        case .piece: return line.map(PieceLabel.spoken) ?? "Counted"
         }
     }
 }

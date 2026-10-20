@@ -77,12 +77,17 @@ enum PieceStaff {
                 continue
             }
             let join = NeckJoin.symbol(into: index, of: labels) ?? ""
-            let cells = label.frettedNotes
+            let fretted = label.frettedNotes
                 .filter { openMidi.indices.contains($0.string) && $0.fret >= 0 }
-                .sorted { $0.string < $1.string }
                 .map { Cell(string: $0.string, text: join + TabLine.cell($0)) }
-            // A shape of four notes or more is also named above it, the way its chip is.
-            let named = cells.isEmpty || cells.count > 3 ? label.name(openMidi: openMidi, spelling: spelling) : nil
+            // A muted string is an `x` on its line, and a join never lands on one (ADR 0262 D4).
+            let muted = label.mutedStrings.filter { openMidi.indices.contains($0) }
+                .map { Cell(string: $0, text: PieceLabel.mutedTab) }
+            let cells = (fretted + muted).sorted { $0.string < $1.string }
+            // A shape of four notes or more is also named above it, the way its chip is. A dead note named
+            // by ear has no string, so its `x` goes above, where a name given by ear does.
+            let named = cells.isEmpty && label.isMuted ? PieceLabel.mutedTab
+                : cells.isEmpty || fretted.count > 3 ? label.name(openMidi: openMidi, spelling: spelling) : nil
             columns.append(Column(note: index, span: 1, above: named ?? (cells.isEmpty ? "?" : nil), cells: cells,
                                   isQuiet: named == nil && cells.isEmpty))
             index += 1
@@ -128,7 +133,7 @@ enum PieceStaff {
 
     static func meta(of notes: PieceNotes) -> String {
         let named = notes.labels.compactMap { $0 }
-        let noun = !named.isEmpty && named.allSatisfy(\.isChord) ? "chord" : "note"
+        let noun = notes.countsChords ? "chord" : "note"
         var parts = ["\(notes.count) \(noun)\(notes.count == 1 ? "" : "s")"]
         if notes.hasFrettedLabels, let tuning = notes.tuningLabel { parts.append(tuning) }
         let unnamed = notes.count - named.count

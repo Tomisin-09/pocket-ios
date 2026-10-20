@@ -169,7 +169,7 @@ extension NameTheNotesSheet {
         // 0.4 s, the house hold (the loop row, panel headers, the speed bar).
         .onLongPressGesture(minimumDuration: 0.4) { toggleSnag(on: index) }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(noun.capitalized) \(index + 1), \(shown.text ?? "not named")"
+        .accessibilityLabel("\(noun.capitalized) \(index + 1), \(shown.text.map(PieceLabel.spoken) ?? "not named")"
                             + (snagged ? ", snagged" : ""))
         .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction { select(index) }

@@ -15,7 +15,12 @@ final class NeckEditorVoiceTests: XCTestCase {
         XCTAssertEqual(naming.shapeStartedElsewhere, " Did any of its notes start elsewhere? Pick how.")
         XCTAssertEqual(naming.intoInfo, NamingInfo.into)
         XCTAssertEqual(naming.chordsInfo, NamingInfo.chords)
-        XCTAssertTrue(NamingInfo.chords.hasSuffix("A chord you heard but didn't play is named on By ear."))
+        XCTAssertTrue(NamingInfo.chords.contains("A chord you heard but didn't play is named on By ear.\n\n"))
+        // ADR 0262 adds the ✕ after it, in both voices, saying what ✕ means here and in My chords.
+        for info in [NamingInfo.chords, WritingInfo.chords] {
+            XCTAssertTrue(info.contains("The ✕ beside each string is a muted note"), info)
+            XCTAssertTrue(info.contains("In My chords, ✕ means a string isn't played"), info)
+        }
         XCTAssertTrue(NamingInfo.into.hasPrefix("How you got to this note: picked, a hammer-on or pull-off"))
     }
 

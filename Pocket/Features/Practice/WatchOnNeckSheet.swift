@@ -103,7 +103,9 @@ struct WatchOnNeckSheet: View {
         PieceNeckView(labels: labels, openMidi: openMidi, spelling: spelling, lick: lick, heard: heard,
                       centre: centre)
             .onGeometryChange(for: Double.self) { Double($0.size.width) } action: {
-                boardWidth = $0 - Double(NeckGeometry.namesWidth + NeckGeometry.namesSpacing)
+                // A piece that mutes a string has the ✕ column beside the names too (ADR 0262 D4).
+                let pinned = PieceNeck.mutedStrings(of: labels).isEmpty ? 0 : NeckGeometry.pinnedWidth
+                boardWidth = $0 - Double(NeckGeometry.namesWidth + NeckGeometry.namesSpacing + pinned)
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("The neck")

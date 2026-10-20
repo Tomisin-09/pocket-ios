@@ -126,8 +126,8 @@ struct TabContent: Equatable, Sendable {
     }
 
     private mutating func dropJoin(at index: Int) {
-        guard labels.indices.contains(index), case .fretted(let notes, let into) = labels[index], into != nil
-        else { return }
-        labels[index] = .fretted(notes, into: nil)
+        guard labels.indices.contains(index), case .fretted(let notes, let muted, let into) = labels[index],
+              into != nil else { return }
+        labels[index] = .fretted(notes, muted: muted, into: nil)
     }
 }

@@ -9,6 +9,9 @@ enum NeckGeometry {
     /// the width is the board's, which *Watch it on the neck* follows the heard note within (ADR 0254).
     static let namesWidth: CGFloat = 16
     static let namesSpacing: CGFloat = 8
+    /// The ✕ column pinned beside the names (ADR 0262 D2), with the space after it: what it takes from the
+    /// board's width when it's shown.
+    static let pinnedWidth: CGFloat = cellSize + namesSpacing
 
     /// The middle of a spot in the marks' coordinates: fret across, string down, below the headroom.
     static func center(string: Int, fret: Int, headroom: CGFloat) -> CGPoint {
@@ -34,15 +37,21 @@ private struct FretAnchor: Hashable {
 /// marks Name the notes shows (ADR 0227 D5). `headroom` is the space above the top string they need.
 /// `beneath` draws under them, in the same coordinates, for the glow that moves between spots as a note is
 /// heard (ADR 0234 D5): a bend gliding to where it lands can't be drawn behind one dot.
-struct FretNeckBoard<Cell: View, Marks: View, Beneath: View>: View {
+///
+/// `pinned`, when `showsPinned`, is a spot per string in a column between the names and the board that
+/// doesn't scroll, so it's in reach at any fret: the ✕ a string is struck dead with (ADR 0262 D2). The
+/// exercise editor's board has none.
+struct FretNeckBoard<Cell: View, Marks: View, Beneath: View, Pinned: View>: View {
     /// One name per string, thinnest first, the order the rows are drawn in.
     let stringNames: [String]
     let maxFret: Int
     var scrollTarget: Int?
     var headroom: CGFloat = 0
+    var showsPinned = false
     @ViewBuilder let cell: (_ string: Int, _ fret: Int) -> Cell
     @ViewBuilder let marks: () -> Marks
     @ViewBuilder let beneath: () -> Beneath
+    @ViewBuilder let pinned: (_ string: Int) -> Pinned
 
     var body: some View {
         HStack(alignment: .center, spacing: NeckGeometry.namesSpacing) {
@@ -57,6 +66,14 @@ struct FretNeckBoard<Cell: View, Marks: View, Beneath: View>: View {
             }
             .padding(.top, headroom)
             .frame(width: NeckGeometry.namesWidth)   // fixed gutter — matches FretboardGrid so the two boards line up
+            if showsPinned {
+                VStack(spacing: 4) {
+                    ForEach(stringNames.indices, id: \.self) { row in pinned(row) }
+                    Color.clear.frame(width: 1, height: 26)   // as the names: the inlay + number rows
+                }
+                .padding(.top, headroom)
+                .frame(width: NeckGeometry.cellSize)
+            }
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
                     VStack(spacing: 4) {
@@ -133,11 +150,11 @@ struct FretNeckBoard<Cell: View, Marks: View, Beneath: View>: View {
     }
 }
 
-extension FretNeckBoard where Marks == EmptyView, Beneath == EmptyView {
+extension FretNeckBoard where Marks == EmptyView, Beneath == EmptyView, Pinned == EmptyView {
     /// A board with nothing drawn over or under its dots, as the exercise editor uses it.
     init(stringNames: [String], maxFret: Int, scrollTarget: Int?,
          @ViewBuilder cell: @escaping (_ string: Int, _ fret: Int) -> Cell) {
         self.init(stringNames: stringNames, maxFret: maxFret, scrollTarget: scrollTarget, headroom: 0,
-                  cell: cell, marks: { EmptyView() }, beneath: { EmptyView() })
+                  cell: cell, marks: { EmptyView() }, beneath: { EmptyView() }, pinned: { _ in EmptyView() })
     }
 }
