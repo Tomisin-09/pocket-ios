@@ -67,7 +67,7 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   drill it makes already has the link (or the picture, or the PDF) attached, with your note. **Attach
   to…** files it on an exercise, routine, song or loop instead, picked from the places you practised
   most recently, from everything, or by search. Once it's filed, **Also attach to…** puts the same link
-  in one more place with a fresh note, and a file you kept somewhere can **Move to…** another. Without
+  or file in one more place with a fresh note; a file in two places is still stored once. Without
   the plan you can file onto songs and loops; if you've had the plan before, exercises and routines
   are there too, with a lock, and open again with the plan.
 - **Name the notes can name a muted note** (ADR 0262). A dead note, struck with no pitch, like the

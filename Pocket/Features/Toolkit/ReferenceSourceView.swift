@@ -153,11 +153,11 @@ struct ReferenceSourceView: View {
     // MARK: - File it, or start a drill from it
 
     /// Not filed: *Start an exercise from this*, full width, with its caption, then *Attach to…*.
-    /// Filed: *Also attach to…* (or *Move to…* for a file), then *Start another exercise from this*.
+    /// Filed: *Also attach to…*, then *Start another exercise from this*.
     @ViewBuilder
     private func actions(_ source: ReferenceSource) -> some View {
         let start = ReferenceFiling.startTitle(for: source)
-        if !source.isFiled, let start {
+        if !source.isFiled {
             Section {
                 Button { startingExercise = true } label: {
                     // White throughout, glyph and lock too: a List draws a row's label icon in the
@@ -189,24 +189,21 @@ struct ReferenceSourceView: View {
         } else {
             Section {
                 attachButton(source)
-                if let start {
-                    Button { startingExercise = true } label: {
-                        HStack(spacing: 8) {
-                            // Teal, glyph included: left alone the List draws the glyph in indigo.
-                            Label(start, systemImage: "metronome").foregroundStyle(PocketColor.practice)
-                            if plan.showsPlanLocks { PlanLockBadge() }
-                        }
+                Button { startingExercise = true } label: {
+                    HStack(spacing: 8) {
+                        // Teal, glyph included: left alone the List draws the glyph in indigo.
+                        Label(start, systemImage: "metronome").foregroundStyle(PocketColor.practice)
+                        if plan.showsPlanLocks { PlanLockBadge() }
                     }
-                    .planLockedValue(plan.showsPlanLocks)
                 }
+                .planLockedValue(plan.showsPlanLocks)
             }
         }
     }
 
     private func attachButton(_ source: ReferenceSource) -> some View {
         Button { attaching = true } label: {
-            Label(ReferenceFiling.attachTitle(for: source),
-                  systemImage: source.isFiled && source.isAttachment ? "arrow.right.circle" : "plus.circle")
+            Label(ReferenceFiling.attachTitle(for: source), systemImage: "plus.circle")
         }
     }
 
@@ -228,20 +225,11 @@ struct ReferenceSourceView: View {
         }
     }
 
-    /// The editor's save. A file is renamed, never re-pointed, and never groups (ADR 0167 phase 2, D3).
-    /// A link's name and address go to every row of its source, so it stays one source; the note goes to
-    /// the row being edited and no other.
+    /// The editor's save: the name to every row, the note to this one (`ReferenceLinkStore.edit`).
     private func commit(_ draft: ReferenceLinkDraft, title: String, url: String, note: String) {
         guard let row = draft.link else { return }
-        if row.isAttachment {
-            ReferenceLinkStore.updateAttachment(row, title: title, note: note)
-        } else {
-            let siblings = ReferenceLibrary.source(containing: row.uid, in: links)?.rows ?? [row]
-            guard ReferenceLinkStore.update(row, title: title, url: url, note: note) else { return }
-            for sibling in siblings where sibling.uid != row.uid {
-                ReferenceLinkStore.update(sibling, title: title, url: url, note: sibling.note)
-            }
-        }
+        let source = ReferenceLibrary.source(containing: row.uid, in: links)
+        guard ReferenceLinkStore.edit(row, of: source, title: title, url: url, note: note) else { return }
         try? context.save()
     }
 

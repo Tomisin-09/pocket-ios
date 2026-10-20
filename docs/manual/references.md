@@ -100,10 +100,10 @@ typed, so a name you'd change or a note you didn't write at the time is one gest
 the row right opens the editor too; swiping left removes.
 
 **Remove takes it off this place, and nothing you kept is lost.** If nothing else uses it, it moves
-to **Not filed** in References, with its note and its file. If the same link is on something else
-too, only this use goes, and the note you wrote here with it; the link stays in References through
-the other place. A file always moves to Not filed: removing one never deletes the copy Red Moon
-kept. Deleting for good happens in [References](#the-references-library), and only there.
+to **Not filed** in References, with its note and its file. If the same link or file is on something
+else too, only this use goes, and the note you wrote here with it; it stays in References through
+the other place, and a file keeps the copy Red Moon holds. Deleting for good happens in
+[References](#the-references-library), and only there.
 
 Tap a link row and the source opens **in its own app** — YouTube in YouTube, a tab site in your
 browser. Red Moon does not show it inside itself, and it never fetches anything from the address: no
@@ -158,10 +158,10 @@ Tap a row and it opens on its own:
 - **Start an exercise from this** — the big button while a source isn't filed. New exercise opens as
   it does in Practice, and the drill it makes already has this link or file attached, with your note.
   Once the source is filed somewhere, the button reads **Start another exercise from this**, and the
-  new drill gets the link with a note of its own.
+  new drill gets the link or file with a note of its own.
 - **Attach to…** — files it on an exercise, routine, song or loop, with its note. Once it's filed, it
-  reads **Also attach to…**: the same link goes in one more place, with a fresh note, and stays where
-  it was. A file is in one place at a time, so a filed one offers **Move to…** instead.
+  reads **Also attach to…**: the same link or file goes in one more place, with a fresh note, and
+  stays where it was. A file in two places is still one file, so it takes no more room.
 - **Delete** — for good. It always asks first and names every place it will come off; once it is in
   two places the button itself says **Delete from both places…**. A file's copy goes with it.
 

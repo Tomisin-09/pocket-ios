@@ -1456,8 +1456,8 @@ sections; **Slice 1** carries the two zero-dependency tenants and is **audio-fre
   one the visit made and emptied is deleted on close.
 - **References** (`ReferencesLibraryView`, ADR 0264) is every `ReferenceLink` in the store, read by one
   unfiltered `@Query` and grouped by the pure `ReferenceLibrary` (`Core/Models/ReferenceLibrary.swift`):
-  rows sharing a normalised `urlString` are **one source** (D3), and a file, or a row with no address, is
-  always its own. Sources split into *Not filed* (no row has an owner) and *Everything*, newest first by
+  rows sharing a normalised `urlString` are **one source** (D3), as are rows naming one stored file
+  (`ReferenceLink.sourceKey`); a row with neither stands alone. Sources split into *Not filed* (no row has an owner) and *Everything*, newest first by
   their newest row; search, the Toolkit row's value, the toast's *stay in References* line and the
   delete dialog's words are functions there too. **＋** reuses `.referenceLinkEditing` and
   `.referenceAttachments` with a `KeepForLater` owner, whose empty `references` makes a new row's
@@ -1470,9 +1470,10 @@ sections; **Slice 1** carries the two zero-dependency tenants and is **audio-fre
   D6's line is pure in `ReferenceAttachRules` over `PlanStanding` (never bought, lapsed, on the plan).
   **Filing (slice 3, D5).** A source's screen offers *Attach to…* and *Start an exercise from this*.
   What either does to the rows is the pure `ReferenceFiling` (`Core/Models/ReferenceLink+Filing.swift`):
-  a row kept for later **moves** (with its note), a filed file moves (a file is in one place, so its
-  button reads *Move to…*), and a filed link is **copied** with no note, so the source is used in one
-  more place. `ReferenceLinkStore.attach` performs it through the owner protocol's `hold(_:)` and the
+  a row kept for later **moves** (with its note), and anything filed is **copied** with no note, so the
+  source is used in one more place. A file's copy is a new row naming the **same file** on disk, so
+  nothing is stored twice; `ReferenceLinkStore`'s deletes take a file's bytes only with the last row
+  naming it, and Remove drops one use of a file filed elsewhere as it does a link's. `ReferenceLinkStore.attach` performs it through the owner protocol's `hold(_:)` and the
   same read-the-order-first rule as `add`. The picker is `ReferenceAttachSheet`, a store-side shell
   (`@Query` of the four owners, saved routines only) over **`ReferencePlaceList`**, which takes values
   only: `ReferenceDestination` (a kind-prefixed key, a song by its `sourceID`, a name, a parent, and a

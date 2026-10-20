@@ -93,7 +93,9 @@ for the same screen.
 - **The library groups rows by `urlString`**, which the store already normalises (a scheme-less paste
   is read as `https`). A group is *filed* if any of its rows has an owner, and *not filed* if none
   does.
-- **Files never group.** A picture or a PDF has no link to match on, so each one is its own source.
+- **A file groups by the file it names.** A picture or a PDF has no link to match on, so a file
+  attached in a second place is a second row naming the same file on disk, and the two are one
+  source. *(Changed while building slice 3, from "files never group": see its build note 4.)*
 - **An unfiled row whose link is filed elsewhere stays.** Its note may be the only copy of what the
   player took from that source on a drill they've since deleted. The source's screen lists it under
   *Kept for later*, beside the places it's used.
@@ -217,8 +219,9 @@ section. Tomisin took the recommendation.
   is lost, so nothing needs confirming.
 - **If the same link is used elsewhere, this use's row goes**, and its note with it. The source
   stays in the library through its other places.
-- **A file is its own source** (D3), so removing one always sends it to *Not filed*. Its bytes are
-  never deleted from an owner's section.
+- **A file follows the same rule** (D3, as slice 3 left it). If nothing else holds it, it moves to
+  *Not filed*, bytes and all. If another place holds it too, this use's row goes and the bytes stay
+  for that place. Its bytes are never deleted from an owner's section.
 - **The library is the one place a source is deleted for good** (D5), and it confirms first. That is
   D2's rule seen from the other side: nothing the player kept leaves Red Moon as a side effect.
 - **The routine editor keeps its contract** (0167 phase 1, constraint 3): a Remove there waits for
@@ -343,11 +346,23 @@ device as well.
      the note copied from was written about somewhere else. A filed source that also has a row kept for
      later moves that row instead of copying a third. Of two rows kept for later (D2's two deleted
      drills), the newest moves.
-  4. **A filed file reads *Move to…*, not *Also attach to…*, and offers no new drill.** A file is its
-     own source and never groups (D3), so it can't be in two places; copying its bytes would make a
-     second source that looks like the first. *Start another exercise from this* would take it off the
-     place it's on, which a button named *Start* shouldn't do. The way there is *Move to…*, or Remove
-     then *Start an exercise from this*.
+  4. **A filed file is copied as a link is: a second row naming the same file.** First built as
+     *Move to…*, with no new drill, because D3 said files never group. Tomisin asked *"could we simply
+     duplicate files?"* Copying the bytes would have made a second source that looked like the first,
+     and *Also attach to…* would have seemed to do nothing, because the screen it was tapped on would
+     still show one place. So the copy shares the file, and D3 now groups files by the file they name
+     (`ReferenceLink.sourceKey`). That gives a file what a link has: *Also attach to…*, *Start another
+     exercise from this*, both places on its screen, and *Delete from both places…*. A PDF of 25 MB
+     isn't stored twice. What follows from it:
+     - **The bytes go with the last row naming them.** Delete, and a row never saved going outright,
+       keep a file another row still names. If the store can't be read to check, the bytes stay for
+       *Reclaim space* (ADR 0182) rather than going from under another place.
+     - **Remove follows D11's link rule**: one use of a file filed elsewhere goes, and the bytes stay.
+     - **Edit renames every row of a file**, as it writes a link's name to every row.
+     - **No schema change.** Every file stored before this is named for its own row's uid, so no two
+       share a name and the library groups them as before. Backups export each file once (the names
+       are a set), and restore never overwrites a file already on disk. References don't travel in a
+       shared practice pack, so there is no receive path to change.
   5. **A place it's already on is shown ticked and greyed, not left out**, so a search for it doesn't
      come back empty. A place with five files is greyed the same way for a file (0167 phase 2's cap).
   6. **Recent is the five places practised most recently.** A loop keeps no date of its own and takes
@@ -364,11 +379,14 @@ device as well.
 - **The picker's list takes values only** (`ReferencePlaceList`), with a store-side shell
   (`ReferenceAttachSheet`) that turns models into destinations and a pick back into a write, so slice
   4 can hand the same list its snapshot.
-- **Tests:** `ReferenceDestinationPickerTests` (16) and `ReferenceFilingTests` (16, 9 of them on an
-  in-memory store, 3 through `finalise(in:)`); `ReferenceFilingUITests` (2): on the plan, a link kept
+- **Tests:** `ReferenceDestinationPickerTests` (16) and `ReferenceFilingTests` (18, 8 of them on an
+  in-memory store, 4 through `finalise(in:)`, 2 on Edit); `ReferenceFilingUITests` (2): on the plan, a link kept
   for later starts a drill that takes it and is then attached to a second drill by search; and under
   `-plan free`, the start button's lock, the picker's free words and footer, no drill under *Show all
-  songs and loops*, and the wall.
+  songs and loops*, and the wall. Build note 4's revision rewrote the file rules in
+  `ReferenceLibraryTests` and `ReferenceRemovalTests`, and added three tests with real bytes to
+  `ReferenceLinkAttachmentTests`: with one file in two places, Remove keeps the bytes and Delete takes
+  them, and a row deleted outright leaves a file another row names.
 - **Mutants:** 28 on the rules and the store, each with a witness test, and every one failed it. Two
   batching lessons. Two mutants that together left a binding unused stopped the build, as warnings are
   errors in Debug. And B5 with B6 made every attach a copy, so three move-path mutants were caught by
@@ -376,7 +394,10 @@ device as well.
   more on the screen: the picker reading every resolved store as on the plan failed the free UI test at
   its search prompt, the line aimed at. Reading for mutants first found a test that couldn't fail:
   *Show everything*'s loops sorted the same by name as by song, so the song-first rule went unchecked
-  until its data changed.
+  until its data changed. Build note 4's revision: 17 more (grouping key, the copy's fields, the
+  last-row delete, Remove's rule, Edit), in five batches with no witness shared inside a batch and
+  none whose break would fail another's witness; every one failed its own. The order mutant first
+  left its binding unused and didn't build, the same lesson again; as `order * 0` it was caught.
 - **Seen on screen, not in a test:** a List draws a row's Label icon in the screen's indigo, ignoring
   the button's tint, so the start button's glyph was indigo on teal. It is now white on the wide button
   and teal on the plain one. Found by the UI test's screenshots.

@@ -39,10 +39,10 @@ final class ReferenceFilingTests: XCTestCase {
         XCTAssertEqual(ReferenceFiling.decide(for: source(filed, kept)), .move(kept.uid))
     }
 
-    /// A file has no link to copy, so it is in one place at a time.
-    func testAFiledFileMoves() {
+    /// A file is copied as a link is: a second row naming the same file.
+    func testAFiledFileIsCopied() {
         let picture = ReferenceLink(attachmentFileName: "a.jpg", kind: .image, exercise: Exercise(name: "Spider"))
-        XCTAssertEqual(ReferenceFiling.decide(for: source(picture)), .move(picture.uid))
+        XCTAssertEqual(ReferenceFiling.decide(for: source(picture)), .copy(picture.uid))
     }
 
     // MARK: - The words (D5)
@@ -53,7 +53,7 @@ final class ReferenceFilingTests: XCTestCase {
         let filedFile = source(ReferenceLink(attachmentFileName: "a.pdf", kind: .pdf, song: song()))
         XCTAssertEqual(ReferenceFiling.attachTitle(for: kept), "Attach to…")
         XCTAssertEqual(ReferenceFiling.attachTitle(for: filed), "Also attach to…")
-        XCTAssertEqual(ReferenceFiling.attachTitle(for: filedFile), "Move to…")
+        XCTAssertEqual(ReferenceFiling.attachTitle(for: filedFile), "Also attach to…", "a file too")
         XCTAssertEqual(ReferenceFiling.pickerTitle(for: filed), "Also attach to",
                        "the sheet's title drops the ellipsis")
     }
@@ -67,14 +67,42 @@ final class ReferenceFilingTests: XCTestCase {
         XCTAssertNil(ReferenceFiling.startCaption(for: filed))
     }
 
-    /// A file's caption names its kind. Once filed, a file offers no new drill, which would take it
-    /// off the place it's on.
-    func testAFileNamesItselfAndOffersNoNewDrillOnceFiled() {
+    /// A file's caption names its kind. Once filed, a file starts another drill as a link does.
+    func testAFileNamesItselfAndStartsAnotherDrillOnceFiled() {
         let keptPicture = source(ReferenceLink(attachmentFileName: "a.jpg", kind: .image))
         XCTAssertEqual(ReferenceFiling.startCaption(for: keptPicture),
                        "New exercise opens with this picture already attached.")
         let filedPicture = source(ReferenceLink(attachmentFileName: "a.jpg", kind: .image, song: song()))
-        XCTAssertNil(ReferenceFiling.startTitle(for: filedPicture))
+        XCTAssertEqual(ReferenceFiling.startTitle(for: filedPicture), "Start another exercise from this")
+    }
+
+    // MARK: - Edit (D3), on values
+
+    /// A file in two places is one file with one name, and a note per place.
+    func testEditingAFileRenamesEveryRowAndNotesOnlyItsOwn() {
+        let here = ReferenceLink(title: "Chart", note: "Bar 3", attachmentFileName: "a.pdf", kind: .pdf,
+                                 exercise: Exercise(name: "Spider"))
+        let there = ReferenceLink(title: "Chart", note: "Intro only", attachmentFileName: "a.pdf", kind: .pdf,
+                                  routine: Routine(name: "Week 3"))
+        XCTAssertTrue(ReferenceLinkStore.edit(here, of: source(here, there),
+                                              title: "Solo chart", url: "", note: "Bars 3 to 8"))
+        XCTAssertEqual([here.title, there.title], ["Solo chart", "Solo chart"])
+        XCTAssertEqual([here.note, there.note], ["Bars 3 to 8", "Intro only"])
+    }
+
+    /// A link's new address goes to every row, so the source stays one; one the gate refuses writes nothing.
+    func testEditingALinkWritesItsAddressToEveryRow() {
+        let here = ReferenceLink(title: "Lesson", note: "From 3:40", urlString: lesson,
+                                 exercise: Exercise(name: "Spider"))
+        let there = ReferenceLink(title: "Lesson", urlString: lesson, routine: Routine(name: "Week 3"))
+        let before = source(here, there)
+        XCTAssertFalse(ReferenceLinkStore.edit(here, of: before, title: "X", url: "javascript:alert(1)", note: ""))
+        XCTAssertEqual([here.title, there.title], ["Lesson", "Lesson"])
+        XCTAssertTrue(ReferenceLinkStore.edit(here, of: before, title: "Lesson, part 2",
+                                              url: "https://example.com/b", note: "From 3:40"))
+        XCTAssertEqual(Set([here.urlString, there.urlString]), ["https://example.com/b"])
+        XCTAssertEqual(there.title, "Lesson, part 2")
+        XCTAssertEqual(there.note, "")
     }
 
     // MARK: - The write, in a store
@@ -125,45 +153,40 @@ final class ReferenceFilingTests: XCTestCase {
         XCTAssertEqual(ReferenceLibrary.sources(all).count, 1, "one source, used in two places")
     }
 
-    /// A file moves off the place it was on, and that list closes its gap. Its bytes are untouched: the
-    /// row keeps its file name.
-    func testMovingAFiledFileRenumbersThePlaceItLeft() throws {
+    /// A filed file is copied as a second row naming the **same file**, at the end of the new place's
+    /// list, with its name and kind and no note. The first place keeps its row, and the two are one
+    /// source, so the source's screen shows both places. The bytes are a file test's
+    /// (`ReferenceLinkAttachmentTests`); this one never writes any.
+    func testAttachingAFiledFileAddsARowNamingTheSameFile() throws {
         let context = try makeContext()
         let drill = Exercise(name: "Spider")
         let target = song()
         context.insert(drill)
         context.insert(target)
-        let picture = ReferenceLink(attachmentFileName: "a.jpg", order: 0, kind: .image, exercise: drill)
+        let picture = ReferenceLink(title: "Chart", note: "Bar 3", attachmentFileName: "a.jpg", order: 0,
+                                    kind: .image, exercise: drill)
         context.insert(picture)
-        let after = try XCTUnwrap(ReferenceLinkStore.add(title: "After", url: "https://example.com/2",
-                                                         to: drill, in: context))
-        try context.save()
-        XCTAssertEqual(after.order, 1)
-
-        ReferenceLinkStore.attach(try fetchedSource(picture, in: context), to: target, in: context)
+        let before = try XCTUnwrap(ReferenceLinkStore.add(title: "Before", url: "https://example.com/2",
+                                                          to: target, in: context))
         try context.save()
 
-        XCTAssertNil(picture.exercise, "at most one owner")
-        XCTAssertIdentical(picture.song, target)
-        XCTAssertEqual(picture.attachmentFileName, "a.jpg")
-        XCTAssertEqual(drill.referencesInOrder.map(\.uid), [after.uid])
-        XCTAssertEqual(after.order, 0, "the place it left closes the gap")
-    }
-
-    /// The picker never offers a place a row is already on; if a stale sheet did, nothing moves.
-    func testMovingOntoItsOwnPlaceChangesNothing() throws {
-        let context = try makeContext()
-        let drill = Exercise(name: "Spider")
-        context.insert(drill)
-        let picture = ReferenceLink(attachmentFileName: "a.jpg", order: 0, kind: .image, exercise: drill)
-        context.insert(picture)
-        ReferenceLinkStore.add(title: "After", url: "https://example.com/2", to: drill, in: context)
+        let copy = try XCTUnwrap(ReferenceLinkStore.attach(try fetchedSource(picture, in: context),
+                                                           to: target, in: context))
         try context.save()
 
-        ReferenceLinkStore.attach(try fetchedSource(picture, in: context), to: drill, in: context)
-
-        XCTAssertEqual(drill.referencesInOrder.map(\.order), [0, 1])
-        XCTAssertEqual(drill.referencesInOrder.first?.uid, picture.uid)
+        XCTAssertNotEqual(copy.uid, picture.uid)
+        XCTAssertIdentical(copy.song, target)
+        XCTAssertEqual(copy.attachmentFileName, "a.jpg")
+        XCTAssertEqual(copy.kind, .image)
+        XCTAssertEqual(copy.title, "Chart")
+        XCTAssertEqual(copy.note, "", "each place keeps its own note")
+        XCTAssertEqual(target.referencesInOrder.map(\.uid), [before.uid, copy.uid])
+        XCTAssertEqual(copy.order, 1)
+        XCTAssertIdentical(picture.exercise, drill, "the first place keeps its row")
+        XCTAssertEqual(picture.note, "Bar 3")
+        let shared = try fetchedSource(picture, in: context)
+        XCTAssertEqual(Set(shared.rows.map(\.uid)), [picture.uid, copy.uid], "one source")
+        XCTAssertEqual(Set(shared.places.map(\.name)), ["Slow Bend", "Spider"], "used in two places")
     }
 
     func testAttachingASourceThatHasGoneWritesNothing() throws {
@@ -207,6 +230,24 @@ final class ReferenceFilingTests: XCTestCase {
         try context.save()
 
         XCTAssertEqual(drill.references.map(\.urlString), [lesson])
+        XCTAssertIdentical(onRoutine.routine, routine, "the routine keeps its own")
+    }
+
+    /// *Start another exercise from this*, on a file: the drill gets a row naming the same file.
+    func testANewDrillStartedFromAFiledFileGetsARowNamingTheSameFile() throws {
+        let context = try makeContext()
+        let routine = Routine(name: "Week 3")
+        context.insert(routine)
+        let onRoutine = ReferenceLink(attachmentFileName: "a.pdf", kind: .pdf, routine: routine)
+        context.insert(onRoutine)
+        try context.save()
+        var plan = makePlan(name: "Triad climb")
+        plan.startedFromReference = onRoutine.uid
+
+        let drill = try XCTUnwrap(plan.finalise(in: context))
+        try context.save()
+
+        XCTAssertEqual(drill.references.map(\.attachmentFileName), ["a.pdf"])
         XCTAssertIdentical(onRoutine.routine, routine, "the routine keeps its own")
     }
 

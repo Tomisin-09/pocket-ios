@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 /// **Attach to…** (ADR 0264 D5): the owner picker, from a source's screen. *Also attach to…* once the
-/// source is filed, and *Move to…* for a file that is (`ReferenceFiling`).
+/// source is filed (`ReferenceFiling`).
 ///
 /// A tap attaches and closes. The share extension's picker (D8) holds a choice for its *Save*, because
 /// the thing being saved doesn't exist yet; here it does, so the pick is the save. *Keep for later* isn't

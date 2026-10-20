@@ -13,8 +13,8 @@ protocol ReferenceLinkOwner: AnyObject {
     var references: [ReferenceLink] { get }
     /// A fresh, unsaved link already pointed at this owner. The caller fills in the rest.
     func makeReference() -> ReferenceLink
-    /// Hang an existing row on this owner: the move half of attaching (ADR 0264 D5). Only
-    /// `ReferenceLinkStore.attach` calls it, after unfiling the row, so it has at most one owner.
+    /// Hang an existing row on this owner: attaching a row kept for later (ADR 0264 D5). Only
+    /// `ReferenceLinkStore.attach` calls it, and only on a row with no owner, so it has at most one.
     func hold(_ link: ReferenceLink)
     /// What the References section calls this owner in its footer, in the player's words.
     var referenceOwnerNoun: String { get }
@@ -162,7 +162,7 @@ enum ReferenceLinkStore {
         for link in links {
             others.removeAll { $0.uid == link.uid }
             if unsaved.contains(link.uid) {
-                deleteRow(link, in: context, fileManager)
+                deleteRows([link], in: context, fileManager)
                 continue
             }
             switch ReferenceRemoval.decide(for: link, among: others) {
@@ -170,7 +170,7 @@ enum ReferenceLinkStore {
                 // Not handed back to `others`: a row kept for later is never somewhere else.
                 unfile(link)
             case .delete:
-                // Only ever a link: a file always goes to *Not filed*, so there are no bytes here.
+                // The row only. A file's bytes stay: the row filed elsewhere names the same file.
                 context.delete(link)
             }
         }
@@ -185,15 +185,15 @@ enum ReferenceLinkStore {
                        _ fileManager: FileManager = .default) {
         let owners = source.rows.compactMap(\.owner)
         let gone = Set(source.rows.map(\.uid))
-        for row in source.rows { deleteRow(row, in: context, fileManager) }
+        deleteRows(source.rows, in: context, fileManager)
         for owner in owners {
             ReferenceLink.renumber(owner.references.filter { !gone.contains($0.uid) })
         }
     }
 
     /// Keep `link` for later (D1): no owner, so it lives in *Not filed*. Its `order` means nothing
-    /// without an owner's list, so it goes back to zero. Also the first half of a move (`attach`).
-    static func unfile(_ link: ReferenceLink) {
+    /// without an owner's list, so it goes back to zero.
+    private static func unfile(_ link: ReferenceLink) {
         link.exercise = nil
         link.song = nil
         link.loop = nil
@@ -201,16 +201,25 @@ enum ReferenceLinkStore {
         link.order = 0
     }
 
-    /// One row and its file. **An attachment's bytes go with its row**: space comes back when the
-    /// player deletes the file, not the next time they visit Settings. The file's delete is swallowed,
-    /// as `SongDeletion`'s is: a row the player asked to delete must go whether or not its file could be
-    /// reached, and what is left behind is what `ReferenceAttachmentStore.orphanedFiles` and *Reclaim
-    /// space* (ADR 0182) are for.
-    private static func deleteRow(_ link: ReferenceLink, in context: ModelContext, _ fileManager: FileManager) {
-        if link.isAttachment {
-            try? ReferenceAttachmentStore.delete(fileName: link.attachmentFileName, fileManager)
+    /// Rows and their files. **An attachment's bytes go with its last row**: space comes back when the
+    /// player deletes the file, not the next time they visit Settings. A file attached in two places is
+    /// one file named by two rows (D3), so it stays while any row not being deleted names it.
+    ///
+    /// When the store can't be read to check, the bytes stay: a file nobody names is what
+    /// `ReferenceAttachmentStore.orphanedFiles` and *Reclaim space* (ADR 0182) clear, while a file
+    /// deleted from under another place can't be put back. The file's delete is swallowed, as
+    /// `SongDeletion`'s is: a row the player asked to delete must go whether or not its file could be
+    /// reached.
+    private static func deleteRows(_ rows: [ReferenceLink], in context: ModelContext, _ fileManager: FileManager) {
+        let gone = Set(rows.map(\.uid))
+        let files = Set(rows.filter(\.isAttachment).map(\.attachmentFileName))
+        if !files.isEmpty, let all = try? context.fetch(FetchDescriptor<ReferenceLink>()) {
+            let stillNamed = Set(all.filter { !gone.contains($0.uid) }.map(\.attachmentFileName))
+            for file in files where !stillNamed.contains(file) {
+                try? ReferenceAttachmentStore.delete(fileName: file, fileManager)
+            }
         }
-        context.delete(link)
+        for row in rows { context.delete(row) }
     }
 }
 
@@ -219,17 +228,16 @@ enum ReferenceLinkStore {
 enum ReferenceRemoval: Equatable {
     /// The source is used nowhere else: the row moves to *Not filed*, note and file intact.
     case unfile
-    /// The same link is filed somewhere else: this use goes, and its note with it. The source stays in
-    /// the library through its other places.
+    /// The same link or file is filed somewhere else: this use goes, and its note with it. The source
+    /// stays in the library through its other places, and a file's bytes stay with them.
     case delete
 
-    /// `others` is every other row in the library. A file is its own source (D3), so it always moves to
-    /// *Not filed*: its bytes are never deleted from an owner's section. Only a row that is **filed**
-    /// counts as somewhere else; one kept for later is not a place.
+    /// `others` is every other row in the library. The same source is the same `sourceKey` (D3): one
+    /// address, or one file on disk. Only a row that is **filed** counts as somewhere else; one kept
+    /// for later is not a place.
     static func decide(for link: ReferenceLink, among others: [ReferenceLink]) -> ReferenceRemoval {
-        guard !link.isAttachment, !link.urlString.isEmpty else { return .unfile }
         let usedElsewhere = others.contains { other in
-            other.uid != link.uid && other.isFiled && !other.isAttachment && other.urlString == link.urlString
+            other.uid != link.uid && other.isFiled && other.sourceKey == link.sourceKey
         }
         return usedElsewhere ? .delete : .unfile
     }
