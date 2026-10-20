@@ -1,6 +1,8 @@
 # ADR 0264 — References: a library in the Toolkit, and sharing into Red Moon
 
-- **Status:** Accepted, not built. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
+- **Status:** Accepted. **Slice 1 built** 2026-10-20 on `pocket-378-keep-references` (D1, D2's
+  delete rules, D7), with ADR 0263's free line on the same branch. Slices 2 to 4 are not built. See
+  §Build notes. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
   (canvas *Red Moon References*). The two questions it first left open were settled the same day,
   with the recommended answers (D11, D12). It lands **before 1.4**, all four slices including the
   share extension. Tomisin: *"we're in no rush to launch, I'd rather we have it in place before we
@@ -246,6 +248,28 @@ Slices 1 to 3 need no new target and no signing work. Slice 4 waits on D10's sig
 Tomisin's work in the developer portal and can be done at any time before it, alongside the App Store
 Connect setup 1.4 already needs (0256 Consequences). 1.4's sandbox pass then covers the extension on a
 device as well.
+
+## Build notes — Slice 1 (2026-10-20, `pocket-378-keep-references`)
+
+- **Built:** the four inverses nullify; `ReferenceLink.isFiled`; `PracticeArchive.unfiledReferences`,
+  newest first, with its files staged; and restore landing those rows with no owner, skipping a uid
+  the library already has, outside `rowCount`. The toast line waits for slice 2, as the build order
+  says.
+- **Tests:** the three cascade tests in `ReferenceLinkTests` are now nullify tests, and `isFiled` is
+  checked on all four owners. `UnfiledReferenceArchiveTests` has 12. Nine are on uninserted models.
+  Three are on an in-memory store, for the three lines that touch one: the export's fetch, the
+  restore's existing keys, and its insert.
+- **Mutants:** 19, in three batches with no two on one line, and every one failed a test. Five were
+  caught only by tests added after the first checkpoint: `isFiled` without its song or loop clause,
+  and the three store lines. The checkpoint commit's tests let all five through.
+- **The store check (D2), on the simulator.** Main's build (`b62a752`) wrote a store, and main's code
+  added a reference to a drill, a song, one of its loops and a routine. This branch's build was
+  installed over it and opened it. It was the same store: its oldest history transaction predates
+  the launch. The app ran for 30 seconds with no crash. Deleting the drill, the song (and with it
+  the loop) and the routine through this branch's model left all four rows on disk with every
+  owner key null. **D2 names a device check, and that has not been done.**
+- **A side effect, as D2 intends:** a temporary session (ADR 0243) replaced by the next Start now
+  leaves any references on it not filed, where it used to delete them.
 
 ## Alternatives rejected
 

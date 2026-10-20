@@ -271,6 +271,9 @@ final class ReferenceLinkTests: XCTestCase {
     func testAReferenceIsFiledWhileAnyOwnerHoldsIt() {
         XCTAssertFalse(ReferenceLink().isFiled)
         XCTAssertTrue(ReferenceLink(exercise: Exercise(name: "Spider")).isFiled)
+        XCTAssertTrue(ReferenceLink(song: makeSong("Slow Bend")).isFiled)
+        XCTAssertTrue(ReferenceLink(loop: Loop(name: "Verse riff", start: 0.1, end: 0.2, speed: 1.0, repeats: 4))
+            .isFiled)
         XCTAssertTrue(ReferenceLink(routine: Routine(name: "Week 3")).isFiled)
     }
 
