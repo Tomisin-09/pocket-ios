@@ -570,6 +570,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **The share-sheet tests wait for the sheet to fill in, not just for it to open.** The Export tests
+  that send Binta failed now and then on CI with *the share sheet opened, but not on the file
+  expected*, and passed on retry. The file was right. The sheet's frame is the app's and is up in
+  about three seconds, and it had 30 seconds. What fills it is drawn by a system service out of
+  process. That usually takes two seconds, but took 11 and 16 on two runs in seven, and it had 10. CI's
+  screen recording shows the screen dimmed and empty, then the sheet arriving with *Binta* on it after
+  the test had given up. Both waits now get the 30 seconds, through one `assertShareSheetOpens` in
+  `UITestCase` that the routine-send test shares. If it fails, it now says whether the sheet never
+  filled in or filled in on something else, and what it said.
 - **The UI tests run beside the required check, not inside it** (ADR 0255). `Lint · Build · Test` now
   runs the unit tests only, and a second job, `UI tests`, runs the new `PocketUI` plan on its own
   runner. The second job is not required, so a PR can merge in about the time the build and unit

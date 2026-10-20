@@ -9,9 +9,6 @@ import XCTest
 /// playing the song, sent by *Tester*, and opens it on the receive door as a tapped file arrives.
 final class RoutineSendUITests: UITestCase {
 
-    /// The share sheet runs out of process: about two seconds on a warm simulator, longer on a cold one.
-    private let shareSheetTimeout: TimeInterval = 30
-
     /// The preview names who sent it and the song coming with it; **Add** lands both, and the loop block
     /// reads as its loop rather than as a placeholder.
     @MainActor
@@ -47,12 +44,8 @@ final class RoutineSendUITests: UITestCase {
         XCTAssertEqual(include.value as? String, "1", "Include the songs isn't on by default")
 
         screen.buttons["Send…"].tap()
-        let sheet = app.otherElements["ActivityListView"]
-        XCTAssertTrue(sheet.waitForExistence(timeout: shareSheetTimeout), "Send… didn't open the share sheet")
-        // A file URL's sheet names it without its extension: the pack is named for the routine.
-        let named = sheet.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Pack routine"))
-        XCTAssertTrue(named.firstMatch.waitForExistence(timeout: Self.uiTimeout),
-                      "the share sheet opened, but not on the routine's pack")
+        // The pack is named for the routine.
+        assertShareSheetOpens(showing: NSPredicate(format: "label == %@", "Pack routine"), in: app)
     }
 
     // MARK: - Steps

@@ -129,6 +129,37 @@ class UITestCase: XCTestCase {
         return destination.exists
     }
 
+    // MARK: - The share sheet (ADR 0236)
+
+    /// The suite's other long wait, for the same reason: the work is genuinely variable, and it isn't
+    /// ours. `ActivityListView` is the app's own frame for the sheet and is up within about three
+    /// seconds. What fills it (the file's name, the activities) is drawn by a system service out of
+    /// process, and that is the slow part: about two seconds as a rule on CI, but 11 and 16 s on two
+    /// runs in seven (#364, #367), the screen dimmed and the sheet empty, then right. It had 10 s.
+    static let shareSheetTimeout: TimeInterval = 30
+
+    /// The share sheet is up, and something in it is labelled as `name` describes: the file the export
+    /// staged, as the sheet's header names it. A file URL's sheet names it without its extension.
+    ///
+    /// The tree is the witness, not a screenshot. If it fails, it says which of two things happened: the
+    /// sheet never filled in, or it filled in on something else, and then what it said instead.
+    @MainActor
+    func assertShareSheetOpens(showing name: NSPredicate, in app: XCUIApplication,
+                               file: StaticString = #filePath, line: UInt = #line) {
+        let sheet = app.otherElements["ActivityListView"]
+        XCTAssertTrue(sheet.waitForExistence(timeout: Self.shareSheetTimeout),
+                      "nothing opened the share sheet", file: file, line: line)
+        let named = sheet.descendants(matching: .any).matching(name).firstMatch
+        if named.waitForExistence(timeout: Self.shareSheetTimeout) { return }
+
+        let said = sheet.descendants(matching: .any).allElementsBoundByIndex
+            .map { $0.label }.filter { !$0.isEmpty }
+        XCTFail(said.isEmpty
+                ? "the share sheet opened but never filled in within \(Int(Self.shareSheetTimeout))s"
+                : "the share sheet opened, but not on the file expected (\(name.predicateFormat)): it says \(said)",
+                file: file, line: line)
+    }
+
     // MARK: - The Practice hub (ADR 0257)
 
     /// Open one of Practice's libraries from the hub, by its shelf's **All N ›** link.
