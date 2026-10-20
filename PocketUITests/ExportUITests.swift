@@ -11,10 +11,6 @@ import XCTest
 /// date in it is the seed's, and the seed's date is yesterday's.
 final class ExportUITests: UITestCase {
 
-    /// The share sheet waits on a system service that runs out of process before it appears: about two
-    /// seconds on a warm simulator, and past `uiTimeout` on a cold one.
-    private let shareSheetTimeout: TimeInterval = 30
-
     /// Hold the seeded take in the Journal, then **Export take…**, and the share sheet opens on a file.
     @MainActor
     func testATakeInTheJournalExportsFromItsHoldMenu() throws {
@@ -285,16 +281,5 @@ final class ExportUITests: UITestCase {
         XCTAssertTrue(take.waitForExistence(timeout: Self.uiTimeout), "no seeded take in the Journal")
         XCTAssertTrue(scrollIntoView(take, in: app), "the seeded take was not reachable")
         return take
-    }
-
-    /// The share sheet is up, and something in it is labelled as `name` describes: the file the
-    /// export staged, as the sheet's header names it.
-    @MainActor
-    private func assertShareSheetOpens(showing name: NSPredicate, in app: XCUIApplication) {
-        let sheet = app.otherElements["ActivityListView"]
-        XCTAssertTrue(sheet.waitForExistence(timeout: shareSheetTimeout), "the export did not open the share sheet")
-        let named = sheet.descendants(matching: .any).matching(name).firstMatch
-        XCTAssertTrue(named.waitForExistence(timeout: Self.uiTimeout),
-                      "the share sheet opened, but not on the file expected (\(name.predicateFormat))")
     }
 }
