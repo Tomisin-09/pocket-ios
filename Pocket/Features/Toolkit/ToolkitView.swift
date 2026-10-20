@@ -27,25 +27,21 @@ struct ToolkitView: View {
     /// The tuner's instrument, which is what its row states. Bound to `Instrument.default`, never a
     /// literal, so an unset key reads the same here as on the tuner itself.
     @AppStorage(AppSettings.Key.tunerInstrument) private var tunerInstrumentRaw = Instrument.default.rawValue
-    /// For the locks on the three things you make (ADR 0256 D2). Each of those screens gates itself.
-    @Environment(PlanStore.self) private var plan: PlanStore?
 
     var body: some View {
         ScrollView {
             VStack(spacing: 10) {
                 // One list, `ToolkitSection`, which the Home tile beside Toolkit offers too (ADR 0235 D6).
+                // Every row is free (ADR 0263 D1), so none draws a lock.
                 ForEach(ToolkitSection.allCases) { section in
-                    let locked = section.planDoor != nil && plan.showsPlanLocks
                     NavigationLink { ToolkitDestination(section: section) } label: {
                         ToolkitSectionRow(icon: section.info.icon,
                                           title: section.info.title,
                                           subtitle: section.info.subtitle,
-                                          trailing: trailing(for: section),
-                                          locked: locked)
+                                          trailing: trailing(for: section))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(spokenLabel(for: section))
-                    .planLockedValue(locked)
                 }
             }
             .padding(20)
@@ -94,9 +90,6 @@ struct ToolkitSectionRow: View {
     let title: String
     let subtitle: String
     let trailing: String
-    /// Opens onto the plan's wall (ADR 0256 D3). The count stays beside the lock: to a lapsed player,
-    /// "12 saved" is the news that nothing went (D4).
-    var locked = false
 
     var body: some View {
         HStack(spacing: 14) {
@@ -117,7 +110,6 @@ struct ToolkitSectionRow: View {
             Text(trailing)
                 .font(.futura(.footnote, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
-            if locked { PlanLockBadge() }
             Image(systemName: "chevron.right")
                 .font(.futura(.footnote, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)

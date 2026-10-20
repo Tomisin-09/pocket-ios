@@ -67,10 +67,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   the neck lights it. A piece with muted notes, opened on an older build, shows those notes unnamed.
 - **Red Moon has one plan: £1 a month, or £15 once** (ADR 0256), and the monthly starts with a
   free week the first time you take it. Your songs are free for good:
-  import them, play them, slow them down and keep your loops and markers, and the Metronome, the
-  Tuner, the Glossary and Help & FAQs are free too. The plan is for practising: drills, routines,
-  Today's session, the loop trainer, Train your ear, Improvise, Watch it on the neck, the Journal,
-  and My chords, My progressions and My tabs. A door behind the plan wears a small lock; tap it
+  import them, play them, slow them down and keep your loops and markers. The Metronome, the
+  Journal and Practice log, and everything in the Toolkit (My chords, My progressions, My tabs, the
+  Tuner, the Glossary and Help & FAQs) are free too (ADR 0263). The plan is for practising: drills,
+  routines, Today's session, the loop trainer, Train your ear, Improvise and Watch it on the neck. A
+  door behind the plan wears a small lock; tap it
   and the screen explains what the plan is, then opens where you were going once you've paid. We'll
   never raise the price, and nothing you can do today will ever move behind a higher one. If you
   stop paying nothing is deleted, and Settings ▸ Your data always exports everything. Settings

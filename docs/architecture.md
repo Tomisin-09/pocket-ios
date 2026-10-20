@@ -47,7 +47,7 @@
 │              MusicKit (browse) is PLANNED-ONLY and not shipped — no MusicKit import,
 │              no MPMediaLibrary, no NSAppleMusicUsageDescription
 │ Monetization — one plan (ADR 0256): `…plan.monthly` (£1/$1, auto-renewing, a free week as its intro
-│              offer) or `…plan.payonce` (£15/$15, non-consumable), both family-shareable. Playing is free; practising and the Journal are the plan.
+│              offer) or `…plan.payonce` (£15/$15, non-consumable), neither family-shareable (ADR 0259). Playing and keeping are free, the Journal and the Toolkit included (ADR 0263); practising is the plan.
 │              `PlanStore` (Core/Plan, StoreKit 2) reads `currentEntitlements`, listens to `Transaction.updates`
 │              and refreshes on every return to the foreground (a plain expiry mints no transaction). Pure
 │              rules in `PlanAccess`. Gated screens wrap their own bodies in `PlanGated` (Features/Plan), so

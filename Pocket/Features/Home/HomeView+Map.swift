@@ -119,18 +119,16 @@ extension HomeView {
     /// The **Journal** space (ADR 0100) — the read-only practice-history destination that aggregates
     /// notes + takes across loops and exercises, in its own warm **gold** identity
     /// (`PocketColor.journal`), a fifth home hue kept clear of the teal · plum · terracotta triad and
-    /// the indigo reference hub.
+    /// the indigo reference hub. Free, so it draws no lock (ADR 0263 D1).
     private var journalTile: some View {
         NavigationLink { JournalTabView() } label: {
             HomeTile(icon: "book.closed.fill", title: "Journal",
                      tint: PocketColor.journal,
                      cardWash: PocketColor.journalCardWash,
-                     circleWash: PocketColor.journalCircleWash,
-                     locked: plan.showsPlanLocks)
+                     circleWash: PocketColor.journalCircleWash)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Journal, your notes and practice takes")
-        .planLockedValue(plan.showsPlanLocks)
     }
 
     // MARK: - Learn
@@ -175,19 +173,16 @@ extension HomeView {
     /// tool's Toolkit row, so the tile and the row say the same thing (ADR 0197 D2).
     private var homeToolTile: some View {
         let tool = AppSettings.resolvedHomeTool(storedValue: homeToolRaw)
-        // Locked only while it opens one of the three things you make (ADR 0256 D2).
-        let locked = tool.planDoor != nil && plan.showsPlanLocks
+        // No lock: every Toolkit tool is free (ADR 0263 D1).
         return NavigationLink { ToolkitDestination(section: tool) } label: {
             HomeTile(icon: tool.info.icon, title: tool.info.title,
                      tint: PocketColor.toolkit,
                      cardWash: PocketColor.toolkitCardWash,
                      circleWash: PocketColor.toolkitCircleWash,
-                     caption: AppSettings.homeToolCaption(chosen: homeToolChosen),
-                     locked: locked)
+                     caption: AppSettings.homeToolCaption(chosen: homeToolChosen))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(tool.info.spoken)
-        .planLockedValue(locked)
         .accessibilityIdentifier("home.toolTile")
         // A bare picker, as Jump back in's: a menu draws no heading over it, so it names nothing on screen.
         .contextMenu {

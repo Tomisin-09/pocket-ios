@@ -73,16 +73,16 @@ enum PlanAccess: String, Equatable, Sendable {
     }
 }
 
-/// A screen behind the plan (ADR 0256 D2). The case names the wall's title, so a player who tapped
-/// *Train your ear* reads that at the top, not a generic "Upgrade".
+/// A screen behind the plan (ADR 0256 D2, as amended by ADR 0263). The case names the wall's title, so
+/// a player who tapped *Train your ear* reads that at the top, not a generic "Upgrade".
 ///
-/// **Only the gated side is listed.** A free screen has no gate and so no door. The free line itself
-/// is pinned by `PlanAccessTests`, against the Toolkit's sections, which are the one place free and
-/// gated sit side by side in a single list.
+/// **Only the gated side is listed**, and only practising is on it: a feature that plays or keeps is
+/// free (0263 D2), so the Journal, the Practice log and the whole Toolkit have no door. A free screen
+/// has no gate. `PlanAccessTests` pins this list exactly, so adding or removing a door is a deliberate
+/// edit there too.
 enum PlanDoor: String, CaseIterable, Sendable {
     case practice
     case todaysSession
-    case practiceLog
     case loopTrainer
     case earTraining
     case watchOnNeck
@@ -90,17 +90,12 @@ enum PlanDoor: String, CaseIterable, Sendable {
     case drill
     case newDrill
     case routine
-    case journal
-    case myChords
-    case myProgressions
-    case myTabs
 
     /// The wall's navigation title: the name the player tapped, as the app spells it there.
     var title: String {
         switch self {
         case .practice: "Practice"
         case .todaysSession: "Today's session"
-        case .practiceLog: "Practice log"
         case .loopTrainer: "Practice now"
         case .earTraining: "Train your ear"
         case .watchOnNeck: "Watch it on the neck"
@@ -108,10 +103,6 @@ enum PlanDoor: String, CaseIterable, Sendable {
         case .drill: "Exercise"
         case .newDrill: "New exercise"
         case .routine: "Routine"
-        case .journal: "Journal"
-        case .myChords: "My chords"
-        case .myProgressions: "My progressions"
-        case .myTabs: "My tabs"
         }
     }
 }
@@ -191,8 +182,9 @@ enum PlanCountdown {
     }
 }
 
-/// The wall's words (ADR 0256 D3, D4, D8). Prices come in as the products' `displayPrice`, never as
-/// literals, so the copy can't disagree with the price sheet in any storefront.
+/// The wall's words (ADR 0256 D3, D4, D8; the sentence as ADR 0263 D4 rewrote it). Prices come in as
+/// the products' `displayPrice`, never as literals, so the copy can't disagree with the price sheet in
+/// any storefront.
 enum PlanWallCopy {
     static func headline(returning: Bool) -> String {
         returning ? "Everything you made is still here." : "Practising is part of the plan."
@@ -200,9 +192,9 @@ enum PlanWallCopy {
 
     static func explanation(returning: Bool) -> String {
         returning
-            ? "Your drills, routines and Journal are just as you left them. They open again with the plan."
-            : "Your songs, loops and markers are free for good. The plan is for practising them: drills, "
-                + "routines, Today's session, the loop trainer and your Journal."
+            ? "Your drills and routines are just as you left them. They open again with the plan."
+            : "Your songs, loops, Journal and Toolkit are free for good. The plan is for practising: drills, "
+                + "routines, Today's session and the loop trainer."
     }
 
     /// The promise's first line (D8), in the player's own currency.

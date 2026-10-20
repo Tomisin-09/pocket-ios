@@ -7,6 +7,11 @@
 - **Amended by:** ADR 0259 (2026-10-18) — **D6** is reversed: Family Sharing is **off** for both
   products. D5's paragraph on family-shared Pay once, the App Store Connect list's "Family Sharing on
   for both" and the sandbox pass's family-shared purchase go with it. Everything else stands.
+  **ADR 0263** (2026-10-20) — **D2**: the Journal, the Practice log and the Toolkit's My chords, My
+  progressions and My tabs are free, and the rule becomes *a feature that plays or keeps is free; a
+  feature that practises is the plan*. **D3**: the Journal tile and the Toolkit's rows draw no lock,
+  and the wall's sentence changes. **D9**: the free-path UI test opens the Journal and My chords.
+  D8's promise, and the rest, stand.
 - **Supersedes:** ADR 0237 — **D1** (the app is free, with no in-app purchase) and **D7** (Settings
   loses its plan row): Red Moon has one plan again (D1 here), and Settings shows it (D10). **D3**'s
   promise that nothing free may ever move behind a price is replaced, before anyone held the free
@@ -84,6 +89,10 @@ The two options are called **monthly** and **Pay once**. Not *Lifetime*, which r
 lifetime?", and not *Own it*, because Red Moon sells control, not ownership.
 
 ### D2 — Playing is free; practising is the plan
+
+> **Amended by 0263 (2026-10-20):** the Journal, the Practice log and the Toolkit's three *My* rows
+> moved to the free side before anything was sold, and the rule below became *a feature that plays or
+> keeps is free; a feature that practises is the plan*. What follows is the line as it was drawn.
 
 **Free, for good:**
 

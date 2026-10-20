@@ -75,8 +75,8 @@ struct YourPlanSettingsView: View {
     private var statusLine: String {
         switch access {
         case .none:
-            "Your songs, loops and markers, the Metronome and the Tuner are free for good. The plan is for "
-                + "practising: drills, routines, Today's session, the loop trainer and your Journal."
+            "Your songs and loops, the Metronome, your Journal and the Toolkit are free for good. The plan is "
+                + "for practising: drills, routines, Today's session and the loop trainer."
         case .monthly:
             PlanWallCopy.monthlyStatus(
                 endsOn: plan?.monthlyPeriodEnd?.formatted(.dateTime.weekday(.wide).day().month(.wide)),
