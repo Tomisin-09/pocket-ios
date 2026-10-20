@@ -258,9 +258,15 @@ The marks go into the tab the usual way, the same however you tapped them: *7b9*
 */10*. Turn on
 `Chords` to place more than one note: one per string, as in My chords, so a double-stop, a triad and a
 full chord are the same taps. The neck names what you placed, a chord such as *Am/C* or, for two notes
-that aren't one, the interval between them. By ear has the twelve note names and, under them, the kinds
-of chord grouped by how many notes they hold. The kind you pick stays picked, and tapping a name saves it
-and moves on, so a solo named by ear is one tap a note. A note placed on the neck reads on By ear as the
+that aren't one, the interval between them. A **muted note**, struck with no pitch, is the ✕ beside each
+string's letter, which stays in view at any fret: tap it and the note is muted on that string, and the
+sheet moves on as it does for a fret. With `Chords` on, ✕s go into the chord, so a chuck across several
+strings, or a chord strummed through a muted string, is the same taps. A muted note has no marks and no
+way in. The tab writes it *x*, and the line of names ✕. In My chords a ✕ means a string you don't play;
+here a string you don't play just has nothing on it. By ear has the twelve note names and, under them,
+`Muted` for a click you heard but can't place, then the kinds of chord grouped by how many notes they
+hold. The kind you pick stays picked, and tapping a name or `Muted` saves it and moves on, so a solo
+named by ear is one tap a note. A note placed on the neck reads on By ear as the
 note it sounds, and naming it something else there asks first. ↶ and ↷, at the right of the row over
 the neck and in the same place beside `What did you hear?` on By ear, undo and redo any change made on
 this visit: a fret, a mark, a name, a note taken out or tapped in, a new tuning. With a keyboard, ⌘Z,
@@ -281,8 +287,8 @@ that snag, so one written in either place shows in both. `Next snag` goes to the
 
 `Done` writes the names onto the saved piece. Under `Saved on this loop` it reads as one line (*98 notes
 · Guitar · Standard · 6 unnamed*), then its tab in rows that fit the screen, each saying which notes it
-holds. A name you gave by ear, or a chord, sits above the strings where it falls; an unnamed note is a
-dot, and four or more unnamed in a row are counted. A piece named only by ear is its names, in fours.
+holds. A name you gave by ear, or a chord, sits above the strings where it falls, and so does the *x* of
+a note you named `Muted` by ear; an unnamed note is a dot, and four or more unnamed in a row are counted. A piece named only by ear is its names, in fours.
 `Snags on this piece` lists where you got stuck, with your lines, and tapping one opens `Name the notes`
 on that note. The piece is listed in the journal under `Pieces`. Saving another pass keeps this one as
 an earlier version.

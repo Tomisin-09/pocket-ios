@@ -139,6 +139,10 @@ One branch, in commits that each stand alone:
 4. **By ear's *Muted***.
 5. The manual, the changelog and the project docs.
 
+**As built:** 2 to 4 are one commit. The new `muted:` value on `.fretted` makes every pattern match on it
+a compile error until it's rewritten, and those matches are spread across the sheet, the neck editor and
+the tab writer as well as the rules. So the label can't build without the views that match on it.
+
 ## Consequences
 
 - **Pure and unit-tested:** encode and decode of every shape of muted answer, the older-build reading

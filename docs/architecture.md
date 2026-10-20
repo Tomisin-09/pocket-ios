@@ -656,7 +656,9 @@ each note you hear, then name them. The pieces, from the audio up:
   the map's tab sheet, *Saved on this loop*, the Journal's piece row) ask one gate,
   `PieceNeck.canWatch`: a tap on the neck and `LoopModeAccess.Facts.audioResolves`.
 - **Storage.** `Loop.transcriptionData: Data?` (additive, Optional) holds a `PieceTranscription`: taps
-  with optional `PieceLabel`s (pitch class · notes on the neck · chord root + `ChordQuality` suffix),
+  with optional `PieceLabel`s (pitch class · notes on the neck · chord root + `ChordQuality` suffix ·
+  since ADR 0262 a dead note, `muted`, with the strings when placed, and an optional `muted` key of
+  strings beside fretted notes, which an older build drops),
   plus the open strings any fret was placed against and, since ADR 0229, `changedAt` (set by a save or a
   changing *Name the notes*; the Journal's piece rows sit on that day under *All* (under *Pieces* they're
   grouped by song, ADR 0232 D20), and `PieceDateBackfill` dates older
