@@ -271,9 +271,12 @@ struct RoutineLibraryView: View {
     ///
     /// The `uid` is captured by value, so the closure needs nothing from a model object that is
     /// about to be deleted.
+    ///
+    /// Its references stay, not filed (ADR 0264 D2), and the toast's second line says so.
     private func deletion(for routine: Routine) -> PocketRowDelete {
         let uid = routine.uid
-        return PocketRowDelete(id: uid, name: displayName(routine)) { [practiceReminder] in
+        let kept = ReferenceLibrary.keptLine(references: routine.references.count)
+        return PocketRowDelete(id: uid, name: displayName(routine), detail: kept) { [practiceReminder] in
             practiceReminder.cancel(routineUID: uid)
             context.delete(routine)
         }

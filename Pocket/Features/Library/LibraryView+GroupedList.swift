@@ -71,8 +71,11 @@ extension LibraryView {
     /// path in the app and it was a bare `context.delete`, so every song ever deleted left its
     /// full-size copy behind forever. Safe against Undo: the coordinator defers `perform` until the
     /// window closes, so an undone delete never reaches this at all.
+    ///
+    /// Its references and its loops' stay, not filed (ADR 0264 D2), and the toast says so.
     func deletion(for song: Song) -> PocketRowDelete {
-        PocketRowDelete(id: song.persistentModelID, name: displayName(song)) {
+        PocketRowDelete(id: song.persistentModelID, name: displayName(song),
+                        detail: ReferenceLibrary.keptLine(references: song.referencesLeftByDelete)) {
             SongDeletion.perform(song) { context.delete(song) }
         }
     }

@@ -6,13 +6,15 @@ import XCTest
 /// (`check-manual.py` C2) and the UI tests reach them by their spoken labels (ADR 0197 D2).
 final class ToolkitSectionTests: XCTestCase {
 
-    func testTheRowsAreInTheHubsOrderWithMyTabsAfterMyProgressions() {
+    /// References is a thing you keep, so it comes after My tabs and before the tools (ADR 0264 D4).
+    func testTheRowsAreInTheHubsOrderWithReferencesAfterMyTabs() {
         XCTAssertEqual(ToolkitSection.allCases.map(\.info.title),
-                       ["My chords", "My progressions", "My tabs", "Tuner", "Glossary", "Help & FAQs"])
+                       ["My chords", "My progressions", "My tabs", "References", "Tuner", "Glossary", "Help & FAQs"])
     }
 
     func testTheRowsThatWereThereSayWhatTheyAlwaysSaid() {
-        let said = ToolkitSection.allCases.filter { $0 != .myTabs }.map { [$0.info.icon, $0.info.subtitle] }
+        let said = ToolkitSection.allCases.filter { $0 != .myTabs && $0 != .references }
+            .map { [$0.info.icon, $0.info.subtitle] }
         XCTAssertEqual(said, [["square.grid.2x2", "Your saved voicings"],
                               ["list.bullet", "Progressions you've written"],
                               ["tuningfork", "Tune by ear or mic"],
@@ -29,10 +31,18 @@ final class ToolkitSectionTests: XCTestCase {
         XCTAssertEqual(ToolkitSection.myTabs.info.spoken, "My tabs, tabs you write on the neck")
     }
 
+    /// Not the books the mockup drew: the Toolkit's own Home tile is `books.vertical.fill`, and this row
+    /// can be the tile beside it.
+    func testReferences() {
+        XCTAssertEqual(ToolkitSection.references.info.icon, "bookmark")
+        XCTAssertEqual(ToolkitSection.references.info.subtitle, "Where you learned it")
+        XCTAssertEqual(ToolkitSection.references.info.spoken, "References, where you learned it")
+    }
+
     /// The raw values are what the Home tile's choice is stored as, so renaming a case must not move them.
     func testTheStoredNamesNeverChange() {
         XCTAssertEqual(ToolkitSection.allCases.map(\.rawValue),
-                       ["myChords", "myProgressions", "myTabs", "tuner", "glossary", "help"])
+                       ["myChords", "myProgressions", "myTabs", "references", "tuner", "glossary", "help"])
     }
 
     func testEverySpokenLabelStartsWithItsTitle() {

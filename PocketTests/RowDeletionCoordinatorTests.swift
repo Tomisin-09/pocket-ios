@@ -21,6 +21,16 @@ final class RowDeletionCoordinatorTests: XCTestCase {
         XCTAssertTrue(coordinator.isPending(id), "the row should leave the list immediately")
         XCTAssertFalse(deleted, "the delete waits for the undo window to close")
         XCTAssertEqual(coordinator.toast?.message, "Deleted Spider")
+        XCTAssertNil(coordinator.toast?.detail, "a delete that keeps nothing says nothing more")
+    }
+
+    /// A delete that keeps something says what it kept, under the name (ADR 0264 D2).
+    func testTheToastCarriesTheDeletesSecondLine() {
+        let coordinator = RowDeletionCoordinator()
+        coordinator.request(PocketRowDelete(id: UUID(), name: "CAGED shape 2",
+                                            detail: "Its 2 references stay in References") {})
+        XCTAssertEqual(coordinator.toast?.message, "Deleted CAGED shape 2")
+        XCTAssertEqual(coordinator.toast?.detail, "Its 2 references stay in References")
     }
 
     func testUndoRestoresTheRowAndNeverDeletes() {

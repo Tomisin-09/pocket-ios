@@ -118,7 +118,7 @@ final class ReferenceLinkAttachmentTests: XCTestCase {
         XCTAssertTrue(ReferenceAttachmentStore.filesOnDisk(files).isEmpty)
     }
 
-    /// Deleting a picture through the store takes its bytes with it, and space coming back when you
+    /// Deleting a picture from References takes its bytes with it, and space coming back when you
     /// delete something is the difference the player actually notices. (Deleting the picture's owner
     /// no longer deletes the row at all since ADR 0264 D2, so it strands no file either.)
     func testDeletingAnImageReferenceRemovesItsFile() throws {
@@ -132,11 +132,33 @@ final class ReferenceLinkAttachmentTests: XCTestCase {
         let leaf = link.attachmentFileName
         try context.save()
 
-        ReferenceLinkStore.delete([link], from: exercise, in: context, files)
+        let source = try XCTUnwrap(ReferenceLibrary.source(containing: link.uid, in: [link]))
+        ReferenceLinkStore.delete(source, in: context, files)
         try context.save()
 
         XCTAssertFalse(ReferenceAttachmentStore.exists(fileName: leaf, files))
         XCTAssertTrue(try context.fetch(FetchDescriptor<ReferenceLink>()).isEmpty)
+    }
+
+    /// **Removing** a picture from its owner never deletes the bytes (ADR 0264 D11): a file is its own
+    /// source, so it moves to *Not filed* with them.
+    func testRemovingAnImageReferenceKeepsItsFileAndUnfilesIt() throws {
+        let files = TempContainerFileManager()
+        defer { files.destroy() }
+        let context = try makeContext()
+        let exercise = Exercise(name: "Spider")
+        context.insert(exercise)
+
+        let link = try ReferenceLinkStore.addAttachment(try pngFixture(), to: exercise, in: context, files)
+        try context.save()
+
+        ReferenceLinkStore.remove([link], from: exercise, in: context, files)
+        try context.save()
+
+        XCTAssertTrue(ReferenceAttachmentStore.exists(fileName: link.attachmentFileName, files))
+        XCTAssertEqual(try context.fetch(FetchDescriptor<ReferenceLink>()).map(\.uid), [link.uid])
+        XCTAssertFalse(link.isFiled)
+        XCTAssertTrue(exercise.references.isEmpty)
     }
 
     /// Correcting a picture writes the words and nothing else. `updateImage` takes no URL at all, so

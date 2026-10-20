@@ -290,8 +290,12 @@ struct ExerciseLibraryView: View {
         PocketRowFavorite(isFavorite: exercise.isFavorite) { exercise.isFavorite.toggle() }
     }
 
+    /// Its references stay, not filed (ADR 0264 D2), and the toast says so.
     private func deletion(for exercise: Exercise) -> PocketRowDelete {
-        PocketRowDelete(id: exercise.uid, name: displayName(exercise)) { context.delete(exercise) }
+        PocketRowDelete(id: exercise.uid, name: displayName(exercise),
+                        detail: ReferenceLibrary.keptLine(references: exercise.references.count)) {
+            context.delete(exercise)
+        }
     }
 
     /// One library row: it pushes the drill's run screen.

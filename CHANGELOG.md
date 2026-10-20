@@ -56,6 +56,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **References, in the Toolkit** (ADR 0264). Every lesson, tab page, picture and file you keep, wherever
+  it's filed, in one list with a search: **Not filed** first, then **Everything**, newest first. A link
+  used on two drills is one row, and says where it's used in each place's colour. **＋** keeps a link,
+  a photo or a file for later, so a lesson found today no longer needs its drill made first. Tap one
+  to open it, read what you took from it, see every place it's used with that place's note, or delete
+  it for good, which asks first and names every place it comes off. The Toolkit row says how many are
+  waiting to be filed. Free, like the rest of the Toolkit.
 - **Name the notes can name a muted note** (ADR 0262). A dead note, struck with no pitch, like the
   chuck in a strummed part or the scratch between funk stabs, used to stay a `?` and count as left
   to name. On Fret & string, each string now has a ✕ beside its letter. Tap it and the note is
@@ -68,8 +75,8 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Red Moon has one plan: £1 a month, or £15 once** (ADR 0256), and the monthly starts with a
   free week the first time you take it. Your songs are free for good:
   import them, play them, slow them down and keep your loops and markers. The Metronome, the
-  Journal and Practice log, and everything in the Toolkit (My chords, My progressions, My tabs, the
-  Tuner, the Glossary and Help & FAQs) are free too (ADR 0263). The plan is for practising: drills,
+  Journal and Practice log, and everything in the Toolkit (My chords, My progressions, My tabs,
+  References, the Tuner, the Glossary and Help & FAQs) are free too (ADR 0263). The plan is for practising: drills,
   routines, Today's session, the loop trainer, Train your ear, Improvise and Watch it on the neck. A
   door behind the plan wears a small lock; tap it
   and the screen explains what the plan is, then opens where you were going once you've paid. We'll
@@ -331,6 +338,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **On an exercise, song, loop or routine, a reference is removed, not deleted** (ADR 0264 D11). Hold
+  or swipe one and choose **Remove**. If nothing else uses it, it moves to *Not filed* in References
+  with its note and file; if the same link is on something else too, only this use goes. Deleting
+  for good happens in References.
+- **Deleting an exercise, song, loop or routine keeps its references, and says so** (ADR 0264 D2).
+  They move to *Not filed* in References with their notes and files, and backups carry them. The undo
+  toast reads *Its 2 references stay in References* under the name.
 - **The metronome's top-right button saves the tempo as a drill** (ADR 0260). The 🔖 **Save as
   exercise** is there whenever the metronome is open, not only while the automator is armed, and
   it takes the tempo at the moment you tap it, so a ramp can keep climbing while you name the drill.
@@ -571,10 +585,6 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
-- **Deleting an exercise, song, loop or routine keeps its references** (ADR 0264 D2, the first
-  References slice). They stay with their notes and files, not filed anywhere, and backups carry
-  them. Nothing shows them yet: the References library in the Toolkit is the next slice, and its
-  entry under *Added* will say so.
 - **The share-sheet tests wait for the sheet to fill in, not just for it to open.** The Export tests
   that send Binta failed now and then on CI with *the share sheet opened, but not on the file
   expected*, and passed on retry. The file was right. The sheet's frame is the app's and is up in

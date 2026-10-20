@@ -10,6 +10,7 @@ struct ToolkitDestination: View {
         case .myChords: MyChordsView()
         case .myProgressions: MyProgressionsView()
         case .myTabs: MyTabsView()
+        case .references: ReferencesLibraryView()
         case .tuner: TunerView()
         case .glossary: GlossaryView()
         case .help: FAQView()

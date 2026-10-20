@@ -84,7 +84,9 @@ marker grammar in [README.md](README.md).
 | `reference/tuner` | `screen` | `tools-and-journal` | Toolkit ▸ Tuner, microphone allowed | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 | `reference/watch-on-neck` | `screen` | `practice` | map seed, Slow Bend ▸ Verse riff ▸ Edit loop ▸ Watch it on the neck, stopped |  |
 | `references/editor` | `screen` | `references` | seeded library, an exercise detail sheet, Add a link tapped |  |
+| `references/library` | `screen` | `references` | seeded library, Toolkit ▸ References, three references not filed and four filed |  |
 | `references/section` | `panel` | `references` | seeded library, an exercise detail sheet ▸ References, with two links and one picture saved, one link carrying a note |  |
+| `references/source` | `screen` | `references` | seeded library, Toolkit ▸ References, a link not filed tapped |  |
 | `routines/block-done` | `screen` | `routines` | seeded library, a routine mid-session, a block just finished |  |
 | `routines/block-record` | `detail` | `routines` | seeded library, Practice ▸ Routines ▸ Morning Routine, first block opened |  |
 | `routines/editor` | `screen` | `routines` | Practice ▸ Routines ▸ + , three blocks added |  |
@@ -115,7 +117,7 @@ marker grammar in [README.md](README.md).
 | `terms/mastery-info` | `detail` | `terms` | seeded library, Binta, loop "Chords" edit sheet, ⓘ tapped on Mastery |  |
 | `toolkit/faq` | `screen` | `toolkit` | Toolkit ▸ Help & FAQs, one question expanded |  |
 | `toolkit/glossary` | `screen` | `toolkit` | Toolkit ▸ Glossary, no search |  |
-| `toolkit/hub` | `screen` | `toolkit` | Toolkit open, some saved chords present |  |
+| `toolkit/hub` | `screen` | `toolkit` | Toolkit open, some saved chords present, one reference not filed |  |
 | `toolkit/my-chords` | `screen` | `toolkit` | Toolkit ▸ My chords, three or more saved chords |  |
 | `toolkit/my-tabs` | `screen` | `toolkit` | the tab the writer figure wrote, Done, back on My tabs |  |
 | `toolkit/tab-read` | `screen` | `toolkit` | the written tab, tapped in My tabs |  |
@@ -123,4 +125,4 @@ marker grammar in [README.md](README.md).
 | `toolkit/tune-settings` | `screen` | `toolkit` | Toolkit ▸ Tuner, Tune settings tapped, top of the sheet |  |
 | `toolkit/tuner` | `screen` | `toolkit` | Toolkit ▸ Tuner, microphone allowed, a string sounding | iPhone — the tuner needs a microphone hearing a real string; a simulator has none and photographs an idle gauge |
 
-107 shots across 18 pages.
+109 shots across 18 pages.

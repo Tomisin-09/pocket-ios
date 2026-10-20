@@ -24,6 +24,8 @@ struct ToolkitView: View {
     @Query private var savedProgressions: [SavedProgression]
     /// And for My tabs (ADR 0235).
     @Query private var writtenTabs: [WrittenTab]
+    /// Every reference row, for References' *N to file* or count of sources (ADR 0264 D4).
+    @Query private var references: [ReferenceLink]
     /// The tuner's instrument, which is what its row states. Bound to `Instrument.default`, never a
     /// literal, so an unset key reads the same here as on the tuner itself.
     @AppStorage(AppSettings.Key.tunerInstrument) private var tunerInstrumentRaw = Instrument.default.rawValue
@@ -62,6 +64,7 @@ struct ToolkitView: View {
         case .myChords: savedCountLabel(savedChords.count)
         case .myProgressions: savedCountLabel(savedProgressions.count)
         case .myTabs: savedCountLabel(writtenTabs.count)
+        case .references: ReferenceLibrary.toolkitValue(ReferenceLibrary.sources(references))
         // Said "Free" until ADR 0237, which was the app stating a tier; the tuner states its own.
         case .tuner: AppSettings.resolvedInstrument(storedValue: tunerInstrumentRaw).displayName
         case .glossary: "\(GlossaryTerm.all.count)"
@@ -69,10 +72,10 @@ struct ToolkitView: View {
         }
     }
 
-    /// The three things you make say their count; the tools say what they are.
+    /// The things you make and keep say their count; the tools say what they are.
     private func spokenLabel(for section: ToolkitSection) -> String {
         switch section {
-        case .myChords, .myProgressions, .myTabs: "\(section.info.title), \(trailing(for: section))"
+        case .myChords, .myProgressions, .myTabs, .references: "\(section.info.title), \(trailing(for: section))"
         case .tuner, .glossary, .help: section.info.spoken
         }
     }
@@ -129,6 +132,7 @@ struct ToolkitSectionRow: View {
 
 #Preview("Toolkit") {
     NavigationStack { ToolkitView() }
-        .modelContainer(for: [SavedChord.self, SavedProgression.self, WrittenTab.self], inMemory: true)
+        .modelContainer(for: [SavedChord.self, SavedProgression.self, WrittenTab.self, ReferenceLink.self],
+                        inMemory: true)
         .preferredColorScheme(.dark)
 }
