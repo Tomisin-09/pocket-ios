@@ -2,6 +2,13 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-16 (`pocket-267-positioning-and-references`)
+- **Amended by:** ADR 0264 (2026-10-20, not built yet) — **The model**: a reference has *at most one*
+  owner, and one with none is *kept for later* in a References library in the Toolkit. The four owner
+  inverses become `.nullify`, so deleting an owner keeps its references. **Consequences**' "deleting
+  an exercise now deletes its links silently" is reversed, and phase 2's *OrphanSweep is the primary
+  collector* stops holding once that lands. The 2026-08-19 revision's *Delete* on an owner's row
+  becomes *Remove*, which sends a source used nowhere else to *Not filed* (0264 D11). http/https only,
+  no fetching or thumbnails, the `PasteButton` and nothing on run screens all stand.
 - **Relates to:** ADR 0001 (local files — the material is the player's own), ADR 0066 R4
   (typed optional owners over a generic `ownerKind + ownerID`), ADR 0070 (never grades the
   player), ADR 0077 (the run screen carries no authoring or review), ADR 0151 (a take
