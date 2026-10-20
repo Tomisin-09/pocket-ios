@@ -136,7 +136,8 @@ final class UnfiledReferenceArchiveTests: XCTestCase {
         try context.save()
 
         let archive = snapshot(try ArchiveSource.everything(in: context))
-        XCTAssertEqual(Set(archive.unfiledReferences?.map(\.title) ?? []), ["Left behind", "Kept for later"])
+        let unfiled = try XCTUnwrap(archive.unfiledReferences)
+        XCTAssertEqual(Set(unfiled.map(\.title)), ["Left behind", "Kept for later"])
         XCTAssertEqual(archive.exercises.map(\.name), ["Spider"])
         XCTAssertEqual(archive.exercises.first?.references.map(\.title), ["Filed"])
     }

@@ -109,12 +109,15 @@ extension PracticeArchive {
     /// are the bulk of a library and an export of them can be hundreds of megabytes; five capped
     /// JPEGs per owner are not that, and a second switch for them would be a choice offered for no
     /// reason (`docs/design-brief.md` §3.5).
+    ///
+    /// One typed statement per source, not one `+` chain: with a fourth term the chain was more than
+    /// CI's Xcode 16 type-checker would solve in time, while Xcode 26 built it without complaint.
     var referenceAttachmentFileNames: [String] {
         var seen = Set<String>()
-        let nested = songs.flatMap { $0.references + $0.loops.flatMap(\.references) }
-            + exercises.flatMap(\.references)
-            + routines.flatMap(\.references)
-            + (unfiledReferences ?? [])
+        var nested: [ReferenceLinkRecord] = songs.flatMap { $0.references + $0.loops.flatMap(\.references) }
+        nested += exercises.flatMap(\.references)
+        nested += routines.flatMap(\.references)
+        nested += unfiledReferences ?? []
         return nested.compactMap(\.attachmentFileName)
             .filter { !$0.isEmpty && seen.insert($0).inserted }
     }
