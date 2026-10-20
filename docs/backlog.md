@@ -9,9 +9,9 @@ closes off an alternative) when it's time to act.
 Decided with Tomisin from a nine-screen mockup, and **not built**. A References row in the Toolkit
 keeps sources that aren't filed yet. Deleting an owner keeps its references, and *Save to Red Moon*
 appears in the iOS share sheet. ADR 0264 has the build order: three slices with no new target, then the
-share extension, whose signing and App Group work it shares with the parked widget below. **Settle
-first:** O1 (what removing a reference from one place does) before slice 2, and O2 (shared plain text
-with a link in it) before slice 4. Free under ADR 0263.
+share extension, whose signing and App Group work it shares with the parked widget below. Its two
+open questions were settled the same day (D11: *Remove* sends a source used nowhere else to *Not
+filed*; D12: shared text gives up its first link). Free under ADR 0263.
 
 ## Chord flourishes past one note (parked 2026-10-04, ADR 0252)
 

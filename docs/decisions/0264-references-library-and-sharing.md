@@ -1,16 +1,19 @@
 # ADR 0264 — References: a library in the Toolkit, and sharing into Red Moon
 
 - **Status:** Accepted, not built. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
-  (canvas *Red Moon References*). Two questions stay open (*Open questions*) and are settled before
-  the slices they touch. It lands **after 1.4**: the library first, then the share extension.
+  (canvas *Red Moon References*). The two questions it first left open were settled the same day,
+  with the recommended answers (D11, D12). It lands **after 1.4**: the library first, then the share
+  extension.
 - **Date:** 2026-10-20
 - **Amends:** ADR 0167 — **The model**: an owner is now *at most one* of the four, not exactly one,
   and a reference with none is *kept for later* (D1). The owners' inverses become `.nullify`, not
   `.cascade`, so deleting an owner keeps its references (D2). With that, **Consequences**' "deleting an
   exercise now deletes its links silently" is reversed, and phase 2's note that `OrphanSweep` is the
   *primary* collector of reference files no longer holds: it is a backstop again, as it is for songs
-  and takes. Everything else in 0167 stands: http and https only, no title fetching and no
-  thumbnails, the `PasteButton`, and nothing on the run screens.
+  and takes. **The 2026-08-19 revision's hold menu**: *Delete* on an owner's reference becomes
+  *Remove*, which sends a source used nowhere else to *Not filed* instead of deleting it (D11).
+  Everything else in 0167 stands: http and https only, no title fetching and no thumbnails, the
+  `PasteButton`, and nothing on the run screens.
 - **Relates to:** 0263 (keeping is free, so References is free: D6 here) · 0151 (a take outlives its
   loop, the same delete-rule change, and its precedent for migration cost) · 0186 D9 (the widget's
   snapshot, the pattern D9 here follows) · 0183 D1 (a snapshot holds only what it renders) · 0235 D2
@@ -198,27 +201,45 @@ unchanged:
 The App Group and the signing work are done once and shared with the parked widget (0186), which
 needs both. This ADR doesn't unpark the widget.
 
+### D11 — Removing a reference from one place
+
+Today a hold on an owner's reference offers *Edit link* and *Delete*, and *Delete* is immediate
+(0167, 2026-08-19 revision). With a library, **Delete becomes Remove** on an owner's References
+section. Tomisin took the recommendation.
+
+- **If the source is used nowhere else, it moves to *Not filed***, with its note and file. Nothing
+  is lost, so nothing needs confirming.
+- **If the same link is used elsewhere, this use's row goes**, and its note with it. The source
+  stays in the library through its other places.
+- **A file is its own source** (D3), so removing one always sends it to *Not filed*. Its bytes are
+  never deleted from an owner's section.
+- **The library is the one place a source is deleted for good** (D5), and it confirms first. That is
+  D2's rule seen from the other side: nothing the player kept leaves Red Moon as a side effect.
+- **The routine editor keeps its contract** (0167 phase 1, constraint 3): a Remove there waits for
+  *Save*, and *Cancel* undoes it.
+
+### D12 — Shared text with a link in it
+
+Some apps share a sentence with a link in it, not a bare URL. The extension also accepts **plain
+text**. It takes the first http or https link in it, found on the device by `NSDataDetector`, which
+makes no request. Text with no such link isn't saved: the extension says *"There's no link in this to
+save."* and offers only *Cancel*. The link then goes through the store's own rule (0167: a scheme-less
+link reads as https, anything else is refused).
+
+The title is whatever the sharing app hands over with the item, if it hands one over. It is never
+fetched (0167), and the player can always type one. Tomisin took the recommendation.
+
 ## Build order
 
 After 1.4, one branch at a time:
 
 1. **Keep references:** D1, D2 (the delete rules, the toast, the device store check), and D7.
-2. **The library:** D3, D4, D5 (without *Attach to…*), and D6's rules as pure, unit-tested logic.
+2. **The library:** D3, D4, D5 (without *Attach to…*), D6's rules as pure, unit-tested logic, and
+   D11.
 3. **Attach to…** and *Start an exercise from this*.
-4. **The share extension:** D8, D9, D10.
+4. **The share extension:** D8, D9, D10 and D12.
 
 Slices 1 to 3 need no new target and no signing work.
-
-## Open questions
-
-- **O1 — What removing a reference from one place does.** Today a hold on an owner's reference
-  offers *Delete*, which deletes it at once (0167). With a library, the recommendation is **Remove**:
-  the reference stops being used there, and if that was the last place it was used, it moves to *Not
-  filed* instead of going. *References* would then be the one place a source is deleted for good,
-  which matches D2. Settle before slice 2.
-- **O2 — Plain text with a link in it.** Some apps share a sentence and a link, not a URL. The
-  recommendation is to accept text, take the first http or https link in it, and refuse text with
-  none. Settle before slice 4.
 
 ## Alternatives rejected
 
