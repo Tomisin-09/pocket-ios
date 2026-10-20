@@ -46,11 +46,12 @@ enum ArchiveRestoreFiles {
 
     /// One directory's worth.
     ///
-    /// **An existing file is never overwritten.** A leaf name is `<uid>.<ext>` in both directories, so
-    /// a name already on disk is the same row's own audio — either from an earlier restore of this
-    /// archive or because the row was never gone. Overwriting would spend the time to reproduce a file
-    /// that is already there, and would do it by truncating the real one first: the failure mode is a
-    /// take destroyed by the operation that was restoring it.
+    /// **An existing file is never overwritten.** A leaf name is `<uid>.<ext>` in both directories,
+    /// minted once when the file was first stored, so a name already on disk is the same file — from an
+    /// earlier restore of this archive, because its row was never gone, or because another row names it
+    /// (a reference file attached in two places is one file, ADR 0264 D3). Overwriting would spend the
+    /// time to reproduce a file that is already there, and would do it by truncating the real one first:
+    /// the failure mode is a take destroyed by the operation that was restoring it.
     private nonisolated static func write(_ entries: [String: ZipEntry],
                                           into directory: URL?,
                                           from zip: ZipArchiveReader,

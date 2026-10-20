@@ -44,6 +44,18 @@ extension ReferenceLink {
         return nil
     }
 
+    /// **Which source this row belongs to** (ADR 0264 D3): its file's name on disk for a file, else its
+    /// address. A file attached in a second place is a second row naming the same file
+    /// (`ReferenceLinkStore.attach`), so the two group as two rows of one link do. Every file written
+    /// before that is named for its own row's uid, so no two of them share a key.
+    ///
+    /// A row with no address and no file can only be one written by hand or by a newer build; it stands
+    /// alone, by its uid, rather than merging with every other such row.
+    var sourceKey: String {
+        if isAttachment { return "file:\(attachmentFileName)" }
+        return urlString.isEmpty ? "row:\(uid.uuidString)" : "link:\(urlString)"
+    }
+
     /// An owner with no name reads as the libraries read it, *Untitled*.
     private static func placeName(_ name: String) -> String {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -51,14 +63,14 @@ extension ReferenceLink {
     }
 }
 
-/// **One source in the References library** (ADR 0264 D3): every row that points at the same link, or a
-/// single file. A source used in two places is two rows, one per owner, each with its own note, and the
-/// library draws them as one.
+/// **One source in the References library** (ADR 0264 D3): every row that points at the same link, or
+/// at the same file. A source used in two places is two rows, one per owner, each with its own note, and
+/// the library draws them as one.
 ///
 /// Reads `ReferenceLink` rows and writes nothing, so a test can hand it uninserted models.
 struct ReferenceSource: Identifiable {
-    /// The link's address as the store normalised it, or the row's uid for a file. Files never group:
-    /// a picture has no address to match another on.
+    /// The link's address as the store normalised it, or the file's name on disk for a file: a file
+    /// attached in two places is one file, named by both rows (`ReferenceLink.sourceKey`).
     let id: String
     /// Every row of this source, newest first. Never empty.
     let rows: [ReferenceLink]
@@ -111,10 +123,9 @@ struct ReferenceSource: Identifiable {
 /// what these return and decides nothing itself.
 enum ReferenceLibrary {
 
-    /// Every row grouped into sources, newest first. A row with no address and no file can only be one
-    /// written by hand or by a newer build; it stands alone rather than merging with every other such row.
+    /// Every row grouped into sources, newest first, by `ReferenceLink.sourceKey`.
     static func sources(_ links: [ReferenceLink]) -> [ReferenceSource] {
-        let grouped = Dictionary(grouping: links, by: groupKey)
+        let grouped = Dictionary(grouping: links, by: \.sourceKey)
         return grouped.map { key, rows in ReferenceSource(id: key, rows: rows.sorted(by: isNewer)) }
             .sorted { lhs, rhs in
                 lhs.newest.dateAdded == rhs.newest.dateAdded ? lhs.id < rhs.id
@@ -125,8 +136,8 @@ enum ReferenceLibrary {
     /// The source a row belongs to: what the source screen shows, opened from that row.
     static func source(containing uid: UUID, in links: [ReferenceLink]) -> ReferenceSource? {
         guard let anchor = links.first(where: { $0.uid == uid }) else { return nil }
-        let key = groupKey(anchor)
-        return ReferenceSource(id: key, rows: links.filter { groupKey($0) == key }.sorted(by: isNewer))
+        let key = anchor.sourceKey
+        return ReferenceSource(id: key, rows: links.filter { $0.sourceKey == key }.sorted(by: isNewer))
     }
 
     /// The library's two sections (D4): *Not filed*, then *Everything*, which lists the rest. A source
@@ -206,10 +217,6 @@ enum ReferenceLibrary {
     }
 
     // MARK: - Helpers
-
-    private static func groupKey(_ link: ReferenceLink) -> String {
-        link.isAttachment || link.urlString.isEmpty ? "file:\(link.uid.uuidString)" : "link:\(link.urlString)"
-    }
 
     /// Newest first; the uid breaks a tie so the order never changes between reads.
     private static func isNewer(_ lhs: ReferenceLink, _ rhs: ReferenceLink) -> Bool {

@@ -46,6 +46,6 @@ final class ReferenceAttachRulesTests: XCTestCase {
         XCTAssertEqual(ReferenceAttachRules.footer(for: .lapsed),
                        "Your drills and routines are just as you left them. They open again with the plan.")
         XCTAssertNil(ReferenceAttachRules.footer(for: .onPlan))
-        XCTAssertEqual(ReferenceAttachRules.lockedCaption, "Opens with the plan")
+        XCTAssertEqual(ReferenceAttachRules.lockedCaption, "opens with the plan")
     }
 }

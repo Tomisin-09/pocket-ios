@@ -50,7 +50,8 @@ extension NewExercisePlan {
     /// The **single insert path** for an interactively created exercise — everything that has to
     /// happen between "the player tapped Create" and "the drill exists": build it through the
     /// factory above, encode the authored payload, bind the command to that payload's rhythm
-    /// (ADR 0121), insert, attach the picked songs (ADR 0111), and report the creation (ADR 0120).
+    /// (ADR 0121), insert, attach the picked songs (ADR 0111) and the reference it was started from
+    /// (ADR 0264 D5), and report the creation (ADR 0120).
     ///
     /// A **freeform** block's payload (ADR 0136) is the plan's `notes`, and it rides through the
     /// factory rather than being encoded here: it is a plain attribute, so unlike `linkedSongs` it can
@@ -108,6 +109,11 @@ extension NewExercisePlan {
         // Songs attach only *after* the insert — assigning a relationship on a model that isn't in a
         // context yet doesn't stick (the same ordering constraint `UnitDuplication` documents).
         if !songs.isEmpty { exercise.linkedSongs = songs }
+        // The reference it was started from (ADR 0264 D5), also after the insert: hanging a row on the
+        // drill is a relationship too.
+        if let startedFromReference {
+            ReferenceLinkStore.attach(sourceContaining: startedFromReference, to: exercise, in: context)
+        }
         return exercise
     }
 }

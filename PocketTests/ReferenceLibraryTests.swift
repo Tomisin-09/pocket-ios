@@ -44,9 +44,17 @@ final class ReferenceLibraryTests: XCTestCase {
         XCTAssertEqual(triads.places.map(\.name), ["Morning routine", "Triad climb"])
     }
 
-    /// A picture has no address to match on, so two files are two sources whatever they're called —
-    /// even file rows that somehow carry one address (a newer build's rows).
-    func testFilesNeverGroup() {
+    /// A file attached in two places is two rows naming one file on disk, and the library draws it once.
+    /// Two files are two sources whatever they're called, even file rows that somehow carry one address
+    /// (a newer build's rows): a file is matched on the file, never on an address.
+    func testFilesGroupByTheFileTheyNameAndNothingElse() throws {
+        let first = file("Chart", added: 0, exercise: Exercise(name: "Triad climb"))
+        let second = file("Chart", added: 5)
+        second.attachmentFileName = first.attachmentFileName
+        let sources = ReferenceLibrary.sources([first, second])
+        XCTAssertEqual(sources.count, 1)
+        XCTAssertEqual(try XCTUnwrap(sources.first).rows.map(\.uid), [second.uid, first.uid])
+
         XCTAssertEqual(ReferenceLibrary.sources([file("Chart"), file("Chart")]).count, 2)
         let one = file("Chart")
         let two = file("Chart")

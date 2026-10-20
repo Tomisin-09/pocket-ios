@@ -43,14 +43,23 @@ final class ReferenceRemovalTests: XCTestCase {
         XCTAssertEqual(ReferenceRemoval.decide(for: link, among: [link]), .unfile)
     }
 
-    /// A file is its own source (D3), so its bytes are never deleted from an owner's section — even a
-    /// file row that somehow carries the same address as a link filed elsewhere (a newer build's row).
-    func testAFileIsAlwaysUnfiled() {
+    /// A file attached in two places is one file named by two rows (D3). Removing one use deletes that
+    /// row only; the bytes stay for the other (`ReferenceLinkAttachmentTests`).
+    func testAFileFiledSomewhereElseIsDeleted() {
+        let picture = ReferenceLink(attachmentFileName: "a.jpg", kind: .image, exercise: Exercise(name: "Spider"))
+        let elsewhere = ReferenceLink(attachmentFileName: "a.jpg", kind: .image, routine: Routine(name: "Week 3"))
+        XCTAssertEqual(ReferenceRemoval.decide(for: picture, among: [elsewhere]), .delete)
+    }
+
+    /// A different file, or a link filed elsewhere that happens to carry the file row's address (a newer
+    /// build's row), is not the same source: a file is matched on its file alone.
+    func testAFileUsedNowhereElseIsUnfiled() {
         let url = "https://example.com/a"
         let picture = ReferenceLink(urlString: url, attachmentFileName: "a.jpg", kind: .image,
                                     exercise: Exercise(name: "Spider"))
         let linkElsewhere = ReferenceLink(urlString: url, routine: Routine(name: "Week 3"))
-        XCTAssertEqual(ReferenceRemoval.decide(for: picture, among: [linkElsewhere]), .unfile)
+        let otherFile = ReferenceLink(attachmentFileName: "b.jpg", kind: .image, routine: Routine(name: "Week 3"))
+        XCTAssertEqual(ReferenceRemoval.decide(for: picture, among: [linkElsewhere, otherFile]), .unfile)
     }
 
     /// The other way round: a file elsewhere is not the same source as a link, whatever it carries.

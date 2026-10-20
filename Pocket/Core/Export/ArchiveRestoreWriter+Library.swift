@@ -298,6 +298,8 @@ extension ArchiveRestoreWriter {
     /// `<uid>.<ext>` in one flat directory. That is the *receive* door's problem: it mints uids (D1).
     /// A restore preserves them, so the leaf name is unchanged, and a name that collided would mean a
     /// uid that collided — which the owner's skip has already handled by not building this row at all.
+    /// Two rows naming one file are not a collision: they are one file attached in two places (ADR 0264
+    /// D3), written once because the names are gathered into a set (`referencedAttachmentNames`).
     ///
     /// D7's other half applies in full, and is `ArchiveRestoreFiles`': the row is written before the
     /// file, because ADR 0182's sweep defines an orphan as a file with no row and *Reclaim space* is a

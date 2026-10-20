@@ -168,7 +168,8 @@ that keep whole bars together.
 
 Every lesson, tab page, picture and file you have kept, wherever it is filed, with a search at the
 top. The ones you haven't filed yet come first, under **Not filed**, so a video saved before its drill
-existed is the first thing you see. **＋** keeps a new one for later. How it all works is in
+existed is the first thing you see. **＋** keeps a new one for later; open one and **Start an
+exercise from this** makes its drill, or **Attach to…** files it. How it all works is in
 [Where you learned it](references.md#the-references-library).
 
 ## Glossary

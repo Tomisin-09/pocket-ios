@@ -46,6 +46,10 @@ struct NewExercisePlan {
     /// adds in the run's Practice Settings, not something saving decides for them. `false` everywhere
     /// else, so a drill made in Practice keeps all three phases.
     var commandOnly = false
+    /// A row of the reference the drill is **started from** (ADR 0264 D5): *Start an exercise from
+    /// this*, on a source's screen. Filed onto the new drill after the insert, moved if it was kept for
+    /// later and copied if it is filed elsewhere (`ReferenceFiling`). `nil` everywhere else.
+    var startedFromReference: UUID?
 }
 
 /// Create a new exercise from within **Practice** (ADR 0046 / 0068 revised). Two steps: **pick a

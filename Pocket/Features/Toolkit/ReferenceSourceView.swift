@@ -2,8 +2,11 @@ import SwiftData
 import SwiftUI
 
 /// **One source** (ADR 0264 D5), opened from the References library: open it, read what you took from
-/// it, see where it's used, and delete it for good. *Attach to…* and *Start an exercise from this* are
-/// slice 3.
+/// it, see where it's used, file it somewhere, start a drill from it, and delete it for good.
+///
+/// **While it isn't filed, *Start an exercise from this* is the main action**, with *Attach to…* under
+/// it. Once it is, the two swap places and change their words: *Also attach to…* and *Start another
+/// exercise from this*, as drawn. What either does to the rows is `ReferenceFiling`'s.
 ///
 /// **It follows the row it was opened from**, not the link: a source is a group of rows by address
 /// (D3), and an edit can change the address. Recomputed from `@Query` on every read, so a change made
@@ -19,10 +22,13 @@ struct ReferenceSourceView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.openURL) private var openURL
     @Environment(\.dismiss) private var dismiss
+    @Environment(PlanStore.self) private var plan: PlanStore?
 
     @State private var editing: ReferenceLinkDraft?
     @State private var presenting: ReferenceAttachmentPresentation?
     @State private var confirmingDelete = false
+    @State private var attaching = false
+    @State private var startingExercise = false
 
     var body: some View {
         Group {
@@ -41,6 +47,11 @@ struct ReferenceSourceView: View {
             }
         }
         .referenceAttachmentViewing($presenting)
+        .sheet(isPresented: $attaching) { ReferenceAttachSheet(anchor: anchor) }
+        // New exercise, through the one insert path (ADR 0128), which files this source onto the drill
+        // and opens it. Behind the plan by the sheet's own gate (0256 D3), so a free player meets the
+        // wall there (D6).
+        .newExerciseFlow(isPresented: $startingExercise, startingFrom: anchor)
         .tint(PocketColor.toolkit)
     }
 
@@ -65,6 +76,7 @@ struct ReferenceSourceView: View {
             } footer: {
                 if source.distinctPlaces.count > 1 { Text("Each place keeps its own note.") }
             }
+            actions(source)
             Section {
                 Button(role: .destructive) { confirmingDelete = true } label: {
                     Text(ReferenceLibrary.deleteButtonTitle(places: source.distinctPlaces.count))
@@ -138,6 +150,63 @@ struct ReferenceSourceView: View {
         source.rows.filter(\.isFiled) + source.keptForLater
     }
 
+    // MARK: - File it, or start a drill from it
+
+    /// Not filed: *Start an exercise from this*, full width, with its caption, then *Attach to…*.
+    /// Filed: *Also attach to…*, then *Start another exercise from this*.
+    @ViewBuilder
+    private func actions(_ source: ReferenceSource) -> some View {
+        let start = ReferenceFiling.startTitle(for: source)
+        if !source.isFiled {
+            Section {
+                Button { startingExercise = true } label: {
+                    // White throughout, glyph and lock too: a List draws a row's label icon in the
+                    // screen's indigo, which on teal can't be read, and the grey badge can't either.
+                    HStack(spacing: 8) {
+                        Label(start, systemImage: "metronome")
+                        if plan.showsPlanLocks {
+                            Image(systemName: "lock.fill").font(.footnote.weight(.semibold)).accessibilityHidden(true)
+                        }
+                    }
+                    .font(.futura(.headline))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(PocketColor.practice)
+                .planLockedValue(plan.showsPlanLocks)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+            } footer: {
+                if let caption = ReferenceFiling.startCaption(for: source) {
+                    Text(caption)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            Section { attachButton(source) }
+        } else {
+            Section {
+                attachButton(source)
+                Button { startingExercise = true } label: {
+                    HStack(spacing: 8) {
+                        // Teal, glyph included: left alone the List draws the glyph in indigo.
+                        Label(start, systemImage: "metronome").foregroundStyle(PocketColor.practice)
+                        if plan.showsPlanLocks { PlanLockBadge() }
+                    }
+                }
+                .planLockedValue(plan.showsPlanLocks)
+            }
+        }
+    }
+
+    private func attachButton(_ source: ReferenceSource) -> some View {
+        Button { attaching = true } label: {
+            Label(ReferenceFiling.attachTitle(for: source), systemImage: "plus.circle")
+        }
+    }
+
     // MARK: - Edit
 
     /// Filed: a menu naming each place, since the note is that place's, or a button for one row. Filed
@@ -156,20 +225,11 @@ struct ReferenceSourceView: View {
         }
     }
 
-    /// The editor's save. A file is renamed, never re-pointed, and never groups (ADR 0167 phase 2, D3).
-    /// A link's name and address go to every row of its source, so it stays one source; the note goes to
-    /// the row being edited and no other.
+    /// The editor's save: the name to every row, the note to this one (`ReferenceLinkStore.edit`).
     private func commit(_ draft: ReferenceLinkDraft, title: String, url: String, note: String) {
         guard let row = draft.link else { return }
-        if row.isAttachment {
-            ReferenceLinkStore.updateAttachment(row, title: title, note: note)
-        } else {
-            let siblings = ReferenceLibrary.source(containing: row.uid, in: links)?.rows ?? [row]
-            guard ReferenceLinkStore.update(row, title: title, url: url, note: note) else { return }
-            for sibling in siblings where sibling.uid != row.uid {
-                ReferenceLinkStore.update(sibling, title: title, url: url, note: sibling.note)
-            }
-        }
+        let source = ReferenceLibrary.source(containing: row.uid, in: links)
+        guard ReferenceLinkStore.edit(row, of: source, title: title, url: url, note: note) else { return }
         try? context.save()
     }
 

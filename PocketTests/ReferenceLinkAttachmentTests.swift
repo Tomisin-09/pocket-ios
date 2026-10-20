@@ -271,3 +271,88 @@ extension ReferenceLinkAttachmentTests {
                        ReferenceLinkKind.markdown.capitalizedNoun)
     }
 }
+
+// MARK: - One file in two places (ADR 0264 D3, D5)
+
+extension ReferenceLinkAttachmentTests {
+
+    /// *Also attach to…* on a file adds a row naming the same file, so nothing more is written to disk.
+    /// **Remove** from one place then deletes that row only: the other place still names the file, so
+    /// its bytes stay.
+    func testRemovingOneOfTwoUsesOfAFileKeepsTheBytesForTheOther() throws {
+        let files = TempContainerFileManager()
+        defer { files.destroy() }
+        let context = try makeContext()
+        let shared = try fileInTwoPlaces(context, files)
+        XCTAssertEqual(ReferenceAttachmentStore.filesOnDisk(files), [shared.picture.attachmentFileName],
+                       "one file, however many places")
+
+        ReferenceLinkStore.remove([shared.picture], from: shared.drill, in: context, files)
+        try context.save()
+
+        XCTAssertTrue(ReferenceAttachmentStore.exists(fileName: shared.copy.attachmentFileName, files))
+        XCTAssertEqual(try context.fetch(FetchDescriptor<ReferenceLink>()).map(\.uid), [shared.copy.uid])
+        XCTAssertIdentical(shared.copy.routine, shared.routine)
+    }
+
+    /// **Delete from both places…** takes every row, and the file once nothing names it.
+    func testDeletingAFileUsedInTwoPlacesTakesTheFile() throws {
+        let files = TempContainerFileManager()
+        defer { files.destroy() }
+        let context = try makeContext()
+        let picture = try fileInTwoPlaces(context, files).picture
+        let source = try XCTUnwrap(ReferenceLibrary.source(containing: picture.uid,
+                                                           in: context.fetch(FetchDescriptor<ReferenceLink>())))
+        XCTAssertEqual(source.rows.count, 2)
+
+        ReferenceLinkStore.delete(source, in: context, files)
+        try context.save()
+
+        XCTAssertFalse(ReferenceAttachmentStore.exists(fileName: picture.attachmentFileName, files))
+        XCTAssertTrue(try context.fetch(FetchDescriptor<ReferenceLink>()).isEmpty)
+    }
+
+    /// A row deleted outright (one never saved, as the routine editor's Cancel leaves) takes its file
+    /// only when nothing else names it. Here a saved row still does, so the bytes stay.
+    func testDeletingARowOutrightLeavesAFileAnotherRowNames() throws {
+        let files = TempContainerFileManager()
+        defer { files.destroy() }
+        let context = try makeContext()
+        let drill = Exercise(name: "Spider")
+        let routine = Routine(name: "Week 3")
+        context.insert(drill)
+        context.insert(routine)
+        let picture = try ReferenceLinkStore.addAttachment(try pngFixture(), to: drill, in: context, files)
+        try context.save()
+        let source = try XCTUnwrap(ReferenceLibrary.source(containing: picture.uid, in: [picture]))
+        let unsaved = try XCTUnwrap(ReferenceLinkStore.attach(source, to: routine, in: context))
+
+        ReferenceLinkStore.remove([unsaved], from: routine, in: context, files)
+        try context.save()
+
+        XCTAssertTrue(ReferenceAttachmentStore.exists(fileName: picture.attachmentFileName, files))
+        XCTAssertEqual(try context.fetch(FetchDescriptor<ReferenceLink>()).map(\.uid), [picture.uid])
+    }
+
+    private struct SharedFile {
+        let drill: Exercise
+        let routine: Routine
+        let picture: ReferenceLink
+        let copy: ReferenceLink
+    }
+
+    /// A real picture on a drill, then attached to a routine through the source screen's store call.
+    private func fileInTwoPlaces(_ context: ModelContext, _ files: TempContainerFileManager) throws -> SharedFile {
+        let drill = Exercise(name: "Spider")
+        let routine = Routine(name: "Week 3")
+        context.insert(drill)
+        context.insert(routine)
+        let picture = try ReferenceLinkStore.addAttachment(try pngFixture(), to: drill, in: context, files)
+        try context.save()
+        let source = try XCTUnwrap(ReferenceLibrary.source(containing: picture.uid, in: [picture]))
+        let copy = try XCTUnwrap(ReferenceLinkStore.attach(source, to: routine, in: context))
+        try context.save()
+        XCTAssertEqual(copy.attachmentFileName, picture.attachmentFileName)
+        return SharedFile(drill: drill, routine: routine, picture: picture, copy: copy)
+    }
+}
