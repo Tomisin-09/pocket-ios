@@ -2,8 +2,9 @@
 
 - **Status:** Accepted, not built. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
   (canvas *Red Moon References*). The two questions it first left open were settled the same day,
-  with the recommended answers (D11, D12). It lands **after 1.4**: the library first, then the share
-  extension.
+  with the recommended answers (D11, D12). It lands **before 1.4**, all four slices including the
+  share extension. Tomisin: *"we're in no rush to launch, I'd rather we have it in place before we
+  launch."* The library comes first, then the share extension.
 - **Date:** 2026-10-20
 - **Amends:** ADR 0167 — **The model**: an owner is now *at most one* of the four, not exactly one,
   and a reference with none is *kept for later* (D1). The owners' inverses become `.nullify`, not
@@ -231,7 +232,7 @@ fetched (0167), and the player can always type one. Tomisin took the recommendat
 
 ## Build order
 
-After 1.4, one branch at a time:
+Before 1.4, one branch at a time, each merged on green before the next starts:
 
 1. **Keep references:** D1, D2 (the delete rules, the toast, the device store check), and D7.
 2. **The library:** D3, D4, D5 (without *Attach to…*), D6's rules as pure, unit-tested logic, and
@@ -239,7 +240,10 @@ After 1.4, one branch at a time:
 3. **Attach to…** and *Start an exercise from this*.
 4. **The share extension:** D8, D9, D10 and D12.
 
-Slices 1 to 3 need no new target and no signing work.
+Slices 1 to 3 need no new target and no signing work. Slice 4 waits on D10's signing step, which is
+Tomisin's work in the developer portal and can be done at any time before it, alongside the App Store
+Connect setup 1.4 already needs (0256 Consequences). 1.4's sandbox pass then covers the extension on a
+device as well.
 
 ## Alternatives rejected
 

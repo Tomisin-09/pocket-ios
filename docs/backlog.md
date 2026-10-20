@@ -4,15 +4,6 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
-## References library and sharing into Red Moon (decided 2026-10-20, ADR 0264): after 1.4
-
-Decided with Tomisin from a nine-screen mockup, and **not built**. A References row in the Toolkit
-keeps sources that aren't filed yet. Deleting an owner keeps its references, and *Save to Red Moon*
-appears in the iOS share sheet. ADR 0264 has the build order: three slices with no new target, then the
-share extension, whose signing and App Group work it shares with the parked widget below. Its two
-open questions were settled the same day (D11: *Remove* sends a source used nowhere else to *Not
-filed*; D12: shared text gives up its first link). Free under ADR 0263.
-
 ## Chord flourishes past one note (parked 2026-10-04, ADR 0252)
 
 ADR 0252 lets a hammer-on or pull-off in a chord move one note, the one on the string tapped, with the
