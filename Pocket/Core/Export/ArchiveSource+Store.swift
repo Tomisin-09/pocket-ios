@@ -15,9 +15,10 @@ extension ArchiveSource {
     /// Ten unsorted fetches rather than ten `@Query`s on the screen: an export is a one-shot read, and
     /// live queries would keep the whole library resident for as long as the Settings screen is open.
     ///
-    /// **Top-level types only.** Loops, markers, blocks, moments and links all arrive through their
-    /// owners, because that is how they are stored and how the archive nests them. `TakeNote` and
-    /// `RoutineItem` are not fetched here for the same reason.
+    /// **Top-level types only.** Loops, markers, blocks, moments and filed links all arrive through
+    /// their owners, because that is how they are stored and how the archive nests them. `TakeNote` and
+    /// `RoutineItem` are not fetched here for the same reason. References are the exception: one with
+    /// no owner has nowhere to arrive through (ADR 0264 D7).
     @MainActor
     static func everything(in context: ModelContext) throws -> ArchiveSource {
         var source = ArchiveSource()
@@ -34,6 +35,9 @@ extension ArchiveSource {
         source.customSkills = try context.fetch(FetchDescriptor<CustomSkill>())
         source.savedProgressions = try context.fetch(FetchDescriptor<SavedProgression>())
         source.writtenTabs = try context.fetch(FetchDescriptor<WrittenTab>())
+        // Every row, filtered in memory by the builder: never a `#Predicate` on an owner relationship
+        // (`docs/swiftdata-gotchas.md`). Only the unfiled ones are written from this list (ADR 0264 D7).
+        source.references = try context.fetch(FetchDescriptor<ReferenceLink>())
         // At most one, by design (ADR 0113) — but fetch rather than assume, so a store that somehow
         // holds two exports the first instead of trapping.
         source.profile = try context.fetch(FetchDescriptor<Profile>()).first

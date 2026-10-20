@@ -128,8 +128,8 @@ final class Routine {
     /// and it is the half of this feature nobody else models. Since ADR 0177 it is no longer the
     /// only prose a routine carries: `notes` says what the session is *for*, this says where it
     /// came *from*, and the two are deliberately separate fields.
-    /// **`.cascade` like `items`.** Additive (CoreData 134110 rule).
-    @Relationship(deleteRule: .cascade, inverse: \ReferenceLink.routine)
+    /// **`.nullify` since ADR 0264 D2**, unlike `items`: a course outlives its session. Additive (CoreData 134110 rule).
+    @Relationship(deleteRule: .nullify, inverse: \ReferenceLink.routine)
     var references: [ReferenceLink] = []
 
     init(name: String = "", dateAdded: Date = .now) {

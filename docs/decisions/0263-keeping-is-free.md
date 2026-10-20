@@ -3,7 +3,8 @@
 - **Status:** Accepted. Decided with Tomisin, 2026-10-20, while designing a References library for the
   Toolkit and a way to share into Red Moon from other apps. That feature has its own ADR, and it too
   lands before 1.4. This one moves the free line before anything is sold. Built on
-  `pocket-376-keeping-is-free`.
+  `pocket-376-keeping-is-free`, and merged with ADR 0264's first slice (`pocket-378-keep-references`),
+  at Tomisin's request: the free line goes in with the References work, not on its own.
 - **Date:** 2026-10-20
 - **Amends:** ADR 0256 — **D2**: the Journal, the Practice log and the Toolkit's My chords, My
   progressions and My tabs move to the free side, and the rule becomes *a feature that plays or keeps

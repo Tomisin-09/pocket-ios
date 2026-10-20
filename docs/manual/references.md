@@ -123,10 +123,9 @@ run screen is built to prevent. Read the source before you start or after you st
 exercise. Nothing is scanned, no text is recognised, nothing is uploaded, and no file ever leaves the
 device except in an export you ask for.
 
-**Deleting the thing deletes its references.** A reference belongs to what it explains, so removing
-an exercise, song, loop or routine removes the links and files hung off it. This is not how
-notes and takes behave — those outlive what they were written about, because they are records of
-*you* rather than of the material. See [Journal and Practice log](journal-and-practice-log.md).
+**Deleting the thing keeps its references.** Where you learned something outlives what you made from
+it, so removing an exercise, song, loop or routine leaves its links and files, with their notes, as
+notes and takes are left. See [Journal and Practice log](journal-and-practice-log.md).
 
 ## Next
 

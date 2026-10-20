@@ -118,9 +118,9 @@ final class ReferenceLinkAttachmentTests: XCTestCase {
         XCTAssertTrue(ReferenceAttachmentStore.filesOnDisk(files).isEmpty)
     }
 
-    /// Deleting a picture through the store takes its bytes with it. The cascade path cannot —
-    /// that is what the orphan sweep is for — but this path can, and space coming back when you
-    /// delete something is the difference the player actually notices.
+    /// Deleting a picture through the store takes its bytes with it, and space coming back when you
+    /// delete something is the difference the player actually notices. (Deleting the picture's owner
+    /// no longer deletes the row at all since ADR 0264 D2, so it strands no file either.)
     func testDeletingAnImageReferenceRemovesItsFile() throws {
         let files = TempContainerFileManager()
         defer { files.destroy() }

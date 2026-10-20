@@ -28,6 +28,9 @@ struct ArchiveSource {
     var savedProgressions: [SavedProgression] = []
     /// The tabs the player wrote on the neck (ADR 0235 D8).
     var writtenTabs: [WrittenTab] = []
+    /// Every reference row. Filed ones already arrive through their owners, so the builder writes only
+    /// the ones with no owner, kept for later (ADR 0264 D7).
+    var references: [ReferenceLink] = []
 }
 
 /// Turns the live store into a `PracticeArchive` (ADR 0181).
@@ -101,7 +104,8 @@ enum ArchiveBuilder {
                 .map(savedProgressionRecord),
             writtenTabs: source.writtenTabs
                 .sorted { ($0.createdAt, $0.uid.uuidString) < ($1.createdAt, $1.uid.uuidString) }
-                .map(writtenTabRecord)
+                .map(writtenTabRecord),
+            unfiledReferences: unfiledReferenceRecords(source.references)
         )
     }
 
@@ -235,6 +239,14 @@ enum ArchiveBuilder {
                                             speed: $0.speed,
                                             songDuration: $0.songDuration) }
         )
+    }
+
+    /// The references no owner holds (ADR 0264 D7), newest first as the library lists them, `uid`
+    /// breaking a tie. Without this they would be in no export at all, because every other reference
+    /// is written under its owner.
+    static func unfiledReferenceRecords(_ links: [ReferenceLink]) -> [ReferenceLinkRecord] {
+        referenceRecords(links.filter { !$0.isFiled })
+            .sorted { ($1.dateAdded, $0.uid.uuidString) < ($0.dateAdded, $1.uid.uuidString) }
     }
 
     /// Links in their authored order (ADR 0167), `uid` breaking a tie.

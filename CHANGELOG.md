@@ -571,6 +571,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **Deleting an exercise, song, loop or routine keeps its references** (ADR 0264 D2, the first
+  References slice). They stay with their notes and files, not filed anywhere, and backups carry
+  them. Nothing shows them yet: the References library in the Toolkit is the next slice, and its
+  entry under *Added* will say so.
 - **The share-sheet tests wait for the sheet to fill in, not just for it to open.** The Export tests
   that send Binta failed now and then on CI with *the share sheet opened, but not on the file
   expected*, and passed on retry. The file was right. The sheet's frame is the app's and is up in

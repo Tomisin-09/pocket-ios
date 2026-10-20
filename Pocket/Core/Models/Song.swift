@@ -144,10 +144,11 @@ final class Song {
     var linkedExercises: [Exercise] = []
 
     /// Where the player learned this song (ADR 0167) — a transcription, a tab page, a cover
-    /// breakdown. **`.cascade` like `loops`/`markers`, not `.nullify` like `recordings`**: a
-    /// pointer to where this song came from is a fact about the song, not an artifact of the
-    /// player, so it goes when the song does. Additive (CoreData 134110 rule).
-    @Relationship(deleteRule: .cascade, inverse: \ReferenceLink.song)
+    /// breakdown. **`.nullify` since ADR 0264 D2, like `recordings`**: where you learned something
+    /// outlives the song you learned it for, so deleting the song leaves its references *not filed*
+    /// in the References library. It was `.cascade`; changing a delete rule leaves the store's shape
+    /// alone (ADR 0151). Additive (CoreData 134110 rule).
+    @Relationship(deleteRule: .nullify, inverse: \ReferenceLink.song)
     var references: [ReferenceLink] = []
 
     init(title: String, artist: String = "", album: String = "", genre: String = "",

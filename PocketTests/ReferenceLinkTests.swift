@@ -2,8 +2,8 @@ import SwiftData
 import XCTest
 @testable import Pocket
 
-/// `ReferenceLink` (ADR 0167): the four typed owners, the **cascade** delete rule that is the
-/// opposite of notes and takes, and the ordering discipline. The cascade tests run against a real
+/// `ReferenceLink` (ADR 0167): the four typed owners, the **nullify** delete rule (ADR 0264 D2, which
+/// reversed 0167's cascade), and the ordering discipline. The delete-rule tests run against a real
 /// in-memory `ModelContainer` because a delete rule is a schema fact — asserting it on plain
 /// `@Model` objects would test nothing.
 final class ReferenceLinkTests: XCTestCase {
@@ -210,23 +210,27 @@ final class ReferenceLinkTests: XCTestCase {
         XCTAssertEqual(routine.referencesInOrder.map(\.order), [0, 1, 2])
     }
 
-    // MARK: - The cascade (⚠ the opposite of ADR 0151's nullify)
+    // MARK: - Deleting an owner keeps its references (ADR 0264 D2, reversing 0167's cascade)
 
-    func testDeletingAnExerciseDeletesItsReferences() throws {
+    /// The lesson is still the lesson once the drill made from it is gone: the reference stays, not
+    /// filed, with what the player wrote about it.
+    func testDeletingAnExerciseLeavesItsReferencesNotFiled() throws {
         let context = try makeContext()
         let exercise = Exercise(name: "Spider")
         context.insert(exercise)
-        ReferenceLinkStore.add(title: "Lesson", url: "https://example.com/a",
+        ReferenceLinkStore.add(title: "Lesson", url: "https://example.com/a", note: "From 3:40",
                                to: exercise, in: context)
         try context.save()
-        XCTAssertEqual(try context.fetch(FetchDescriptor<ReferenceLink>()).count, 1)
 
         context.delete(exercise)
         try context.save()
-        XCTAssertTrue(try context.fetch(FetchDescriptor<ReferenceLink>()).isEmpty)
+        let left = try context.fetch(FetchDescriptor<ReferenceLink>())
+        XCTAssertEqual(left.map(\.title), ["Lesson"])
+        XCTAssertEqual(left.first?.note, "From 3:40")
+        XCTAssertEqual(left.first?.isFiled, false)
     }
 
-    func testDeletingARoutineDeletesItsReferences() throws {
+    func testDeletingARoutineLeavesItsReferencesNotFiled() throws {
         let context = try makeContext()
         let routine = Routine(name: "Week 3")
         context.insert(routine)
@@ -236,14 +240,16 @@ final class ReferenceLinkTests: XCTestCase {
 
         context.delete(routine)
         try context.save()
-        XCTAssertTrue(try context.fetch(FetchDescriptor<ReferenceLink>()).isEmpty)
+        let left = try context.fetch(FetchDescriptor<ReferenceLink>())
+        XCTAssertEqual(left.map(\.title), ["Course"])
+        XCTAssertEqual(left.first?.isFiled, false)
     }
 
-    /// A song cascades to its loops already; a loop's own references must go with it rather than
-    /// surviving as orphans pointing at a region nobody can play.
-    func testDeletingASongDeletesBothItsOwnAndItsLoopsReferences() throws {
+    /// A song still cascades to its loops, but neither the song's references nor its loops' go with
+    /// them: both are left not filed.
+    func testDeletingASongLeavesBothItsOwnAndItsLoopsReferences() throws {
         let context = try makeContext()
-        let song = makeSong("Little Wing")
+        let song = makeSong("Slow Bend")
         let loop = Loop(name: "Verse riff", start: 0.1, end: 0.2, speed: 1.0, repeats: 4)
         loop.song = song
         context.insert(song)
@@ -253,11 +259,19 @@ final class ReferenceLinkTests: XCTestCase {
         ReferenceLinkStore.add(title: "That lick, slowed", url: "https://example.com/loop",
                                to: loop, in: context)
         try context.save()
-        XCTAssertEqual(try context.fetch(FetchDescriptor<ReferenceLink>()).count, 2)
 
         context.delete(song)
         try context.save()
-        XCTAssertTrue(try context.fetch(FetchDescriptor<ReferenceLink>()).isEmpty)
+        XCTAssertTrue(try context.fetch(FetchDescriptor<Loop>()).isEmpty, "The song no longer took its loops")
+        let left = try context.fetch(FetchDescriptor<ReferenceLink>())
+        XCTAssertEqual(Set(left.map(\.title)), ["Transcription", "That lick, slowed"])
+        XCTAssertTrue(left.allSatisfy { !$0.isFiled })
+    }
+
+    func testAReferenceIsFiledWhileAnyOwnerHoldsIt() {
+        XCTAssertFalse(ReferenceLink().isFiled)
+        XCTAssertTrue(ReferenceLink(exercise: Exercise(name: "Spider")).isFiled)
+        XCTAssertTrue(ReferenceLink(routine: Routine(name: "Week 3")).isFiled)
     }
 
     // MARK: - Helpers

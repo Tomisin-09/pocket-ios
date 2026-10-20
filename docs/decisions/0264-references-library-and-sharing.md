@@ -234,9 +234,11 @@ fetched (0167), and the player can always type one. Tomisin took the recommendat
 
 Before 1.4, one branch at a time, each merged on green before the next starts:
 
-1. **Keep references:** D1, D2 (the delete rules, the toast, the device store check), and D7.
-2. **The library:** D3, D4, D5 (without *Attach to…*), D6's rules as pure, unit-tested logic, and
-   D11.
+1. **Keep references:** D1, D2 (the delete rules and the device store check), and D7. ADR 0263's
+   free line rides on this branch too. The toast's *"stay in References"* line waits for slice 2,
+   because until then there is no References to point at.
+2. **The library:** D3, D4, D5 (without *Attach to…*), D6's rules as pure, unit-tested logic, D11,
+   and D2's toast line.
 3. **Attach to…** and *Start an exercise from this*.
 4. **The share extension:** D8, D9, D10 and D12.
 

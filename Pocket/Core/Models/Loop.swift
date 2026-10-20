@@ -228,11 +228,11 @@ final class Loop {
     var routineItems: [RoutineItem] = []
 
     /// Where this passage is explained (ADR 0167) — the video that covers *this* eight bars, which
-    /// is usually more specific than anything hung off the whole song. **`.cascade`, the opposite
-    /// of `journal` and `recordings` above**: ADR 0151 keeps a take alive past its loop because the
-    /// take is the player's; a pointer to a lesson about a region that no longer exists is not.
+    /// is usually more specific than anything hung off the whole song. **`.nullify` since ADR 0264
+    /// D2, like `journal` and `recordings` above**: a lesson outlives the loop it was filed on, so
+    /// deleting the loop, or the song that cascades to it, leaves its references *not filed*.
     /// Additive (CoreData 134110 rule).
-    @Relationship(deleteRule: .cascade, inverse: \ReferenceLink.loop)
+    @Relationship(deleteRule: .nullify, inverse: \ReferenceLink.loop)
     var references: [ReferenceLink] = []
 
     /// Every recorded edit to this loop's span (ADR 0199). **`.cascade`, like `references` and

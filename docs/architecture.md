@@ -1765,9 +1765,9 @@ empty, because that line was Home's only word about adding a first song.
   Attributes are primitives and there is **no stored enum** (the ADR 0036 device-only migration
   trap): narrowed / widened / **moved** is derived by the pure `SpanHistory.kind`, where a span that
   keeps its width and slides along the song is *neither* — calling it either would put a false claim
-  into everything downstream. ⚠ The inverse **cascades**, like `ReferenceLink` below and unlike
-  `JournalEntry` / `Recording`: ADR 0151 keeps a take past its loop because the take is a recording
-  of *you*, while a fact *about a span* has nothing to be about once the span is gone.
+  into everything downstream. ⚠ The inverse **cascades**, unlike `JournalEntry` / `Recording` and,
+  since ADR 0264, `ReferenceLink` below: ADR 0151 keeps a take past its loop because the take is a
+  recording of *you*, while a fact *about a span* has nothing to be about once the span is gone.
 
   **Three readers now**, all landed after the record: `LoopSpanSection` and the widen-back offer
   (ADR 0201), the Oracle context payload (ADR 0204 D2 — two widths in seconds per edit, oldest
@@ -1778,15 +1778,15 @@ empty, because that line was Home's only word about adding a first song.
   off the thing it explains. The note (added by the ADR's 2026-08-19 revision) is *what you took from
   the source*, as against the title's *what the source is*: a plain non-optional `String` with a
   declaration default, additive on a live table, shown as a two-line-capped third line on the row. Additive new table; nothing existing migrates. The owner is polymorphic through **four
-  typed optional relationships** (`exercise` / `song` / `loop` / `routine`, exactly one non-nil), the
-  ADR 0066 R4 shape rather than a generic `ownerKind + ownerID`, which would move referential
-  integrity out of SwiftData and into hand-written lookups that cannot cascade. ⚠ Those inverses
-  **cascade**, which is the deliberate opposite of the rule the two neighbouring polymorphic models
-  follow: `JournalEntry` and `Recording` **nullify** (ADR 0151) because they are records of *you* and
-  outlive the unit they were made against, while a reference link is a record of *the owner* — a
-  pointer to where **this exercise** came from, meaningless once the exercise is gone. A reader who
-  has internalised the nullify rule will read the cascade as a bug, so it is stated at the model, in
-  `PROJECT.md`, and here. `kindRaw` is a `String` with a computed `kind` accessor, and the
+  typed optional relationships** (`exercise` / `song` / `loop` / `routine`, **at most one** non-nil
+  since ADR 0264 D1, none meaning *kept for later*), the ADR 0066 R4 shape rather than a generic
+  `ownerKind + ownerID`, which would move referential integrity out of SwiftData and into
+  hand-written lookups. Those inverses **nullify** since ADR 0264 D2, the rule `JournalEntry` and
+  `Recording` already follow (ADR 0151): where you learned something outlives the drill made from
+  it, so deleting an owner leaves its references not filed, note and file intact. ADR 0167 had them
+  cascade, as a record of the owner; changing a delete rule left the store's shape alone, as 0151
+  found. The export writes unfiled ones in `PracticeArchive.unfiledReferences` (0264 D7), since every
+  other reference nests under its owner. `kindRaw` is a `String` with a computed `kind` accessor, and the
   relationship is never filtered in a `#Predicate` — the optional-relationship freeze. **The file
   half shipped 2026-08-31** (ADR 0167 phase 2) and was the pure addition `.image` had been carried
   for since day one — as **four** kinds rather than one: `.image`, `.pdf`, `.text` and `.markdown`,
@@ -1815,10 +1815,11 @@ empty, because that line was Home's only word about adding a first song.
   them unconditionally would turn a `.zip` into kilobytes of mojibake. The Files filter is
   `pickerTypes`, derived from `CGImageSourceCopyTypeIdentifiers()` plus the document types, rather
   than `[.image]` — that abstract supertype offers SVG, which ImageIO cannot decode, so the picker
-  would advertise a file the app then refused. ⚠ Because the owner inverses **cascade**, a deleted
-  owner takes the reference *rows* without running any of our code, which strands the files:
-  `OrphanSweep` is this directory's **primary** collector rather than its backstop, and
-  `ReferenceLinkStore.delete` removes the file only on the paths that do run through us.
+  would advertise a file the app then refused. Until ADR 0264 the inverses cascaded, which deleted
+  reference rows without running any of our code and stranded their files, so `OrphanSweep` was this
+  directory's primary collector. They nullify now: a deleted owner leaves the row and its file, the
+  sweep is a backstop here as everywhere else, and `ReferenceLinkStore.delete` is what removes a
+  file.
   `ReferenceURL` accepts **`http` and `https` only** — an
   allowlist, because `openURL` will happily take `shortcuts://`, `mailto:` or an app's own scheme and
   a practice-log field is not the place to have opinions about those — and reads a **scheme-less

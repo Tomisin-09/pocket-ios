@@ -80,6 +80,10 @@ struct RestoredLibrary {
     /// vocabulary the restored drills and goals name, not items the preview counts.
     var customSkills: [CustomSkill] = []
 
+    /// References no owner holds, kept for later (ADR 0264 D7). Absent from `rowCount` for the reason
+    /// a filed reference is: the preview counts library items, and a reference rides beside one.
+    var unfiledReferences: [ReferenceLink] = []
+
     /// Take audio to write out of the zip once the rows exist, keyed by file name (D7).
     var takeAudio: [String: ZipEntry] = [:]
 
@@ -139,6 +143,7 @@ struct RestoredLibrary {
             take.moments = moments
         }
         folders.forEach(context.insert)
+        unfiledReferences.forEach(context.insert)
         if let profile { context.insert(profile) }
     }
 }
@@ -185,6 +190,7 @@ enum ArchiveRestoreWriter {
         keys.takeUIDs = Set(((try? context.fetch(FetchDescriptor<Recording>())) ?? []).map(\.uid))
         keys.hasProfile = ((try? context.fetchCount(FetchDescriptor<Profile>())) ?? 0) > 0
         keys.folderPaths = Set(PracticeFolderStore.fetchMarkers(in: context).map { $0.path.lowercased() })
+        keys.referenceUIDs = Set(((try? context.fetch(FetchDescriptor<ReferenceLink>())) ?? []).map(\.uid))
         return keys
     }
 
@@ -231,6 +237,7 @@ enum ArchiveRestoreWriter {
         addTakes(archive.takes, existing: existing, into: &landing, resolver: resolver)
         addProfile(archive.profile, existing: existing, into: &landing)
         addFolderMarkers(archive.folderMarkers ?? [], existing: existing, into: &landing)
+        addUnfiledReferences(archive.unfiledReferences ?? [], existing: existing, into: &landing)
 
         // Only the files the rows being added actually name. An archive carries the pictures and
         // audio for its whole library, and a restore into a populated one may be adding a fraction of
@@ -287,6 +294,7 @@ extension RestoredLibrary {
         }
         names.formUnion(exercises.flatMap(\.references).map(\.attachmentFileName))
         names.formUnion(routines.flatMap { $0.routine.references }.map(\.attachmentFileName))
+        names.formUnion(unfiledReferences.map(\.attachmentFileName))
         names.remove("")
         return names
     }

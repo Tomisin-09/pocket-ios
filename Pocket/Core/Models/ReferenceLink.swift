@@ -74,15 +74,15 @@ enum ReferenceLinkKind: String, CaseIterable {
 /// and any enum stored through a `String` backing field.
 ///
 /// The owner is polymorphic through **typed optional relationships**, the shape ADR 0066 R4 chose
-/// over a generic `ownerKind + ownerID` and `JournalEntry` follows: exactly one of `exercise`,
-/// `song`, `loop`, `routine` is non-nil. A generic pair would move referential integrity out of
-/// SwiftData and into hand-written lookups that cannot cascade.
+/// over a generic `ownerKind + ownerID` and `JournalEntry` follows: **at most one** of `exercise`,
+/// `song`, `loop`, `routine` is non-nil (ADR 0264 D1). A reference with none is *kept for later*:
+/// not filed yet, or left behind by an owner that was deleted. A generic pair would move
+/// referential integrity out of SwiftData and into hand-written lookups.
 ///
-/// ⚠ **The owner inverses cascade** — the opposite of notes and takes, and the first question a
-/// reviewer asks. A note or a take nullifies (ADR 0151) because it is a record of *you*: a
-/// reflection you wrote outlives the loop it was about. A reference link is a record of *the
-/// owner* — it is a pointer to where **this exercise** came from, and it means nothing once the
-/// exercise is gone. Delete the owner, delete the pointer.
+/// **The owner inverses nullify** (ADR 0264 D2), as notes and takes do (ADR 0151). ADR 0167 had
+/// them cascade, on the reasoning that a reference is a record of its owner. With a References
+/// library it is a record of *where you learned something*, and that outlives the drill made from
+/// it: deleting an owner leaves its references not filed, note and file intact.
 ///
 /// **Never filter on this in a `#Predicate`.** Optional-relationship predicates starve the main
 /// thread (`docs/swiftdata-gotchas.md`); fetch broadly and filter in memory.
@@ -134,7 +134,7 @@ final class ReferenceLink {
     /// additive is the whole point of `kindRaw` having carried `.image` since day one.
     var attachmentFileName: String = ""
 
-    // MARK: - Owners (exactly one is non-nil)
+    // MARK: - Owners (at most one is non-nil; none means not filed, ADR 0264 D1)
 
     /// The exercise this came from — a drill built out of somebody's lesson.
     var exercise: Exercise?
@@ -145,6 +145,10 @@ final class ReferenceLink {
     /// The routine this came from — a course's week 3. **The most on-thesis owner and the half
     /// nobody else models**: a course belongs to a session, not to a drill (ADR 0167).
     var routine: Routine?
+
+    /// Whether any owner holds this reference. `false` is a state, not an error: the reference is
+    /// kept for later (ADR 0264 D1), and the archive carries it on its own (D7).
+    var isFiled: Bool { exercise != nil || song != nil || loop != nil || routine != nil }
 
     init(uid: UUID = UUID(),
          title: String = "",

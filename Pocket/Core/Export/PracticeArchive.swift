@@ -83,6 +83,11 @@ struct PracticeArchive: Codable, Equatable, Sendable {
     /// The tabs the player wrote on the neck (ADR 0235 D8), each carried as stored. `Optional`, so an
     /// archive written before 0235 still decodes.
     var writtenTabs: [WrittenTabRecord]?
+
+    /// The references no owner holds, kept for later (ADR 0264 D7): not filed yet, or left behind by an
+    /// owner that was deleted. Every other reference nests under its owner. `Optional`, so an archive
+    /// written before 0264 still decodes, and additive, so `currentSchemaVersion` doesn't move.
+    var unfiledReferences: [ReferenceLinkRecord]?
 }
 
 /// A skill the player made (ADR 0216 D7) — its name and the description behind its ⓘ.
@@ -96,9 +101,9 @@ struct CustomSkillRecord: Codable, Equatable, Sendable {
 extension PracticeArchive {
     /// Every reference picture in the archive, by leaf name (ADR 0167 phase 2).
     ///
-    /// Gathered from all four owners because references nest under whichever one holds them — there
-    /// is no flat list to read. Deduplicated: an image belongs to exactly one owner, so a repeat
-    /// would mean the tree is wrong, and staging it twice would only hide that.
+    /// Gathered from all four owners because references nest under whichever one holds them, plus the
+    /// unfiled ones, which no owner holds (ADR 0264 D7). Deduplicated: a file belongs to one reference,
+    /// so a repeat would mean the tree is wrong, and staging it twice would only hide that.
     ///
     /// **Unlike take audio, pictures are not optional.** The take toggle exists because recordings
     /// are the bulk of a library and an export of them can be hundreds of megabytes; five capped
@@ -109,6 +114,7 @@ extension PracticeArchive {
         let nested = songs.flatMap { $0.references + $0.loops.flatMap(\.references) }
             + exercises.flatMap(\.references)
             + routines.flatMap(\.references)
+            + (unfiledReferences ?? [])
         return nested.compactMap(\.attachmentFileName)
             .filter { !$0.isEmpty && seen.insert($0).inserted }
     }
