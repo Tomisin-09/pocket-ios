@@ -77,7 +77,11 @@ struct AddRoutineUnitSheet: View {
             .background(PocketColor.background.ignoresSafeArea())
             .navigationTitle("Add to routine")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, prompt: "Search exercises, loops, songs")
+            // In the nav bar, always shown: the libraries' placement (ADR 0178 D8, 0226 D1). The default
+            // put the field at the **bottom** on iOS 26, where the tally below covered it the moment a
+            // block was added — the one moment a second search is most likely.
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always),
+                        prompt: "Search exercises, loops, songs")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
