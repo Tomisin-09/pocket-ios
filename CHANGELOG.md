@@ -70,6 +70,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   or file in one more place with a fresh note; a file in two places is still stored once. Without
   the plan you can file onto songs and loops; if you've had the plan before, exercises and routines
   are there too, with a lock, and open again with the plan.
+- **Save to Red Moon, from any app's share sheet** (ADR 0264 D8). In YouTube, your browser, Photos or
+  Files, tap Share and choose Red Moon. Name it, write what you took from it, and pick where it goes:
+  **Keep for later** to start with, or a recent drill, song, loop or routine, or any of them by
+  search. **Save** closes and you stay where you were; the reference is in Red Moon the next time
+  you open it. It takes one link, picture, PDF or text file at a time, and shared text with a link in
+  it. Red Moon only appears in the share sheet for those. Nothing is fetched from the link. If the
+  place you picked is gone or full by the time Red Moon opens, the reference waits in *Not filed*
+  instead of being lost.
 - **Name the notes can name a muted note** (ADR 0262). A dead note, struck with no pitch, like the
   chuck in a strummed part or the scratch between funk stabs, used to stay a `?` and count as left
   to name. On Fret & string, each string now has a ✕ beside its letter. Tap it and the note is
@@ -592,6 +600,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **The store is pinned to the app's own Application Support** (`PocketStore`). The share extension
+  needs an App Group, and SwiftData's default configuration (`groupContainer: .automatic`) moves the
+  store into the first group the app is entitled to. On the simulator, the first launch with the group
+  copied the whole library into the group container and ran from the copy. The configuration now says
+  `.none`, and `PocketStoreTests` pins the store's URL. Nothing shipped with the group unpinned.
+- **A second target, `PocketShare`** (ADR 0264 D10), embedded in the app, so CI and the pre-push hook
+  build it. Its own sources sit under `Pocket/ShareExtension/`, where the lint rule and check-manual
+  already look, and it compiles the pure reference rules and the place list from the app. The colours
+  moved to `Colors.xcassets`, a catalog both targets include. Entitlements are declared in
+  `project.yml`, since `xcodegen generate` rewrites an entitlements file from `properties` and wiped
+  the group written only in the file.
 - **The share-sheet tests wait for the sheet to fill in, not just for it to open.** The Export tests
   that send Binta failed now and then on CI with *the share sheet opened, but not on the file
   expected*, and passed on retry. The file was right. The sheet's frame is the app's and is up in

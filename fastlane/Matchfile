@@ -4,5 +4,7 @@
 git_url(ENV["MATCH_GIT_URL"] || "git@github.com:Tomisin-09/pocket-ios-certificates.git")
 storage_mode("git")
 type("appstore")
-app_identifier(["click.decooperations.pocket"])
+# The app and its share extension (ADR 0264 D10). Each needs an App Store profile in the match repo,
+# with the App Group group.click.decooperations.pocket on both ids, before `fastlane beta` can sign.
+app_identifier(["click.decooperations.pocket", "click.decooperations.pocket.share"])
 # username / team_id supplied via App Store Connect API key in CI.

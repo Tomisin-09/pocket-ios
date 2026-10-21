@@ -371,7 +371,8 @@ Auto-skipped — `ITSAppUsesNonExemptEncryption = false` is already set.
 `decooperations.co.uk/privacy` (Vercel), matching the Docket/website section style
 — see the paste-ready section text in chat / commit. It must match
 `docs/privacy-policy.md` as revised by **ADR 0239**: no accounts, data stored **on
-the device** (there is no cross-device sync — `Pocket.entitlements` is empty and no
+the device** (there is no cross-device sync — `Pocket.entitlements` holds no iCloud
+entitlement, only the App Group the share extension uses on the same phone (ADR 0264), and no
 CloudKit database is configured, ADR 0145), your playing never transmitted, and **no
 usage data collected** — no analytics, with usage figures coming from App Store
 Connect. The region-split usage counts of ADRs 0120 and 0147, and Aptabase as a

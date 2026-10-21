@@ -1483,6 +1483,32 @@ sections; **Slice 1** carries the two zero-dependency tenants and is **audio-fre
   startingFrom:)`: the row's uid rides on `NewExercisePlan.startedFromReference`, and `finalise(in:)`,
   the one insert path (ADR 0128), attaches the source after the insert, read fresh from the store. The
   sheet's own plan gate is the free player's wall.
+  **Save to Red Moon (slice 4, D8–D10)** is a second target, `PocketShare`, a share extension embedded
+  in the app. It never opens the store. The two meet in an App Group folder (`ShareContainer`,
+  `group.click.decooperations.pocket/References/`), which holds two things:
+  - `owners.json`, a `ShareOwnerSnapshot` the app writes: every place as a `ReferenceDestination`, the
+    places full of files, the `PlanStanding` and the appearance. Names and kinds only (0183 D1).
+  - `Inbox/<uuid>/`, one folder per save the extension writes (`ShareInbox`): the shared file's bytes
+    first, then `item.json` last, so a folder without one is a save that never finished.
+
+  `ShareInboxHost`, a root modifier like `practiceReceiveHost`, drains the inbox on `.active`, then
+  writes the snapshot. It writes the snapshot again on `.background` (another app's share sheet is only
+  reachable with Red Moon in the background, so that write holds every edit), and when the standing or
+  the appearance changes. It writes nothing until StoreKit has answered. `ShareInboxDrain` files each
+  save through `ReferenceLinkStore`, so 0167's rules (http/https, the downscale, 25 MB, five files) apply
+  in the app and not in the extension's tighter memory. `ShareInboxPlan` (pure) decides again against
+  the store: a place gone, full, or out of D6's reach sends the save to *Not filed*. The save's id
+  becomes the reference's `uid` (`addAttachment(…, uid:)`), so a drain that stops between the store's
+  save and clearing the inbox never files twice. In the extension, `SharedItemLoader` loads the best
+  attachment, ranked by `SharedContent.Offer` (web link, picture, PDF, Markdown, plain text), with
+  `@Sendable` completion handlers. It copies a file out before the handler returns, and finds D12's
+  first web link with `NSDataDetector`. `SaveToRedMoonView` draws `ReferencePlaceSections` in its
+  *held* mode (`ReferencePlacePicking.held`: a radio, saved on *Save*) under its own search field and a
+  *Keep for later* row. The extension compiles a named list of the app's files (`project.yml`: the
+  sharing types, D6's and the picker's rules, `ReferenceURL`, `ReferenceAttachmentStore`, the place
+  list, the tokens, `Colors.xcassets`) and nothing that touches SwiftData. Its activation rule is a
+  predicate naming exactly 0167's kinds, one item, at most one picture or PDF. `ShareActivationRuleTests`
+  evaluates the rule read out of the built appex.
 
 The rows come from `ToolkitSection`, pushed through `ToolkitDestination`, which sets the indigo tint
 itself so a tool opened from **the Home tile beside Toolkit** (ADR 0235 D6) looks as it does from here.
@@ -1535,6 +1561,15 @@ empty, because that line was Home's only word about adding a first song.
 
 ## Persistence
 
+- **The store lives in the app's own Application Support, pinned** (`Core/Storage/PocketStore.swift`).
+  `PocketStore.configuration` is `ModelConfiguration(groupContainer: .none, cloudKitDatabase: .none)`, and
+  `PocketApp` runs on `PocketStore.container()`. Since ADR 0264 the app holds an App Group entitlement,
+  and SwiftData's default `.automatic` puts the store in the first group the app is entitled to. On the
+  simulator, the first launch with the group **copied the whole store into the group container and ran
+  from the copy**, which is the move 0264 and 0186 D9 refused. In-memory tests can't see that, and
+  neither can CI's unsigned build, which has no group. `PocketStoreTests` pins the URL, and it bites on
+  a local, signed-to-run simulator. The App Group itself holds only the share extension's snapshot and
+  inbox (Toolkit hub, above).
 - **SwiftData `@Model` domain** (`Core/Models/`): `Song` is the aggregate root, with
   cascade relationships to its `Loop`s and `Marker`s. The practice screen binds to a
   persisted `Song` via the `ModelContext`; loops/markers persist across launches. ADR 0011.

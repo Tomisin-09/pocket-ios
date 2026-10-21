@@ -1,24 +1,5 @@
 import Foundation
 
-/// Appearance override for the app's colour scheme (ADR 0062 follow-up). `.system`
-/// (the default) follows the device setting, as ADR 0062 originally shipped; `.light`/
-/// `.dark` pin the app regardless of the device, both to aid testing across appearances
-/// on one device and as a standing user preference. `RawRepresentable` with a `String`
-/// raw value so it works directly with `@AppStorage`.
-enum AppearancePreference: String, CaseIterable {
-    case system
-    case light
-    case dark
-
-    var label: String {
-        switch self {
-        case .system: return "System"
-        case .light: return "Light"
-        case .dark: return "Dark"
-        }
-    }
-}
-
 /// Whether a running ramp announces its next tempo change before making it, and how insistently
 /// (ADR 0131). A ramp that steps silently is found out by being wrong about it, so the default is to
 /// show the change coming; `off` restores the pre-0131 behaviour for a player who wants the ramp to

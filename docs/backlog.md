@@ -744,6 +744,15 @@ it, all of it gets re-derived.
 
 ### Six things that will bite
 
+> **Since ADR 0264 slice 4 (2026-10-21), the share extension has paid most of these.** The App
+> Group `group.click.decooperations.pocket` exists on the app, so a widget joins it rather than
+> making one (1, still needing its own bundle id and profile). The extension's sources sit under
+> `Pocket/ShareExtension/`, the pattern for 2. It is embedded as a dependency, the pattern for 3.
+> The colours are their own `Colors.xcassets`, which a widget includes as the extension does (4).
+> The snapshot store takes its folder injected, the pattern for 6. And one more that bit:
+> SwiftData's default moves the store into the group (`PocketStore`, `docs/swiftdata-gotchas.md`),
+> now pinned. The notes below are as written in 2026-09.
+
 1. **The signing wall — the reason this is parked, and the only part that cannot be done in code.**
    `fastlane/Matchfile:7` and `fastlane/Appfile:2` each pin the single id
    `click.decooperations.pocket`, and `fastlane/Fastfile:29` is

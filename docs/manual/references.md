@@ -133,8 +133,9 @@ looks through the names, the sites, your notes and the names of the places they'
 
 Each row is one source: its name, then the site or the kind of file and when you saved it, then
 *On Triad climb · Morning routine* in each place's colour, then the first line of your note. **A link
-used in two places is one row here**, though each place keeps its own note. A file is always its own
-row, since there is no address to match it to another by.
+used in two places is one row here**, though each place keeps its own note. So is a file you've
+attached in two places with **Also attach to…**: it is one file. Two files you picked separately are
+two rows, even if they hold the same thing.
 
 **＋** offers **Add a link**, **Choose a photo** and **Choose a file**, the same fields and pickers
 as on an exercise. What you add is kept for later, under Not filed. There is no five-file limit here:
@@ -180,6 +181,39 @@ goes on, and the drill opens again with the plan.
 
 **Edit** at the top changes the name and the link everywhere the source is used, since it is one
 source, and the note of one place only. When it's used in more than one place, Edit asks which.
+
+## Saving from another app
+
+In YouTube, your browser, Photos, Files, or any app with a share button, tap **Share** and choose
+**Red Moon**. If it isn't in the row of apps, scroll to the end of that row, tap **More**, and add it.
+
+**Save to Red Moon** opens over the app you're in:
+
+- **What you're saving**, at the top: the link, or the file. Its name is whatever the app sent with
+  it, or the site, and you can change it. Under it, **What you took from it**, which is optional.
+- **Where it goes.** **Keep for later** is chosen to start with, so **Save** on its own puts it under
+  Not filed in References. Or choose a place: **Recent** lists what you practised most lately, **Show
+  everything** lists every exercise, routine, song and loop, and the search looks through all of
+  them. It offers what **Attach to…** offers: without the plan, songs and loops; if you've had the
+  plan before, exercises and routines too, with a lock.
+- **Save** keeps it and closes, and you're back in the app you were in. It's in Red Moon the next time
+  you open it.
+
+It takes one thing at a time: one link, one picture, one PDF, or one `.txt` or `.md` file, the same
+files **Add a file** takes. Red Moon only appears in the share sheet for those, so it doesn't show up
+for several photos at once or a video. Shared text works too, if there's a link in it: Red Moon keeps
+the first web address it finds, and if there isn't one it says *There's no link in this to save.*
+
+As everywhere else, nothing is fetched from the address: no title, no preview. Pictures are made
+smaller when Red Moon next opens, as they are when you add one here, and a document over 25 MB is
+refused before you can save it.
+
+**Nothing you save is lost.** If the place you picked has gone by the time Red Moon opens (you
+deleted that song in between), or it already holds five files, the reference goes under **Not
+filed** instead, and you can attach it from there.
+
+The list of places comes from Red Moon itself, the last time it was open. Until you've opened Red
+Moon once after installing it, there's only **Keep for later**.
 
 ## Three things it deliberately does not do
 

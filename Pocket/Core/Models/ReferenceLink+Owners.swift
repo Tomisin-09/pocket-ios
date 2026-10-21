@@ -104,15 +104,18 @@ enum ReferenceLinkStore {
     ///
     /// - Parameter contentType: what the picker claimed. A hint the store is free to overrule — see
     ///   `ReferenceAttachmentStore.adopt`.
+    /// - Parameter uid: the new row's id, which names its file. Minted here unless the caller already
+    ///   has one: a save from the share extension carries its own, so draining it twice can tell
+    ///   (ADR 0264 D9).
     @discardableResult
     static func addAttachment(_ data: Data,
                               contentType: UTType? = nil,
                               title: String = "",
                               note: String = "",
+                              uid: UUID = UUID(),
                               to owner: some ReferenceLinkOwner,
                               in context: ModelContext,
                               _ fileManager: FileManager = .default) throws -> ReferenceLink {
-        let uid = UUID()
         let stored = try ReferenceAttachmentStore.adopt(data, contentType: contentType, for: uid,
                                                         fileManager)
         // Same ordering trap as `add`: `makeReference()` wires the owner, and SwiftData fills the

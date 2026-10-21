@@ -4,7 +4,7 @@ import Foundation
 /// owner picker lists it. Values only, so the picker's rules are tested without a store, and so the
 /// share extension (slice 4), which can't open the store, can be handed the same rows from D9's owner
 /// snapshot: a key, a kind, a name, a parent, and when it was last practised.
-struct ReferenceDestination: Identifiable, Equatable, Sendable {
+struct ReferenceDestination: Identifiable, Equatable, Codable, Sendable {
     /// The kind and the owner's own key, so two kinds can't collide: a uid, or a song's `sourceID`,
     /// since `Song` has no uid (`PracticeRun.songSourceID` keys a song the same way).
     let id: String
@@ -24,45 +24,6 @@ struct ReferenceDestination: Identifiable, Equatable, Sendable {
     }
 
     static func key(_ kind: ReferencePlaceKind, _ ownerKey: String) -> String { "\(kind.rawValue):\(ownerKey)" }
-}
-
-extension ReferenceDestination {
-    init(exercise: Exercise) {
-        self.init(id: Self.key(.exercise, exercise.uid.uuidString), kind: .exercise,
-                  name: Self.displayName(exercise.name), lastPracticed: exercise.lastPracticed)
-    }
-
-    init(routine: Routine) {
-        self.init(id: Self.key(.routine, routine.uid.uuidString), kind: .routine,
-                  name: Self.displayName(routine.name), lastPracticed: routine.lastPracticed)
-    }
-
-    init(song: Song) {
-        self.init(id: Self.key(.song, song.sourceID), kind: .song, name: Self.displayName(song.title),
-                  parent: song.artist, lastPracticed: song.lastPracticed)
-    }
-
-    init(loop: Loop) {
-        self.init(id: Self.key(.loop, loop.uid.uuidString), kind: .loop, name: Self.displayName(loop.name),
-                  parent: loop.song.map { Self.displayName($0.title) }, lastPracticed: loop.song?.lastPracticed)
-    }
-
-    /// The key a row's owner goes by, to mark the places a source is already on.
-    static func key(of owner: any ReferenceLinkOwner) -> String? {
-        switch owner {
-        case let exercise as Exercise: key(.exercise, exercise.uid.uuidString)
-        case let routine as Routine: key(.routine, routine.uid.uuidString)
-        case let song as Song: key(.song, song.sourceID)
-        case let loop as Loop: key(.loop, loop.uid.uuidString)
-        default: nil
-        }
-    }
-
-    /// An owner with no name reads as *Untitled*, as `ReferenceLink.place` reads it.
-    private static func displayName(_ name: String) -> String {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty ? "Untitled" : trimmed
-    }
 }
 
 /// **The owner picker's rules** (ADR 0264 D5, D6, D8): which places are offered, which carry a lock,

@@ -1,6 +1,6 @@
 # SwiftData gotchas — a pre-flight checklist
 
-SwiftData has bitten this project four separate times, and **most of these only
+SwiftData has bitten this project five separate times, and **most of these only
 reproduce on device** — the in-memory test store and the simulator hide them.
 Run this checklist whenever you touch a `@Model`, a `#Predicate`, or a
 `.sheet`/navigation driven by a model. Each item links to the ADR that paid the
@@ -20,6 +20,21 @@ tuition.
       crashes are invisible to a fresh launch.
 - [ ] If you add/rename/retype a stored property, note whether it's a **lossy**
       migration and say so in the ADR (see the field-model audit, ADR 0036).
+
+## When you add an entitlement, or touch the `ModelContainer`
+
+- [ ] **Keep `groupContainer: .none` on the app's store** (`PocketStore.configuration`).
+      SwiftData's default is `.automatic`: the store goes into the first App Group
+      the app is entitled to. Adding one for the share extension (ADR 0264) made the
+      first launch **copy the whole store into the group container and run from the
+      copy**, with the original left unread in Application Support. It showed only on
+      a signed simulator build: in-memory tests can't see it, and CI builds unsigned,
+      with no group. `PocketStoreTests` pins the URL. The same goes for
+      `cloudKitDatabase: .none` the day an iCloud entitlement appears.
+      → [ADR 0264](decisions/0264-references-library-and-sharing.md) (slice 4 build notes)
+- [ ] **Declare entitlements in `project.yml`'s `properties:`, not only in the file.**
+      `xcodegen generate` rewrites the `.entitlements` file from `properties`, and a key
+      written only in the file is wiped without a word, along with any comment.
 
 ## When you write a `#Predicate` / `@Query`
 

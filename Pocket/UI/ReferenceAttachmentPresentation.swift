@@ -219,19 +219,9 @@ struct ReferenceAttachmentPicking<Owner: ReferenceLinkOwner & AnyObject>: ViewMo
         Task { @MainActor in naming = .naming(link) }
     }
 
-    static var unreadable: String {
-        "Red Moon couldn't read that one. It takes pictures, PDFs and plain text files."
-    }
-
-    static var tooLarge: String {
-        let limit = StorageUsage.formatted(bytes: Int64(ReferenceAttachmentStore.maxDocumentBytes))
-        return "That file is bigger than \(limit). Red Moon keeps a copy of everything you attach, "
-            + "so it holds the line there."
-    }
-
-    static var atLimit: String {
-        "This already has \(ReferenceAttachmentStore.maxPerOwner) files. Remove one to add another."
-    }
+    static var unreadable: String { ReferenceAttachmentCopy.unreadable }
+    static var tooLarge: String { ReferenceAttachmentCopy.tooLarge }
+    static var atLimit: String { ReferenceAttachmentCopy.atLimit }
 }
 
 /// The viewer half on its own, for the surfaces that read but do not edit —

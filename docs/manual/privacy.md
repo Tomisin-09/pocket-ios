@@ -22,6 +22,12 @@ Two consequences worth knowing before you rely on them:
 - **A device backup includes the app's data**, and audio you keep in iCloud Drive stays in iCloud
   Drive exactly as it was before you imported it.
 
+**Save to Red Moon**, the piece that appears in other apps' share sheets, can't read any of that. To
+show you where a link can go, Red Moon leaves it a list of the names of your songs, loops, exercises
+and routines, and when you last practised each: no notes, no history, no tempos. That list and
+whatever you save sit in a folder on this phone that only Red Moon and its share sheet can open,
+until Red Moon next opens and files what you saved. See [Where you learned it](references.md).
+
 Imported audio is **copied into the app**, so a song keeps playing whether or not the file it came
 from is still where you found it. Deleting a song from Red Moon removes Red Moon's copy and leaves
 your original alone.

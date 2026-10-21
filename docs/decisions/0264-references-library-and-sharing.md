@@ -4,8 +4,10 @@
   delete rules, D7), with ADR 0263's free line on the same branch, merged as #370. **Slice 2 built**
   2026-10-20 on `pocket-379-references-library` (D3, D4, D5 without its slice 3 actions, D6's rules as
   pure logic, D11, D2's toast line). **Slice 3 built** 2026-10-20 on `pocket-380-references-attach`
-  (D5's *Attach to…* and *Start an exercise from this*, over D6's rules). Slice 4 is not built. See
-  §Build notes. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
+  (D5's *Attach to…* and *Start an exercise from this*, over D6's rules). **Slice 4 built** 2026-10-21
+  on `pocket-381-save-to-red-moon` (D8, D9, D10, D12: the share extension), checked on the simulator,
+  and from Safari on a device once D10's signing was done; the other apps are still to check on a
+  device. See §Build notes. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
   (canvas *Red Moon References*). The two questions it first left open were settled the same day,
   with the recommended answers (D11, D12). It lands **before 1.4**, all four slices including the
   share extension. Tomisin: *"we're in no rush to launch, I'd rather we have it in place before we
@@ -401,6 +403,106 @@ device as well.
 - **Seen on screen, not in a test:** a List draws a row's Label icon in the screen's indigo, ignoring
   the button's tint, so the start button's glyph was indigo on teal. It is now white on the wide button
   and teal on the plain one. Found by the UI test's screenshots.
+
+## Build notes — Slice 4 (2026-10-21, `pocket-381-save-to-red-moon`)
+
+- **Built:** the `PocketShare` target, embedded in the app (D10.3), with its sources under
+  `Pocket/ShareExtension/` (D10.2: the lint rule and C9 read them, nothing widened) and a named list of
+  the app's pure files compiled in beside them. The colours moved to `Colors.xcassets`, a catalog both
+  targets include (D10.4). The App Group `group.click.decooperations.pocket` is on both targets. The
+  extension's id is `click.decooperations.pocket.share`. D9's two files are `ShareOwnerSnapshot`
+  (`owners.json`) and `ShareInbox` (`Inbox/<uuid>/`, bytes first and `item.json` last), both taking
+  their folder as a parameter (D10.5). The app's half is `ShareInboxHost` at the root, `ShareInboxDrain`
+  through `ReferenceLinkStore`, and the pure `ShareInboxPlan`. The extension's half is
+  `SharedItemLoader`, the pure `SharedContent` (what an attachment offers, D12's first link, titles, the
+  25 MB check) and `SaveToRedMoonView` over slice 3's place list.
+- **Found while building, and fixed before anything shipped: SwiftData moved the store.** A
+  `ModelConfiguration` left at its default has `groupContainer: .automatic`, which puts the store in the
+  first App Group the app is entitled to. The first simulator launch with the group copied the whole
+  store into the group container and ran from the copy, with the original left unread in Application
+  Support. That is this ADR's first rejected alternative, done silently by the framework. The app now
+  runs on `PocketStore.container()`, pinned to `groupContainer: .none` (and `cloudKitDatabase: .none`).
+  `PocketStoreTests` pins the URL. In-memory tests can't see this, and CI builds unsigned, with no group,
+  so the test bites on a local simulator run, which is signed with the group. Recorded in
+  `docs/swiftdata-gotchas.md`.
+- **And XcodeGen wiped the entitlement.** `entitlements: path:` with no `properties:` rewrites the file
+  whenever its keys differ, so the group written in the file vanished on `xcodegen generate`. Both
+  targets now declare it in `project.yml`, and the app's file-comment (why there is no iCloud and no
+  Sign in with Apple) moved there with it.
+- **Decided while building, from what D8, D9 and D12 leave open.** Each is a call to check.
+  1. **The snapshot is written when the app goes to the background, not after each edit** (D9 says
+     *"after an owner is added, renamed or deleted"*). On an iPhone, another app's share sheet is only
+     reachable with Red Moon in the background, so a write as it leaves holds every edit made while it
+     was open, with no hook on each edit site. It is also written on the foreground (after the drain)
+     and when the plan standing or the appearance changes.
+  2. **Nothing is written until StoreKit has answered**, so a snapshot never carries a guessed standing.
+     The drain, which can run first, reads an unanswered StoreKit as on the plan: the save was picked
+     from a snapshot written with the standing known, and a standing never moves back (D6).
+  3. **The snapshot carries the appearance**, since the extension draws it: a player who pinned Light
+     or Dark in Settings sees the same.
+  4. **The title is editable in the card**, its placeholder the site or the file's kind. It starts as
+     what the sharing app sent with the item, with the link taken out and only the first line kept (D12:
+     never fetched). A document starts with its own name; a picture with none, since a camera's name says
+     nothing.
+  5. **The search sits under *Where it goes*, as drawn**, not in the navigation bar: the item comes
+     first on this screen. A pick in *Show everything* marks the place and comes back to *Save*.
+  6. **A save the store can't take at all is cleared, not kept.** The extension checks the kind and the
+     25 MB ceiling before *Save*, so this is a file whose bytes turn out unreadable; it would be refused
+     on every launch. Everything the store *can* take is kept, in *Not filed* if its place can't (D9).
+  7. **A save's id is the reference's uid**, so a drain stopped between the store's save and clearing
+     the inbox finds it already there and doesn't file it twice. It is also dated by when the player
+     tapped *Save*, not by when the app next opened.
+  8. **Before the app has written a snapshot** (installed or updated, not yet opened), the extension
+     offers *Keep for later* alone and says the places show once Red Moon has opened. It doesn't guess a
+     standing for a footer it can't back.
+  9. **The activation rule is a predicate**, since the dictionary keys can't say *a web link but not a
+     file link* or *at most one picture among the attachments*. One item; at least one attachment that is
+     a web link, a picture, a PDF or text; at most one picture or PDF. A video app that sends a link and
+     a sentence passes; two photos don't. `ShareActivationRuleTests` evaluates the rule out of the built
+     extension against those shapes. The shapes are written from what each kind of app sends, and the
+     device check with the real apps is owed.
+  10. **A folder with no `item.json` is cleared on the drain**, with no file timestamps read: the drain
+      runs only on the foreground, when no extension can be mid-write on an iPhone. So the app's privacy
+      manifest gains no required-reason API. The extension carries a manifest of its own that declares
+      none.
+- **Checked on the simulator:**
+  - The App Group reaches both signatures.
+  - The app writes `owners.json` with every place: 8 on the test simulator, temporary sessions left out.
+  - Saves written into the inbox by hand, the way the extension writes them, drained on the next
+    launch: a link filed on a song with its note, a `.txt` and a `.md` kept for later with their bytes
+    named by the save's id, and a link aimed at a drill kept for later on a never-bought simulator
+    (D6). An abandoned folder was cleared. (The first of these runs is how the store move above was
+    found: the rows landed in the group container's copy.)
+  - **The real path, driven by a throwaway UI test (not kept):** Safari on the simulator, its share
+    sheet, which lists Red Moon for a web page, then *Save to Red Moon*: the title Safari sent (*Example
+    Domain*), *Keep for later* ticked, *Recent* from the snapshot. Picking a song moved the tick, a note
+    was typed, *Save* closed the sheet, and bringing Red Moon forward filed it on that song with the
+    note and the page's address. Screenshots looked at; it draws as the mockup in dark appearance.
+- **D10.1's signing, done 2026-10-21** under team `2L35PZ86GP`. A development build from
+  `scripts/run-device.sh` registered `click.decooperations.pocket.share` and turned App Groups on for
+  both ids, but its profiles came down with an empty group list and the build failed on the
+  mismatch. Automatic signing doesn't create or assign a group. Tomisin registered
+  `group.click.decooperations.pocket` in the developer portal and assigned it to both ids, and the
+  next build signed. Read off the built binaries: the app and the extension are signed by the team,
+  and both carry the group.
+- **Checked on a device** (Tomisin's iPhone, that build, installed over an earlier development build):
+  - The store stayed in Application Support. Its files there were touched at the new build's launch,
+    and no store appeared in the group container.
+  - **Safari:** its share sheet lists Red Moon, and *Save to Red Moon* showed the page's title and
+    site, *Keep for later* ticked, and *Recent* holding the phone's own song and loops, read from the
+    snapshot the app wrote. A song was picked, a note typed and *Save* tapped; Red Moon, brought
+    forward, had it filed on that song.
+- **Owed:**
+  - **The match repo**, the one part of D10.1 left: `fastlane/Matchfile` names both ids, so
+    `fastlane beta` fails until it is repopulated (`fastlane match appstore` without `readonly`). An
+    archive from Xcode's Organizer, the way releases are made today, signs automatically and doesn't
+    need it.
+  - **On a device:** the extension from YouTube, Photos and Files; what each sends against the
+    activation rule; the title each hands over; a large photo through the drain; and the store staying
+    in Application Support on an upgrade from the 1.3 build (that build first, this one over it, read
+    by the store files' timestamps, not by counts).
+  - The manual's figures for the extension, with the all-slices reshoot. A share sheet belongs to
+    another app, so these are hand-shot on a device.
 
 ## Alternatives rejected
 

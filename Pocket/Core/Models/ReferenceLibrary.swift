@@ -1,20 +1,5 @@
 import Foundation
 
-/// The four things a reference can be filed on (ADR 0167), as the References library names them.
-enum ReferencePlaceKind: String, CaseIterable, Sendable {
-    case exercise, song, loop, routine
-
-    /// What a *Where it's used* row says under the place's name.
-    var noun: String {
-        switch self {
-        case .exercise: "Exercise"
-        case .song: "Song"
-        case .loop: "Loop"
-        case .routine: "Routine"
-        }
-    }
-}
-
 /// Where one reference row is filed: the owner's kind and name, and a loop's song. Values only, so the
 /// library's rules are tested without a store.
 struct ReferencePlace: Equatable, Sendable {

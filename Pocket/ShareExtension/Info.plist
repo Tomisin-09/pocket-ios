@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Save to Red Moon, the share extension (ADR 0264 D8). Hand-maintained like the app's own
+	     Info.plist: no `info:` block in project.yml, which would regenerate this file. The two
+	     version keys must equal the app's, and do, because both read the project's settings. -->
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<!-- What the share sheet writes under the icon. The brand, never the target's name. -->
+	<key>CFBundleDisplayName</key>
+	<string>Red Moon</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<!-- D8: Red Moon appears only for what it keeps, so it never offers and then refuses.
+			     One item, holding a web link, a picture, a PDF or text (a .txt or .md file, or a
+			     sentence with a link in it, D12), and at most one picture or PDF among its
+			     attachments: two photos is two references, which this doesn't take. A file link
+			     (`public.file-url`) is not a web link; a file counts by its own type.
+
+			     PocketTests/ShareActivationRuleTests evaluates this string, read out of the built
+			     extension, against what the common sharing apps send. Change it there first. -->
+			<key>NSExtensionActivationRule</key>
+			<string>extensionItems.@count == 1 AND SUBQUERY(extensionItems, $item, SUBQUERY($item.attachments, $attachment, (ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.url" AND NOT (ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.file-url")) OR ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.image" OR ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "com.adobe.pdf" OR ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.plain-text").@count >= 1 AND SUBQUERY($item.attachments, $attachment, ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.image" OR ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "com.adobe.pdf").@count &lt;= 1).@count == 1</string>
+		</dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.share-services</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>$(PRODUCT_MODULE_NAME).ShareViewController</string>
+	</dict>
+</dict>
+</plist>
