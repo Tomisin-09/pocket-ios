@@ -148,7 +148,8 @@ struct ImproviseSheet: View {
 }
 
 /// The **pushed** improvise host — what the Loops library navigates to from a flagged row's Improv
-/// button (ADR 0135 B8a). The sheet's twin, without the modal chrome.
+/// button (ADR 0135 B8a), and a Journal caption and Home's Jump back in through `LoopModeScreen`. The
+/// sheet's twin, without the modal chrome, and gated like it since ADR 0267 (see `EarTrainingScreen`).
 struct ImproviseScreen: View {
     let loop: Loop
     @State private var player: ContinuousLoopPlayer
@@ -160,6 +161,10 @@ struct ImproviseScreen: View {
     }
 
     var body: some View {
+        PlanGated(.improvise) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         ImproviseView(loop: loop, player: player, recorder: recorder,
                       routineContext: nil)
             .navigationTitle(LoopRunMode.improvise.label)

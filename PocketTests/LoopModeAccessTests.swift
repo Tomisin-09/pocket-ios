@@ -144,4 +144,27 @@ final class LoopModeAccessTests: XCTestCase {
                            "\(mode) admits a loop with no tempo and no audio")
         }
     }
+
+    // MARK: - Which mode a loop opens in (ADR 0228, 0265, 0267)
+
+    /// The one rule the Journal's captions and Home's Jump back in open a loop by: the mode asked for
+    /// while the loop still allows it, else the first it does, else nowhere.
+    func testAPreferredModeOpensWhileTheLoopStillAllowsIt() {
+        XCTAssertEqual(LoopModeAccess.mode(preferring: .ear, among: [.trainer, .ear]), .ear)
+        XCTAssertEqual(LoopModeAccess.mode(preferring: .improvise, among: [.trainer, .ear, .improvise]),
+                       .improvise)
+    }
+
+    func testALostModeFallsBackToTheFirstAllowed() {
+        // Improvise after the backing-track flag came off.
+        XCTAssertEqual(LoopModeAccess.mode(preferring: .improvise, among: [.trainer, .ear]), .trainer)
+        // The trainer after the command tempo was cleared.
+        XCTAssertEqual(LoopModeAccess.mode(preferring: .trainer, among: [.ear]), .ear)
+    }
+
+    func testNoPreferenceTakesThePrecedenceAndNoModeIsNowhere() {
+        XCTAssertEqual(LoopModeAccess.mode(preferring: nil, among: [.ear, .improvise]), .ear)
+        XCTAssertNil(LoopModeAccess.mode(preferring: .ear, among: []))
+        XCTAssertNil(LoopModeAccess.mode(preferring: nil, among: []))
+    }
 }

@@ -102,9 +102,11 @@ enum HomeFeed {
 /// preference, not a record of what happened. `RawRepresentable` with a `String` raw value so it
 /// works directly with `@AppStorage`.
 ///
-/// **`Loop` is absent on purpose.** `lastPracticed` exists on `Song`, `Routine` and `Exercise` and
-/// nowhere else; giving `Loop` one to round the set out would be a schema change made for a card,
-/// which is the trade ADR 0189's criteria exist to refuse.
+/// **`Loop` joined in ADR 0267, still without a column.** `lastPracticed` exists on `Song`, `Routine`
+/// and `Exercise` and nowhere else, and 0193 D1 refused to add one to `Loop` for a card. A loop's
+/// date comes from the practice log instead (`loopResumeCandidates`), which already records every
+/// loop run with its mode. One value covers all three modes: they are ways to practise a loop, not
+/// three kinds of thing, and the card says which one it reopens.
 enum JumpBackInPreference: String, CaseIterable, Identifiable {
     /// Whatever was touched last, of any kind — the default, and exactly what Home did before this
     /// setting existed.
@@ -112,6 +114,7 @@ enum JumpBackInPreference: String, CaseIterable, Identifiable {
     case song
     case routine
     case exercise
+    case loop
 
     static let `default` = JumpBackInPreference.mostRecent
 
@@ -123,6 +126,7 @@ enum JumpBackInPreference: String, CaseIterable, Identifiable {
         case .song: return "Song"
         case .routine: return "Routine"
         case .exercise: return "Exercise"
+        case .loop: return "Loop"
         }
     }
 
@@ -133,15 +137,17 @@ enum JumpBackInPreference: String, CaseIterable, Identifiable {
         case .song: return .song
         case .routine: return .routine
         case .exercise: return .exercise
+        case .loop: return .loop
         }
     }
 }
 
 extension HomeFeed {
 
-    /// Which kind of unit the "Jump back in" card ends up carrying.
+    /// Which kind of unit the "Jump back in" card ends up carrying. `loop` is declared last, so it
+    /// loses every tie (ADR 0267).
     enum ResumeKind: String, CaseIterable {
-        case song, routine, exercise
+        case song, routine, exercise, loop
     }
 
     /// The kind the card should show, from the player's preference and the newest `lastPracticed`
@@ -154,15 +160,17 @@ extension HomeFeed {
     /// unobservable in the direction that matters: the moment a routine *is* practised, the pin
     /// takes over and never yields again.
     ///
-    /// Ties break **song · routine · exercise**, the declaration order, matching
+    /// Ties break **song · routine · exercise · loop**, the declaration order, matching
     /// `mostRecentlyPracticed`'s first-maximal rule so two surfaces reading the same instant can't
     /// disagree about which unit that instant belongs to.
     static func resumeKind(preference: JumpBackInPreference,
                            songPracticedAt: Date?,
                            routinePracticedAt: Date?,
-                           exercisePracticedAt: Date?) -> ResumeKind? {
+                           exercisePracticedAt: Date?,
+                           loopPracticedAt: Date?) -> ResumeKind? {
         let practiced: [(kind: ResumeKind, date: Date?)] = [
-            (.song, songPracticedAt), (.routine, routinePracticedAt), (.exercise, exercisePracticedAt)
+            (.song, songPracticedAt), (.routine, routinePracticedAt), (.exercise, exercisePracticedAt),
+            (.loop, loopPracticedAt)
         ]
         if let pinned = preference.pinnedKind,
            practiced.contains(where: { $0.kind == pinned && $0.date != nil }) {
@@ -172,5 +180,51 @@ extension HomeFeed {
             .compactMap { entry in entry.date.map { (entry.kind, $0) } }
             .max { $0.1 < $1.1 }?
             .0
+    }
+}
+
+// MARK: - A loop to jump back into (ADR 0267)
+
+extension HomeFeed {
+
+    /// A loop the player ran on its own, the mode they ran it in, and when. Read off the practice
+    /// log, because `Loop` stores no date of its own (ADR 0193 D1).
+    struct LoopResume: Equatable {
+        let loopUID: UUID
+        let mode: LoopRunMode
+        let startedAt: Date
+    }
+
+    /// How many of the newest loop-mode runs Home reads to find one (`HomeView.recentLoopRuns`).
+    ///
+    /// A bound rather than the whole log, which Home refuses to query. Rows inside a routine, and
+    /// rows on loops deleted since, are skipped after the fetch; if every one of the newest fifty is
+    /// one of those, Home has no loop to offer and the card falls back as a pin with nothing behind it
+    /// does (ADR 0193 D3). That takes fifty loop blocks in routines since the last loop run on its own.
+    static let recentLoopRunLimit = 50
+
+    /// The loops the card could offer, newest first, **one per loop** (its newest run).
+    ///
+    /// The planner reads loop recency off the same log (`PracticeLog.lastPracticedByUnit`, ADR 0137
+    /// D2a), and this differs from it twice, both on purpose:
+    /// - **It keeps the mode.** The planner asks *when did you last work on this material*; the card
+    ///   has to know *which screen to reopen*, so an ear-training run reopens ear training.
+    /// - **It drops runs inside a routine** (`routineUID != nil`). Those are the routine's: counting
+    ///   them would put a routine's own loop block on the card in place of the routine just played.
+    ///
+    /// Rows that aren't a loop mode, and rows with no `unitUID`, are not loop runs and are skipped.
+    /// The caller still has to find each loop and check it can open in some mode; a candidate is a
+    /// row, not a promise that the loop survives.
+    static func loopResumeCandidates(_ records: [SessionRecord]) -> [LoopResume] {
+        var newest: [UUID: LoopResume] = [:]
+        for record in records where record.routineUID == nil {
+            guard let loopUID = record.unitUID, let mode = record.kind.loopRunMode else { continue }
+            if let seen = newest[loopUID], seen.startedAt >= record.startedAt { continue }
+            newest[loopUID] = LoopResume(loopUID: loopUID, mode: mode, startedAt: record.startedAt)
+        }
+        return newest.values.sorted { lhs, rhs in
+            lhs.startedAt != rhs.startedAt ? lhs.startedAt > rhs.startedAt
+                : lhs.loopUID.uuidString < rhs.loopUID.uuidString
+        }
     }
 }

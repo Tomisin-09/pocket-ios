@@ -131,15 +131,12 @@ enum JournalOwnerRoute: Hashable {
     }
 
     /// The mode the note was written in when the loop still qualifies for it, else the first that it
-    /// does (ADR 0142 J5a). A mode the loop has since lost, such as improvise after the backing-track
-    /// flag came off, falls back rather than opening a screen the loop can't run.
+    /// does (ADR 0142 J5a) — `LoopModeAccess.mode(preferring:for:)`, the rule Home's Jump back in
+    /// opens a loop by too (ADR 0267).
     private static func route(loop: Loop?, exercise: Exercise?,
                               writtenIn written: LoopRunMode? = nil) -> JournalOwnerRoute? {
         if let exercise { return .exercise(exercise) }
-        guard let loop else { return nil }
-        let modes = LoopModeAccess.modes(for: loop)
-        if let written, modes.contains(written) { return .loop(loop, written) }
-        guard let mode = modes.first else { return nil }
+        guard let loop, let mode = LoopModeAccess.mode(preferring: written, for: loop) else { return nil }
         return .loop(loop, mode)
     }
 }

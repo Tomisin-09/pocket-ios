@@ -69,4 +69,20 @@ extension LoopModeAccess {
     static func modes(for loop: Loop) -> [LoopRunMode] {
         LoopRunMode.allCases.filter { allows($0, loop) }
     }
+
+    /// The mode to open this loop in: `preferred` while the loop still qualifies for it, else the first
+    /// mode it does (ADR 0142 J5a's precedence), else `nil` when it qualifies for none.
+    ///
+    /// A mode the loop has since lost, such as improvise after the backing-track flag came off, falls
+    /// back rather than opening a screen the loop can't run. The Journal's captions (ADR 0228, 0265) and
+    /// Home's Jump back in (ADR 0267) both open a loop this way, so they cannot disagree about it.
+    static func mode(preferring preferred: LoopRunMode?, for loop: Loop) -> LoopRunMode? {
+        mode(preferring: preferred, among: modes(for: loop))
+    }
+
+    /// The same rule over a list of allowed modes already in hand, so it is tested without a `Loop`.
+    static func mode(preferring preferred: LoopRunMode?, among allowed: [LoopRunMode]) -> LoopRunMode? {
+        if let preferred, allowed.contains(preferred) { return preferred }
+        return allowed.first
+    }
 }

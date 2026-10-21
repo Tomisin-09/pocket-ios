@@ -18,13 +18,16 @@ Under it, `Ready to practice?`.
 your goals.
 
 **`JUMP BACK IN`** appears once you have practised anything, and carries the last thing you
-practised — a song with its artist and mastery, a routine with its block count, or an exercise with
-its command tempos — along with when you last played it. Tapping it reopens that thing: a song in the
-[song player](song-player.md), a routine on its own screen, an exercise on its run screen.
+practised — a song with its artist and mastery, a routine with its block count, an exercise with
+its command tempos, or a loop with its song and the mode you used — along with when you last played
+it. Tapping it reopens that thing: a song in the [song player](song-player.md), a routine on its own
+screen, an exercise on its run screen, and a loop in the mode you left it in: `Practice`,
+`Train your ear` or `Improvise`. Only a loop you opened on its own counts; one you played inside a
+routine leaves the routine on the card.
 
-**Hold the card** to pin what it offers: `Most recent`, `Song`, `Routine` or `Exercise`. The same
-choice is in [Settings ▸ Practice](settings.md#practice) under `Jump back in`. A pin you have nothing
-for yet — `Routine`, before you have run one — shows the most recent of any kind until you do.
+**Hold the card** to pin what it offers: `Most recent`, `Song`, `Routine`, `Exercise` or `Loop`. The
+same choice is in [Settings ▸ Practice](settings.md#practice) under `Jump back in`. A pin you have
+nothing for yet — `Routine`, before you have run one — shows the most recent of any kind until you do.
 
 **`This week`** is three numbers over the last seven days: `Minutes`, `Days` and `Notes`. All three
 count the same week, and none of them is a target — nothing here sets you a number to reach or

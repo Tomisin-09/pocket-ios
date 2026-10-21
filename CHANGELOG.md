@@ -56,6 +56,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Jump back in can carry a loop.** Home's card now offers the loop you last practised on its own,
+  and reopens it in the mode you left it in: **Practice**, **Train your ear** or **Improvise**. Its
+  second line names the song and the mode. Hold the card, or go to **Settings ▸ Practice ▸ Jump back
+  in**, to pin it to **Loop**. Loops you play inside a routine don't count, so a routine stays on the
+  card after you run it. (ADR 0267)
 - **References, in the Toolkit** (ADR 0264). Every lesson, tab page, picture and file you keep, wherever
   it's filed, in one list with a search: **Not filed** first, then **Everything**, newest first. A link
   used on two drills is one row, and says where it's used in each place's colour. **＋** keeps a link,
@@ -563,6 +568,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **Train your ear and Improvise show the plan's wall from the Journal and Map the song when the
+  plan is off.** A Journal caption on an ear-training or improvise note or take, and holding a piece
+  in **Map the song**, opened the mode itself, though both modes are the plan's. They now open the
+  wall titled for the mode, as **Practice now** already did. (ADR 0267)
 - **A take opens the mode you recorded it in.** Tapping the caption on a take recorded in **Train
   your ear** or **Improvise** opened the practice ramp whenever the loop had a tempo. It now opens the
   mode the take came from, as a note already did. Takes recorded before this update are matched to

@@ -19,11 +19,7 @@ struct JournalOwnerDestinationView: View {
         case .exercise(let exercise):
             ExerciseRunScreen(exercise: exercise)
         case .loop(let loop, let mode):
-            switch mode {
-            case .trainer: LoopRunView(loop: loop)
-            case .ear: EarTrainingScreen(loop: loop)
-            case .improvise: ImproviseScreen(loop: loop)
-            }
+            LoopModeScreen(loop: loop, mode: mode)
         case .naming(let loop, let note):
             EarTrainingScreen(loop: loop, namingAt: note)
         case .routine(let routine):

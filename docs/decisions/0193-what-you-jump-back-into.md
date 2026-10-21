@@ -5,6 +5,9 @@
 - **Since:** ADR 0257 (2026-10-17) removed the *Recent routines* rail this ADR's Context sets the card
   beside. Jump back in is now Home's only "carry on" card; routines you played are on the Practice
   hub's Routines shelf. Nothing decided here changes.
+- **Amended by:** ADR 0267 (2026-10-21) — **D1**: `Loop` is a fifth value. Its date and mode come
+  from the practice log, so it still adds no column; the card reopens the loop in the mode it was last
+  run in. D2 to D6 stand.
 - **Relates to:** widens the ADR 0044 follow-on home hub's resume card from songs to three kinds;
   places the setting under **ADR 0162 D2**'s Practice destination and gives it **ADR 0163**'s second
   door (the hold, with the Settings row kept). Gated with **ADR 0144 D4**. Reads the fields ADR 0066
@@ -31,6 +34,9 @@ Both are one setting apart, and the data for both was already on disk.
 ## Decisions
 
 ### D1 — Four values, and `Loop` is not one of them
+
+> **Amended by 0267 (2026-10-21):** `Loop` is a fifth value. The column argument below still holds; the
+> practice log already records every loop run with its mode, so the card reads that instead.
 
 `JumpBackInPreference`: **most recent** (the default) · **song** · **routine** · **exercise**.
 

@@ -41,6 +41,9 @@ struct HomeView: View {
     // read them when deciding which one-time profile moment to surface (ADR 0113).
     @Query var exercises: [Exercise]
     @Query var loops: [Loop]
+    /// The newest loop runs in the practice log, which is where Jump back in finds a loop (ADR 0267).
+    /// Bounded, and filtered on a plain `String` column only — see `HomeView.recentLoopRuns`.
+    @Query(HomeView.recentLoopRuns) var recentLoopRuns: [PracticeRun]
     /// The local artist profile (ADR 0113). `.first?.artistName` personalises the greeting; `nil`
     /// (untouched install / no name) reads name-free.
     @Query var profiles: [Profile]

@@ -706,7 +706,7 @@ placements. Lane assignment is a greedy interval colouring per layer, done once 
 its lane across rows; the layer comes from `PieceLabel.readsAsChord` (via `earReading`, so a shape on the
 neck that spells a chord counts), else `LoopType.chords`. The screen is a `.fullScreenCover` from
 `SongDetailsSheet`. Tapping a piece opens its tab sheet; holding it is a `.contextMenu` of the modes
-`LoopModeAccess` allows. A mode pushes `JournalOwnerDestinationView` inside the cover's own
+`LoopModeAccess` allows. A mode pushes `LoopModeScreen` (ADR 0267) inside the cover's own
 `NavigationStack`, after the practice screen's `pauseForNestedAudio` when the details were opened from
 there; a mode picked on the tab sheet is held until the sheet's `onDismiss`, since a push can't start
 under a presented sheet. `build` cuts the sections **before** placing pieces, because a repeating loop
