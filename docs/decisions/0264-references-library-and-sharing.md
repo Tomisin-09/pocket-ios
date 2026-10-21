@@ -5,8 +5,9 @@
   2026-10-20 on `pocket-379-references-library` (D3, D4, D5 without its slice 3 actions, D6's rules as
   pure logic, D11, D2's toast line). **Slice 3 built** 2026-10-20 on `pocket-380-references-attach`
   (D5's *Attach to…* and *Start an exercise from this*, over D6's rules). **Slice 4 built** 2026-10-21
-  on `pocket-381-save-to-red-moon` (D8, D9, D10, D12: the share extension), checked on the simulator;
-  the device check waits on D10's signing step. See §Build notes. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
+  on `pocket-381-save-to-red-moon` (D8, D9, D10, D12: the share extension), checked on the simulator,
+  and from Safari on a device once D10's signing was done; the other apps are still to check on a
+  device. See §Build notes. Decided with Tomisin on 2026-10-20, from a nine-screen mockup
   (canvas *Red Moon References*). The two questions it first left open were settled the same day,
   with the recommended answers (D11, D12). It lands **before 1.4**, all four slices including the
   share extension. Tomisin: *"we're in no rush to launch, I'd rather we have it in place before we
@@ -464,7 +465,7 @@ device as well.
       runs only on the foreground, when no extension can be mid-write on an iPhone. So the app's privacy
       manifest gains no required-reason API. The extension carries a manifest of its own that declares
       none.
-- **Checked on the simulator, not the device** (signing, D10.1, is still to do):
+- **Checked on the simulator:**
   - The App Group reaches both signatures.
   - The app writes `owners.json` with every place: 8 on the test simulator, temporary sessions left out.
   - Saves written into the inbox by hand, the way the extension writes them, drained on the next
@@ -477,12 +478,26 @@ device as well.
     Domain*), *Keep for later* ticked, *Recent* from the snapshot. Picking a song moved the tick, a note
     was typed, *Save* closed the sheet, and bringing Red Moon forward filed it on that song with the
     note and the page's address. Screenshots looked at; it draws as the mockup in dark appearance.
+- **D10.1's signing, done 2026-10-21** under team `2L35PZ86GP`. A development build from
+  `scripts/run-device.sh` registered `click.decooperations.pocket.share` and turned App Groups on for
+  both ids, but its profiles came down with an empty group list and the build failed on the
+  mismatch. Automatic signing doesn't create or assign a group. Tomisin registered
+  `group.click.decooperations.pocket` in the developer portal and assigned it to both ids, and the
+  next build signed. Read off the built binaries: the app and the extension are signed by the team,
+  and both carry the group.
+- **Checked on a device** (Tomisin's iPhone, that build, installed over an earlier development build):
+  - The store stayed in Application Support. Its files there were touched at the new build's launch,
+    and no store appeared in the group container.
+  - **Safari:** its share sheet lists Red Moon, and *Save to Red Moon* showed the page's title and
+    site, *Keep for later* ticked, and *Recent* holding the phone's own song and loops, read from the
+    snapshot the app wrote. A song was picked, a note typed and *Save* tapped; Red Moon, brought
+    forward, had it filed on that song.
 - **Owed:**
-  - **D10.1, signing, Tomisin's:** register `click.decooperations.pocket.share` and the App Group
-    `group.click.decooperations.pocket` under team `2L35PZ86GP`, add the group to both app ids, and
-    repopulate the match repo. `fastlane/Matchfile` now names both ids, so `fastlane beta` fails until
-    then, as D10.1 says.
-  - **On a device:** the extension from YouTube, Safari, Photos and Files; what each sends against the
+  - **The match repo**, the one part of D10.1 left: `fastlane/Matchfile` names both ids, so
+    `fastlane beta` fails until it is repopulated (`fastlane match appstore` without `readonly`). An
+    archive from Xcode's Organizer, the way releases are made today, signs automatically and doesn't
+    need it.
+  - **On a device:** the extension from YouTube, Photos and Files; what each sends against the
     activation rule; the title each hands over; a large photo through the drain; and the store staying
     in Application Support on an upgrade from the 1.3 build (that build first, this one over it, read
     by the store files' timestamps, not by counts).
