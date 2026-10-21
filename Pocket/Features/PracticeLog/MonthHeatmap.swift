@@ -27,7 +27,8 @@ struct MonthHeatmap: View {
     /// Today, for the ring and for which days are still to come. Passed in rather than read from
     /// `.now` so a preview or a test can say what "today" is.
     var today: Date = .now
-    /// The day *What you played* is narrowed to (ADR 0241), filled in the grid.
+    /// The day *What you played* is narrowed to (ADR 0241), filled in the grid. While there is one,
+    /// the other practised days step back (ADR 0269).
     var selectedDay: Date?
     /// Called with a practised day's start when its cell is tapped. `nil` leaves the grid inert.
     var onSelectDay: ((Date) -> Void)?
@@ -105,8 +106,14 @@ struct MonthHeatmap: View {
         let shade = month.shade(of: bucket)
         let selected = isSelected(bucket)
         let isToday = calendar.isDate(bucket.day, inSameDayAs: today)
+        // The other practised days step back while one is chosen, as the week chart's bars do, so the
+        // grid itself says which day the figures above it are about (ADR 0269). Only the fill dims:
+        // the date stays legible and today's ring stays whole. The neutral and the outlines are
+        // already quiet and are left as they are.
+        let dimmed = selectedDay != nil && bucket.isActive && !selected
         return RoundedRectangle(cornerRadius: cellCorner)
-            .fill(fill(shade: shade, selected: selected, toCome: isToCome(bucket)))
+            .fill(fill(shade: shade, selected: selected, toCome: isToCome(bucket))
+                .opacity(dimmed ? WeekMinutesChart.unchosenOpacity : 1))
             .overlay {
                 // Every ring is drawn inside the cell rather than around it: the grid sits in a paging
                 // scroll view, and a ring drawn outside the frame would be clipped at the grid's edges.
@@ -123,7 +130,7 @@ struct MonthHeatmap: View {
                 // its caption. Scales down rather than spilling at the accessibility text sizes.
                 Text("\(calendar.component(.day, from: bucket.day))")
                     .font(.futura(.caption2, weight: isToday || selected ? .semibold : nil))
-                    .foregroundStyle(numberColour(shade: shade, selected: selected))
+                    .foregroundStyle(numberColour(shade: dimmed ? nil : shade, selected: selected))
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                     .padding(.horizontal, 5)
@@ -145,7 +152,7 @@ struct MonthHeatmap: View {
 
     /// The chosen day is **filled** with ink, as a calendar marks the date you picked, because the
     /// ring now means today (ADR 0268). Only a practised day can be chosen, so a fill never hides a
-    /// day off — and the day's figures are in the list it narrows, just below.
+    /// day off — and the day's own figures take over the ones above the grid (ADR 0269).
     private func fill(shade: Int?, selected: Bool, toCome: Bool) -> Color {
         if selected { return PocketColor.textPrimary }
         if let shade { return PocketColor.practice.opacity(rampOpacities[shade]) }
@@ -154,7 +161,9 @@ struct MonthHeatmap: View {
 
     /// The date over its own fill. The ramp runs towards the practice colour, which is light in the
     /// dark appearance and dark in the light one, so the page's background takes over from ink one
-    /// shade earlier in the dark — the crossover that keeps every shade above 4:1 (ADR 0268).
+    /// shade earlier in the dark — the crossover that keeps every shade above 4:1 (ADR 0268). A dimmed
+    /// day is passed no shade: its fill is nearly as quiet as the neutral, so its date is drawn like
+    /// an unpractised day's (ADR 0269).
     private func numberColour(shade: Int?, selected: Bool) -> Color {
         if selected { return PocketColor.background }
         guard let shade else { return PocketColor.textSecondary }

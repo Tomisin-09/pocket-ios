@@ -43,6 +43,7 @@
 │              deleted unit, a placeholder when the log never knew) and MinutesFigure ("<1 minute", never "0").
 │              ADR 0242 adds the .metronome kind (one group in What you played, with no items to open) and
 │              PracticeRunKind decodes an unknown raw value as .other, so a newer build's row can't fail an archive.
+│              ADR 0269 adds PracticeProgress.day: a chosen day's figures, read off the same bucket the chart draws.
 │   Services — Persistence (SwiftData), Sync (CloudKit, planned), AIClient (→ proxy).
 │              MusicKit (browse) is PLANNED-ONLY and not shipped — no MusicKit import,
 │              no MPMediaLibrary, no NSAppleMusicUsageDescription

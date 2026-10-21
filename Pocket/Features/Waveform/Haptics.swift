@@ -27,6 +27,9 @@ enum HapticStyle: Hashable {
     /// The system **success** notification pattern (da-dum) — used when the tuner confirms a string has
     /// held in tune (ADR 0115), distinct from the plain impacts so "you nailed it" feels like an event.
     case success
+    /// The system **selection** tick, the one a picker makes as it moves — used when a tap chooses a
+    /// day on the Practice log (ADR 0269), where something on screen changed rather than happened.
+    case selection
 }
 
 /// Holds long-lived feedback generators so the Taptic Engine stays warm between
@@ -39,6 +42,11 @@ enum HapticStyle: Hashable {
     private var impactGenerators: [HapticStyle: UIImpactFeedbackGenerator] = [:]
     private lazy var notificationGenerator: UINotificationFeedbackGenerator = {
         let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        return generator
+    }()
+    private lazy var selectionGenerator: UISelectionFeedbackGenerator = {
+        let generator = UISelectionFeedbackGenerator()
         generator.prepare()
         return generator
     }()
@@ -56,13 +64,22 @@ enum HapticStyle: Hashable {
     }
 
     func prepare(_ style: HapticStyle) {
-        if style == .success { notificationGenerator.prepare() } else { impactGenerator(for: style).prepare() }
+        switch style {
+        case .success: notificationGenerator.prepare()
+        case .selection: selectionGenerator.prepare()
+        case .light, .medium: impactGenerator(for: style).prepare()
+        }
     }
 
     func fire(_ style: HapticStyle) {
         if style == .success {
             notificationGenerator.notificationOccurred(.success)
             notificationGenerator.prepare() // keep warm
+            return
+        }
+        if style == .selection {
+            selectionGenerator.selectionChanged()
+            selectionGenerator.prepare() // keep warm
             return
         }
         let generator = impactGenerator(for: style)

@@ -26,6 +26,10 @@ struct WeekMinutesChart: View {
     /// Called with a practised day's start when its bar is tapped. `nil` leaves the bars inert.
     var onSelectDay: ((Date) -> Void)?
 
+    /// How far the other practised days step back while one is chosen — here, and in the month grid
+    /// (ADR 0269), so both charts say "this one" the same way.
+    static let unchosenOpacity = 0.32
+
     /// Bar geometry. The stub is what a zero day draws — visible enough to say "this day exists and
     /// nothing happened", quiet enough not to read as a small amount of practice.
     private let barHeight = 96.0
@@ -77,7 +81,7 @@ struct WeekMinutesChart: View {
                 Color.clear.frame(height: barHeight)
                 UnevenRoundedRectangle(topLeadingRadius: corner, topTrailingRadius: corner)
                     .fill(day.isActive ? PocketColor.practice : PocketColor.surfaceStandard)
-                    .opacity(isDimmed(day) ? 0.32 : 1)
+                    .opacity(isDimmed(day) ? Self.unchosenOpacity : 1)
                     .frame(height: height(for: day))
             }
             Text(weekdayInitial(day.day))

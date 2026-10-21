@@ -4,6 +4,10 @@
   checked on the simulator and on a device. Still owed: the Practice log figures in the reshoot
   (Consequences).
 - **Date:** 2026-10-02
+- **Amended by:** ADR 0269 (2026-10-21) — **D4**: a tap still narrows the list and still opens
+  nothing, but it also turns the section's figures into the chosen day's, and the chip that gives
+  the period back moves from beside *What you played* to just above the chart. The month's other
+  practised days dim as the week's bars already did, and the tap ticks.
 - **Amended by:** ADR 0268 (2026-10-21) — **D7**'s scale: the month grid's darkest shade now starts
   at the month's typical practised day (its upper quartile), not its longest, so one long day no
   longer turns every ordinary day pale, and *Longest day* is no longer the scale. Still the month's
@@ -111,6 +115,10 @@ over another.
 Not a sheet: a tap that filters a list already on screen beats raising a second surface with two rows
 in it. Groups open in place onto their items, and start closed — five rows keeps the month grid within
 reach.
+
+> **Amended by ADR 0269 (2026-10-21).** The tap also turns the figures above the chart into the
+> chosen day's, and the chip that clears it sits there, just above the chart, instead of beside *What
+> you played*, which was often below the fold. The rest of this section stands.
 
 ### D5 — A run records its song and its name
 

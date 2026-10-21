@@ -92,6 +92,20 @@ enum PracticeProgress {
         }
     }
 
+    /// **One chosen day** (ADR 0269) — what the figures above the week chart or the month grid turn
+    /// into while a day is tapped: the section's own figures, for that day alone. No days count,
+    /// because one day is one day.
+    struct Day: Equatable, Sendable {
+        let interval: DateInterval
+        /// The same bucket the chart and the grid draw for this day, so a figure can't disagree with
+        /// the bar or the cell it was tapped from.
+        let bucket: PracticeLog.DayBucket
+        /// Runs that day that went faster than that drill had ever been logged at, at that rhythm.
+        let newTempos: Int
+
+        var minutesFigure: PracticeLog.MinutesFigure { .init(seconds: bucket.seconds) }
+    }
+
     /// **All-time** — meaningful from the second session, which is why it ships with the near
     /// horizons. Activity leads; the inventory counts are supporting texture, never the headline,
     /// because they measure library size and can go *down* when a drill is deleted.
@@ -151,6 +165,17 @@ enum PracticeProgress {
                      bestDay: PracticeLog.bestDay(days),
                      // Measured against the whole log, not against this month — see `TempoRecord`.
                      newTempos: TempoRecord.entries(in: records, within: interval).count)
+    }
+
+    /// The day holding `date`, bucketed and measured the way the week and the month are.
+    static func day(records: [SessionRecord], containing date: Date, calendar: Calendar) -> Day {
+        let interval = PracticeLog.dayInterval(containing: date, calendar: calendar)
+        let bucket = PracticeLog.dailyBuckets(records, in: interval, calendar: calendar).first
+            ?? PracticeLog.DayBucket(day: interval.start, seconds: 0, runCount: 0)
+        return Day(interval: interval,
+                   bucket: bucket,
+                   // Measured against the whole log, as the month's figure is — see `TempoRecord`.
+                   newTempos: TempoRecord.entries(in: records, within: interval).count)
     }
 
     static func allTime(records: [SessionRecord], inventory: PracticeStats.Summary) -> AllTime {

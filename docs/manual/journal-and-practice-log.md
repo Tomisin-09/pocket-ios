@@ -386,12 +386,14 @@ to open it and see the exercise, loop or song itself, with each loop's song unde
 **Metronome** is the one kind with nothing inside it, so it doesn't open: the click isn't an
 exercise or a song, and its row is the whole of what there is to say.
 
-Tap a day — a bar in the week, a cell in the month — and the list narrows to that day. In the month
-the cell you chose fills in solid. Tap the day again, or the date that appears beside **What you
-played**, to see the whole week or month.
+Tap a day — a bar in the week, a cell in the month — and the section turns to that day. The figures
+above the chart become the day's: its minutes, and in the month any new tempo. A chip with the day's
+date sits just above the chart, the other days dim, and the list narrows to that day. In the month
+the cell you chose fills in solid. Tap the day again, or the chip, to see the whole week or month.
+With **Haptics** on, in Settings ▸ **Sound & feel**, each tap also gives a light tick.
 
 <!-- shot: journal/what-you-played | role: panel
-     | alt: The week chart with one day chosen and the others dimmed, and What you played narrowed to that day with one kind opened onto what was played
+     | alt: The week chart with one day chosen and the others dimmed, that day's minutes and date above it, and What you played narrowed to that day with one kind opened onto what was played
      | state: seeded library, Practice log, a practised day tapped on This week's chart, its first kind opened -->
 
 It lists what you *played*, not where you were in the app: time spent browsing the song library or

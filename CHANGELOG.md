@@ -358,6 +358,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Tapping a day in the Practice log shows it where you're looking** (ADR 0269). The figures above
+  the week chart or month grid change to that day's minutes (and, in the month, any new tempo). A
+  chip with the day's date sits just above the chart and takes you back to the whole week or month.
+  The other days dim, and the tap gives a light tick when Haptics is on. Before, the only sign beyond
+  the cell itself was a small date beside What you played, often below the screen.
 - **The month grid in the Practice log reads as a calendar** (ADR 0268). Each square shows its date,
   the columns have weekday initials, today has a ring around it, and the days still to come are
   outlines rather than looking like days off. Tapping a practised day now fills its square in solid,

@@ -227,7 +227,8 @@ final class ManualShotsUITests: ManualShotCase {
         XCTAssertTrue(awaitHittable(day), "no practised day in this week's chart. \(stepLog)")
         day.tap()
         note("tapped a practised day")
-        // Choosing a day swaps the week list's *Whole week* for a chip naming the day.
+        // Choosing a day swaps the week list's *Whole week* for the day's date (ADR 0269 moved the
+        // chip that clears it up beside the figures; the list's header now names the day as text).
         let wholeWeek = app.staticTexts["Whole week"]
         let narrowed = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: wholeWeek)
         XCTAssertEqual(XCTWaiter.wait(for: [narrowed], timeout: Self.shootTimeout), .completed,

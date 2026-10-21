@@ -81,8 +81,9 @@ page.
 Today gets a 2 pt ink ring, inside the cell for the reason the selection ring was: a ring outside the
 frame is clipped at the pager's edges. That ring used to mean *the chosen day* (0241). The chosen day
 now **fills with ink**, its date in the page background, which is how Calendar marks the date you
-picked. Only a practised day can be chosen, and its minutes are in the list it narrows, just below.
-So while it is chosen, hiding its shade loses nothing the screen doesn't show anyway.
+picked. Only a practised day can be chosen, and its minutes are in the list it narrows, just below
+(and, since 0269, in the figures above the grid). So while it is chosen, hiding its shade loses
+nothing the screen doesn't show anyway.
 
 The week chart already marks today its own way (a bold weekday label) and keeps it.
 
