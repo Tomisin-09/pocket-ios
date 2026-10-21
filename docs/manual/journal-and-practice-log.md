@@ -367,12 +367,16 @@ month since you started, the same way the week does.
      | alt: The month grid with one shaded cell per day and the Less to More key beneath it
      | state: seeded library, Practice log, scrolled to This month, two or more weeks of history in the current month -->
 
-The shading is **relative to that month's own longest day** — that is what the *Less → More* key
-under it means, and the *Longest day* line above the grid is the darkest cell. There is no fixed
-number it is shaded against, because choosing one would be setting a daily target by the back door,
-so as you page back, the same shade can mean more in a busy month than in a quiet one. Days with
-nothing on them are a distinct neutral rather than the palest step, so "nothing" never reads as "a
-little".
+Each square carries its date, today has a ring around it, and the days still to come are outlines,
+because a day that hasn't happened yet isn't a day off.
+
+The shading runs up to **a typical day of practice for that month** — the busier quarter of the
+days you played — rather than to its longest, so one long day doesn't turn every ordinary day pale.
+A day at that length or past it is the darkest shade, and that is what the *Less → More* key under
+the grid means. There is no fixed number it is shaded against, because choosing one would be setting
+a daily target by the back door, so as you page back, the same shade can mean more in a busy month
+than in a quiet one. Days with nothing on them are a distinct neutral rather than the palest step, so
+"nothing" never reads as "a little".
 
 ### What you played
 
@@ -382,8 +386,9 @@ to open it and see the exercise, loop or song itself, with each loop's song unde
 **Metronome** is the one kind with nothing inside it, so it doesn't open: the click isn't an
 exercise or a song, and its row is the whole of what there is to say.
 
-Tap a day — a bar in the week, a cell in the month — and the list narrows to that day. Tap the day
-again, or the date that appears beside **What you played**, to see the whole week or month.
+Tap a day — a bar in the week, a cell in the month — and the list narrows to that day. In the month
+the cell you chose fills in solid. Tap the day again, or the date that appears beside **What you
+played**, to see the whole week or month.
 
 <!-- shot: journal/what-you-played | role: panel
      | alt: The week chart with one day chosen and the others dimmed, and What you played narrowed to that day with one kind opened onto what was played

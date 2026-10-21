@@ -51,7 +51,6 @@ enum PracticeProgress {
         let newTempos: Int
 
         var isEmpty: Bool { daysActive == 0 }
-        var peakMinutes: Int { max(1, days.lazy.map(\.minutes).max() ?? 0) }
         var minutesFigure: PracticeLog.MinutesFigure {
             .init(seconds: days.reduce(0) { $0 + $1.seconds })
         }
@@ -59,6 +58,38 @@ enum PracticeProgress {
         /// The longest day **worth stating** — `nil` until the month has two active days (ADR 0241).
         /// With one, "Longest day" names the only day there is and repeats the figures above it.
         var longestDay: PracticeLog.DayBucket? { daysActive >= 2 ? bestDay : nil }
+
+        // MARK: Shading (ADR 0268)
+
+        /// How many shades a practised day can take. Four is as many as a small cell carries legibly.
+        static let shadeCount = 4
+
+        /// Where the darkest shade begins: the month's **typical practised day**, taken as the upper
+        /// quartile of its practised days — not its longest (ADR 0268). Against the longest, one
+        /// two-hour day turned a month of twenty-minute days pale. The quartile shrugs off up to a
+        /// quarter of the days being unusually long, and it is not a number anyone chose, so it
+        /// sets no target (ADR 0117).
+        ///
+        /// Nearest-rank, so it is always a day that happened. With three practised days or fewer
+        /// that makes it the longest one: there is no "typical" to find in three. At least a second,
+        /// so a month of zero-length runs can't divide by zero.
+        var shadeScaleSeconds: Double {
+            let practised = days.filter(\.isActive).map(\.seconds).sorted()
+            guard !practised.isEmpty else { return 1 }
+            let rank = Int((Double(practised.count) * 0.75).rounded(.up)) - 1
+            return max(1, practised[rank])
+        }
+
+        /// Which shade a day takes, 0 (palest) to `shadeCount - 1` (darkest). `nil` for a day with no
+        /// practice, which draws a distinct neutral rather than the palest shade, so "nothing" never
+        /// reads as "a little". Any practice at all reaches the palest; anything at or past the scale
+        /// is the darkest.
+        func shade(of bucket: PracticeLog.DayBucket) -> Int? {
+            guard bucket.isActive else { return nil }
+            let fraction = bucket.seconds / shadeScaleSeconds
+            let step = Int((fraction * Double(Self.shadeCount)).rounded(.up)) - 1
+            return min(Self.shadeCount - 1, max(0, step))
+        }
     }
 
     /// **All-time** — meaningful from the second session, which is why it ships with the near

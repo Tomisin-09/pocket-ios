@@ -97,12 +97,16 @@ struct PracticeLogMonthSection: View {
                          unit: "month", position: paging, returnLabel: "This month", goTo: show)
             VStack(alignment: .leading, spacing: 14) {
                 figures(month, isCurrent: paging.isCurrent)
-                PeriodPager(starts: starts, position: $position) { start in
-                    MonthHeatmap(month: PracticeProgress.month(records: records, now: start, calendar: calendar),
-                                 calendar: calendar,
-                                 selectedDay: start == paging.shown ? selectedDay : nil,
-                                 onSelectDay: toggle,
-                                 showsKey: false)
+                VStack(spacing: 6) {
+                    MonthHeatmapWeekdays(calendar: calendar)
+                    PeriodPager(starts: starts, position: $position) { start in
+                        MonthHeatmap(month: PracticeProgress.month(records: records, now: start, calendar: calendar),
+                                     calendar: calendar,
+                                     today: now,
+                                     selectedDay: start == paging.shown ? selectedDay : nil,
+                                     onSelectDay: toggle,
+                                     showsHeadingsAndKey: false)
+                    }
                 }
                 MonthHeatmapKey()
                 if !month.isEmpty {
@@ -130,8 +134,8 @@ struct PracticeLogMonthSection: View {
                     PracticeLogFigure("\(month.newTempos)", month.newTempos == 1 ? "new tempo" : "new tempos")
                 }
             }
-            // The longest day is also the scale the grid is shaded against, which is why the key
-            // under the grid doesn't repeat it. Held back until there are two days to compare.
+            // A fact about the month, and no longer the grid's scale — the grid shades against the
+            // month's typical day (ADR 0268). Held back until there are two days to compare.
             if let longest = month.longestDay {
                 let figure = PracticeLog.MinutesFigure(seconds: longest.seconds)
                 Text("Longest day: \(longest.day.formatted(.dateTime.weekday(.wide).day().month())) "

@@ -4,6 +4,11 @@
   checked on the simulator and on a device. Still owed: the Practice log figures in the reshoot
   (Consequences).
 - **Date:** 2026-10-02
+- **Amended by:** ADR 0268 (2026-10-21) — **D7**'s scale: the month grid's darkest shade now starts
+  at the month's typical practised day (its upper quartile), not its longest, so one long day no
+  longer turns every ordinary day pale, and *Longest day* is no longer the scale. Still the month's
+  own measure, still no fixed number, still no comparison between periods. The chosen cell is now
+  filled rather than ringed; the ring marks today.
 - **Amended by:** ADR 0242 (2026-10-02) — the metronome, left *"not decided here"* under *What stays
   out*, is decided: time with the click on the Metronome screen counts as practice, its length is the
   time the click sounded, and *What you played* gains a **Metronome** group with nothing to open.
@@ -151,6 +156,11 @@ would be a daily target by the back door, as 0117 said). Paging makes that relat
 20-minute day in a quiet month shades as dark as two hours in a busy one — so it has to be stated, and
 it is: the *Longest day* line above the grid *is* the scale, which is why the key under it was **not**
 given a second copy of the same number. The mock had both, and they said one fact twice.
+
+> **Superseded in part by ADR 0268 D1–D2 (2026-10-21).** The scale is now the month's **typical**
+> practised day (its upper quartile), not its longest: one 165-minute day had turned a month of
+> twenty-minute days the palest shade. *Longest day* stays as a fact and is no longer the scale, and
+> the key still carries no number. The rest of this section stands.
 
 ## What stays out
 
