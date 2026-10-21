@@ -7,6 +7,9 @@
   reused inside a routine; and R4's command/reach editor in `ExerciseDetailSheet` is removed (ⓘ
   becomes read-only). The session chrome — progress strip, count-in, auto-advance — and the **R4b
   pre-start block previews** are retained and extended, not reversed.
+- **Amended by:** ADR 0266 — §3's *"advances only on Skip"*: a looping song block now has a **Done**
+  (**Finish** on the last block) that logs the play-along and advances. Skip still logs nothing, and
+  the rest of §3 (one fixed speed, looping by default, play-through-once when off) stands.
 
 ## Player & editor refinements (2026-07-08)
 

@@ -125,7 +125,8 @@ Across the top is the **progress strip**: one segment per block, marked **Start*
 leaves the session.
 
 Underneath, the block is just its own run screen. An exercise block is the exercise run screen with
-its settings and its staircase; a loop block is the loop; a song block plays the song through. What
+its settings and its staircase; a loop block is the loop; a song block plays the song, round and round
+until you tap **Done** (or once through, with **Loop song blocks** off). What
 drops out is authoring and review: you cannot edit a block's shape or change its meter here, and the
 takes and journal bar is not on this screen either. A routine is where you play the thing. The
 **quick note** button stays, because a routine block is exactly where a note tends to be owed — and

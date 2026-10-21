@@ -991,8 +991,9 @@ exercises, a `LoopAudioPreviewPlayer` of the loop's real audio for loops, each o
 previews happen up front, **Start** runs straight into block one (`shouldAutoStart` no longer excepts the
 first block; `routineAutoStart` off still waits per-block). A **song
 block** is the audio-only `SongPlayAlongView` — a fixed play-along speed (no ramp, ADR 0070), play/pause
-and −10s/+10s, local/iCloud files only (ADR 0001); it loops until skipped by default, or plays through
-once and advances per the `routineSongLoop` setting. It has **zero evaluation surface** (ADR 0070) —
+and −10s/+10s, local/iCloud files only (ADR 0001); it loops until **Done** by default, or plays through
+once and advances per the `routineSongLoop` setting. Done and the play-through both log a `.song` run
+through one `finish()` (ADR 0266); Skip still logs nothing. It has **zero evaluation surface** (ADR 0070) —
 completion is the material's length, not a graded take. `RoutinePresets` seeds three curated in-house
 starter routines once on first launch (after `PracticePresets`, resolving blocks against the seeded
 exercises **by name**; exercise-only, since loops/songs need user audio at cold start). The **planner**

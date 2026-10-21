@@ -565,6 +565,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   mode the take came from, as a note already did. Takes recorded before this update are matched to
   the session they were recorded in, where the practice log shows one; the rest open as before.
   (ADR 0265)
+- **A song block in a routine can be finished.** A looping song had no way to end except **›**, which
+  skips and logs nothing. Once it's playing, **Done** (or **Finish** on the last block) logs the time
+  you played along and moves on, as Improvise and ear-training blocks do. (ADR 0266)
 - **Raising a drill no longer takes it out of your sessions.** After you raised the tempo on a 5, the
   next completion screen showed your 5 again and leaned toward another raise. Tapping Continue
   without touching the dots then saved that 5 at the new tempo, and the drill stopped being picked.

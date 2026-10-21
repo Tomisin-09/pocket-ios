@@ -1,5 +1,9 @@
 # 0117 — Practice stats & the Progress screen: measure effort, never performance; streaks are opt-in
 
+> **Amended by ADR 0266 (2026-10-21).** A **looping** song play-along in a routine is no longer
+> unlogged: its **Done** ends it and writes a `.song` row, timed from **Play along**. The rule behind the
+> *Two surfaces stay unlogged* paragraph, that the screen being open is not an honest length, still stands.
+
 > **Amended by ADR 0260 (2026-10-18).** The hours milestones (10/50/100/500) are gone from All-time.
 > The wall sat directly under the lifetime figure and restated it. All-time is now the lifetime
 > figure, then the inventory counts. Every constraint below stands.
