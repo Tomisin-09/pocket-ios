@@ -210,7 +210,8 @@ extension ArchiveBuilder {
                     TakeNoteRecord(uid: $0.uid, time: $0.time, text: $0.text, createdAt: $0.createdAt)
                 },
             isPinned: recording.isPinned,
-            isStandalone: recording.isStandalone
+            isStandalone: recording.isStandalone,
+            loopRunMode: recording.loopRunModeRaw
         )
     }
 }

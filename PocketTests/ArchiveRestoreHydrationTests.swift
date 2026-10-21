@@ -217,6 +217,28 @@ final class ArchiveRestoreHydrationTests: XCTestCase {
         XCTAssertEqual(landing.takes.first?.0.ownerKind, Recording.OwnerKind.none)
     }
 
+    // MARK: - ADR 0265, a take keeps the mode it was recorded in
+
+    /// Without the mode travelling, a restored ear-training take on a measured loop would open the
+    /// ramp again: the bug 0265 fixed, brought back by a restore.
+    func testATakesModeComesBack() {
+        let landing = landed(archive {
+            var take = Fixture.take(uid: UUID(), fileName: "take-1.m4a")
+            take.loopRunMode = "ear"
+            $0.takes = [take]
+        })
+
+        XCTAssertEqual(landing.takes.first?.0.loopRunModeRaw, "ear")
+        XCTAssertEqual(landing.takes.first?.0.loopRunMode, .ear)
+    }
+
+    /// A take from an archive written before 0265 lands with no mode, as it was written.
+    func testAnArchiveWrittenBeforeTakeModesRestoresNoMode() {
+        let landing = landed(archive { $0.takes = [Fixture.take(uid: UUID(), fileName: "take-1.m4a")] })
+
+        XCTAssertNil(landing.takes.first?.0.loopRunModeRaw)
+    }
+
     // MARK: - ADR 0205, the marks and the span history come home
 
     /// A snag's `loopUID` is a loose id copy, and it resolves on the way back in **because** the loop

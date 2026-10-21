@@ -106,7 +106,7 @@ struct EarTrainingView: View {
             player.stop()
         }
         .sheet(isPresented: $showingTakes) {
-            TakesSheet(owner: .loop(loop), onDelete: deleteTake)
+            TakesSheet(owner: .loop(loop, .ear), onDelete: deleteTake)
         }
         .sheet(isPresented: $showingVersions) {
             PieceVersionsSheet(loop: loop, spelling: counting.spelling)
@@ -130,7 +130,7 @@ struct EarTrainingView: View {
     /// is never left recording after the audio it was hummed over has stopped. Idempotent — the two
     /// seams overlap on purpose.
     private func finishTake() {
-        recorder.finishIfRecording(owner: .loop(loop), context: modelContext)
+        recorder.finishIfRecording(owner: .loop(loop, .ear), context: modelContext)
     }
 
     /// Relisten, without leaving the loop. **Stops the bed first**: one `RecordingPlayer` and the loop

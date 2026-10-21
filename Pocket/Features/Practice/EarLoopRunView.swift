@@ -84,7 +84,7 @@ struct EarLoopRunView: View {
     private func finish() {
         // Explicit rather than relying on `EarTrainingView`'s teardown to catch it, matching
         // `ImproviseLoopRunView.finish()` — and before the log, since advancing tears this screen down.
-        recorder.finishIfRecording(owner: .loop(loop), context: modelContext)
+        recorder.finishIfRecording(owner: .loop(loop, .ear), context: modelContext)
         logCompletedRun()   // before advancing — advancing tears this screen down
         routineContext?.onFinished()
     }

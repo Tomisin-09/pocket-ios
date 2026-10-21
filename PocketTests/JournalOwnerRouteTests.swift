@@ -141,6 +141,50 @@ final class JournalOwnerRouteTests: XCTestCase {
         XCTAssertNil(JournalOwnerRoute.route(for: .take(take)))
     }
 
+    // MARK: - A take opens the mode it was recorded in (ADR 0265)
+
+    /// A loop take attached the way the run screens attach one, so the mode is written by the same
+    /// choke point the app uses rather than set on the row by hand.
+    private func loopTake(on loop: Loop, recordedIn mode: LoopRunMode?) -> JournalTimeline.Item {
+        let take = Recording(fileName: "take.m4a", duration: 30)
+        if let mode {
+            RecordingOwner.loop(loop, mode).attach(to: take)
+        } else {
+            take.loop = loop   // a take from before 0265: a loop, and no mode
+        }
+        return .take(take)
+    }
+
+    func testAnEarTakeOnAMeasuredLoopOpensEarTrainingNotTheRamp() {
+        // The device bug: a measured loop qualifies for the trainer, which the precedence puts first.
+        XCTAssertEqual(mode(of: loopTake(on: makeLoop(measured: true), recordedIn: .ear)), .ear)
+    }
+
+    func testAnImproviseTakeOpensImproviseOnlyWhileTheLoopIsABackingTrack() {
+        XCTAssertEqual(mode(of: loopTake(on: makeLoop(measured: true, backing: true), recordedIn: .improvise)),
+                       .improvise)
+        XCTAssertEqual(mode(of: loopTake(on: makeLoop(measured: true, backing: false), recordedIn: .improvise)),
+                       .trainer, "the flag came off: fall back rather than open a mode the loop can't run")
+    }
+
+    func testATrainerTakeOpensTheRamp() {
+        XCTAssertEqual(mode(of: loopTake(on: makeLoop(measured: true, backing: true), recordedIn: .trainer)),
+                       .trainer)
+    }
+
+    func testATakeWithNoModeKeepsThePrecedence() {
+        XCTAssertEqual(mode(of: loopTake(on: makeLoop(measured: true), recordedIn: nil)), .trainer)
+        XCTAssertEqual(mode(of: loopTake(on: makeLoop(measured: false), recordedIn: nil)), .ear,
+                       "unmeasured: no ramp to open, so ear training (ADR 0138)")
+    }
+
+    func testATakeWhoseStoredModeThisVersionDoesNotKnowKeepsThePrecedence() {
+        let item = loopTake(on: makeLoop(measured: false), recordedIn: nil)
+        guard case .take(let take) = item else { return XCTFail("built a take") }
+        take.loopRunModeRaw = "metronome"
+        XCTAssertEqual(mode(of: item), .ear, "unknown reads as no mode, never as the trainer")
+    }
+
     // MARK: - Identity is the stable uid
 
     func testRouteIdentityIsTheUnitsStableUID() {

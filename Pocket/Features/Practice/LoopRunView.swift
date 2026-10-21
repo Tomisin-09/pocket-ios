@@ -171,7 +171,7 @@ struct LoopRunView: View {
             QuickJournalSheet(owner: .loop(loop))
         }
         .sheet(isPresented: $showingTakes) {
-            TakesSheet(owner: .loop(loop), onDelete: deleteTake)
+            TakesSheet(owner: .loop(loop, .trainer), onDelete: deleteTake)
         }
         .fullScreenCover(item: $completion) { finished in
             // Reuse the routine block's Done screen for a standalone loop finish (ADR 0082, mirroring

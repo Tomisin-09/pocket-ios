@@ -88,6 +88,12 @@ struct RecordingRecord: Codable, Equatable, Sendable {
     /// an archive written before this decodes as `nil`, and every take in it had an owner. Without it a
     /// restored standalone take would come back reading as an orphan — a take whose loop was deleted.
     var isStandalone: Bool?
+
+    /// The mode a loop take was recorded in (ADR 0265), as `Recording.loopRunModeRaw` stores it: the
+    /// raw string, so a mode a later version adds survives a round trip through this one. **Optional**
+    /// for the same reason as `isStandalone`: an archive written before this decodes as `nil`, and a
+    /// take restored from it falls back to ADR 0142's precedence, as it did when it was written.
+    var loopRunMode: String?
 }
 
 /// A note pinned to a point in a take (ADR 0175).

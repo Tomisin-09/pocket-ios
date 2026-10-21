@@ -64,7 +64,7 @@ struct ImproviseView: View {
             player.stop()
         }
         .sheet(isPresented: $showingTakes) {
-            TakesSheet(owner: .loop(loop), onDelete: deleteTake)
+            TakesSheet(owner: .loop(loop, .improvise), onDelete: deleteTake)
         }
         // On the shared core, so all three hosts get it once (ADR 0050) — a jam is the longest a
         // player goes without touching the screen, and this one had never asked.
@@ -77,7 +77,7 @@ struct ImproviseView: View {
     /// take is never left recording after the audio it was played over has stopped. Idempotent — the
     /// two seams overlap on purpose (stopping the bed, then leaving).
     private func finishTake() {
-        recorder.finishIfRecording(owner: .loop(loop), context: modelContext)
+        recorder.finishIfRecording(owner: .loop(loop, .improvise), context: modelContext)
     }
 
     /// Relisten, without leaving the jam. **Stops the bed first**: the takes sheet has its own player,

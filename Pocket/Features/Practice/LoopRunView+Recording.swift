@@ -23,7 +23,7 @@ extension LoopRunView {
     /// Finalize an in-flight take when the run ends or the screen exits, so a take is never left
     /// recording after the audio it was played over has stopped. Idempotent.
     func finishTakeIfNeeded() {
-        recorder.finishIfRecording(owner: .loop(loop), context: modelContext)
+        recorder.finishIfRecording(owner: .loop(loop, .trainer), context: modelContext)
     }
 
     /// Delete a take from the Takes sheet — remove the file and the model row (ADR 0069 retention).

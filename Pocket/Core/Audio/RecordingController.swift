@@ -2,10 +2,13 @@ import Foundation
 import SwiftData
 
 /// What a take is being recorded against — routes the owner onto a new `Recording` (ADR 0069 §5).
-/// A small closed enum so a call site passes `.loop(loop)` and the `Recording`'s polymorphic owner
-/// is set correctly without the view touching the relationship fields.
+/// A small closed enum so a call site passes `.loop(loop, .ear)` and the `Recording`'s polymorphic
+/// owner is set correctly without the view touching the relationship fields.
 enum RecordingOwner {
-    case loop(Loop)
+    /// A loop, **and the mode the take is recorded in** (ADR 0265). The mode is in the case rather
+    /// than a defaulted parameter so every loop take site has to say which it is: a take that forgot
+    /// its mode opened the ramp from the Journal, which is the bug this closes.
+    case loop(Loop, LoopRunMode)
     case exercise(Exercise)
     case song(Song)
     /// Recorded against nothing — the Journal's ＋ (ADR 0224).
@@ -17,7 +20,9 @@ enum RecordingOwner {
     /// can never acquire an owner without acquiring the caption that outlives it.
     func attach(to recording: Recording) {
         switch self {
-        case .loop(let loop): recording.loop = loop
+        case .loop(let loop, let mode):
+            recording.loop = loop
+            recording.loopRunModeRaw = mode.rawValue
         case .exercise(let exercise): recording.exercise = exercise
         case .song(let song): recording.song = song
         case .standalone:
@@ -31,9 +36,12 @@ enum RecordingOwner {
 
     /// This owner's takes, newest-first — what the Takes list surfaces (ADR 0069 slice 3). Reading
     /// through the model tracks the SwiftData relationship, so the list refreshes on add/delete.
+    ///
+    /// A loop's list **ignores the mode**: every take on the loop, whichever mode recorded it. The
+    /// mode says where a take's caption leads (ADR 0265), not which screen may list it.
     var recordingsByRecent: [Recording] {
         switch self {
-        case .loop(let loop): loop.recordingsByRecent
+        case .loop(let loop, _): loop.recordingsByRecent
         case .exercise(let exercise): exercise.recordingsByRecent
         case .song(let song): song.recordingsByRecent
         // No owner to list from — the Journal feed is where a standalone take is found, and no
