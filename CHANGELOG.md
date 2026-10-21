@@ -358,6 +358,19 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Tapping a day in the Practice log shows it where you're looking** (ADR 0269). The figures above
+  the week chart or month grid change to that day's minutes (and, in the month, any new tempo). A
+  chip with the day's date sits just above the chart and takes you back to the whole week or month.
+  The other days dim, and the tap gives a light tick when Haptics is on. Before, the only sign beyond
+  the cell itself was a small date beside What you played, often below the screen.
+- **The month grid in the Practice log reads as a calendar** (ADR 0268). Each square shows its date,
+  the columns have weekday initials, today has a ring around it, and the days still to come are
+  outlines rather than looking like days off. Tapping a practised day now fills its square in solid,
+  since the ring means today.
+- **One long day no longer turns the rest of the month pale** (ADR 0268). The month grid shaded every
+  day against the month's longest, so a single two-hour day made a month of twenty-minute days the
+  palest shade. The darkest shade now starts at a typical day of practice for that month. It is still
+  the month's own measure, not a number anyone sets.
 - **In the routine editor, Add exercise, loop or song and Insert rest sit right under the blocks.**
   They were at the very bottom, past Progress and References, so a long routine meant a scroll to
   the end every time you added something.
@@ -568,6 +581,8 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **The palest shade on the month grid no longer looks like a day off.** It sat so close to the
+  colour of an unpractised day that a short session was hard to tell from none. (ADR 0268)
 - **Train your ear and Improvise show the plan's wall from the Journal and Map the song when the
   plan is off.** A Journal caption on an ear-training or improvise note or take, and holding a piece
   in **Map the song**, opened the mode itself, though both modes are the plan's. They now open the

@@ -9,7 +9,8 @@ import SwiftUI
 ///
 /// **It narrows; it doesn't navigate.** Tapping a day on the chart above filters this list to that day
 /// rather than opening a sheet, so a tap changes something already on screen instead of raising a
-/// second surface with two rows in it. The chip that names the day is how you get the period back.
+/// second surface with two rows in it. The way back to the whole period is the chip above the chart
+/// (`PracticeLogDayChip`, ADR 0269); here the header only says which day the list is showing.
 ///
 /// **Ranked by minutes and nothing else (ADR 0070).** No group is marked as too much or too little.
 struct WhatYouPlayedList: View {
@@ -18,7 +19,6 @@ struct WhatYouPlayedList: View {
     let wholePeriodLabel: String
     /// The day the list is narrowed to, if any.
     let selectedDay: Date?
-    let clearDay: () -> Void
 
     /// Which kinds are open. Starts empty: closed groups are five rows, which keeps the chart and the
     /// month grid below within reach; the items are one tap away.
@@ -58,28 +58,12 @@ struct WhatYouPlayedList: View {
                 .font(.futura(.footnote, weight: .semibold))
                 .foregroundStyle(PocketColor.textSecondary)
             Spacer(minLength: 8)
-            if let selectedDay {
-                Button(action: clearDay) {
-                    HStack(spacing: 5) {
-                        Text(selectedDay.formatted(.dateTime.weekday(.wide).day().month(.abbreviated)))
-                        Image(systemName: "xmark")
-                            .font(.caption2.weight(.bold))
-                    }
-                    .font(.futura(.caption, weight: .medium))
-                    .foregroundStyle(PocketColor.textPrimary)
-                    .padding(.leading, 10)
-                    .padding(.trailing, 8)
-                    .padding(.vertical, 5)
-                    .background(Capsule().fill(PocketColor.practiceCircleWash))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(selectedDay.formatted(.dateTime.weekday(.wide).day().month(.wide)))
-                .accessibilityHint("Shows the \(wholePeriodLabel.lowercased()) again")
-            } else {
-                Text(wholePeriodLabel)
-                    .font(.futura(.caption))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
+            // Says which day, and nothing more: the chip that clears it sits with the figures above
+            // the chart, where the tap was (ADR 0269).
+            Text(selectedDay.map { $0.formatted(.dateTime.weekday(.wide).day().month(.abbreviated)) }
+                 ?? wholePeriodLabel)
+                .font(.futura(.caption))
+                .foregroundStyle(PocketColor.textSecondary)
         }
         .frame(minHeight: 30)
     }

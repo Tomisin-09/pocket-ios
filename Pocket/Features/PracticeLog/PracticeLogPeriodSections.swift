@@ -4,8 +4,9 @@ import SwiftUI
 /// and pages back through every week since you started.
 ///
 /// The figures and *What you played* follow the page that settles; only the bar chart travels with
-/// the swipe (see `PeriodPager` for why). Choosing a day narrows the list to it, and leaving the page
-/// lets the choice go, so a day from one week is never left selected over another.
+/// the swipe (see `PeriodPager` for why). Choosing a day narrows the list to it and turns the figures
+/// into the day's (ADR 0269), and leaving the page lets the choice go, so a day from one week is never
+/// left selected over another.
 struct PracticeLogWeekSection: View {
     let records: [SessionRecord]
     let starts: [Date]
@@ -29,9 +30,11 @@ struct PracticeLogWeekSection: View {
                         .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                 } else {
-                    HStack(spacing: 20) {
-                        PracticeLogFigure(week.minutesFigure)
-                        PracticeLogFigure("\(week.daysActive)", week.daysActive == 1 ? "day" : "days")
+                    // Side by side where they fit, so tapping a bar never moves the chart under your
+                    // finger; stacked only once the text is too large for one line.
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 20) { figures(week) }
+                        VStack(alignment: .leading, spacing: 10) { figures(week) }
                     }
                 }
                 PeriodPager(starts: starts, position: $position) { start in
@@ -44,12 +47,25 @@ struct PracticeLogWeekSection: View {
                 if !week.isEmpty {
                     WhatYouPlayedList(groups: PracticeBreakdown.groups(scoped(to: week.interval), names: names),
                                       wholePeriodLabel: "Whole week",
-                                      selectedDay: selectedDay,
-                                      clearDay: { selectedDay = nil })
+                                      selectedDay: selectedDay)
                 }
             }
         }
         .onChange(of: position) { selectedDay = nil }
+    }
+
+    /// The week's figures, or the chosen day's (ADR 0269): its minutes, with the chip that names it in
+    /// place of the days count, because one day is one day.
+    @ViewBuilder
+    private func figures(_ week: PracticeProgress.Week) -> some View {
+        if let selectedDay {
+            PracticeLogFigure(PracticeProgress.day(records: records, containing: selectedDay,
+                                                   calendar: calendar).minutesFigure)
+            PracticeLogDayChip(day: selectedDay, unit: "week", clear: clear)
+        } else {
+            PracticeLogFigure(week.minutesFigure)
+            PracticeLogFigure("\(week.daysActive)", week.daysActive == 1 ? "day" : "days")
+        }
     }
 
     /// "21–27 Sept", or with the year when the week isn't in this one.
@@ -67,8 +83,17 @@ struct PracticeLogWeekSection: View {
         withAnimation(.snappy) { position = start }
     }
 
+    /// A tap on a practised day chooses it, or lets it go if it was already chosen. It ticks, so the
+    /// tap is felt before anything is read (ADR 0269), unless Haptics is off in Sound & feel.
     private func toggle(_ day: Date) {
-        selectedDay = selectedDay.map { calendar.isDate($0, inSameDayAs: day) } == true ? nil : day
+        haptic(.selection)
+        withAnimation(.snappy(duration: 0.2)) {
+            selectedDay = selectedDay.map { calendar.isDate($0, inSameDayAs: day) } == true ? nil : day
+        }
+    }
+
+    private func clear() {
+        withAnimation(.snappy(duration: 0.2)) { selectedDay = nil }
     }
 
     private func scoped(to interval: DateInterval) -> [SessionRecord] {
@@ -97,25 +122,31 @@ struct PracticeLogMonthSection: View {
                          unit: "month", position: paging, returnLabel: "This month", goTo: show)
             VStack(alignment: .leading, spacing: 14) {
                 figures(month, isCurrent: paging.isCurrent)
-                PeriodPager(starts: starts, position: $position) { start in
-                    MonthHeatmap(month: PracticeProgress.month(records: records, now: start, calendar: calendar),
-                                 calendar: calendar,
-                                 selectedDay: start == paging.shown ? selectedDay : nil,
-                                 onSelectDay: toggle,
-                                 showsKey: false)
+                VStack(spacing: 6) {
+                    MonthHeatmapWeekdays(calendar: calendar)
+                    PeriodPager(starts: starts, position: $position) { start in
+                        MonthHeatmap(month: PracticeProgress.month(records: records, now: start, calendar: calendar),
+                                     calendar: calendar,
+                                     today: now,
+                                     selectedDay: start == paging.shown ? selectedDay : nil,
+                                     onSelectDay: toggle,
+                                     showsHeadingsAndKey: false)
+                    }
                 }
                 MonthHeatmapKey()
                 if !month.isEmpty {
                     WhatYouPlayedList(groups: PracticeBreakdown.groups(scoped(to: month.interval), names: names),
                                       wholePeriodLabel: "Whole month",
-                                      selectedDay: selectedDay,
-                                      clearDay: { selectedDay = nil })
+                                      selectedDay: selectedDay)
                 }
             }
         }
         .onChange(of: position) { selectedDay = nil }
     }
 
+    /// The month's figures, or the chosen day's (ADR 0269): its minutes and any new tempo, without the
+    /// days count, because one day is one day. The minutes figure stays put and changes its number, so
+    /// the eye that tapped the grid sees it change.
     @ViewBuilder
     private func figures(_ month: PracticeProgress.Month, isCurrent: Bool) -> some View {
         if month.isEmpty {
@@ -123,22 +154,46 @@ struct PracticeLogMonthSection: View {
                 .font(.futura(.subheadline))
                 .foregroundStyle(PocketColor.textSecondary)
         } else {
+            let day = selectedDay.map { PracticeProgress.day(records: records, containing: $0, calendar: calendar) }
+            let tempos = day?.newTempos ?? month.newTempos
             HStack(spacing: 20) {
-                PracticeLogFigure(month.minutesFigure)
-                PracticeLogFigure("\(month.daysActive)", month.daysActive == 1 ? "day" : "days")
-                if month.newTempos > 0 {
-                    PracticeLogFigure("\(month.newTempos)", month.newTempos == 1 ? "new tempo" : "new tempos")
+                PracticeLogFigure(day?.minutesFigure ?? month.minutesFigure)
+                if day == nil {
+                    PracticeLogFigure("\(month.daysActive)", month.daysActive == 1 ? "day" : "days")
+                }
+                if tempos > 0 {
+                    PracticeLogFigure("\(tempos)", tempos == 1 ? "new tempo" : "new tempos")
                 }
             }
-            // The longest day is also the scale the grid is shaded against, which is why the key
-            // under the grid doesn't repeat it. Held back until there are two days to compare.
-            if let longest = month.longestDay {
-                let figure = PracticeLog.MinutesFigure(seconds: longest.seconds)
-                Text("Longest day: \(longest.day.formatted(.dateTime.weekday(.wide).day().month())) "
-                     + "· \(figure.value) \(figure.unit)")
-                    .font(.futura(.footnote))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
+            dayLine(month)
+        }
+    }
+
+    /// Under the figures: the month's longest day, or the chip naming the chosen day in its place.
+    /// Both are always laid out and one is hidden, so the row is the height of the taller and the grid
+    /// below doesn't move when you tap it (ADR 0269).
+    private func dayLine(_ month: PracticeProgress.Month) -> some View {
+        ZStack(alignment: .leading) {
+            longestDay(month)
+                .opacity(selectedDay == nil ? 1 : 0)
+                .accessibilityHidden(selectedDay != nil)
+            PracticeLogDayChip(day: selectedDay ?? month.interval.start, unit: "month", clear: clear)
+                .opacity(selectedDay == nil ? 0 : 1)
+                .allowsHitTesting(selectedDay != nil)
+                .accessibilityHidden(selectedDay == nil)
+        }
+    }
+
+    /// A fact about the month, and no longer the grid's scale — the grid shades against the month's
+    /// typical day (ADR 0268). Held back until there are two days to compare.
+    @ViewBuilder
+    private func longestDay(_ month: PracticeProgress.Month) -> some View {
+        if let longest = month.longestDay {
+            let figure = PracticeLog.MinutesFigure(seconds: longest.seconds)
+            Text("Longest day: \(longest.day.formatted(.dateTime.weekday(.wide).day().month())) "
+                 + "· \(figure.value) \(figure.unit)")
+                .font(.futura(.footnote))
+                .foregroundStyle(PocketColor.textSecondary)
         }
     }
 
@@ -157,8 +212,17 @@ struct PracticeLogMonthSection: View {
         withAnimation(.snappy) { position = start }
     }
 
+    /// A tap on a practised day chooses it, or lets it go if it was already chosen. It ticks, so the
+    /// tap is felt before anything is read (ADR 0269), unless Haptics is off in Sound & feel.
     private func toggle(_ day: Date) {
-        selectedDay = selectedDay.map { calendar.isDate($0, inSameDayAs: day) } == true ? nil : day
+        haptic(.selection)
+        withAnimation(.snappy(duration: 0.2)) {
+            selectedDay = selectedDay.map { calendar.isDate($0, inSameDayAs: day) } == true ? nil : day
+        }
+    }
+
+    private func clear() {
+        withAnimation(.snappy(duration: 0.2)) { selectedDay = nil }
     }
 
     private func scoped(to interval: DateInterval) -> [SessionRecord] {

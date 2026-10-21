@@ -43,6 +43,7 @@
 │              deleted unit, a placeholder when the log never knew) and MinutesFigure ("<1 minute", never "0").
 │              ADR 0242 adds the .metronome kind (one group in What you played, with no items to open) and
 │              PracticeRunKind decodes an unknown raw value as .other, so a newer build's row can't fail an archive.
+│              ADR 0269 adds PracticeProgress.day: a chosen day's figures, read off the same bucket the chart draws.
 │   Services — Persistence (SwiftData), Sync (CloudKit, planned), AIClient (→ proxy).
 │              MusicKit (browse) is PLANNED-ONLY and not shipped — no MusicKit import,
 │              no MPMediaLibrary, no NSAppleMusicUsageDescription
@@ -1930,8 +1931,10 @@ empty, because that line was Home's only word about adding a first song.
   rest of the design system: one series ⇒ no legend, empty days **drawn** rather than skipped, one
   direct label rather than a number on every bar, and a **single-hue four-step** sequential ramp for the
   month heatmap with unpractised days a distinct neutral (never step zero). The ramp is relative to the
-  month's own busiest day — an absolute scale would need a number to be absolute against, and picking
-  one would be setting a daily goal by the back door.
+  month's own **typical** practised day — the upper quartile, nearest rank, in the pure
+  `PracticeProgress.Month.shade(of:)` — rather than its busiest, so one long day can't turn every
+  ordinary day pale (ADR 0268). An absolute scale would need a number to be absolute against, and
+  picking one would be setting a daily goal by the back door.
 
 - **Reviewing the feed** (ADR 0190). The Journal's read-back controls are three independent filters
   and a jump, all resolved in the pure `JournalTimeline` and composed in one place (`JournalTabView.items`):

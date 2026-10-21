@@ -120,3 +120,35 @@ struct PracticeLogFigure: View {
         .accessibilityLabel("\(value) \(unit)")
     }
 }
+
+/// **The day you chose** (ADR 0269) — a chip naming it, beside the figures it has taken over, that
+/// gives the whole week or month back. It sits directly above the chart you tapped, which is where
+/// your eye is: under *What you played*, where it used to be, it was often below the fold.
+struct PracticeLogDayChip: View {
+    let day: Date
+    /// "week" or "month" — what tapping the chip shows again, for its spoken hint.
+    let unit: String
+    let clear: () -> Void
+
+    var body: some View {
+        Button(action: clear) {
+            HStack(spacing: 6) {
+                Text(day.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Image(systemName: "xmark")
+                    .font(.caption2.weight(.bold))
+            }
+            .font(.futura(.footnote, weight: .medium))
+            .foregroundStyle(PocketColor.textPrimary)
+            .padding(.leading, 12)
+            .padding(.trailing, 10)
+            .padding(.vertical, 6)
+            .background(Capsule().fill(PocketColor.practiceCircleWash))
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(day.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+        .accessibilityHint("Shows the whole \(unit) again")
+    }
+}
