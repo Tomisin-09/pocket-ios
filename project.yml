@@ -59,6 +59,11 @@ targets:
     platform: iOS
     sources:
       - path: Pocket
+        # The share extension's own sources and plists (ADR 0264 D10). They live under `Pocket/` so
+        # the "Red Moon, never Pocket" lint rule and check-manual's C9 read them with no widening,
+        # and they are excluded here because they belong to `PocketShare`, below.
+        excludes:
+          - "ShareExtension/**"
     # No `info:` block on purpose: the Info.plist is hand-maintained (it carries
     # documented usage strings, background modes and the portrait lock). An
     # `info:` block makes XcodeGen *generate* — i.e. overwrite — that file on
@@ -97,8 +102,81 @@ targets:
     configFiles:
       Debug: Configuration/Pocket-Debug.xcconfig
       Release: Configuration/Pocket-Release.xcconfig
+    # The entitlements are declared HERE, not in the file: XcodeGen writes the file from
+    # `properties` on every `xcodegen generate`, and a key written only in the file is wiped (and
+    # with it any comment). The file used to carry this note as a comment; it can't any more.
+    #
+    # - One App Group (ADR 0264 D9): *Save to Red Moon* can't open the store, so the app writes the
+    #   owner snapshot to it and drains the extension's inbox from it. The store stays in
+    #   Application Support. `PocketShare` names the same group; `ShareContainer` names it in code.
+    # - No CloudKit or iCloud container: added if and when sync lands.
+    # - No Sign in with Apple. That was the plan in ADR 0002 / ADR 0092 §A3 and ADR 0187 D3
+    #   superseded it: the Oracle authenticates with App Attest (no entitlement for the default
+    #   environment) and meters quota against an opaque token minted at purchase, so it brings no
+    #   account. That keeps ADR 0113 intact, and Apple's in-app account-deletion rule never attaches.
+    #
+    # Do not add an entitlement before the feature that needs it.
     entitlements:
       path: Pocket/Resources/Pocket.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.click.decooperations.pocket
+    # Embedded, which is also the only way it is built: the scheme builds the app's dependency
+    # graph and nothing else (ADR 0264 D10.3), so CI and the pre-push hook compile it through this.
+    dependencies:
+      - target: PocketShare
+
+  # *Save to Red Moon*, the share extension (ADR 0264 D8–D10). It never opens the store: it reads the
+  # owner snapshot the app writes to the App Group and writes saves to an inbox there, which the app
+  # files when it next comes to the foreground (D9).
+  #
+  # Its sources are its own folder plus the shared files listed by name, the way `UITestHooks.swift`
+  # is shared with the UI tests: pure rules and value-only views, nothing that touches SwiftData.
+  # Adding a file here means the app's copy and this one are the same code, which is the point.
+  PocketShare:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Pocket/ShareExtension
+      # The snapshot, the inbox and what a share is (D9, D12).
+      - path: Pocket/Core/Sharing/ShareContainer.swift
+      - path: Pocket/Core/Sharing/ShareOwnerSnapshot.swift
+      - path: Pocket/Core/Sharing/ShareInbox.swift
+      - path: Pocket/Core/Sharing/SharedContent.swift
+      # D6's rules and the picker's, over values (slice 3).
+      - path: Pocket/Core/Plan/ReferenceAttachRules.swift
+      - path: Pocket/Core/Plan/PlanAccess.swift
+      - path: Pocket/Core/Models/ReferenceDestination.swift
+      - path: Pocket/Core/Models/ReferencePlaceKind.swift
+      # 0167's rules: http/https only, what a file may be, and how big.
+      - path: Pocket/Core/Models/ReferenceURL.swift
+      - path: Pocket/Core/Models/ReferenceLinkKind.swift
+      - path: Pocket/Core/Models/ReferenceAttachmentCopy.swift
+      - path: Pocket/Core/Storage/ReferenceAttachmentStore.swift
+      # The place list, and the look: tokens, Futura, and the colours, whose catalog is its own so both
+      # targets include it (D10.4).
+      - path: Pocket/UI/ReferencePlaceList.swift
+      - path: Pocket/UI/DesignTokens.swift
+      - path: Pocket/App/AppearancePreference.swift
+      - path: Pocket/Resources/Colors.xcassets
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: click.decooperations.pocket.share
+        INFOPLIST_FILE: Pocket/ShareExtension/Info.plist
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Manual
+        APPLICATION_EXTENSION_API_ONLY: YES
+      configs:
+        # A second target doesn't inherit the app's (D10.3), so it says the same thing itself.
+        Debug:
+          SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    # Declared here, as the app's are: XcodeGen writes the file from `properties`. The one place
+    # the extension and the app meet (D9): the snapshot and the inbox, never the store.
+    entitlements:
+      path: Pocket/ShareExtension/PocketShare.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.click.decooperations.pocket
 
   PocketTests:
     type: bundle.unit-test

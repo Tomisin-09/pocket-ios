@@ -1,17 +1,5 @@
 import SwiftUI
 
-/// Maps the persisted preference to the `.preferredColorScheme(_:)` argument — `nil`
-/// for `.system` so SwiftUI falls through to the device setting instead of pinning one.
-extension AppearancePreference {
-    var colorScheme: ColorScheme? {
-        switch self {
-        case .system: return nil
-        case .light: return .light
-        case .dark: return .dark
-        }
-    }
-}
-
 /// Functional colour system from the product brief. Colour carries meaning —
 /// it is never decorative. Keep these definitions as the single source of truth;
 /// do not hard-code hex values or `Color.white`/`.black` opacity fills in views.
@@ -25,7 +13,8 @@ extension AppearancePreference {
 ///
 /// **Light + dark appearance (ADR 0062):** every token below except the four system
 /// dynamic colours (`active`/`danger`/`marker`/`pin`, which already adapt on their own)
-/// resolves from an Asset Catalog colour set under `Assets.xcassets/Colors` with
+/// resolves from an Asset Catalog colour set in `Colors.xcassets` (a catalog of its own, which
+/// the share extension includes too: a catalog doesn't cross a target, ADR 0264 D10) with
 /// separate "Any Appearance" (light) and "Dark" values, tuned so contrast holds up on
 /// **both** the cream (`#F0E3D8`) and near-black (`#040404`) canvases — see the ADR for
 /// the paired hex table and contrast ratios. The app follows the system appearance by

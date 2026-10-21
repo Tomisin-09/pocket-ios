@@ -184,17 +184,6 @@ struct ReferenceSourceIcon: View {
     }
 }
 
-extension ReferencePlaceKind {
-    /// Each place in its own home's colour: drills and routines are Practice's teal, songs and loops the
-    /// Library's terracotta.
-    var tint: Color {
-        switch self {
-        case .exercise, .routine: PocketColor.practice
-        case .song, .loop: PocketColor.library
-        }
-    }
-}
-
 #Preview("References") {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(for: ReferenceLink.self, Exercise.self,

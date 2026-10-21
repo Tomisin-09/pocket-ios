@@ -249,8 +249,8 @@ Buying is the easy path. These are the ones that break:
 - [x] **Purchase monthly** → same — account A, 2026-08-07
 - [x] **Restore on a wiped install** — PASSED 2026-08-07; Pro returned before the button was even tapped (see the Progress section). Delete the app, reinstall, tap Restore Purchases. Apple
       requires this to work and it's a common rejection reason.
-      ⚠️ **This is the one destructive step, and it destroys real data.** `Pocket.entitlements` is
-      empty — no CloudKit, no iCloud sync (it's deferred to "Phase 4 when sync lands") — and the app
+      ⚠️ **This is the one destructive step, and it destroys real data.** `Pocket.entitlements` has
+      no CloudKit and no iCloud (its one App Group, ADR 0264, lives on the same phone) (it's deferred to "Phase 4 when sync lands") — and the app
       has no export and no file sharing. So deleting it permanently destroys every song, loop, marker,
       journal entry, take and practice-log row on that device. Do this on a **spare iPhone**, or take a
       full Finder/iCloud device backup first (app containers are included). Sandbox needs real

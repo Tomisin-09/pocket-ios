@@ -6,7 +6,7 @@ import Foundation
 /// **Nothing moves a player from `lapsed` back to `neverBought`**: StoreKit's record of a past purchase
 /// never goes away. So a copy of this that has gone stale can only be wrong in the lock, never in what
 /// is offered, and D9 leans on that.
-enum PlanStanding: String, Equatable, Sendable {
+enum PlanStanding: String, Equatable, Codable, Sendable {
     /// Never bought the plan.
     case neverBought
     /// Bought it once and it has ended: a monthly that ran out, or a refund.

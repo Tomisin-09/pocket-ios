@@ -120,7 +120,8 @@ Pocket/
   Features/    Home · Library · Waveform · Metronome · Practice · Repertoire · Oracle (ADR 0187)
   Core/        Audio (engine + pure tempo math) · Models · Services · Export and restore (ADRs 0181, 0188) · Storage · Diagnostics (MetricKit, ADR 0183) · Oracle (ADR 0187)
   UI/          Shared components, design tokens
-  Resources/   Info.plist, PrivacyInfo.xcprivacy
+  Resources/   Info.plist, PrivacyInfo.xcprivacy, Assets.xcassets, Colors.xcassets (shared with the extension)
+  ShareExtension/  Save to Red Moon, the share extension: its own target, PocketShare (ADR 0264 D8–D10)
 Configuration/    Per-config .xcconfig (the backend base URL)
 PocketTests/      Unit tests (pure logic)
 PocketUITests/    XCUITest flows

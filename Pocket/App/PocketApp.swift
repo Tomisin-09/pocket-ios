@@ -31,6 +31,8 @@ struct PocketApp: App {
     // for days, and a return after half an hour away is the player opening it again.
     @Environment(\.scenePhase) private var scenePhase
 
+    private let store = PocketStore.container()
+
     init() {
         // The Journal's list filters persist (ADR 0190 D8), and a simulator keeps its `UserDefaults`
         // between runs — so a driven test starts from whatever the last one left behind unless the
@@ -66,17 +68,17 @@ struct PocketApp: App {
                 // preview sheet both doors present. Tap-to-open can arrive on a cold launch with no
                 // screen of the app's own on top, which is why it lives at the root at all.
                 .practiceReceiveHost()
+                // What *Save to Red Moon* kept while the app was away, and the snapshot it picks from
+                // (ADR 0264 D9). Inside `.environment(plan)`, which it reads.
+                .shareInboxHost()
                 .environment(diagnostics)
                 .environment(practiceReminder)
                 .environment(plan)
                 .preferredColorScheme(appearance.colorScheme)
         }
-        .modelContainer(for: [Song.self, Loop.self, Marker.self, JournalEntry.self,
-                              Exercise.self, Routine.self, RoutineItem.self, Goal.self,
-                              LongTermGoal.self, Recording.self, TakeNote.self, SavedChord.self, Profile.self,
-                              PracticeRun.self, ReferenceLink.self, LoopSpanChange.self,
-                              Snag.self, PracticeFolder.self, CustomSkill.self, SavedProgression.self,
-                              WrittenTab.self])
+        // Pinned to the app's own Application Support (`PocketStore`): since ADR 0264 the app has an App
+        // Group, and SwiftData's default would move the store into it.
+        .modelContainer(store)
         .onChange(of: scenePhase) { _, phase in
             GestureHintOpening.current.sceneChanged(to: phase)
             // A lapse mints no transaction, so nothing else would notice it until a cold launch: the

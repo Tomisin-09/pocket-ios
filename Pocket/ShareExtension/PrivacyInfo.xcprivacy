@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Save to Red Moon (ADR 0264 D8). It sends nothing anywhere: it reads the owner snapshot and
+	     writes what the player saves into the App Group, for the app to file. It reads no required-
+	     reason API (no UserDefaults, no file timestamps, no disk space, no boot time). Keep this in
+	     step with the app's own manifest if that ever changes. -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array/>
+</dict>
+</plist>
