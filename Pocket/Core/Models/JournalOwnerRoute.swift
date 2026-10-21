@@ -17,7 +17,8 @@ enum JournalOwnerRoute: Hashable {
     /// ramp to open (ADR 0138), so the caption opens whichever mode `LoopModeAccess` allows, in the
     /// established precedence — trainer, then ear, then improvise — unless the note was written in one
     /// mode and the loop still qualifies for it (ADR 0228): an ear or a transcribed note opens ear
-    /// training, an improvise note opens improvise.
+    /// training, an improvise note opens improvise. A take opens the mode it was recorded in, on the
+    /// same terms (ADR 0265).
     case loop(Loop, LoopRunMode)
     /// A loop's piece, open in Name the notes at a note (ADR 0234 D7): where a line written on a snag
     /// leads, so the words and the note they're about come back together. Train your ear, with the
@@ -79,8 +80,9 @@ enum JournalOwnerRoute: Hashable {
                 return .naming(loop, note: note)
             }
             return route
+        // A take carries the mode it was recorded in (ADR 0265); one from before that falls back.
         case .take(let take):
-            return route(loop: take.loop, exercise: take.exercise)
+            return route(loop: take.loop, exercise: take.exercise, writtenIn: take.loopRunMode)
         // A piece is made and edited in ear training (ADR 0225), so that's where it opens (ADR 0229).
         case .piece(let piece):
             return route(loop: piece.loop, exercise: nil, writtenIn: .ear)
@@ -115,7 +117,8 @@ enum JournalOwnerRoute: Hashable {
 
     /// The loop mode a note of this kind is written in, for the kinds only one mode writes (ADR 0228):
     /// ear training's notes and the pieces saved from its Count the notes, and improvise's notes. A take
-    /// and a session pill carry no mode, so they keep ADR 0142's precedence.
+    /// stores its own mode instead (ADR 0265). A session pill carries none, so it keeps ADR 0142's
+    /// precedence.
     ///
     /// **Exhaustive with no `default`**, as `LoopModeAccess.allows` is: a new kind has to say where its
     /// caption goes before it compiles.

@@ -88,6 +88,7 @@ extension ArchiveRestoreWriter {
             take.ownerLabelAtTake = record.ownerLabelAtTake
             take.isPinned = record.isPinned ?? false
             take.isStandalone = record.isStandalone
+            take.loopRunModeRaw = record.loopRunMode
             let moments = record.moments.map { moment in
                 TakeNote(time: moment.time, text: moment.text, uid: moment.uid, createdAt: moment.createdAt)
             }

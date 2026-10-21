@@ -137,10 +137,18 @@ extension RoutinePlayerView {
     /// This stage's take owner — the same polymorphic routing `RecordingController` uses, so the
     /// sheet lists exactly the takes the block wrote. A song stage has no recorder (ADR 0179 D6) and
     /// a rest has no unit, so both are `nil`.
+    ///
+    /// A loop's mode comes from the **payload**, never `stage.loop`, which answers for all three
+    /// modes alike (ADR 0265). Only the list reads this today, and it ignores the mode, but an owner
+    /// that names the wrong mode is the bug waiting for the next caller to attach with it.
     func takeOwner(for stage: RoutineStage) -> RecordingOwner? {
-        if let exercise = stage.exercise { return .exercise(exercise) }
-        if let loop = stage.loop { return .loop(loop) }
-        return nil
+        switch stage.payload {
+        case .exercise(let exercise): .exercise(exercise)
+        case .loop(let loop): .loop(loop, .trainer)
+        case .earLoop(let loop): .loop(loop, .ear)
+        case .improviseLoop(let loop): .loop(loop, .improvise)
+        case .song, .rest: nil
+        }
     }
 
     /// Delete a take from the sheet — the file and the row (ADR 0069 retention), mirroring the run

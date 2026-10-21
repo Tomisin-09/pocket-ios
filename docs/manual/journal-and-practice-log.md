@@ -307,8 +307,9 @@ your homework, which it does not do.
 
 The caption under a note or take names what it was about — *Slow Bend · Verse riff*, *Spider ·
 exercise* — and where it has somewhere to go it is a link with a chevron. Tap it to open the thing
-itself. A caption with no chevron is a subject that no longer exists, or one with no screen to open,
-so the affordance is never a promise the tap cannot keep. The pills on a session note behave the
+itself. A loop opens in the mode the note or take came from: a take recorded in **Train your ear**
+opens Train your ear, not the practice ramp. A caption with no chevron is a subject that no longer
+exists, or one with no screen to open, so the affordance is never a promise the tap cannot keep. The pills on a session note behave the
 same way, and a unit deleted since the session renders dimmed.
 
 ## Changing and removing

@@ -89,7 +89,7 @@ struct ImproviseLoopRunView: View {
     private func finish() {
         // Explicit rather than relying on `ImproviseView`'s teardown to catch it, matching
         // `FreeformRunView.finish()` — and before the log, since advancing tears this screen down.
-        recorder.finishIfRecording(owner: .loop(loop), context: modelContext)
+        recorder.finishIfRecording(owner: .loop(loop, .improvise), context: modelContext)
         logCompletedRun()   // before advancing — advancing tears this screen down
         routineContext?.onFinished()
     }

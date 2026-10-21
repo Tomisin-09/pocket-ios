@@ -35,14 +35,14 @@ final class ManualRoutineShots: ManualShotCase {
 
         addThreeBlocks(in: app)
 
-        // **`Add exercise, loop or song` is not asserted here, and the marker no longer promises it.**
-        // That row sits at the *bottom* of the editor's `List`, after the blocks, the estimate and
-        // the references section — and a `List` does not render below-fold rows into the
-        // accessibility tree at all, so with three blocks added it is not merely out of frame, it is
-        // absent. The screen dump settles what one frame can hold from the top: the Name field, the
-        // Description, the numbered blocks and the estimated length. The editor grew a Description
-        // (ADR 0177) and a references section (ADR 0167) after this figure was specified, and the
-        // alt text was still describing the shorter screen.
+        // **`Add exercise, loop or song` is asserted again, and `Estimated length` no longer is.**
+        // Until 2026-10-21 the add row sat at the *bottom* of the editor's `List`, past the blocks,
+        // the estimate and the references section, and a `List` does not render below-fold rows into
+        // the accessibility tree — so with three blocks it was absent and the figure showed the
+        // estimate instead. The row now follows the blocks directly, and the screen dump of the first
+        // run after the move settles what one frame holds from the top: the Name field, About, the
+        // three numbered blocks and `Add exercise, loop or song`, with `Insert rest` in the tree just
+        // below the fold and Progress further down.
         //
         // Corrected in the prose rather than answered with a `swipeUp`, which is the rule this shoot
         // already set for `reference/loop-edit` and `toolkit/tune-settings`: a figure scrolled to
@@ -51,8 +51,7 @@ final class ManualRoutineShots: ManualShotCase {
                 assertingOnScreen: "Routine",
                 // The headers the detail sheets share since ADR 0258: About was Description, Practise
                 // was Blocks.
-                alsoRequiring: ["Name", "About", "Practise"],
-                orBeginningWith: ["Estimated length"])
+                alsoRequiring: ["Name", "About", "Practise", "Add exercise, loop or song"])
 
         // A block tap opens the reps editor (ADR 0076). It is a detent sheet with no navigation bar,
         // so it takes the chromeless path; `Repeat this block` is the stepper's own label and exists
@@ -117,8 +116,8 @@ final class ManualRoutineShots: ManualShotCase {
         // Rest-insert mode is entered by **holding** Insert rest, which turns the gaps between blocks
         // into targets under a header naming what to do.
         // Scrolled to first, for the same reason the Add row is not asserted above: `Insert rest` is
-        // the row beneath it, at the very bottom of the list, and has to be brought into existence
-        // before it can be held.
+        // the row beneath it, after every block, and has to be brought into existence before it can
+        // be held.
         let insertRest = element(in: app, labelStartingWith: "Insert rest")
         scrollIntoFrame(insertRest, called: "the Insert rest row", in: app)
         hold(insertRest, labelled: "Insert rest",

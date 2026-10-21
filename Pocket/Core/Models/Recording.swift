@@ -104,6 +104,21 @@ final class Recording {
     /// take captured before this is right: all of them were recorded against something.
     var isStandalone: Bool?
 
+    /// The **mode** a loop take was recorded in — `LoopRunMode.rawValue` — so its Journal caption
+    /// opens that mode rather than ADR 0142's precedence, which put an ear-training take on the ramp
+    /// (ADR 0265). Written once at capture, through `RecordingOwner.loop(_:_:)`.
+    ///
+    /// `nil` for an exercise, song or standalone take, which have no mode, and for a loop take
+    /// captured before this shipped — `TakeModeBackfill` fills those it can from the practice log.
+    /// A `String` and not the enum (ADR 0189 D4, `docs/swiftdata-gotchas.md`). Additive optional
+    /// with **no declaration default** (CoreData 134110), the name `RoutineItem.loopRunModeRaw` uses.
+    var loopRunModeRaw: String?
+
+    /// The decoded mode, or `nil` when none was recorded **or** the stored value is one this version
+    /// doesn't know. Deliberately not `LoopRunMode(raw:)`, which folds unknown to `.trainer`: an
+    /// unknown mode has to fall back to the precedence, not be read as the ramp.
+    var loopRunMode: LoopRunMode? { loopRunModeRaw.flatMap(LoopRunMode.init(rawValue:)) }
+
     init(fileName: String, duration: TimeInterval, uid: UUID = UUID(), createdAt: Date = Date(),
          loop: Loop? = nil, exercise: Exercise? = nil, song: Song? = nil) {
         self.uid = uid

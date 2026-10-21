@@ -5,6 +5,10 @@
 - **Amends:** ADR 0142 — **J5a**: a loop caption on a note written in one mode opens that mode when the
   loop still qualifies for it. J5a's precedence (trainer, then ear, then improvise) stays, as the
   fallback and for every other note, every take and every session pill.
+- **Amended by:** ADR 0265 — **D3**'s *takes* clause and the rejected alternative of storing the mode
+  on takes: a loop take now records the mode it was recorded in (`Recording.loopRunModeRaw`) and its
+  caption opens that mode on D2's terms. D1, D2, and D3 for every other note kind and for session
+  pills still stand, and a take with no recorded mode still keeps J5a.
 - **Relates to:** 0138 (each loop mode gates on what it needs) · 0104 and 0135 (the notes ear training
   and improvise write) · 0225 (the *Transcribed* kind, saved from Count the notes).
 

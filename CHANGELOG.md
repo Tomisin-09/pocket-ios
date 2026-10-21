@@ -353,6 +353,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **In the routine editor, Add exercise, loop or song and Insert rest sit right under the blocks.**
+  They were at the very bottom, past Progress and References, so a long routine meant a scroll to
+  the end every time you added something.
 - **On an exercise, song, loop or routine, a reference is removed, not deleted** (ADR 0264 D11). Hold
   or swipe one and choose **Remove**. If nothing else uses it, it moves to *Not filed* in References
   with its note and file; if the same link is on something else too, only this use goes. Deleting
@@ -560,6 +563,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **A take opens the mode you recorded it in.** Tapping the caption on a take recorded in **Train
+  your ear** or **Improvise** opened the practice ramp whenever the loop had a tempo. It now opens the
+  mode the take came from, as a note already did. Takes recorded before this update are matched to
+  the session they were recorded in, where the practice log shows one; the rest open as before.
+  (ADR 0265)
+- **A song block in a routine can be finished.** A looping song had no way to end except **›**, which
+  skips and logs nothing. Once it's playing, **Done** (or **Finish** on the last block) logs the time
+  you played along and moves on, as Improvise and ear-training blocks do. (ADR 0266)
+- **Search in Add to routine no longer disappears.** After you added a block, the *1 block added*
+  line covered the search field at the bottom of the screen. Search now sits at the top, always shown,
+  as it does in the Exercises, Loops and Routines libraries.
 - **Raising a drill no longer takes it out of your sessions.** After you raised the tempo on a 5, the
   next completion screen showed your 5 again and leaned toward another raise. Tapping Continue
   without touching the dots then saved that 5 at the new tempo, and the drill stopped being picked.

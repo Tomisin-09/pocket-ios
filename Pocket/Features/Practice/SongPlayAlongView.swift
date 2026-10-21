@@ -5,8 +5,9 @@ import SwiftUI
 /// block in a routine — the repertoire counterpart of `ExerciseRunView` / `LoopRunView`. A song block
 /// is an open jam, so this is deliberately minimal (ADR 0070 — no evaluation surface): one **fixed
 /// play-along speed** you set (no ramp), play / pause, and **−10s / +10s** seeks over the live
-/// position. By default the song **loops** and the routine advances only when you Skip; with *Loop
-/// song blocks* off it plays through once and auto-advances.
+/// position. By default the song **loops** until you tap **Done**, which logs the play-along and moves
+/// on (ADR 0266); with *Loop song blocks* off it plays through once and auto-advances. Skip still
+/// moves on without logging anything, as it does for every block.
 ///
 /// It owns a `SongPlayAlongModel` (and through it a private `PracticeAudioEngine`), so it's
 /// independent of the waveform screen. As with the loop run, a routine block gets the routine chrome
@@ -52,6 +53,7 @@ struct SongPlayAlongView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .routineSessionChrome(routineContext)
+        .toolbar { doneButton }
         .safeAreaInset(edge: .bottom) { transport }
         .overlay { if showCountIn { RoutineCountInOverlay(onComplete: countInFinished) } }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
@@ -88,7 +90,7 @@ struct SongPlayAlongView: View {
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
                 Text(AppSettings.routineSongLoop
-                     ? "Plays as a loop — skip when you're done"
+                     ? "Plays as a loop — tap Done when you've finished"
                      : "Plays through once, then moves on")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
@@ -188,11 +190,8 @@ struct SongPlayAlongView: View {
     /// log the play-through first (ADR 0117), before advancing tears this screen down.
     private func wireIfNeeded() {
         guard !wired else { return }
-        if let routineContext {
-            model.onFinished = {
-                logCompletedRun()
-                routineContext.onFinished()
-            }
+        if routineContext != nil {
+            model.onFinished = { finish() }
         }
         wired = true
     }
@@ -201,10 +200,10 @@ struct SongPlayAlongView: View {
     /// practice, so it earns its minutes and its day on the calendar; no tempo is recorded, because a
     /// play-along is played at the song's own speed rather than at a tempo you own.
     ///
-    /// **A looping play-along never reaches here** — it has no end, so there is no completed run to
-    /// log. That is the same rule the ramp screens follow (a run stopped by hand logs nothing) rather
-    /// than a gap: the log records runs with an honest length, and "however long the screen was open"
-    /// isn't one.
+    /// Two ways in: the song **playing through** with *Loop song blocks* off, and **Done** (ADR 0266).
+    /// A looping play-along has no end of its own, so the player saying they're finished *is* its end,
+    /// as it is for an improvise block (ADR 0135 B3b). The length is from Play along to Done. Skip and
+    /// exit still log nothing.
     ///
     /// `unitUID` is deliberately `nil`: `Song` is the one model with no business `uid` — it is
     /// identified by its `SongRef`. The song travels as `songSourceID` instead (ADR 0241), the same
@@ -220,6 +219,33 @@ struct SongPlayAlongView: View {
                               songSourceID: song.sourceID,
                               unitLabel: song.title,
                               into: modelContext)
+    }
+
+    /// The one completion seam, shared by Done and the song playing through: log, then advance,
+    /// because advancing tears this screen down.
+    private func finish() {
+        logCompletedRun()
+        routineContext?.onFinished()
+    }
+
+    /// **Done** — or **Finish** on the last block — as a nav-bar button, the way an improvise or ear
+    /// block finishes (ADR 0266). A looping song never ends on its own, and before this the only way
+    /// on was ›, which logs nothing: an hour of playing along counted for no minutes.
+    ///
+    /// Shown only once the play-along has started. Before that there is nothing to finish, and a Done
+    /// that only moved on would be a second Skip.
+    @ToolbarContentBuilder private var doneButton: some ToolbarContent {
+        if let context = routineContext, isRunning {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(context.stageIndex >= context.stageCount - 1 ? "Finish" : "Done") {
+                    haptic(.light)
+                    finish()
+                }
+                .font(.futura(.body, weight: .semibold))
+                .tint(PocketColor.practice)
+                .accessibilityLabel("Done with this song")
+            }
+        }
     }
 
     /// Start tapped: in a routine, run the visual count-in first (ADR 0071); standalone, start now.

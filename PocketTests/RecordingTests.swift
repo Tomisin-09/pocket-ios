@@ -91,13 +91,60 @@ final class RecordingTests: XCTestCase {
         let exerciseTake = Recording(fileName: "e.m4a", duration: 5)
         context.insert(loopTake)
         context.insert(exerciseTake)
-        RecordingOwner.loop(loop).attach(to: loopTake)
+        RecordingOwner.loop(loop, .ear).attach(to: loopTake)
         RecordingOwner.exercise(exercise).attach(to: exerciseTake)
         try context.save()
 
         XCTAssertEqual(loopTake.ownerKind, .loop)
         XCTAssertEqual(exerciseTake.ownerKind, .exercise)
         XCTAssertNil(loopTake.exercise)
+        // The mode travels with the loop through the same choke point, and persists (ADR 0265).
+        XCTAssertEqual(loopTake.loopRunModeRaw, "ear")
+        XCTAssertEqual(loopTake.loopRunMode, .ear)
+        XCTAssertNil(exerciseTake.loopRunModeRaw, "an exercise take has no mode")
+    }
+
+    /// **Only a loop take carries a mode** (ADR 0265). An exercise, a song and a standalone take
+    /// have none to record, and must not pick one up from a default.
+    func testOnlyALoopTakeRecordsAMode() {
+        for mode in LoopRunMode.allCases {
+            let take = Recording(fileName: "l.m4a", duration: 5)
+            RecordingOwner.loop(Loop(name: "Verse", start: 0, end: 0.2, speed: 1, repeats: 1), mode)
+                .attach(to: take)
+            XCTAssertEqual(take.loopRunMode, mode)
+        }
+        let song = Song(title: "Etude", duration: 60, ref: SongRef(id: "x", source: .localFile, bookmark: nil))
+        let owners: [RecordingOwner] = [.exercise(Exercise(name: "Spider")), .song(song), .standalone]
+        for owner in owners {
+            let take = Recording(fileName: "x.m4a", duration: 5)
+            owner.attach(to: take)
+            XCTAssertNil(take.loopRunModeRaw, "\(owner) took a mode")
+        }
+    }
+
+    /// A stored mode this version doesn't know reads as **no mode**, never folded to the trainer the
+    /// way `LoopRunMode(raw:)` folds it, so the caption falls back to the precedence.
+    func testAnUnknownStoredModeReadsAsNone() {
+        let take = Recording(fileName: "x.m4a", duration: 5)
+        take.loopRunModeRaw = "metronome"
+        XCTAssertNil(take.loopRunMode)
+    }
+
+    /// The Takes list on a loop shows **every** take on it, whichever mode recorded it: the mode
+    /// decides where a caption leads, not which screen may list the take.
+    func testALoopsTakesListIgnoresTheMode() throws {
+        let context = ModelContext(try makeContainer())
+        let loop = Loop(name: "Verse", start: 0, end: 0.2, speed: 1, repeats: 1)
+        let earTake = Recording(fileName: "a.m4a", duration: 5, createdAt: .now.addingTimeInterval(-60))
+        let rampTake = Recording(fileName: "b.m4a", duration: 5)
+        context.insert(loop)
+        context.insert(earTake)
+        context.insert(rampTake)
+        RecordingOwner.loop(loop, .ear).attach(to: earTake)
+        RecordingOwner.loop(loop, .trainer).attach(to: rampTake)
+        try context.save()
+        XCTAssertEqual(RecordingOwner.loop(loop, .improvise).recordingsByRecent.map(\.uid),
+                       [rampTake.uid, earTake.uid])
     }
 
     /// ADR 0151 — **this test used to assert the opposite.** A take outlives the loop it was recorded
@@ -110,7 +157,7 @@ final class RecordingTests: XCTestCase {
         let take = Recording(fileName: "keep-me.m4a", duration: 8)
         context.insert(loop)
         context.insert(take)
-        RecordingOwner.loop(loop).attach(to: take)
+        RecordingOwner.loop(loop, .trainer).attach(to: take)
         try context.save()
 
         context.delete(loop)
@@ -137,7 +184,7 @@ final class RecordingTests: XCTestCase {
         context.insert(loop)
         context.insert(take)
         loop.song = song
-        RecordingOwner.loop(loop).attach(to: take)
+        RecordingOwner.loop(loop, .trainer).attach(to: take)
         try context.save()
         XCTAssertEqual(take.ownerLabelAtTake, "Don't Know Why · Chords")
 

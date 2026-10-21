@@ -24,8 +24,8 @@ enum SettingsInfo {
     static let routineRest =
         "The breather between blocks."
     static let routineSongLoop =
-        "A song block loops as an open jam and moves on only when you skip. Off plays it through once, "
-        + "then auto-advances."
+        "A song block loops as an open jam until you tap Done. Off plays it through once, then "
+        + "auto-advances."
     static let routineTunerOffer =
         "Starting a routine asks whether you want to tune first. Answering it, or turning this off, "
         + "takes one tap — it never keeps you from playing."
