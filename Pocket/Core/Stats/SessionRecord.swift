@@ -67,6 +67,18 @@ enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
         }
     }
 
+    /// The loop mode a run of this kind was practised in, or `nil` for a kind that isn't a loop mode.
+    /// Read by the take-mode backfill (ADR 0265 D4) and Home's Jump back in (ADR 0267).
+    /// **Exhaustive with no `default`**, so a new kind has to say whether it is one before it compiles.
+    var loopRunMode: LoopRunMode? {
+        switch self {
+        case .loop: .trainer
+        case .earLoop: .ear
+        case .improvise: .improvise
+        case .exercise, .song, .metronome, .other: nil
+        }
+    }
+
     /// Reads a kind this build doesn't know as `.other` instead of throwing (ADR 0242).
     ///
     /// The synthesised decoder for a `String` enum throws on a raw value it has no case for, and in

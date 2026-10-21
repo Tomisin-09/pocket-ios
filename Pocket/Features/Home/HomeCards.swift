@@ -125,10 +125,10 @@ struct HomeTileRow<Content: View>: View {
     }
 }
 
-/// The "Jump back in" card: the unit you last practised — a song, a routine or an exercise, per the
-/// player's preference (ADR 0193) — with when you last touched it and a trailing readout. Resumes it
-/// on tap; a song resumes at its last-practiced tempo (ADR 0044). Neutral chrome — the metronome card
-/// owns the screen's one accent colour.
+/// The "Jump back in" card: the unit you last practised — a song, a routine, an exercise or a loop,
+/// per the player's preference (ADR 0193, 0267) — with when you last touched it and a trailing
+/// readout. Resumes it on tap; a song resumes at its last-practiced tempo (ADR 0044), a loop in the
+/// mode it was run in. Neutral chrome — the metronome card owns the screen's one accent colour.
 ///
 /// **The eyebrow does not vary.** `JUMP BACK IN` names the card's *job*, and a card that renamed
 /// itself with its contents would read as three different cards that happen to share a slot. Only the
@@ -170,8 +170,8 @@ struct JumpBackInCard: View {
     /// does not have. Parameterising the one string beats a near-duplicate card — the layout and
     /// `MasteryReadout` handling are worth sharing.
     var eyebrow: String = "JUMP BACK IN"
-    /// Whether the unit opens onto the plan's wall: a routine or a drill, for a player whose plan has
-    /// lapsed (ADR 0256 D3, D4). A song never is.
+    /// Whether the unit opens onto the plan's wall: a routine, a drill or a loop's mode, for a player
+    /// whose plan has lapsed (ADR 0256 D3, D4). A song never is.
     var locked = false
 
     var body: some View {
@@ -227,10 +227,10 @@ struct JumpBackInCard: View {
     }
 }
 
-/// The three shapes one card takes (ADR 0193), side by side — the check the build cannot make:
-/// that a routine's block count and an exercise's command line sit where a song's artist and mastery
-/// do, and that the fixed eyebrow still reads as one card rather than three.
-#Preview("Jump back in — three shapes") {
+/// The shapes one card takes (ADR 0193, and a loop's since ADR 0267), side by side — the check the
+/// build cannot make: that a routine's block count, an exercise's command line and a loop's song and
+/// mode sit where a song's artist and mastery do, and that the fixed eyebrow still reads as one card.
+#Preview("Jump back in — every shape") {
     VStack(spacing: 16) {
         JumpBackInCard(content: .init(title: "Slow Bend", subtitle: "Jack Trader",
                                       practiced: .now.addingTimeInterval(-3600),
@@ -242,6 +242,10 @@ struct JumpBackInCard: View {
                                       subtitle: "Command 90 → 120 BPM · 8ths",
                                       practiced: .now.addingTimeInterval(-172_800),
                                       trailing: .mastery(nil)))
+        JumpBackInCard(content: .init(title: "Verse riff", subtitle: "Slow Bend · Train your ear",
+                                      practiced: .now.addingTimeInterval(-7200),
+                                      trailing: .mastery(2)),
+                       locked: true)
     }
     .padding(20)
     .background(PocketColor.background)

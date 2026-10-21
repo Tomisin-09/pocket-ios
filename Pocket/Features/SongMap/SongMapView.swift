@@ -135,7 +135,7 @@ struct SongMapView: View {
             .navigationDestination(isPresented: Binding(get: { opening != nil },
                                                         set: { if !$0 { opening = nil } })) {
                 if let opening, let loop = loops[opening.uid] {
-                    JournalOwnerDestinationView(route: .loop(loop, opening.mode))
+                    LoopModeScreen(loop: loop, mode: opening.mode)
                 }
             }
             .navigationDestination(isPresented: Binding(get: { reviewing != nil },

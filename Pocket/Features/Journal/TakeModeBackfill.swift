@@ -67,22 +67,11 @@ enum TakeModeBackfill {
     /// precedence rather than taking a guess.
     static func mode(forTakeAt takenAt: Date, loopUID: UUID, runs: [SessionRecord]) -> LoopRunMode? {
         let modes = Set(runs.compactMap { run -> LoopRunMode? in
-            guard run.unitUID == loopUID, let mode = mode(for: run.kind) else { return nil }
+            guard run.unitUID == loopUID, let mode = run.kind.loopRunMode else { return nil }
             let start = run.startedAt.addingTimeInterval(-slack)
             let end = run.startedAt.addingTimeInterval(run.durationSeconds + slack)
             return (start...end).contains(takenAt) ? mode : nil
         })
         return modes.count == 1 ? modes.first : nil
-    }
-
-    /// The loop mode a run of this kind was practised in, or `nil` for a kind that isn't a loop mode.
-    /// **Exhaustive with no `default`**, so a new kind has to say whether it is one before it compiles.
-    static func mode(for kind: PracticeRunKind) -> LoopRunMode? {
-        switch kind {
-        case .loop: .trainer
-        case .earLoop: .ear
-        case .improvise: .improvise
-        case .exercise, .song, .metronome, .other: nil
-        }
     }
 }

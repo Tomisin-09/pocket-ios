@@ -82,10 +82,11 @@ Every one of these is optional, and none of it leaves the device.
   routine. With notifications off for Red Moon each row reads **`Not being delivered`** rather than
   naming a time it cannot keep.
 - **`Home`** ▸ **`Jump back in`** — what Home's resume card carries: `Most recent`, `Song`,
-  `Routine` or `Exercise`. Its footer: *The card under today's session carries the last thing you
-  practised. Pin it to a song, a routine or an exercise if that is what you always come back to. You
-  can also hold the card itself to change this. Whichever you pick, the most recent of any kind shows
-  until there is one of that kind to show.*
+  `Routine`, `Exercise` or `Loop`. Its footer: *The card under today's session carries the last thing
+  you practised. Pin it to a song, a routine, an exercise or a loop if that is what you always come
+  back to. A loop opens in the mode you last used on it. You can also hold the card itself to change
+  this. Whichever you pick, the most recent of any kind shows until there is one of that kind to
+  show.*
 - **`Beside Toolkit`** — what the tile beside Toolkit on Home opens: `My tabs`, `My chords`,
   `My progressions`, `Tuner`, `Glossary` or `Help & FAQs`. Its footer: *The tile beside Toolkit on Home
   opens the tool you pick here. You can also hold the tile to change it.*

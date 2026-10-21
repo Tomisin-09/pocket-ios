@@ -203,9 +203,14 @@ struct EarTrainingSheet: View {
     }
 }
 
-/// The **pushed** ear-training host — what the Loops library navigates to (ADR 0138 G4). Same core
-/// view, same owned player; it differs from `EarTrainingSheet` only in having no modal chrome, since
-/// a pushed screen already has a back button.
+/// The **pushed** ear-training host — what the Loops library navigates to (ADR 0138 G4), and a Journal
+/// caption and Home's Jump back in through `LoopModeScreen`. Same core view, same owned player; it
+/// differs from `EarTrainingSheet` only in having no modal chrome, since a pushed screen already has a
+/// back button.
+///
+/// **Gated like the sheet** (ADR 0256 D3). It wasn't until ADR 0267: the Loops library only pushes it
+/// from inside the gated Practice hub, so nothing showed, but the Journal went free in ADR 0263 and its
+/// captions opened this screen for a player without the plan, where 0263 D3 promised the wall.
 struct EarTrainingScreen: View {
     let loop: Loop
     /// Open Name the notes at this note once the screen is up: a snag's line in the Journal leads here
@@ -221,6 +226,10 @@ struct EarTrainingScreen: View {
     }
 
     var body: some View {
+        PlanGated(.earTraining) { gatedScreen }
+    }
+
+    @ViewBuilder private var gatedScreen: some View {
         EarTrainingView(loop: loop, player: player, recorder: recorder,
                         routineContext: nil, namingAt: namingAt)
             .navigationTitle(LoopRunMode.ear.label)

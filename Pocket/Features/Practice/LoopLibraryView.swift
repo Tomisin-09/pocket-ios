@@ -199,16 +199,7 @@ struct LoopLibraryView: View {
         // Item-bound safely: the request is a value with its own id, not the model (ADR 0090).
         .sheet(item: $routineRequest) { AddToRoutineSheet(request: $0) }
         .sheet(item: $watching) { WatchOnNeckSheet(loop: $0.value) }
-        .navigationDestination(item: $launch) { launch in
-            switch launch.mode {
-            case .trainer:
-                LoopRunView(loop: launch.loop)
-            case .ear:
-                EarTrainingScreen(loop: launch.loop)
-            case .improvise:
-                ImproviseScreen(loop: launch.loop)
-            }
-        }
+        .navigationDestination(item: $launch) { LoopModeScreen(loop: $0.loop, mode: $0.mode) }
     }
 
     /// Whether a song section shows its loops, and the write-back that persists a tap. A live search

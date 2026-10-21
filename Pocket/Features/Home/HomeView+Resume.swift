@@ -8,7 +8,8 @@ import SwiftUI
 ///
 /// `Routine.lastPracticed` and `Exercise.lastPracticed` were both already written on every run and
 /// read by nothing on this screen — Home consulted songs alone. So this reads three fields where it
-/// read one and **adds none**, which is what makes it cheap under ADR 0189's criteria.
+/// read one and **adds none**, which is what makes it cheap under ADR 0189's criteria. A loop has no
+/// such field; since ADR 0267 its date and mode come from the practice log, which still adds none.
 extension HomeView {
 
     /// The unit the card is offering, with its model attached. `nil` when nothing anywhere has been
@@ -17,6 +18,44 @@ extension HomeView {
         case song(Song)
         case routine(Routine)
         case exercise(Exercise)
+        /// A loop, in the mode it reopens in, and when it was run (ADR 0267).
+        case loop(Loop, LoopRunMode, Date)
+    }
+
+    /// The newest **loop-mode** rows of the practice log, newest first, at most
+    /// `HomeFeed.recentLoopRunLimit` of them (ADR 0267).
+    ///
+    /// **Filtered on `kindRaw` alone**, a plain `String`: an optional comparison in a `#Predicate`
+    /// freezes the main thread (`docs/swiftdata-gotchas.md`), so the `routineUID` test is left to
+    /// `HomeFeed.loopResumeCandidates`, in memory. **Bounded**, because Home has refused an unbounded
+    /// query over the log twice (`HomeStatsStrip`, `completedSittingCount`). And a live `@Query`, not a
+    /// fetch on appear: ear training and improvise log in `.onDisappear`, which can land after Home's
+    /// `.onAppear`, and a fetch would then miss the run the player just finished.
+    nonisolated static var recentLoopRuns: FetchDescriptor<PracticeRun> {
+        let kinds = PracticeRunKind.allCases.filter { $0.loopRunMode != nil }.map(\.rawValue)
+        var descriptor = FetchDescriptor<PracticeRun>(
+            predicate: #Predicate { kinds.contains($0.kindRaw) },
+            sortBy: [SortDescriptor(\.startedAt, order: .reverse)])
+        descriptor.fetchLimit = HomeFeed.recentLoopRunLimit
+        return descriptor
+    }
+
+    /// A loop the card can offer: the live model, the mode it reopens in, and when it was run.
+    struct ResumableLoop {
+        let loop: Loop
+        let mode: LoopRunMode
+        let date: Date
+    }
+
+    /// The newest loop run on its own whose loop still exists and can open in some mode — preferring
+    /// the mode it was run in (`LoopModeAccess.mode(preferring:for:)`, the Journal's rule too).
+    private var resumableLoop: ResumableLoop? {
+        for candidate in HomeFeed.loopResumeCandidates(recentLoopRuns.map(\.record)) {
+            guard let loop = loops.first(where: { $0.uid == candidate.loopUID }),
+                  let mode = LoopModeAccess.mode(preferring: candidate.mode, for: loop) else { continue }
+            return ResumableLoop(loop: loop, mode: mode, date: candidate.startedAt)
+        }
+        return nil
     }
 
     /// The player's stated preference, resolved through the one constant both this and
@@ -32,13 +71,16 @@ extension HomeView {
         let song = HomeFeed.mostRecentlyPracticed(songs, practicedAt: \.lastPracticed)
         let routine = HomeFeed.mostRecentlyPracticed(routines, practicedAt: \.lastPracticed)
         let exercise = HomeFeed.mostRecentlyPracticed(exercises, practicedAt: \.lastPracticed)
+        let loop = resumableLoop
         switch HomeFeed.resumeKind(preference: jumpBackIn,
                                    songPracticedAt: song?.lastPracticed,
                                    routinePracticedAt: routine?.lastPracticed,
-                                   exercisePracticedAt: exercise?.lastPracticed) {
+                                   exercisePracticedAt: exercise?.lastPracticed,
+                                   loopPracticedAt: loop?.date) {
         case .song: return song.map(ResumeTarget.song)
         case .routine: return routine.map(ResumeTarget.routine)
         case .exercise: return exercise.map(ResumeTarget.exercise)
+        case .loop: return loop.map { ResumeTarget.loop($0.loop, $0.mode, $0.date) }
         case nil: return nil
         }
     }
@@ -47,7 +89,7 @@ extension HomeView {
     ///
     /// **The hold is ADR 0163's grammar** — the setting put where you are using it, with the
     /// Settings row kept as the findable route. Both surfaces write the same key, so there is no
-    /// second copy of the four labels to drift.
+    /// second copy of the labels to drift.
     @ViewBuilder
     func resumeCard(_ target: ResumeTarget) -> some View {
         Group {
@@ -73,6 +115,16 @@ extension HomeView {
                     ExerciseRunScreen(exercise: exercise)
                 } label: {
                     JumpBackInCard(content: Self.content(exercise), locked: plan.showsPlanLocks)
+                }
+                .planLockedValue(plan.showsPlanLocks)
+            case .loop(let loop, let mode, let date):
+                NavigationLink {
+                    // The pushed host for the mode, which gates itself (ADR 0256 D3): all three of a
+                    // loop's launches are the plan's.
+                    LoopModeScreen(loop: loop, mode: mode)
+                } label: {
+                    JumpBackInCard(content: Self.content(loop, mode: mode, practiced: date),
+                                   locked: plan.showsPlanLocks)
                 }
                 .planLockedValue(plan.showsPlanLocks)
             }
@@ -110,5 +162,16 @@ extension HomeView {
                                subtitle: exercise.commandProgressLabel,
                                practiced: exercise.lastPracticed,
                                trailing: .mastery(exercise.mastery))
+    }
+
+    private static func content(_ loop: Loop, mode: LoopRunMode, practiced: Date) -> JumpBackInCard.Content {
+        // The second line says where a tap goes — *Slow Bend · Train your ear* — because one `Loop`
+        // value covers three screens (ADR 0267). Improvise draws no mastery: a bed to solo over isn't
+        // something you rate yourself on, which is why its run logs no tempo either.
+        let subtitle = [loop.song?.title, mode.label].compactMap { $0 }.filter { !$0.isEmpty }
+            .joined(separator: " · ")
+        return JumpBackInCard.Content(title: loop.name.isEmpty ? "Untitled loop" : loop.name,
+                                      subtitle: subtitle, practiced: practiced,
+                                      trailing: mode == .improvise ? .none : .mastery(loop.mastery))
     }
 }
