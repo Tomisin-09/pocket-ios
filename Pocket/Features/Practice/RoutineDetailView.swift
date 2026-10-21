@@ -194,22 +194,7 @@ struct RoutineDetailView: View {
                 Text(insertingRests ? "Tap where a rest goes" : "Practise")
             }
 
-            // How long it is, when you last did it, how many times (ADR 0173). Lives in
-            // `RoutineDetailView+History.swift` — one section rather than two because the old
-            // length gate and a history gate were near-complements, so the screen would have
-            // shown one or the other and never both.
-            lengthAndHistorySection
-
-            // Where this session came from (ADR 0167). Lives in
-            // `RoutineDetailView+References.swift` — the sandbox makes this surface the odd
-            // one out among the five that host a section, in three ways written up there.
-            referencesSection
-
-            // The appointment you made with this routine (ADR 0186). Lives in
-            // `RoutineDetailView+Reminder.swift`, which explains why it is the one control here
-            // that ignores the Cancel/Save contract rather than joining it.
-            reminderSection
-
+            // Right under the blocks they add to, not past Progress and References (device, 2026-10-21).
             if canAddBlocks {
                 Section {
                     if insertingRests {
@@ -229,6 +214,22 @@ struct RoutineDetailView: View {
                     }
                 }
             }
+
+            // How long it is, when you last did it, how many times (ADR 0173). Lives in
+            // `RoutineDetailView+History.swift` — one section rather than two because the old
+            // length gate and a history gate were near-complements, so the screen would have
+            // shown one or the other and never both.
+            lengthAndHistorySection
+
+            // Where this session came from (ADR 0167). Lives in
+            // `RoutineDetailView+References.swift` — the sandbox makes this surface the odd
+            // one out among the five that host a section, in three ways written up there.
+            referencesSection
+
+            // The appointment you made with this routine (ADR 0186). Lives in
+            // `RoutineDetailView+Reminder.swift`, which explains why it is the one control here
+            // that ignores the Cancel/Save contract rather than joining it.
+            reminderSection
         }
         .scrollContentBackground(.hidden)
         .background(PocketColor.background.ignoresSafeArea())

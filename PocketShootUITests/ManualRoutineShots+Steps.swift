@@ -86,11 +86,12 @@ extension ManualRoutineShots {
 
         // **Gated on `Save`, not on the Add row.** `Done` dismisses the Add sheet back onto the
         // editor, and the obvious thing to wait for is the control the editor opened with — except
-        // that with three blocks now in the list, `Add exercise, loop or song` has moved below the
-        // fold, and a `List` does not render below-fold rows into the tree. So the gate went looking
-        // for something genuinely absent and reported "something opened and it is not what this shot
-        // needs", when what had opened was precisely the right screen. It read as a failed tap for
-        // three runs and was a failed *assumption*: that the editor looks the same full as empty.
+        // that with blocks now in the list, `Add exercise, loop or song` can be below the fold (it
+        // follows the last block), and a `List` does not render below-fold rows into the tree. So
+        // the gate went looking for something genuinely absent and reported "something opened and
+        // it is not what this shot needs", when what had opened was precisely the right screen. It
+        // read as a failed tap for three runs and was a failed *assumption*: that the editor looks
+        // the same full as empty.
         //
         // `Save` is in the editor's toolbar, always drawn, and the Add sheet's own toolbar carries
         // `Done` and `Cancel` but no `Save` — so it cannot be satisfied from the sheet being left.

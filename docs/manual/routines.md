@@ -55,7 +55,7 @@ whole list back.
 a routine you start and abandon leaves nothing behind.
 
 <!-- shot: routines/editor | role: screen
-     | alt: The routine editor in edit mode, with the Name field, the About section, the numbered blocks under Practise and the estimated length under Progress
+     | alt: The routine editor in edit mode, with the Name field, the About section, the numbered blocks under Practise and Add exercise, loop or song right beneath them
      | state: Practice ▸ Routines ▸ + , three blocks added -->
 
 - **Name it** — the field at the top. Naming is what keeps it in your routines to run again.

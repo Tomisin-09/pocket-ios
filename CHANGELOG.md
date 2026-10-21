@@ -353,6 +353,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **In the routine editor, Add exercise, loop or song and Insert rest sit right under the blocks.**
+  They were at the very bottom, past Progress and References, so a long routine meant a scroll to
+  the end every time you added something.
 - **On an exercise, song, loop or routine, a reference is removed, not deleted** (ADR 0264 D11). Hold
   or swipe one and choose **Remove**. If nothing else uses it, it moves to *Not filed* in References
   with its note and file; if the same link is on something else too, only this use goes. Deleting
