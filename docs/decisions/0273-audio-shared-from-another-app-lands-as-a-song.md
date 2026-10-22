@@ -1,8 +1,8 @@
 # ADR 0273 — Audio shared from another app lands as a song
 
 - **Status:** Accepted. Built 2026-10-22 on `pocket-387-share-audio-in-as-a-song`. Checked on the
-  simulator end to end from Files' share sheet; **Voice Memos and the other apps are still to check on
-  a device** (see §Build notes).
+  simulator end to end from Files' share sheet, and on the phone from Voice Memos; **Mail, Messages,
+  AirDrop and WhatsApp are still to check** (see §Build notes).
 - **Date:** 2026-10-22
 - **Amends:** ADR 0188 — **D3**: the door opens a third type, and the first the app doesn't own:
   `public.audio`, at `Alternate` rank. 0188 kept the zip out of the Open-with list because a folder of
@@ -139,9 +139,8 @@ Home pushes, and from its own flags for its covers and imports.
 - **A test note.** `UITestCase.launchApp` waits for Home's seeding marker, which a song opened over
   Home at launch takes out of the tree, so `SharedAudioUITests` launches the app itself.
 - **Owed, on a device** (no kept UI test can drive another app's share sheet, 0264 D10.6):
-  1. Voice Memos lists Red Moon in its app row, the case this ADR began from. Files does on the
-     simulator, and both describe the file the same way, but Voice Memos itself is unchecked.
-  2. Mail and Messages attachments, and AirDrop.
-  3. A WhatsApp voice note, usually `.opus`, and whether the decoder reads it.
-  4. Sharing while a routine runs: the song is kept and the alert appears, or the alert doesn't
+  1. Mail and Messages attachments, and AirDrop. (Voice Memos, the case this ADR began from, is
+     done: see *On the phone* above.)
+  2. A WhatsApp voice note, usually `.opus`, and whether the decoder reads it.
+  3. Sharing while a routine runs: the song is kept and the alert appears, or the alert doesn't
      present over the routine's cover (Consequences).
