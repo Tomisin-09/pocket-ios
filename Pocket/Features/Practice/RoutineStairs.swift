@@ -3,7 +3,8 @@ import SwiftUI
 /// A command-anchored routine drawn as a staircase: one bar per plateau, height ∝ BPM
 /// (normalised across the routine's span) and **width ∝ how long it holds**, so the command
 /// dwell reads as the wide bar and the backoff tail as the dip after the summit. A faithful
-/// picture of what a run will play (ADR 0045/0046).
+/// picture of what a run will play (ADR 0045/0046) — within a narrowest and a widest bar
+/// (`barWidths`), so a very long hold can't squeeze the rest to slivers (ADR 0270).
 ///
 /// Shared between the Practice run screen (`ExerciseRunView`) and the legacy in-metronome
 /// Training Mode sheet — extracted from the latter so it survives the Slice 4 dismantling and
@@ -88,23 +89,20 @@ struct RoutineStairs: View {
                 let low = plateaus.map(\.bpm).min() ?? 0
                 let high = plateaus.map(\.bpm).max() ?? 1
                 let span = max(1, high - low)
-                let totalIntervals = max(1, plateaus.reduce(0) { $0 + $1.intervals })
                 let spacing: CGFloat = 4
-                let usableWidth = geo.size.width - spacing * CGFloat(plateaus.count - 1)
+                let widths = barWidths(across: geo.size.width - spacing * CGFloat(plateaus.count - 1))
                 ZStack(alignment: .topLeading) {
                     HStack(alignment: .bottom, spacing: spacing) {
                         ForEach(Array(plateaus.enumerated()), id: \.offset) { index, plateau in
                             RoundedRectangle(cornerRadius: 3)
                                 .fill(tint.opacity(fill(forIndex: index)))
-                                .frame(width: usableWidth * CGFloat(plateau.intervals)
-                                       / CGFloat(totalIntervals),
+                                .frame(width: widths[index],
                                        height: Self.barAreaHeight * heightFraction(plateau.bpm, low, span))
                                 .animation(.easeInOut(duration: 0.25), value: currentIndex)
                         }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                    dwellLabel(low: low, span: span, usableWidth: usableWidth,
-                               spacing: spacing, totalIntervals: totalIntervals)
+                    dwellLabel(low: low, span: span, widths: widths, spacing: spacing)
                 }
             }
             .frame(height: Self.chartHeight)
@@ -163,11 +161,9 @@ struct RoutineStairs: View {
     /// no room at all (`minCaptionWidth`) is dropped.
     private var captionRow: some View {
         GeometryReader { geo in
-            let totalIntervals = max(1, plateaus.reduce(0) { $0 + $1.intervals })
             let spacing: CGFloat = 4
-            let usableWidth = geo.size.width - spacing * CGFloat(plateaus.count - 1)
-            let metrics = CaptionMetrics(usableWidth: usableWidth, spacing: spacing,
-                                         totalIntervals: totalIntervals, midY: geo.size.height / 2)
+            let widths = barWidths(across: geo.size.width - spacing * CGFloat(plateaus.count - 1))
+            let metrics = CaptionMetrics(widths: widths, spacing: spacing, midY: geo.size.height / 2)
             ZStack {
                 ForEach(RampPhase.allCases) { phase in
                     if let range = phaseRanges[phase] {
@@ -192,9 +188,9 @@ struct RoutineStairs: View {
     /// The bar-layout figures every caption placement needs — grouped so each caption call site takes
     /// one parameter instead of three.
     private struct CaptionMetrics {
-        let usableWidth: CGFloat
+        /// Each bar's drawn width, from `barWidths(across:)`.
+        let widths: [CGFloat]
         let spacing: CGFloat
-        let totalIntervals: Int
         /// Vertical centre of the caption row — the same for every label.
         let midY: CGFloat
     }
@@ -203,7 +199,7 @@ struct RoutineStairs: View {
     @ViewBuilder
     private func caption(_ text: String, _ color: Color, weight: Font.Weight,
                          over range: Range<Int>, metrics: CaptionMetrics) -> some View {
-        let width = groupWidth(of: range, metrics: metrics)
+        let width = Self.groupWidth(of: range, widths: metrics.widths, spacing: metrics.spacing)
         if width >= Self.minCaptionWidth {
             Text(text)
                 .font(.futura(.caption2, weight: weight))
@@ -211,19 +207,59 @@ struct RoutineStairs: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .frame(width: width)
-                .position(x: centerX(of: range, usableWidth: metrics.usableWidth,
-                                     spacing: metrics.spacing, totalIntervals: metrics.totalIntervals),
+                .position(x: Self.centerX(of: range, widths: metrics.widths, spacing: metrics.spacing),
                           y: metrics.midY)
         }
     }
 
     /// The on-screen width of a contiguous group of bars, including the spacing between them.
-    private func groupWidth(of range: Range<Int>, metrics: CaptionMetrics) -> CGFloat {
-        let bars = range.reduce(CGFloat(0)) { total, index in
-            total + metrics.usableWidth * CGFloat(plateaus[index].intervals)
-                / CGFloat(metrics.totalIntervals)
+    private static func groupWidth(of range: Range<Int>, widths: [CGFloat], spacing: CGFloat) -> CGFloat {
+        range.reduce(CGFloat(0)) { $0 + widths[$1] } + spacing * CGFloat(max(0, range.count - 1))
+    }
+
+    /// The narrowest a bar draws, so a short rung beside a long hold stays a step you can see
+    /// (ADR 0270). It gives way when the row can't spare this much for every bar.
+    private static let minBarWidth: CGFloat = 10
+    /// The largest share of the row one bar takes, so a long hold leaves the other phases room.
+    private static let maxBarShare: CGFloat = 0.7
+
+    private func barWidths(across usable: CGFloat) -> [CGFloat] {
+        Self.barWidths(plateaus.map(\.intervals), usable: usable)
+    }
+
+    /// Each bar's width: **in proportion to how long it holds**, held between `minBarWidth` and
+    /// `maxBarShare` of the row, and always filling `usable` (ADR 0270). A bar past a bound is pinned
+    /// there and the rest share what's left in proportion, so an ordinary run draws as it always did
+    /// and only a lopsided one bends. Widest first: pinning a long hold frees room for the short ones,
+    /// which may then clear the floor on their own. A lone bar (command alone) fills the row.
+    private static func barWidths(_ intervals: [Int], usable: CGFloat) -> [CGFloat] {
+        guard !intervals.isEmpty, usable > 0 else { return intervals.map { _ in 0 } }
+        let weights = intervals.map { CGFloat(max(1, $0)) }
+        let floor = min(minBarWidth, usable / CGFloat(weights.count))
+        // Never so wide that the other bars can't all have the floor beside it.
+        let ceiling = max(floor, min(usable * maxBarShare, usable - floor * CGFloat(weights.count - 1)))
+        var pinned = [CGFloat?](repeating: nil, count: weights.count)
+        for _ in 0...weights.count {
+            let free = weights.indices.filter { pinned[$0] == nil }
+            guard !free.isEmpty else { break }
+            let remaining = usable - pinned.reduce(0) { $0 + ($1 ?? 0) }
+            let share = free.reduce(0) { $0 + weights[$1] }
+            let proposed = free.map { (index: $0, width: remaining * weights[$0] / share) }
+            let over = proposed.filter { $0.width > ceiling }
+            let under = proposed.filter { $0.width < floor }
+            if !over.isEmpty {
+                over.forEach { pinned[$0.index] = ceiling }
+            } else if !under.isEmpty {
+                under.forEach { pinned[$0.index] = floor }
+            } else {
+                proposed.forEach { pinned[$0.index] = $0.width }
+                break
+            }
         }
-        return bars + metrics.spacing * CGFloat(max(0, range.count - 1))
+        // Everything pinned can leave the row short (a lone bar stops at the ceiling): stretch to fill.
+        let widths = pinned.map { $0 ?? 0 }
+        let total = widths.reduce(0, +)
+        return total > 0 ? widths.map { $0 * usable / total } : widths
     }
 
     /// A bar's height as a share of the bar area — 30% at the run's lowest tempo, full at its highest.
@@ -239,8 +275,7 @@ struct RoutineStairs: View {
     /// overhang a narrow bar without disturbing layout. The y is clamped into the reserved top strip
     /// so it never clips when the command bar is itself the tallest (a no-reach routine).
     @ViewBuilder
-    private func dwellLabel(low: Int, span: Int, usableWidth: CGFloat, spacing: CGFloat,
-                            totalIntervals: Int) -> some View {
+    private func dwellLabel(low: Int, span: Int, widths: [CGFloat], spacing: CGFloat) -> some View {
         if let dwell = dwellIndex {
             let barTop = Self.chartHeight - Self.barAreaHeight * heightFraction(plateaus[dwell].bpm, low, span)
             let labelY = max(Self.labelStripHeight / 2, barTop - Self.labelStripHeight / 2 - 2)
@@ -248,8 +283,7 @@ struct RoutineStairs: View {
                 .font(.futura(.caption2, weight: .semibold))
                 .foregroundStyle(tint)
                 .fixedSize()
-                .position(x: centerX(of: dwell..<(dwell + 1), usableWidth: usableWidth,
-                                     spacing: spacing, totalIntervals: totalIntervals),
+                .position(x: Self.centerX(of: dwell..<(dwell + 1), widths: widths, spacing: spacing),
                           y: labelY)
         }
     }
@@ -257,17 +291,9 @@ struct RoutineStairs: View {
     /// The mid-x of a **contiguous group** of bars (`range`) — the leading offset to the group plus
     /// half the group's own width. Used to centre each phase caption (and the single-bar BPM signpost)
     /// under the bars it names, so every label lines up with its step whatever the bar widths.
-    private func centerX(of range: Range<Int>, usableWidth: CGFloat, spacing: CGFloat,
-                         totalIntervals: Int) -> CGFloat {
-        func width(_ index: Int) -> CGFloat {
-            usableWidth * CGFloat(plateaus[index].intervals) / CGFloat(totalIntervals)
-        }
-        var leading: CGFloat = 0
-        for index in 0..<range.lowerBound { leading += width(index) + spacing }
-        var groupWidth: CGFloat = 0
-        for index in range { groupWidth += width(index) }
-        groupWidth += spacing * CGFloat(max(0, range.count - 1))
-        return leading + groupWidth / 2
+    private static func centerX(of range: Range<Int>, widths: [CGFloat], spacing: CGFloat) -> CGFloat {
+        let leading = (0..<range.lowerBound).reduce(CGFloat(0)) { $0 + widths[$1] + spacing }
+        return leading + groupWidth(of: range, widths: widths, spacing: spacing) / 2
     }
 }
 

@@ -6,6 +6,8 @@
 - **Amended by:** ADR 0226 D3 — a **loop's** holds range over 1…32 passes, not D3's shared 1…12;
   an exercise's stay 1…12 intervals. That closes the *Open* note under *As built*. The rest of D3
   stands.
+- **Amended by:** ADR 0270 — an **exercise's** holds range over 1…250 intervals (1,000 bars), not
+  D3's 1…12. Still one range shared by all four phases; the defaults and the four-bar step stand.
 - **Amends:** ADR 0045 — the four-phase profile stands, but only **command** is mandatory: the
   warm-up and the summit become optional, as the back-off already is (D2), and every phase gets a
   hold of its own where 0045 held all but command for one interval (D3). The warm-up is stored as a

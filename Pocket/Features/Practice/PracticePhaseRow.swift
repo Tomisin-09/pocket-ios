@@ -98,7 +98,9 @@ struct PhaseCountRow: View {
             StepperButton(symbol: "minus", label: decreaseLabel, tint: tint) { onStep(-1) }
             // Pinned to the tempo field's 56 so every row's −/+ line up down the panel.
             HStack(alignment: .firstTextBaseline, spacing: 2) {
-                Text("\(value)")
+                // Verbatim, so no grouping separator: a localized `1,000` doesn't fit the 56 even
+                // scaled, and the row's caption above says `1000 bars` (ADR 0270).
+                Text(verbatim: "\(value)")
                     .font(.pocketMono(.title3))
                     .foregroundStyle(PocketColor.textPrimary)
                     .contentTransition(.numericText())

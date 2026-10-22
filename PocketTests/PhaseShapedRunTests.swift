@@ -115,9 +115,21 @@ final class PhaseShapedRunTests: XCTestCase {
     func testHoldsClampToTheSharedRange() {
         var shape = RunShape()
         shape.setHold(.warmup, 0)
-        shape.setHold(.command, 40)
+        shape.setHold(.command, 400)
         XCTAssertEqual(shape.warmupHold, 1)
-        XCTAssertEqual(shape.dwell, 12)
+        XCTAssertEqual(shape.dwell, 250)
+    }
+
+    /// Every hold on an exercise reaches **1,000 bars** and stops there (ADR 0270) — warm-up, reach and
+    /// back off as well as command. An exercise's interval is four bars, so that is 250 of them.
+    func testEveryExerciseHoldReachesAThousandBars() {
+        var shape = RunShape()
+        for phase in RampPhase.allCases {
+            shape.setHold(phase, 250)
+            XCTAssertEqual(shape.hold(phase) * 4, 1000, "\(phase.title) reaches 1,000 bars")
+            shape.setHold(phase, 251)
+            XCTAssertEqual(shape.hold(phase), 250, "\(phase.title) stops there")
+        }
     }
 
     /// The Steps control shows rungs drawn; storage keeps intermediate stops (D4).

@@ -358,6 +358,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **An exercise's holds now go up to 1,000 bars** (ADR 0270). Hold under Command, and Each step under
+  Warm-up, Reach and Back off, used to stop at 48 bars, under two minutes at 100 BPM. They now reach
+  1,000 bars: twenty minutes at 200 BPM in 4/4, and longer at slower tempos. The line under the
+  staircase still tells you how long the run will take. Loops keep their limit of 32 passes.
+- **A long hold no longer squeezes the rest of the staircase to slivers** (ADR 0270). Each bar is still
+  as wide as its hold in proportion, but no bar is narrower than a visible step or wider than 70% of
+  the row. Beside a long command, the warm-up, reach and back-off steps stay readable and keep their
+  labels. Ordinary runs draw as before. This applies on exercises, loops and routine blocks.
 - **Tapping a day in the Practice log shows it where you're looking** (ADR 0269). The figures above
   the week chart or month grid change to that day's minutes (and, in the month, any new tempo). A
   chip with the day's date sits just above the chart and takes you back to the whole week or month.

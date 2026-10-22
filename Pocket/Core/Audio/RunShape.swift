@@ -55,9 +55,11 @@ struct RunShape: Equatable {
     /// sets `loopHoldCeiling`, and everything else takes the exercise's.
     var holdCeiling = RunShape.exerciseHoldCeiling
 
-    /// An exercise's holds: 1…12 intervals of four bars — the dwell's range (ADR 0078), shared by every
-    /// phase (ADR 0221 D3).
-    static let exerciseHoldCeiling = 12
+    /// An exercise's holds: 1…250 intervals of four bars, so **up to 1,000 bars**, shared by every phase
+    /// (ADR 0221 D3). Was 0078's 1…12 — 48 bars, under two minutes at 100 BPM — until ADR 0270 asked
+    /// for twenty minutes. It is bars, not time: 1,000 bars is twenty minutes at 200 BPM in 4/4 and
+    /// longer below it, and the length line under the staircase says what the hold costs.
+    static let exerciseHoldCeiling = 250
     /// A loop's holds: 1…32 **passes** (ADR 0226 D3). An interval on a loop is one pass, and a short
     /// loop — a one-bar lick — wants far more than twelve of them; the controls it replaced reached 96.
     static let loopHoldCeiling = 32

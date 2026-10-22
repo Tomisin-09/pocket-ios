@@ -5,6 +5,8 @@
 - **Amends:** ADR 0221 D3 — a loop's holds range over **1…32 passes**, no longer the shared 1…12
   intervals; an exercise's stay 1…12 intervals of four bars. The *Open* note in 0221's *As built*
   about the 96-pass reach of the old controls is closed by this. Everything else in D3 stands.
+- **Amended by:** ADR 0270 — D3's *"an exercise still 12 intervals"*: an exercise's holds now reach
+  250 intervals, 1,000 bars. A loop's 1…32 passes and the ceiling riding on the shape stand.
 - **Amends:** ADR 0037 — a dropped marker is named **"M3"**, not "Marker 3". The instant drop, the
   rename from the row, and the high-water numbering all stand.
 - **Amends:** ADR 0178 D8 — its last paragraph kept Exercises and Loops on the default search

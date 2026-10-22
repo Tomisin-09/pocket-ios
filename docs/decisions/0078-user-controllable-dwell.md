@@ -6,6 +6,9 @@
   **Hold** control in the Command row, shown in bars on an exercise and passes on a loop instead of
   a raw interval count. Its 1…12 range and storage stand; warm-up, reach and back-off now each get a
   hold with the same range. On a loop, `repsPerStep` folds into the holds.
+- **Amended by:** ADR 0270 — on an exercise the **1…12** range becomes **1…250 intervals**, which is
+  1,000 bars; nothing here said why twelve, and 48 bars was too short to play a song through. The
+  storage, the floor of one interval and the four-bar step stand.
 
 ## Context
 

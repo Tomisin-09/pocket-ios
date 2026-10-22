@@ -88,9 +88,9 @@ final class LoopPhaseShapeTests: XCTestCase {
 
     // MARK: - D3: a loop's hold range (ADR 0226 D3)
 
-    /// A loop holds up to 32 passes, an exercise stays at 12 intervals — and the loop's ceiling comes
-    /// with its shape, so neither host passes it in (and neither can forget to).
-    func testALoopHoldsUpToThirtyTwoPassesAndAnExerciseStaysAtTwelve() {
+    /// A loop holds up to 32 passes, an exercise up to 250 intervals (1,000 bars, ADR 0270) — and the
+    /// loop's ceiling comes with its shape, so neither host passes it in (and neither can forget to).
+    func testALoopHoldsUpToThirtyTwoPassesAndAnExerciseUpToAThousandBars() {
         var loopShape = makeLoop().runShape
         XCTAssertEqual(loopShape.holdCeiling, 32)
         loopShape.dwell = 31
@@ -102,9 +102,11 @@ final class LoopPhaseShapeTests: XCTestCase {
         XCTAssertEqual(loopShape.reachHold, 32, "every phase shares the loop's ceiling")
 
         var exerciseShape = Exercise(name: "Drill").runShape
-        XCTAssertEqual(exerciseShape.holdCeiling, 12)
-        exerciseShape.setHold(.command, 13)
-        XCTAssertEqual(exerciseShape.dwell, 12, "an exercise still stops at 12 intervals of four bars")
+        XCTAssertEqual(exerciseShape.holdCeiling, 250)
+        exerciseShape.setHold(.command, 251)
+        XCTAssertEqual(exerciseShape.dwell, 250, "an exercise stops at 250 intervals of four bars")
+        loopShape.setHold(.command, 250)
+        XCTAssertEqual(loopShape.dwell, 32, "and a loop's ceiling did not rise with it")
     }
 
     /// The ceiling survives a save and a re-read: it is not stored, it is what `Loop.runShape` says.
