@@ -4,7 +4,8 @@ import SwiftUI
 /// `LoopRunView` for a loop whose block mode is `.improvise`. It embeds the shared `ImproviseView`
 /// (the loop as a backing track, continuous playback at one live tempo, Journal capture) and adds
 /// only the routine chrome: the session **progress strip**, **skip**, **exit** (via
-/// `routineSessionChrome`), a **Done** button, and the block's planned length (ADR 0141).
+/// `routineSessionChrome`), and the block's planned length (ADR 0141) with **Done** beside it in the
+/// bottom bar (ADR 0271).
 ///
 /// **Manual advance, no completion screen.** A jam has nothing to grade or promote, so — exactly like
 /// an ear block (ADR 0104) and unlike an exercise or loop-trainer block — it never shows a
@@ -40,11 +41,11 @@ struct ImproviseLoopRunView: View {
             .navigationTitle(loop.name.isEmpty ? LoopRunMode.improvise.label : loop.name)
             .navigationBarTitleDisplayMode(.inline)
             .routineSessionChrome(routineContext)
-            .toolbar { doneButton }
             .onAppear { if startedAt == nil { startedAt = .now }; armIfBlockRecords() }
             .rampLessBlockLength(plannedMinutes: routineContext?.plannedMinutes,
                                  cycleSeconds: { player.cycleSeconds(for: loop) },
                                  isPlaying: { player.isPlaying },
+                                 done: done,
                                  onFinish: finish)
     }
 
@@ -84,6 +85,13 @@ struct ImproviseLoopRunView: View {
                               into: modelContext)
     }
 
+    /// The block's **Done** (or **Finish** on the last block), in the bottom bar beside the time left
+    /// (ADR 0271) — quiet, because a jam has nothing to grade. `nil` without a routine,
+    /// which this screen is never shown outside of.
+    private var done: BlockDone? {
+        routineContext.map { BlockDone(title: $0.finishTitle, accessibilityLabel: "Done with this improvise block") }
+    }
+
     /// The one completion seam, shared by the Done button and the block running its length — so a
     /// block that timed out logs and advances exactly like one finished by hand.
     private func finish() {
@@ -92,24 +100,6 @@ struct ImproviseLoopRunView: View {
         recorder.finishIfRecording(owner: .loop(loop, .improvise), context: modelContext)
         logCompletedRun()   // before advancing — advancing tears this screen down
         routineContext?.onFinished()
-    }
-
-    /// The completion action as a **nav-bar button**, not a bottom pill — a jam has nothing to grade,
-    /// so advancing is a quiet "Done" (or "Finish" on the last block), never a big call-to-action that
-    /// reads like something's wrong. It leaves the screen's own **Save to Journal** as the only bottom
-    /// action. The progress strip's › also advances (skip); this is the deliberate "I'm done".
-    @ToolbarContentBuilder private var doneButton: some ToolbarContent {
-        if let context = routineContext {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(context.stageIndex >= context.stageCount - 1 ? "Finish" : "Done") {
-                    haptic(.light)
-                    finish()
-                }
-                .font(.futura(.body, weight: .semibold))
-                .tint(PocketColor.practice)
-                .accessibilityLabel("Done with this improvise block")
-            }
-        }
     }
 }
 

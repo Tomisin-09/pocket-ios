@@ -52,6 +52,10 @@ struct RoutinePlayerView: View {
     /// *Save as a routine*. Fixed at the start, not read live: after a save the flag is `false`, and
     /// the place the button was is where the line saying it's in Routines goes.
     @State var startedTemporary: Bool
+    /// Whether **Leave this routine?** is up (ADR 0272). Every way out of a session in progress — the ✕
+    /// on a block or a rest, the exit on the Done screen — raises this rather than dismissing, so one
+    /// alert at the root serves them all.
+    @State var confirmingExit = false
 
     init(routine: Routine) {
         self.routine = routine
@@ -95,6 +99,15 @@ struct RoutinePlayerView: View {
             beginSession()
         }
         .sheet(isPresented: $showingTuner) { tunerSheet }
+        // An alert, not a confirmation dialog (ADR 0272 D4): on iOS 26 a dialog is a popover pointing
+        // at whatever it is attached to, and this one has three exits to serve. Centred, its Leave is
+        // also not under the finger that just tapped ✕.
+        .alert("Leave this routine?", isPresented: $confirmingExit) {
+            Button("Keep practising", role: .cancel) {}
+            Button("Leave", role: .destructive) { dismiss() }
+        } message: {
+            Text("Blocks you've finished stay in your practice log.")
+        }
         .onDisappear(perform: player.end)
     }
 
@@ -197,7 +210,7 @@ struct RoutinePlayerView: View {
                           onBack: { player.back(); haptic(.light) },
                           onSkip: { player.skip(); haptic(.light) },
                           onFinished: { finishedBlock() },
-                          onExit: { dismiss() })
+                          onExit: { confirmingExit = true })   // asks first (ADR 0272)
     }
 
     // MARK: - Unit block → the real run screen

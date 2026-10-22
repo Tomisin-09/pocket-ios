@@ -111,10 +111,11 @@ extension RoutinePlayerView {
             }
         }
         // The Done screen sits outside the per-block session chrome, so give it its own way out —
-        // Continue advances, but a player mid-routine needs to be able to leave from here too.
+        // Continue advances, but a player mid-routine needs to be able to leave from here too. It asks
+        // first, as the ✕ on a block does (ADR 0272): the rating and note here aren't kept yet.
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Button { dismiss() } label: {
+                Button { confirmingExit = true } label: {
                     Image(systemName: "chevron.left")
                 }
                 .tint(PocketColor.textSecondary)

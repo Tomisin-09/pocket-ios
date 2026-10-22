@@ -46,8 +46,15 @@ struct RoutineRunContext {
     let onSkip: () -> Void
     /// This block finished on its own (the ramp's last plateau) — advance automatically.
     let onFinished: () -> Void
-    /// Leave the whole player.
+    /// Leave the whole player. The routine player asks **Leave this routine?** first (ADR 0272), so a run
+    /// screen calls this and never dismisses anything itself.
     let onExit: () -> Void
+
+    /// What a block's own completion button says: **Finish** on the session's last block, where it
+    /// ends the routine, and **Done** everywhere else, where it moves on.
+    var finishTitle: String {
+        stageIndex >= stageCount - 1 ? "Finish" : "Done"
+    }
 }
 
 extension View {

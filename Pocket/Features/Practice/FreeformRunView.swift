@@ -71,7 +71,6 @@ struct FreeformRunView: View {
         .navigationTitle(exercise.name.isEmpty ? "Your own practice" : exercise.name)
         .navigationBarTitleDisplayMode(.inline)
         .routineSessionChrome(routineContext)
-        .safeAreaInset(edge: .bottom) { doneButton }
         .toolbar { toolbarItems }
         .onAppear {
             if startedAt == nil { startedAt = .now }
@@ -94,10 +93,13 @@ struct FreeformRunView: View {
         .keepAwakeDuringPractice()
         // A freeform block takes a planned length like any other ramp-less block (ADR 0141). No audio
         // means no phrase to protect, so it finishes at the planned moment rather than waiting for a
-        // cycle to come round; open-ended outside a routine, as everywhere else.
+        // cycle to come round; open-ended outside a routine, as everywhere else. Its Done shares the
+        // bar (ADR 0271) and, unlike an ear block's, is there standalone too: here it closes the screen.
         .rampLessBlockLength(plannedMinutes: routineContext?.plannedMinutes,
                              cycleSeconds: { 0 },
                              isPlaying: { false },
+                             done: BlockDone(title: routineContext?.finishTitle ?? "Done",
+                                             accessibilityLabel: "Done with this block"),
                              onFinish: finish)
         // The three callbacks are not optional decoration: `JournalSheet` defaults them to no-ops, so
         // presenting it bare — as this screen did — gave a freeform block a journal whose Add, edit and
@@ -146,7 +148,7 @@ struct FreeformRunView: View {
 
     /// Elapsed time, and nothing more. No target, no progress bar, no "you're behind" — the block has
     /// no length the app is entitled to hold the player to, and in a routine the planned length is
-    /// already reported by the ramp-less chrome above.
+    /// already reported in the block's bottom bar, beside Done.
     private var elapsedReadout: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             Text(elapsedLabel(at: context.date))
@@ -235,32 +237,6 @@ struct FreeformRunView: View {
     }
 
     // MARK: - Chrome
-
-    /// The completion action as a **bottom pill**, unlike an ear block's quiet nav-bar Done. This
-    /// screen has no other bottom action competing with it, and Done here leads somewhere — the
-    /// rating screen — so it is a real call to action rather than a way out.
-    private var doneButton: some View {
-        Button {
-            haptic(.light)
-            finish()
-        } label: {
-            Text(finishLabel)
-                .font(.futura(.body, weight: .semibold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(PocketColor.practice)
-        .padding(.horizontal, 20)
-        .padding(.bottom, 10)
-        .background(.ultraThinMaterial)
-        .accessibilityLabel("Done with this block")
-    }
-
-    private var finishLabel: String {
-        guard let routineContext else { return "Done" }
-        return routineContext.stageIndex >= routineContext.stageCount - 1 ? "Finish" : "Done"
-    }
 
     @ToolbarContentBuilder private var toolbarItems: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {

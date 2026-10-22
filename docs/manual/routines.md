@@ -122,7 +122,9 @@ lengthen. Rest length is a single setting, under **Settings ▸ Routines**.
 
 Across the top is the **progress strip**: one segment per block, marked **Start** and **Finish**, with
 **‹** to step back and **›** to skip ahead. A multi-run block shows which repeat you are on. **✕**
-leaves the session.
+leaves the session, after asking **Leave this routine?** in case the tap was an accident: **Keep
+practising** puts you back where you were, and the blocks you have finished stay in your log either
+way.
 
 Underneath, the block is just its own run screen. An exercise block is the exercise run screen with
 its settings and its staircase; a loop block is the loop; a song block plays the song, round and round
@@ -131,6 +133,12 @@ drops out is authoring and review: you cannot edit a block's shape or change its
 takes and journal bar is not on this screen either. A routine is where you play the thing. The
 **quick note** button stays, because a routine block is exactly where a note tends to be owed — and
 a block you set to record shows its recording timer here, which is a readout, not a button.
+
+A block that ends when you say so has its own **Done**, or **Finish** on the last block. It is never
+up beside **✕**, which leaves the whole routine: **Done** finishes only this block. On a song
+block it sits under the play-along speed once the song is playing. On an ear training, improvise or
+**Your own practice** block it is at the bottom right, in a bar that also shows the time left when the
+block has a length. While you type a note, **Done** steps out of the way and the time left stays.
 
 Every block gets a **3 · 2 · 1** count-in, so an auto-started block never begins mid-stride.
 

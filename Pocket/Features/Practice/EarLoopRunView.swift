@@ -3,8 +3,8 @@ import SwiftUI
 /// An **ear-training loop block** inside a routine (ADR 0104 Slice 2). The routine counterpart of
 /// `LoopRunView` for a loop whose block mode is `.ear`: it embeds the shared `EarTrainingView`
 /// (continuous playback + hum/sing + note capture) and adds only the routine chrome — the session
-/// **progress strip**, **skip**, **exit** (via `routineSessionChrome`) — plus a bottom **Done**
-/// button that advances to the next block.
+/// **progress strip**, **skip**, **exit** (via `routineSessionChrome`) — plus the block's bottom bar,
+/// where **Done** advances to the next block (ADR 0271, via `rampLessBlockLength`).
 ///
 /// **Manual advance, no completion screen.** Ear internalisation has no ramp or natural end, so unlike
 /// exercise/loop blocks it never shows a `RoutineBlockDoneView` (mastery/promote) — the player decides
@@ -36,11 +36,11 @@ struct EarLoopRunView: View {
             .navigationTitle(loop.name.isEmpty ? LoopRunMode.ear.label : loop.name)
             .navigationBarTitleDisplayMode(.inline)
             .routineSessionChrome(routineContext)
-            .toolbar { doneButton }
             .onAppear { if startedAt == nil { startedAt = .now }; armIfBlockRecords() }
             .rampLessBlockLength(plannedMinutes: routineContext?.plannedMinutes,
                                  cycleSeconds: { player.cycleSeconds(for: loop) },
                                  isPlaying: { player.isPlaying },
+                                 done: done,
                                  onFinish: finish)
     }
 
@@ -79,6 +79,13 @@ struct EarLoopRunView: View {
                               into: modelContext)
     }
 
+    /// The block's **Done** (or **Finish** on the last block), in the bottom bar beside the time left
+    /// (ADR 0271) — quiet, because an ear block has nothing to grade. `nil` without a routine,
+    /// which this screen is never shown outside of.
+    private var done: BlockDone? {
+        routineContext.map { BlockDone(title: $0.finishTitle, accessibilityLabel: "Done with this ear-training block") }
+    }
+
     /// The one completion seam, shared by the Done button and the block running its planned length
     /// (ADR 0141) — so a block that timed out logs and advances exactly like one finished by hand.
     private func finish() {
@@ -87,24 +94,6 @@ struct EarLoopRunView: View {
         recorder.finishIfRecording(owner: .loop(loop, .ear), context: modelContext)
         logCompletedRun()   // before advancing — advancing tears this screen down
         routineContext?.onFinished()
-    }
-
-    /// The completion action as a **nav-bar button**, not a bottom pill — an ear block has nothing to
-    /// grade, so advancing is a quiet "Done" (or "Finish" on the last block), never a big call-to-action
-    /// that reads like something's wrong. It leaves the screen's own **Save to Journal** as the only
-    /// bottom action. The progress strip's › also advances (skip); this is the deliberate "I'm done".
-    @ToolbarContentBuilder private var doneButton: some ToolbarContent {
-        if let context = routineContext {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(context.stageIndex >= context.stageCount - 1 ? "Finish" : "Done") {
-                    haptic(.light)
-                    finish()
-                }
-                .font(.futura(.body, weight: .semibold))
-                .tint(PocketColor.practice)
-                .accessibilityLabel("Done with this ear-training block")
-            }
-        }
     }
 }
 
