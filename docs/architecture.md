@@ -1288,7 +1288,7 @@ and every hold is a number of passes (`LoopCommandRamp.passesPerInterval`, ADR 0
 dwell is `rampDwellIntervals`, ADR 0078). Before 0221 a player-set **reps per step** multiplied every
 hold; it is folded in on read by `Loop.runShape` and retired (`rampRepsPerStep` written as 1) by the
 first save through `Loop.applyRunShape(_:)`, so no stored loop changes what it plays. A loop's holds
-range over 1…32 passes, an exercise's over 1…12 intervals: the ceiling rides on the shape
+range over 1…32 passes, an exercise's over 1…250 intervals of four bars (1,000 bars, ADR 0270): the ceiling rides on the shape
 (`RunShape.holdCeiling`, which `Loop.runShape` sets — ADR 0226 D3), so no host passes it. A folded
 hold can still exceed it, and `RunShape.setHold` walks such a value down rather than snapping it. The ramp
 reuses `CommandRamp`'s `.bars` interval mechanism with "bars" reinterpreted as loop passes, and
