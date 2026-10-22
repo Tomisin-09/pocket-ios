@@ -68,6 +68,14 @@ and it conforms to `public.data`, not `public.zip-archive`, so Files opens it in
 than offering to expand it. Its `CFBundleDocumentTypes` entry landed with the code that opens it,
 for the rule above; the same receive host takes both types and tells them apart by extension.
 
+**ADR 0273 adds a third `CFBundleDocumentTypes` entry, and the first for a type the app doesn't
+own: `public.audio`**, rank `Alternate`, role `Viewer`. It puts Red Moon in another app's share sheet
+for any audio file (a voice memo, a file in Files), and the same receive host opens it as a **song**,
+copied in like any import, with no preview, onto its waveform when Home is showing, and otherwise
+with an *Added* alert whose **Open** shows the song player as a full-screen cover over that screen. 0188 kept zips out of the Open-with list as over-broad; every audio file is
+something the app practises with, and the in-app picker already offers exactly this type. The share
+extension stays off for audio, so the sheet shows one Red Moon, not two.
+
 ## Architecture (V1)
 
 - **App data (solo):** SwiftData, with CloudKit sync planned (Phase 4). Apple's

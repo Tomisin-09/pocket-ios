@@ -2308,6 +2308,19 @@ true (ADR 0150 §118-121).
   - **No placeholders, unlike a routine.** `SharedBlockPlaceholder` exists because a routine would
     otherwise arrive quietly shorter; a drill's shape arrives whole, so the preview's footer states
     once what never crosses instead of the file enumerating it.
+- **The same door takes audio shared from another app, as a song** (ADR 0273). `Info.plist` declares
+  `public.audio` at `Alternate` rank, the one `CFBundleDocumentTypes` entry for a type the app doesn't
+  own, so Red Moon is in a share sheet's app row for any audio file (Voice Memos, Files). In
+  `PracticeReceiveHost.open`, after the pack check, `SharedAudio.isAudio` (pure) sends the file to
+  `openAudio`: a copy into `tmp/RedMoonInbox/<uuid>/` under its own name (the title), then
+  `SongImporter.prepareReceived` off the main actor and `persist`, behind the **+** progress overlay.
+  No preview. Where it lands is Home's call through `SharedSongArrival`, an `@Observable` mailbox the
+  host puts in the environment: Home writes `homeCanOpen` (on top, by `onAppear`/`onDisappear` on its
+  stack root, and none of its own covers, imports or pushes in flight; `HomeView+SharedSong`), and the
+  host either hands the song over for Home's `openingSong` destination or sets its *Added* alert, whose
+  **Open** shows the song player in a root-level full-screen cover (`SharedSongCover`), over whatever
+  screen is up, closed by the player's own back chevron. The
+  share extension stays off for audio, which `ShareActivationRuleTests` pins.
 - **And the archive can be read back** (ADR 0188 S3), which closes the loop ADR 0181 named as
   half-open in its own Consequences. Five pieces, each pure until the last:
   - **`ZipArchiveReader`** is ours, and D8 argues why: `NSFileCoordinator` gives zipping out and has

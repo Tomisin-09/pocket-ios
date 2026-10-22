@@ -87,7 +87,8 @@ here.
 
 Tap **+** on Home — or open **Song library** and use **Import a song** — and pick an audio file. The
 app copies it into its own storage, reads the whole file once to draw its waveform, and adds it to
-your library.
+your library. A recording in another app, a voice memo say, can come in from that app's **Share**
+button instead: pick **Red Moon** and it opens as a song.
 
 The copy matters: because the song is Red Moon's own from then on, moving or deleting the original
 later does not silence it.

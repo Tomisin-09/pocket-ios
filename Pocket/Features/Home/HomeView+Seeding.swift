@@ -50,6 +50,7 @@ extension HomeView {
         // Put in or taken out on every UI-test launch, so the store the next test finds is known.
         NamingPieceSeed.apply(to: context)
         ReceivedPackSeed.removeLeftovers(from: context)
+        SharedAudioSeed.removeLeftovers(from: context)
         #endif
         seedingComplete = true
     }

@@ -65,4 +65,12 @@ final class ShareActivationRuleTests: XCTestCase {
         XCTAssertFalse(try shows([[["public.vcard"]]]))
         XCTAssertFalse(try shows([[[]]]))
     }
+
+    /// Audio is the app's, through *Open in* (ADR 0273), so the extension stays off for it: a voice memo
+    /// offering both would put two Red Moon icons side by side in the share sheet.
+    func testAudioDoesntShowTheExtension() throws {
+        XCTAssertFalse(try shows([[["com.apple.m4a-audio", "public.file-url"]]]), "a voice memo")
+        XCTAssertFalse(try shows([[["public.mp3"]]]))
+        XCTAssertFalse(try shows([[["com.microsoft.waveform-audio", "public.file-url"]]]))
+    }
 }

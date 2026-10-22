@@ -56,6 +56,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Share audio into Red Moon from another app.** In Voice Memos, Files or anywhere else that shares an
+  audio file, tap **Share** and pick **Red Moon**: the recording arrives as a song, copied in and titled
+  by its file name, and opens ready to practise. If you're on another screen, it doesn't move you: it
+  goes into your songs, and the message that says so has **Open** to play it there and then. (ADR 0273)
 - **Jump back in can carry a loop.** Home's card now offers the loop you last practised on its own,
   and reopens it in the mode you left it in: **Practice**, **Train your ear** or **Improvise**. Its
   second line names the song and the mode. Hold the card, or go to **Settings ▸ Practice ▸ Jump back
