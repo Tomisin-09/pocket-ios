@@ -34,6 +34,9 @@ struct HomeView: View {
     /// instance rather than an environment value because the delegate that fills it lives outside
     /// the SwiftUI environment entirely; `@Observable` still tracks it from here.
     let notificationRouter = NotificationRouter.shared
+    /// Where a song shared from another app opens (ADR 0273 D3): Home says whether it can take one, and
+    /// opens it. Optional, so a preview with no receive host above it has none.
+    @Environment(SharedSongArrival.self) var sharedSongArrival: SharedSongArrival?
     /// Non-private since ADR 0193: `HomeView+Resume` reads them to pick the card's subject.
     @Query(sort: \Song.title) var songs: [Song]
     @Query var routines: [Routine]
@@ -77,7 +80,8 @@ struct HomeView: View {
     @State var adoptingStarterTrack = false
     /// Drives multi-select import: progress overlay + partial-failure summary (shared
     /// behaviour with the library's + button).
-    @State private var importModel = SongImportModel()
+    /// Internal since ADR 0273: a shared song mustn't open while one of Home's own imports is running.
+    @State var importModel = SongImportModel()
     /// Pushes the library after a home-screen import lands songs, so the user sees
     /// where they went (from the library itself there's nowhere to go).
     /// Internal since ADR 0214: `screenIsSettled` in `HomeView+ProfileMoment` reads it, because a
@@ -104,6 +108,9 @@ struct HomeView: View {
     /// **launch** appearance: a cold launch is the player arriving to do something, and the ask waits
     /// for the walk back instead.
     @State var homeHasAppearedThisLaunch = false
+    /// Whether Home's own screen is the one showing: false while anything is pushed over it (ADR 0273
+    /// D3). Every door on Home pushes, so `onAppear` and `onDisappear` on the stack root are the record.
+    @State var homeIsOnTop = false
 
     var body: some View {
         NavigationStack {
@@ -231,6 +238,11 @@ struct HomeView: View {
             .task { await seedFirstRunContent(); await sweepOrphanedReminders() }
             .onChange(of: notificationRouter.pendingRoutineUID) { _, _ in openRoutineFromReminder() }
             .onAppear(perform: openRoutineFromReminder)
+            // A song shared from another app (ADR 0273): see `HomeView+SharedSong`.
+            .onAppear { homeIsOnTop = true }
+            .onDisappear { homeIsOnTop = false }
+            .onChange(of: canOpenSharedSong, initial: true) { _, can in sharedSongArrival?.homeCanOpen = can }
+            .onChange(of: sharedSongArrival?.pending == nil) { _, _ in openSharedSong() }
             .overlay(alignment: .topLeading) { seedingMarker }
         }
     }

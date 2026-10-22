@@ -79,6 +79,15 @@ enum UITestHooks {
     /// block on *Pack test*'s loop and a block playing the song. Without it, a `-uiTesting` launch takes
     /// any received *Pack routine* back out with the song.
     static let receiveRoutinePackArgument = "-receiveRoutinePack"
+    /// `-receiveSharedAudio`: at launch, writes a short tone, *Shared tone.m4a*, and opens it on the
+    /// receive door the way an audio file shared from another app arrives (ADR 0273). Without it, a
+    /// `-uiTesting` launch takes any *Shared tone* song back out, for the starter track's card as above.
+    /// Read app-side through `SharedAudioSeed`.
+    static let receiveSharedAudioArgument = "-receiveSharedAudio"
+    /// `-receiveSharedAudioOnReturn`: the same file, opened the first time the app comes back from the
+    /// background instead of at launch, so a test can leave another screen open first and see the *Added*
+    /// alert's **Open** (ADR 0273 D3).
+    static let receiveSharedAudioOnReturnArgument = "-receiveSharedAudioOnReturn"
     /// `-seedSongMap`: with `-seedScreenshots`, the shoot's Slow Bend is the one `SongMapPreview` lays out
     /// (sections, chords and notes pieces, a named riff) with three snags on it, one carrying a line. The
     /// manual's song map, Name the notes, Pieces and Snags figures are all of that song. Its own pass, so

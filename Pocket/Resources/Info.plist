@@ -127,8 +127,9 @@
 	     sent in Messages, Mail, Files or AirDrop opens it here. It lands with
 	     S2 and not before: until this slice nothing in the app opened one, and
 	     a declared capability the app does not exercise is what AGENTS.md
-	     forbids. The code that honours it is RoutineReceiveHost.swift, whose
-	     `.onOpenURL` is the app's only inbound-URL path.
+	     forbids. The code that honours it is PracticeReceiveHost.swift (it was
+	     RoutineReceiveHost.swift), whose `.onOpenURL` is the app's only
+	     inbound-URL path, for all three types below.
 
 	     Editor, not Viewer: a received routine is added to the library and is
 	     then the player's own to change. Owner rank because this app defines
@@ -166,6 +167,29 @@
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>click.decooperations.pocket.pack</string>
+			</array>
+		</dict>
+		<!-- Any audio file (ADR 0273): a voice memo, a bounce in Files, a
+		     recording somebody sent. This is what puts Red Moon in another app's
+		     share sheet for audio, and the same host opens it, as a song: copied
+		     in and read like any import (SharedAudio.swift). It is the one type
+		     here this app doesn't own, and the reason it isn't 0188's zip case:
+		     every audio file on the phone is something the app practises with,
+		     and the in-app picker already offers exactly this type.
+
+		     Alternate rank, so Red Moon is offered and never becomes the default
+		     for audio. Viewer, not Editor: the app reads the file and keeps a
+		     copy, and never writes the original. -->
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Audio file</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.audio</string>
 			</array>
 		</dict>
 	</array>

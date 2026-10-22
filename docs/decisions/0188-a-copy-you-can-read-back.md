@@ -15,6 +15,11 @@
   crosses in a routine, stands. **D8**: the reader reads a second file we wrote, so the pack's zip
   method is part of its format too. D1, D2, D5, D6, D7 and D9 stand, and the received song's uids are
   minted fresh under D1.
+- **Amended by:** ADR 0273 (2026-10-22) — **D3**: the door opens a third type, and the first the app
+  doesn't own: `public.audio`, at `Alternate` rank, which lands as a song. The zip stays out of the
+  Open-with list for the reason given below; audio passes the same test because every audio file is
+  something the app practises with. **D9**: a shared audio file has no preview, because the player
+  chose Red Moon in the share sheet. The rest stands.
 - **Amended by:** ADR 0205 — restore hydrates snags onto the song and span changes onto the loop
   (0205 D3). D1's trust asymmetry, `SchemaVersionGate` and the raw-enum-column rule are untouched,
   and the receive door is unchanged: `SharedPractice` carries no loops, so there was no hole there.

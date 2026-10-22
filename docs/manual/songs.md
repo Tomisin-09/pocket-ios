@@ -24,6 +24,20 @@ what it is.
 Because the app keeps its own copy, moving, renaming or deleting the original file afterwards does
 not affect the song in your library.
 
+### From another app
+
+A recording doesn't have to be in Files first. In Voice Memos, Files or any other app that shares an
+audio file, tap **Share** and pick **Red Moon** from the row of apps (if it isn't there,
+scroll to the end of the row and tap **More**). Red Moon opens and the recording arrives as a song,
+the same way an import does: copied in, read for its waveform, and titled by its file name.
+
+If Red Moon is on Home, the song opens ready to practise. If you are on another screen, a routine for
+instance, it does not interrupt you: the song goes into your library and Red Moon says so. Tap **Open**
+there to play it straight away; going back from it returns you to where you were.
+
+A recording's file name is often a date or a number, and the song takes it as its title. Rename it
+while you still remember what it was.
+
 ### The empty library
 
 Before you have imported anything, the library offers **Import a song** and, under it, **Try the

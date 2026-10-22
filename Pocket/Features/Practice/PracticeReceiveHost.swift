@@ -17,7 +17,8 @@ private struct PendingReceive: Identifiable {
 }
 
 /// The app's **inbound door** for `.redmoonpractice` files (ADR 0188 S2, ADR 0209 D4) — both doors,
-/// both payload kinds — and for `.redmoonpack`s, which carry songs with their audio (ADR 0236 D8).
+/// both payload kinds — for `.redmoonpack`s, which carry songs with their audio (ADR 0236 D8), and for
+/// a plain audio file shared from another app, which lands as a song (ADR 0273).
 ///
 /// Applied **once** at the app root: one host means one preview sheet for the whole app, and the two
 /// doors cannot present different things or write by different rules.
@@ -42,6 +43,15 @@ private struct PracticeReceiveHost: ViewModifier {
     /// Where the pack on show was unpacked (ADR 0236 D8). Removed when the preview closes without Add;
     /// on Add, the landing takes it over and removes it once the song is in.
     @State private var unpacked: URL?
+    /// Where a shared song opens (ADR 0273 D3): Home says whether it can, and takes the song if so.
+    @State private var arrival = SharedSongArrival()
+    /// While a shared audio file is being read for its waveform, a full-file decode: the overlay **+**
+    /// shows, so a long recording doesn't look like nothing happened.
+    @State private var readingAudio = false
+    /// The shared song the *Added* alert can open, when it landed somewhere Home couldn't open it (D3).
+    @State private var landedSong: Song?
+    /// The shared song open over whatever screen the player was on, after **Open** (D3).
+    @State private var playingShared: Song?
 
     func body(content: Content) -> some View {
         content
@@ -49,13 +59,15 @@ private struct PracticeReceiveHost: ViewModifier {
             // parameter: a picked URL points at the player's *own* file, wherever they keep it, and
             // deleting it would be the app tidying up somebody else's Files app.
             .environment(\.receivePracticeFile, { url in open(url, removingSource: false) })
+            .environment(arrival)
             // The first door. A tapped file arrives as a copy the system has already placed in this
             // app's own inbox, so it is ours to remove once read — and nothing ever reads it again.
             .onOpenURL { url in open(url, removingSource: true) }
             #if DEBUG
-            // The UI test of the receive door: a pack built at launch, opened as a tapped file would be.
-            .task { if let pack = ReceivedPackSeed.packIfAsked() { open(pack, removingSource: true) } }
+            // The UI tests' files, opened as a tapped file would be.
+            .modifier(ReceiveDoorTestFiles { open($0, removingSource: true) })
             #endif
+            .overlay { if readingAudio { ImportProgressOverlay(progress: SongImportProgress(completed: 0, total: 1)) } }
             .sheet(item: $pending, onDismiss: discardUnpacked) { arrival in
                 switch arrival.practice {
                 // A shared routine or drill is practice, so it waits behind the plan; a shared song is
@@ -82,10 +94,18 @@ private struct PracticeReceiveHost: ViewModifier {
                 Text(failure ?? "")
             }
             .alert("Added", isPresented: presenting($landed)) {
-                Button("OK", role: .cancel) {}
+                // A shared song that landed over another screen can be opened from here (ADR 0273 D3).
+                if let song = landedSong {
+                    Button("Open") {
+                        landedSong = nil
+                        playingShared = song
+                    }
+                }
+                Button("OK", role: .cancel) { landedSong = nil }
             } message: {
                 Text(landed ?? "")
             }
+            .modifier(SharedSongCover(song: $playingShared))
     }
 
     /// Read a file and offer what is in it — or say why not.
@@ -98,6 +118,7 @@ private struct PracticeReceiveHost: ViewModifier {
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         if url.pathExtension.lowercased() == PracticePack.fileExtension { return openPack(url) }
+        if SharedAudio.isAudio(url) { return openAudio(url) }
         guard let data = try? Data(contentsOf: url) else {
             failure = "That file couldn’t be read."
             return
@@ -145,6 +166,50 @@ private struct PracticeReceiveHost: ViewModifier {
             case let .failure(reason):
                 try? FileManager.default.removeItem(at: staging)
                 failure = reason.message
+            }
+        }
+    }
+
+    /// An audio file shared from another app (ADR 0273): copied into `tmp/` under its own name while
+    /// it's still in scope, since the name is the song's title and the inbox copy is removed when `open`
+    /// returns, then read and kept off the main actor the way a pack's song is. No preview: the player
+    /// chose Red Moon in the share sheet, and that is the yes (D2).
+    ///
+    /// Then it opens on its waveform if Home can take it, the way **+** opens a single import. If not,
+    /// another screen is up or a routine is running, so nothing moves: the alert names the song and
+    /// offers **Open**, which shows it over that screen (D3).
+    private func openAudio(_ url: URL) {
+        let staging = FileManager.default.temporaryDirectory
+            .appending(path: "RedMoonInbox", directoryHint: .isDirectory)
+            .appending(path: UUID().uuidString, directoryHint: .isDirectory)
+        let copy = staging.appending(path: url.lastPathComponent, directoryHint: .notDirectory)
+        do {
+            try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: true)
+            try FileManager.default.copyItem(at: url, to: copy)
+        } catch {
+            try? FileManager.default.removeItem(at: staging)
+            failure = SharedAudio.unreadable
+            return
+        }
+        readingAudio = true
+        Task {
+            defer {
+                try? FileManager.default.removeItem(at: staging)
+                readingAudio = false
+            }
+            do {
+                let prepared = try await Task.detached { try SongImporter.prepareReceived(from: copy) }.value
+                let song = SongImporter.persist(prepared, into: context)
+                save()
+                if arrival.homeCanOpen {
+                    arrival.open(song)
+                } else {
+                    landedSong = song
+                    landed = SharedAudio.landed(title: song.title)
+                    haptic(.medium)
+                }
+            } catch {
+                failure = SharedAudio.unreadable
             }
         }
     }
