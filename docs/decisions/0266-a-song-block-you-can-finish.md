@@ -12,6 +12,9 @@
   arrival.
 - **Relates to:** 0135 B3b (the improvise block's Done, whose reasoning this copies) · 0104 (the ear
   block's Done) · 0070 (no grading: Done is the player saying they're finished, not a verdict).
+- **Amended by:** ADR 0271 (2026-10-22) — **D1**: Done leaves the toolbar, where it read as done with
+  the routine, for a place under the play-along speed. D1's reason for keeping it out of the bottom
+  (the transport owns it) stands, and so do D2–D5.
 
 ## Context
 

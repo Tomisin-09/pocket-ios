@@ -173,6 +173,41 @@ final class RoutineLibraryUITests: UITestCase {
         }
     }
 
+    // MARK: - Leaving a session (ADR 0272)
+
+    /// **✕ asks before it leaves**, Keep practising stays, and Leave goes. Played from the seeded routine,
+    /// whose first block is an exercise, so nothing auto-starts and nothing counts down under the alert.
+    ///
+    /// The tune-up question is answered only if it is asked: a run that once tapped *Don't ask again*
+    /// leaves the simulator never asking, and this test is about leaving, not tuning.
+    @MainActor
+    func testLeavingARoutineAsksFirst() throws {
+        let app = launchApp()
+        try openRoutinesLibrary(in: app)
+        try openSeededRoutine(in: app)
+        tapWhenHittable(app.buttons["Start routine"], called: "Start routine")
+        let notNow = app.buttons["Not now"]
+        if notNow.waitForExistence(timeout: Self.uiTimeout) { notNow.tap() }
+
+        let close = app.buttons["Close player"]
+        let skip = app.buttons["Skip to next block"]
+        XCTAssertTrue(skip.waitForExistence(timeout: Self.uiTimeout), "the routine player never opened")
+        tapWhenHittable(close, called: "Close player")
+        let alert = app.alerts["Leave this routine?"]
+        XCTAssertTrue(alert.waitForExistence(timeout: Self.uiTimeout), "✕ left the routine without asking")
+
+        alert.buttons["Keep practising"].tap()
+        XCTAssertTrue(waitForDisappearance(of: alert), "Keep practising didn't close the question")
+        XCTAssertTrue(skip.exists, "Keep practising didn't keep the session")
+
+        tapWhenHittable(close, called: "Close player")
+        XCTAssertTrue(alert.waitForExistence(timeout: Self.uiTimeout), "the second ✕ didn't ask")
+        alert.buttons["Leave"].tap()
+        XCTAssertTrue(waitForDisappearance(of: skip), "Leave didn't close the player")
+        XCTAssertTrue(app.buttons["Start routine"].waitForExistence(timeout: Self.uiTimeout),
+                      "Leave didn't return to the routine it was played from")
+    }
+
     // MARK: - Reach
 
     /// Home → Practice → Routines.

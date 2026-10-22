@@ -19,6 +19,9 @@
   song map) needs it. The Journal is still the dated history, and free-text notes still go nowhere
   else. **E6**: a count the player taps and names themselves is not the tally E6 forbids; no score,
   streak, accuracy or verdict appears. E1, E2, E4 and E5 stand.
+- **Amended by:** ADR 0271 (2026-10-22) — **S2.6**: the routine ear block's Done leaves the nav bar,
+  where it read as done with the whole routine, for a bar along the bottom beside the time left. It
+  stays quiet, a bordered button and not the full-width pill S2.6 removed, so S2.6's finding stands.
 
 ## Context
 

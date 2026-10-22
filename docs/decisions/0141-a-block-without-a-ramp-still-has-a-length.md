@@ -12,6 +12,9 @@
   playing*), ADR 0104 (ear training), ADR 0135 (improvise over a backing track), ADR 0136 (the
   freeform block, unbuilt), ADR 0070 (never grade the player).
 - **Amends:** ADR 0135 §B6a's *rationale* — not its placement (L5).
+- **Amended by:** ADR 0271 (2026-10-22) — **L3**: the readout sits in a bar with a background, which
+  it shares with the block's Done, so it no longer draws over what scrolls under it, and it is set
+  larger and semibold. Its register stands, and it stays on screen while the keyboard is up.
 
 ## Context
 

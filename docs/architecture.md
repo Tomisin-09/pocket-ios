@@ -817,7 +817,10 @@ block" into the same `nil`, which are opposite intentions: the first runs open-e
 the mode's default (ear 5 min, improvise 10). It is a **budget, not a buzzer**: `RampLessBlockChrome`
 never cuts audio, never disables Done, and rounds the end **up to the next loop-region boundary**
 (`finishTime`) so a phrase is never severed — which is also why such a block can overshoot its
-allotment by up to one region, and why its length should be read as a floor. `RampLessBlockLengthControl`
+allotment by up to one region, and why its length should be read as a floor. Since ADR 0271 the
+modifier also owns the block's **Done**: one bottom bar with the time left on the leading edge and Done
+on the trailing one, on the ear, improvise and freeform screens, so Done no longer sits in the nav bar
+beside the routine's ✕. `RampLessBlockLengthControl`
 offers **No time limit**, restoring ADR 0104 / 0135's open-ended behaviour exactly, as a choice rather
 than as the only option. Reconciled with ADR 0014 R1 by separating two claims that shared one word:
 R1 forbids *the app* deciding you've played enough, and the length here is the player's own — so

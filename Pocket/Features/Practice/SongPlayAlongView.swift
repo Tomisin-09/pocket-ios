@@ -44,7 +44,10 @@ struct SongPlayAlongView: View {
         VStack(spacing: 26) {
             Spacer(minLength: 8)
             hero
-            tempoControl
+            VStack(spacing: 18) {
+                tempoControl
+                doneButton
+            }
             Spacer()
         }
         .padding(24)
@@ -53,7 +56,6 @@ struct SongPlayAlongView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .routineSessionChrome(routineContext)
-        .toolbar { doneButton }
         .safeAreaInset(edge: .bottom) { transport }
         .overlay { if showCountIn { RoutineCountInOverlay(onComplete: countInFinished) } }
         .keepAwakeDuringPractice()   // Settings V1 (ADR 0050)
@@ -228,23 +230,32 @@ struct SongPlayAlongView: View {
         routineContext?.onFinished()
     }
 
-    /// **Done** — or **Finish** on the last block — as a nav-bar button, the way an improvise or ear
-    /// block finishes (ADR 0266). A looping song never ends on its own, and before this the only way
-    /// on was ›, which logs nothing: an hour of playing along counted for no minutes.
+    /// **Done** — or **Finish** on the last block — under the play-along speed (ADR 0266, moved by
+    /// ADR 0271). A looping song never ends on its own, and before 0266 the only way on was ›, which
+    /// logs nothing: an hour of playing along counted for no minutes.
     ///
-    /// Shown only once the play-along has started. Before that there is nothing to finish, and a Done
-    /// that only moved on would be a second Skip.
-    @ToolbarContentBuilder private var doneButton: some ToolbarContent {
-        if let context = routineContext, isRunning {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(context.stageIndex >= context.stageCount - 1 ? "Finish" : "Done") {
-                    haptic(.light)
-                    finish()
-                }
-                .font(.futura(.body, weight: .semibold))
-                .tint(PocketColor.practice)
-                .accessibilityLabel("Done with this song")
+    /// Not top right, where it sat first: there it read as done with the *routine*, in the band that
+    /// belongs to ✕ and the progress strip. Not in the bottom bar either, which the transport owns.
+    ///
+    /// Live only once the play-along has started. Before that there is nothing to finish, and a Done
+    /// that only moved on would be a second Skip. Its space is held while it is hidden, so Done
+    /// appearing moves nothing on the screen.
+    @ViewBuilder private var doneButton: some View {
+        if let context = routineContext {
+            Button {
+                haptic(.light)
+                finish()
+            } label: {
+                Text(context.finishTitle)
+                    .font(.futura(.body, weight: .semibold))
+                    .padding(.horizontal, 6)
             }
+            .buttonStyle(.bordered)
+            .tint(PocketColor.practice)
+            .opacity(isRunning ? 1 : 0)
+            .disabled(!isRunning)
+            .accessibilityHidden(!isRunning)
+            .accessibilityLabel("Done with this song")
         }
     }
 

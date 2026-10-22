@@ -358,6 +358,18 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Leaving a routine asks first** (ADR 0272). ✕ on a block or a rest, and the exit on the screen
+  between blocks, now ask *Leave this routine?* before they close the session, so an accidental tap
+  no longer throws away your place. Keep practising carries on where you were; the blocks you have
+  finished stay in your log either way.
+- **A routine block's Done no longer sits at the top right, where it looked like it ended the
+  routine** (ADR 0271). On an ear training, improvise or Your own practice block, Done is now at the
+  bottom right, in a bar with the time left in the block, which is larger and bolder than before.
+  The bar has a background, so the time left no longer draws over whatever scrolls under it, such as
+  Save to Journal. On a song block, Done sits under the play-along speed once the song is playing.
+  Done is a small bordered button on all of them, including Your own practice, whose large Done bar
+  is gone. While you type a note, Done steps aside so it isn't next to the keyboard's checkmark; the
+  time left stays.
 - **An exercise's holds now go up to 1,000 bars** (ADR 0270). Hold under Command, and Each step under
   Warm-up, Reach and Back off, used to stop at 48 bars, under two minutes at 100 BPM. They now reach
   1,000 bars: twenty minutes at 200 BPM in 4/4, and longer at slower tempos. The line under the
