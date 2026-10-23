@@ -202,9 +202,10 @@ enum PlanWallCopy {
         "\(monthly) a month, or \(payOnce) once."
     }
 
-    /// The promise's second line, verbatim (D8).
+    /// The promise's second line, verbatim (D8, as ADR 0274 D1 rewrote it: a price lock, not a freeze).
     static let promiseLine =
-        "We'll never raise the price, and nothing you can do today will ever move behind a higher one."
+        "That's the founding price, and it's yours for as long as you keep the plan. "
+            + "Nothing you can do today will ever move behind a higher one."
 
     /// The monthly button's two lines (D1): the free week first, while the player can still have it.
     static func monthlyOption(monthly: String, trial: PlanTrial?) -> (title: String, detail: String) {
