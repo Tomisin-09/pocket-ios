@@ -47,12 +47,30 @@ enum ReferenceURL {
     /// Whether `raw` would be stored. The save button reads this; the error message is the caller's.
     static func isValid(_ raw: String) -> Bool { normalised(raw) != nil }
 
-    /// The subtitle under a reference row — the site the link points at, with `www.` dropped and
-    /// case folded, so `WWW.YouTube.com` and `youtube.com` read as the same place. `nil` when the
-    /// string is not a link we would store, which is the same condition that blocks the save.
+    /// The subtitle under a reference row — the site the link points at, with case folded and the
+    /// prefixes that only say which screen it was copied on dropped (`www.`, and a phone's `m.` or
+    /// `mobile.`), so `WWW.YouTube.com`, `m.youtube.com` and `youtube.com` read as the same place.
+    /// YouTube's short links read as `youtube.com` too: its app's share sheet hands out `youtu.be`, and
+    /// the library's *Site* grouping (ADR 0275) would otherwise put one channel's lessons under two
+    /// sites. Every other subdomain is kept: `tabs.ultimate-guitar.com` is a part of a site, not a copy
+    /// of it. `nil` when the string is not a link we would store, which is the same condition that
+    /// blocks the save.
     static func displayHost(_ raw: String) -> String? {
         guard let host = normalised(raw)?.host()?.lowercased(), !host.isEmpty else { return nil }
-        let bare = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
-        return bare.isEmpty ? nil : bare
+        let bare = withoutScreenPrefix(host)
+        return siteAliases[bare] ?? bare
+    }
+
+    /// Prefixes that name a copy of a site for one kind of screen, never a part of it.
+    private static let screenPrefixes = ["www.", "m.", "mobile."]
+
+    /// Another name a site hands out for itself.
+    private static let siteAliases = ["youtu.be": "youtube.com"]
+
+    /// `host` without a screen prefix, unless dropping it leaves no domain (`m.com` stays `m.com`).
+    private static func withoutScreenPrefix(_ host: String) -> String {
+        guard let prefix = screenPrefixes.first(where: { host.hasPrefix($0) }) else { return host }
+        let bare = String(host.dropFirst(prefix.count))
+        return bare.contains(".") ? bare : host
     }
 }

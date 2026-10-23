@@ -131,6 +131,18 @@ looks through the names, the sites, your notes and the names of the places they'
   left behind when you deleted what it was on.
 - **Everything** — the rest, newest first.
 
+That's the **Newest** layout. **⋯** offers two more, and References remembers the one you pick:
+
+- **Site** — every reference under the site it's from, A to Z, then **Pictures**, **PDFs**, **Text
+  files** and **Markdown files**. The heading names the site, so the rows don't repeat it. One that
+  isn't filed sits with the rest of its site and says **Not filed yet**. A site's phone address and
+  YouTube's short `youtu.be` links count as the site itself.
+- **Where it's used** — **Not filed**, then **Exercises**, **Routines**, **Songs** and **Loops**. A
+  link used on a drill and a song is under both.
+
+In these two, tap a heading to fold it away, and again to open it. Searching opens every heading, so
+nothing you search for hides in a folded one.
+
 Each row is one source: its name, then the site or the kind of file and when you saved it, then
 *On Triad climb · Morning routine* in each place's colour, then the first line of your note. **A link
 used in two places is one row here**, though each place keeps its own note. So is a file you've

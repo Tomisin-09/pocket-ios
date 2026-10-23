@@ -45,6 +45,18 @@ enum ReferenceLinkKind: String, CaseIterable {
         }
     }
 
+    /// A heading over several of this kind: the References library's *Site* grouping, where a file has
+    /// no site and is grouped by what it is (ADR 0275).
+    var pluralTitle: String {
+        switch self {
+        case .link: return "Links"
+        case .image: return "Pictures"
+        case .pdf: return "PDFs"
+        case .text: return "Text files"
+        case .markdown: return "Markdown files"
+        }
+    }
+
     /// What the app calls one of these in a sentence.
     /// The noun with a capital, for the places that name a kind on its own rather than mid-sentence
     /// — a row with no title of its own, and the file preview in the editor.

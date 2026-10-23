@@ -47,6 +47,9 @@ struct PocketApp: App {
             // The tile beside Toolkit is the same trap (ADR 0235 D6): a test that changes it would change
             // it for every test after, and for Home's figures.
             AppSettings.resetHomeTool()
+            // And the References library's grouping (ADR 0275): a test that groups it by site would
+            // leave every later test, and the library's figure, reading other sections.
+            AppSettings.resetReferencesLayout()
             // The Oracle's cadence is the same trap with a longer fuse (ADR 0187 D15). Its gate is
             // driven by a stored date, so the *second* run of a suite finds the week already spent
             // and the screen showing a persisted reading instead of the button. A test written

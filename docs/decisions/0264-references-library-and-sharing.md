@@ -13,6 +13,9 @@
   share extension. Tomisin: *"we're in no rush to launch, I'd rather we have it in place before we
   launch."* The library comes first, then the share extension.
 - **Date:** 2026-10-20
+- **Amended by:** ADR 0275 (2026-10-23) — **D4**: *Not filed* then *Everything* is now the default of
+  three layouts, chosen from an ⋯ menu; the library can also be grouped by site or by where each source
+  is used. Slice 2's build note 2 (no ⋯ until there was an option) is met by it. The rest of D4 stands.
 - **Amends:** ADR 0167 — **The model**: an owner is now *at most one* of the four, not exactly one,
   and a reference with none is *kept for later* (D1). The owners' inverses become `.nullify`, not
   `.cascade`, so deleting an owner keeps its references (D2). With that, **Consequences**' "deleting an
