@@ -56,6 +56,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Group your references by site, or by where they're used.** **⋯** in References now offers three
+  layouts. **Newest** is the list as it was. **Site** puts every reference under the site it's from, A
+  to Z, then pictures, PDFs and text files under their own headings. One kept for later sits with the
+  rest of its site and says *Not filed yet*. **Where it's used** shows **Not filed**, then exercises,
+  routines, songs and loops. Each heading folds, and the library remembers the layout you picked.
+  `m.youtube.com` and YouTube's short `youtu.be` links now read as `youtube.com` everywhere a
+  reference shows its site. (ADR 0275)
 - **Share audio into Red Moon from another app.** In Voice Memos, Files or anywhere else that shares an
   audio file, tap **Share** and pick **Red Moon**: the recording arrives as a song, copied in and titled
   by its file name, and opens ready to practise. If you're on another screen, it doesn't move you: it

@@ -8,11 +8,16 @@ import SwiftUI
 /// Free for good (ADR 0263: keeping is free), so the screen carries no `PlanGated`. The rules are
 /// `ReferenceLibrary`'s; this draws what they return.
 ///
-/// **No options menu yet.** D4 names 0126's grammar, `ellipsis.circle` then ＋, but nothing for the menu
-/// to hold: the order is fixed (newest first) and search covers finding. An empty menu would be a
-/// control that does nothing, so the bar carries ＋ alone, as My tabs does, until there is an option.
+/// **The options menu** is 0126's grammar, `ellipsis.circle` then ＋, and holds how the library groups
+/// (ADR 0275): *Newest*, the two sections above, or by *Site* or *Where it's used*, which fold as every
+/// other library's groups do. It waited, empty, until it had this to hold (0264, slice 2's note 2).
 struct ReferencesLibraryView: View {
     @Query(sort: \ReferenceLink.dateAdded, order: .reverse) private var links: [ReferenceLink]
+
+    @AppStorage(AppSettings.Key.referencesGrouping) private var grouping = AppSettings.referencesGroupingDefault
+    /// Which sections are folded, per grouping: a site's section and a kind of place's are different
+    /// sections even where a title could match (`LibrarySectionExpansion`'s scope).
+    @AppStorage(AppSettings.Key.referencesCollapsedSections) private var collapsedSections = ""
 
     @State private var searchText = ""
     /// The link being added, or the file just picked and waiting for its name, presented at the root as
@@ -25,14 +30,14 @@ struct ReferencesLibraryView: View {
 
     var body: some View {
         let sources = ReferenceLibrary.sources(links)
-        let sections = ReferenceLibrary.sections(sources, matching: searchText)
+        let groups = ReferenceLibrary.groups(sources, by: grouping, matching: searchText)
         Group {
             if sources.isEmpty {
                 emptyState
-            } else if sections.isEmpty {
+            } else if groups.isEmpty {
                 ContentUnavailableView.search(text: searchText)
             } else {
-                list(sections)
+                list(groups)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -41,6 +46,11 @@ struct ReferencesLibraryView: View {
         .navigationBarTitleDisplayMode(.inline)
         .searchable(text: $searchText, prompt: "Search references")
         .toolbar {
+            // Nothing to group on an empty library, and a menu whose choice changes nothing is a control
+            // that does nothing.
+            if !links.isEmpty {
+                ToolbarItem(placement: .topBarTrailing) { optionsMenu }
+            }
             ToolbarItem(placement: .topBarTrailing) { addMenu }
         }
         .referenceLinkEditing($editing, owner: keep, accent: PocketColor.toolkit)
@@ -48,21 +58,25 @@ struct ReferencesLibraryView: View {
         .tint(PocketColor.toolkit)
     }
 
-    private func list(_ sections: ReferenceLibrary.Sections) -> some View {
+    private func list(_ groups: [ReferenceGroup]) -> some View {
         List {
-            if !sections.notFiled.isEmpty {
-                Section {
-                    rows(sections.notFiled)
-                } header: {
-                    HStack {
-                        Text("Not filed")
-                        Spacer()
-                        Text("\(sections.notFiled.count)")
+            ForEach(groups) { group in
+                if grouping.collapses {
+                    CollapsibleLibrarySection(title: group.title, count: group.sources.count,
+                                              isExpanded: expansion(of: group.title)) {
+                        rows(group.sources)
+                    }
+                } else {
+                    Section {
+                        rows(group.sources)
+                    } header: {
+                        HStack {
+                            Text(group.title)
+                            Spacer()
+                            if group.showsCount { Text("\(group.sources.count)") }
+                        }
                     }
                 }
-            }
-            if !sections.everything.isEmpty {
-                Section("Everything") { rows(sections.everything) }
             }
         }
         .scrollContentBackground(.hidden)
@@ -73,10 +87,38 @@ struct ReferencesLibraryView: View {
             // Opened by the newest row's uid, never by the link: an edit can change the address, and the
             // screen follows the row it was opened from (ADR 0090's rule, for a value with no model).
             NavigationLink { ReferenceSourceView(anchor: source.newest.uid) } label: {
-                ReferenceSourceRow(source: source)
+                ReferenceSourceRow(source: source, showsOrigin: grouping.rowShowsOrigin,
+                                   marksNotFiled: grouping.rowMarksNotFiled)
             }
             .listRowBackground(PocketColor.surfaceSubtle)
         }
+    }
+
+    /// Whether a section shows its rows, stored per grouping. A search opens every section, so a match
+    /// inside a folded one can't read as a search that found nothing (`LibrarySectionExpansion`).
+    private func expansion(of title: String) -> Binding<Bool> {
+        Binding(get: {
+            LibrarySectionExpansion.isExpanded(title, in: collapsedSections, scope: grouping.rawValue,
+                                               searching: !searchText.isEmpty)
+        }, set: {
+            collapsedSections = LibrarySectionExpansion.setting(title, expanded: $0, in: collapsedSections,
+                                                                scope: grouping.rawValue)
+        })
+    }
+
+    /// List options (ADR 0275): how the library groups. Like the practice libraries' menu, it holds an
+    /// inline picker and its choice is the ticked row; it doesn't fill, since grouping hides nothing.
+    private var optionsMenu: some View {
+        Menu {
+            Picker("Group by", selection: $grouping) {
+                ForEach(ReferenceGrouping.allCases) { option in
+                    Text(option.label).tag(option)
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+        }
+        .accessibilityLabel("List options")
     }
 
     /// The three ways in an owner's section offers, here in one menu: the first half of adding, as there.
@@ -113,6 +155,12 @@ struct ReferencesLibraryView: View {
 /// Morning routine* in each place's colour; then the first line of its note.
 struct ReferenceSourceRow: View {
     let source: ReferenceSource
+    /// Whether the second line starts with the site or kind. Not under a heading that says it already
+    /// (ADR 0275's *Site*).
+    var showsOrigin = true
+    /// Whether a source filed nowhere says *Not filed yet*. Only where it shares a section with filed
+    /// ones (ADR 0275's *Site*); elsewhere *Not filed* is its section.
+    var marksNotFiled = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -123,13 +171,17 @@ struct ReferenceSourceRow: View {
                     .foregroundStyle(PocketColor.textPrimary)
                     .lineLimit(2)
                 // The Journal's days, as My tabs reads them.
-                Text("\(source.origin) · \(WrittenTab.day(source.newest.dateAdded))")
+                Text(showsOrigin ? "\(source.origin) · \(day)" : day)
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
                 if !source.distinctPlaces.isEmpty {
                     Text(Self.placesLine(source.distinctPlaces))
                         .font(.futura(.caption))
                         .lineLimit(2)
+                } else if marksNotFiled {
+                    Text("Not filed yet")
+                        .font(.futura(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
                 }
                 if let note = source.noteLine {
                     Text(note)
@@ -142,6 +194,9 @@ struct ReferenceSourceRow: View {
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
     }
+
+    /// When it was saved, as the Journal's days read.
+    private var day: String { WrittenTab.day(source.newest.dateAdded) }
 
     /// *On Triad climb · Slow Bend*: each name in its place's colour, the joins in the secondary text.
     static func placesLine(_ places: [ReferencePlace]) -> AttributedString {

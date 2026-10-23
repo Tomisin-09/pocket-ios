@@ -102,6 +102,9 @@ enum AppSettings {
         static let homeToolChosen = "homeToolChosen"
         /// The songs already offered *Use your markers as sections?* (ADR 0232 D7), in `AppSettings+SongMap`.
         static let songMapSectionOffers = "songMapSectionOffers"
+        /// The References library's grouping and its folded sections (ADR 0275), in `AppSettings+References`.
+        static let referencesGrouping = "referencesGrouping"
+        static let referencesCollapsedSections = "referencesCollapsedSections"
         #if DEBUG
         /// DEBUG-only A/B for ADR 0140 §3. Never read in Release, which always compensates.
         static let compensateStretchLatency = "compensateStretchLatency"

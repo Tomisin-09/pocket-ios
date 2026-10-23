@@ -65,9 +65,32 @@ final class ReferenceURLTests: XCTestCase {
         XCTAssertEqual(ReferenceURL.displayHost("https://youtube.com/watch?v=x"), "youtube.com")
     }
 
-    func testDisplayHostKeepsSubdomainsThatAreNotWWW() {
+    func testDisplayHostKeepsSubdomainsThatAreNotAScreensCopy() {
         XCTAssertEqual(ReferenceURL.displayHost("https://tabs.ultimate-guitar.com/tab/1"),
                        "tabs.ultimate-guitar.com")
+        XCTAssertEqual(ReferenceURL.displayHost("https://music.youtube.com/watch?v=x"), "music.youtube.com")
+    }
+
+    /// A phone's copy of a site is the site (ADR 0275), so the library's *Site* grouping files one lesson
+    /// series under one heading whichever screen each link was copied on.
+    func testDisplayHostDropsAPhonesPrefix() {
+        XCTAssertEqual(ReferenceURL.displayHost("https://m.youtube.com/watch?v=x"), "youtube.com")
+        XCTAssertEqual(ReferenceURL.displayHost("https://mobile.twitter.com/a/status/1"), "twitter.com")
+    }
+
+    /// Only a prefix: a domain that merely starts with the letters is left alone, and so is a prefix that
+    /// is the whole domain.
+    func testDisplayHostDropsAPrefixOnlyWhenADomainIsLeft() {
+        XCTAssertEqual(ReferenceURL.displayHost("https://music.example.com/a"), "music.example.com")
+        XCTAssertEqual(ReferenceURL.displayHost("https://mobilelessons.com/a"), "mobilelessons.com")
+        XCTAssertEqual(ReferenceURL.displayHost("https://m.com/a"), "m.com")
+    }
+
+    /// YouTube's app shares `youtu.be` links; they're YouTube's (ADR 0275).
+    func testDisplayHostReadsYouTubesShortLinksAsYouTube() {
+        XCTAssertEqual(ReferenceURL.displayHost("https://youtu.be/dQw4w9WgXcQ?si=abc"), "youtube.com")
+        XCTAssertEqual(ReferenceURL.displayHost("youtu.be/dQw4w9WgXcQ"), "youtube.com")
+        XCTAssertEqual(ReferenceURL.displayHost("https://www.youtu.be/x"), "youtube.com")
     }
 
     func testDisplayHostWorksOnASchemeLessEntry() {

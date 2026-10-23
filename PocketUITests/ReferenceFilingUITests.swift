@@ -7,6 +7,9 @@ import XCTest
 ///
 /// The simulator keeps its store between runs, so the link is made unique to this run and found by that.
 /// It is deleted at the end; the drill it started stays, like every drill a UI test makes.
+///
+/// Also the library's **grouping** (ADR 0275), which needs the same steps: a link kept for later, the
+/// library's toolbar, and a delete to tidy up.
 final class ReferenceFilingUITests: UITestCase {
 
     @MainActor
@@ -113,6 +116,52 @@ final class ReferenceFilingUITests: UITestCase {
         deleteSource(with: app.buttons["Delete"].firstMatch, listedAs: row, in: app)
     }
 
+    /// **The ⋯ menu regroups the library** (ADR 0275). By *Site*, a link kept for later sits under its own
+    /// site's heading, which folds, and says it isn't filed; by *Where it's used*, it's under *Not filed* and doesn't;
+    /// back on *Newest*, its row names its site again. The rules are `ReferenceGroupingTests`; this is the
+    /// menu reaching them and the screen drawing them. Headings are found by their accessibility label,
+    /// never their text, which iOS 18 draws in capitals.
+    @MainActor
+    func testTheOptionsMenuGroupsTheLibraryBySiteAndByWhereItsUsed() {
+        let app = launchApp()
+        let host = "group\(String(UUID().uuidString.prefix(6)).lowercased()).example.com"
+
+        openReferences(in: app)
+        addLink("https://\(host)/lesson", in: app)
+        let row = element(labelStartingWith: host, in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: Self.uiTimeout), "the link kept for later isn't in the library")
+        let markedRow = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@ AND label CONTAINS %@", host, "Not filed yet"))
+            .firstMatch
+
+        group(by: "Site", in: app)
+        let siteHeading = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "\(host), 1")).firstMatch
+        XCTAssertTrue(siteHeading.waitForExistence(timeout: Self.uiTimeout), "no heading for the link's site")
+        XCTAssertTrue(markedRow.exists, "under its site, a link kept for later didn't say it isn't filed")
+        screenshot(app, "library-by-site")
+        // The heading folds its section away, and opens it again.
+        siteHeading.tap()
+        XCTAssertTrue(waitForDisappearance(of: markedRow), "tapping the site's heading didn't fold it")
+        siteHeading.tap()
+        XCTAssertTrue(markedRow.waitForExistence(timeout: Self.uiTimeout), "tapping it again didn't open it")
+
+        group(by: "Where it's used", in: app)
+        let notFiled = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Not filed, ")).firstMatch
+        XCTAssertTrue(notFiled.waitForExistence(timeout: Self.uiTimeout), "no Not filed heading to fold")
+        XCTAssertTrue(row.exists, "the link left the library")
+        XCTAssertFalse(markedRow.exists, "under Not filed, the row said so twice")
+        screenshot(app, "library-by-place")
+
+        group(by: "Newest", in: app)
+        let named = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@ AND label CONTAINS %@", host, "\(host) · "))
+            .firstMatch
+        XCTAssertTrue(named.waitForExistence(timeout: Self.uiTimeout), "back on Newest, the row didn't name its site")
+
+        XCTAssertTrue(tap(row, until: app.buttons["Start an exercise from this"], in: app), "the source didn't open")
+        deleteSource(with: app.buttons["Delete"].firstMatch, listedAs: row, in: app)
+    }
+
     // MARK: - Steps
 
     /// From New exercise's template picker: a Basic drill named `name`, created, its run screen opened
@@ -162,6 +211,19 @@ final class ReferenceFilingUITests: UITestCase {
         let references = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "References,")).firstMatch
         XCTAssertTrue(references.waitForExistence(timeout: Self.uiTimeout), "no References row")
         XCTAssertTrue(tap(references, until: app.navigationBars["References"], in: app), "References didn't open")
+    }
+
+    /// ⋯ ▸ a grouping. Tapped by coordinate, as ＋ is: on CI's iOS 18 a toolbar `Menu` is found but never
+    /// reported hittable.
+    @MainActor
+    private func group(by option: String, in app: XCUIApplication) {
+        let options = app.navigationBars["References"].buttons["List options"]
+        XCTAssertTrue(options.waitForExistence(timeout: Self.uiTimeout), "no ⋯ on References")
+        options.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let choice = app.buttons[option]
+        XCTAssertTrue(choice.waitForExistence(timeout: Self.uiTimeout), "⋯ didn't offer \(option)")
+        choice.tap()
+        XCTAssertTrue(waitForDisappearance(of: choice), "the menu didn't close on \(option)")
     }
 
     /// ＋ ▸ Add a link, typed, saved with no name: the row then reads as its host, which is this run's own.
