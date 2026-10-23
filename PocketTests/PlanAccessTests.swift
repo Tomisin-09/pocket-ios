@@ -153,9 +153,12 @@ final class PlanAccessTests: XCTestCase {
                        "$1.00 a month, or $15.00 once.")
     }
 
+    /// ADR 0274 D1: the founding price is a lock on the player's price, with its condition in the
+    /// promise itself, and the free line's half kept word for word.
     func testThePromiseLineIsVerbatim() {
         XCTAssertEqual(PlanWallCopy.promiseLine,
-                       "We'll never raise the price, and nothing you can do today will ever move behind a higher one.")
+                       "That's the founding price, and it's yours for as long as you keep the plan. "
+                        + "Nothing you can do today will ever move behind a higher one.")
     }
 
     /// Guideline 3.1.2: the disclosure names the renewing price and how to cancel.

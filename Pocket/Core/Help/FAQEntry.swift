@@ -205,9 +205,15 @@ extension FAQEntry {
                 + "monthly, or pay once. The monthly starts with a free trial if you haven't had one, "
                 + "and the plan's screen says how long it lasts.",
               area: .plan),
+        // ADR 0274: the founding price is a lock, not a freeze. Apple's grace after a lapse is Apple's
+        // figure, so it stays "a while" here (ADR 0145 D6).
         .init(question: "Will the price go up?",
-              answer: "No. We'll never raise the price, and nothing you can do today will ever move "
-                + "behind a higher one. There is one plan, and new features join it.",
+              answer: "Not for you. Today's price is the founding price, and it's yours for as long as "
+                + "you keep the plan: a monthly plan renews at the price you joined at, and Pay once is "
+                + "never charged again. If you stop the monthly, Apple holds your price for a while in "
+                + "case you come back; after that, you'd join at the price of the day. Nothing you can "
+                + "do today will ever move behind a higher one. There is one plan, and new features "
+                + "join it.",
               area: .plan),
         .init(question: "What happens if I stop paying?",
               answer: "Nothing you made is deleted. Your songs, loops and markers, your Journal and the "

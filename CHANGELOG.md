@@ -103,8 +103,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   References, the Tuner, the Glossary and Help & FAQs) are free too (ADR 0263). The plan is for practising: drills,
   routines, Today's session, the loop trainer, Train your ear, Improvise and Watch it on the neck. A
   door behind the plan wears a small lock; tap it
-  and the screen explains what the plan is, then opens where you were going once you've paid. We'll
-  never raise the price, and nothing you can do today will ever move behind a higher one. If you
+  and the screen explains what the plan is, then opens where you were going once you've paid. Today's
+  price is the **founding price**, and it's yours for as long as you keep the plan: if the price ever
+  goes up, it goes up for people who join later, not for you (ADR 0274). Nothing you can do today
+  will ever move behind a higher one. If you
   stop paying nothing is deleted, and Settings ▸ Your data always exports everything. Settings
   gains **Your plan**, which says the day your free week ends and what comes after it. While the
   free week is set to renew, Home's top row counts it down (*Your free week ends in 3 days*) and

@@ -12,6 +12,11 @@
   feature that practises is the plan*. **D3**: the Journal tile and the Toolkit's rows draw no lock,
   and the wall's sentence changes. **D9**: the free-path UI test opens the Journal and My chords.
   D8's promise, and the rest, stand.
+  **ADR 0274** (2026-10-23) — **D8**: *"We'll never raise the price"* goes. The promise's second
+  line becomes *"That's the founding price, and it's yours for as long as you keep the plan. Nothing
+  you can do today will ever move behind a higher one."* The price can now rise for new players, but
+  never for a player who holds it. D8's reason for *"We'll"* and the Consequences' *"A price can
+  never rise"* go with it. D1's prices, and D8's second half, stand.
 - **Supersedes:** ADR 0237 — **D1** (the app is free, with no in-app purchase) and **D7** (Settings
   loses its plan row): Red Moon has one plan again (D1 here), and Settings shows it (D10). **D3**'s
   promise that nothing free may ever move behind a price is replaced, before anyone held the free
@@ -218,6 +223,11 @@ the 2026-08 beta lock-out), and it exercises the real purchase path. There is no
 grant. Tomisin buys first on a real TestFlight build. The "What to Test" note then tells testers how.
 
 ### D8 — The promise
+
+> **Amended by 0274 (2026-10-23):** before anything was sold, the second line became *"That's the
+> founding price, and it's yours for as long as you keep the plan. Nothing you can do today will
+> ever move behind a higher one."* It's a price lock, not a price freeze. What follows is the promise
+> as it was first made.
 
 Verbatim on the wall, in the App Store description and on the site:
 
