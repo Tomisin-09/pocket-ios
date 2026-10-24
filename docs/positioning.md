@@ -9,6 +9,31 @@ that answers the harder question: **are the shipped surfaces actually saying it?
 
 ---
 
+## 0. The line (2026-10-24, ADR 0276)
+
+The sections below argue the position from the market. This one states it in the player's words,
+and every surface should be able to be traced back to it.
+
+> **Red Moon is a practice studio for songs you own. Your practice adds up instead of starting over,
+> and it works alongside whatever you already learn from.**
+
+Two ideas carry it, and they are one claim seen from two sides:
+
+- **Practice that adds up.** The loop you saved yesterday is a block in today's session; the
+  tempo you reached is where you start; the note you wrote is on the loop it was about. Nothing resets
+  when the app closes. This is the *benefit*, and the answer to "why not just a slow-downer".
+- **It complements your other sources.** A video, a teacher, a course stays where it is (§1, the
+  multiplier thesis; ADR 0167's references). This is the *posture*, and the reason it never shames you
+  for jumping between them (§3).
+
+**The word is studio, not room** (ADR 0276). A studio is a place with equipment, where you work on
+something over time. Never "tutor", "coach" or "teacher", which promise judgement (§3), and never
+"studio" alone, which reads as a recording app: it is always *practice studio*.
+
+Everything below keeps its argument. Where it says *practice room*, read *practice studio*.
+
+---
+
 ## 1. The multiplier thesis
 
 We do not own the material and we do not own the method. Somebody else wrote the song;
@@ -164,7 +189,7 @@ The existing fragments already argue this and were never gathered:
 | Layer | The line |
 |---|---|
 | **Acquisition** (App Store search) | **Stays** loop / slow-downer keywords. *"Slow downer"* is a real query with real volume; *"practice routine app"* is not. Do not trade a working keyword for a positioning statement. |
-| **Product framing** (landing page, story, in-app, manual) | The intersection: **the practice room that runs on your own recordings.** |
+| **Product framing** (landing page, story, in-app, manual) | The intersection: **the practice studio that runs on your own recordings, and adds up.** |
 | **Retention** | The routine — the thing that makes the second week look like the first. |
 
 The claim everywhere is **both ends**. Pocket is the only app holding a session
@@ -175,20 +200,21 @@ feature list.
 
 ## 7. The contradiction audit
 
-Two positions are live in shipped surfaces at once. Loop-first almost everywhere;
-routine-first only on the marketing story page.
+*Written 2026-08-16 as a list of live contradictions; re-audited 2026-10-24 against the tree. Most
+of it has since been fixed, which is why this is now a status table.*
 
-| Surface | What it says today | Edit it needs | Constraint |
-|---|---|---|---|
-| In-app FAQ, *"Where do I start?"* (`Pocket/Core/Help/FAQEntry.swift:71`) | *"That loop is the whole app in miniature; everything else is a way of doing more of it."* | Both-ends framing | ⚠ Rewrite the **answer** freely; **never rename the question** — `check-manual.py` C3 asserts every manual `See Help & FAQs: "…"` citation names a real question. `FAQEntryTests` pins the catalog. |
-| In-app FAQ, *"What is Red Moon Practice?"* (`:65`) | Feature list with routines fourth | Lead with the intersection | Same rule. |
-| Manual, getting started (`docs/manual/getting-started.md:3`) | *"Everything else in the app — drills, routines, the tuner, the journal — is built around that one move."* | Reframe: the loop is the first move, not the whole thesis | Separately authored prose — moves with the reframe, not forced by the check. |
-| Manual spine (`docs/manual/README.md:51-54`) | Slice A is *"the path the whole product is built around"*; routines is *"the half of the app that has no waveform in it"* | Soften the framing; consider whether routines move up the order | Page order is a manual-wide change; Phase 5 shooting is paused, so this is a cheap moment to do it. |
-| App Store subtitle (`docs/app-store-listing-copy.md:46`) | *"Loop, slow down, learn songs"* | **No change** — this is the acquisition layer working correctly | — |
-| App Store description (`:86-88`) | *"Build a session"* is the 4th section; routines are one bullet | Raise it | **1.1's description and screenshots are permanently locked** (`:12-14`). Lands in 1.2. Promotional text is editable now. |
-| Onboarding (ADR 0149) | *"We are choosing not to teach exercises, routines, or the planner this way."* | Under review — a dated pointer only, not a reversal | Proposal: a deferred fourth beat at the *second* session, where the saved loop becomes a block. Not in the first ninety seconds. |
-| Landing page | Six feature cards, **no routines card** | Propose a routines card | **Separate repo, auto-deploys to production on every push.** Not touched from here. |
-| Story page | *"an intelligent practice routine that integrates all of these features"* | Already closest to the position | Same repo constraint. |
+| Surface | Status | Note |
+|---|---|---|
+| In-app FAQ, *"What is Red Moon Practice?"* and *"Where do I start?"* (`Pocket/Core/Help/FAQEntry.swift`) | **Fixed** | Both-ends framing since 1ab4ff2; 2026-10-24 adds *studio*, *adds up* and the complements-your-sources line. The questions are not renamed: `check-manual.py` C3 and `FAQEntryTests` pin them, and `ManualToolkitShots` matches the answer's opening words, which moved with it. |
+| Manual, `getting-started` | **Fixed** 2026-10-24 | Opening now says *adds up* and states the complements-your-sources posture. The closing line *"the loop is the app. Everything else is a way of doing more of it"* — the last loop-first sentence in the manual — is replaced: the loop is the first move, not the thesis. |
+| Manual spine (`docs/manual/README.md`) | **Fixed** | Grouped under the two halves since 2026-08-17; its own note already says *first* is about sequence, never about which half matters. |
+| App Store subtitle | **No change, by design** | *"Loop, slow down, learn songs"* is the acquisition layer (§6). |
+| App Store description | **Fixed** 2026-10-24 | Opens on the studio and on *tomorrow starts where today stopped*. Its pricing lines were also stale (they said free; ADR 0256 reversed that); the file's banner says what is history. |
+| Beta guide (`docs/beta/user-guide.md`) | **Fixed** 2026-10-24 | It said *"Everything else in the app exists to support that"* of the loop. |
+| Onboarding (ADR 0149) | **Open, not re-checked** | *"We are choosing not to teach exercises, routines, or the planner this way."* Proposal stands: a deferred fourth beat at the second session, where the saved loop becomes a block. Not in the first ninety seconds. |
+| Landing page | **Open — separate repo** | Auto-deploys on every push; not touched from here. Needs: *studio*, *adds up*, and a routines/memory card (it has six feature cards and none for either). `docs/site/index.html` here is a stale local copy, re-worded only so the vocabulary doesn't drift. |
+| Story page | **Open — separate repo** | Closest to the position already. |
+| Price | **Fixed in the listing copy; verify elsewhere** | ADR 0256 (one plan) superseded ADR 0237 (free). Anywhere still saying *free* or *nothing to buy* is wrong. |
 
 ## 8. Who this is for
 

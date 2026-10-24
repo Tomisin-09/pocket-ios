@@ -66,9 +66,11 @@ music is a big part of what I'm trying to learn.
 
 ## 2. What this is, and what it isn't
 
-Red Moon is a practice room, not a music player. You bring a song you're trying to learn,
+Red Moon is a practice studio, not a music player. You bring a song you're trying to learn,
 mark the bar that keeps beating you, slow it right down, and loop it against a click until it
-stops beating you. Everything else in the app exists to support that.
+stops beating you. Then it keeps hold of where you got to, so tomorrow's practice starts from
+today's rather than from nothing. It sits beside whatever else you learn from, and never asks you
+to move any of it here.
 
 **It will never score your playing.** Nothing listens and grades you, and nothing ever will.
 When you see a rating, you put it there. Your recordings stay on your phone.

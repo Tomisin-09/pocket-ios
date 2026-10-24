@@ -63,13 +63,15 @@ extension FAQEntry {
     static let all: [FAQEntry] = [
         // MARK: Getting started
         .init(question: "What is Red Moon Practice?",
-              answer: "A practice room that runs on music you already own. It holds two things that "
-                + "usually live in separate apps. One is the audio: bring in a song, mark the bars "
-                + "you can't play yet, slow them down and run them against a click. The other is "
-                + "the session: those loops become blocks you can line up with your own drills and "
+              answer: "A practice studio that runs on music you already own, built so your practice "
+                + "adds up instead of starting over each day. It holds two things that usually "
+                + "live in separate apps. One is the audio: bring in a song, mark the bars you "
+                + "can't play yet, slow them down and run them against a click. The other is the "
+                + "session: those loops become blocks you can line up with your own drills and "
                 + "press play on. Alongside both, a tuner and metronome, chord and theory tools, "
-                + "and a journal of what you actually did. It doesn't teach you the song — it's "
-                + "where you go to get it under your fingers.",
+                + "and a journal of what you actually did. It doesn't replace the lesson, the "
+                + "video or the teacher you learn from — it keeps hold of what you took from "
+                + "them, and it's where you go to get it under your fingers.",
               area: .gettingStarted),
         .init(question: "Where do I start?",
               answer: "Import a song and play it. When the passage that keeps falling apart comes "

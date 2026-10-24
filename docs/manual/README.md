@@ -190,7 +190,7 @@ human, and it is the first thing to reread when a page starts to feel thin.
 - **Streaks, "this year", weekly goals on the Practice log.** These do not exist and are checked for by
   name, because there is no legitimate use of those words here.
 - **Ear training and theory as *creatable* templates.** Ear training shipped as a loop mode.
-- **A free tier, a "free taste", or any price.** Red Moon is free and sells nothing (ADR 0237).
+- **Any price, any trial length, or what is free and what is the plan.** StoreKit owns the numbers and the app's own plan screens own the line (ADR 0256); a manual page that names either is stale the day it changes. Say *the plan* and stop.
 - **Instruments beyond guitar and 4-string bass.** Ukulele and the rest are parked (ADR 0116).
 - **Take sharing.** Parked pending legal advice (ADR 0150).
 - ~~**The bundled demo song.**~~ **Resolved 2026-08-13, and it is not parked.** Walked in the

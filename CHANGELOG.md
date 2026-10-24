@@ -371,6 +371,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Red Moon describes itself as a practice studio that adds up** (ADR 0276). Help & FAQs ▸ *What is
+  Red Moon Practice?* now opens on *a practice studio that runs on music you already own, built so
+  your practice adds up instead of starting over each day*, and says Red Moon doesn't replace the
+  lesson, the video or the teacher you learn from but keeps hold of what you took from them. Nothing
+  in the app's behaviour changed.
 - **Leaving a routine asks first** (ADR 0272). ✕ on a block or a rest, and the exit on the screen
   between blocks, now ask *Leave this routine?* before they close the session, so an accidental tap
   no longer throws away your place. Keep practising carries on where you were; the blocks you have

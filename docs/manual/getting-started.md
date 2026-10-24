@@ -1,14 +1,19 @@
 # Getting started
 
-Red Moon Practice is a practice room for music you already own. You bring in an audio file, mark the
-few bars that keep falling apart, slow them down, and loop them against a click until they stop
-falling apart. That is the first move, and this page walks you through it.
+Red Moon Practice is a practice studio for music you already own, built so that your practice adds
+up instead of starting over each day. You bring in an audio file, mark the few bars that keep falling
+apart, slow them down, and loop them against a click until they stop falling apart. That is the first
+move, and this page walks you through it.
 
 It is not the whole app. The other half is what you do with those loops afterwards: a saved loop
 becomes a block in a routine, sitting next to drills you built and other songs you are working on,
 and the routine is what you press play on when you have twenty minutes and no plan. The tuner, the
 metronome, the chord tools and the journal fill in around both. Most people meet the looping first
 and the routines a week or two later, which is the order this manual is written in.
+
+Red Moon does not ask you to give up where you learn. A video, a teacher, a course or a tab site
+stays exactly where it is; the studio is where what you took from it is kept, and where you work it
+into your hands.
 
 **See Help & FAQs: "What is Red Moon Practice?"**
 
@@ -153,8 +158,9 @@ nudge the speed up and carry on.
 
 **See Help & FAQs: "Does slowing a song down change its pitch?"**
 
-That is the loop, and the loop is the app. Everything else is a way of doing more of it or keeping
-track of having done it.
+That is the first move. It is the one to learn on day one because it needs no vocabulary, not because
+the rest of the app hangs off it: the routines, the journal and the references are the other half, the
+part that makes tomorrow's practice start where today's stopped.
 
 ## Where to go next
 
