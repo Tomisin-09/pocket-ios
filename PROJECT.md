@@ -10,6 +10,10 @@ A native iOS guitar-practice tool that attaches practice data (loops, markers,
 notes, session history, routines) to songs in the user's music library. The app
 is an intelligence layer over the library — it never replaces it.
 
+**The line (ADR 0276):** Red Moon is a *practice studio* for songs you own. Your practice adds up
+instead of starting over, and it works alongside whatever you already learn from. The paragraph below
+is the argument for it from the market; `docs/messaging.md` is how it is said, to whom.
+
 **The position, stated once:** Pocket is the intersection of two categories that
 normally ship separately — a **session conductor** (routines, blocks, history) and a
 **real audio engine over the player's own DRM-free files** (waveform, A/B span,

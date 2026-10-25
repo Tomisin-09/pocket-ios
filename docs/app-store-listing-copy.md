@@ -1,13 +1,15 @@
 # App Store listing copy — Red Moon Practice v1.1
 
-> ## Red Moon is free — ADR 0237 (2026-10-01)
+> ## The plan, not "free" — ADR 0256 (2026-10-17), which superseded ADR 0237 (2026-10-01)
 >
-> The app sells nothing: no subscription, no trial, no in-app purchase. The description,
-> **Price / availability** and **App Review notes** below are updated for that. The 1.1
-> sections that described the subscription are kept as history and say so; do not paste
-> from them. What App Store Connect still needs, by hand: both `…pro.*` products and the
-> "Red Moon Pro" group removed from sale, any screenshot showing the paywall or a padlock
-> replaced, and App Privacy re-checked for a Purchases declaration.
+> ADR 0237 made the app free, and the free build never shipped. **ADR 0256 reversed it:** one plan,
+> £1 / $1 a month (with a free week first) or £15 / $15 once; the Song library, the song player with
+> saved loops, the Metronome, the Journal and Practice log, and the Toolkit stay free (ADR 0263), and
+> practising is the plan. This file was written for the free release and still carries its
+> checklists, its *What's New* draft and its review notes below. **Those are history: do not paste
+> from them** — re-derive each from ADR 0256 and 0274 and re-check it against the build. The
+> description, price and review-notes sections have been brought up to date (2026-10-24); the
+> checklists and *What's New* have not.
 
 > ## ⚠ 1.0 is RELEASED, not held (discovered 2026-08-07)
 >
@@ -88,12 +90,12 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 *(99 chars — verify in the field; ASC counts live.)*
 
 ## Description
-> **Red Moon is a practice room, not a jukebox.**
+> **Red Moon is a practice studio, not a jukebox.**
 >
 > Bring in a song you own and loop the bar you can't play yet, on guitar or bass.
 > Slow it down without the pitch dropping, then line your loops up with your drills
-> into a session you press play on. Red Moon remembers how each one is coming along.
-> Nobody is marking you.
+> into a session you press play on. Red Moon remembers how each one is coming along, so
+> tomorrow starts where today stopped. Nobody is marking you.
 >
 > **Loop and slow down**
 > • Import audio files you own from Files or iCloud Drive
@@ -140,14 +142,14 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 >
 > Red Moon plays audio files you own. It can't play Apple Music or Spotify streams.
 >
-> Nothing you play leaves your phone unless you send it yourself. There's no account
-> and nothing to buy. Your audio, recordings, notes and song names stay on your
+> Nothing you play leaves your phone unless you send it yourself. There's no account.
+> Your audio, recordings, notes and song names stay on your
 > device, Red Moon doesn't count what you do in it, and it never uses the
 > advertising identifier.
 >
 > Named after the Tom Misch track that started it all.
 
-*Rewritten for the free release, 2026-10-02, to the plan in the Marketing Foundation:*
+*Rewritten for the (since superseded) free release, 2026-10-02, to the plan in the Marketing Foundation; re-voiced 2026-10-24 as a practice studio that adds up, and the "nothing to buy" line removed (ADR 0256):*
 
 - *The opening names both halves, the loop on your own song and the session it feeds,
   and ends on "Nobody is marking you". The headline and the start of that paragraph
@@ -161,8 +163,8 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
   Music.*
 - *"No ads" is gone (ADR 0240: it stays only in disclosures, the privacy policy and the
   review notes), the usage-counts sentence went with ADR 0239, and "free" is not a
-  headline. "Nothing to buy" is one plain fact at the end.*
-- *Every claim is in the free build. Check the line-wrap in the field.*
+  headline.*
+- *Say "plan", never a price or a trial length, in the description: the storefront shows them, and ADR 0145 D6 forbids hardcoding them. Check the line-wrap in the field.*
 
 ### History: the EULA line — REJECTED 2026-08-08 for its absence, retired by ADR 0237
 
@@ -193,7 +195,7 @@ Apple's standard terms. Only if that ever changes does the link move into ASC's
 own custom-EULA field instead of the description — and then all three surfaces
 (description, paywall, Settings) must point at the custom one, not Apple's.
 
-## What's New — the free release (draft)
+## What's New — the free release (draft) — HISTORY, do not paste (ADR 0256)
 
 The next version's notes carry everything built since 1.3; this is the part about
 price, to merge in near the top. Paste-ready:
@@ -313,15 +315,17 @@ come from App Store Connect (ADR 0239). The region-split usage counts ADRs 0120 
 Questionnaire answers are all "None" → **4+**.
 
 ## Price / availability
-- **App price:** Free. There is no in-app purchase of any kind (ADR 0237).
-- **In-app purchases:** none. The two auto-renewable subscriptions that ADR 0144
+- **App price:** Free to download; one plan inside it (ADR 0256): **Monthly** (£1 / $1, with a free
+  week as an introductory offer; product `click.decooperations.pocket.plan.monthly`) or **Pay once**
+  (£15 / $15, non-consumable; `…plan.payonce`). Family Sharing off (ADR 0259). The founding price is
+  held for as long as a player keeps the plan (ADR 0274).
+- **In-app purchases:** the two products above. *History, kept for the record:* the two auto-renewable subscriptions that ADR 0144
   set up (`click.decooperations.pocket.pro.annual` and `…pro.monthly`, group
   **"Red Moon Pro"**) were never sold and are **removed from sale** in App Store
   Connect; the app no longer links StoreKit at all. If the Oracle is ever priced,
   it is strictly additive (0237 D3) and gets new products.
-- **Paid Applications Agreement:** no longer needed for this app. Keeping or
-  dropping it is the owner's call (ADR 0237 Consequences); nothing in the app
-  depends on it.
+- **Paid Applications Agreement:** needed again, because the app sells a plan (ADR 0256). Without it
+  the products cannot be sold.
 - **Availability:** All territories, unless you want a phased rollout.
 
 ## App Review notes (paste-ready)
@@ -332,8 +336,11 @@ shipping code, not aspiration.
 > Red Moon Practice is a guitar practice tool. No account or sign-in is required —
 > nothing is created on a server and there is no login to give you.
 >
-> **The whole app is free.** There are no in-app purchases, no subscription and no
-> advertising; every screen is reachable from the home screen without paying.
+> **One plan, no advertising.** The Song library, the song player (saved loops and markers), the
+> Metronome, the Journal and Practice log, and the Toolkit are free. Practising (exercises, routines,
+> Today's session) is the plan (ADR 0256, 0263). **Reviewer access: <how the review build reaches
+> the plan screens — confirm against the sandbox pass before pasting>.** Do not paste this note
+> until that line is filled in.
 >
 > **To try the song player, open the Song library and tap "Try the demo".** That adds a playable practice track so you can try the waveform, loop
 > capture and speed control immediately. You can also import your own audio from the
@@ -354,7 +361,7 @@ shipping code, not aspiration.
 > kind is present.
 
 **Before pasting, re-check each claim still holds** — a stale one is worse than no
-note at all. In particular "the whole app is free" (ADR 0237), "no analytics"
+note at all. In particular the free/plan line (ADR 0256, 0263), "no analytics"
 (ADR 0239), and "Try the demo" ([`LibraryView.swift`](../Pocket/Features/Library/LibraryView.swift),
 `LibraryEmptyState.onTryDemo` → `Song.sample()` — the *generated* tone song, which is
 why it survives ADR 0148 §7 deleting the bundled demo track).

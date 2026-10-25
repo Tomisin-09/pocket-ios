@@ -81,7 +81,7 @@ final class ManualToolkitShots: ManualShotCase {
         // that proves the row opened, so it stays, and it stays copy-bound on purpose.
         capture(app, slug: "toolkit/faq",
                 assertingOnScreen: "Help & FAQs",
-                orBeginningWith: ["A practice room that runs on music you already own"])
+                orBeginningWith: ["A practice studio that runs on music you already own"])
     }
 
     /// `toolkit/tune-settings` — the Tune Settings sheet, from the top.
