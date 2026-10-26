@@ -4,6 +4,9 @@
   2026-10-23. Built on `pocket-388-founding-price`. Still owed, outside the repo: the App Store
   description and the site (Consequences).
 - **Date:** 2026-10-23
+- **Amended by:** ADR 0277 (2026-10-26) — **D2**: the prices that hold the lock are £0.99 a month
+  and £14.99 once, because App Store Connect offered no round point. 0277 also records that the
+  founding price is the products' price, not an introductory offer. The lock and D1's wording stand.
 - **Amends:** ADR 0256 — **D8**: the promise's second line. *"We'll never raise the price"* goes, and
   a price lock takes its place (D1, D2 here). The second half, *"nothing you can do today will ever
   move behind a higher one"*, stays word for word. Two other things go with it: D8's reason for
@@ -71,7 +74,8 @@ and the site.
 
 ### D2 — A lock, not a promotion
 
-- **The prices don't change.** They stay £1 a month and £15 once (0256 D1).
+- **The prices don't change.** They stay £1 a month and £15 once (0256 D1). *(0277: £0.99 and
+  £14.99, the nearest points App Store Connect offers.)*
 - **No end date, no countdown, no "limited time".** Tomisin: *"no end in sight"*.
 - **No struck-through "usual price".** Nobody has ever been charged one. Showing one would be the
   trick the round price exists to avoid.

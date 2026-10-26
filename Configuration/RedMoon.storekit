@@ -3,7 +3,7 @@
   "nonRenewingSubscriptions" : [],
   "products" : [
     {
-      "displayPrice" : "15.00",
+      "displayPrice" : "14.99",
       "familyShareable" : false,
       "internalID" : "1000000101",
       "localizations" : [
@@ -39,7 +39,7 @@
         {
           "adHocOffers" : [],
           "codeOffers" : [],
-          "displayPrice" : "1.00",
+          "displayPrice" : "0.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "1000000102",
@@ -57,7 +57,7 @@
               "locale" : "en_GB"
             }
           ],
-          "productID" : "click.decooperations.pocket.plan.monthly",
+          "productID" : "click.decooperations.pocket.plan.monthly2",
           "recurringSubscriptionPeriod" : "P1M",
           "referenceName" : "Red Moon Monthly",
           "subscriptionGroupID" : "20261017",

@@ -29,9 +29,9 @@ move it here. Full argument, competitor roster and the surfaces still contradict
 - **Name:** **Red Moon Practice** on the App Store; **Pocket** everywhere in the
   code. The Xcode target, the bundle id and this repo keep the internal name —
   the two are not going to be reconciled, so read "Pocket" below as the codebase
-  and "Red Moon" as the product. Red Moon has **one plan**, £1 / $1 a month (with a free week
-  first, an App Store intro offer) or £15 / $15 once (**ADR 0256**, reversing 0237 before its free
-  build shipped). That's the **founding price**: a lock, not a freeze. It can rise for new players,
+  and "Red Moon" as the product. Red Moon has **one plan**, £0.99 a month (with a free week
+  first, an App Store intro offer) or £14.99 once (**ADR 0256**, reversing 0237 before its free
+  build shipped; the prices are **ADR 0277**'s, as App Store Connect had no round point). That's the **founding price**: a lock, not a freeze. It can rise for new players,
   never for a player who holds it (**ADR 0274**). Playing is free: the Song library,
   the song player with saved loops and markers, the Metronome, the Journal and Practice log, and the
   whole Toolkit (**ADR 0263**: keeping is free). Practising is the plan.
@@ -175,7 +175,8 @@ their subscription group. ⚠️ **Availability must be re-enabled when 1.1 is
 approved**, or it ships approved and undownloadable with no warning in ASC.
 **Since ADR 0237 (2026-10-01) Red Moon is free:** the two subscriptions were never sold and come off
 sale in App Store Connect. **ADR 0256 (2026-10-17) brought back a price before the free build
-shipped:** one plan, two new products (`…plan.monthly`, `…plan.payonce`), playing free and
+shipped:** one plan, two new products (`…plan.monthly2`, `…plan.payonce`; ADR 0277 says why the monthly's
+id ends in 2), playing free and
 practising paid.
 
 The phase numbering below is historical. Phases 1 and 2 are **built and shipped**;

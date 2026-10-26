@@ -103,7 +103,7 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   The tab writes a muted note *x*, and the line of names ✕. A muted note counts as named, and a
   strummed part of chords and chucks still counts in chords. My tabs has the ✕ too, and Watch it on
   the neck lights it. A piece with muted notes, opened on an older build, shows those notes unnamed.
-- **Red Moon has one plan: £1 a month, or £15 once** (ADR 0256), and the monthly starts with a
+- **Red Moon has one plan: £0.99 a month, or £14.99 once** (ADR 0256, 0277), and the monthly starts with a
   free week the first time you take it. Your songs are free for good:
   import them, play them, slow them down and keep your loops and markers. The Metronome, the
   Journal and Practice log, and everything in the Toolkit (My chords, My progressions, My tabs,
