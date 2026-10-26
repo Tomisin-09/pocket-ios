@@ -50,8 +50,10 @@ local / iCloud audio files** — never imply Apple Music / Spotify streaming (se
 ---
 
 ## Name (reserved)
-**Red Moon Practice** — already reserved in App Store Connect (the qualifier that
-clears the "Red Moon Fitness" name collision).
+**Red Moon Practice Studio** — renamed in App Store Connect for 1.4, after ADR 0276's *practice
+studio* (24 of 30 characters). It was **Red Moon Practice**, the qualifier that cleared the
+"Red Moon Fitness" name collision. The subscription group *Red Moon* shows this name beside it in
+Settings ▸ Subscriptions (ADR 0277).
 
 ## Subtitle — 30 char max
 > **Loop, slow down, learn songs**  *(28)*

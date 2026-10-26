@@ -26,7 +26,8 @@ move it here. Full argument, competitor roster and the surfaces still contradict
 **`docs/positioning.md`** (2026-08-16).
 
 - **Platform:** iOS 17+, phone-first, Swift / SwiftUI.
-- **Name:** **Red Moon Practice** on the App Store; **Pocket** everywhere in the
+- **Name:** **Red Moon Practice Studio** on the App Store (renamed from *Red Moon Practice*
+  for 1.4, after ADR 0276); **Red Moon** on the home screen; **Pocket** everywhere in the
   code. The Xcode target, the bundle id and this repo keep the internal name —
   the two are not going to be reconciled, so read "Pocket" below as the codebase
   and "Red Moon" as the product. Red Moon has **one plan**, £0.99 a month (with a free week
