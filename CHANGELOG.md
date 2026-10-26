@@ -372,7 +372,8 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ### Changed
 
 - **Red Moon describes itself as a practice studio that adds up** (ADR 0276). Help & FAQs ▸ *What is
-  Red Moon Practice?* now opens on *a practice studio that runs on music you already own, built so
+  Red Moon?* (it asked *What is Red Moon Practice?* until the App Store name became *Red Moon
+  Practice Studio*, ADR 0278) now opens on *a practice studio that runs on music you already own, built so
   your practice adds up instead of starting over each day*, and says Red Moon doesn't replace the
   lesson, the video or the teacher you learn from but keeps hold of what you took from them. Nothing
   in the app's behaviour changed.

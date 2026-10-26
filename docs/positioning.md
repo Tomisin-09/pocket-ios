@@ -205,7 +205,7 @@ of it has since been fixed, which is why this is now a status table.*
 
 | Surface | Status | Note |
 |---|---|---|
-| In-app FAQ, *"What is Red Moon Practice?"* and *"Where do I start?"* (`Pocket/Core/Help/FAQEntry.swift`) | **Fixed** | Both-ends framing since 1ab4ff2; 2026-10-24 adds *studio*, *adds up* and the complements-your-sources line. The questions are not renamed: `check-manual.py` C3 and `FAQEntryTests` pin them, and `ManualToolkitShots` matches the answer's opening words, which moved with it. |
+| In-app FAQ, *"What is Red Moon?"* and *"Where do I start?"* (`Pocket/Core/Help/FAQEntry.swift`) | **Fixed** | Both-ends framing since 1ab4ff2; 2026-10-24 adds *studio*, *adds up* and the complements-your-sources line. The first question was *"What is Red Moon Practice?"* until the store rename (ADR 0278); `check-manual.py` C3 holds the manual's citation to it, and `ManualToolkitShots` matches the question and the answer's opening words. |
 | Manual, `getting-started` | **Fixed** 2026-10-24 | Opening now says *adds up* and states the complements-your-sources posture. The closing line *"the loop is the app. Everything else is a way of doing more of it"* — the last loop-first sentence in the manual — is replaced: the loop is the first move, not the thesis. |
 | Manual spine (`docs/manual/README.md`) | **Fixed** | Grouped under the two halves since 2026-08-17; its own note already says *first* is about sequence, never about which half matters. |
 | App Store subtitle | **No change, by design** | *"Loop, slow down, learn songs"* is the acquisition layer (§6). |

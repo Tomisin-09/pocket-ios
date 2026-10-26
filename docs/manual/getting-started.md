@@ -15,7 +15,7 @@ Red Moon does not ask you to give up where you learn. A video, a teacher, a cour
 stays exactly where it is; the studio is where what you took from it is kept, and where you work it
 into your hands.
 
-**See Help & FAQs: "What is Red Moon Practice?"**
+**See Help & FAQs: "What is Red Moon?"**
 
 ## What you need
 

@@ -63,7 +63,7 @@ final class ManualToolkitShots: ManualShotCase {
         tapRow(labelStartingWith: "Help and FAQs", in: app,
                arrivingAt: app.navigationBars["Help & FAQs"], called: "the Help & FAQs screen")
 
-        let question = app.descendants(matching: .any)["What is Red Moon Practice?"].firstMatch
+        let question = app.descendants(matching: .any)["What is Red Moon?"].firstMatch
         XCTAssertTrue(question.waitForExistence(timeout: Self.shootTimeout),
                       "the first FAQ question never appeared. \(stepLog)")
         question.tap()
