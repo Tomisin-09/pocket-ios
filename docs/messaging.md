@@ -32,7 +32,7 @@ pitch: **Loop it → Slow it down → Keep it.** In longer form: *work it out, b
 | **To someone who doesn't play** | A notebook and a slow-motion replay for learning an instrument, that never tells you you're doing badly. |
 | **To a teacher** | Build a routine, send it to your student with the songs inside, and it plays on their phone. They loop what you set, and you see nothing of what they play. |
 | **App Store subtitle** | *Loop, slow down, learn songs* — unchanged: it is what people search for. |
-| **App Store promotional text** (editable now; candidate) | Loop the hard bar in your own tracks and slow it down without dropping the pitch. Then line your loops up with your drills into a session that picks up where you left off. |
+| **App Store promotional text** (1.4; 166 of 170 characters) | Loop the hard bar in your own tracks and slow it down without dropping the pitch. Then line your loops up with drills into a session that picks up where you left off. |
 
 Never say *free*, *streaks*, *score*, *level up*, or imply Apple Music or Spotify works (ADR 0001).
 
