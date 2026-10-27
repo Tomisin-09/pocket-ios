@@ -42,7 +42,7 @@ the first verb taught in detail.
 | **To someone who doesn't play** | A notebook and a slow-motion replay for learning an instrument, that never tells you you're doing badly. |
 | **To a teacher** | Build a routine, send it to your student with the songs inside, and it plays on their phone. They loop what you set, and you see nothing of what they play. |
 | **App Store subtitle** | *Loop, slow down, learn songs* — unchanged: it is what people search for. |
-| **App Store promotional text** (1.4; 166 of 170 characters) | Loop the hard bar in your own tracks and slow it down without dropping the pitch. Then line your loops up with drills into a session that picks up where you left off. |
+| **App Store promotional text** (1.4; 161 of 170 characters; ADR 0279) | Work out the hard bar, build it up against a click, run it in a routine, and keep what you learn. A practice studio for guitar players who learn from everywhere. |
 
 Never say *free*, *streaks*, *score*, *level up*, or imply Apple Music or Spotify works (ADR 0001).
 

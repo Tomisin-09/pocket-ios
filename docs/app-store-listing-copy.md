@@ -72,12 +72,15 @@ Alternates:
 - `The guitar woodshed in your pocket` — too long (34); trim if you love it.
 
 ## Promotional text — 170 char max (editable anytime, no review)
-> Loop the hard bar in your own tracks and slow it down without dropping the pitch. Then line your
-> loops up with drills into a session that picks up where you left off. *(166)*
+> Work out the hard bar, build it up against a click, run it in a routine, and keep what you learn.
+> A practice studio for guitar players who learn from everywhere. *(161)*
 
-*1.4 (2026-10-26), ADR 0276's candidate from `docs/messaging.md` §2. That candidate was 171
-characters, one over the limit, so "your drills" became "drills" in both places. Replace the live
-text in App Store Connect with this. The field needs no review.*
+*1.4 (2026-10-27), chosen by Tomisin: the four verbs and the line (ADR 0279). Replace the live text in
+App Store Connect with this. The field needs no review.*
+
+*Considered for 1.4 the day before, from ADR 0276's candidate (trimmed from 171 to fit): "Loop the
+hard bar in your own tracks and slow it down without dropping the pitch. Then line your loops up with
+drills into a session that picks up where you left off." (166)*
 
 *History. The text from 2026-08-16 was: "Loop the hard bar in your own tracks and slow it down without
 dropping the pitch — then line those loops up with your drills into a session you press play on."
