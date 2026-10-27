@@ -509,7 +509,41 @@ exists / receives before submission. Marketing URL: leave blank for v1 (full
 marketing site is a post-launch project; point the Marketing URL at it later — no
 new build needed).
 
-## Screenshots — REVISED shoot guide (re-shoot, 2026-07-21)
+## Screenshots — 1.4 (2026-10-27, ADR 0279)
+
+Ten frames, one story: the four verbs twice, then the roof. Shot dark at 09:41 on the iPhone 17 Pro
+Max simulator by the manual's harness, with the plan unlocked (no padlocks, no prices: Guideline
+2.3.7), and captioned by `scripts/appstore-frames.swift`. The finished set is in
+`~/Documents/Red Moon Screenshots 2/appstore-2026-10-27/`: **`6.9/`** (1320×2868) and **`6.5/`**
+(1242×2688). Upload whichever size the iPhone slot asks for, in filename order.
+
+| # | Verb | Headline | Capture (test → slug) |
+|---|---|---|---|
+| 1 | WORK IT OUT | Loop the bar you can't play. Slow it down. | `AppStoreShots.testWorkItOut` (Binta's *Chords* at 0.75×) |
+| 2 | BUILD IT UP | Every drill runs against a click. | `exercises/run-live` |
+| 3 | RUN IT | Line up the hard parts. Press play. | `AppStoreShots.testRunIt` (*Open mic, Friday*) |
+| 4 | KEEP IT | Record a take. Note what you heard. | `journal/take-moments` |
+| 5 | YOUR SOURCES | Keep the lesson beside the part it's for. | `references/section` |
+| 6 | WORK IT OUT | Name the notes by ear. See them on the neck. | `reference/watch-on-neck` |
+| 7 | BUILD IT UP | Ramp a loop up to full speed. | `reference/loop-automator` |
+| 8 | RUN IT | Today's session, shaped by your goals. | `reference/practice-hub` |
+| 9 | KEEP IT | See the days you played. Never a score. | `journal/progress` |
+| 10 | YOUR METHOD | Your songs, drills and routines, in one place. | `reference/home` |
+
+**To shoot them again:**
+1. `POCKET_SIM="iPhone 17 Pro Max" POCKET_SHOT_OUT=build/shots-appstore POCKET_SHOOT_ONLY=AppStoreShots ./scripts/shoot-manual.sh`
+   for frames 1 and 3. Their images land in `build/shots-appstore/export/`, named in its `manifest.json`.
+2. `POCKET_SIM="iPhone 17 Pro Max" POCKET_SHOT_OUT=build/shots-appstore-manual POCKET_SHOOT_PASS="base player exercises map" ./scripts/shoot-manual.sh`
+   for the rest (`filed-partial/`).
+3. Write a `frames.json` from the table, then `swift scripts/appstore-frames.swift frames.json <out>`.
+   A non-breaking space (`\u00a0`) keeps two words of a headline together.
+
+*Watch-outs:* frame 4's take is on *I'd Rather Go Blind (Cover)*, one of the seed's covers credited to
+Jack Trader, so a real song title is on screen. Frame 5's links read `example.com`. The practice log's
+lower half (`journal/month-heatmap`) is unusable as a frame: its header ghosts under the navigation bar,
+and it ends on *0 Mastered*.
+
+## Screenshots — REVISED shoot guide (re-shoot, 2026-07-21) — history
 
 **Why re-shoot:** the `appstore-final/` set was shot **2026-07-16** and now predates
 a batch of UI-changing merges (all Jul 20–21): Home regrouped into titled sections
@@ -659,8 +693,10 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 - [ ] The description's £ prices: if English (U.K.) is the only English localization, every
       storefront reads them. Decide whether to add English (U.S.)
 - [ ] *What's New — 1.4* pasted
-- [ ] Screenshots: a new set, because the 1.1 set predates the hub, the sheets, References and the
-      plan. No price, padlock or "free" in any of them (2.3.7). Delete the carried-over set first
+- [x] Screenshots: the 1.4 set is shot (see *Screenshots — 1.4*). No price, padlock or "free" in any
+      of them (2.3.7)
+- [ ] Screenshots uploaded to version 1.4, in filename order, after deleting the 1.1 set it carried
+      over (which predates the hub, the sheets, References and the plan)
 - [ ] App Privacy re-checked, *Purchases* included
 - [ ] App Review notes pasted, after the sandbox pass confirms the plan sentence
 

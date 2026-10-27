@@ -108,7 +108,11 @@ extension PracticeHistorySeed {
         let specs = [
             RoutineSpec(name: "Evening technique",
                         slugs: ["spider-walk", "alternate-picking"], loops: 0),
-            RoutineSpec(name: "Blues, week three", slugs: ["a-minor-pentatonic"], loops: 1)
+            RoutineSpec(name: "Blues, week three", slugs: ["a-minor-pentatonic"], loops: 1),
+            // The App Store's *Run it* frame (ADR 0279 D4): a routine built for something coming up,
+            // out of the starter song's own loops and the two drills an open-mic set leans on.
+            RoutineSpec(name: "Open mic, Friday", slugs: ["pop-changes", "strumming-down-up-eighths"],
+                        loops: 0, bintaLoops: ScreenshotSeed.bintaLoopNames)
         ]
 
         for (index, spec) in specs.enumerated() {
@@ -125,13 +129,21 @@ extension PracticeHistorySeed {
                 guard let exercise = exercises.first(where: { $0.presetSlug == slug }) else { continue }
                 items.append(.item(exercise, order: items.count))
             }
+            // Named loops are *Binta*'s, found by name rather than by position, because the fetch
+            // that hands `loops` in has no order. No assert: `ExportUITests` seeds history without
+            // *Binta*, and a routine whose loops aren't there keeps its drills, as before.
+            let chosen = spec.bintaLoops.isEmpty
+                ? Array(loops.prefix(spec.loops))
+                : spec.bintaLoops.compactMap { name in
+                    loops.first { $0.name == name && $0.song?.title == StarterTrack.title }
+                }
             // A rest between the drills and the loop — the shape the page describes, and the one
             // that makes the row's "· 1 rest" half of the summary non-zero on at least one routine
             // that is not the preset.
-            if !items.isEmpty && spec.loops > 0 {
+            if !items.isEmpty && !chosen.isEmpty {
                 items.append(RoutineItem(kind: .rest, order: items.count))
             }
-            for loop in loops.prefix(spec.loops) {
+            for loop in chosen {
                 items.append(.item(loop, order: items.count))
             }
 
@@ -164,6 +176,8 @@ extension PracticeHistorySeed {
         let name: String
         let slugs: [String]
         let loops: Int
+        /// Loops of *Binta*'s to use, by name, instead of the first `loops` of the store's.
+        var bintaLoops: [String] = []
     }
 
     // MARK: - Dates

@@ -51,7 +51,8 @@ final class SeededRoutineShapeTests: XCTestCase {
     /// `firstRunSlugs` rather than restating it, so retiring a spec from the first-run set fails
     /// here instead of in a photograph.
     func testSeededRoutinesNameOnlyDrillsAFreshInstallHas() {
-        let named = ["spider-walk", "alternate-picking", "a-minor-pentatonic"]
+        let named = ["spider-walk", "alternate-picking", "a-minor-pentatonic",
+                     "pop-changes", "strumming-down-up-eighths"]
         for slug in named {
             XCTAssertTrue(PracticePresets.firstRunSlugs.contains(slug),
                           "the routine seed names '\(slug)', which a fresh install does not seed — "
@@ -81,7 +82,7 @@ final class SeededRoutineShapeTests: XCTestCase {
         try context.save()
 
         let routines = try context.fetch(FetchDescriptor<Routine>())
-        XCTAssertEqual(routines.count, 2, "both seeded routines should land")
+        XCTAssertEqual(routines.count, 3, "all three seeded routines should land")
 
         let evening = try XCTUnwrap(routines.first { $0.name == "Evening technique" })
         XCTAssertEqual(evening.items.filter(\.kind.carriesUnit).count, 2)
@@ -95,6 +96,57 @@ final class SeededRoutineShapeTests: XCTestCase {
                        "one exercise and one loop")
         XCTAssertEqual(blues.items.filter { !$0.kind.carriesUnit }.count, 1,
                        "the rest between them")
+
+        // No Binta in this store (`ExportUITests` seeds history the same way), so *Open mic* keeps
+        // its two drills and gets no rest, rather than borrowing another song's loop.
+        let openMic = try XCTUnwrap(routines.first { $0.name == "Open mic, Friday" })
+        XCTAssertEqual(openMic.items.filter(\.kind.carriesUnit).count, 2, "its two drills, and no loop")
+        XCTAssertEqual(openMic.items.filter { !$0.kind.carriesUnit }.count, 0, "no rest without a loop")
+    }
+
+    /// *Open mic, Friday* is the App Store's *Run it* frame (ADR 0279): two drills, a rest, then
+    /// **Binta's** loops, found by name *and* song. A same-named loop on another song is the trap:
+    /// the store hands loops over unordered, so a name-only match could pick either.
+    @MainActor
+    func testOpenMicTakesBintasOwnLoops() throws {
+        let context = try makeContext()
+        for spec in PracticePresets.firstRunSpecs {
+            let exercise = Exercise(name: spec.name)
+            exercise.presetSlug = spec.slug
+            context.insert(exercise)
+        }
+        let decoy = Song(title: "Another Song", duration: 100,
+                         ref: SongRef(id: "another-song", source: .localFile, bookmark: nil))
+        context.insert(decoy)
+        let decoyLoop = Loop(name: ScreenshotSeed.bintaLoopNames[0], start: 0.1, end: 0.2, speed: 1, repeats: 1)
+        decoyLoop.song = decoy
+        context.insert(decoyLoop)
+        let binta = Song(title: StarterTrack.title, duration: 81,
+                         ref: SongRef(id: "binta", source: .localFile, bookmark: nil))
+        context.insert(binta)
+        for (index, name) in ScreenshotSeed.bintaLoopNames.enumerated() {
+            let loop = Loop(name: name, start: 0.2 + Double(index) * 0.2, end: 0.35 + Double(index) * 0.2,
+                            speed: 1, repeats: 1)
+            loop.song = binta
+            context.insert(loop)
+        }
+        try context.save()
+
+        PracticeHistorySeed.seedRoutines(exercises: try context.fetch(FetchDescriptor<Exercise>()),
+                                         loops: try context.fetch(FetchDescriptor<Loop>()),
+                                         into: context)
+        try context.save()
+
+        let openMic = try XCTUnwrap(try context.fetch(FetchDescriptor<Routine>())
+            .first { $0.name == "Open mic, Friday" })
+        let ordered = openMic.items.sorted { $0.order < $1.order }
+        XCTAssertEqual(ordered.filter(\.kind.carriesUnit).count, 2 + ScreenshotSeed.bintaLoopNames.count,
+                       "two drills and every one of Binta's loops")
+        XCTAssertEqual(ordered.filter { !$0.kind.carriesUnit }.count, 1, "one rest between them")
+        let loops = ordered.compactMap(\.loop)
+        XCTAssertEqual(loops.map(\.name), ScreenshotSeed.bintaLoopNames, "Binta's loops, in order")
+        XCTAssertTrue(loops.allSatisfy { $0.song?.title == StarterTrack.title },
+                      "a same-named loop on another song must not be picked")
     }
 
     /// The guard that stops the seed topping up a library that already holds these names — a second
