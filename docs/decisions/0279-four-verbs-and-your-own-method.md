@@ -4,7 +4,7 @@
   on 2026-10-27. Built on `pocket-391-listing-copy-1-4`.
 - **Date:** 2026-10-27
 - **Amends:** ADR 0276 — **D1**: the line leads with the player, not the songs. The listing's opening
-  is now *"Red Moon is a practice studio for players who learn from everywhere."* *Practice studio*,
+  is now *"Red Moon is a practice studio for guitar players who learn from everywhere."* *Practice studio*,
   *adds up* and *nobody is marking you* all stand, as do D2 to D4.
 - **Relates to:** 0167 (where you learned it: the references this ADR's roof rests on) · 0070 (no
   grading, which is why the fourth verb is *keep it*, not *score it*) · 0132 (the click that thins) ·
@@ -26,7 +26,7 @@ routine built around the parts they found hard (*Symposium Oct Practice*).
 
 ### D1 — The line leads with the player
 
-> **Red Moon is a practice studio for players who learn from everywhere.**
+> **Red Moon is a practice studio for guitar players who learn from everywhere.**
 >
 > It doesn't hand you another method. It gives you the tools to build your own from what you already
 > learn from, and it keeps everything you do, so your practice adds up instead of starting over.
@@ -71,6 +71,23 @@ The person is described by a situation, not a demographic: a self-taught player 
 the way, such as an open mic, a jam, a lesson or a recording. In Jobs-to-be-Done terms that date is
 the trigger. *Tutorial hell* (the self-taught programmer's name for watching lessons without getting
 better) is candidate language for the site and social posts. It isn't for the App Store.
+
+### D5 — Guitar first, bass second, everyone else after
+
+Tomisin, 2026-10-27: *"mainly guitar players. bass secondary, and other musicians after. all musicians
+could benefit but it's mainly a guitar focused app."* What the app supports bears that order out:
+
+- **Guitar** has everything: the drills, chords, strumming, the fretboard and tabs.
+- **Bass** has its own four-string neck, bass chord shapes and bass tunings. Strumming drills aren't
+  offered on bass (0248's first-run order and the bass chord work in CHANGELOG 1.2).
+- **Any other instrument** gets the song player, the metronome, routines and the journal. The first run
+  takes Piano, Singing, Drums, Ukulele, Violin and others, and their Practice fills from the loops they
+  save (0248).
+
+So the line says *guitar players*, the description's second paragraph names bass and then everyone
+else, and **"guitar" moves from the keywords into the subtitle** (*"Loop & slow down guitar songs"*),
+still led by the slow-downer. A word in the name or subtitle is already indexed, so the keyword field's
+seven characters go to *tabs*. Screenshots show guitar.
 
 ## Consequences
 

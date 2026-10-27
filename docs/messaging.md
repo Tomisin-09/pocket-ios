@@ -8,7 +8,7 @@ are judgements from the repo and the competitor roster, not research with player
 
 ## 1. The line
 
-> **Red Moon is a practice studio for players who learn from everywhere.** It doesn't hand you
+> **Red Moon is a practice studio for guitar players who learn from everywhere.** It doesn't hand you
 > another method. It gives you the tools to build your own from what you already learn from, and it
 > keeps everything you do, so your practice adds up instead of starting over.
 

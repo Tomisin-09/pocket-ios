@@ -62,7 +62,10 @@ studio* (24 of 30 characters). It was **Red Moon Practice**, the qualifier that 
 Settings ▸ Subscriptions (ADR 0277).
 
 ## Subtitle — 30 char max
-> **Loop, slow down, learn songs**  *(28)*
+> **Loop & slow down guitar songs**  *(29)*
+
+*1.4 (2026-10-27, ADR 0279 D5): "guitar" moves out of the keywords and into the subtitle,
+which search weighs more, still led by the slow-downer. Before: "Loop, slow down, learn songs" (28).*
 
 Alternates:
 - `Slow down and loop any song` *(27)*
@@ -98,16 +101,23 @@ routines; the claim is holding both ends.*
 
 ## Keywords — 100 char max, comma-separated, NO spaces after commas
 Don't spend keyword space on words already in the name ("practice") or subtitle.
-> `guitar,looper,slow downer,metronome,tempo,scales,chords,arpeggio,riff,solo,transcribe,woodshed,bass`
+> `looper,slow downer,metronome,tempo,scales,chords,arpeggio,riff,solo,transcribe,woodshed,bass,tabs`
+
+*1.4: "guitar" left for the subtitle (a word in the name or subtitle is already indexed, so repeating
+it here wastes space), and "tabs" took its place. Before: `guitar,looper,…,woodshed,bass`.*
 
 *(99 chars — verify in the field; ASC counts live.)*
 
 ## Description
-> **Red Moon is a practice studio for players who learn from everywhere.**
+> **Red Moon is a practice studio for guitar players who learn from everywhere.**
 >
 > A video lesson, a teacher, a tab, a record you love. Red Moon doesn't hand you another method. It
 > gives you the tools to build your own from what you already learn from, and it keeps everything you
 > do, so your practice adds up instead of starting over. Nobody is marking you.
+>
+> Built for guitar, with drills, chords and the fretboard at its heart. Bass gets its own four-string
+> neck, tunings and shapes. Play something else? The song player, the metronome, routines and the
+> journal work for any instrument.
 >
 > **Work it out**
 > • Bring in songs you own from Files or iCloud Drive, or share audio in from another app
@@ -138,7 +148,8 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 > • Keep the lesson beside the part it's for: a link or a file on any song, loop or drill
 > • Save to Red Moon from any app's share sheet
 > • Send a routine to a teacher or bandmate, with its songs inside
-> • A tuner, a metronome, chord shapes, a placer that names any voicing, and a glossary
+> • A tuner for guitar and bass, a metronome, chord shapes, a placer that names any voicing, and a
+>   glossary
 >
 > **One plan**
 > Your songs and loops, the Metronome, the Journal and everything in the Toolkit are free. The plan
