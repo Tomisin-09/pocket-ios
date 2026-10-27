@@ -4,6 +4,23 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## A new Apple Account can be welcomed back (logged 2026-10-27, ADR 0256 D4) — for 1.4.1
+
+Seen in the 1.4 sandbox pass, on the device: after one sandbox account had bought and lapsed, a fresh
+one, signed in without quitting the app, got the wall's welcome-back headline (*"Everything you made
+is still here."*) beside its own free week. The free week was right; the headline wasn't.
+
+- **Cause:** `PlanStore.hasBoughtBefore` latches. `refresh()` sets it to `true` and only ever asks
+  `Transaction.all` again while it is `false`, so it never goes back when the Apple Account changes.
+  It lives in memory, so quitting the app clears it.
+- **Who sees it:** someone who changes the App Store account while Red Moon is open, after an account
+  that bought. Rare. App Review starts from a fresh launch.
+- **Fix, not decided here:** ask `Transaction.all` on every refresh while the plan is off, one walk
+  of a short history, instead of only until it first says yes. Not `Storefront.updates`: the two
+  sandbox accounts were both in the UK, so no storefront changed. A test has to sign one account out
+  and another in; `PlanStore` reads StoreKit directly, so this may need a StoreKit-testing session
+  rather than a unit test.
+
 ## Chord flourishes past one note (parked 2026-10-04, ADR 0252)
 
 ADR 0252 lets a hammer-on or pull-off in a chord move one note, the one on the string tapped, with the
