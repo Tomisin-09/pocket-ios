@@ -3,7 +3,7 @@
 > ## The plan, not "free" — ADR 0256 (2026-10-17), which superseded ADR 0237 (2026-10-01)
 >
 > ADR 0237 made the app free, and the free build never shipped. **ADR 0256 reversed it:** one plan,
-> £1 / $1 a month (with a free week first) or £15 / $15 once; the Song library, the song player with
+> £0.99 a month (with a free week first) or £14.99 once (ADR 0277); the Song library, the song player with
 > saved loops, the Metronome, the Journal and Practice log, and the Toolkit stay free (ADR 0263), and
 > practising is the plan. This file was written for the free release and still carries its
 > checklists, its *What's New* draft and its review notes below. **Those are history: do not paste
@@ -50,8 +50,10 @@ local / iCloud audio files** — never imply Apple Music / Spotify streaming (se
 ---
 
 ## Name (reserved)
-**Red Moon Practice** — already reserved in App Store Connect (the qualifier that
-clears the "Red Moon Fitness" name collision).
+**Red Moon Practice Studio** — renamed in App Store Connect for 1.4, after ADR 0276's *practice
+studio* (24 of 30 characters). It was **Red Moon Practice**, the qualifier that cleared the
+"Red Moon Fitness" name collision. The subscription group *Red Moon* shows this name beside it in
+Settings ▸ Subscriptions (ADR 0277).
 
 ## Subtitle — 30 char max
 > **Loop, slow down, learn songs**  *(28)*
@@ -315,9 +317,10 @@ come from App Store Connect (ADR 0239). The region-split usage counts ADRs 0120 
 Questionnaire answers are all "None" → **4+**.
 
 ## Price / availability
-- **App price:** Free to download; one plan inside it (ADR 0256): **Monthly** (£1 / $1, with a free
-  week as an introductory offer; product `click.decooperations.pocket.plan.monthly`) or **Pay once**
-  (£15 / $15, non-consumable; `…plan.payonce`). Family Sharing off (ADR 0259). The founding price is
+- **App price:** Free to download; one plan inside it (ADR 0256): **Monthly** (£0.99, with a free
+  week as an introductory offer; product `click.decooperations.pocket.plan.monthly2` in the group
+  **Red Moon**) or **Pay once** (£14.99, non-consumable; `…plan.payonce`). UK is the base storefront;
+  the rest are App Store Connect's generated prices. `…plan.monthly` is spent (ADR 0277 D3). Family Sharing off (ADR 0259). The founding price is
   held for as long as a player keeps the plan (ADR 0274).
 - **In-app purchases:** the two products above. *History, kept for the record:* the two auto-renewable subscriptions that ADR 0144
   set up (`click.decooperations.pocket.pro.annual` and `…pro.monthly`, group

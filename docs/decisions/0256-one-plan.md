@@ -17,6 +17,11 @@
   you can do today will ever move behind a higher one."* The price can now rise for new players, but
   never for a player who holds it. D8's reason for *"We'll"* and the Consequences' *"A price can
   never rise"* go with it. D1's prices, and D8's second half, stand.
+  **ADR 0277** (2026-10-26) — **D1**: the prices are **£0.99 a month and £14.99 once**, because App
+  Store Connect offered no £1.00 or £15.00 point, and *"Round on purpose"* goes. The monthly's id is
+  now `click.decooperations.pocket.plan.monthly2`, in a new group, *Red Moon*. The original
+  `…plan.monthly` was created in the old group by mistake, deleted, and can never be reused. The
+  free week, *Pay once* and the rest of D1 stand.
 - **Supersedes:** ADR 0237 — **D1** (the app is free, with no in-app purchase) and **D7** (Settings
   loses its plan row): Red Moon has one plan again (D1 here), and Settings shows it (D10). **D3**'s
   promise that nothing free may ever move behind a price is replaced, before anyone held the free
@@ -57,6 +62,10 @@ ADR 0112's free line. D2 is that line, with the Journal moved behind the plan.
 ## Decisions
 
 ### D1 — One plan, two ways to pay
+
+> **Amended by 0277 (2026-10-26):** App Store Connect offered no £1.00 or £15.00 point, so the prices
+> are £0.99 and £14.99, and the monthly's id is `…plan.monthly2`. The original `…plan.monthly` is
+> spent. The table below is D1 as it was decided.
 
 | | Price | Kind | Product id |
 |---|---|---|---|

@@ -62,7 +62,7 @@ extension FAQEntry {
     /// looked up by name.
     static let all: [FAQEntry] = [
         // MARK: Getting started
-        .init(question: "What is Red Moon Practice?",
+        .init(question: "What is Red Moon?",
               answer: "A practice studio that runs on music you already own, built so your practice "
                 + "adds up instead of starting over each day. It holds two things that usually "
                 + "live in separate apps. One is the audio: bring in a song, mark the bars you "

@@ -134,7 +134,7 @@ struct YourPlanSettingsView: View {
 #Preview("Your plan — free") {
     NavigationStack { YourPlanSettingsView() }
         .environment(PlanStore(preview: .none,
-                               prices: PlanStore.OfferPrices(monthly: "£1", payOnce: "£15",
+                               prices: PlanStore.OfferPrices(monthly: "£0.99", payOnce: "£14.99",
                                                              trial: PlanTrial(unit: .week, value: 1))))
         .preferredColorScheme(.dark)
 }
@@ -142,7 +142,7 @@ struct YourPlanSettingsView: View {
 #Preview("Your plan — the free week") {
     NavigationStack { YourPlanSettingsView() }
         .environment(PlanStore(preview: .monthly,
-                               prices: PlanStore.OfferPrices(monthly: "£1", payOnce: "£15",
+                               prices: PlanStore.OfferPrices(monthly: "£0.99", payOnce: "£14.99",
                                                              trial: PlanTrial(unit: .week, value: 1)),
                                ownMonthlyRenews: true, freeWeekEnds: .now.addingTimeInterval(5 * 86_400)))
         .preferredColorScheme(.dark)

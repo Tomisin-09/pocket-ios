@@ -3,6 +3,8 @@
 - **Status:** Accepted — decided with Tomisin on 2026-10-24. Wording only; nothing in the app's behaviour,
   data or screens changes.
 - **Date:** 2026-10-24
+- **Amended by:** ADR 0278 (2026-10-26) — **D3**: Help's first question is now *"What is Red Moon?"*,
+  after the App Store rename to *Red Moon Practice Studio*. The rest of D3, and the line, stand.
 - **Amends:** `docs/positioning.md` (not an ADR) — §0 is new, §6's product-framing line says *studio*, and
   §7's audit becomes a status table.
 - **Relates to:** 0001 (the audio is the player's own, which is why *studio* can be said) · 0070 (never
@@ -39,6 +41,10 @@ descriptions of the app (`FAQEntry`, the manual, the beta guide, the listing cop
 *tutor* or *teacher*: they promise judgement, which 0070 rules out.
 
 ### D3 — Wording only; the questions stay
+
+> **Amended by 0278 (2026-10-26):** after the app was renamed on the App Store to *Red Moon
+> Practice Studio*, the first question became *"What is Red Moon?"*. The answer, and the other
+> questions, stay as below.
 
 `FAQEntry`'s *"What is Red Moon Practice?"* keeps its question text, because `check-manual.py` C3
 pins every cited question and `FAQEntryTests` pins the catalog. Only the answer changed, and
