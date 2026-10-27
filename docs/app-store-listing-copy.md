@@ -10,6 +10,12 @@
 > its *One plan* block and the EULA line), *What's New — 1.4*, Price / availability, App Review
 > notes, and the **1.4 pre-submission checklist**. Every other *What's New* draft and checklist
 > below is history. Don't paste from it.
+>
+> **Don't copy from this file into App Store Connect.** Its blockquotes are wrapped and marked up for
+> reading here, and App Store Connect's fields are plain text that keep every line break. Run
+> `./scripts/export-listing.py --copy <field>` and paste. The fields are `subtitle`,
+> `promotional-text`, `keywords`, `description`, `whats-new` and `review-notes`. The script checks each
+> field's limit and the description's EULA link first, and copies nothing if one fails.
 
 > ## ⚠ 1.0 is RELEASED, not held (discovered 2026-08-07)
 >
@@ -97,55 +103,42 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 *(99 chars — verify in the field; ASC counts live.)*
 
 ## Description
-> **Red Moon is a practice studio, not a jukebox.**
+> **Red Moon is a practice studio for players who learn from everywhere.**
 >
-> Bring in a song you own and loop the bar you can't play yet, on guitar or bass.
-> Slow it down without the pitch dropping, then line your loops up with your drills
-> into a session you press play on. Red Moon remembers how each one is coming along, so
-> tomorrow starts where today stopped. Nobody is marking you.
+> A video lesson, a teacher, a tab, a record you love. Red Moon doesn't hand you another method. It
+> gives you the tools to build your own from what you already learn from, and it keeps everything you
+> do, so your practice adds up instead of starting over. Nobody is marking you.
 >
-> **Loop and slow down**
-> • Import audio files you own from Files or iCloud Drive
-> • Draw a loop on the waveform, as short as half a second, and repeat it hands-free
-> • Slow the tempo while the pitch stays true, with a click under it at the same speed
-> • Mark snags without stopping, then tighten the loop to where they land
+> **Work it out**
+> • Bring in songs you own from Files or iCloud Drive, or share audio in from another app
+> • Loop the bar you can't play yet, as short as half a second, and let it go round
+> • Slow it down while the pitch stays true
+> • Count the notes, name them on the neck, and keep what you find as tab
 > • A song is waiting the first time you open the app, with a three-step guide
 >
-> **Build a session**
-> • Chain loops, songs, drills and rests into a routine and press play
-> • A routine remembers when you last played it, and never sets you a target
-> • Today's session builds one for you from three questions and your goals
-> • A tuner is offered before you start, and between blocks
->
-> **Work a part out by ear**
-> • Count the notes: tap once for each note you hear, pass after pass
-> • Name the notes on the neck, by fret and string, or by ear
-> • Keep what you found as tab, and watch the song's map fill in
-> • Or write a tab yourself, and export it as text or PDF
-> You do the hearing. Red Moon keeps the record, and never checks your answer.
->
-> **Drills on a real fretboard**
-> • Scales and arpeggios drawn as fretboard boxes, labelled by where your hand goes
-> • Chord diagrams, movable shapes, and a placer that names any voicing you build
-> • Picking, legato, strumming and chord-change drills with a tempo ramp
-> • Progressions in any key, including ones you write yourself
->
-> **A journal, not a scoreboard**
-> • Notes on a loop, a drill or a whole session, in a dated journal
-> • Record takes with the mic, and pin a note to a moment in one
-> • This week shows the minutes and days you played, and never scores them
->
-> **A metronome and a tuner you can trust**
-> • Count-in, time signatures, and a tempo that ramps across a run
+> **Build it up**
+> • Every drill runs against a click: scales, arpeggios, picking, legato, strumming, chord changes
+> • A tempo ramp raises the speed a step at a time, holds it, and can back off
 > • Click withdrawal thins the click, so you carry the pulse yourself
-> • A tuner for guitar and bass, with alternate tunings
+> • Scales and chords drawn on the fretboard, labelled by where your hand goes
 >
-> **Keep the lesson you're following**
-> • Put a link or a file on any song, loop or drill, with a note on what you took
->   from it
-> • Send a routine to your teacher or a bandmate with its songs inside, so it plays
->   at the other end
+> **Run it**
+> • Chain loops, songs, drills and rests into a routine, and press play
+> • Build one around the parts you find hard, for a gig, a lesson or just this week
+> • Today's session builds one for you from three questions and your goals
+> • A routine remembers when you last ran it, and never sets you a target
+>
+> **Keep it**
+> • Record takes, and pin a note to a moment in one
+> • Write down what you noticed, on a loop, a drill or a whole session
+> • The practice log shows the days and minutes you played, and never scores them
 > • Export a take or a song's audio to work on in your DAW
+>
+> **Your sources, your method**
+> • Keep the lesson beside the part it's for: a link or a file on any song, loop or drill
+> • Save to Red Moon from any app's share sheet
+> • Send a routine to a teacher or bandmate, with its songs inside
+> • A tuner, a metronome, chord shapes, a placer that names any voicing, and a glossary
 >
 > **One plan**
 > Your songs and loops, the Metronome, the Journal and everything in the Toolkit are free. The plan
@@ -167,7 +160,7 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 > The monthly plan is an auto-renewable subscription. Terms of Use (EULA):
 > https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
-*Rewritten for the (since superseded) free release, 2026-10-02, to the plan in the Marketing Foundation; re-voiced 2026-10-24 as a practice studio that adds up, and the "nothing to buy" line removed (ADR 0256):*
+*Restructured 2026-10-27 and approved by Tomisin the same day (ADR 0279), around four verbs, *work it out · build it up · run it · keep it*, under one roof, *your sources, your method*. The opening names the audience: the self-taught player who learns from everywhere. The 2026-10-24 version (seven feature groups, opening *"a practice studio, not a jukebox"*) is in git history. Before that: rewritten for the free release, 2026-10-02; re-voiced 2026-10-24 as a practice studio that adds up (ADR 0256):*
 
 - *The opening names both halves, the loop on your own song and the session it feeds,
   and ends on "Nobody is marking you". The headline and the start of that paragraph
@@ -386,7 +379,7 @@ Questionnaire answers are all "None" → **4+**.
 Paste into **App Review Information → Notes**. Everything here is checked against the
 shipping code, not aspiration.
 
-> Red Moon Practice is a guitar practice tool. No account or sign-in is required —
+> Red Moon Practice Studio is a guitar and bass practice tool. No account or sign-in is required —
 > nothing is created on a server and there is no login to give you.
 >
 > **One plan, no advertising.** The Song library, the song player (saved loops and markers), the
@@ -647,7 +640,8 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 **The listing**
 - [ ] Name *Red Moon Practice Studio* (done), subtitle and keywords
 - [ ] Promotional text replaced
-- [ ] Description pasted, with the *One plan* block, the promise, and **the EULA line at the end**
+- [ ] Every text field pasted through `./scripts/export-listing.py --copy <field>`, never from this
+      file. The description carries the *One plan* block, the promise and **the EULA line at the end**
 - [ ] The description's £ prices: if English (U.K.) is the only English localization, every
       storefront reads them. Decide whether to add English (U.S.)
 - [ ] *What's New — 1.4* pasted

@@ -677,6 +677,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **The listing is pasted through `scripts/export-listing.py`** (ADR 0279). App Store Connect's fields
+  are plain text that keep every line break, so pasting from `docs/app-store-listing-copy.md` would
+  carry its `>` and `**` marks and its wrapping into the listing. The script writes each field as plain
+  text, checks it against the field's limit, checks the description for the EULA link (the 1.1
+  rejection), and with `--copy <field>` puts one field on the clipboard.
 - **The store is pinned to the app's own Application Support** (`PocketStore`). The share extension
   needs an App Group, and SwiftData's default configuration (`groupContainer: .automatic`) moves the
   store into the first group the app is entitled to. On the simulator, the first launch with the group
