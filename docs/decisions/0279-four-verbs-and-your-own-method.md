@@ -84,10 +84,12 @@ could benefit but it's mainly a guitar focused app."* What the app supports bear
   takes Piano, Singing, Drums, Ukulele, Violin and others, and their Practice fills from the loops they
   save (0248).
 
-So the line says *guitar players*, the description's second paragraph names bass and then everyone
-else, and **"guitar" moves from the keywords into the subtitle** (*"Loop & slow down guitar songs"*),
-still led by the slow-downer. A word in the name or subtitle is already indexed, so the keyword field's
-seven characters go to *tabs*. Screenshots show guitar.
+So the line says *guitar players*, the description's third paragraph names bass and then everyone
+else, and the screenshots show guitar.
+
+**The subtitle stays *"Loop, slow down, learn songs"*** (Tomisin, 2026-10-27). *"Loop & slow down
+guitar songs"*, with *guitar* leaving the keywords for *tabs*, was considered and turned down. So
+*guitar* stays the first keyword: neither the name nor the subtitle carries it.
 
 ## Consequences
 

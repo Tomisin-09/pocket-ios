@@ -62,10 +62,10 @@ studio* (24 of 30 characters). It was **Red Moon Practice**, the qualifier that 
 Settings ▸ Subscriptions (ADR 0277).
 
 ## Subtitle — 30 char max
-> **Loop & slow down guitar songs**  *(29)*
+> **Loop, slow down, learn songs**  *(28)*
 
-*1.4 (2026-10-27, ADR 0279 D5): "guitar" moves out of the keywords and into the subtitle,
-which search weighs more, still led by the slow-downer. Before: "Loop, slow down, learn songs" (28).*
+*Kept for 1.4 (Tomisin, 2026-10-27, ADR 0279 D5). "Loop & slow down guitar songs" was considered
+and turned down, so "guitar" stays the first keyword.*
 
 Alternates:
 - `Slow down and loop any song` *(27)*
@@ -101,10 +101,10 @@ routines; the claim is holding both ends.*
 
 ## Keywords — 100 char max, comma-separated, NO spaces after commas
 Don't spend keyword space on words already in the name ("practice") or subtitle.
-> `looper,slow downer,metronome,tempo,scales,chords,arpeggio,riff,solo,transcribe,woodshed,bass,tabs`
+> `guitar,looper,slow downer,metronome,tempo,scales,chords,arpeggio,riff,solo,transcribe,woodshed,bass`
 
-*1.4: "guitar" left for the subtitle (a word in the name or subtitle is already indexed, so repeating
-it here wastes space), and "tabs" took its place. Before: `guitar,looper,…,woodshed,bass`.*
+*"guitar" must stay here: neither the name nor the subtitle carries it, so this field is the only
+place search can find it.*
 
 *(99 chars — verify in the field; ASC counts live.)*
 
