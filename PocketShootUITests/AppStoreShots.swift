@@ -15,7 +15,9 @@ import XCTest
 /// shoot names this class, so these never land in the manual's `filed/` set.
 final class AppStoreShots: ManualShotCase {
     /// The loop is started **before** the speed is set, because starting a loop can apply the speed
-    /// the loop was saved at.
+    /// the loop was saved at. The gridlines are switched off last: at App Store size the waveform reads
+    /// clearer without them (Tomisin, 2026-10-27), and requiring *Show gridlines* keeps a frame with
+    /// the grid still on from passing.
     @MainActor
     func testWorkItOut() {
         let app = launchForShoot()
@@ -25,11 +27,14 @@ final class AppStoreShots: ManualShotCase {
             revealing: app.buttons["Deactivate loop"], called: "the active loop transport")
         tap(app.buttons["0.75×"], labelled: "the 0.75× preset",
             revealing: app.buttons["Playback speed 0.75 times"], called: "the reduced speed readout")
+        tap(app.buttons["Hide gridlines"], labelled: "the Grid chip",
+            revealing: app.buttons["Show gridlines"], called: "the gridlines switched off")
 
         captureChromeless(app, slug: "appstore/work-it-out",
                           screen: "the song player, looping and slowed",
                           ownedBy: ["Looping Chords"],
-                          alsoRequiring: ["Deactivate loop", "Playback speed 0.75 times", "Waveform"])
+                          alsoRequiring: ["Deactivate loop", "Playback speed 0.75 times", "Waveform",
+                                          "Show gridlines"])
     }
 
     /// The routine's own screen, opened the way `ManualRoutineShots` opens *Morning Routine*. That

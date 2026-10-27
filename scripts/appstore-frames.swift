@@ -5,9 +5,11 @@
 //
 // `frames.json` is a list of `{ "source": "<capture.png>", "verb": "WORK IT OUT",
 // "headline": "Loop the bar you can't play.", "name": "01-work-it-out" }`, with each `source`
-// relative to the manifest. Each frame is drawn at both sizes App Store Connect takes for iPhone,
-// natively rather than one resized into the other (the two aspect ratios differ, so a resize would
-// stretch): 1320×2868 (6.9") into `<out>/6.9/` and 1242×2688 (6.5") into `<out>/6.5/`.
+// relative to the manifest. Each frame is drawn natively at three iPhone sizes, rather than one
+// resized into another (their aspect ratios differ, so a resize would stretch): 1206×2622 (6.3") into
+// `<out>/6.3/`, 1320×2868 (6.9") into `<out>/6.9/` and 1242×2688 (6.5") into `<out>/6.5/`. **6.3" is
+// the one App Store Connect requires**: its slot, *iPhone with Dynamic Island (medium display)*, takes
+// only 1206×2622 or 1179×2556, and rejected both other sizes on 2026-10-27.
 //
 // The look is the app's: the near-black background (`#040404`), the brand teal (`#60A8C7`) for the
 // verb, white Futura for the headline. The capture sits below, whole, with the phone's rounded
@@ -35,7 +37,11 @@ struct Canvas {
     let height: Int
 }
 
-let canvases = [Canvas(folder: "6.9", width: 1320, height: 2868), Canvas(folder: "6.5", width: 1242, height: 2688)]
+let canvases = [
+    Canvas(folder: "6.3", width: 1206, height: 2622),
+    Canvas(folder: "6.9", width: 1320, height: 2868),
+    Canvas(folder: "6.5", width: 1242, height: 2688)
+]
 let background = NSColor(srgbRed: 4 / 255, green: 4 / 255, blue: 4 / 255, alpha: 1)
 let teal = NSColor(srgbRed: 0x60 / 255, green: 0xA8 / 255, blue: 0xC7 / 255, alpha: 1)
 

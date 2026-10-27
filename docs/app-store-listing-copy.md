@@ -514,12 +514,15 @@ new build needed).
 Ten frames, one story: the four verbs twice, then the roof. Shot dark at 09:41 on the iPhone 17 Pro
 Max simulator by the manual's harness, with the plan unlocked (no padlocks, no prices: Guideline
 2.3.7), and captioned by `scripts/appstore-frames.swift`. The finished set is in
-`~/Documents/Red Moon Screenshots 2/appstore-2026-10-27/`: **`6.9/`** (1320×2868) and **`6.5/`**
-(1242×2688). Upload whichever size the iPhone slot asks for, in filename order.
+`~/Documents/Red Moon Screenshots 2/appstore-2026-10-27/`: **`6.3/`** (1206×2622), `6.9/` (1320×2868)
+and `6.5/` (1242×2688). Upload **`6.3/`**, in filename order: App Store Connect's one required iPhone
+slot is now *iPhone with Dynamic Island (medium display)*, which takes only 1206×2622 or 1179×2556. It
+rejected the other two sizes there on 2026-10-27 ("File dimensions are invalid"). The 6.9" set fits the
+optional *large display* slot; App Store Connect scales the 6.3" set for every size left empty.
 
 | # | Verb | Headline | Capture (test → slug) |
 |---|---|---|---|
-| 1 | WORK IT OUT | Loop the bar you can't play. Slow it down. | `AppStoreShots.testWorkItOut` (Binta's *Chords* at 0.75×) |
+| 1 | WORK IT OUT | Loop the bar you can't play. Slow it down. | `AppStoreShots.testWorkItOut` (Binta's *Chords* at 0.75×, gridlines off) |
 | 2 | BUILD IT UP | Every drill runs against a click. | `exercises/run-live` |
 | 3 | RUN IT | Line up the hard parts. Press play. | `AppStoreShots.testRunIt` (*Open mic, Friday*) |
 | 4 | KEEP IT | Record a take. Note what you heard. | `journal/take-moments` |

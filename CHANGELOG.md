@@ -682,7 +682,7 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   routine built for a gig. The history seed now includes *Open mic, Friday* (Pop Changes, the strumming
   drill, a rest and *Binta*'s two loops), so the manual's routine figures will show four routines when
   they're next shot. `scripts/appstore-frames.swift` puts the verb and headline over each capture at
-  both iPhone sizes, with no alpha channel. The storyboard is in `docs/app-store-listing-copy.md`.
+  three iPhone sizes, with no alpha channel. 6.3" (1206×2622) is the one App Store Connect requires now. The storyboard is in `docs/app-store-listing-copy.md`.
 - **The listing is pasted through `scripts/export-listing.py`** (ADR 0279). App Store Connect's fields
   are plain text that keep every line break, so pasting from `docs/app-store-listing-copy.md` would
   carry its `>` and `**` marks and its wrapping into the listing. The script writes each field as plain
