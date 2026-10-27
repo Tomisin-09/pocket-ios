@@ -47,6 +47,10 @@ extension ScreenshotSeed {
                 speed: 1.0, repeats: 2, mastery: 2)
     ]
 
+    /// The names of Binta's seeded loops, in order. *Open mic, Friday* is built from them
+    /// (`PracticeHistorySeed+Authored`), so it reads them here rather than spelling them twice.
+    static var bintaLoopNames: [String] { bintaLoops.map(\.name) }
+
     /// Dress an imported Binta. Called by `importReal` before the song is inserted, so its markers,
     /// loops, snags and the snag's line all go in with it.
     static func dressBinta(_ song: Song) {

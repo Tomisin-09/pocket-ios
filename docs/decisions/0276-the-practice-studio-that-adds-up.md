@@ -5,6 +5,9 @@
 - **Date:** 2026-10-24
 - **Amended by:** ADR 0278 (2026-10-26) — **D3**: Help's first question is now *"What is Red Moon?"*,
   after the App Store rename to *Red Moon Practice Studio*. The rest of D3, and the line, stand.
+  **ADR 0279** (2026-10-27) — **D1**: the line leads with the player, *"a practice studio for players
+  who learn from everywhere"*, and the app is told in four verbs (*work it out, build it up, run it,
+  keep it*) under *your sources, your method*. *Practice studio* and *adds up* stand.
 - **Amends:** `docs/positioning.md` (not an ADR) — §0 is new, §6's product-framing line says *studio*, and
   §7's audit becomes a status table.
 - **Relates to:** 0001 (the audio is the player's own, which is why *studio* can be said) · 0070 (never
@@ -27,6 +30,9 @@ with *Red Moon*.
 ## Decisions
 
 ### D1 — The line
+
+> **Amended by 0279 (2026-10-27):** the line now leads with the player: *"Red Moon is a practice
+> studio for players who learn from everywhere."* The rest of what follows stands.
 
 > **Red Moon is a practice studio for songs you own. Your practice adds up instead of starting over,
 > and it works alongside whatever you already learn from.**

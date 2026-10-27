@@ -8,8 +8,13 @@ are judgements from the repo and the competitor roster, not research with player
 
 ## 1. The line
 
-> **Red Moon is a practice studio for songs you own. Your practice adds up instead of starting over,
-> and it works alongside whatever you already learn from.**
+> **Red Moon is a practice studio for guitar players who learn from everywhere.** It doesn't hand you
+> another method. It gives you the tools to build your own from what you already learn from, and it
+> keeps everything you do, so your practice adds up instead of starting over.
+
+*ADR 0279 (2026-10-27). Until then the line was ADR 0276's: "a practice studio for songs you own…
+and it works alongside whatever you already learn from". The new line leads with the person instead
+of the input.*
 
 - **Practice that adds up** is the benefit. Yesterday's loop is a block in today's session, the tempo
   you reached is where you start, and a note sits on the loop it was about.
@@ -19,8 +24,13 @@ are judgements from the repo and the competitor roster, not research with player
 - Say **practice studio**, both words. Not *coach*, *tutor* or *teacher* (promises judgement, ADR
   0070). Not *studio* alone (reads as a recording app).
 
-The three beats the app already teaches in its first-song guide, reused as the structure of every
-pitch: **Loop it → Slow it down → Keep it.** In longer form: *work it out, build it up, keep it.*
+**Four verbs, under one roof (ADR 0279):** **work it out** (the slow-downer and the ear) · **build
+it up** (the click under every drill) · **run it** (routines) · **keep it** (takes, journal, log; your
+own commentary, never a score). The roof is **your sources, your method**: it's why these are tools and
+not a syllabus. The App Store description is organised this way.
+
+The first-song guide keeps its own three beats, **Loop it → Slow it down → Keep it**: it's the way in,
+the first verb taught in detail.
 
 ## 2. The pitch at each length
 
@@ -32,7 +42,7 @@ pitch: **Loop it → Slow it down → Keep it.** In longer form: *work it out, b
 | **To someone who doesn't play** | A notebook and a slow-motion replay for learning an instrument, that never tells you you're doing badly. |
 | **To a teacher** | Build a routine, send it to your student with the songs inside, and it plays on their phone. They loop what you set, and you see nothing of what they play. |
 | **App Store subtitle** | *Loop, slow down, learn songs* — unchanged: it is what people search for. |
-| **App Store promotional text** (editable now; candidate) | Loop the hard bar in your own tracks and slow it down without dropping the pitch. Then line your loops up with your drills into a session that picks up where you left off. |
+| **App Store promotional text** (1.4; 161 of 170 characters; ADR 0279) | Work out the hard bar, build it up against a click, run it in a routine, and keep what you learn. A practice studio for guitar players who learn from everywhere. |
 
 Never say *free*, *streaks*, *score*, *level up*, or imply Apple Music or Spotify works (ADR 0001).
 

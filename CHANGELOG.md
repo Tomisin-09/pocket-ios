@@ -677,6 +677,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **The App Store screenshots are shot and captioned from the repo** (ADR 0279). `AppStoreShots`
+  captures the two frames no manual figure shows: *Binta*'s *Chords* loop playing slowed, and a
+  routine built for a gig. The history seed now includes *Open mic, Friday* (Pop Changes, the strumming
+  drill, a rest and *Binta*'s two loops), so the manual's routine figures will show four routines when
+  they're next shot. `scripts/appstore-frames.swift` puts the verb and headline over each capture at
+  three iPhone sizes, with no alpha channel. 6.3" (1206×2622) is the one App Store Connect requires now. The storyboard is in `docs/app-store-listing-copy.md`.
+- **The listing is pasted through `scripts/export-listing.py`** (ADR 0279). App Store Connect's fields
+  are plain text that keep every line break, so pasting from `docs/app-store-listing-copy.md` would
+  carry its `>` and `**` marks and its wrapping into the listing. The script writes each field as plain
+  text, checks it against the field's limit, checks the description for the EULA link (the 1.1
+  rejection), and with `--copy <field>` puts one field on the clipboard.
 - **The store is pinned to the app's own Application Support** (`PocketStore`). The share extension
   needs an App Group, and SwiftData's default configuration (`groupContainer: .automatic`) moves the
   store into the first group the app is entitled to. On the simulator, the first launch with the group

@@ -1,15 +1,21 @@
-# App Store listing copy — Red Moon Practice v1.1
+# App Store listing copy — Red Moon Practice Studio 1.4
 
-> ## The plan, not "free" — ADR 0256 (2026-10-17), which superseded ADR 0237 (2026-10-01)
+> ## 1.4 is the release (2026-10-26): what's current
 >
-> ADR 0237 made the app free, and the free build never shipped. **ADR 0256 reversed it:** one plan,
-> £0.99 a month (with a free week first) or £14.99 once (ADR 0277); the Song library, the song player with
-> saved loops, the Metronome, the Journal and Practice log, and the Toolkit stay free (ADR 0263), and
-> practising is the plan. This file was written for the free release and still carries its
-> checklists, its *What's New* draft and its review notes below. **Those are history: do not paste
-> from them** — re-derive each from ADR 0256 and 0274 and re-check it against the build. The
-> description, price and review-notes sections have been brought up to date (2026-10-24); the
-> checklists and *What's New* have not.
+> One plan (ADR 0256): **£0.99 a month** (a free week first) **or £14.99 once** (ADR 0277), at the
+> founding price (ADR 0274). The Song library, the song player with saved loops, the Metronome, the
+> Journal and Practice log, and the Toolkit are free (ADR 0263). Practising is the plan.
+>
+> **Current, so paste from these:** Name, Subtitle, Promotional text, Keywords, Description (with
+> its *One plan* block and the EULA line), *What's New — 1.4*, Price / availability, App Review
+> notes, and the **1.4 pre-submission checklist**. Every other *What's New* draft and checklist
+> below is history. Don't paste from it.
+>
+> **Don't copy from this file into App Store Connect.** Its blockquotes are wrapped and marked up for
+> reading here, and App Store Connect's fields are plain text that keep every line break. Run
+> `./scripts/export-listing.py --copy <field>` and paste. The fields are `subtitle`,
+> `promotional-text`, `keywords`, `description`, `whats-new` and `review-notes`. The script checks each
+> field's limit and the description's EULA link first, and copies nothing if one fails.
 
 > ## ⚠ 1.0 is RELEASED, not held (discovered 2026-08-07)
 >
@@ -58,16 +64,27 @@ Settings ▸ Subscriptions (ADR 0277).
 ## Subtitle — 30 char max
 > **Loop, slow down, learn songs**  *(28)*
 
+*Kept for 1.4 (Tomisin, 2026-10-27, ADR 0279 D5). "Loop & slow down guitar songs" was considered
+and turned down, so "guitar" stays the first keyword.*
+
 Alternates:
 - `Slow down and loop any song` *(27)*
 - `The guitar woodshed in your pocket` — too long (34); trim if you love it.
 
 ## Promotional text — 170 char max (editable anytime, no review)
-> Loop the hard bar in your own tracks and slow it down without dropping the
-> pitch — then line those loops up with your drills into a session you press
-> play on. *(157)*
+> Work out the hard bar, build it up against a click, run it in a routine, and keep what you learn.
+> A practice studio for guitar players who learn from everywhere. *(161)*
 
-*Reframed 2026-08-16 (`docs/positioning.md` §6). The promotional field is the **only**
+*1.4 (2026-10-27), chosen by Tomisin: the four verbs and the line (ADR 0279). Replace the live text in
+App Store Connect with this. The field needs no review.*
+
+*Considered for 1.4 the day before, from ADR 0276's candidate (trimmed from 171 to fit): "Loop the
+hard bar in your own tracks and slow it down without dropping the pitch. Then line your loops up with
+drills into a session that picks up where you left off." (166)*
+
+*History. The text from 2026-08-16 was: "Loop the hard bar in your own tracks and slow it down without
+dropping the pitch — then line those loops up with your drills into a session you press play on."
+Reframed 2026-08-16 (`docs/positioning.md` §6). The promotional field is the **only**
 listing layer editable while 1.1 is live — subtitle, keywords, description and
 screenshots are locked until 1.2 — so it carries the intersection claim on its own for
 now. It states both halves in one sentence: the audio engine on your own files, and the
@@ -89,58 +106,61 @@ routines; the claim is holding both ends.*
 Don't spend keyword space on words already in the name ("practice") or subtitle.
 > `guitar,looper,slow downer,metronome,tempo,scales,chords,arpeggio,riff,solo,transcribe,woodshed,bass`
 
+*"guitar" must stay here: neither the name nor the subtitle carries it, so this field is the only
+place search can find it.*
+
 *(99 chars — verify in the field; ASC counts live.)*
 
 ## Description
-> **Red Moon is a practice studio, not a jukebox.**
+> **Red Moon is a practice studio for guitar players who learn from everywhere.**
 >
-> Bring in a song you own and loop the bar you can't play yet, on guitar or bass.
-> Slow it down without the pitch dropping, then line your loops up with your drills
-> into a session you press play on. Red Moon remembers how each one is coming along, so
-> tomorrow starts where today stopped. Nobody is marking you.
+> A video lesson, a teacher, a tab, a record you love. Red Moon doesn't hand you another method. It
+> gives you the tools to build your own from what you already learn from, and it keeps everything you
+> do, so your practice adds up instead of starting over. Nobody is marking you.
 >
-> **Loop and slow down**
-> • Import audio files you own from Files or iCloud Drive
-> • Draw a loop on the waveform, as short as half a second, and repeat it hands-free
-> • Slow the tempo while the pitch stays true, with a click under it at the same speed
-> • Mark snags without stopping, then tighten the loop to where they land
+> Built for guitar, with drills, chords and the fretboard at its heart. Bass gets its own four-string
+> neck, tunings and shapes. Play something else? The song player, the metronome, routines and the
+> journal work for any instrument.
+>
+> **Work it out**
+> • Bring in songs you own from Files or iCloud Drive, or share audio in from another app
+> • Loop the bar you can't play yet, as short as half a second, and let it go round
+> • Slow it down while the pitch stays true
+> • Count the notes, name them on the neck, and keep what you find as tab
 > • A song is waiting the first time you open the app, with a three-step guide
 >
-> **Build a session**
-> • Chain loops, songs, drills and rests into a routine and press play
-> • A routine remembers when you last played it, and never sets you a target
-> • Today's session builds one for you from three questions and your goals
-> • A tuner is offered before you start, and between blocks
->
-> **Work a part out by ear**
-> • Count the notes: tap once for each note you hear, pass after pass
-> • Name the notes on the neck, by fret and string, or by ear
-> • Keep what you found as tab, and watch the song's map fill in
-> • Or write a tab yourself, and export it as text or PDF
-> You do the hearing. Red Moon keeps the record, and never checks your answer.
->
-> **Drills on a real fretboard**
-> • Scales and arpeggios drawn as fretboard boxes, labelled by where your hand goes
-> • Chord diagrams, movable shapes, and a placer that names any voicing you build
-> • Picking, legato, strumming and chord-change drills with a tempo ramp
-> • Progressions in any key, including ones you write yourself
->
-> **A journal, not a scoreboard**
-> • Notes on a loop, a drill or a whole session, in a dated journal
-> • Record takes with the mic, and pin a note to a moment in one
-> • This week shows the minutes and days you played, and never scores them
->
-> **A metronome and a tuner you can trust**
-> • Count-in, time signatures, and a tempo that ramps across a run
+> **Build it up**
+> • Every drill runs against a click: scales, arpeggios, picking, legato, strumming, chord changes
+> • A tempo ramp raises the speed a step at a time, holds it, and can back off
 > • Click withdrawal thins the click, so you carry the pulse yourself
-> • A tuner for guitar and bass, with alternate tunings
+> • Scales and chords drawn on the fretboard, labelled by where your hand goes
 >
-> **Keep the lesson you're following**
-> • Put a link or a file on any song, loop or drill, with a note on what you took
->   from it
-> • Send a routine to your teacher or a bandmate with its songs inside, so it plays
->   at the other end
+> **Run it**
+> • Chain loops, songs, drills and rests into a routine, and press play
+> • Build one around the parts you find hard, for a gig, a lesson or just this week
+> • Today's session builds one for you from three questions and your goals
+> • A routine remembers when you last ran it, and never sets you a target
+>
+> **Keep it**
+> • Record takes, and pin a note to a moment in one
+> • Write down what you noticed, on a loop, a drill or a whole session
+> • The practice log shows the days and minutes you played, and never scores them
 > • Export a take or a song's audio to work on in your DAW
+>
+> **Your sources, your method**
+> • Keep the lesson beside the part it's for: a link or a file on any song, loop or drill
+> • Save to Red Moon from any app's share sheet
+> • Send a routine to a teacher or bandmate, with its songs inside
+> • A tuner for guitar and bass, a metronome, chord shapes, a placer that names any voicing, and a
+>   glossary
+>
+> **One plan**
+> Your songs and loops, the Metronome, the Journal and everything in the Toolkit are free. The plan
+> is for practising: drills, routines, Today's session and the loop trainer.
+>
+> **£0.99 a month, or £14.99 once.**
+> That's the founding price, and it's yours for as long as you keep the plan. Nothing you can do
+> today will ever move behind a higher one.
 >
 > Red Moon plays audio files you own. It can't play Apple Music or Spotify streams.
 >
@@ -150,8 +170,11 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 > advertising identifier.
 >
 > Named after the Tom Misch track that started it all.
+>
+> The monthly plan is an auto-renewable subscription. Terms of Use (EULA):
+> https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 
-*Rewritten for the (since superseded) free release, 2026-10-02, to the plan in the Marketing Foundation; re-voiced 2026-10-24 as a practice studio that adds up, and the "nothing to buy" line removed (ADR 0256):*
+*Restructured 2026-10-27 and approved by Tomisin the same day (ADR 0279), around four verbs, *work it out · build it up · run it · keep it*, under one roof, *your sources, your method*. The opening names the audience: the self-taught player who learns from everywhere. The 2026-10-24 version (seven feature groups, opening *"a practice studio, not a jukebox"*) is in git history. Before that: rewritten for the free release, 2026-10-02; re-voiced 2026-10-24 as a practice studio that adds up (ADR 0256):*
 
 - *The opening names both halves, the loop on your own song and the session it feeds,
   and ends on "Nobody is marking you". The headline and the start of that paragraph
@@ -166,9 +189,21 @@ Don't spend keyword space on words already in the name ("practice") or subtitle.
 - *"No ads" is gone (ADR 0240: it stays only in disclosures, the privacy policy and the
   review notes), the usage-counts sentence went with ADR 0239, and "free" is not a
   headline.*
-- *Say "plan", never a price or a trial length, in the description: the storefront shows them, and ADR 0145 D6 forbids hardcoding them. Check the line-wrap in the field.*
+- *1.4 (2026-10-26): the **One plan** block and the promise go in word for word (ADR 0256 D8, 0274
+  D1), with the UK prices (ADR 0277). ADR 0145 D6's rule against hardcoded prices is about in-app
+  help copy, not this field. Still name no trial length: the storefront shows it, and App Store
+  Connect sets it.*
+- *The prices are in pounds because this is the English (U.K.) text. If the app has no other English
+  localization, every storefront reads £. An English (U.S.) description would use the US prices App
+  Store Connect generated, so read them off the products first.*
+- *The EULA line is back (Guideline 3.1.2), because the monthly is an auto-renewable subscription
+  again. Paste the URL as bare text, at the very end. Its absence is what rejected 1.1 (3).*
+- *Check the line-wrap in the field, and the length (4,000 characters at most).*
 
 ### History: the EULA line — REJECTED 2026-08-08 for its absence, retired by ADR 0237
+
+> **Back for 1.4.** ADR 0256's monthly is an auto-renewable subscription, so the EULA line is in the
+> description again (above). What follows was written for the free release, and still explains why.
 
 **No longer applies.** Guideline 3.1.2 binds an app that offers auto-renewable
 subscriptions, and since ADR 0237 Red Moon offers none, so the two closing lines
@@ -196,6 +231,23 @@ We ship **no custom EULA**, so App Information ▸ License Agreement stays on
 Apple's standard terms. Only if that ever changes does the link move into ASC's
 own custom-EULA field instead of the description — and then all three surfaces
 (description, paywall, Settings) must point at the custom one, not Apple's.
+
+## What's New in This Version — 1.4 (paste this)
+
+> Red Moon is now a practice studio with one plan. Your songs and loops, the Metronome, the Journal
+> and the Toolkit are free, and practising is the plan, at the founding price.
+>
+> Also new:
+> • The Practice hub is shelves: today's session, your routines, and your drills by kind
+> • References: keep every lesson, video and file you learn from, and attach them where they belong
+> • Save to Red Moon from any app's share sheet, and audio shared from Voice Memos or Files lands
+>   as a song
+> • The Practice log's month reads as a calendar, and tapping a day shows what you played
+
+*Short on purpose. Hardly anyone has 1.1 installed, so this reads mostly as the product page's version
+history. It names no price and no trial length. Each line is a CHANGELOG entry: the hub (ADR 0257),
+References and Save to Red Moon (ADR 0264), audio shared in (ADR 0273), the month grid (ADRs 0268,
+0269).*
 
 ## What's New — the free release (draft) — HISTORY, do not paste (ADR 0256)
 
@@ -268,16 +320,18 @@ calls it out, and with no installed base it says nothing to the only people
 reading. **Don't** mention 1.0 being pulled, ADR numbers, or CI/test work.
 
 ## Support URL — REQUIRED
-Needs to resolve to a real page. Cheapest route: a single static page (GitHub
-Pages, Notion public page, or a Carrd) with a contact email. Placeholder:
-`https://<host>/red-moon-practice/support`
+`https://decooperations.co.uk/redmoon/support`, live since 1.0 (the `uk-site` route
+`app/redmoon/support/page.tsx`). It's already set in App Information. Open it once before
+submitting.
 
 ## Marketing URL — optional
 Leave blank for v1, or point at the same host's landing page.
 
 ## Privacy Policy URL — REQUIRED
-Host `docs/privacy-policy.md` (rendered) somewhere public and paste the URL.
-GitHub Pages renders Markdown directly, which is the zero-effort option.
+`https://decooperations.co.uk/privacy`, the live policy (`uk-site` `app/privacy/page.tsx`). It's
+already set in App Information. Settings ▸ About links to its Red Moon section,
+`#red-moon-practice`, so keep that anchor's id if the heading changes (ADR 0278).
+`docs/privacy-policy.md` is a draft, not the live text.
 
 ## App Privacy (nutrition label) — set by ADRs 0161 and 0183; analytics removed by ADR 0239
 Not "Data Not Collected" — the contact form sends what the player writes. Declare
@@ -297,6 +351,9 @@ Not "Data Not Collected" — the contact form sends what the player writes. Decl
   *Settings ▸ Help & About ▸ Diagnostics ▸ Include in support messages* on (off by
   default) and shown to them in full first. No call stacks, no logs. MetricKit needs
   no `NSPrivacyAccessedAPITypes` entry — it is not a required-reason API.
+- **Purchases (1.4).** The plan is bought through StoreKit, and the app sends nothing about a
+  purchase anywhere: `PlanStore` reads entitlements on the device. So *Purchases* stays not
+  collected. Check that against Apple's current definitions when you answer.
 - Everything else stays *not collected*. No identifiers, no location, no contacts.
 - **"Do you or your third-party partners use data for tracking?" → No.** There is
   no IDFA and no ATT prompt, permanently (ADR 0120 §1), and no ad SDK in the app
@@ -336,14 +393,15 @@ Questionnaire answers are all "None" → **4+**.
 Paste into **App Review Information → Notes**. Everything here is checked against the
 shipping code, not aspiration.
 
-> Red Moon Practice is a guitar practice tool. No account or sign-in is required —
+> Red Moon Practice Studio is a guitar and bass practice tool. No account or sign-in is required —
 > nothing is created on a server and there is no login to give you.
 >
 > **One plan, no advertising.** The Song library, the song player (saved loops and markers), the
 > Metronome, the Journal and Practice log, and the Toolkit are free. Practising (exercises, routines,
-> Today's session) is the plan (ADR 0256, 0263). **Reviewer access: <how the review build reaches
-> the plan screens — confirm against the sandbox pass before pasting>.** Do not paste this note
-> until that line is filled in.
+> Today's session, the loop trainer) is the plan: a monthly auto-renewable subscription with a
+> one-week free introductory offer, or *Pay once*, a non-consumable. Both can be bought with a
+> sandbox account. To reach the plan screen, tap **Practice** on the home screen. Every practising
+> screen leads to it until the plan is bought, and **Restore purchases** is on the same screen.
 >
 > **To try the song player, open the Song library and tap "Try the demo".** That adds a playable practice track so you can try the waveform, loop
 > capture and speed control immediately. You can also import your own audio from the
@@ -364,7 +422,8 @@ shipping code, not aspiration.
 > kind is present.
 
 **Before pasting, re-check each claim still holds** — a stale one is worse than no
-note at all. In particular the free/plan line (ADR 0256, 0263), "no analytics"
+note at all. For 1.4, confirm the plan sentence on the TestFlight build during the sandbox pass:
+**Practice** on the home screen opens the plan screen, and *Restore purchases* is on it. In particular the free/plan line (ADR 0256, 0263), "no analytics"
 (ADR 0239), and "Try the demo" ([`LibraryView.swift`](../Pocket/Features/Library/LibraryView.swift),
 `LibraryEmptyState.onTryDemo` → `Song.sample()` — the *generated* tone song, which is
 why it survives ADR 0148 §7 deleting the bundled demo track).
@@ -450,7 +509,44 @@ exists / receives before submission. Marketing URL: leave blank for v1 (full
 marketing site is a post-launch project; point the Marketing URL at it later — no
 new build needed).
 
-## Screenshots — REVISED shoot guide (re-shoot, 2026-07-21)
+## Screenshots — 1.4 (2026-10-27, ADR 0279)
+
+Ten frames, one story: the four verbs twice, then the roof. Shot dark at 09:41 on the iPhone 17 Pro
+Max simulator by the manual's harness, with the plan unlocked (no padlocks, no prices: Guideline
+2.3.7), and captioned by `scripts/appstore-frames.swift`. The finished set is in
+`~/Documents/Red Moon Screenshots 2/appstore-2026-10-27/`: **`6.3/`** (1206×2622), `6.9/` (1320×2868)
+and `6.5/` (1242×2688). Upload **`6.3/`**, in filename order: App Store Connect's one required iPhone
+slot is now *iPhone with Dynamic Island (medium display)*, which takes only 1206×2622 or 1179×2556. It
+rejected the other two sizes there on 2026-10-27 ("File dimensions are invalid"). The 6.9" set fits the
+optional *large display* slot; App Store Connect scales the 6.3" set for every size left empty.
+
+| # | Verb | Headline | Capture (test → slug) |
+|---|---|---|---|
+| 1 | WORK IT OUT | Loop the bar you can't play. Slow it down. | `AppStoreShots.testWorkItOut` (Binta's *Chords* at 0.75×, gridlines off) |
+| 2 | BUILD IT UP | Every drill runs against a click. | `exercises/run-live` |
+| 3 | RUN IT | Line up the hard parts. Press play. | `AppStoreShots.testRunIt` (*Open mic, Friday*) |
+| 4 | KEEP IT | Record a take. Note what you heard. | `journal/take-moments` |
+| 5 | YOUR SOURCES | Keep the lesson beside the part it's for. | `references/section` |
+| 6 | WORK IT OUT | Name the notes by ear. See them on the neck. | `reference/watch-on-neck` |
+| 7 | BUILD IT UP | Ramp a loop up to full speed. | `reference/loop-automator` |
+| 8 | RUN IT | Today's session, shaped by your goals. | `reference/practice-hub` |
+| 9 | KEEP IT | See the days you played. Never a score. | `journal/progress` |
+| 10 | YOUR METHOD | Your songs, drills and routines, in one place. | `reference/home` |
+
+**To shoot them again:**
+1. `POCKET_SIM="iPhone 17 Pro Max" POCKET_SHOT_OUT=build/shots-appstore POCKET_SHOOT_ONLY=AppStoreShots ./scripts/shoot-manual.sh`
+   for frames 1 and 3. Their images land in `build/shots-appstore/export/`, named in its `manifest.json`.
+2. `POCKET_SIM="iPhone 17 Pro Max" POCKET_SHOT_OUT=build/shots-appstore-manual POCKET_SHOOT_PASS="base player exercises map" ./scripts/shoot-manual.sh`
+   for the rest (`filed-partial/`).
+3. Write a `frames.json` from the table, then `swift scripts/appstore-frames.swift frames.json <out>`.
+   A non-breaking space (`\u00a0`) keeps two words of a headline together.
+
+*Watch-outs:* frame 4's take is on *I'd Rather Go Blind (Cover)*, one of the seed's covers credited to
+Jack Trader, so a real song title is on screen. Frame 5's links read `example.com`. The practice log's
+lower half (`journal/month-heatmap`) is unusable as a frame: its header ghosts under the navigation bar,
+and it ends on *0 Mastered*.
+
+## Screenshots — REVISED shoot guide (re-shoot, 2026-07-21) — history
 
 **Why re-shoot:** the `appstore-final/` set was shot **2026-07-16** and now predates
 a batch of UI-changing merges (all Jul 20–21): Home regrouped into titled sections
@@ -555,6 +651,71 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 1242×2688, shot 2026-07-16).
 
 ## Pre-submission checklist
+
+### 1.4 (2026-10-26): work through this one
+
+**App Store Connect**
+- [x] The version record renamed from 1.2 to 1.4 (2026-10-26)
+- [x] The new age-rating questions answered (2026-10-26). Since 2026-01-31, App Store Connect won't
+      take an update without them
+- [x] Paid Applications Agreement active (checked 2026-10-26)
+- [x] Subscription group **Red Moon** created, with the display name *Red Moon* (English U.K.)
+- [x] The monthly, `click.decooperations.pocket.plan.monthly2`, created in it: 1 month, £0.99
+- [ ] The monthly's introductory offer: Free, 1 week, all countries, no end date
+- [x] Pay once, `click.decooperations.pocket.plan.payonce`, created: non-consumable, £14.99
+- [ ] Family Sharing **off** on both (ADR 0259). It can't be turned off once it's on
+- [ ] Read the US prices App Store Connect generated for both products, and decide whether to keep
+      them (ADR 0256 D1)
+- [ ] A review screenshot of the plan screen on **both** products, from the TestFlight build
+- [ ] The old *Red Moon Pro* products (`…pro.monthly`, `…pro.annual`) confirmed removed from sale.
+      `…plan.monthly` is spent: never reuse it (ADR 0277)
+
+**The build**
+- [ ] #383 merged, and main's UI job green (`scripts/main-ui-green.sh`, ADR 0255)
+- [ ] Archived from main in Organizer with **Xcode 26.5**, not `testflight.yml`, which is pinned to
+      Xcode 16. Apple has refused uploads not built with the iOS 26 SDK since 2026-04-28. After
+      `xcodegen generate`, re-tick automatic signing on **Pocket and PocketShare**
+- [ ] 1.4 (8) processed, and attached to version 1.4
+
+**On the phone (TestFlight, sandbox)**
+- [ ] Purchases: never bought → the plan screen · the free week and Home's countdown · cancel ·
+      Pay once · Pay once while the monthly renews → the cancel-the-monthly flow · reinstall and
+      Restore purchases · lapsed. A sandbox account gets the free week once per group, so use a
+      fresh tester to see it again
+- [ ] Save to Red Moon from YouTube, Files and Photos: never bought, lapsed, on the plan
+- [ ] Still owed from #379: Mail, Messages and AirDrop; a WhatsApp `.opus` voice note; the *Added*
+      alert over a running routine
+- [ ] Upgrade 1.3 (7) → 1.4 (8), on a device that doesn't hold your own practice history. 1.3 (7)
+      expires from TestFlight in early December
+
+**The listing**
+- [ ] Name *Red Moon Practice Studio* (done), subtitle and keywords
+- [ ] Promotional text replaced
+- [ ] Every text field pasted through `./scripts/export-listing.py --copy <field>`, never from this
+      file. The description carries the *One plan* block, the promise and **the EULA line at the end**
+- [ ] The description's £ prices: if English (U.K.) is the only English localization, every
+      storefront reads them. Decide whether to add English (U.S.)
+- [ ] *What's New — 1.4* pasted
+- [x] Screenshots: the 1.4 set is shot (see *Screenshots — 1.4*). No price, padlock or "free" in any
+      of them (2.3.7)
+- [ ] Screenshots uploaded to version 1.4, in filename order, after deleting the 1.1 set it carried
+      over (which predates the hub, the sheets, References and the plan)
+- [ ] App Privacy re-checked, *Purchases* included
+- [ ] App Review notes pasted, after the sandbox pass confirms the plan sentence
+
+**Submit and release**
+- [ ] One submission: version 1.4 (8), the *Red Moon* group, the monthly and Pay once. A new group
+      goes to review with its first subscription and a build that shows it (what cost 1.1 two
+      cycles)
+- [ ] Version release: **Manually release this version**
+- [ ] On approval: release it, then **turn availability back on** (Pricing and Availability ▸ App
+      Availability). It has been off since 2026-08-07, and nothing in App Store Connect warns you
+- [ ] `uk-site`: the prices, the founding-price wording, the free line, *practice studio*, privacy
+      §Purchases and the terms. Keep the `#red-moon-practice` anchor. Push at go-live, with the real
+      App Store link
+- [ ] Tag `v1.4` on main
+
+### History: the free release and 1.1. Don't work from these
 
 **For the free release (ADR 0237), before anything below:**
 - [ ] Both `…pro.annual` and `…pro.monthly` and the **"Red Moon Pro"** group removed from
