@@ -154,6 +154,7 @@ struct LoopRunView: View {
             if !running { finishTakeIfNeeded() }   // run stopped ⇒ never leave a take recording
         }
         .onDisappear { finishTakeIfNeeded(); model.stop() }
+        .endsTakeOnLeavingApp(finishTakeIfNeeded)
         .sheet(isPresented: $showingJournal) {
             JournalSheet(owner: .loop(loop),
                          onAdd: addJournalEntry,

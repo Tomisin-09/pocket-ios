@@ -84,6 +84,9 @@ A **take** is a recording of you playing, captured through the microphone. Arm t
 next to **Start training** on a run screen — it turns red once armed — and the take starts when the
 run does and ends when it does. Takes land in this same timeline alongside your notes.
 
+Leaving Red Moon also ends a take: going to another app, locking the phone, or a call coming in. What
+you played up to then is saved, and the microphone is let go.
+
 <!-- shot: journal/take-row | role: detail
      | alt: A take in the timeline with its play button, name, duration, time and the owner caption beneath
      | state: seeded library, Journal, Takes filter, at least one take
