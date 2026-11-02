@@ -11,7 +11,7 @@ enum PlanProduct {
     /// £0.99 a month, an auto-renewable subscription in the group *Red Moon* (D1, ADR 0277). Never
     /// `…plan.monthly`: that id was made in the wrong group, deleted, and can't be reused (0277 D3).
     static let monthly = "click.decooperations.pocket.plan.monthly2"
-    /// £14.99 once, a non-consumable. Called **Pay once**, never *Lifetime* or *Own it* (D1, ADR 0277).
+    /// £4.99 once, a non-consumable. Called **Pay once**, never *Lifetime* or *Own it* (D1, ADR 0277).
     static let payOnce = "click.decooperations.pocket.plan.payonce"
     /// Both, in the order the wall offers them.
     static let all = [monthly, payOnce]
@@ -111,7 +111,7 @@ enum PlanDoor: String, CaseIterable, Sendable {
 /// How a price is written (ADR 0256 D1). StoreKit's `displayPrice` would write a whole amount as
 /// "£1.00", so a whole amount drops its pence. Any other price keeps them (£0.99, €1.09), because
 /// rounding a price in copy would state a price nobody charges. The prices were meant to be round;
-/// App Store Connect had no round point, so the UK's are £0.99 and £14.99 (ADR 0277).
+/// App Store Connect had no round point, so the UK's are £0.99 and £4.99 (ADR 0277, 0280).
 enum PlanPrice {
     static func isWhole(_ value: Decimal) -> Bool {
         var source = value

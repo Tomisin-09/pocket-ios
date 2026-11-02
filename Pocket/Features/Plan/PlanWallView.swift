@@ -48,14 +48,14 @@ struct PlanWallView: View {
 #Preview("Wall — first time") {
     NavigationStack { PlanWallView(door: .practice) {} }
         .environment(PlanStore(preview: .none,
-                               prices: PlanStore.OfferPrices(monthly: "£0.99", payOnce: "£14.99",
+                               prices: PlanStore.OfferPrices(monthly: "£0.99", payOnce: "£4.99",
                                                              trial: PlanTrial(unit: .week, value: 1))))
         .preferredColorScheme(.dark)
 }
 
 #Preview("Wall — free week already used") {
     NavigationStack { PlanWallView(door: .routine) {} }
-        .environment(PlanStore(preview: .none, prices: PlanStore.OfferPrices(monthly: "£0.99", payOnce: "£14.99")))
+        .environment(PlanStore(preview: .none, prices: PlanStore.OfferPrices(monthly: "£0.99", payOnce: "£4.99")))
         .preferredColorScheme(.dark)
 }
 

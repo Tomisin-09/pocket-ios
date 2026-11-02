@@ -4,6 +4,71 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## The metronome records a take (logged 2026-10-30, extends ADR 0069) — for 1.5
+
+Planned on 2026-10-28, not built. The metronome is the one practice screen with a click and no
+recorder, and recording yourself playing to a click is the obvious thing to want there. Takes already
+ship (ADR 0069 and its follow-ons), and exercise runs already pair a `StandaloneMetronomeEngine` with
+a `RecordingController`, so most of this is reuse. It needs its own ADR that **amends 0069**, with
+the back edge written into 0069's header in the same commit (C16).
+
+**Decided with Tomisin:**
+- **Mic only.** ADR 0069 D1 stands. Through the speaker the mic hears the click, which is the timing
+  reference and is wanted here; with headphones the take is just the playing. Mixing the click into
+  the file was turned down for 1.5: it needs a new pipeline (an input tap plus latency compensation)
+  and amends 0069 D1.
+- **Arm, then Start.** A `RecordArmToggle` beside Start, as on exercise runs. The take begins with the
+  click, from Start *or* the automator's Start ramp, runs through Pause, and ends at ■ or on leaving
+  the screen. Recording mid-click was turned down: the session would have to sit in `.playAndRecord`
+  whenever the metronome is open, for everyone, whether they record or not.
+- **Leaving the app ends and saves the take.** The click plays on through the lock screen, as it does
+  now. On `.background` only, not `.inactive` (Control Center, a banner).
+- **Free**, like every take (ADR 0112, 0263).
+
+**How, in outline:**
+- `Recording` gets `isMetronome: Bool?`, which partitions with `isStandalone` (never both true), and
+  snapshot columns for tempo, meter, subdivision and withdrawal. All optional primitives with no
+  declaration default: the shape `JournalEntry` used for ADR 0160's metronome note. Then
+  `OwnerKind.metronome` and `RecordingOwner.metronome(MetronomeJournalContext)`, with the snapshot
+  taken at take start from the engine's `journalContext`, which has had no caller since ADR 0260.
+- Writing `ownerLabelAtTake = "Metronome"` at capture means the Journal caption, `TakeDetailView`
+  and the export file name all read it through their existing fallback, with no new branch.
+- The Journal's Metronome filter already exists for notes; `bucket(forTake:)` maps the new kind to
+  it. The take row shows the snapshot's `summary` ("96 BPM · 4/4"). The archive's `RecordingRecord`
+  gets the same fields, as optionals.
+- **The take must begin before the click does.** Otherwise the session flips category under a running
+  click, the glitch 0069's arm grammar exists to avoid. So Start and Start ramp both go through one
+  function that calls `beginArmedTake()` first; `.onChange(of: transport)` fires too late.
+- `MetronomeView.swift` is at 395 of 400 lines. Transport and recording move into `+Transport` and
+  `+Recording` files, as `ExerciseRunView` did.
+- Copy written for other screens reads wrong here: `RecordingRoute.nudge` warns that "the backing
+  track in the room is captured too", and `RecordArmToggle`'s hint says "when you start training".
+  On the speaker, say the click will be in the take.
+- `TakesSheet` lists metronome takes from a `@Query` filtered in memory, not a `#Predicate` on the
+  optional (`docs/swiftdata-gotchas.md`).
+
+**When it ships:** don't merge until 1.4 is approved, because 1.4 (8) was archived from main. The
+manual's `metronome/screen` figure goes stale. Run `ManualMetronomeShots` after touching the body.
+
+## A take keeps the mic on after you leave the app (logged 2026-10-30) — for 1.4.1, confirmed on device
+
+Found by reading the code while planning metronome takes, then **confirmed on the device by Tomisin
+the same day**: with a take running, leaving Red Moon leaves the mic indicator lit. The manual's
+privacy page (`docs/manual/privacy.md`) says Red Moon releases the microphone "as soon as you leave
+the screen or send the app to the background", so **that sentence is false in 1.4**. The tuner keeps
+the promise: `TunerView.swift:75` stops on `scenePhase`. No take surface reads `scenePhase`, and
+nothing in the app observes `AVAudioSession.interruptionNotification`. With `UIBackgroundModes: audio`
+and a `.playAndRecord` session, the `AVAudioRecorder` carries on in the background.
+
+- **Not yet checked:** whether the take's file keeps capturing audio the whole time it is in the
+  background, or only holds the mic open. Play the take back after a minute away to find out. The fix
+  is the same either way.
+- **Surfaces:** loop run, exercise run, freeform block, ear training, improvise, and the Journal's
+  *Record a take*. Each makes its own `RecordingController`.
+- **Fix, not decided here:** finish the take on `.background` on each screen, or once inside
+  `RecordingController`. The metronome entry above does it for the metronome. The FAQ makes no
+  background claim, so only the privacy page depends on this.
+
 ## A new Apple Account can be welcomed back (logged 2026-10-27, ADR 0256 D4) — for 1.4.1
 
 Seen in the 1.4 sandbox pass, on the device: after one sandbox account had bought and lapsed, a fresh
