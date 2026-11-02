@@ -1,3 +1,4 @@
+import AVFoundation
 import SwiftUI
 
 /// Reusable practice-take record controls (ADR 0069), shared by the run screens (`LoopRunView`,
@@ -92,6 +93,47 @@ struct RecordArmToggle: View {
         if isRecording { return onStopTake == nil ? "The take ends when the run does" : "" }
         if recorder.isArmed { return "A take will record when you start training" }
         return disabled ? "Stop the backing track first" : ""
+    }
+}
+
+/// **A take ends when you leave the app.** Sending Red Moon to the background, or an audio
+/// interruption beginning (a call, Siri, an alarm), runs the screen's own finish, so the take is saved
+/// up to that moment and the mic is let go. Before this, a take carried on in the background with the
+/// mic indicator lit, which made the manual's privacy page untrue (device check, 2026-10-30).
+///
+/// - **`.background` only, not `.inactive`.** Pulling down Control Center or a banner sliding in makes
+///   the scene inactive without leaving the app, and a take shouldn't end for that.
+/// - **Only the take ends.** Whatever it was played over keeps going: the backing track, the click,
+///   the run plays on through the lock screen as it always has.
+/// - **`finish` is the screen's existing one**, the same call its `.onDisappear` makes.
+///   `finishIfRecording` is idempotent, so firing with nothing rolling does nothing.
+///
+/// The tuner keeps the same promise its own way (`TunerView`, on `scenePhase`).
+struct TakeEndsOnLeavingApp: ViewModifier {
+    let finish: () -> Void
+
+    @Environment(\.scenePhase) private var scenePhase
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background { finish() }
+            }
+            // Hopped to main: this closure is main-actor code, and nothing promises the session posts
+            // there. An audio callback on the wrong thread has trapped on device before.
+            .onReceive(NotificationCenter.default
+                .publisher(for: AVAudioSession.interruptionNotification)
+                .receive(on: DispatchQueue.main)) { note in
+                if RecordingController.endsTake(onInterruption: note.userInfo) { finish() }
+            }
+    }
+}
+
+extension View {
+    /// End and save a rolling take when the player leaves the app or another app's audio takes over.
+    /// Goes on every screen that records a take, beside the `.onDisappear` that finishes it.
+    func endsTakeOnLeavingApp(_ finish: @escaping () -> Void) -> some View {
+        modifier(TakeEndsOnLeavingApp(finish: finish))
     }
 }
 

@@ -37,7 +37,8 @@ L a week or more.
 
 3. `pocket-396` **Stop recording when you leave the app** (S–M). The entry *A take keeps the mic on
    after you leave the app* below. One shared modifier finishes the take on `.background` and on an
-   audio-session interruption, on all six recording screens.
+   audio-session interruption, on all six recording screens. **Built 2026-11-02**; the device check
+   is still owed.
 4. `pocket-397` **Welcome back on a new Apple Account** (S). The entry *A new Apple Account can be
    welcomed back* below. **Built 2026-11-02**; the sandbox account switch on the device is still owed.
 5. `pocket-398` **Polish** (S): an opaque import card that names the file in progress, a taller notes
@@ -148,7 +149,25 @@ the back edge written into 0069's header in the same commit (C16).
 after touching the body. (The earlier gate, "don't merge until 1.4 is approved", went when 1.4 came off
 review on 2026-11-02.)
 
-## A take keeps the mic on after you leave the app (logged 2026-10-30) — in 1.4, item 3 of the final push, confirmed on device
+## A take keeps the mic on after you leave the app (logged 2026-10-30) — in 1.4, item 3 of the final push, confirmed on device — **FIXED 2026-11-02** (`pocket-396`)
+
+**Fixed by** `endsTakeOnLeavingApp` (`RecordControls.swift`), on all six recording screens. On
+`.background` (not `.inactive`), and when an audio interruption *begins*, it runs the screen's own
+finish, so the take is saved up to that moment. Only the take ends. A freeform block's held
+`.playAndRecord` session stays held, because its click plays on and releasing would flip the category
+under it. If the mic indicator stays lit after leaving a freeform block mid-take, that hold is the
+next thing to release.
+
+**The open question, answered from Apple's documentation rather than the device:** an app with
+`UIBackgroundModes: audio` and an active record-capable session keeps an `AVAudioRecorder` capturing
+in the background, so the take most likely kept recording audio the whole time. Nobody played one
+back after a minute away to confirm it, and after this fix it no longer matters.
+
+**Owed, on the device:** start a take on a loop run, leave the app, and check the indicator goes off
+and the take is in the Journal. Then the same on a freeform block with its click on, and a call
+arriving mid-take.
+
+What follows is the entry as logged.
 
 Found by reading the code while planning metronome takes, then **confirmed on the device by Tomisin
 the same day**: with a take running, leaving Red Moon leaves the mic indicator lit. The manual's

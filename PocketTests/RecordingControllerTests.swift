@@ -1,3 +1,4 @@
+import AVFoundation
 import XCTest
 import SwiftData
 @testable import Pocket
@@ -140,5 +141,36 @@ final class RecordingControllerTests: XCTestCase {
         XCTAssertTrue(controller.holdsSession)
         XCTAssertEqual(controller.state, .idle)
         controller.releaseRecordSession()
+    }
+
+    // MARK: - Leaving the app (endsTakeOnLeavingApp)
+
+    /// A call, Siri or an alarm **beginning** ends the take. The system posts the type as an
+    /// `NSNumber`, so that is the shape asserted first; a bare `UInt` reads the same.
+    func testAnInterruptionBeginningEndsTheTake() {
+        let began = AVAudioSession.InterruptionType.began.rawValue
+        XCTAssertTrue(RecordingController.endsTake(
+            onInterruption: [AVAudioSessionInterruptionTypeKey: NSNumber(value: began)]))
+        XCTAssertTrue(RecordingController.endsTake(
+            onInterruption: [AVAudioSessionInterruptionTypeKey: began]))
+    }
+
+    /// The interruption **ending** is not a reason to end anything: the take was already finished
+    /// when it began, and a new one is the player's to start.
+    func testAnInterruptionEndingDoesNotEndTheTake() {
+        let ended = AVAudioSession.InterruptionType.ended.rawValue
+        XCTAssertFalse(RecordingController.endsTake(
+            onInterruption: [AVAudioSessionInterruptionTypeKey: NSNumber(value: ended)]))
+    }
+
+    /// A notification whose type can't be read ends nothing. Guessing "began" would cut a take short
+    /// over a malformed notification.
+    func testAnUnreadableInterruptionDoesNotEndTheTake() {
+        XCTAssertFalse(RecordingController.endsTake(onInterruption: nil))
+        XCTAssertFalse(RecordingController.endsTake(onInterruption: [:]))
+        XCTAssertFalse(RecordingController.endsTake(
+            onInterruption: [AVAudioSessionInterruptionTypeKey: "began"]))
+        XCTAssertFalse(RecordingController.endsTake(
+            onInterruption: [AVAudioSessionInterruptionTypeKey: NSNumber(value: 99)]))
     }
 }
