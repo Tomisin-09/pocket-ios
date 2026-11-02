@@ -17,7 +17,9 @@ bug goes under **After the freeze** at the end of this entry, not into 1.4.
 - **No TestFlight beta.** Each piece is tested on Tomisin's device as it lands. The next archive is the
   submission.
 - **The version stays 1.4**, build 10 or later.
-- **Order:** small things first, then the beat map, then the remaining features.
+- **Order:** small things first, then the beat map, then the remaining features. **Changed later the
+  same day:** after items 3 and 4, the beat map goes **first**, ahead of items 5–7, and it takes in
+  *counting the bar* from the proposal (item 11 widened, item 11b added). Then 5–7, then Phase 3.
 - **The beat map gets no spike.** Build it, then try it. The proposal is the artifact
   https://claude.ai/artifact/B36SDYybPBQgP9CksnxJrL.
 - **iPad** stays parked ("practice workbench").
@@ -27,7 +29,8 @@ bug goes under **After the freeze** at the end of this entry, not into 1.4.
   now.
 
 **The list.** One branch and one PR per item, merged once CI is green. S is about a day, M a few days,
-L a week or more.
+L a week or more. Item numbers are stable names, not the build order (see *Order* above). A branch
+takes the next free `pocket-` number when its item starts.
 
 *Phase 0: housekeeping*
 1. Merge #387, the founding window (ADR 0280). **Done 2026-11-02.**
@@ -41,40 +44,55 @@ L a week or more.
    is still owed.
 4. `pocket-397` **Welcome back on a new Apple Account** (S). The entry *A new Apple Account can be
    welcomed back* below. **Built 2026-11-02**; the sandbox account switch on the device is still owed.
-5. `pocket-398` **Polish** (S): an opaque import card that names the file in progress, a taller notes
+5. **Polish** (S, after the beat map): an opaque import card that names the file in progress, a taller notes
    field, the delete-version pop-up attached to its button, and a sweep of the other
    `.confirmationDialog`s, each screenshotted open.
-6. `pocket-399` **A tempo control inside Name the notes** (S): `LoopTempoControl` beside the play
+6. **A tempo control inside Name the notes** (S, after the beat map): `LoopTempoControl` beside the play
    button, as in Watch on the neck.
-7. `pocket-400` **Swipe to delete in the Journal** (S, ADR amends 0100): trailing, no full swipe,
+7. **Swipe to delete in the Journal** (S, ADR amends 0100, after the beat map): trailing, no full swipe,
    undo toast kept, no multi-select. A plain button tinted danger, **not** `role: .destructive`, which
    plays a fake removal under the deferred delete.
 
-*Phase 2: the beat map*
+*Phase 2: the beat map (now built first)*
 
-8. `pocket-401` **B1, hear new notes** (M): a spectral-flux onset envelope beside the RMS one, so the
-   BPM estimate works on songs without drums. Ships on its own.
-9. `pocket-402` **B2, the song stores its beats** (L, the ADR): an additive optional `beatTimes` on
+8. `pocket-398` **B1, hear new notes** (M): a spectral-flux onset envelope in place of the RMS one, so
+   the BPM estimate works on songs without drums. Ships on its own. **Built 2026-11-02.** On *Binta*
+   the estimate now reads 83.9 BPM with the 1 at 0.03 s (measured: 83 and 0.027 s); the old envelope
+   read 110.9 BPM. The 0.9 left over is `TempoEstimator`'s own resolution, which B3 replaces. Owed on
+   the device: Tomisin's own songs without drums.
+9. **B2, the song stores its beats** (L, the ADR): an additive optional `beatTimes` on
    `Song`, the archive fields with `decodeIfPresent`, and tapping through a song. Amends 0022 and 0154
    and replaces the entry *A song whose tempo changes at a section* further down.
-10. `pocket-403` **B3, the beat finder** (L): a pure `BeatTracker` with a confidence score per bar,
+10. **B3, the beat finder** (L): a pure `BeatTracker` with a confidence score per bar,
     and the *Find the beats* and *Check the beat* screens. Never auto-commits (ADR 0004).
-11. `pocket-404` **B4, find the 1 by choosing** (M): hear each beat accented and pick the one.
-12. `pocket-405` **B5, fix a stretch** (M): loop a few bars and tap along, or drag one beat.
-13. `pocket-406` **B6, the tempo lane** (M): a lane under the waveform, "BPM here" on loop rows, and
+11. **B4, count the bar by choosing** (M): two questions, each answered by ear with the beat
+    accented. How many beats in a bar, 3 or 4? Then which beat is the 1? Writes `Song.beatsPerBar`
+    (it already exists, ADR 0051, so no new field) and `downbeatSeconds` snapped onto a beat.
+    **Open, for its ADR:** whether 5, 6 and 7 sit behind a *More* option, and whether a 6/8 song
+    counts in 6 or in 2.
+
+    **11b. B4b, Red Moon counts the bar** (M, its own branch): step 4 of the proposal. Each beat
+    is scored for how hard it is hit, how much low end is on it, and how much the harmony changes
+    there (chroma either side of the beat). Red Moon then tests whether those scores repeat every 3
+    beats or every 4. The best cycle is the meter, and its strong beat is the 1. Both are
+    pre-selected on item 11's screen and never committed (ADR 0004). A second check between the
+    beats tells a straight feel from a triplet one (3/4 from 6/8). 2/4 is treated as 4. Detection
+    never offers 5/4 or 7/8; the player chooses those.
+12. **B5, fix a stretch** (M): loop a few bars and tap along, or drag one beat.
+13. **B6, the tempo lane** (M): a lane under the waveform, "BPM here" on loop rows, and
     the metronome carry (ADR 0170).
 
 *Phase 3: the remaining features*
 
-14. `pocket-407` **The metronome records a take** (M, ADR amends 0069). The next entry below.
-15. `pocket-408` **An import loading screen** (M, ADR amends 0011): a sheet showing each file's state,
+14. **The metronome records a take** (M, ADR amends 0069). The next entry below.
+15. **An import loading screen** (M, ADR amends 0011): a sheet showing each file's state,
     where any imported song can be opened.
-16. `pocket-409` **Make a song from this take** (M, short ADR), in the take's hold menu. Needs 9
+16. **Make a song from this take** (M, short ADR), in the take's hold menu. Needs 9
     and 14.
-17. `pocket-410` **Pre-bends** (M, ADR amends 0227): all four shapes (bend, bend and release,
+17. **Pre-bends** (M, ADR amends 0227): all four shapes (bend, bend and release,
     pre-bend, pre-bend and release). A note is named by the fret it lands on, as with lead-ins. The
     new field on `FrettedNote` is optional, because a Codable default doesn't survive a missing key.
-18. `pocket-411` **Watch the section** on the neck (M, ADR amends 0254): straight through with gaps.
+18. **Watch the section** on the neck (M, ADR amends 0254): straight through with gaps.
     Where loops overlap, the one that starts later shows.
 
 *Phase 4: release, then freeze*
@@ -93,9 +111,10 @@ L a week or more.
 
 **Checks on top of the usual ones.** Any `@Model` change (items 9 and 14) gets an upgrade check over an
 existing store, on the simulator and on the device, proved by timestamps rather than counts
-(`docs/swiftdata-gotchas.md`). Pure logic (items 8–13 and 17) gets unit tests, each watched failing once
+(`docs/swiftdata-gotchas.md`). Pure logic (items 8–13, 11b and 17) gets unit tests, each watched failing once
 against a deliberate mutant. On the device: item 3, the mic indicator goes off and the take is saved;
-item 4, the sandbox account switch; items 8–13, Tomisin's own drifting and drum-less songs; item 14, the
+item 4, the sandbox account switch; items 8–13 and 11b, Tomisin's own drifting and drum-less songs, and for 11b, did it pick 3 or 4
+correctly; item 14, the
 click through the speaker and through headphones.
 
 ### After the freeze
