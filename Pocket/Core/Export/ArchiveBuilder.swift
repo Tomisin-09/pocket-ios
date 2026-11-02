@@ -144,6 +144,7 @@ enum ArchiveBuilder {
             preciseBPM: song.preciseBPM,
             downbeatSeconds: song.downbeatSeconds,
             extraDownbeatSeconds: song.extraDownbeatSeconds.sorted(),
+            beatTimes: song.beatTimes.isEmpty ? nil : song.beatTimes,
             beatsPerBar: song.beatsPerBar,
             noteValue: song.noteValue,
             showsGridlines: song.showsGridlines,

@@ -15,29 +15,28 @@ extension WaveformPracticeModel {
     /// ~480 of them for four minutes at 120 BPM — and this is read by the waveform, the
     /// gridlines toggle (`gridAvailable`), the click gate (`canUseMetronome`) and the snap
     /// candidates. Recomputing all of that on every read put an allocation storm behind a value
-    /// that changes only when the tempo, the 1, the time signature or the song's length does.
-    /// Keyed on exactly those four rather than rebuilt by hand at each mutation site, because
-    /// the song's tempo fields are also written from outside this model (`SongEditSheet`), and
-    /// a cache that can be missed is worse than no cache at all.
+    /// that changes only when the tempo, the beat map, the 1, the time signature or the song's
+    /// length does. Keyed on exactly those five rather than rebuilt by hand at each mutation site,
+    /// because the song's tempo fields are also written from outside this model (`SongEditSheet`),
+    /// and a cache that can be missed is worse than no cache at all.
     var beatGrid: [BeatGrid.Beat] {
-        let key = GridKey(bpm: song.tempoBPM, anchors: song.downbeatAnchors,
+        let key = GridKey(bpm: song.tempoBPM, beatMap: song.beatTimes, anchors: song.downbeatAnchors,
                           beatsPerBar: song.beatsPerBar, duration: duration)
         if let cached = gridCache, cached.key == key { return cached.beats }
-        guard let bpm = key.bpm, !key.anchors.isEmpty, key.duration > 0 else {
-            gridCache = (key, [])
-            return []
-        }
-        let beats = BeatGrid.beats(bpm: bpm, duration: key.duration, anchors: key.anchors,
-                                   beatsPerBar: key.beatsPerBar)
+        let beats = BeatGrid.beats(bpm: key.bpm, map: key.beatMap, duration: key.duration,
+                                   anchors: key.anchors, beatsPerBar: key.beatsPerBar)
         gridCache = (key, beats)
         return beats
     }
 
     /// Everything `beatGrid` is derived from. Equal key ⇒ the cached array is still correct.
     /// `anchors` rather than a single downbeat since ADR 0154 — adding or removing a correction
-    /// has to miss the cache, or the grid would silently keep the phase you just corrected.
+    /// has to miss the cache, or the grid would silently keep the phase you just corrected. The
+    /// `beatMap` since ADR 0281, for the same reason: a tap-through that left the cache alone
+    /// would keep drawing the old straight line over the beats just tapped.
     struct GridKey: Equatable {
         let bpm: Double?
+        let beatMap: [TimeInterval]
         let anchors: [TimeInterval]
         let beatsPerBar: Int
         let duration: TimeInterval

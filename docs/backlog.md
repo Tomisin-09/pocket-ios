@@ -56,13 +56,17 @@ takes the next free `pocket-` number when its item starts.
 *Phase 2: the beat map (now built first)*
 
 8. `pocket-398` **B1, hear new notes** (M): a spectral-flux onset envelope in place of the RMS one, so
-   the BPM estimate works on songs without drums. Ships on its own. **Built 2026-11-02.** On *Binta*
+   the BPM estimate works on songs without drums. Ships on its own. **Merged 2026-11-02 (#391).** On *Binta*
    the estimate now reads 83.9 BPM with the 1 at 0.03 s (measured: 83 and 0.027 s); the old envelope
    read 110.9 BPM. The 0.9 left over is `TempoEstimator`'s own resolution, which B3 replaces. Owed on
    the device: Tomisin's own songs without drums.
-9. **B2, the song stores its beats** (L, the ADR): an additive optional `beatTimes` on
-   `Song`, the archive fields with `decodeIfPresent`, and tapping through a song. Amends 0022 and 0154
-   and replaces the entry *A song whose tempo changes at a section* further down.
+9. `pocket-399` **B2, the song stores its beats** (L, ADR 0281): an additive `beatTimes` on
+   `Song`, the archive field optional, and tapping through a song. Amends 0022 and 0154
+   and replaces the entry *A song whose tempo changes at a section* further down. **Built
+   2026-11-02.** *Tap through the song* is a screen pushed from the tempo editor's Tap mode, kept
+   apart from the tap pad (ADR 0281 D5). A typed or tapped tempo replaces a map, undoably. The upgrade
+   over an existing store was checked on the simulator. Owed on the device: the same upgrade over the
+   real library, and a tap-through of one of Tomisin's drifting songs, with the click on.
 10. **B3, the beat finder** (L): a pure `BeatTracker` with a confidence score per bar,
     and the *Find the beats* and *Check the beat* screens. Never auto-commits (ADR 0004).
 11. **B4, count the bar by choosing** (M): two questions, each answered by ear with the beat
@@ -1578,107 +1582,17 @@ Three shapes, the zoom-density study, and the full cockpit at 390×844, drawn ag
 tokens and dimensions: <https://claude.ai/code/artifact/45c5b4bb-962e-4c87-8150-d813fef51e32>.
 Option A is the chosen one. The artboards are mockups, not source.
 
-## A song whose tempo changes at a section — NEXT (would be ADR 0168)
+## A song whose tempo changes at a section — REPLACED by ADR 0281 (2026-11-02)
 
-**The observation.** A song that runs 92 in the verse and 78 in the bridge cannot be gridded.
-Set 92 and the grid is wrong for the whole bridge *and* wrong from the bridge to the end,
-because nothing ever recovers the error.
-
-**Anchors (0154) only half-cover it, by construction.** Planting an anchor at the bridge resets
-the *phase* there, but the beat *interval* is still 92's, so it is wrong again within a couple of
-bars and you would be planting an anchor every bar. 0154 says this in its own consequences:
-anchors stop error accumulating, they don't make one BPM correct. **Wobble wants anchors; a
-stated change wants a tempo.** That distinction is the whole design.
-
-**A second half, not previously written down (2026-08-31).** The word doing the work in this
-entry's title is *section*, and the app has no such thing. A tempo map gives the bridge its own
-BPM; it does not let you **name** the bridge or **go** to it. *"Practise the solo, then the
-outro"* is a practice affordance markers only half-provide — a marker is a point, a section is a
-span with a name, and choosing one is the navigation a player actually performs when learning a
-whole song. **The two are the same authoring surface**: whatever UI plants a tempo change at a
-boundary is the UI that would name the span it opens. Decide them together or the second one
-re-opens the first.
-
-**The finding that makes this cheap — everything downstream of the grid is already tempo-agnostic.**
-Nothing after `BeatGrid` sees a BPM. `MetronomeSchedule.upcoming` takes `[(time, isDownbeat)]`;
-`WaveformPracticeModel+Snap` takes `beatGrid.map(\.fraction)`; the drawing layer takes
-`model.beatGrid`. So a tempo map lands almost entirely inside one pure function plus authoring
-UI — not the sprawl 0154 priced it at.
-
-### Preferred shape: a tempo per anchor (piecewise-constant)
-
-`Shape.interval` in `BeatGrid` becomes **per-segment**. `segment(from:upTo:)` already runs
-anchor-to-anchor at a fixed interval, so the maths change is small. Decide explicitly whose
-interval the half-interval collapse rule uses at a seam (the incoming segment's, or the larger of
-the two) — that rule is what keeps `beats(...)` total.
-
-**Storage, against a schema frozen for destructive `@Model` changes** (additive stays safe):
-
-- **Preferred:** a new cascade-owned `@Model TempoAnchor { uid, seconds, bpm: Double? }`, the same
-  shape `Marker` already uses, where `bpm == nil` means "phase correction only" — which is exactly
-  what 0154's `extraDownbeatSeconds` entries are today. A new entity plus a to-many on `Song` is
-  additive, but **must be device-verified over an existing install** (`docs/swiftdata-gotchas.md`;
-  the in-memory test store starts empty and cannot catch a migration failure), as 0154 was.
-- **Escape hatch** if that migration proves risky pre-1.2: a parallel `[Double]` beside
-  `extraDownbeatSeconds`. Cheaper to migrate, but it carries a silent alignment invariant — the
-  exact class of bug this repo prefers to design out.
-- Either way `Song.tempoBPM` stays the **headline** tempo so no existing call site moves — the
-  same trick 0154 used by keeping `downbeatSeconds` primary.
-
-**Deferred: interpolation.** A tempo that *slides* (ritardando, gradual accelerando) means beats
-are no longer at fixed multiples and you have to integrate to place them. A section change is a
-step function, so piecewise-constant covers the actual use case; only build interpolation on
-evidence.
-
-**Not the model, but yes the UI: markers.** `Marker` already carries seconds + a label ("Bridge")
-and is already a snap candidate. Keep the types separate — a named place and a tempo change are
-different things, and a marker must never grid a song — but offer "set the tempo from here" at a
-marker and snap anchor drops to them.
-
-**Still rejected: per-loop tempo overrides.** 0154's reasoning stands — it leaves the whole-song
-grid wrong whenever no loop is armed, which is where the drift is noticed.
-
-### Auto-detection is in scope — 0004 permits it, and 0154 rejected something narrower
-
-Worth stating plainly, because it was nearly parked on a misreading. **ADR 0004 does not ban
-estimation, it institutionalises it:** rung 2 is "else optionally estimate on-device, flagged as
-estimated", and it already auto-places *the 1* — `TempoEstimator.Estimate` carries
-`downbeatSeconds` today. What 0004 forbids is **auto-commit**. What 0154 rejected is narrower
-still: silently *re-anchoring* a grid the player had already placed by hand. Proposing boundaries
-into a song that has none is neither of those things.
-
-This also attacks the cost that got the map deferred in the first place ("needs an authoring UI") —
-a detected first draft you then correct is far cheaper than a blank timeline.
-
-Mechanically it reuses what exists: run `estimateBPM` over overlapping ~10–15 s windows of the same
-onset envelope to get a tempo *curve* instead of a scalar, and propose a boundary where that curve
-steps and holds. `minConfidence` already returns `nil` on windows with no clear periodicity rather
-than inventing a tempo. Two traps to design against:
-
-1. **Re-centre the prior per song.** `preferredBPM` is a fixed 120 with a log-normal prior sized to
-   fold half/double errors. Per-window that is not enough — one window flipping to double-tempo
-   reads as a section change that isn't there. Centre each window's prior on the song's *global*
-   estimate so windows are pulled toward the song's own tempo and only a genuine step survives.
-2. **Threshold and hysteresis, or wobble becomes sections.** The same windowing that finds a bridge
-   sees Dilla drift as a constant trickle of small changes. Propose a boundary only when the change
-   is both large enough and sustained — get this wrong and an unquantised track becomes forty
-   bogus sections.
-
-### Slices, and two things that will bite
-
-1. Per-anchor tempo in `BeatGrid` — the correctness fix, pure and unit-testable.
-2. Authoring: set/edit a section tempo, tapping through a section to read it (ADR 0166's window is
-   what makes that reading local).
-3. Detection as prefill, never auto-commit.
-
-- **`GridKey` must gain the per-section tempos** (`WaveformPracticeModel+Grid.swift`), or the
-  memoised grid silently keeps the phase you just corrected — the ADR 0153 trap 0154 already paid
-  for once.
-- **`SongTempoTransition` already exists and means something else** (banking playback *speed* on
-  loop arm/disarm). "Tempo" means two things in this app; don't let a tempo map inherit that name.
-- **ADR 0131 opportunity:** it currently warns before an *exercise ramp* changes tempo. A song
-  tempo map is a second source of "the tempo is about to change" — pre-lighting a bar before the
-  bridge is nearly free once the map exists.
+This entry proposed a tempo per anchor (a `TempoAnchor` entity, piecewise-constant). ADR 0281 stores
+the beats themselves instead (`Song.beatTimes`). A song that slows for its bridge is then a beat map
+whose gaps widen there, and a band that drifts is covered too, which a tempo per anchor was not. See
+0281's *Alternatives considered*. Its findings were carried over: everything after `BeatGrid` takes
+beat times, `GridKey` must include the map, and "tempo" already names playback speed in
+`SongTempoTransition`. Still open from it, and now B3 and B6 of the beat map: detection that proposes
+and never commits (it needs a per-song prior and hysteresis, or one window flipping to double time
+reads as a section), and ADR 0131's warning before the tempo changes, which a map makes nearly free.
+Naming a section is the song map's (ADR 0232).
 
 ## The transport lights up with nothing scheduled — ✅ FIXED 2026-08-12 (re-diagnosed first)
 

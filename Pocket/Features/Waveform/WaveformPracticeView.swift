@@ -197,23 +197,7 @@ struct WaveformPracticeView: View {
         .sheet(isPresented: $model.showingLoopBulkEdit) {
             LoopBulkEditSheet(loops: model.selectedLoops, onApply: model.applyBulkEdit)
         }
-        .sheet(isPresented: $model.settingBPM) {
-            BPMSheet(engine: model.engine, currentBPM: model.song.tempoBPM,
-                     currentDownbeat: model.song.downbeatSeconds,
-                     currentBeatsPerBar: model.song.beatsPerBar,
-                     currentNoteValue: model.song.noteValue,
-                     onCommit: { bpm, downbeat, beats, note in
-                         model.commitTempo(bpm: bpm, downbeat: downbeat,
-                                           beatsPerBar: beats, noteValue: note)
-                     },
-                     onSetOnWaveform: { bpm in
-                         model.commitTempo(bpm: bpm, downbeat: nil)
-                         model.beginSetDownbeat(resumeSheet: true)
-                     },
-                     onEstimate: {
-                         await model.estimateTempoFromAudio().map { ($0.bpm, $0.downbeatSeconds) }
-                     })
-        }
+        .bpmSheet(model)
         .task {
             await model.loadAudio()
             model.beginPlaybackSession()

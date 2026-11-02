@@ -49,11 +49,19 @@ extension WaveformPracticeModel {
     /// downbeat lands — "the 1") is set only when provided, so a BPM-only commit leaves
     /// any existing phase anchor untouched (ADR 0022/0026). Both are optional so the
     /// sheet can commit either independently; a fully-empty commit is a no-op.
+    ///
+    /// A tempo given as a number means one steady tempo, so it **replaces a beat map** (ADR 0281
+    /// D4), with an undo, because the map may be a whole song's worth of tapping.
     func commitTempo(bpm: Double?, downbeat: TimeInterval?,
                      beatsPerBar: Int? = nil, noteValue: Int? = nil) {
         if let bpm {
+            let before = TempoSnapshot(song)
             song.preciseBPM = bpm
             song.bpm = Int(bpm.rounded())
+            if !before.beatTimes.isEmpty {
+                song.beatTimes = []
+                presentUndo("Back to one tempo") { [weak self] in self?.restore(before) }
+            }
         }
         if let downbeat {
             song.downbeatSeconds = downbeat

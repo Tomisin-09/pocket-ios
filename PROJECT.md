@@ -246,7 +246,15 @@ invariant: no two beats may be *closer* than half an interval — which drops a 
 next anchor and collapses near-duplicate anchors. In the downbeat bar, ✓ **corrects from the drop**
 and leaves the original 1 alone, **Move the 1** replaces the original and leaves corrections alone,
 and a count + undoable **Clear** removes them. The single-anchor `BeatGrid` entry point delegates
-to the plural one byte-identically. A **scrub** seek deliberately drops the beat grid and catches only the sparse
+to the plural one byte-identically. **ADR 0281** lets a song store **its beats**: additive
+declaration-default `Song.beatTimes: [TimeInterval]` (a **beat map**, at least four beats). When
+there is one, the grid is the map's beats (carried to the song's ends at the tempo at each end),
+the 1 marks the beat nearest it, a correction restarts the count at its beat, and `preciseBPM` holds
+the map's median so every one-tempo reader still works. Every grid goes through one entry point,
+`BeatGrid.beats(bpm:map:…)` / `Song.gridBeats(duration:)`, and the waveform's `GridKey` includes
+the map. A map is made in the tempo editor's **Tap through the song** (taps snapped onto a clear
+onset within 50 ms, cleaned and gap-filled by pure `BeatMap`), and a tempo given as a number
+replaces it, undoably. A **scrub** seek deliberately drops the beat grid and catches only the sparse
 landmarks (markers + loop edges), the same set the minimap uses, so a free scrub between beats
 lands where the finger lifts instead of magnetizing to the pulse (ADR 0080). A per-song **Grid** toggle on the "Loop controls" row shows/hides it, appearing
 only once a grid exists; when a **tempo is set but the 1 isn't** (`needsDownbeat` — a BPM-only commit,
@@ -555,5 +563,5 @@ the planner's **selection** (goals → required skills from a **technique taxono
 and its **ordering/time-boxing** are grounded in practice science (spaced repetition +
 serial-position effect + diminishing returns; ADR 0014); a **clean-before-fast** advance
 gate for the speed-trainer is recorded for a later automator slice (ADR 0016).
-Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `MetronomeBeats`, `MetronomeGrid`, `TempoMarking`, `TempoSliderScale`, `TimeSignature`, `MetronomeAutomator`, `TempoStretch`, `CommandRamp`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`, `MasteryRollup`, `LoopProgressFormat`, `PracticeStats`, `GlossaryTerm`, `ClickTimbre`, `PitchDetector`, `TunerReading`, `InstrumentTuning`, `TunerSmoother`.
+Verified pure logic: `TempoMath`, `TempoPeaks`, `TempoEstimator`, `SongRef`, `AudioMath`, `WaveformGesture`, `BeatGrid`, `BeatMap`, `MetronomeBeats`, `MetronomeGrid`, `TempoMarking`, `TempoSliderScale`, `TimeSignature`, `MetronomeAutomator`, `TempoStretch`, `CommandRamp`, `LoopLanes`, `AutoName`, `Song`, `AutomatorConfig`, `EntryKind`, `JournalGrouping`, `MasteryRollup`, `LoopProgressFormat`, `PracticeStats`, `GlossaryTerm`, `ClickTimbre`, `PitchDetector`, `TunerReading`, `InstrumentTuning`, `TunerSmoother`.
 See `CHANGELOG.md` for the full history.
