@@ -31,9 +31,11 @@ move it here. Full argument, competitor roster and the surfaces still contradict
   code. The Xcode target, the bundle id and this repo keep the internal name —
   the two are not going to be reconciled, so read "Pocket" below as the codebase
   and "Red Moon" as the product. Red Moon has **one plan**, £0.99 a month (with a free week
-  first, an App Store intro offer) or £14.99 once (**ADR 0256**, reversing 0237 before its free
-  build shipped; the prices are **ADR 0277**'s, as App Store Connect had no round point). That's the **founding price**: a lock, not a freeze. It can rise for new players,
-  never for a player who holds it (**ADR 0274**). Playing is free: the Song library,
+  first, an App Store intro offer) or £4.99 once (**ADR 0256**, reversing 0237 before its free
+  build shipped; the product ids are **ADR 0277**'s). That's the **founding price**, for the first
+  90 days on sale; players who join after pay £2.99 a month or £9.99 once (**ADR 0280**). It's a
+  lock, not a freeze: a price can rise for new players, never for a player who holds it
+  (**ADR 0274**). Playing is free: the Song library,
   the song player with saved loops and markers, the Metronome, the Journal and Practice log, and the
   whole Toolkit (**ADR 0263**: keeping is free). Practising is the plan.
 

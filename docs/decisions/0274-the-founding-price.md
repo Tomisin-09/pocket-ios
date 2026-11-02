@@ -7,6 +7,10 @@
 - **Amended by:** ADR 0277 (2026-10-26) — **D2**: the prices that hold the lock are £0.99 a month
   and £14.99 once, because App Store Connect offered no round point. 0277 also records that the
   founding price is the products' price, not an introductory offer. The lock and D1's wording stand.
+  ADR 0280 (2026-11-02) — **D2**: the founding price now ends. It's £0.99 a month or £4.99 once for
+  the first 90 days on sale, then £2.99 or £9.99 for players who join after. *"No end date"* and
+  *"no 'limited time'"* no longer hold; the app still shows no countdown. The lock (D1's wording, D3)
+  stands, so a founder keeps their price.
 - **Amends:** ADR 0256 — **D8**: the promise's second line. *"We'll never raise the price"* goes, and
   a price lock takes its place (D1, D2 here). The second half, *"nothing you can do today will ever
   move behind a higher one"*, stays word for word. Two other things go with it: D8's reason for
@@ -73,6 +77,11 @@ and the site.
     marketing-forward of the three, and selling is what 0256 kept off the wall.
 
 ### D2 — A lock, not a promotion
+
+> **Amended by 0280 (2026-11-02):** the founding price now has an end: the first 90 days on sale, at
+> £0.99 a month or £4.99 once, then £2.99 or £9.99 for players who join after. The site, the
+> description and posts say when it ends; the app still shows no countdown. The lock below stands, so
+> a founder keeps their price. What follows is D2 as it was decided.
 
 - **The prices don't change.** They stay £1 a month and £15 once (0256 D1). *(0277: £0.99 and
   £14.99, the nearest points App Store Connect offers.)*

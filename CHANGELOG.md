@@ -103,7 +103,7 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   The tab writes a muted note *x*, and the line of names ✕. A muted note counts as named, and a
   strummed part of chords and chucks still counts in chords. My tabs has the ✕ too, and Watch it on
   the neck lights it. A piece with muted notes, opened on an older build, shows those notes unnamed.
-- **Red Moon has one plan: £0.99 a month, or £14.99 once** (ADR 0256, 0277), and the monthly starts with a
+- **Red Moon has one plan: £0.99 a month, or £4.99 once** (ADR 0256, 0277, 0280), and the monthly starts with a
   free week the first time you take it. Your songs are free for good:
   import them, play them, slow them down and keep your loops and markers. The Metronome, the
   Journal and Practice log, and everything in the Toolkit (My chords, My progressions, My tabs,
@@ -112,7 +112,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   door behind the plan wears a small lock; tap it
   and the screen explains what the plan is, then opens where you were going once you've paid. Today's
   price is the **founding price**, and it's yours for as long as you keep the plan: if the price ever
-  goes up, it goes up for people who join later, not for you (ADR 0274). Nothing you can do today
+  goes up, it goes up for people who join later, not for you (ADR 0274). The founding price is for
+  Red Moon's first 90 days on sale; after that, new players pay £2.99 a month or £9.99 once
+  (ADR 0280). Nothing you can do today
   will ever move behind a higher one. If you
   stop paying nothing is deleted, and Settings ▸ Your data always exports everything. Settings
   gains **Your plan**, which says the day your free week ends and what comes after it. While the
