@@ -87,7 +87,7 @@ struct BPMSheet: View {
         self.onCommit = onCommit
         self.onSetOnWaveform = onSetOnWaveform
         self.onEstimate = onEstimate
-        _manualText = State(initialValue: currentBPM.map { String(Int($0.rounded())) } ?? "")
+        _manualText = State(initialValue: currentBPM.map(TempoMath.wholeBPM) ?? "")
         _downbeat = State(initialValue: currentDownbeat)
         _timeSignature = State(initialValue: TimeSignature.forStored(
             beats: currentBeatsPerBar, noteValue: currentNoteValue, accentBeats: []))
@@ -98,7 +98,7 @@ struct BPMSheet: View {
     /// automatically (the strings stop matching) without an `onChange` race.
     private var showingEstimate: Bool {
         guard let estimate = lastEstimate else { return false }
-        return manualText == String(Int(estimate.rounded()))
+        return manualText == TempoMath.wholeBPM(estimate)
     }
 
     /// The BPM the current mode would commit (full precision), or `nil` if not set.
@@ -107,12 +107,8 @@ struct BPMSheet: View {
         case .tap:
             return TempoMath.bpm(fromTapTimes: taps)
         case .manual:
-            // Untouched, the field only shows the song's tempo rounded. Committing it would round
-            // the tempo, and on a song with a beat map it would replace the map (ADR 0281 D4).
-            guard manualText != currentBPM.map({ String(Int($0.rounded())) }) || lastEstimate != nil
-            else { return nil }
-            guard let value = Double(manualText.trimmingCharacters(in: .whitespaces)), value > 0 else { return nil }
-            return value.clamped(to: TempoMath.minTapBPM...TempoMath.maxTapBPM)
+            // The field shows a whole BPM; this keeps an untouched tempo and an unedited estimate exact.
+            return TempoMath.manualBPM(text: manualText, current: currentBPM, estimate: lastEstimate)
         }
     }
 
@@ -234,7 +230,7 @@ struct BPMSheet: View {
             .disabled(isEstimating)
 
             if showingEstimate, let estimate = lastEstimate {
-                Label("Estimated \(Int(estimate.rounded())) BPM — confirm or adjust",
+                Label("Estimated \(TempoMath.wholeBPM(estimate)) BPM — confirm or adjust",
                       systemImage: "info.circle")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
@@ -263,7 +259,7 @@ struct BPMSheet: View {
         if let result {
             lastEstimate = result.bpm
             mode = .manual
-            manualText = String(Int(result.bpm.rounded()))
+            manualText = TempoMath.wholeBPM(result.bpm)
             if let phase = result.downbeat { downbeat = phase }
         } else {
             lastEstimate = nil

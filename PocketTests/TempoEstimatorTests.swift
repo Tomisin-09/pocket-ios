@@ -47,6 +47,97 @@ final class TempoEstimatorTests: XCTestCase {
         XCTAssertEqual(bpm, 133, accuracy: 2)
     }
 
+    // MARK: timing many beats (ADR 0282)
+
+    /// A stand-in autocorrelation: a peak of `height` at every multiple of `period` frames,
+    /// falling to nothing two frames either side.
+    private func peaks(every period: Double, height: Double = 1) -> (Int) -> Double {
+        { lag in
+            let beats = (Double(lag) / period).rounded()
+            guard beats >= 1 else { return 0 }
+            return max(0, height * (1 - abs(Double(lag) - beats * period) / 2))
+        }
+    }
+
+    /// 83 BPM is 72.3 frames a beat, so its spikes land 72 or 73 frames apart. One beat's lag
+    /// can't tell the tempo closer than that; eighty seconds of beats can.
+    func testAWholeSongGivesTheTempoToAHundredth() throws {
+        let bpm = try XCTUnwrap(TempoEstimator.estimateBPM(onsets: impulseTrain(bpm: 83, seconds: 80),
+                                                           framesPerSecond: 100))
+        XCTAssertEqual(bpm, 83, accuracy: 0.01)
+    }
+
+    /// The last seconds of *Binta* are a guitar fill with no beat under it. The rest of the song
+    /// outvotes it.
+    func testAFillOffTheBeatDoesNotMoveTheTempo() throws {
+        var onsets = impulseTrain(bpm: 83, seconds: 80)
+        var seed: UInt64 = 7
+        for index in 7_400..<onsets.count {
+            seed = seed &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+            onsets[index] = seed >> 60 == 0 ? 1 : 0
+        }
+        let bpm = try XCTUnwrap(TempoEstimator.estimateBPM(onsets: onsets, framesPerSecond: 100))
+        XCTAssertEqual(bpm, 83, accuracy: 0.01)
+    }
+
+    /// *Binta*'s one-beat reading was 71.5 frames against 72.3.
+    func testRefiningCorrectsABeatReadMostOfAFrameShort() {
+        let lag = TempoEstimator.refined(beatLag: 71.52, frameCount: 8_000, autocorr: peaks(every: 72.29))
+        XCTAssertEqual(lag, 72.29, accuracy: 0.01)
+    }
+
+    /// With eight beats the longest span, whole frames alone would leave the beat 0.04 frames out.
+    /// The parabola between frames reads closer.
+    func testRefiningReadsBetweenFrames() {
+        let lag = TempoEstimator.refined(beatLag: 71.52, frameCount: 1_200, autocorr: peaks(every: 72.29))
+        XCTAssertEqual(lag, 72.29, accuracy: 0.02)
+    }
+
+    /// A song in three repeats strongly only every bar of three beats. Doubling spans (2, 4, 8…)
+    /// never land on one; growing by a half or a third does.
+    func testABarOfThreeIsAmongTheSpans() {
+        let lag = TempoEstimator.refined(beatLag: 71.52, frameCount: 8_000, autocorr: peaks(every: 3 * 72.29))
+        XCTAssertEqual(lag, 72.29, accuracy: 0.01)
+    }
+
+    /// Two beats on from a beat read 2.2 frames long, the true peak is past the window's edge. The
+    /// reading has drifted too far to follow, so it stands. Searching on would, at 32 beats, find
+    /// the 33rd beat's peak and confirm the wrong tempo.
+    func testRefiningLeavesTheReadingWhenThePeakIsOutOfReach() {
+        let lag = TempoEstimator.refined(beatLag: 74.5, frameCount: 8_000, autocorr: peaks(every: 72.29))
+        XCTAssertEqual(lag, 74.5)
+    }
+
+    /// A repeat too faint to trust at one beat is too faint at many.
+    func testRefiningIgnoresAPeakBelowConfidence() {
+        let faint = peaks(every: 72.79, height: TempoEstimator.minConfidence / 2)
+        let lag = TempoEstimator.refined(beatLag: 72.29, frameCount: 8_000, autocorr: faint)
+        XCTAssertEqual(lag, 72.29)
+    }
+
+    /// At least half the envelope always overlaps itself, and no lag is below one frame.
+    func testRefiningAsksOnlyForLagsInsideTheEnvelope() throws {
+        var asked: [Int] = []
+        let shape = peaks(every: 50)
+        _ = TempoEstimator.refined(beatLag: 50, frameCount: 1_000) { asked.append($0); return shape($0) }
+        XCTAssertLessThanOrEqual(try XCTUnwrap(asked.max()), 500)
+
+        asked = []
+        _ = TempoEstimator.refined(beatLag: 1, frameCount: 1_000) { asked.append($0); return shape($0) }
+        XCTAssertGreaterThanOrEqual(try XCTUnwrap(asked.min()), 1)
+    }
+
+    /// The starter track holds 83 BPM from start to end (a steady grid fitted to the whole song
+    /// reads 83.00, and so does each half). A 0.02 BPM error is 20 ms by its last beat.
+    func testBintaReadsItsTempoExactly() throws {
+        let url = try XCTUnwrap(Bundle(for: Self.self).url(forResource: StarterTrack.resourceName,
+                                                           withExtension: StarterTrack.resourceExtension))
+        let envelope = try XCTUnwrap(WaveformExtractor.extractOnsetEnvelope(from: url))
+        let bpm = try XCTUnwrap(TempoEstimator.estimateBPM(onsets: envelope.onsets,
+                                                           framesPerSecond: envelope.framesPerSecond))
+        XCTAssertEqual(bpm, 83, accuracy: 0.02)
+    }
+
     // MARK: octave handling
 
     /// On-beats taller than their eighth-note subdivisions: the estimate should lock to

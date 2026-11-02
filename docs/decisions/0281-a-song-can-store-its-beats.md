@@ -9,6 +9,8 @@
   is unchanged for every song without a map. ADR 0154: its first two rejected alternatives, a full
   tempo map and re-anchoring by detection, are answered in D6. A correction keeps its meaning on a
   map, *the bar count restarts here* (D2). Its single-tempo grid and its ✓ and Move rules stand.
+- **Amended by:** ADR 0282, on the Context only: *Binta*'s grid drifted because its estimate read 83.9
+  BPM, and the song holds 83 throughout, so it was not a band moving. Every decision here stands.
 - **Relates to:** 0004 (an estimate never commits itself), 0024 (the peak snap D5 narrows), 0153
   (the memoised grid, D8), 0166 (the windowed tap reading the new screen shows), 0170 (the tempo
   carried out of a song, which reads D3's median), 0212 (the archive rule D7 follows), 0225 and 0232

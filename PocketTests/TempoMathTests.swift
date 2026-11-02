@@ -250,6 +250,44 @@ final class TempoMathTests: XCTestCase {
                        60.0 / everyGapMean, accuracy: 1e-6)
     }
 
+    // MARK: the Manual field's commit (ADR 0282)
+
+    func testWholeBPMRoundsToTheNearest() {
+        XCTAssertEqual(TempoMath.wholeBPM(83.0015), "83")
+        XCTAssertEqual(TempoMath.wholeBPM(83.9), "84")
+        XCTAssertEqual(TempoMath.wholeBPM(83.5), "84")
+    }
+
+    /// The field shows the estimate rounded. Committing what it shows saved *Binta*'s 83.9 as 84.
+    func testAnUneditedEstimateCommitsAtFullPrecision() {
+        XCTAssertEqual(TempoMath.manualBPM(text: "83", current: 84, estimate: 83.0015), 83.0015)
+    }
+
+    func testAnUntouchedTempoCommitsNothing() {
+        XCTAssertNil(TempoMath.manualBPM(text: "84", current: 83.6, estimate: nil))
+    }
+
+    /// After an estimate, typing the old tempo back is a choice, not an untouched field.
+    func testATypedTempoCommitsAsTypedAfterAnEstimate() {
+        XCTAssertEqual(TempoMath.manualBPM(text: "84", current: 84, estimate: 83.0015), 84)
+    }
+
+    func testATypedTempoCommitsAsTyped() {
+        XCTAssertEqual(TempoMath.manualBPM(text: " 92.5 ", current: 84, estimate: nil), 92.5)
+        XCTAssertEqual(TempoMath.manualBPM(text: "92", current: nil, estimate: nil), 92)
+    }
+
+    func testATypedTempoIsClampedToTheTappableRange() {
+        XCTAssertEqual(TempoMath.manualBPM(text: "999", current: 84, estimate: nil), TempoMath.maxTapBPM)
+        XCTAssertEqual(TempoMath.manualBPM(text: "5", current: 84, estimate: nil), TempoMath.minTapBPM)
+    }
+
+    func testAnEmptyOrUnreadableFieldCommitsNothing() {
+        XCTAssertNil(TempoMath.manualBPM(text: "", current: 84, estimate: nil))
+        XCTAssertNil(TempoMath.manualBPM(text: "fast", current: 84, estimate: 83.0015))
+        XCTAssertNil(TempoMath.manualBPM(text: "0", current: 84, estimate: nil))
+    }
+
     // MARK: automator step count
 
     func testAutomatorStepCountExact() {

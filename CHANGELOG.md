@@ -373,6 +373,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Estimate from audio finds a steady song's exact tempo** (ADR 0282). It used to time a single beat,
+  to the nearest hundredth of a second, so a song at 83 BPM could read 83.9, and the grid ended up
+  more than a beat early by the last bar. It now times many beats at once, so *Binta* reads 83.00. A
+  fill or a break near the end doesn't throw it off. **Done** also keeps the estimate as it was
+  found, instead of saving the whole number the field shows. A song already set from an estimate
+  keeps its tempo until you run *Estimate from audio* again.
 - **A song can follow a band that speeds up and slows down** (ADR 0281, the beat map's second
   slice). Until now a song's grid was one tempo drawn as a straight line from the 1, so on a song
   played without a click the bar lines and the click slid off the music. The tempo editor's Tap mode

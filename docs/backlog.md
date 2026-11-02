@@ -58,15 +58,22 @@ takes the next free `pocket-` number when its item starts.
 8. `pocket-398` **B1, hear new notes** (M): a spectral-flux onset envelope in place of the RMS one, so
    the BPM estimate works on songs without drums. Ships on its own. **Merged 2026-11-02 (#391).** On *Binta*
    the estimate now reads 83.9 BPM with the 1 at 0.03 s (measured: 83 and 0.027 s); the old envelope
-   read 110.9 BPM. The 0.9 left over is `TempoEstimator`'s own resolution, which B3 replaces. Owed on
-   the device: Tomisin's own songs without drums.
+   read 110.9 BPM. The 0.9 left over was `TempoEstimator` timing one beat, which B3a fixes (ADR 0282).
+   Owed on the device: Tomisin's own songs without drums.
 9. `pocket-399` **B2, the song stores its beats** (L, ADR 0281): an additive `beatTimes` on
    `Song`, the archive field optional, and tapping through a song. Amends 0022 and 0154
    and replaces the entry *A song whose tempo changes at a section* further down. **Built
    2026-11-02.** *Tap through the song* is a screen pushed from the tempo editor's Tap mode, kept
    apart from the tap pad (ADR 0281 D5). A typed or tapped tempo replaces a map, undoably. The upgrade
-   over an existing store was checked on the simulator. Owed on the device: the same upgrade over the
-   real library, and a tap-through of one of Tomisin's drifting songs, with the click on.
+   over an existing store was checked on the simulator, and over the real library on the device. On
+   the device, Tomisin found tapping through a whole song "isn't tolerable at all, this is better
+   suited towards sections" (B5). Where the row goes is for B3 to settle.
+
+    **9b. `pocket-400` B3a, an exact tempo for a steady song** (S, ADR 0282). Added 2026-11-02 ahead
+    of B3, because Tomisin ranked steady click songs above songs that move. *Binta*'s "drift" was its
+    estimate, 83.9 against a steady 83. *Estimate from audio* now times many beats, not one (83.00),
+    and Done keeps the estimate exact instead of the whole number the field shows. **Built
+    2026-11-02.** Owed on the device: Tomisin's own steady songs, each estimated again.
 10. **B3, the beat finder** (L): a pure `BeatTracker` with a confidence score per bar,
     and the *Find the beats* and *Check the beat* screens. Never auto-commits (ADR 0004).
 11. **B4, count the bar by choosing** (M): two questions, each answered by ear with the beat
