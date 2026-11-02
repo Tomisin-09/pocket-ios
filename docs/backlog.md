@@ -73,7 +73,10 @@ takes the next free `pocket-` number when its item starts.
     of B3, because Tomisin ranked steady click songs above songs that move. *Binta*'s "drift" was its
     estimate, 83.9 against a steady 83. *Estimate from audio* now times many beats, not one (83.00),
     and Done keeps the estimate exact instead of the whole number the field shows. **Built
-    2026-11-02.** Owed on the device: Tomisin's own steady songs, each estimated again.
+    2026-11-02**, and on the device it holds on Tomisin's steady songs. Two guitar songs read at
+    double time, so **Half** and **Double** were added (D5). **Open:** whether the estimate says so
+    when a song's tempo moves (*Let's Ride* moves 119.6–122.0 BPM); Tomisin leans to being upfront
+    about it rather than solving it.
 10. **B3, the beat finder** (L): a pure `BeatTracker` with a confidence score per bar,
     and the *Find the beats* and *Check the beat* screens. Never auto-commits (ADR 0004).
 11. **B4, count the bar by choosing** (M): two questions, each answered by ear with the beat

@@ -138,6 +138,66 @@ final class TempoEstimatorTests: XCTestCase {
         XCTAssertEqual(bpm, 83, accuracy: 0.02)
     }
 
+    // MARK: Half and Double (ADR 0282 D5)
+
+    /// A guitar part at 83 BPM: the beat hit hard and the half-beat between hit nearly as hard,
+    /// so the eighth notes read as a beat of their own, as on *Don't Know Why*.
+    private func eighthsOverBeats(offsetFrames: Int = 25) -> [Double] {
+        let beats = impulseTrain(bpm: 83, seconds: 60, spike: 1, offsetFrames: offsetFrames)
+        let halves = impulseTrain(bpm: 83, seconds: 60, spike: 0.8, offsetFrames: offsetFrames + 36)
+        return zip(beats, halves).map { max($0, $1) }
+    }
+
+    /// Halving counts the same beat, and the 1 is placed again: of the two phases at half the
+    /// tempo, the beat (0.25 s) is hit harder than the half-beat the double-time 1 sat on.
+    func testHalfCountsTheSameBeatAndPlacesTheOneAgain() throws {
+        let reading = TempoEstimator.Reading(estimate: .init(bpm: 166, downbeatSeconds: 0.61),
+                                             onsets: eighthsOverBeats(), framesPerSecond: 100)
+        let half = try XCTUnwrap(reading.scaled(by: 0.5))
+        XCTAssertEqual(half.estimate.bpm, 83)
+        XCTAssertEqual(try XCTUnwrap(half.estimate.downbeatSeconds), 0.25, accuracy: 0.02)
+        XCTAssertEqual(half.onsets, reading.onsets)
+    }
+
+    /// The exactness ADR 0282 D1 bought survives a trip through Half and Double.
+    func testDoubleThenHalfIsTheSameTempo() throws {
+        let reading = TempoEstimator.Reading(estimate: .init(bpm: 83.0015, downbeatSeconds: 0.02),
+                                             onsets: eighthsOverBeats(), framesPerSecond: 100)
+        let back = try XCTUnwrap(reading.scaled(by: 2)?.scaled(by: 0.5))
+        XCTAssertEqual(back.estimate.bpm, 83.0015)
+    }
+
+    func testScalingPastTheTappableRangeIsRefused() {
+        let fast = TempoEstimator.Reading(estimate: .init(bpm: 200, downbeatSeconds: nil),
+                                          onsets: [], framesPerSecond: 100)
+        XCTAssertFalse(fast.allows(2))
+        XCTAssertNil(fast.scaled(by: 2))
+        XCTAssertTrue(fast.allows(0.5))
+
+        let slow = TempoEstimator.Reading(estimate: .init(bpm: 50, downbeatSeconds: nil),
+                                          onsets: [], framesPerSecond: 100)
+        XCTAssertFalse(slow.allows(0.5))
+        XCTAssertNil(slow.scaled(by: 0.5))
+    }
+
+    /// The estimate's own 1 moves with it. A 1 the player placed, or cleared, since stays.
+    func testTheEstimatesOneMovesButThePlayersStays() throws {
+        let reading = TempoEstimator.Reading(estimate: .init(bpm: 166, downbeatSeconds: 0.61),
+                                             onsets: eighthsOverBeats(), framesPerSecond: 100)
+        let half = try XCTUnwrap(reading.scaled(by: 0.5))
+        XCTAssertEqual(reading.downbeat(after: half, current: 0.61), half.estimate.downbeatSeconds)
+        XCTAssertEqual(reading.downbeat(after: half, current: 3.2), 3.2)
+        XCTAssertNil(reading.downbeat(after: half, current: nil))
+    }
+
+    func testAReadingKeepsItsEnvelope() throws {
+        let onsets = impulseTrain(bpm: 120, offsetFrames: 12)
+        let reading = try XCTUnwrap(TempoEstimator.read(onsets: onsets, framesPerSecond: 100))
+        XCTAssertEqual(reading.estimate, TempoEstimator.estimate(onsets: onsets, framesPerSecond: 100))
+        XCTAssertEqual(reading.onsets, onsets)
+        XCTAssertEqual(reading.framesPerSecond, 100)
+    }
+
     // MARK: octave handling
 
     /// On-beats taller than their eighth-note subdivisions: the estimate should lock to

@@ -220,7 +220,10 @@ to open this too; it now carries the tempo out instead.)
   of a loop first, and `Done` keeps them. A tap near a clear hit moves onto it, and a beat
   you miss is filled in. With no 1 set, start on a 1: the first tap becomes it.
 - **`Manual`** — type the number.
-- **`Estimate from audio`** analyses the track and proposes one.
+- **`Estimate from audio`** analyses the track and proposes one, exact enough for a song played to
+  a click to stay on the beat to the end. A guitar playing every half-beat can read as double time:
+  if the click comes twice a beat, `Half` fixes it, and `Double` does the reverse. Both keep the
+  estimate exact and place the 1 again.
 - **`The 1 (downbeat)`** — `Mark the 1 at the playhead`, or `Set the 1 on the waveform`.
 
 A song that has its beats opens the editor with **`The beats`**: how many there are, how far the

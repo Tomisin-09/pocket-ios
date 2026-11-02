@@ -379,6 +379,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   fill or a break near the end doesn't throw it off. **Done** also keeps the estimate as it was
   found, instead of saving the whole number the field shows. A song already set from an estimate
   keeps its tempo until you run *Estimate from audio* again.
+- **Half and Double, under an estimate.** A guitar part that plays every half-beat can make the
+  estimate read double time. If the click comes twice a beat, **Half** fixes it, and **Double** does
+  the reverse. Both keep the tempo exact and place the 1 again.
 - **A song can follow a band that speeds up and slows down** (ADR 0281, the beat map's second
   slice). Until now a song's grid was one tempo drawn as a straight line from the 1, so on a song
   played without a click the bar lines and the click slid off the music. The tempo editor's Tap mode

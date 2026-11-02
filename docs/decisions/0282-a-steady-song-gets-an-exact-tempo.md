@@ -30,6 +30,17 @@ Tomisin set the priority on 2026-11-02: *"the aim is to ensure that we can match
 possible for steady click songs, this is more important than getting something for songs that speed
 up and slow down."* So this slice goes before B3, the beat finder.
 
+On the device the exact estimate held on Tomisin's steady songs ("that estimate works well on a
+rhythm basis"). Two, *Don't Know Why* (a solo guitar cover) and *Heart of Life* (an instrumental),
+read at double time and stayed on the beat: 166.2 for 83.1 and 171.9 for 86.0. Both are guitar
+parts that play every eighth note about as firmly as the beat, so the envelope repeats more strongly
+at half a beat (0.21 against 0.17, and 0.34 against 0.26). The tempo prior hardly separates them:
+83 and 166 sit almost evenly either side of 120. *Binta* was nearly a tie the same way (0.2202
+against 0.2203 once weighted). The envelope gives no clue that settles it, either: on *Don't Know
+Why*, alternate beats are equally strong. A third song, *Let's Ride* (a guitar cover), did not fit
+one tempo at all. It moves between 119.6 and 122.0 BPM from section to section, where *Binta*'s
+sections agree to 0.02%.
+
 ## Decisions
 
 **D1. The estimate times many beats, not one.** The one-beat reading still finds the tempo and its
@@ -65,6 +76,15 @@ lies between them, with the number of bars between inferred from the estimate. T
 restarts the bar count (ADR 0154), so giving it this job is its own decision. It is worth taking up
 only if a steady song still drifts after D1.
 
+**D5. Half and Double, chosen by ear.** While the Manual field still shows the estimate, two
+buttons under it read the same beat at half or double the tempo. The result is exact (a tempo
+halved and doubled again comes back unchanged), and the 1 is placed again at the new tempo, because
+halving leaves two candidate phases, a beat and the half-beat after it. A 1 the player has placed or
+cleared since the estimate stays theirs. Each button is disabled where the result would leave the
+tappable range. The sheet keeps the onset envelope with the estimate (`TempoEstimator.Reading`), so
+neither button decodes the file again. On the device songs: *Don't Know Why* halves to 83.104 BPM,
+*Heart of Life* to 85.956.
+
 ## Alternatives considered
 
 - **Fit a steady grid to the whole song** (tempo and phase swept together, as the measurement in the
@@ -76,6 +96,11 @@ only if a steady song still drifts after D1.
 - **Show a decimal in the Manual field.** It would make an exact estimate look unsure (83.0, then
   82.9 on another song), and nothing the player does needs it. The field stays whole; the value saved
   is exact.
+- **Fold half and double time automatically** (a lower tempo prior, or a test for alternating
+  strong and weak beats). A prior centred lower would read these three songs right and turn a fast
+  song into half time, and with three songs to calibrate on there is no way to know where to put
+  it. The alternating test finds nothing on *Don't Know Why*. Choosing by ear takes a second and is
+  always right.
 - **Build the beat finder (B3) first.** It answers songs that move, which Tomisin ranked below
   steady ones. Most of a steady song's drift was one number.
 
@@ -84,7 +109,10 @@ only if a steady song still drifts after D1.
 - **A song already set from an estimate keeps its old tempo.** Running *Estimate from audio* again
   replaces it. The stored value is never rewritten behind the player's back (ADR 0004).
 - **A song that moves** gets the tempo its repeats agree on, or the search stops early and keeps a
-  shorter reading. It is still one tempo; the beat map (ADR 0281) is the answer there.
+  shorter reading. It is still one tempo, and its grid drifts (*Let's Ride*). Tomisin's view
+  (2026-11-02): "maybe that's just a limitation we're upfront about rather than try to solve for."
+  The downbeat section's footer already says a song played to feel drifts, and to set the 1 again
+  where it does. Whether the estimate should also say so for the song in hand is not decided here.
 - **Checked on one real song.** *Binta* is the only audio in the repository, and a unit test now
   decodes it (`PocketTests` carries a copy) and holds its estimate to 83 ± 0.02 BPM. Tomisin's own
   steady songs are checked on the device.

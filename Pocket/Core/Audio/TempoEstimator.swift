@@ -51,6 +51,50 @@ enum TempoEstimator {
         return Estimate(bpm: bpm, downbeatSeconds: downbeat)
     }
 
+    /// What *Estimate from audio* hands the tempo editor: the estimate and the envelope it was read
+    /// from. A guitar part that plays every eighth note as firmly as the beat repeats more strongly
+    /// at half a beat, so the estimate can land on double time (*Don't Know Why* read 166 against
+    /// 83) or, as nearly happened on *Binta*, half. Nothing in the envelope settles which, so the
+    /// player chooses by ear with **Half** and **Double** (ADR 0282 D5), and the envelope lets the
+    /// 1 be placed again at the new tempo.
+    struct Reading: Sendable, Equatable {
+        let estimate: Estimate
+        let onsets: [Double]
+        let framesPerSecond: Double
+
+        /// Whether `factor` times the tempo stays inside `TempoMath.minTapBPM...maxTapBPM`.
+        func allows(_ factor: Double) -> Bool {
+            (TempoMath.minTapBPM...TempoMath.maxTapBPM).contains(estimate.bpm * factor)
+        }
+
+        /// The same beat counted at `factor` times the tempo (½ or 2), so exact to the same
+        /// precision, with the 1 placed again at the new tempo. Halving leaves two candidate phases
+        /// for the 1, a beat and the half-beat after it, and the comb filter keeps the stronger.
+        /// `nil` when the new tempo is outside the tappable range.
+        func scaled(by factor: Double) -> Reading? {
+            guard allows(factor) else { return nil }
+            let bpm = estimate.bpm * factor
+            let downbeat = TempoEstimator.estimateDownbeat(onsets: onsets, framesPerSecond: framesPerSecond,
+                                                           bpm: bpm) ?? estimate.downbeatSeconds
+            return Reading(estimate: Estimate(bpm: bpm, downbeatSeconds: downbeat),
+                           onsets: onsets, framesPerSecond: framesPerSecond)
+        }
+
+        /// The 1 to show once `scaled` replaces this reading. The estimate's own 1 moves with it, but
+        /// a 1 the player has placed since (`current` differs from this reading's) stays theirs.
+        func downbeat(after scaled: Reading, current: TimeInterval?) -> TimeInterval? {
+            guard current == estimate.downbeatSeconds else { return current }
+            return scaled.estimate.downbeatSeconds ?? current
+        }
+    }
+
+    /// `estimate(onsets:framesPerSecond:)`, kept with its envelope (`Reading`).
+    static func read(onsets: [Double], framesPerSecond: Double) -> Reading? {
+        estimate(onsets: onsets, framesPerSecond: framesPerSecond).map {
+            Reading(estimate: $0, onsets: onsets, framesPerSecond: framesPerSecond)
+        }
+    }
+
     /// Minimum normalised autocorrelation at the chosen lag for the estimate to be
     /// trusted. Flat or rubato/ambient material (ADR 0004's hard case) has no sharp
     /// repeat, so its peak stays low and we return `nil` — "no confident estimate" —

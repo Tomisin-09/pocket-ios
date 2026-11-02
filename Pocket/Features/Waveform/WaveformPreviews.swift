@@ -64,15 +64,21 @@ import SwiftUI
     }
 }
 
+private extension TempoEstimator.Reading {
+    /// A 124 BPM estimate with the 1 at half a second, and no envelope behind it.
+    static let preview = TempoEstimator.Reading(estimate: .init(bpm: 124, downbeatSeconds: 0.5),
+                                                onsets: [], framesPerSecond: 100)
+}
+
 #Preview("BPM sheet — tap-tempo (ADR 0024)") {
     BPMSheet(engine: PracticeAudioEngine(), currentBPM: nil, currentDownbeat: nil,
-             onCommit: { _, _, _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { (124, 0.5) })
+             onCommit: { _, _, _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { .preview })
         .preferredColorScheme(.dark)
 }
 
 #Preview("BPM sheet — prefilled") {
     BPMSheet(engine: PracticeAudioEngine(), currentBPM: 128, currentDownbeat: 1.5,
-             onCommit: { _, _, _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { (124, 0.5) })
+             onCommit: { _, _, _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { .preview })
         .preferredColorScheme(.dark)
 }
 

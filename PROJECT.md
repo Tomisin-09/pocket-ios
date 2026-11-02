@@ -279,7 +279,9 @@ autocorrelation for the BPM (weighted by a ~120 BPM prior to fold half/double er
 again across many beats so a steady song's tempo is exact, ADR 0282) and a
 comb-filter for the downbeat phase. It **prefills** both, flagged as estimated for the user to
 confirm, never auto-committing (rung 2 of ADR 0004). Confirmed unedited, the estimate is saved
-exactly, not as the whole BPM the field shows (`TempoMath.manualBPM`). A **Click** toggle on the **speed bar**
+exactly, not as the whole BPM the field shows (`TempoMath.manualBPM`). **Half** and **Double** under
+it read the same beat at another speed, still exact, with the 1 placed again
+(`TempoEstimator.Reading`, ADR 0282 D5). A **Click** toggle on the **speed bar**
 (beside the BPM, its own teal — ADR 0027) plays a
 **metronome** over the song that **follows the speed control** (50% → half-BPM, locked to the
 slowed track): pure unit-tested `MetronomeSchedule` schedules each beat `delay = (beat − now) /
