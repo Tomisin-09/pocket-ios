@@ -66,7 +66,8 @@ final class CountTheNotesModel {
     var grid: CountGrid? {
         if let gridCache { return gridCache }
         let song = loop.song
-        let built = CountGrid(tempo: song?.tempoBPM, anchors: song?.downbeatAnchors ?? [],
+        let built = CountGrid(tempo: song?.tempoBPM, beatMap: song?.beatTimes ?? [],
+                              anchors: song?.downbeatAnchors ?? [],
                               beatsPerBar: song?.beatsPerBar ?? 4, duration: song?.duration ?? 0,
                               regionStart: loop.startSeconds, regionEnd: loop.endSeconds)
         gridCache = .some(built)

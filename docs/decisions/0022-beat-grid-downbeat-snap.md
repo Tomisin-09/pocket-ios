@@ -2,6 +2,9 @@
 
 - **Status:** Accepted — **extended by [ADR 0154](0154-a-grid-you-can-correct-as-you-go.md)**
 - **Date:** 2026-06-19 (`pocket-025-beat-grid-snap`)
+- **Amended by:** ADR 0281 (2026-11-02), D1 and D2: a song can store its beats, and when it does
+  the grid is drawn from them, with the 1 marking which beat starts a bar. The tempo-plus-phase grid
+  below still draws every song without a map, and "no 1, no grid" holds for both.
 
 > **Amended 2026-08-09.** "Tempo + *one* phase anchor" held for four decisions and is wrong for
 > music whose pulse moves: a single anchor makes the grid a straight line, and phase error

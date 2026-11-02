@@ -4,6 +4,11 @@
 - **Date:** 2026-08-09 (`pocket-249-beat-grid-anchors`)
 - **Extends:** ADR 0022 (the grid is tempo + one phase anchor), ADR 0024 (tap tempo, `preciseBPM`)
 - **Relates to:** ADR 0004 (BPM is best-effort and user-correctable), ADR 0026 (the in-song click)
+- **Amended by:** ADR 0281 (2026-11-02). Two of the alternatives below are answered there (its D6).
+  *A full tempo map* is built after all, as stored beats rather than (time, BPM) pairs, because
+  drift turned out to be where the app is weakest. *Detecting the drift* stays bound by the reason
+  it was rejected: detection only proposes. A correction keeps its meaning on a beat map, the bar
+  count restarts at the beat it marks (its D2). Everything below still governs a song without a map.
 
 ## Context
 

@@ -34,6 +34,8 @@ struct BPMSheet: View {
     /// The song's current time signature (ADR 0051), to prefill the meter picker. Default 4/4.
     let currentBeatsPerBar: Int
     let currentNoteValue: Int
+    /// The song's beat map and the way to tap one (ADR 0281). `nil` in previews.
+    let beatMap: BeatMapHooks?
     /// `(bpm, downbeatSeconds, beatsPerBar, noteValue)` — bpm/downbeat may be `nil` (set only
     /// what's given); the time signature always carries a value (the picker's selection).
     let onCommit: (Double?, TimeInterval?, Int, Int) -> Void
@@ -72,7 +74,7 @@ struct BPMSheet: View {
     @State private var timeSignature: TimeSignature
 
     init(engine: PracticeAudioEngine, currentBPM: Double?, currentDownbeat: TimeInterval?,
-         currentBeatsPerBar: Int = 4, currentNoteValue: Int = 4,
+         currentBeatsPerBar: Int = 4, currentNoteValue: Int = 4, beatMap: BeatMapHooks? = nil,
          onCommit: @escaping (Double?, TimeInterval?, Int, Int) -> Void,
          onSetOnWaveform: @escaping (Double?) -> Void,
          onEstimate: @escaping () async -> (bpm: Double, downbeat: TimeInterval?)?) {
@@ -81,6 +83,7 @@ struct BPMSheet: View {
         self.currentDownbeat = currentDownbeat
         self.currentBeatsPerBar = currentBeatsPerBar
         self.currentNoteValue = currentNoteValue
+        self.beatMap = beatMap
         self.onCommit = onCommit
         self.onSetOnWaveform = onSetOnWaveform
         self.onEstimate = onEstimate
@@ -104,6 +107,10 @@ struct BPMSheet: View {
         case .tap:
             return TempoMath.bpm(fromTapTimes: taps)
         case .manual:
+            // Untouched, the field only shows the song's tempo rounded. Committing it would round
+            // the tempo, and on a song with a beat map it would replace the map (ADR 0281 D4).
+            guard manualText != currentBPM.map({ String(Int($0.rounded())) }) || lastEstimate != nil
+            else { return nil }
             guard let value = Double(manualText.trimmingCharacters(in: .whitespaces)), value > 0 else { return nil }
             return value.clamped(to: TempoMath.minTapBPM...TempoMath.maxTapBPM)
         }
@@ -118,6 +125,13 @@ struct BPMSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                if let beatMap, !beatMap.beatTimes.isEmpty {
+                    BeatMapSummarySection(hooks: beatMap) {
+                        beatMap.useOneTempo()
+                        dismiss()
+                    }
+                }
+
                 Picker("Mode", selection: $mode) {
                     ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
                 }
@@ -125,6 +139,8 @@ struct BPMSheet: View {
                 .listRowBackground(Color.clear)
 
                 if mode == .tap { tapSection } else { manualSection }
+
+                if mode == .tap, let beatMap { TapThroughLinkSection(engine: engine, hooks: beatMap) }
 
                 estimateSection
 
@@ -298,6 +314,15 @@ struct BPMSheet: View {
         }
     }
 
+    private func recordTap() {
+        taps.append(engine.currentTime)
+        haptic(.light)
+    }
+}
+
+// Outside the struct's body, which sits on SwiftLint's 250-line type-body limit: these two read only
+// the sheet's own state, so they lose nothing by living in an extension.
+extension BPMSheet {
     // MARK: Time signature (ADR 0051)
 
     private var timeSignatureSection: some View {
@@ -328,10 +353,5 @@ struct BPMSheet: View {
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(bpm.map { "\(Int($0.rounded())) beats per minute" } ?? "Tempo not set")
-    }
-
-    private func recordTap() {
-        taps.append(engine.currentTime)
-        haptic(.light)
     }
 }

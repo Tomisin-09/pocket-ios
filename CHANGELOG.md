@@ -373,6 +373,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **A song can follow a band that speeds up and slows down** (ADR 0281, the beat map's second
+  slice). Until now a song's grid was one tempo drawn as a straight line from the 1, so on a song
+  played without a click the bar lines and the click slid off the music. The tempo editor's Tap mode
+  now has **Tap through the song**: play it from the top and tap every beat, and each tap becomes a
+  beat of the song's own. The grid lines, the bars, the click, snapping and the song map all follow
+  them. A tap near a clear hit moves onto it, a beat you miss is filled in, and the tempo shown is
+  the middle of the ones you tapped. A song that has its beats says so at the top of the tempo
+  editor, with how far its tempo moves, and **Use one tempo** goes back. Typing a tempo also goes back
+  to one, and both can be undone. Backups and songs you send carry the beats.
 - **Estimate from audio hears new notes, not only drums** (the beat map's first slice). The estimate
   used to listen only for moments where the song got louder, so a song without drums, or a melody at
   an even level, gave no tempo or a wrong one. It now listens for new notes arriving as well, the way

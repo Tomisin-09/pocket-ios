@@ -33,6 +33,12 @@ struct SongRecord: Codable, Equatable, Sendable {
     var preciseBPM: Double?
     var downbeatSeconds: TimeInterval?
     var extraDownbeatSeconds: [TimeInterval]
+    /// The song's beat map (ADR 0281), `nil` for a song without one. **`Optional`, read through
+    /// `?? []`**: an additive field the format predates, and `[Double]` is not a type this format
+    /// owns, so it takes ADR 0212 D3's scalar rule rather than a named container overload, which
+    /// would default every missing `[Double]` in every `Codable` type. Written `nil` when empty, so
+    /// a song without a map exports exactly as it did.
+    var beatTimes: [TimeInterval]?
     var beatsPerBar: Int
     var noteValue: Int
     var showsGridlines: Bool

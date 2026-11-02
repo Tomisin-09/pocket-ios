@@ -7,6 +7,16 @@ import SwiftData
 @MainActor
 extension ArchiveRestoreWriter {
 
+    /// The song's grid as the record stored it: the corrections (ADR 0154), the beat map (ADR 0281,
+    /// optional in the record because the format predates it), the meter and the gridlines switch.
+    private static func restoreGrid(_ record: SongRecord, to song: Song) {
+        song.extraDownbeatSeconds = record.extraDownbeatSeconds
+        song.beatTimes = record.beatTimes ?? []
+        song.beatsPerBar = record.beatsPerBar
+        song.noteValue = record.noteValue
+        song.showsGridlines = record.showsGridlines
+    }
+
     /// Songs, with their loops, markers and links.
     ///
     /// **The audio does not come back, and cannot.** `SongRecord.audioFileName` names a file the
@@ -46,10 +56,7 @@ extension ArchiveRestoreWriter {
             // column here, and the reason the `ref:` above passes a placeholder source rather than a
             // decoded one.
             song.sourceRaw = record.sourceRaw
-            song.extraDownbeatSeconds = record.extraDownbeatSeconds
-            song.beatsPerBar = record.beatsPerBar
-            song.noteValue = record.noteValue
-            song.showsGridlines = record.showsGridlines
+            restoreGrid(record, to: song)
             song.lastPracticedSpeed = record.lastPracticedSpeed
             song.loops = record.loops.map { saved in
                 let made = loop(from: saved)

@@ -227,14 +227,18 @@ struct CountGrid: Equatable {
     let regionEnd: TimeInterval
 
     /// The grid for a region, or `nil` when the song has none: no tempo, or no 1 placed (ADR 0022 won't
-    /// guess the phase, and neither does this).
-    init?(tempo: Double?, anchors: [TimeInterval], beatsPerBar: Int, duration: TimeInterval,
-          regionStart: TimeInterval, regionEnd: TimeInterval) {
+    /// guess the phase, and neither does this). With a beat map (ADR 0281) the beats are the map's,
+    /// and `interval` is the beat *here*, the median gap across the region, not the song's.
+    init?(tempo: Double?, beatMap: [TimeInterval] = [], anchors: [TimeInterval], beatsPerBar: Int,
+          duration: TimeInterval, regionStart: TimeInterval, regionEnd: TimeInterval) {
         guard let tempo, tempo > 0, duration > 0, regionEnd > regionStart else { return nil }
-        let interval = 60 / tempo
-        let all = BeatGrid.beats(bpm: tempo, duration: duration, anchors: anchors, beatsPerBar: beatsPerBar)
-        let near = all.map { (seconds: $0.fraction * duration, isDownbeat: $0.isDownbeat) }
-            .filter { $0.seconds >= regionStart - interval && $0.seconds <= regionEnd + interval }
+        let all = BeatGrid.beats(bpm: tempo, map: beatMap, duration: duration, anchors: anchors,
+                                 beatsPerBar: beatsPerBar)
+            .map { (seconds: $0.fraction * duration, isDownbeat: $0.isDownbeat) }
+        let interval = BeatMap.isMap(beatMap)
+            ? Self.localInterval(all.map(\.seconds), regionStart: regionStart, regionEnd: regionEnd) ?? 60 / tempo
+            : 60 / tempo
+        let near = all.filter { $0.seconds >= regionStart - interval && $0.seconds <= regionEnd + interval }
         guard !near.isEmpty else { return nil }
         let length = regionEnd - regionStart
         self.beats = near.map(\.seconds)
@@ -243,6 +247,15 @@ struct CountGrid: Equatable {
             .map { Mark(fraction: ($0.seconds - regionStart) / length, isDownbeat: $0.isDownbeat) }
         self.regionStart = regionStart
         self.regionEnd = regionEnd
+    }
+
+    /// The median gap between the beats that touch the region: those inside it and one either side.
+    private static func localInterval(_ beats: [TimeInterval], regionStart: TimeInterval,
+                                      regionEnd: TimeInterval) -> TimeInterval? {
+        guard let first = beats.lastIndex(where: { $0 <= regionStart }) ?? beats.indices.first,
+              let last = beats.firstIndex(where: { $0 >= regionEnd }) ?? beats.indices.last,
+              last > first else { return nil }
+        return BeatMap.medianInterval(Array(beats[first...last]))
     }
 
     /// How many of `taps` fall in each beat. See `TapTally.perBeatCounts`.

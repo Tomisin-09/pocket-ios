@@ -55,6 +55,16 @@ final class Song {
     /// additively (the CoreData 134110 mandatory-attribute rule). Never read directly: the grid
     /// reads `downbeatAnchors`, which is `nil`-safe about the primary.
     var extraDownbeatSeconds: [TimeInterval] = []
+    /// The song's **beat map** (ADR 0281): every beat, in seconds, ascending, for a song whose
+    /// tempo moves. When there is one the grid is drawn from it instead of from one tempo, and
+    /// `downbeatSeconds` marks which of its beats is the 1. `preciseBPM` holds the map's median,
+    /// so everything that reads one tempo keeps working.
+    ///
+    /// Empty for a song with a steady tempo, which is most of them. The same shape as
+    /// `extraDownbeatSeconds`, a declaration-default `[Double]`, so SwiftData lightweight migration
+    /// fills older songs with an empty array (the CoreData 134110 rule). A four-minute song is a
+    /// few hundred numbers. Read it through `hasBeatMap`, which knows how many beats make a map.
+    var beatTimes: [TimeInterval] = []
     /// Time signature (ADR 0051): `beatsPerBar` groups the beat grid into bars — every
     /// `beatsPerBar`-th beat from the downbeat is a bar line — and `noteValue` is the
     /// denominator (4, 8, …), carried so the signature round-trips and reads right. Both
@@ -199,8 +209,19 @@ final class Song {
 
     /// The full-precision tempo to drive the beat grid: `preciseBPM` when set, else
     /// the rounded `bpm` promoted to `Double` (so a song that only ever had an integer
-    /// tempo still grids), else `nil` when the tempo is unknown (ADR 0024).
-    var tempoBPM: Double? { preciseBPM ?? bpm.map(Double.init) }
+    /// tempo still grids), else `nil` when the tempo is unknown (ADR 0024). A song with a beat map
+    /// has its median in `preciseBPM`; the map is the last resort only if that was lost (ADR 0281).
+    var tempoBPM: Double? { preciseBPM ?? bpm.map(Double.init) ?? BeatMap.medianBPM(beatTimes) }
+
+    /// Whether the grid follows a beat map rather than one tempo (ADR 0281).
+    var hasBeatMap: Bool { BeatMap.isMap(beatTimes) }
+
+    /// The song's beats, the map or one tempo, from its 1 (ADR 0281). `duration` is passed in
+    /// because the player measures the open file, which can differ from the stored one.
+    func gridBeats(duration: TimeInterval) -> [BeatGrid.Beat] {
+        BeatGrid.beats(bpm: tempoBPM, map: beatTimes, duration: duration,
+                       anchors: downbeatAnchors, beatsPerBar: beatsPerBar)
+    }
 
     /// Every phase anchor in time order — the primary `downbeatSeconds` plus any corrections
     /// (ADR 0154). Empty when no 1 has been placed, which is the same "no grid, we don't guess

@@ -72,6 +72,7 @@ enum ReceivedSongBuilder {
         song.preciseBPM = record.preciseBPM
         song.downbeatSeconds = record.downbeatSeconds
         song.extraDownbeatSeconds = record.extraDownbeatSeconds
+        song.beatTimes = record.beatTimes ?? []
         song.beatsPerBar = record.beatsPerBar
         song.noteValue = record.noteValue
         song.showsGridlines = record.showsGridlines

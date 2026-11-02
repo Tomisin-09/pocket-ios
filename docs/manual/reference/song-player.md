@@ -214,9 +214,18 @@ to open this too; it now carries the tempo out instead.)
 - **`Tap`** — `Tap to the beat`. The app's own explanation: *Play the song and tap along. Tapping
   reads the playhead, so a loop or slowed speed still reads the true tempo. The reading follows your
   last few taps, so on a song that drifts, keep tapping through the section you care about.*
+- **`Tap through the song`**, under the tap pad, opens a screen of its own for a song whose tempo
+  moves. Play the song and tap every beat to the end. Each tap becomes a beat, so the grid follows
+  the band when it speeds up or slows down. `From the start` plays the song from the top, letting go
+  of a loop first, and `Done` keeps them. A tap near a clear hit moves onto it, and a beat
+  you miss is filled in. With no 1 set, start on a 1: the first tap becomes it.
 - **`Manual`** — type the number.
 - **`Estimate from audio`** analyses the track and proposes one.
 - **`The 1 (downbeat)`** — `Mark the 1 at the playhead`, or `Set the 1 on the waveform`.
+
+A song that has its beats opens the editor with **`The beats`**: how many there are, how far the
+tempo moves, and `Use one tempo` to go back to a steady one. Setting a tempo by tapping the pad or
+typing it goes back to one tempo too. Either can be undone from the bar that appears.
 
 ### The player settings sheet
 

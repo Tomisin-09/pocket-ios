@@ -29,10 +29,9 @@ extension SongMapInput {
     /// The song's downbeats, or `nil` when it has no grid or hides it.
     static func grid(for song: Song) -> Grid? {
         guard song.showsGridlines, let bpm = song.tempoBPM, bpm > 0, song.duration > 0 else { return nil }
-        let anchors = song.downbeatAnchors
-        guard !anchors.isEmpty else { return nil }
-        let downbeats = BeatGrid.beats(bpm: bpm, duration: song.duration, anchors: anchors,
-                                       beatsPerBar: song.beatsPerBar)
+        // The song's own grid, so a beat map's bars are the bars here too (ADR 0281). The bar
+        // length below stays the headline tempo's: it only sizes rows, and a map's median is that.
+        let downbeats = song.gridBeats(duration: song.duration)
             .filter(\.isDownbeat)
             .map { $0.fraction * song.duration }
         guard !downbeats.isEmpty else { return nil }
