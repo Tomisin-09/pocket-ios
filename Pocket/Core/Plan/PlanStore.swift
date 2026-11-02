@@ -23,6 +23,7 @@ final class PlanStore {
     /// not meet a lock or a wall in that moment, so until then a gate waits and no lock draws.
     private(set) var hasResolved: Bool
     /// Whether this Apple Account has bought the plan before (D4: the wall's returning headline).
+    /// Read again on every refresh, because the account can change while the app is open.
     private(set) var hasBoughtBefore = false
     /// Whether the player's **own** monthly will renew again (D5). A family-shared monthly isn't
     /// theirs to cancel, so it never counts.
@@ -155,10 +156,15 @@ final class PlanStore {
         inFreeWeek = freeWeek
         if let groupID { subscriptionGroupID = groupID }
         await readTrialEligibility()
-        if !owned.isEmpty {
-            hasBoughtBefore = true
-        } else if !access.isOn, !hasBoughtBefore {
+        // Asked again on **every** refresh that finds nothing owned, never latched. The Apple Account
+        // can change while the app is open, and a yes from the last account says nothing about this
+        // one: a fresh account signed in after one that bought and lapsed was greeted as returning
+        // (1.4 sandbox pass, 2026-10-27). Nothing owned means the plan is off, so this is still only
+        // asked while it is.
+        if owned.isEmpty {
             hasBoughtBefore = await Self.anyPastPurchase()
+        } else {
+            hasBoughtBefore = true
         }
     }
 

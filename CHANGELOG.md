@@ -622,6 +622,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **A new Apple Account isn't welcomed back.** If you switched App Store accounts while Red Moon was
+  open, after an account that had bought the plan, the plan's wall greeted the new account with
+  *"Everything you made is still here."* It now asks the App Store again each time, so only an account
+  that has bought before sees that.
 - **The palest shade on the month grid no longer looks like a day off.** It sat so close to the
   colour of an unpractised day that a short session was hard to tell from none. (ADR 0268)
 - **Train your ear and Improvise show the plan's wall from the Journal and Map the song when the
