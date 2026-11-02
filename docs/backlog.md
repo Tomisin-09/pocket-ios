@@ -4,7 +4,104 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
-## The metronome records a take (logged 2026-10-30, extends ADR 0069) — for 1.5
+## The last feature push before 1.4, then a freeze (decided 2026-11-02)
+
+1.4 was taken **off review** on 2026-11-02. Setting the tempo (the tap UI, finding the 1, drift) isn't
+good enough to ask people to pay for. The list below gets built, 1.4 goes back to review, and then
+**features freeze**: bug fixes only.
+
+The list is the release's definition of done. Anything new that turns up while building it and isn't a
+bug goes under **After the freeze** at the end of this entry, not into 1.4.
+
+**Decided with Tomisin:**
+- **No TestFlight beta.** Each piece is tested on Tomisin's device as it lands. The next archive is the
+  submission.
+- **The version stays 1.4**, build 10 or later.
+- **Order:** small things first, then the beat map, then the remaining features.
+- **The beat map gets no spike.** Build it, then try it. The proposal is the artifact
+  https://claude.ai/artifact/B36SDYybPBQgP9CksnxJrL.
+- **iPad** stays parked ("practice workbench").
+- **Defaults the ADRs will propose, unless Tomisin objects there:** *Find the beats* opens from the top
+  of the tempo editor (hold the metronome). The metronome takes the loop's local tempo when a loop is
+  armed, and the song's median otherwise. An odd-length bar is handled by an ADR 0154 correction for
+  now.
+
+**The list.** One branch and one PR per item, merged once CI is green. S is about a day, M a few days,
+L a week or more.
+
+*Phase 0: housekeeping*
+1. Merge #387, the founding window (ADR 0280). **Done 2026-11-02.**
+2. `pocket-395`: this entry.
+
+*Phase 1: small things*
+
+3. `pocket-396` **Stop recording when you leave the app** (S–M). The entry *A take keeps the mic on
+   after you leave the app* below. One shared modifier finishes the take on `.background` and on an
+   audio-session interruption, on all six recording screens.
+4. `pocket-397` **Welcome back on a new Apple Account** (S). The entry *A new Apple Account can be
+   welcomed back* below.
+5. `pocket-398` **Polish** (S): an opaque import card that names the file in progress, a taller notes
+   field, the delete-version pop-up attached to its button, and a sweep of the other
+   `.confirmationDialog`s, each screenshotted open.
+6. `pocket-399` **A tempo control inside Name the notes** (S): `LoopTempoControl` beside the play
+   button, as in Watch on the neck.
+7. `pocket-400` **Swipe to delete in the Journal** (S, ADR amends 0100): trailing, no full swipe,
+   undo toast kept, no multi-select. A plain button tinted danger, **not** `role: .destructive`, which
+   plays a fake removal under the deferred delete.
+
+*Phase 2: the beat map*
+
+8. `pocket-401` **B1, hear new notes** (M): a spectral-flux onset envelope beside the RMS one, so the
+   BPM estimate works on songs without drums. Ships on its own.
+9. `pocket-402` **B2, the song stores its beats** (L, the ADR): an additive optional `beatTimes` on
+   `Song`, the archive fields with `decodeIfPresent`, and tapping through a song. Amends 0022 and 0154
+   and replaces the entry *A song whose tempo changes at a section* further down.
+10. `pocket-403` **B3, the beat finder** (L): a pure `BeatTracker` with a confidence score per bar,
+    and the *Find the beats* and *Check the beat* screens. Never auto-commits (ADR 0004).
+11. `pocket-404` **B4, find the 1 by choosing** (M): hear each beat accented and pick the one.
+12. `pocket-405` **B5, fix a stretch** (M): loop a few bars and tap along, or drag one beat.
+13. `pocket-406` **B6, the tempo lane** (M): a lane under the waveform, "BPM here" on loop rows, and
+    the metronome carry (ADR 0170).
+
+*Phase 3: the remaining features*
+
+14. `pocket-407` **The metronome records a take** (M, ADR amends 0069). The next entry below.
+15. `pocket-408` **An import loading screen** (M, ADR amends 0011): a sheet showing each file's state,
+    where any imported song can be opened.
+16. `pocket-409` **Make a song from this take** (M, short ADR), in the take's hold menu. Needs 9
+    and 14.
+17. `pocket-410` **Pre-bends** (M, ADR amends 0227): all four shapes (bend, bend and release,
+    pre-bend, pre-bend and release). A note is named by the fret it lands on, as with lead-ins. The
+    new field on `FrettedNote` is optional, because a Codable default doesn't survive a missing key.
+18. `pocket-411` **Watch the section** on the neck (M, ADR amends 0254): straight through with gaps.
+    Where loops overlap, the one that starts later shows.
+
+*Phase 4: release, then freeze*
+
+19. What was owed for 1.4.1: the iOS 27 header and search asset, and the FAQ wording.
+20. The stale "free" text: the site and privacy policy (`uk-site` `app/privacy/page.tsx`),
+    `docs/privacy-policy.md`, the CHANGELOG line "Red Moon is free.", and the listing doc's StoreKit
+    line.
+21. Manual reference pages for controls that were renamed or added. Then **one** reshoot of every
+    stale figure, and a check that the ADR 0279 App Store screenshots don't show the old grid or tempo
+    sheet.
+22. `/ready-to-ship`, including `scripts/main-ui-green.sh`.
+23. Archive 1.4 (build 10 or later) by hand in Organizer and submit. On approval: availability on,
+    release, update `uk-site`, tag `v1.4`.
+24. **Freeze.** Bug fixes only.
+
+**Checks on top of the usual ones.** Any `@Model` change (items 9 and 14) gets an upgrade check over an
+existing store, on the simulator and on the device, proved by timestamps rather than counts
+(`docs/swiftdata-gotchas.md`). Pure logic (items 8–13 and 17) gets unit tests, each watched failing once
+against a deliberate mutant. On the device: item 3, the mic indicator goes off and the take is saved;
+item 4, the sandbox account switch; items 8–13, Tomisin's own drifting and drum-less songs; item 14, the
+click through the speaker and through headphones.
+
+### After the freeze
+
+Nothing yet.
+
+## The metronome records a take (logged 2026-10-30, extends ADR 0069) — in 1.4, item 14 of the final push
 
 Planned on 2026-10-28, not built. The metronome is the one practice screen with a click and no
 recorder, and recording yourself playing to a click is the obvious thing to want there. Takes already
@@ -15,7 +112,7 @@ the back edge written into 0069's header in the same commit (C16).
 **Decided with Tomisin:**
 - **Mic only.** ADR 0069 D1 stands. Through the speaker the mic hears the click, which is the timing
   reference and is wanted here; with headphones the take is just the playing. Mixing the click into
-  the file was turned down for 1.5: it needs a new pipeline (an input tap plus latency compensation)
+  the file was turned down for 1.4: it needs a new pipeline (an input tap plus latency compensation)
   and amends 0069 D1.
 - **Arm, then Start.** A `RecordArmToggle` beside Start, as on exercise runs. The take begins with the
   click, from Start *or* the automator's Start ramp, runs through Pause, and ends at ■ or on leaving
@@ -47,10 +144,11 @@ the back edge written into 0069's header in the same commit (C16).
 - `TakesSheet` lists metronome takes from a `@Query` filtered in memory, not a `#Predicate` on the
   optional (`docs/swiftdata-gotchas.md`).
 
-**When it ships:** don't merge until 1.4 is approved, because 1.4 (8) was archived from main. The
-manual's `metronome/screen` figure goes stale. Run `ManualMetronomeShots` after touching the body.
+**When it ships:** the manual's `metronome/screen` figure goes stale. Run `ManualMetronomeShots`
+after touching the body. (The earlier gate, "don't merge until 1.4 is approved", went when 1.4 came off
+review on 2026-11-02.)
 
-## A take keeps the mic on after you leave the app (logged 2026-10-30) — for 1.4.1, confirmed on device
+## A take keeps the mic on after you leave the app (logged 2026-10-30) — in 1.4, item 3 of the final push, confirmed on device
 
 Found by reading the code while planning metronome takes, then **confirmed on the device by Tomisin
 the same day**: with a take running, leaving Red Moon leaves the mic indicator lit. The manual's
@@ -69,7 +167,7 @@ and a `.playAndRecord` session, the `AVAudioRecorder` carries on in the backgrou
   `RecordingController`. The metronome entry above does it for the metronome. The FAQ makes no
   background claim, so only the privacy page depends on this.
 
-## A new Apple Account can be welcomed back (logged 2026-10-27, ADR 0256 D4) — for 1.4.1
+## A new Apple Account can be welcomed back (logged 2026-10-27, ADR 0256 D4) — in 1.4, item 4 of the final push
 
 Seen in the 1.4 sandbox pass, on the device: after one sandbox account had bought and lapsed, a fresh
 one, signed in without quitting the app, got the wall's welcome-back headline (*"Everything you made
