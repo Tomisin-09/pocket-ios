@@ -105,6 +105,7 @@ struct EarTrainingView: View {
             finishTake()     // before the bed stops — see `ContinuousLoopControls`' stop branch
             player.stop()
         }
+        .endsTakeOnLeavingApp(finishTake)
         .sheet(isPresented: $showingTakes) {
             TakesSheet(owner: .loop(loop, .ear), onDelete: deleteTake)
         }

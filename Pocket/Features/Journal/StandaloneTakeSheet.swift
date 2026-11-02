@@ -58,6 +58,11 @@ struct StandaloneTakeSheet: View {
             // permission prompt — without it, dismissing mid-prompt starts a mic on a dead sheet.
             recorder.releaseRecordSession()
         }
+        // Leaving the app saves the take too. That is still the save, not a gesture that meant
+        // something else, so it doesn't break the rule above.
+        .endsTakeOnLeavingApp {
+            recorder.finishIfRecording(owner: .standalone, context: modelContext)
+        }
     }
 
     /// The one control. A `Button` is safe here — there is no hold on it (memory: *a Button + a hold

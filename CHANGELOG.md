@@ -622,6 +622,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **Leaving Red Moon ends a take and lets go of the microphone.** A take left running when you went
+  to another app, or locked the phone, kept recording with the microphone indicator lit. Now leaving
+  the app ends the take and saves what you played up to then, and so does a call, Siri or an alarm
+  taking over the audio. Only the take ends; nothing else about leaving the app changes. This applies
+  to every screen that records: practice and exercise runs, freeform blocks, Train your ear,
+  Improvise, and **Record a take** in the Journal.
 - **The palest shade on the month grid no longer looks like a day off.** It sat so close to the
   colour of an unpractised day that a short session was hard to tell from none. (ADR 0268)
 - **Train your ear and Improvise show the plan's wall from the Journal and Map the song when the

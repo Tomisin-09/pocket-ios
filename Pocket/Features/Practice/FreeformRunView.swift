@@ -88,6 +88,11 @@ struct FreeformRunView: View {
             metronome.stop()
             recorder.releaseRecordSession()
         }
+        // The take only: the held session stays, because the click plays on in the background and
+        // releasing would flip the category under it.
+        .endsTakeOnLeavingApp {
+            recorder.finishIfRecording(owner: .exercise(exercise), context: modelContext)
+        }
         // ADR 0050 — and this screen needs it more than most: a freeform block is *prose you read
         // while practising*, so the phone can sit untouched for the whole block.
         .keepAwakeDuringPractice()

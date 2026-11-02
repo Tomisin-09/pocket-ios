@@ -1,4 +1,4 @@
-import Foundation
+import AVFoundation
 import SwiftData
 
 /// What a take is being recorded against — routes the owner onto a new `Recording` (ADR 0069 §5).
@@ -251,6 +251,20 @@ final class RecordingController {
     func finishIfRecording(owner: RecordingOwner, context: ModelContext) {
         guard state == .recording else { return }
         stopRecording(owner: owner, context: context)
+    }
+
+    /// Whether an `AVAudioSession.interruptionNotification` should end the take: true only when an
+    /// interruption has **begun** (a call, Siri, an alarm). By then the system has already stopped the
+    /// recorder, and `TakeRecorder.stop()` recovers the length from the file, so finishing saves what
+    /// was played up to the interruption. Leaving the take "recording" instead would show a running
+    /// take that is capturing nothing. An `.ended`, or a notification without a readable type, is no
+    /// reason to end anything.
+    ///
+    /// The pure half of `endsTakeOnLeavingApp`, split out so it can be tested without a microphone.
+    nonisolated static func endsTake(onInterruption userInfo: [AnyHashable: Any]?) -> Bool {
+        guard let raw = userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: raw) else { return false }
+        return type == .began
     }
 
     // MARK: - Start-less surfaces (ADR 0069 amendment, 2026-08-05)
