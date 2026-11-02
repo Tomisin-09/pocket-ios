@@ -211,6 +211,9 @@ to open this too; it now carries the tempo out instead.)
      | alt: The tempo sheet with the Tap and Manual segments, the tap pad, Estimate from audio, and the downbeat section
      | state: seeded library, Binta, tempo editor open -->
 
+- **`Play`** and **`Click`** sit at the top in both modes, so you can hear the tempo while you set it.
+  The click plays what you've set before `Done`: the tempo, the 1 and the bar. `Cancel` puts the
+  song's click back as it was, and `Done` keeps the switch as you left it.
 - **`Tap`** — `Tap to the beat`. The app's own explanation: *Play the song and tap along. Tapping
   reads the playhead, so a loop or slowed speed still reads the true tempo. The reading follows your
   last few taps, so on a song that drifts, keep tapping through the section you care about.*
@@ -223,8 +226,12 @@ to open this too; it now carries the tempo out instead.)
 - **`Estimate from audio`** analyses the track and proposes one, exact enough for a song played to
   a click to stay on the beat to the end. A guitar playing every half-beat can read as double time:
   if the click comes twice a beat, `Half` fixes it, and `Double` does the reverse. Both keep the
-  estimate exact and place the 1 again.
-- **`The 1 (downbeat)`** — `Mark the 1 at the playhead`, or `Set the 1 on the waveform`.
+  estimate exact and place the 1 again. Under it, the editor says what one tempo can't do: *Works
+  best with songs played to a click. A song that speeds up or slows down will drift.*
+- **`The 1`** — `Mark the 1 at the playhead`, or `Set the 1 on the waveform`. Above those, two
+  questions to answer by ear with the click on. `Beats in a bar`: 3, 4, or `More…` for the other
+  time signatures. `Which beat is the 1?`: one button a beat. The click plays the 1 higher, so
+  choosing a beat moves that accent. Keep the one that sounds like the start of the bar.
 
 A song that has its beats opens the editor with **`The beats`**: how many there are, how far the
 tempo moves, and `Use one tempo` to go back to a steady one. Setting a tempo by tapping the pad or

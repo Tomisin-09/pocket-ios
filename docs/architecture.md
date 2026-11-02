@@ -194,7 +194,12 @@ edge stops the search. The tempo comes out exact on a steady song (*Binta*: 83.9
 envelope and keeps the phase whose beats collect the most onset energy — pinning the beat
 phase to real hits (the *bar-1* beat isn't disambiguated, so the anchor can sit a beat off).
 The estimate only **prefills** the sheet (BPM + downbeat) flagged as estimated — the user
-still confirms it, so speed never depends on a guess. An active loop **loops
+still confirms it, so speed never depends on a guess. A 1 a beat off is fixed by ear in the same
+sheet (ADR 0283): **Which beat is the 1?** moves it by whole beats of the grid Done would leave
+(pure `BeatGrid.one`, held with the chosen beat in `DownbeatChoice`), while the sheet's own **Click**
+plays those values before Done. The model builds that preview grid with `gridIfCommitted`, which
+applies `commitTempo`'s rules, and hands the engine's click back to the song when the sheet closes
+(`endClickPreview`). An active loop **loops
 continuously, gaplessly and click-free** — the
 engine pre-renders the loop region into a buffer whose seam is equal-power
 **crossfaded** (`AudioMath.crossfadeGains`) and plays it on `.loops`, so the wrap is

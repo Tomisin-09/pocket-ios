@@ -23,6 +23,11 @@ bug goes under **After the freeze** at the end of this entry, not into 1.4.
 - **The beat map gets no spike.** Build it, then try it. The proposal is the artifact
   https://claude.ai/artifact/B36SDYybPBQgP9CksnxJrL.
 - **iPad** stays parked ("practice workbench").
+- **The beat map is cut for 1.4** (2026-11-02, Tomisin: *"Could we soley do b4 + ui interface
+  settings? We'll add a warning that it only works well with tracks with a steady tempo"*). 1.4 takes
+  B1, B2, B3a, then B4 with the tempo sheet's layout (hear the click inside the sheet) and a
+  steady-tempo warning, all in ADR 0283. **B3, B4b, B5 and B6 come after 1.4.** *Tap through the
+  song* stays as the way to handle a song that moves. Phase 3 stays in 1.4.
 - **Defaults the ADRs will propose, unless Tomisin objects there:** *Find the beats* opens from the top
   of the tempo editor (hold the metronome). The metronome takes the loop's local tempo when a loop is
   armed, and the song's median otherwise. An odd-length bar is handled by an ADR 0154 correction for
@@ -77,23 +82,25 @@ takes the next free `pocket-` number when its item starts.
     double time, so **Half** and **Double** were added (D5). **Open:** whether the estimate says so
     when a song's tempo moves (*Let's Ride* moves 119.6–122.0 BPM); Tomisin leans to being upfront
     about it rather than solving it.
-10. **B3, the beat finder** (L): a pure `BeatTracker` with a confidence score per bar,
+10. **B3, the beat finder** (L, **after 1.4**): a pure `BeatTracker` with a confidence score per bar,
     and the *Find the beats* and *Check the beat* screens. Never auto-commits (ADR 0004).
-11. **B4, count the bar by choosing** (M): two questions, each answered by ear with the beat
-    accented. How many beats in a bar, 3 or 4? Then which beat is the 1? Writes `Song.beatsPerBar`
-    (it already exists, ADR 0051, so no new field) and `downbeatSeconds` snapped onto a beat.
-    **Open, for its ADR:** whether 5, 6 and 7 sit behind a *More* option, and whether a 6/8 song
-    counts in 6 or in 2.
+11. `pocket-401` **B4, count the bar by choosing** (M, ADR 0283): two questions, each answered by
+    ear with the beat accented. How many beats in a bar, 3 or 4? Then which beat is the 1? Writes
+    `Song.beatsPerBar` (it already exists, ADR 0051, so no new field) and `downbeatSeconds` moved by
+    whole beats of the grid. **Built 2026-11-03** with the tempo sheet's new layout: Play and a
+    Click switch pinned at the top, the click playing the sheet's values before Done, and the
+    steady-tempo warning. 5, 6 and 7 sit behind *More…*. **Still open:** whether a 6/8 song counts in
+    6 or in 2 (it still clicks six to the bar).
 
-    **11b. B4b, Red Moon counts the bar** (M, its own branch): step 4 of the proposal. Each beat
+    **11b. B4b, Red Moon counts the bar** (M, its own branch, **after 1.4**): step 4 of the proposal. Each beat
     is scored for how hard it is hit, how much low end is on it, and how much the harmony changes
     there (chroma either side of the beat). Red Moon then tests whether those scores repeat every 3
     beats or every 4. The best cycle is the meter, and its strong beat is the 1. Both are
     pre-selected on item 11's screen and never committed (ADR 0004). A second check between the
     beats tells a straight feel from a triplet one (3/4 from 6/8). 2/4 is treated as 4. Detection
     never offers 5/4 or 7/8; the player chooses those.
-12. **B5, fix a stretch** (M): loop a few bars and tap along, or drag one beat.
-13. **B6, the tempo lane** (M): a lane under the waveform, "BPM here" on loop rows, and
+12. **B5, fix a stretch** (M, **after 1.4**): loop a few bars and tap along, or drag one beat.
+13. **B6, the tempo lane** (M, **after 1.4**): a lane under the waveform, "BPM here" on loop rows, and
     the metronome carry (ADR 0170).
 
 *Phase 3: the remaining features*

@@ -2,6 +2,10 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-01
+- **Amended by:** ADR 0283 D2, on *Set it with the tempo*: the meter is still chosen in the tempo
+  sheet and committed with the tempo, but as *Beats in a bar* (3, 4 or More…) in the section for
+  the 1, not a picker over every preset in its own section. The per-song meter, the gridlines toggle
+  and the bar lines stand.
 
 ## Context
 

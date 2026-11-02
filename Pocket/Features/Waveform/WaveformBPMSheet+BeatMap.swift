@@ -74,6 +74,10 @@ extension View {
                         playFromStart: model.playWholeSongFromStart,
                         commit: { taps, onsets in model.commitBeatMap(taps: taps, onsets: onsets) },
                         useOneTempo: model.clearBeatMap),
+                     click: TempoClickHooks(
+                        wasOn: model.metronomeOn,
+                        preview: { model.previewClick($0) },
+                        end: { model.endClickPreview(keepOn: $0) }),
                      onCommit: { bpm, downbeat, beats, note in
                          model.commitTempo(bpm: bpm, downbeat: downbeat,
                                            beatsPerBar: beats, noteValue: note)

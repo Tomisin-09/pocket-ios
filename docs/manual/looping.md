@@ -130,7 +130,10 @@ The metronome button on the speed bar turns a click on over the top of the song.
 the right place the app needs two things: the song's tempo, and where beat one is.
 
 **The tempo.** Hold the metronome button to open the tempo editor. You can tap it out, type a BPM,
-or let the app guess it from the audio. The editor also carries the time signature.
+or let the app guess it from the audio. **Play** and **Click** at the top of the editor let you hear
+the tempo before you keep it. The editor also asks how many beats are in a bar, and which beat is the
+1: choose one, and the click's higher note moves to it. It works best on a song played to a click;
+one that speeds up or slows down will drift.
 
 Tapping reads the playhead rather than your finger, so a loop or a slowed-down speed still reads the
 song's true tempo. The reading follows your **last few taps** rather than everything you have tapped,

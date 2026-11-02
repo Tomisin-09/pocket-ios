@@ -373,6 +373,18 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Hear the tempo while you set it** (ADR 0283). The tempo editor now has **Play** and a **Click**
+  switch at the top, in view whichever part you're on. The click plays what you've set before you
+  tap Done: the tempo, the 1 and the bar. **Cancel** puts the song's click back as it was; **Done**
+  keeps the switch as you left it. Until now the only switch was the metronome on the speed bar,
+  under the editor.
+- **Count the bar by ear** (ADR 0283). The section for the 1 asks two questions. **Beats in a bar**:
+  3, 4, or **More…** for 2/4, 5/4, 6/8, 7/8 and 12/8, in place of the old *Time signature* picker.
+  **Which beat is the 1?**: one button a beat. The click plays the 1 higher, so choosing a beat moves
+  that accent; keep the one that sounds like the start of the bar. It's the fix for an estimate that
+  puts the 1 a beat off.
+- **The tempo editor says what one tempo can't do.** *Works best with songs played to a click. A song
+  that speeds up or slows down will drift.*
 - **Estimate from audio finds a steady song's exact tempo** (ADR 0282). It used to time a single beat,
   to the nearest hundredth of a second, so a song at 83 BPM could read 83.9, and the grid ended up
   more than a beat early by the last bar. It now times many beats at once, so *Binta* reads 83.00. A

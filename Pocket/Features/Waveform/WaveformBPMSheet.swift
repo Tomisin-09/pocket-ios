@@ -12,7 +12,8 @@ import SwiftUI
 /// The sheet computes a full-precision BPM (`TempoMath.bpm(fromTapTimes:)`) and hands
 /// it back via `onCommit`; the model stores it in `Song.preciseBPM` (grid) and mirrors
 /// the rounded value into `Song.bpm` (display). Reads the engine's observable state
-/// live so the play/pause label and tap capture stay in sync.
+/// live so the play/pause label and tap capture stay in sync. Play and the click sit above
+/// the form, and the click plays the sheet's values before Done (ADR 0283).
 /// The tap section's footer. File-scope rather than inline because `BPMSheet` sits on
 /// SwiftLint's 250-line type-body limit, and prose is the part that can live outside the
 /// body without losing anything. The second sentence is the ADR 0166 disclosure: the
@@ -36,6 +37,8 @@ struct BPMSheet: View {
     let currentNoteValue: Int
     /// The song's beat map and the way to tap one (ADR 0281). `nil` in previews.
     let beatMap: BeatMapHooks?
+    /// The song's click, played from the sheet (ADR 0283). `nil` in previews.
+    let click: TempoClickHooks?
     /// `(bpm, downbeatSeconds, beatsPerBar, noteValue)` — bpm/downbeat may be `nil` (set only
     /// what's given); the time signature always carries a value (the picker's selection).
     let onCommit: (Double?, TimeInterval?, Int, Int) -> Void
@@ -60,8 +63,9 @@ struct BPMSheet: View {
     @State private var taps: [TimeInterval] = []
     /// Manual-mode BPM text.
     @State private var manualText: String
-    /// The bar-1 downbeat ("the 1"), shared by both modes. `nil` ⇒ leave phase as-is.
-    @State private var downbeat: TimeInterval?
+    /// The bar-1 downbeat ("the 1"), shared by both modes, and the beat of the bar the player has
+    /// heard it on (ADR 0283 D3). Nothing placed ⇒ leave phase as-is.
+    @State private var one: DownbeatChoice
     /// The last on-device estimate, kept with its envelope for **Half** and **Double**.
     @State private var reading: TempoEstimator.Reading?
     /// Its tempo at full precision. Manual mode is prefilled with its rounded value; the
@@ -74,9 +78,14 @@ struct BPMSheet: View {
     @State private var estimateFailed = false
     /// The chosen meter (ADR 0051) — seeded from the song, committed on Done.
     @State private var timeSignature: TimeSignature
+    /// The sheet's click switch, seeded from the song's click (ADR 0283 D1).
+    @State private var clickOn: Bool
+    /// The switch as Done left it, for the song to keep; `nil` until Done.
+    @State private var keptClick: Bool?
 
     init(engine: PracticeAudioEngine, currentBPM: Double?, currentDownbeat: TimeInterval?,
          currentBeatsPerBar: Int = 4, currentNoteValue: Int = 4, beatMap: BeatMapHooks? = nil,
+         click: TempoClickHooks? = nil,
          onCommit: @escaping (Double?, TimeInterval?, Int, Int) -> Void,
          onSetOnWaveform: @escaping (Double?) -> Void,
          onEstimate: @escaping () async -> TempoEstimator.Reading?) {
@@ -86,13 +95,15 @@ struct BPMSheet: View {
         self.currentBeatsPerBar = currentBeatsPerBar
         self.currentNoteValue = currentNoteValue
         self.beatMap = beatMap
+        self.click = click
         self.onCommit = onCommit
         self.onSetOnWaveform = onSetOnWaveform
         self.onEstimate = onEstimate
         _manualText = State(initialValue: currentBPM.map(TempoMath.wholeBPM) ?? "")
-        _downbeat = State(initialValue: currentDownbeat)
+        _one = State(initialValue: DownbeatChoice(placed: currentDownbeat))
         _timeSignature = State(initialValue: TimeSignature.forStored(
             beats: currentBeatsPerBar, noteValue: currentNoteValue, accentBeats: []))
+        _clickOn = State(initialValue: click?.wasOn ?? false)
     }
 
     /// Whether the value currently in Manual mode is the unedited estimate, so the
@@ -114,11 +125,27 @@ struct BPMSheet: View {
         }
     }
 
+    /// The 1 Done commits: the placed one, moved to the beat chosen along the grid Done would leave
+    /// (ADR 0283 D3). A tempo given replaces a beat map, so the map counts only while none is.
+    private var chosenDownbeat: TimeInterval? {
+        one.seconds(beatsPerBar: timeSignature.beats, bpm: resolvedBPM ?? currentBPM,
+                    map: resolvedBPM == nil ? beatMap?.beatTimes ?? [] : [],
+                    duration: beatMap?.duration ?? 0)
+    }
+
+    /// Something to count the beats from: a tempo, given here or the song's.
+    private var hasTempo: Bool { (resolvedBPM ?? currentBPM) != nil }
+
     private var timeSignatureChanged: Bool {
         timeSignature.beats != currentBeatsPerBar || timeSignature.noteValue != currentNoteValue
     }
 
-    private var canCommit: Bool { resolvedBPM != nil || downbeat != nil || timeSignatureChanged }
+    private var canCommit: Bool { resolvedBPM != nil || one.placed != nil || timeSignatureChanged }
+
+    /// What the click plays, so it follows every change in the sheet (ADR 0283 D1).
+    private var clickPreview: TempoClickHooks.Values {
+        .init(isOn: clickOn, bpm: resolvedBPM, downbeat: chosenDownbeat, beatsPerBar: timeSignature.beats)
+    }
 
     var body: some View {
         NavigationStack {
@@ -142,9 +169,14 @@ struct BPMSheet: View {
 
                 estimateSection
 
-                downbeatSection
+                Section { SteadyTempoNote() }
+                    .listRowBackground(Color.clear)
 
-                timeSignatureSection
+                downbeatSection
+            }
+            .safeAreaInset(edge: .top, spacing: 0) {
+                TempoSheetTransport(engine: engine, clickOn: $clickOn,
+                                    canClick: hasTempo && (chosenDownbeat ?? currentDownbeat) != nil)
             }
             .navigationTitle("Set tempo")
             .navigationBarTitleDisplayMode(.inline)
@@ -154,13 +186,17 @@ struct BPMSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        onCommit(resolvedBPM, downbeat, timeSignature.beats, timeSignature.noteValue)
+                        keptClick = clickOn
+                        onCommit(resolvedBPM, chosenDownbeat, timeSignature.beats, timeSignature.noteValue)
                         dismiss()
                     }
                     .disabled(!canCommit)
                 }
             }
         }
+        .onChange(of: clickPreview) { _, values in click?.preview(values) }
+        // On the stack, not the form, so pushing Tap through the song doesn't end the preview.
+        .onDisappear { click?.end(keptClick) }
         .presentationDetents([.medium, .large])
     }
 
@@ -186,10 +222,6 @@ struct BPMSheet: View {
                 .accessibilityLabel("Tap to the beat")
 
                 HStack {
-                    Button { engine.togglePlay() } label: {
-                        Label(engine.isPlaying ? "Pause" : "Play",
-                              systemImage: engine.isPlaying ? "pause.fill" : "play.fill")
-                    }
                     Spacer()
                     Button("Reset") { taps.removeAll() }
                         .foregroundStyle(PocketColor.textSecondary)
@@ -218,11 +250,25 @@ struct BPMSheet: View {
         }
     }
 
-    // MARK: Shared downbeat ("the 1")
+    private func recordTap() {
+        taps.append(engine.currentTime)
+        haptic(.light)
+    }
+}
+
+// Outside the struct's body, which sits on SwiftLint's 250-line type-body limit: these read only
+// the sheet's own state, so they lose nothing by living in an extension.
+extension BPMSheet {
+    // MARK: Shared downbeat ("the 1"), and counting the bar (ADR 0283)
 
     private var downbeatSection: some View {
         Section {
-            Button { downbeat = engine.currentTime } label: {
+            BeatsInABarRow(signature: $timeSignature)
+            WhichBeatIsTheOneRow(beat: Binding(get: { one.beat(inBarOf: timeSignature.beats) },
+                                               set: { one.beat = $0 }),
+                                 beatsPerBar: timeSignature.beats,
+                                 canChoose: hasTempo && one.placed != nil)
+            Button { one.placed = engine.currentTime } label: {
                 Label("Mark the 1 at the playhead", systemImage: "1.circle")
             }
             Button {
@@ -232,11 +278,11 @@ struct BPMSheet: View {
             } label: {
                 Label("Set the 1 on the waveform", systemImage: "waveform.path")
             }
-            if let downbeat {
+            if let downbeat = chosenDownbeat {
                 LabeledContent("Downbeat") {
                     HStack(spacing: 8) {
                         Text(timecode(downbeat)).font(.pocketMono(.body))
-                        Button { self.downbeat = nil } label: {
+                        Button { one.placed = nil } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .foregroundStyle(PocketColor.textSecondary)
                         }
@@ -251,25 +297,15 @@ struct BPMSheet: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
         } header: {
-            Text("The 1 (downbeat)")
+            Text("The 1")
         } footer: {
-            Text("The 1 is where a bar starts — it anchors the beat grid's phase. Mark it "
-                 + "at the playhead, or drag it onto a snare/kick peak on the waveform.\n\n"
-                 + "One tempo assumes a steady one. If the drummer played to feel rather "
-                 + "than a click, the grid will slowly drift out of time with the music — "
-                 + "set the 1 again where it drifts, and it re-locks from there.")
+            Text("The 1 starts a bar, and the click plays it higher. Mark it at the playhead or on the "
+                 + "waveform, then play with the click on. If the bar starts on another beat, choose that "
+                 + "beat. Where a song drifts, set the 1 again on the waveform, and the grid re-locks "
+                 + "from there.")
         }
     }
 
-    private func recordTap() {
-        taps.append(engine.currentTime)
-        haptic(.light)
-    }
-}
-
-// Outside the struct's body, which sits on SwiftLint's 250-line type-body limit: these read only
-// the sheet's own state, so they lose nothing by living in an extension.
-extension BPMSheet {
     // MARK: Estimate from audio (ADR 0004, rung 2)
 
     private var estimateSection: some View {
@@ -306,8 +342,8 @@ extension BPMSheet {
             }
         } footer: {
             Text("Analyses the track's onsets to guess the tempo and place the 1. If the click "
-                 + "comes twice a beat, use Half; if it comes every other beat, use Double. The 1 "
-                 + "can be a beat off, so check it against the music.")
+                 + "comes twice a beat, use Half; if it comes every other beat, use Double. If the 1 "
+                 + "lands on the wrong beat, choose the right one below.")
         }
     }
 
@@ -324,41 +360,25 @@ extension BPMSheet {
         if let result {
             mode = .manual
             manualText = TempoMath.wholeBPM(result.estimate.bpm)
-            if let phase = result.estimate.downbeatSeconds { downbeat = phase }
+            if let phase = result.estimate.downbeatSeconds { one.placed = phase }
         } else {
             estimateFailed = true
         }
     }
 
     /// **Half** or **Double** (ADR 0282 D5): the same estimate read at another speed, so still
-    /// exact. The estimate's 1 is placed again, unless the player has placed one since.
+    /// exact. The estimate's 1 is placed again, unless the player has placed one since, or chosen
+    /// another beat for it (ADR 0283 D3), which then stays where they heard it.
     private func rescaleEstimate(by factor: Double) {
         guard let current = reading, let scaled = current.scaled(by: factor) else { return }
-        downbeat = current.downbeat(after: scaled, current: downbeat)
+        one.placed = current.downbeat(after: scaled, current: chosenDownbeat)
         reading = scaled
         manualText = TempoMath.wholeBPM(scaled.estimate.bpm)
     }
 
-    // MARK: Time signature (ADR 0051)
-
-    private var timeSignatureSection: some View {
-        Section {
-            Picker("Time signature", selection: $timeSignature) {
-                ForEach(TimeSignature.presets) { signature in
-                    Text(signature.name).tag(signature)
-                }
-            }
-        } header: {
-            Text("Time signature")
-        } footer: {
-            Text("Groups the beat grid into bars, so the downbeats read as bar lines. "
-                 + "\(timeSignature.name) · \(timeSignature.context).")
-        }
-    }
-
     private func bpmReadout(_ bpm: Double?) -> some View {
         VStack(spacing: 0) {
-            Text(bpm.map { String(Int($0.rounded())) } ?? "—")
+            Text(bpm.map(TempoMath.wholeBPM) ?? "—")
                 .font(.pocketMono(.largeTitle))
                 .foregroundStyle(PocketColor.textPrimary)
                 .contentTransition(.numericText())
@@ -368,6 +388,6 @@ extension BPMSheet {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(bpm.map { "\(Int($0.rounded())) beats per minute" } ?? "Tempo not set")
+        .accessibilityLabel(bpm.map { "\(TempoMath.wholeBPM($0)) beats per minute" } ?? "Tempo not set")
     }
 }

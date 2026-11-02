@@ -281,7 +281,14 @@ comb-filter for the downbeat phase. It **prefills** both, flagged as estimated f
 confirm, never auto-committing (rung 2 of ADR 0004). Confirmed unedited, the estimate is saved
 exactly, not as the whole BPM the field shows (`TempoMath.manualBPM`). **Half** and **Double** under
 it read the same beat at another speed, still exact, with the 1 placed again
-(`TempoEstimator.Reading`, ADR 0282 D5). A **Click** toggle on the **speed bar**
+(`TempoEstimator.Reading`, ADR 0282 D5). **ADR 0283** pins **Play** and a **Click** switch above the
+editor's form (`TempoSheetTransport`), and the click plays the editor's values before Done
+(`previewClick`, through `gridIfCommitted`, which applies `commitTempo`'s rules); Done keeps the
+switch, any other way out puts the song's click back (`endClickPreview`). The section for the 1
+asks **Beats in a bar** (3, 4, More…, replacing the time signature picker) and **Which beat is the
+1?** (one button a beat; the pure `DownbeatChoice`/`BeatGrid.one` move the 1 by whole beats of the
+grid, along a beat map's own beats when there is one), and a static note says one tempo works best
+on a song played to a click. A **Click** toggle on the **speed bar**
 (beside the BPM, its own teal — ADR 0027) plays a
 **metronome** over the song that **follows the speed control** (50% → half-BPM, locked to the
 slowed track): pure unit-tested `MetronomeSchedule` schedules each beat `delay = (beat − now) /
