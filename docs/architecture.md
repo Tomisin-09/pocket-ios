@@ -169,8 +169,12 @@ lightweight migration is safe (a type change on `bpm` is not); `Song.bpm: Int?` 
 rounded display mirror and `Song.tempoBPM` feeds the `Double`-tempo `BeatGrid` so the grid
 doesn't drift across a long song (ADR 0024). The sheet can also **estimate the tempo
 on-device** (ADR 0004, rung 2): `WaveformExtractor.extractOnsetEnvelope` decodes the
-source to a ~100 Hz onset-strength curve (`AudioMath.onsetEnvelope` — frame RMS reduced
-to its half-wave-rectified rises) off the main actor, and pure `TempoEstimator.estimateBPM`
+source to a ~100 Hz onset-strength curve off the main actor: **spectral flux**
+(`AudioMath.spectralFlux`, Accelerate's FFT over a ~46 ms Hann window, magnitudes summed into
+semitone-wide bands from 30 Hz to 16 kHz, log-compressed, and each band's rise from the frame
+before summed). It replaced a frame-RMS rise envelope, which heard only things getting louder, so
+a melody at an even level (a song without drums) gave no tempo or a wrong one; flux hears the
+energy of a new note arriving in bands that were quiet. Pure `TempoEstimator.estimateBPM`
 takes the autocorrelation peak of that curve, weighting each candidate lag by a log-normal
 **tempo prior** (~120 BPM) to fold the common half/double-tempo error; a flat/ambient curve
 yields `nil` (no confident read). It also places **the 1**: a comb-filter

@@ -3,8 +3,9 @@ import Foundation
 /// Pure, UI-free on-device tempo estimation — rung 2 of ADR 0004's fallback chain
 /// ("else optionally estimate on-device, flagged as estimated").
 ///
-/// Works on an **onset-strength envelope** (`AudioMath.onsetEnvelope`): a coarse
-/// energy-rise curve where drum/note onsets spike. The beat period shows up as the
+/// Works on an **onset-strength envelope** (`AudioMath.spectralFlux`): a ~100 Hz curve
+/// of how much energy arrives in each frequency band, which spikes on drum hits and on
+/// new notes alike, so it hears a song without drums too. The beat period shows up as the
 /// lag at which that curve most strongly repeats, so the estimate is the peak of its
 /// autocorrelation. ADR 0004 calls out the classic failure — landing on half- or
 /// double-tempo — so each lag's correlation is weighted by a **log-normal prior**

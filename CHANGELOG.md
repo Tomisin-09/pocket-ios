@@ -373,6 +373,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Estimate from audio hears new notes, not only drums** (the beat map's first slice). The estimate
+  used to listen only for moments where the song got louder, so a song without drums, or a melody at
+  an even level, gave no tempo or a wrong one. It now listens for new notes arriving as well, the way
+  you would. Drums are still heard. On *Binta*, the song you can add from Home, it now reads 84 BPM
+  against the 83 it was measured at, where it used to read 111.
+
 - **Red Moon describes itself as a practice studio that adds up** (ADR 0276). Help & FAQs ▸ *What is
   Red Moon?* (it asked *What is Red Moon Practice?* until the App Store name became *Red Moon
   Practice Studio*, ADR 0278) now opens on *a practice studio that runs on music you already own, built so
