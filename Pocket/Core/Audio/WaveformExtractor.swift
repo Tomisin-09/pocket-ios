@@ -100,14 +100,14 @@ enum WaveformExtractor {
     /// frames-per-second it was sampled at (which `TempoEstimator` needs to turn a lag
     /// back into BPM), or `nil` for an empty/degenerate file. Mirrors `extract`'s
     /// chunked read so a long file never pulls the whole buffer in at once; the
-    /// reduction is the pure, tested `AudioMath.onsetEnvelope`. Run off the main actor.
+    /// reduction is the pure, tested `AudioMath.spectralFlux`, which hears a new note
+    /// even when nothing gets louder (B1 of the beat map). Run off the main actor.
     static func extractOnsetEnvelope(from url: URL) throws
         -> (onsets: [Double], framesPerSecond: Double)? {
         let file = try AVAudioFile(forReading: url)
         let format = file.processingFormat
         let totalFrames = file.length
-        let duration = AudioMath.framesToSeconds(Int(totalFrames), sampleRate: format.sampleRate)
-        guard totalFrames > 0, duration > 0 else { return nil }
+        guard totalFrames > 0, format.sampleRate > 0 else { return nil }
 
         let channelCount = Int(format.channelCount)
         var mono = [Float]()
@@ -124,11 +124,12 @@ enum WaveformExtractor {
             }
             mono.append(contentsOf: AudioMath.mixToMono(channels))
         }
-        guard !mono.isEmpty else { return nil }
 
-        let onsetFrames = max(1, Int((duration * onsetFramesPerSecond).rounded()))
-        let onsets = AudioMath.onsetEnvelope(mono, frames: onsetFrames)
-        // Report the rate actually achieved, not the target, so lag→BPM is exact.
-        return (onsets, Double(onsetFrames) / duration)
+        // The hop is `sampleRate / onsetFramesPerSecond` samples, fractional if need be, so the
+        // envelope's rate is exactly `onsetFramesPerSecond` and lag→BPM stays exact.
+        let onsets = AudioMath.spectralFlux(mono, sampleRate: format.sampleRate,
+                                            framesPerSecond: onsetFramesPerSecond)
+        guard !onsets.isEmpty else { return nil }
+        return (onsets, onsetFramesPerSecond)
     }
 }

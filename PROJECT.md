@@ -265,7 +265,8 @@ still reads the true tempo — pure `TempoMath.bpm(fromTapTimes:)`) or **manual*
 `Song.preciseBPM` (`Song.bpm: Int?` is the rounded display mirror; `tempoBPM` feeds the grid)
 so it doesn't drift across a long song; long-press the BPM readout to re-open the editor.
 The editor can also **estimate the tempo and the 1 from the audio** — an on-device pass over
-the track's onset envelope (`WaveformExtractor.extractOnsetEnvelope` + pure `TempoEstimator`):
+the track's onset envelope (`WaveformExtractor.extractOnsetEnvelope`, spectral flux from pure
+`AudioMath.spectralFlux` so it hears new notes as well as drums, + pure `TempoEstimator`):
 autocorrelation for the BPM (weighted by a ~120 BPM prior to fold half/double errors) and a
 comb-filter for the downbeat phase. It **prefills** both, flagged as estimated for the user to
 confirm, never auto-committing (rung 2 of ADR 0004). A **Click** toggle on the **speed bar**
