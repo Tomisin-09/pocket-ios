@@ -40,7 +40,7 @@ L a week or more.
    audio-session interruption, on all six recording screens. **Built 2026-11-02**; the device check
    is still owed.
 4. `pocket-397` **Welcome back on a new Apple Account** (S). The entry *A new Apple Account can be
-   welcomed back* below.
+   welcomed back* below. **Built 2026-11-02**; the sandbox account switch on the device is still owed.
 5. `pocket-398` **Polish** (S): an opaque import card that names the file in progress, a taller notes
    field, the delete-version pop-up attached to its button, and a sweep of the other
    `.confirmationDialog`s, each screenshotted open.
@@ -186,7 +186,18 @@ and a `.playAndRecord` session, the `AVAudioRecorder` carries on in the backgrou
   `RecordingController`. The metronome entry above does it for the metronome. The FAQ makes no
   background claim, so only the privacy page depends on this.
 
-## A new Apple Account can be welcomed back (logged 2026-10-27, ADR 0256 D4) — in 1.4, item 4 of the final push
+## A new Apple Account can be welcomed back (logged 2026-10-27, ADR 0256 D4) — in 1.4, item 4 of the final push — **FIXED 2026-11-02** (`pocket-397`)
+
+**Fixed:** `PlanStore.refresh()` now walks `Transaction.all` on every refresh that finds nothing owned,
+never latching. **There is no automated test.** An `SKTestSession` test was written (buy, refund, clear
+the transactions, which is what a new account looks like to the app, then refresh). It never reached the
+code: with `RedMoon.storekit` in the test bundle, `xcodebuild test` on the iOS 26.5 simulator logged
+`[SKTestSession] Error saving configuration file: SKInternalErrorDomain Code=3` and every
+`buyProduct` threw `notEntitled`. It was dropped rather than debugged, because a test red locally and
+green on CI's iOS 18.5 would be worse than none. The change is one condition of StoreKit I/O with no pure
+rule to pull out. **Owed:** the real account switch on the device (`run-device.sh -s`).
+
+What follows is the entry as logged.
 
 Seen in the 1.4 sandbox pass, on the device: after one sandbox account had bought and lapsed, a fresh
 one, signed in without quitting the app, got the wall's welcome-back headline (*"Everything you made

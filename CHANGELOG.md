@@ -622,6 +622,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **A new Apple Account isn't welcomed back.** If you switched App Store accounts while Red Moon was
+  open, after an account that had bought the plan, the plan's wall greeted the new account with
+  *"Everything you made is still here."* It now asks the App Store again each time, so only an account
+  that has bought before sees that.
 - **Leaving Red Moon ends a take and lets go of the microphone.** A take left running when you went
   to another app, or locked the phone, kept recording with the microphone indicator lit. Now leaving
   the app ends the take and saves what you played up to then, and so does a call, Siri or an alarm
