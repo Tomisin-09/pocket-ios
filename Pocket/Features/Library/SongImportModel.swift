@@ -1,10 +1,26 @@
 import Foundation
 import SwiftData
 
-/// Progress of an in-flight batch import, for the "Importing N of M…" overlay.
+/// Progress of an in-flight batch import, for the import card.
 struct SongImportProgress: Equatable {
     var completed: Int
     var total: Int
+    /// The file being decoded now, by the name it will import under, or `nil` when there isn't one to
+    /// name (share-in reads one file before it has a title). The card names it: a count that sits on
+    /// "0 of 1" for a long decode looks stuck, and the name says what the wait is for.
+    var current: String?
+
+    /// The card's main line: *Importing “Binta”*, or *Importing…* with no name to give.
+    var headline: String {
+        current.map { "Importing “\($0)”" } ?? "Importing…"
+    }
+
+    /// Where the batch is, *2 of 5*, counting the file in progress; `nil` for a single file, where it
+    /// would only ever say *1 of 1*.
+    var position: String? {
+        guard total > 1 else { return nil }
+        return "\(min(completed + 1, total)) of \(total)"
+    }
 }
 
 /// Outcome of a finished batch import. Pure value type (no SwiftData) so the
@@ -80,6 +96,7 @@ final class SongImportModel {
         var failedNames: [String] = []
 
         for (index, url) in urls.enumerated() {
+            progress?.current = SongImporter.title(for: url)
             do {
                 let prepared = try await Task.detached(priority: .userInitiated) {
                     try SongImporter.prepare(from: url)

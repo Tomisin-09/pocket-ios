@@ -35,10 +35,7 @@ struct PieceVersionsSheet: View {
                         PieceDrawing(piece: piece, spelling: spelling)
                         Button("Use this version") { use(index) }
                             .foregroundStyle(PocketColor.practice)
-                        Button("Delete", role: .destructive) {
-                            deleting = index
-                            confirmingDelete = true
-                        }
+                        deleteButton(index)
                     } header: {
                         header(nil, piece)
                     }
@@ -51,13 +48,30 @@ struct PieceVersionsSheet: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .confirmationDialog("Delete this version?", isPresented: $confirmingDelete,
-                                titleVisibility: .visible, presenting: deleting) { index in
-                Button("Delete", role: .destructive) { delete(index) }
-            } message: { _ in
-                Text("It's removed from this loop for good. The version in use doesn't change.")
-            }
         }
+    }
+
+    /// An earlier version's **Delete**, with *Delete this version?* hung on the button itself, not the List:
+    /// on iOS 26 the dialog is a popover pointing at the view it hangs from, and from the List it pointed at
+    /// the first row. Its own function rather than a chain inside the `Section`, because one modifier added
+    /// inline to a Section's builder has crashed a screen on open before (`RoutineDetailView`, 2026-09).
+    private func deleteButton(_ index: Int) -> some View {
+        Button("Delete", role: .destructive) {
+            deleting = index
+            confirmingDelete = true
+        }
+        .confirmationDialog("Delete this version?", isPresented: confirming(index), titleVisibility: .visible) {
+            Button("Delete", role: .destructive) { delete(index) }
+        } message: {
+            Text("It's removed from this loop for good. The version in use doesn't change.")
+        }
+    }
+
+    /// Whether *Delete this version?* is up for this version: one flag, read per button, so only the
+    /// button that was tapped presents it.
+    private func confirming(_ index: Int) -> Binding<Bool> {
+        Binding(get: { confirmingDelete && deleting == index },
+                set: { if !$0 { confirmingDelete = false } })
     }
 
     /// *In use · 30 Sep 2026 at 10:12*, or the date alone. Kept in its own case: a list header is
