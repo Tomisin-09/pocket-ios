@@ -668,6 +668,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **The import card says what it's doing, and can be read.** It was see-through, so the screen behind
+  showed under its words, and it counted files finished, so one long file read *Importing 0 of 1…* the
+  whole time. It now sits on a solid card and names the song it's reading, with *2 of 5* when there
+  are several.
+- **More room to write a note.** The note box under a practice run, ear training and improvise opens
+  three lines tall, not two, and grows to eight before it scrolls.
+- **Deleting an earlier version of a piece asks from its own button.** *Delete this version?* used to
+  point at the top of the Versions list; it now comes from the Delete you tapped.
 - **A new Apple Account isn't welcomed back.** If you switched App Store accounts while Red Moon was
   open, after an account that had bought the plan, the plan's wall greeted the new account with
   *"Everything you made is still here."* It now asks the App Store again each time, so only an account
