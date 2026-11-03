@@ -169,8 +169,10 @@ makes a **tap** behave the way a scrub always has. Read off `AppSettings` at rel
 minimap alike (the strip already excludes beats, so `Off` is the only value that reaches it);
 loop-edge releases and ADR 0099's neighbour-aware yielding are deliberately out of reach, since
 `Off` there would make loops hard to place at all. Tempo and the downbeat are set behind the **metronome control** on the speed bar (`BPMSheet`, opened by holding it — or by a plain tap while the song has no tempo, the state it badges; ADR 0124 retired the "Set BPM" capsule and gave its slot to whole-song **repeat**; **ADR 0170 made that control the *only* handle on the editor**, specialising the BPM callout beside it into a gateway *out* — see below):
-**tap-tempo** captures the engine's song-time per tap (pure `TempoMath.bpm(fromTapTimes:)`,
-so in-loop / slowed tapping reads the true tempo) or **manual** entry, and **the 1** is
+the sheet opens on **Find the tempo** (the on-device estimate) and holds its tempo, with where it
+came from, in the pure `TempoDraft` (ADR 0284); **Tap along**, a pushed page, captures the engine's
+song-time per tap (pure `TempoMath.bpm(fromTapTimes:)`, so in-loop / slowed tapping reads the true
+tempo), **Type a tempo** takes a number, and **the 1** is
 placed by a draggable waveform handle that **snaps to the loudest transient** near the drop
 (pure `TempoPeaks.snap`, against the displayed bars so a deep zoom sharpens it). Tempo is
 persisted full-precision in `Song.preciseBPM` — an **additive** optional so SwiftData

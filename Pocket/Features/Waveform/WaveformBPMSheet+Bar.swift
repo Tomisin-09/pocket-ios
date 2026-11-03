@@ -21,30 +21,50 @@ struct TempoClickHooks {
 }
 
 /// Play and the click, pinned above the sheet's form so the tempo can be heard while it's set,
-/// whichever part of the form is in view (ADR 0283 D1).
+/// whichever part of the form is in view (ADR 0283 D1). The click shows only once there's something to
+/// click; until then the strip says what's missing, rather than greying out a switch (ADR 0284 D3).
 struct TempoSheetTransport: View {
     let engine: PracticeAudioEngine
     @Binding var clickOn: Bool
-    /// A tempo and a 1 to click, once Done.
-    let canClick: Bool
+    /// What the click still needs (a tempo, a 1), or `nil` when it can play.
+    let clickWaitsFor: String?
+    /// The pushed pages keep the click quiet, so they show Play alone (ADR 0284 D6).
+    var offersClick = true
 
     var body: some View {
         HStack {
             Button { engine.togglePlay() } label: {
-                Label(engine.isPlaying ? "Pause" : "Play",
-                      systemImage: engine.isPlaying ? "pause.fill" : "play.fill")
+                Image(systemName: engine.isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(engine.isPlaying ? PocketColor.background : PocketColor.waveformAccent)
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(engine.isPlaying ? PocketColor.waveformAccent
+                                                               : PocketColor.surfaceStandard))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Circle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel(engine.isPlaying ? "Pause" : "Play")
             Spacer()
-            Toggle(isOn: $clickOn) {
-                Label("Click", systemImage: "metronome")
+            if offersClick {
+                if let clickWaitsFor {
+                    Text(clickWaitsFor)
+                        .font(.futura(.footnote))
+                        .foregroundStyle(PocketColor.textSecondary)
+                } else {
+                    ToggleChip(isOn: clickOn, tint: PocketColor.active) { clickOn.toggle() } content: {
+                        Label("Click", systemImage: "metronome")
+                            .font(.futura(.footnote, weight: .medium))
+                    }
+                }
             }
-            .fixedSize()
-            .disabled(!canClick)
         }
-        .font(.futura(.subheadline))
-        .padding(.horizontal, 20)
-        .padding(.vertical, 10)
-        .background(.bar)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 4)
+        .background(PocketColor.background)
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(PocketColor.surfaceStandard).frame(height: 1)
+        }
     }
 }
 
@@ -73,6 +93,36 @@ enum BarChoice: Hashable {
     }
 }
 
+/// The section for the 1 (ADR 0284 D4): how many beats in a bar, which of them is the 1, and the two
+/// ways to place it. Shown once there's a tempo to count the beats from.
+struct TheOneSection: View {
+    @Binding var signature: TimeSignature
+    @Binding var one: DownbeatChoice
+    let onMark: () -> Void
+    let onSetOnWaveform: () -> Void
+
+    var body: some View {
+        Section {
+            BeatsInABarRow(signature: $signature)
+            WhichBeatIsTheOneRow(beat: Binding(get: { one.beat(inBarOf: signature.beats) },
+                                               set: { one.beat = $0 }),
+                                 beatsPerBar: signature.beats, canChoose: one.placed != nil)
+            Button(action: onMark) {
+                Label("Mark the 1 at the playhead", systemImage: "1.circle")
+            }
+            Button(action: onSetOnWaveform) {
+                Label("Set the 1 on the waveform", systemImage: "waveform.path")
+            }
+        } header: {
+            TempoSheetHeader("The 1")
+        } footer: {
+            TempoSheetFooter("The 1 starts a bar, and the click plays it higher. Where a song drifts, set "
+                             + "the 1 again on the waveform, and the grid re-locks from there.")
+        }
+        .tempoSheetCard()
+    }
+}
+
 /// **Beats in a bar**: 3, 4 or More, which opens the full list of time signatures.
 struct BeatsInABarRow: View {
     @Binding var signature: TimeSignature
@@ -86,12 +136,12 @@ struct BeatsInABarRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Beats in a bar")
-            Picker("Beats in a bar", selection: choice) {
-                Text("3").tag(BarChoice.three)
-                Text("4").tag(BarChoice.four)
-                Text("More…").tag(BarChoice.more)
-            }
-            .pickerStyle(.segmented)
+            TempoPills(options: [PickerItem(value: BarChoice.three, title: "3"),
+                                 PickerItem(value: BarChoice.four, title: "4"),
+                                 PickerItem(value: BarChoice.more, title: "More…")],
+                       selection: choice)
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Beats in a bar")
             if showsMore {
                 Picker("Time signature", selection: $signature) {
                     ForEach(TimeSignature.presets) { Text($0.name).tag($0) }
@@ -111,11 +161,12 @@ struct BeatsInABarRow: View {
 }
 
 /// **Which beat is the 1?** One button a beat. The click accents the 1, so choosing a beat moves the
-/// accent there, and the player keeps the one that lands where the bar starts (ADR 0283 D3).
+/// accent there, and the player keeps the one that lands where the bar starts (ADR 0283 D3). The
+/// chosen beat fills green, the player's colour for what's chosen (ADR 0284 D4).
 struct WhichBeatIsTheOneRow: View {
     @Binding var beat: Int
     let beatsPerBar: Int
-    /// A tempo and a 1 to count from.
+    /// A 1 to count from.
     let canChoose: Bool
 
     var body: some View {
@@ -124,12 +175,15 @@ struct WhichBeatIsTheOneRow: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: columns),
                       spacing: 8) {
                 ForEach(1...max(1, beatsPerBar), id: \.self) { number in
-                    Button { beat = number } label: {
+                    Button {
+                        beat = number
+                        haptic(.light)
+                    } label: {
                         Text("\(number)")
-                            .font(.pocketMono(.body))
+                            .font(.futura(.body))
                             .foregroundStyle(number == beat ? PocketColor.background : PocketColor.textPrimary)
-                            .frame(width: 40, height: 40)
-                            .background(Circle().fill(number == beat ? PocketColor.metronome
+                            .frame(width: 44, height: 44)
+                            .background(Circle().fill(number == beat ? PocketColor.active
                                                                      : PocketColor.surfaceStandard))
                     }
                     .buttonStyle(.plain)
@@ -149,11 +203,14 @@ struct WhichBeatIsTheOneRow: View {
 
 /// The limit of one tempo, said where a tempo is set (ADR 0283 D4). The same for every song: Red
 /// Moon doesn't yet tell a song that moves from one that doesn't.
-struct SteadyTempoNote: View {
+struct SteadyTempoSection: View {
     var body: some View {
-        Label("Works best with songs played to a click. A song that speeds up or slows down will drift.",
-              systemImage: "exclamationmark.triangle")
-            .font(.futura(.footnote))
-            .foregroundStyle(PocketColor.textSecondary)
+        Section {
+            Label("Works best with songs played to a click. A song that speeds up or slows down will drift.",
+                  systemImage: "exclamationmark.triangle")
+                .font(.futura(.footnote))
+                .foregroundStyle(PocketColor.textSecondary)
+                .listRowBackground(Color.clear)
+        }
     }
 }

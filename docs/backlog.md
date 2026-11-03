@@ -92,6 +92,14 @@ takes the next free `pocket-` number when its item starts.
     steady-tempo warning. 5, 6 and 7 sit behind *More…*. **Still open:** whether a 6/8 song counts in
     6 or in 2 (it still clicks six to the bar).
 
+    **11c. `pocket-402` The tempo sheet leads with Find the tempo** (M, ADR 0284). Added 2026-11-03,
+    after B4 on the device: the sheet *"feels very reminiscent of the early days of the app before we
+    had a theme"*, and *"there seems to be an emphasis on the tapping, making it seem like the default
+    method."* Agreed from the design canvas https://claude.ai/artifact/7rX1wRafACX5cHE98eaJ4U (its
+    Redesign row). Find the tempo first, then the tempo with its source and Half / Double, then the 1,
+    then Tap along (a page), Type a tempo and Tap through the song. A tempo turns the click on, and
+    the strip says what the click needs. In the player's look. B4's logic is unchanged.
+
     **11b. B4b, Red Moon counts the bar** (M, its own branch, **after 1.4**): step 4 of the proposal. Each beat
     is scored for how hard it is hit, how much low end is on it, and how much the harmony changes
     there (chroma either side of the beat). Red Moon then tests whether those scores repeat every 3
@@ -140,7 +148,25 @@ click through the speaker and through headphones.
 
 ### After the freeze
 
-Nothing yet.
+- **Estimate the tempo at import? Open, not decided** (raised 2026-11-03, Tomisin: *"maybe we should
+  make estimating the bpm part of the import process?"*, then *"we'll put the estimating at import as
+  a decision to come back to, we won't make the final decision today"*). The idea is that a song
+  arrives with ADR 0284's tempo card already showing, so the first visit to the sheet is a check
+  rather than a search. The shape proposed, if it goes ahead: run the estimate in the background
+  after import, store it as a **suggestion** in new optional fields, and leave `preciseBPM` empty
+  until Done. Committing at import would break ADR 0004's *never auto-commits*, and a half or double
+  reading would then show as fact on the speed bar, in the grid and in the click. What it costs:
+  - **A decode per song.** Import already decodes the whole file for the waveform
+    (`SongImporter.prepare` → `WaveformExtractor.extract`). The estimate decodes it again
+    (`extractOnsetEnvelope`) unless the two passes are merged.
+  - **A schema change.** New optional `Song` fields mean an upgrade check over an existing store,
+    on the simulator and on the device, proved by timestamps (`docs/swiftdata-gotchas.md`).
+  - **Load on a bulk import.** A song shared in from another app is only dropped in an inbox by the
+    share extension, which never touches SwiftData; the app imports it when it next opens, so its
+    estimate would run then.
+  - **Older songs** keep needing *Find the tempo* in the sheet, which stays either way.
+
+  Needs its own ADR, amending 0004's rung 2 and 0011's import if it goes ahead. **Not decided.**
 
 ## The metronome records a take (logged 2026-10-30, extends ADR 0069) — in 1.4, item 14 of the final push
 

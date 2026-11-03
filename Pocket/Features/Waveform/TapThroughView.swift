@@ -23,8 +23,8 @@ struct BeatMapHooks {
 /// becomes a beat in the song's beat map. The way to give a song that speeds up and slows down a
 /// grid that follows it, until Red Moon can find the beats itself (B3).
 ///
-/// Pushed from the tempo sheet's Tap mode. Taps read the playhead, as the sheet's own tap pad does,
-/// so a slowed speed still maps the song's real timing.
+/// Pushed from the tempo sheet's other ways (ADR 0284 D5), and dressed as the sheet is. Taps read the
+/// playhead, as *Tap along*'s do, so a slowed speed still maps the song's real timing.
 struct TapThroughView: View {
     let engine: PracticeAudioEngine
     let hooks: BeatMapHooks
@@ -47,8 +47,9 @@ struct TapThroughView: View {
                 }
                 .padding(.vertical, 4)
             } footer: {
-                Text(footer)
+                TempoSheetFooter(footer)
             }
+            .tempoSheetCard()
             if didNotMap {
                 Label("Those taps don't make a beat map yet. Tap at least \(BeatMap.minBeats) beats.",
                       systemImage: "exclamationmark.triangle")
@@ -56,11 +57,13 @@ struct TapThroughView: View {
                     .foregroundStyle(PocketColor.textSecondary)
             }
         }
+        .tempoSheetStyle()
         .navigationTitle("Tap through the song")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Done") { save() }
+                    .font(.futura(.body, weight: .bold))
                     .disabled(taps.count < BeatMap.minBeats || isSaving)
             }
         }
@@ -107,17 +110,10 @@ struct TapThroughView: View {
 
     private var pad: some View {
         Button { tap() } label: {
-            Text(engine.isPlaying ? "Tap" : "Play to start tapping")
-                .font(engine.isPlaying ? .pocketMono(.title2) : .futura(.headline))
-                .foregroundStyle(PocketColor.textPrimary)
-                .frame(maxWidth: .infinity)
-                .frame(height: 120)
-                .background(RoundedRectangle(cornerRadius: 16)
-                    .fill(PocketColor.active.opacity(engine.isPlaying ? 0.18 : 0.08)))
-                .overlay(RoundedRectangle(cornerRadius: 16)
-                    .stroke(PocketColor.active.opacity(0.5), lineWidth: 1))
+            Text(engine.isPlaying ? "TAP" : "Play to start tapping")
         }
-        .buttonStyle(.plain)
+        .buttonStyle(TapPadStyle(isLive: engine.isPlaying))
+        .frame(height: 120)
         .disabled(!engine.isPlaying)
         .accessibilityLabel("Tap each beat")
     }

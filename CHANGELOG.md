@@ -373,6 +373,16 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **The tempo editor starts with Find the tempo** (ADR 0284). It used to open on a tap pad, with the
+  estimate further down, so tapping looked like the way to do it. Now **Find the tempo** comes first
+  and the rest follows from what it finds. The tempo shows large, with where it came from and a line
+  for the bar and its 1. **Half** and **Double** each show the tempo they'd give, and work on a tapped
+  or typed tempo too. Finding a tempo turns the click on, so pressing Play is the check. The section
+  for the 1 appears once there's a tempo. **Tap along**, **Type a tempo** and **Tap through the
+  song** are listed under it, each saying when to use it, in place of the *Tap* and *Manual*
+  segments. Tap along has a page of its own with a bigger pad. Until there's something to click,
+  the top of the editor says what's missing instead of showing a switch that does nothing. The
+  editor now has the app's own look.
 - **Hear the tempo while you set it** (ADR 0283). The tempo editor now has **Play** and a **Click**
   switch at the top, in view whichever part you're on. The click plays what you've set before you
   tap Done: the tempo, the 1 and the bar. **Cancel** puts the song's click back as it was; **Done**

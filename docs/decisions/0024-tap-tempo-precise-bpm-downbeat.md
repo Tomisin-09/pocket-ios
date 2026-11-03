@@ -2,6 +2,10 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-20
+- **Amended by:** ADR 0284 D5 and D6, on the sheet's two modes: Tap and Manual are no longer a
+  segmented choice. The sheet opens on *Find the tempo*, and *Tap along* (a page of its own) and
+  *Type a tempo* are listed under it as other ways. Tap tempo, `preciseBPM`, the peak-snapped 1
+  and *Set the 1 on the waveform* stand.
 
 ## Context
 

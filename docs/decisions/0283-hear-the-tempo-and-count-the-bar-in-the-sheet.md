@@ -12,6 +12,11 @@
   corrections), 0281 (on a beat map, D3 steps along the map), 0282 (D4 answers half of its open
   question)
 - **Schema:** none.
+- **Amended by:** ADR 0284 D3, on D1's switch: it shows only once there's a tempo and a 1, the
+  strip says what's missing until then, and a tempo found, tapped or typed turns it on. The preview,
+  Cancel putting the song's click back and Done keeping the switch stand, as do D2, D3 and D4,
+  redrawn in ADR 0284 D4. The tap pad has moved to *Tap along*, where the click is quiet, so the
+  Consequence below about each tap in Tap mode no longer applies.
 
 ## Context
 

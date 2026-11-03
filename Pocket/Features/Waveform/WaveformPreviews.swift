@@ -70,13 +70,13 @@ private extension TempoEstimator.Reading {
                                                 onsets: [], framesPerSecond: 100)
 }
 
-#Preview("BPM sheet — tap-tempo (ADR 0024)") {
+#Preview("Tempo sheet — no tempo yet (ADR 0284)") {
     BPMSheet(engine: PracticeAudioEngine(), currentBPM: nil, currentDownbeat: nil,
              onCommit: { _, _, _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { .preview })
         .preferredColorScheme(.dark)
 }
 
-#Preview("BPM sheet — prefilled") {
+#Preview("Tempo sheet — a song with a tempo") {
     BPMSheet(engine: PracticeAudioEngine(), currentBPM: 128, currentDownbeat: 1.5,
              onCommit: { _, _, _, _ in }, onSetOnWaveform: { _ in }, onEstimate: { .preview })
         .preferredColorScheme(.dark)
