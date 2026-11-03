@@ -42,10 +42,10 @@ struct BPMSheet: View {
     /// "Set the 1 on the waveform" — commits the current BPM (if any) and hands off to
     /// the on-waveform downbeat handle. The sheet dismisses first.
     let onSetOnWaveform: (Double?) -> Void
-    /// On-device tempo estimate from the audio (ADR 0004, rung 2). Returns the estimated
-    /// BPM and (when found) a downbeat phase in seconds, or `nil` when there's no
-    /// analysable source or no confident read.
-    let onEstimate: () async -> (bpm: Double, downbeat: TimeInterval?)?
+    /// On-device tempo estimate from the audio (ADR 0004, rung 2). Returns the estimate, with
+    /// (when found) a downbeat phase in seconds and the envelope behind it, or `nil` when there's
+    /// no analysable source or no confident read.
+    let onEstimate: () async -> TempoEstimator.Reading?
 
     @Environment(\.dismiss) private var dismiss
 
@@ -62,10 +62,12 @@ struct BPMSheet: View {
     @State private var manualText: String
     /// The bar-1 downbeat ("the 1"), shared by both modes. `nil` ⇒ leave phase as-is.
     @State private var downbeat: TimeInterval?
-    /// The last on-device estimate (full precision). Manual mode is prefilled with its
-    /// rounded value; the "estimated" flag shows only while `manualText` still matches
-    /// it (any manual edit makes it a user value, not an estimate — ADR 0004).
-    @State private var lastEstimate: Double?
+    /// The last on-device estimate, kept with its envelope for **Half** and **Double**.
+    @State private var reading: TempoEstimator.Reading?
+    /// Its tempo at full precision. Manual mode is prefilled with its rounded value; the
+    /// "estimated" flag shows only while `manualText` still matches it (any manual edit
+    /// makes it a user value, not an estimate — ADR 0004).
+    private var lastEstimate: Double? { reading?.estimate.bpm }
     /// True while the off-main estimate is running, to show progress and avoid re-entry.
     @State private var isEstimating = false
     /// True when the estimate found no confident tempo (flat/ambient material).
@@ -77,7 +79,7 @@ struct BPMSheet: View {
          currentBeatsPerBar: Int = 4, currentNoteValue: Int = 4, beatMap: BeatMapHooks? = nil,
          onCommit: @escaping (Double?, TimeInterval?, Int, Int) -> Void,
          onSetOnWaveform: @escaping (Double?) -> Void,
-         onEstimate: @escaping () async -> (bpm: Double, downbeat: TimeInterval?)?) {
+         onEstimate: @escaping () async -> TempoEstimator.Reading?) {
         self.engine = engine
         self.currentBPM = currentBPM
         self.currentDownbeat = currentDownbeat
@@ -87,7 +89,7 @@ struct BPMSheet: View {
         self.onCommit = onCommit
         self.onSetOnWaveform = onSetOnWaveform
         self.onEstimate = onEstimate
-        _manualText = State(initialValue: currentBPM.map { String(Int($0.rounded())) } ?? "")
+        _manualText = State(initialValue: currentBPM.map(TempoMath.wholeBPM) ?? "")
         _downbeat = State(initialValue: currentDownbeat)
         _timeSignature = State(initialValue: TimeSignature.forStored(
             beats: currentBeatsPerBar, noteValue: currentNoteValue, accentBeats: []))
@@ -98,7 +100,7 @@ struct BPMSheet: View {
     /// automatically (the strings stop matching) without an `onChange` race.
     private var showingEstimate: Bool {
         guard let estimate = lastEstimate else { return false }
-        return manualText == String(Int(estimate.rounded()))
+        return manualText == TempoMath.wholeBPM(estimate)
     }
 
     /// The BPM the current mode would commit (full precision), or `nil` if not set.
@@ -107,12 +109,8 @@ struct BPMSheet: View {
         case .tap:
             return TempoMath.bpm(fromTapTimes: taps)
         case .manual:
-            // Untouched, the field only shows the song's tempo rounded. Committing it would round
-            // the tempo, and on a song with a beat map it would replace the map (ADR 0281 D4).
-            guard manualText != currentBPM.map({ String(Int($0.rounded())) }) || lastEstimate != nil
-            else { return nil }
-            guard let value = Double(manualText.trimmingCharacters(in: .whitespaces)), value > 0 else { return nil }
-            return value.clamped(to: TempoMath.minTapBPM...TempoMath.maxTapBPM)
+            // The field shows a whole BPM; this keeps an untouched tempo and an unedited estimate exact.
+            return TempoMath.manualBPM(text: manualText, current: currentBPM, estimate: lastEstimate)
         }
     }
 
@@ -220,57 +218,6 @@ struct BPMSheet: View {
         }
     }
 
-    // MARK: Estimate from audio (ADR 0004, rung 2)
-
-    private var estimateSection: some View {
-        Section {
-            Button { Task { await runEstimate() } } label: {
-                HStack {
-                    Label("Estimate from audio", systemImage: "wand.and.stars")
-                    Spacer()
-                    if isEstimating { ProgressView() }
-                }
-            }
-            .disabled(isEstimating)
-
-            if showingEstimate, let estimate = lastEstimate {
-                Label("Estimated \(Int(estimate.rounded())) BPM — confirm or adjust",
-                      systemImage: "info.circle")
-                    .font(.futura(.footnote))
-                    .foregroundStyle(PocketColor.textSecondary)
-            } else if estimateFailed {
-                Label("Couldn't detect a clear tempo — tap or type it instead",
-                      systemImage: "exclamationmark.triangle")
-                    .font(.futura(.footnote))
-                    .foregroundStyle(PocketColor.textSecondary)
-            }
-        } footer: {
-            Text("Analyses the track's onsets to guess the tempo and place the 1. The "
-                 + "tempo can land on half or double time and the 1 can be a beat off, so "
-                 + "check both against the music.")
-        }
-    }
-
-    /// Run the on-device estimate, prefilling Manual mode with the tempo and (when found)
-    /// the downbeat — both flagged as estimated until edited. A `nil` result means no
-    /// analysable source or no confident read — surface that rather than silently doing
-    /// nothing.
-    private func runEstimate() async {
-        isEstimating = true
-        estimateFailed = false
-        let result = await onEstimate()
-        isEstimating = false
-        if let result {
-            lastEstimate = result.bpm
-            mode = .manual
-            manualText = String(Int(result.bpm.rounded()))
-            if let phase = result.downbeat { downbeat = phase }
-        } else {
-            lastEstimate = nil
-            estimateFailed = true
-        }
-    }
-
     // MARK: Shared downbeat ("the 1")
 
     private var downbeatSection: some View {
@@ -320,9 +267,78 @@ struct BPMSheet: View {
     }
 }
 
-// Outside the struct's body, which sits on SwiftLint's 250-line type-body limit: these two read only
+// Outside the struct's body, which sits on SwiftLint's 250-line type-body limit: these read only
 // the sheet's own state, so they lose nothing by living in an extension.
 extension BPMSheet {
+    // MARK: Estimate from audio (ADR 0004, rung 2)
+
+    private var estimateSection: some View {
+        Section {
+            Button { Task { await runEstimate() } } label: {
+                HStack {
+                    Label("Estimate from audio", systemImage: "wand.and.stars")
+                    Spacer()
+                    if isEstimating { ProgressView() }
+                }
+            }
+            .disabled(isEstimating)
+
+            if showingEstimate, let estimate = lastEstimate {
+                Label("Estimated \(TempoMath.wholeBPM(estimate)) BPM — confirm or adjust",
+                      systemImage: "info.circle")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+                HStack(spacing: 12) {
+                    Button("Half") { rescaleEstimate(by: 0.5) }
+                        .disabled(reading?.allows(0.5) != true)
+                        .accessibilityLabel("Half the estimated tempo")
+                    Button("Double") { rescaleEstimate(by: 2) }
+                        .disabled(reading?.allows(2) != true)
+                        .accessibilityLabel("Double the estimated tempo")
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            } else if estimateFailed {
+                Label("Couldn't detect a clear tempo — tap or type it instead",
+                      systemImage: "exclamationmark.triangle")
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
+        } footer: {
+            Text("Analyses the track's onsets to guess the tempo and place the 1. If the click "
+                 + "comes twice a beat, use Half; if it comes every other beat, use Double. The 1 "
+                 + "can be a beat off, so check it against the music.")
+        }
+    }
+
+    /// Run the on-device estimate, prefilling Manual mode with the tempo and (when found)
+    /// the downbeat — both flagged as estimated until edited. A `nil` result means no
+    /// analysable source or no confident read — surface that rather than silently doing
+    /// nothing.
+    private func runEstimate() async {
+        isEstimating = true
+        estimateFailed = false
+        let result = await onEstimate()
+        isEstimating = false
+        reading = result
+        if let result {
+            mode = .manual
+            manualText = TempoMath.wholeBPM(result.estimate.bpm)
+            if let phase = result.estimate.downbeatSeconds { downbeat = phase }
+        } else {
+            estimateFailed = true
+        }
+    }
+
+    /// **Half** or **Double** (ADR 0282 D5): the same estimate read at another speed, so still
+    /// exact. The estimate's 1 is placed again, unless the player has placed one since.
+    private func rescaleEstimate(by factor: Double) {
+        guard let current = reading, let scaled = current.scaled(by: factor) else { return }
+        downbeat = current.downbeat(after: scaled, current: downbeat)
+        reading = scaled
+        manualText = TempoMath.wholeBPM(scaled.estimate.bpm)
+    }
+
     // MARK: Time signature (ADR 0051)
 
     private var timeSignatureSection: some View {

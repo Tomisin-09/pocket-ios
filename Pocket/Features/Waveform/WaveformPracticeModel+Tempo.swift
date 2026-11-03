@@ -33,13 +33,13 @@ extension WaveformPracticeModel {
     /// Returns `nil` when there's no source file (the demo sample) or the material is too
     /// flat/ambient for a confident read. The estimate is *not* committed here — the BPM
     /// sheet prefills it, flagged as estimated, for the user to confirm or correct (ADR
-    /// 0004: estimates aren't truth).
-    func estimateTempoFromAudio() async -> TempoEstimator.Estimate? {
+    /// 0004: estimates aren't truth). It comes with its envelope, so the sheet's **Half** and
+    /// **Double** can read it again without decoding the file twice (ADR 0282 D5).
+    func estimateTempoFromAudio() async -> TempoEstimator.Reading? {
         guard let url = sourceURL else { return nil }
         return await Task.detached(priority: .userInitiated) {
             guard let extracted = try? WaveformExtractor.extractOnsetEnvelope(from: url) else { return nil }
-            return TempoEstimator.estimate(onsets: extracted.onsets,
-                                           framesPerSecond: extracted.framesPerSecond)
+            return TempoEstimator.read(onsets: extracted.onsets, framesPerSecond: extracted.framesPerSecond)
         }.value
     }
 

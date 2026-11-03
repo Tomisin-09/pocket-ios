@@ -180,6 +180,9 @@ targets:
     platform: iOS
     sources:
       - path: PocketTests
+      # The starter track, so the tempo estimate is checked on real audio (ADR 0282).
+      - path: Pocket/Resources/Binta.m4a
+        buildPhase: resources
     # Test bundles have no hand-maintained Info.plist; let Xcode generate one.
     # Xcode 26.5 no longer defaults this on, so without it the bundle can't
     # code-sign and the suite fails to build.

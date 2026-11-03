@@ -7,7 +7,8 @@ import Foundation
 /// of how much energy arrives in each frequency band, which spikes on drum hits and on
 /// new notes alike, so it hears a song without drums too. The beat period shows up as the
 /// lag at which that curve most strongly repeats, so the estimate is the peak of its
-/// autocorrelation. ADR 0004 calls out the classic failure — landing on half- or
+/// autocorrelation. One beat's lag finds the tempo; the lag of many beats makes it exact
+/// (`refined`, ADR 0282), so a steady song's grid holds to its last bar. ADR 0004 calls out the classic failure — landing on half- or
 /// double-tempo — so each lag's correlation is weighted by a **log-normal prior**
 /// centred on a typical tempo: when a genuine beat and its octave both show energy,
 /// the one nearer the prior wins, folding most half/double errors back in. The
@@ -50,6 +51,50 @@ enum TempoEstimator {
         return Estimate(bpm: bpm, downbeatSeconds: downbeat)
     }
 
+    /// What *Estimate from audio* hands the tempo editor: the estimate and the envelope it was read
+    /// from. A guitar part that plays every eighth note as firmly as the beat repeats more strongly
+    /// at half a beat, so the estimate can land on double time (*Don't Know Why* read 166 against
+    /// 83) or, as nearly happened on *Binta*, half. Nothing in the envelope settles which, so the
+    /// player chooses by ear with **Half** and **Double** (ADR 0282 D5), and the envelope lets the
+    /// 1 be placed again at the new tempo.
+    struct Reading: Sendable, Equatable {
+        let estimate: Estimate
+        let onsets: [Double]
+        let framesPerSecond: Double
+
+        /// Whether `factor` times the tempo stays inside `TempoMath.minTapBPM...maxTapBPM`.
+        func allows(_ factor: Double) -> Bool {
+            (TempoMath.minTapBPM...TempoMath.maxTapBPM).contains(estimate.bpm * factor)
+        }
+
+        /// The same beat counted at `factor` times the tempo (½ or 2), so exact to the same
+        /// precision, with the 1 placed again at the new tempo. Halving leaves two candidate phases
+        /// for the 1, a beat and the half-beat after it, and the comb filter keeps the stronger.
+        /// `nil` when the new tempo is outside the tappable range.
+        func scaled(by factor: Double) -> Reading? {
+            guard allows(factor) else { return nil }
+            let bpm = estimate.bpm * factor
+            let downbeat = TempoEstimator.estimateDownbeat(onsets: onsets, framesPerSecond: framesPerSecond,
+                                                           bpm: bpm) ?? estimate.downbeatSeconds
+            return Reading(estimate: Estimate(bpm: bpm, downbeatSeconds: downbeat),
+                           onsets: onsets, framesPerSecond: framesPerSecond)
+        }
+
+        /// The 1 to show once `scaled` replaces this reading. The estimate's own 1 moves with it, but
+        /// a 1 the player has placed since (`current` differs from this reading's) stays theirs.
+        func downbeat(after scaled: Reading, current: TimeInterval?) -> TimeInterval? {
+            guard current == estimate.downbeatSeconds else { return current }
+            return scaled.estimate.downbeatSeconds ?? current
+        }
+    }
+
+    /// `estimate(onsets:framesPerSecond:)`, kept with its envelope (`Reading`).
+    static func read(onsets: [Double], framesPerSecond: Double) -> Reading? {
+        estimate(onsets: onsets, framesPerSecond: framesPerSecond).map {
+            Reading(estimate: $0, onsets: onsets, framesPerSecond: framesPerSecond)
+        }
+    }
+
     /// Minimum normalised autocorrelation at the chosen lag for the estimate to be
     /// trusted. Flat or rubato/ambient material (ADR 0004's hard case) has no sharp
     /// repeat, so its peak stays low and we return `nil` — "no confident estimate" —
@@ -60,8 +105,9 @@ enum TempoEstimator {
     /// `framesPerSecond`. Returns `nil` when the envelope is too short, silent, or has
     /// no clear periodicity (confidence below `minConfidence`). The result is the
     /// autocorrelation peak — sub-frame-refined by parabolic interpolation so the BPM
-    /// isn't quantised to the frame grid — weighted by the tempo prior, then clamped to
-    /// the tappable range so a degenerate lag can't yield an absurd value.
+    /// isn't quantised to the frame grid — weighted by the tempo prior, then timed across
+    /// many beats (`refined`) and clamped to the tappable range so a degenerate lag can't
+    /// yield an absurd value.
     static func estimateBPM(onsets: [Double], framesPerSecond: Double,
                             preferredBPM: Double = preferredBPM) -> Double? {
         guard framesPerSecond > 0, onsets.count > 8 else { return nil }
@@ -104,9 +150,50 @@ enum TempoEstimator {
         guard bestRaw >= minConfidence else { return nil }
 
         // Parabolic interpolation around the integer peak for sub-frame precision.
-        let refinedLag = interpolatedPeak(lag: bestLag, autocorr: autocorr,
-                                          lowerBound: minLag, upperBound: maxLag)
-        return bpm(forLag: refinedLag).clamped(to: TempoMath.minTapBPM...TempoMath.maxTapBPM)
+        let beatLag = interpolatedPeak(lag: bestLag, autocorr: autocorr,
+                                       lowerBound: minLag, upperBound: maxLag)
+        let lag = refined(beatLag: beatLag, frameCount: signal.count, autocorr: autocorr)
+        return bpm(forLag: lag).clamped(to: TempoMath.minTapBPM...TempoMath.maxTapBPM)
+    }
+
+    /// How far, in frames, `refined` looks either side of where a span's peak should be. One
+    /// beat's lag can be out by about a frame, which is two over two beats; four leaves room
+    /// and stays well inside the gap to the next beat's peak.
+    static let refineWindow = 4
+
+    /// Time many beats, not one. A beat's lag is read in whole frames (10 ms), and a lopsided
+    /// peak pulls the parabola most of a frame off. *Binta*'s beat is 72.3 frames and read as
+    /// 71.5, 83.9 BPM against 83, so its grid was a second early by the end (ADR 0282). The
+    /// same autocorrelation at the lag of many beats divides that error by their number.
+    ///
+    /// The spans grow by a half or a third each time (2, 3, 4, 6, 8, 12…), so a bar of three and
+    /// a bar of four are both among them, and the error carried into each search stays small.
+    /// Each is searched around the last reading times the span:
+    /// - a peak below `minConfidence` is skipped, so the result is never less sure than the
+    ///   one-beat reading;
+    /// - a clear peak on the window's edge stops the search, because the reading has drifted
+    ///   too far to follow, and a longer span would only find a neighbouring beat;
+    /// - otherwise the peak, refined by a parabola, becomes the new reading.
+    ///
+    /// Spans grow while at least half the envelope still overlaps itself. `beatLag` and the
+    /// result are in frames per beat.
+    static func refined(beatLag: Double, frameCount: Int, autocorr: (Int) -> Double) -> Double {
+        var lag = beatLag
+        var span = 2
+        while span < frameCount, Double(span) * lag + Double(refineWindow) < Double(frameCount) / 2 {
+            let guess = Int((Double(span) * lag).rounded())
+            let window = (guess - refineWindow)...(guess + refineWindow)
+            let values = window.lowerBound > 0 ? window.map(autocorr) : []
+            if let best = values.indices.max(by: { values[$0] < values[$1] }), values[best] >= minConfidence {
+                guard best > 0, best < values.count - 1 else { break }
+                let left = values[best - 1], mid = values[best], right = values[best + 1]
+                let denominator = left - 2 * mid + right
+                let delta = denominator < 0 ? 0.5 * (left - right) / denominator : 0
+                lag = (Double(window.lowerBound + best) + delta) / Double(span)
+            }
+            span = span.isMultiple(of: 3) ? span / 3 * 4 : span / 2 * 3
+        }
+        return lag
     }
 
     /// Place the beat-grid **phase anchor** ("the 1") from the onset envelope, given an

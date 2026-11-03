@@ -47,6 +47,157 @@ final class TempoEstimatorTests: XCTestCase {
         XCTAssertEqual(bpm, 133, accuracy: 2)
     }
 
+    // MARK: timing many beats (ADR 0282)
+
+    /// A stand-in autocorrelation: a peak of `height` at every multiple of `period` frames,
+    /// falling to nothing two frames either side.
+    private func peaks(every period: Double, height: Double = 1) -> (Int) -> Double {
+        { lag in
+            let beats = (Double(lag) / period).rounded()
+            guard beats >= 1 else { return 0 }
+            return max(0, height * (1 - abs(Double(lag) - beats * period) / 2))
+        }
+    }
+
+    /// 83 BPM is 72.3 frames a beat, so its spikes land 72 or 73 frames apart. One beat's lag
+    /// can't tell the tempo closer than that; eighty seconds of beats can.
+    func testAWholeSongGivesTheTempoToAHundredth() throws {
+        let bpm = try XCTUnwrap(TempoEstimator.estimateBPM(onsets: impulseTrain(bpm: 83, seconds: 80),
+                                                           framesPerSecond: 100))
+        XCTAssertEqual(bpm, 83, accuracy: 0.01)
+    }
+
+    /// The last seconds of *Binta* are a guitar fill with no beat under it. The rest of the song
+    /// outvotes it.
+    func testAFillOffTheBeatDoesNotMoveTheTempo() throws {
+        var onsets = impulseTrain(bpm: 83, seconds: 80)
+        var seed: UInt64 = 7
+        for index in 7_400..<onsets.count {
+            seed = seed &* 6_364_136_223_846_793_005 &+ 1_442_695_040_888_963_407
+            onsets[index] = seed >> 60 == 0 ? 1 : 0
+        }
+        let bpm = try XCTUnwrap(TempoEstimator.estimateBPM(onsets: onsets, framesPerSecond: 100))
+        XCTAssertEqual(bpm, 83, accuracy: 0.01)
+    }
+
+    /// *Binta*'s one-beat reading was 71.5 frames against 72.3.
+    func testRefiningCorrectsABeatReadMostOfAFrameShort() {
+        let lag = TempoEstimator.refined(beatLag: 71.52, frameCount: 8_000, autocorr: peaks(every: 72.29))
+        XCTAssertEqual(lag, 72.29, accuracy: 0.01)
+    }
+
+    /// With eight beats the longest span, whole frames alone would leave the beat 0.04 frames out.
+    /// The parabola between frames reads closer.
+    func testRefiningReadsBetweenFrames() {
+        let lag = TempoEstimator.refined(beatLag: 71.52, frameCount: 1_200, autocorr: peaks(every: 72.29))
+        XCTAssertEqual(lag, 72.29, accuracy: 0.02)
+    }
+
+    /// A song in three repeats strongly only every bar of three beats. Doubling spans (2, 4, 8…)
+    /// never land on one; growing by a half or a third does.
+    func testABarOfThreeIsAmongTheSpans() {
+        let lag = TempoEstimator.refined(beatLag: 71.52, frameCount: 8_000, autocorr: peaks(every: 3 * 72.29))
+        XCTAssertEqual(lag, 72.29, accuracy: 0.01)
+    }
+
+    /// Two beats on from a beat read 2.2 frames long, the true peak is past the window's edge. The
+    /// reading has drifted too far to follow, so it stands. Searching on would, at 32 beats, find
+    /// the 33rd beat's peak and confirm the wrong tempo.
+    func testRefiningLeavesTheReadingWhenThePeakIsOutOfReach() {
+        let lag = TempoEstimator.refined(beatLag: 74.5, frameCount: 8_000, autocorr: peaks(every: 72.29))
+        XCTAssertEqual(lag, 74.5)
+    }
+
+    /// A repeat too faint to trust at one beat is too faint at many.
+    func testRefiningIgnoresAPeakBelowConfidence() {
+        let faint = peaks(every: 72.79, height: TempoEstimator.minConfidence / 2)
+        let lag = TempoEstimator.refined(beatLag: 72.29, frameCount: 8_000, autocorr: faint)
+        XCTAssertEqual(lag, 72.29)
+    }
+
+    /// At least half the envelope always overlaps itself, and no lag is below one frame.
+    func testRefiningAsksOnlyForLagsInsideTheEnvelope() throws {
+        var asked: [Int] = []
+        let shape = peaks(every: 50)
+        _ = TempoEstimator.refined(beatLag: 50, frameCount: 1_000) { asked.append($0); return shape($0) }
+        XCTAssertLessThanOrEqual(try XCTUnwrap(asked.max()), 500)
+
+        asked = []
+        _ = TempoEstimator.refined(beatLag: 1, frameCount: 1_000) { asked.append($0); return shape($0) }
+        XCTAssertGreaterThanOrEqual(try XCTUnwrap(asked.min()), 1)
+    }
+
+    /// The starter track holds 83 BPM from start to end (a steady grid fitted to the whole song
+    /// reads 83.00, and so does each half). A 0.02 BPM error is 20 ms by its last beat.
+    func testBintaReadsItsTempoExactly() throws {
+        let url = try XCTUnwrap(Bundle(for: Self.self).url(forResource: StarterTrack.resourceName,
+                                                           withExtension: StarterTrack.resourceExtension))
+        let envelope = try XCTUnwrap(WaveformExtractor.extractOnsetEnvelope(from: url))
+        let bpm = try XCTUnwrap(TempoEstimator.estimateBPM(onsets: envelope.onsets,
+                                                           framesPerSecond: envelope.framesPerSecond))
+        XCTAssertEqual(bpm, 83, accuracy: 0.02)
+    }
+
+    // MARK: Half and Double (ADR 0282 D5)
+
+    /// A guitar part at 83 BPM: the beat hit hard and the half-beat between hit nearly as hard,
+    /// so the eighth notes read as a beat of their own, as on *Don't Know Why*.
+    private func eighthsOverBeats(offsetFrames: Int = 25) -> [Double] {
+        let beats = impulseTrain(bpm: 83, seconds: 60, spike: 1, offsetFrames: offsetFrames)
+        let halves = impulseTrain(bpm: 83, seconds: 60, spike: 0.8, offsetFrames: offsetFrames + 36)
+        return zip(beats, halves).map { max($0, $1) }
+    }
+
+    /// Halving counts the same beat, and the 1 is placed again: of the two phases at half the
+    /// tempo, the beat (0.25 s) is hit harder than the half-beat the double-time 1 sat on.
+    func testHalfCountsTheSameBeatAndPlacesTheOneAgain() throws {
+        let reading = TempoEstimator.Reading(estimate: .init(bpm: 166, downbeatSeconds: 0.61),
+                                             onsets: eighthsOverBeats(), framesPerSecond: 100)
+        let half = try XCTUnwrap(reading.scaled(by: 0.5))
+        XCTAssertEqual(half.estimate.bpm, 83)
+        XCTAssertEqual(try XCTUnwrap(half.estimate.downbeatSeconds), 0.25, accuracy: 0.02)
+        XCTAssertEqual(half.onsets, reading.onsets)
+    }
+
+    /// The exactness ADR 0282 D1 bought survives a trip through Half and Double.
+    func testDoubleThenHalfIsTheSameTempo() throws {
+        let reading = TempoEstimator.Reading(estimate: .init(bpm: 83.0015, downbeatSeconds: 0.02),
+                                             onsets: eighthsOverBeats(), framesPerSecond: 100)
+        let back = try XCTUnwrap(reading.scaled(by: 2)?.scaled(by: 0.5))
+        XCTAssertEqual(back.estimate.bpm, 83.0015)
+    }
+
+    func testScalingPastTheTappableRangeIsRefused() {
+        let fast = TempoEstimator.Reading(estimate: .init(bpm: 200, downbeatSeconds: nil),
+                                          onsets: [], framesPerSecond: 100)
+        XCTAssertFalse(fast.allows(2))
+        XCTAssertNil(fast.scaled(by: 2))
+        XCTAssertTrue(fast.allows(0.5))
+
+        let slow = TempoEstimator.Reading(estimate: .init(bpm: 50, downbeatSeconds: nil),
+                                          onsets: [], framesPerSecond: 100)
+        XCTAssertFalse(slow.allows(0.5))
+        XCTAssertNil(slow.scaled(by: 0.5))
+    }
+
+    /// The estimate's own 1 moves with it. A 1 the player placed, or cleared, since stays.
+    func testTheEstimatesOneMovesButThePlayersStays() throws {
+        let reading = TempoEstimator.Reading(estimate: .init(bpm: 166, downbeatSeconds: 0.61),
+                                             onsets: eighthsOverBeats(), framesPerSecond: 100)
+        let half = try XCTUnwrap(reading.scaled(by: 0.5))
+        XCTAssertEqual(reading.downbeat(after: half, current: 0.61), half.estimate.downbeatSeconds)
+        XCTAssertEqual(reading.downbeat(after: half, current: 3.2), 3.2)
+        XCTAssertNil(reading.downbeat(after: half, current: nil))
+    }
+
+    func testAReadingKeepsItsEnvelope() throws {
+        let onsets = impulseTrain(bpm: 120, offsetFrames: 12)
+        let reading = try XCTUnwrap(TempoEstimator.read(onsets: onsets, framesPerSecond: 100))
+        XCTAssertEqual(reading.estimate, TempoEstimator.estimate(onsets: onsets, framesPerSecond: 100))
+        XCTAssertEqual(reading.onsets, onsets)
+        XCTAssertEqual(reading.framesPerSecond, 100)
+    }
+
     // MARK: octave handling
 
     /// On-beats taller than their eighth-note subdivisions: the estimate should lock to

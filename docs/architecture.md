@@ -186,7 +186,10 @@ a melody at an even level (a song without drums) gave no tempo or a wrong one; f
 energy of a new note arriving in bands that were quiet. Pure `TempoEstimator.estimateBPM`
 takes the autocorrelation peak of that curve, weighting each candidate lag by a log-normal
 **tempo prior** (~120 BPM) to fold the common half/double-tempo error; a flat/ambient curve
-yields `nil` (no confident read). It also places **the 1**: a comb-filter
+yields `nil` (no confident read). That one-beat lag is read in 10 ms frames, so
+`TempoEstimator.refined` reads the same autocorrelation at the lag of 2, 3, 4, 6, 8… beats,
+each searched within 4 frames of the last reading. A weak peak is skipped, and a peak on the window's
+edge stops the search. The tempo comes out exact on a steady song (*Binta*: 83.9 → 83.00, ADR 0282). It also places **the 1**: a comb-filter
 (`TempoEstimator.estimateDownbeat`) slides a pulse train at the detected period across the
 envelope and keeps the phase whose beats collect the most onset energy — pinning the beat
 phase to real hits (the *bar-1* beat isn't disambiguated, so the anchor can sit a beat off).

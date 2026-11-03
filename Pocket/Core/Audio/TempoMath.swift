@@ -151,6 +151,26 @@ enum TempoMath {
         return (60.0 / mean).clamped(to: minTapBPM...maxTapBPM)
     }
 
+    /// A tempo as the tempo editor's Manual field shows it: a whole BPM.
+    static func wholeBPM(_ bpm: Double) -> String { String(Int(bpm.rounded())) }
+
+    /// The tempo the tempo editor's Manual field commits, or `nil` for nothing to commit. The
+    /// field shows a whole BPM (`wholeBPM`), so committing what it shows would round the tempo.
+    /// Two cases commit something else:
+    /// - **The estimate, unedited** (`text` still shows `estimate`): the estimate itself, which
+    ///   is exact to well under a tenth of a BPM. Rounded, *Binta*'s 83.9 became 84 (ADR 0282).
+    /// - **Untouched** (`text` still shows `current`, and there is no estimate): nothing. On a
+    ///   song with a beat map it would also replace the map (ADR 0281 D4).
+    ///
+    /// Anything typed commits as typed, clamped to `minTapBPM...maxTapBPM`.
+    static func manualBPM(text: String, current: Double?, estimate: Double?) -> Double? {
+        let range = minTapBPM...maxTapBPM
+        if let estimate, text == wholeBPM(estimate) { return estimate.clamped(to: range) }
+        guard estimate != nil || text != current.map(wholeBPM) else { return nil }
+        guard let value = Double(text.trimmingCharacters(in: .whitespaces)), value > 0 else { return nil }
+        return value.clamped(to: range)
+    }
+
     /// `gaps` with anything further than `tapOutlierTolerance` from their median removed.
     /// The median is `AudioMath.percentile(_:0.5)` — the same robust reference the onset
     /// envelope normalises against — so at least half the gaps always survive by

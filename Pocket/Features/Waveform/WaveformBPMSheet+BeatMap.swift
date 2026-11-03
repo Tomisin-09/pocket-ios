@@ -82,9 +82,7 @@ extension View {
                          model.commitTempo(bpm: bpm, downbeat: nil)
                          model.beginSetDownbeat(resumeSheet: true)
                      },
-                     onEstimate: {
-                         await model.estimateTempoFromAudio().map { ($0.bpm, $0.downbeatSeconds) }
-                     })
+                     onEstimate: { await model.estimateTempoFromAudio() })
         }
     }
 }
