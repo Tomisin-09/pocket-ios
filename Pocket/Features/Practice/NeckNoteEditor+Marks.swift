@@ -1,7 +1,7 @@
 import SwiftUI
 
 // The five playing marks (ADR 0227 D5), under the neck. A bend changes the note and vibrato colours it, so
-// both live on the note; hammer-on, pull-off and slide are *Into it* (`+Into`): a join from the tap before,
+// both live on the note, and once there's a bend, *Pre-bend* and *Release* say how it moves (ADR 0288); hammer-on, pull-off and slide are *Into it* (`+Into`): a join from the tap before,
 // or a lead-in inside the note when the two were heard as one. Split out for file length; Name the notes
 // and the tab writer both draw them (ADR 0235 D9).
 extension NeckNoteEditor {
@@ -24,6 +24,7 @@ extension NeckNoteEditor {
                         .padding(.leading, 52)
                 }
             }
+            if let note, note.bend > 0 { bendShapeRow(note) }
         }
     }
 
@@ -32,30 +33,46 @@ extension NeckNoteEditor {
             rowTitle("Bend").fixedSize().frame(minWidth: 44, alignment: .leading)
             MarkSegments(options: FrettedNote.bends.map { bend in
                 .init(title: Self.bendTitle(bend), isOn: note?.bend == bend, isEnabled: note != nil) {
-                    mark { $0.bend = bend }
+                    mark { $0.changeBend(to: bend) }
                 }
             })
         }
     }
 
     private func vibratoButton(_ note: FrettedNote?) -> some View {
+        markToggle("~ Vibrato", isOn: note?.vibrato == true, isEnabled: note != nil) { $0.vibrato.toggle() }
+    }
+
+    /// How the bend moves (ADR 0288), under the bend once there is one, lined up with its sizes. Two
+    /// switches rather than four choices, because a bend can be both: bent before the pick, then let down.
+    private func bendShapeRow(_ note: FrettedNote) -> some View {
+        HStack(spacing: 8) {
+            markToggle("Pre-bend", isOn: note.preBent, isEnabled: true) { $0.preBent.toggle() }
+            markToggle("Release", isOn: note.releases, isEnabled: true) { $0.releases.toggle() }
+        }
+        .padding(.leading, 52)
+    }
+
+    /// A mark that's on or off, filled while it's on.
+    private func markToggle(_ title: String, isOn: Bool, isEnabled: Bool,
+                            change: @escaping (inout FrettedNote) -> Void) -> some View {
         Button {
-            mark { $0.vibrato.toggle() }
+            mark(change)
         } label: {
-            Text("~ Vibrato")
-                .font(.futura(.footnote, weight: note?.vibrato == true ? .bold : nil))
+            Text(title)
+                .font(.futura(.footnote, weight: isOn ? .bold : nil))
                 .padding(.horizontal, 10)
                 .frame(minHeight: 32)
-                .foregroundStyle(note?.vibrato == true ? PocketColor.background : PocketColor.textPrimary)
+                .foregroundStyle(isOn ? PocketColor.background : PocketColor.textPrimary)
                 .background(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .fill(note?.vibrato == true ? accent : .clear))
+                    .fill(isOn ? accent : .clear))
                 .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous)
-                    .strokeBorder(note?.vibrato == true ? .clear : PocketColor.surfaceBorder))
+                    .strokeBorder(isOn ? .clear : PocketColor.surfaceBorder))
         }
         .buttonStyle(.plain)
-        .disabled(note == nil)
-        .opacity(note == nil ? 0.35 : 1)
-        .accessibilityAddTraits(note?.vibrato == true ? .isSelected : [])
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.35)
+        .accessibilityAddTraits(isOn ? .isSelected : [])
     }
 
     /// What a bend button says: *None*, *½*, *Whole*, *1½* (steps).

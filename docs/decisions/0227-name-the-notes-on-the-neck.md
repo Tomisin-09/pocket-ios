@@ -32,6 +32,11 @@
   ear gains *Muted*. **D7**: a tap of only ✕s reads as *Muted* there. **D9**: a `muted` kind and an
   optional `muted` key; an older build reads the kind as unnamed and drops the key. **D10**: palm muting
   and rakes stay out. The rest stands.
+- **Amended by:** ADR 0288 (Bend releases and pre-bends, 2026-11-04) — **D5**: a bend gains *Pre-bend*
+  and *Release*, four shapes in all, drawn and written `7b9`, `7b9r7`, `7pb9`, `7pb9r7`. **D9**: a
+  released bend is stored under `release` rather than `bend`, a pre-bend adds `preBend`, and a note is
+  named by where its bend lands, so an older build reads a release as its plain fret. **D10**: bend
+  releases and pre-bends are lifted; a slide out to nowhere (`7\`) still stays out. The rest stands.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the
   synth withdrawn here, and D4.3, the route back) · 0093 (the chord namer that names a shape) · 0095
   (My chords, whose one-note-per-string rule the Chords switch follows) · 0065 (exercise templates, whose scales editor

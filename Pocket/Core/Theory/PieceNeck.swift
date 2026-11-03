@@ -69,7 +69,7 @@ enum PieceNeck {
     // MARK: - In words
 
     /// The tap being heard, said the way a player would: the line over the chips, and the neck's VoiceOver
-    /// value. *"G string, fret 5, hammered on from 3"*, *"B string, fret 6, bent a whole step"*, *"Gm7,
+    /// value. *"G string, fret 5, hammered on from 3"*, *"B string, fret 6, bent a whole step and released"*, *"Gm7,
     /// frets 10 to 12"*, *"F, named by ear"*, *"Not named yet"*.
     static func words(for index: Int, of labels: [PieceLabel?], openMidi: [Int], spelling: NoteSpelling) -> String {
         guard labels.indices.contains(index), let label = labels[index] else { return "Not named yet" }
@@ -96,7 +96,7 @@ enum PieceNeck {
         default:
             break
         }
-        if note.bend > 0 { words.append("bent " + bendSizes[min(note.bend, bendSizes.count - 1)]) }
+        if let bend = note.bendWords { words.append(bend) }
         if note.vibrato { words.append("with vibrato") }
         return words.joined(separator: ", ")
     }
@@ -108,9 +108,6 @@ enum PieceNeck {
         guard muted.count == 1 else { return "Muted, \(muted.count) strings" }
         return strings.indices.contains(string) ? "\(strings[string]) string, muted" : "Muted"
     }
-
-    /// A bend's size, by semitones, as the By ear line says it.
-    private static let bendSizes = ["", "a half step", "a whole step", "a step and a half"]
 
     private static func fretWord(_ fret: Int) -> String { fret == 0 ? "the open string" : "\(fret)" }
 }

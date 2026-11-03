@@ -120,6 +120,7 @@ enum NeckPlacement {
             }
             let kept = notes[ring]
             return Outcome(label: .fretted([FrettedNote(string: string, fret: fret, bend: kept.bend,
+                                                        releases: kept.releases, preBent: kept.preBent,
                                                         vibrato: kept.vibrato,
                                                         leadIn: kept.string == string ? kept.leadIn : nil)],
                                            into: into),

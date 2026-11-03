@@ -644,7 +644,8 @@ each note you hear, then name them. The pieces, from the audio up:
   the same state, with no clock of its own, and never scrolls to follow (*Watch it on the neck*'s does,
   below). Since ADR 0234 D5 the glow
   moves the way the note was played: the pure `HaloMotion` (`Core/Theory`) reads the note and the one
-  before it (a lead-in or join first, then a bend, then vibrato, else a pop), and `HeardGlows` animates
+  before it (a lead-in or join first, then a bend by its shape, ADR 0288, then vibrato, else a pop), and
+  `HeardGlows` animates
   it with `keyframeAnimator` in `FretNeckBoard`'s `beneath` slot, under the dots; Reduce Motion fades
   only.
 - **The slice.** `playSlice(from:length:rate:)` reads 0.35 s of the file (from 80 ms before the tap)
@@ -718,7 +719,9 @@ each note you hear, then name them. The pieces, from the audio up:
   kind decodes as an unnamed tap. Notes on the neck are `FrettedNote`s (highest-first string, fret, and
   since ADR 0227 D9 an optional `bend` and `vibrato`, and since ADR 0230 an optional `leadIn`: a start
   fret or from below/above, and its join, for a note heard as one, on every note of a shape moving as
-  one) with an optional `into` join; one
+  one, and since ADR 0288 a bend's shape: a released bend's size under `release` instead of `bend`, so an
+  older build reads it as the fret it lands on, and an optional `preBend`; `FrettedNote+Bend` reads the
+  two as one `BendShape` for the tab, the words, the glow and the drawing) with an optional `into` join; one
   note is written as 0225's `fret` kind with the marks as optional keys, so an older build keeps the fret and drops the
   marks, and two or more as a `shape`, which an older build reads as unnamed. `NeckJoin` holds the join
   rule (same strings, every note moving one way; the direction picks h/p or / \ and is never stored).

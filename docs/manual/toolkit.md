@@ -145,8 +145,8 @@ The writer is the same neck as Name the notes, in the Toolkit's colour.
 - Name it at the top, or leave it: an unnamed tab is called *Untitled tab*.
 - The strip shows your notes as chips, with a **+** where the next one goes. **Tap the neck** and the
   note fills the **+**, which moves on. Nothing plays.
-- Bend, vibrato, hammer-ons, pull-offs and slides go on the note you just placed, as they do in Name
-  the notes. Turn on **Chords** to put a double-stop or a chord on one chip, a note per string.
+- Bends (with pre-bends and releases), vibrato, hammer-ons, pull-offs and slides go on the note you
+  just placed, as they do in Name the notes. Turn on **Chords** to put a double-stop or a chord on one chip, a note per string.
 - **Tap a note** to change it. The line under the strip then offers **Insert before** it, after which
   each tap adds a note there, and **Take** it **out**. Tap another note, or **Back to the end**, to go
   back to writing at the end.

@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// The note being named's marks, drawn on the neck (ADR 0227 D5): a bend as an arrow to a dashed ghost
-/// where it lands (the fretLIVE idea), vibrato as a wave over the note, a hammer-on or pull-off as a curve
+/// where it lands (the fretLIVE idea), pointing the way the pitch moves (ADR 0288), vibrato as a wave over the note, a hammer-on or pull-off as a curve
 /// under the string marked *h* or *p*, a slide as an arrow marked `/` or `\`. A lead-in draws the same
 /// curve or arrow from a ring where it started, or, from nowhere, a short arrow in. Only the current note's.
 struct NeckMarksLayer: View {
@@ -57,25 +57,17 @@ struct NeckMarksLayer: View {
     private func drawNoteMarks(_ note: FrettedNote, in context: GraphicsContext, ink: GraphicsContext.Shading,
                                line: StrokeStyle) {
         let from = center(note.string, note.fret)
-        let land = note.fret + note.bend
-        let bendShows = note.bend > 0 && land <= maxFret
-        if bendShows {
-            let ghost = center(note.string, land)
-            context.stroke(Path(ellipseIn: CGRect(x: ghost.x - 12, y: ghost.y - 12, width: 24, height: 24)),
-                           with: ink, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2.5]))
-            let start = CGPoint(x: from.x + 4, y: from.y - 12)
-            let control = CGPoint(x: (from.x + ghost.x) / 2 + 2, y: from.y - 34)
-            let end = CGPoint(x: ghost.x - 3, y: ghost.y - 13)
-            var arc = Path()
-            arc.move(to: start)
-            arc.addQuadCurve(to: end, control: control)
-            context.stroke(arc, with: ink, style: line)
-            context.fill(arrowhead(at: end, from: control), with: ink)
+        let shape = note.bentFret <= maxFret ? note.bendShape : nil
+        if let shape {
+            drawBend(shape, from: from, to: center(note.string, note.bentFret), in: context)
         }
         if note.vibrato {
-            let over = bendShows ? center(note.string, land) : from
+            // Over where the note ends up: the bent pitch, unless it's let back down to the fret.
+            let held = shape != nil && !note.releases
+            let over = held ? center(note.string, note.bentFret) : from
             var wave = Path()
-            let left = over.x + (bendShows ? 3 : -9)
+            // Clear of the arc: right of a held bend's arrowhead, left of a released one's.
+            let left = over.x + (held ? 3 : (shape == nil ? -9 : -21))
             wave.move(to: CGPoint(x: left, y: over.y - 17))
             for step in 0..<4 {
                 let start = left + CGFloat(step) * 4.5
@@ -83,6 +75,29 @@ struct NeckMarksLayer: View {
                                   control: CGPoint(x: start + 2.25, y: over.y - 17 + (step.isMultiple(of: 2) ? -3 : 3)))
             }
             context.stroke(wave, with: ink, style: line)
+        }
+    }
+
+    /// A bend: a dashed ghost where it lands, and an arc from the note to it with the arrow the way the pitch
+    /// is heard to move (ADR 0288). Up for a bend, up and back for a release, down for a pre-bend let down. A
+    /// pre-bend held has its arc dashed, since the string was pushed before anything sounded.
+    private func drawBend(_ shape: FrettedNote.BendShape, from: CGPoint, to ghost: CGPoint,
+                          in context: GraphicsContext) {
+        let ink = GraphicsContext.Shading.color(accent)
+        var style = StrokeStyle(lineWidth: 1.75, lineCap: .round, lineJoin: .round)
+        context.stroke(Path(ellipseIn: CGRect(x: ghost.x - 12, y: ghost.y - 12, width: 24, height: 24)),
+                       with: ink, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2.5]))
+        let start = CGPoint(x: from.x + 4, y: from.y - 12)
+        let control = CGPoint(x: (from.x + ghost.x) / 2 + 2, y: from.y - 34)
+        let end = CGPoint(x: ghost.x - 3, y: ghost.y - 13)
+        var arc = Path()
+        arc.move(to: start)
+        arc.addQuadCurve(to: end, control: control)
+        if shape == .preBend { style.dash = [3, 3] }
+        context.stroke(arc, with: ink, style: style)
+        if shape != .preBendAndRelease { context.fill(arrowhead(at: end, from: control), with: ink) }
+        if shape == .bendAndRelease || shape == .preBendAndRelease {
+            context.fill(arrowhead(at: start, from: control), with: ink)
         }
     }
 

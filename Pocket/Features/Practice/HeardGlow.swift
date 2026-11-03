@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// The glow on the neck while the strip plays the loop or a phrase (ADR 0227 D2), moving **the way each note
-/// was played** (ADR 0234 D5, `HaloMotion`): a picked note pops, a bend glides to where it lands, vibrato
-/// shakes, a hammer-on or pull-off lights where it started and snaps across, a slide travels along the
+/// was played** (ADR 0234 D5, `HaloMotion`): a picked note pops, a bend glides to where it lands (and back,
+/// when it's released, ADR 0288), vibrato shakes, a hammer-on or pull-off lights where it started and snaps across, a slide travels along the
 /// string. It sits under the dots, in the board's coordinates (`FretNeckBoard.beneath`), and stays lit while
 /// the note is heard, fading as the next takes over. With Reduce Motion it only fades in, where the note is.
 /// Name the notes' neck never scrolls to follow it, so the board can't move under a finger that's naming
@@ -79,7 +79,7 @@ private struct HeardGlow: View {
         case .bend(let from, _), .legato(let from, _), .slide(let from, _): return point(from).x
         case .slideIn(let to, let fromBelow):
             return point(to).x + (fromBelow ? -1.4 : 1.4) * NeckGeometry.pitch
-        case .pop(let spot), .vibrato(let spot): return point(spot).x
+        case .pop(let spot), .vibrato(let spot), .bendAndRelease(let spot, _): return point(spot).x
         }
     }
 
@@ -99,9 +99,14 @@ private struct HeardGlow: View {
         case (true, _), (_, .pop):
             MoveKeyframe(end)
         case (_, .bend):
-            // Lit where it was fretted, then pushed up to where it lands.
+            // Lit where the bend starts, then pushed up (or let down) to where it lands.
             LinearKeyframe(startX, duration: 0.16)
             CubicKeyframe(end, duration: 0.4)
+        case (_, .bendAndRelease(_, let peak)):
+            // Pushed up to the bent pitch, then let back down to the fret.
+            LinearKeyframe(startX, duration: 0.16)
+            CubicKeyframe(point(peak).x, duration: 0.32)
+            CubicKeyframe(end, duration: 0.32)
         case (_, .vibrato):
             // Side to side along the string, as a finger rocks it, then still.
             LinearKeyframe(end, duration: 0.12)
