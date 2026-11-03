@@ -14,7 +14,8 @@ are the exception, and the reason is the audio itself rather than a policy choic
 ## Importing
 
 Tap **+** on Home, or open **Song library** and use **Import a song**. You can select more than one
-file at once; a progress indicator appears while they are read.
+file at once; while they are read, a card names the song it is on and, for several, how far through
+it is (*2 of 5*).
 
 Each import does three things: it copies the file into Red Moon's own storage, reads the whole file
 once to draw the waveform, and takes the title from the file name. So a file called
