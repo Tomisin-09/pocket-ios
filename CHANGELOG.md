@@ -387,6 +387,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Slow the loop down without leaving Name the notes.** − and + beside the strip's play button set
+  the speed, as in Watch on the neck, and a tapped note plays at that speed too. The note count moves
+  to a line of its own under them.
 - **Swipe a Journal note or take to delete it** (ADR 0285). Until now the Journal was the one list
   where deleting meant holding a row. Swipe left and a **Delete** button appears; the swipe never
   deletes on its own, so a row brushed while scrolling stays put. Delete still raises **Undo**, and

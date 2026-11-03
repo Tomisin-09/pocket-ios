@@ -9,8 +9,16 @@ extension NameTheNotesSheet {
     /// or a phrase plays, the strip follows the chip being heard, and comes back to the current one after.
     var strip: some View {
         VStack(alignment: .leading, spacing: 6) {
+            // Play and its tempo side by side, as in Watch on the neck: a tapped note plays at the same
+            // percent as the loop, so slowing a fast run down to name it is one control for both.
             HStack(spacing: 8) {
                 playButton
+                LoopTempoControl(player: player, buttonSize: 28, spacing: 6, valueWidth: 56)
+                Spacer(minLength: 4)
+                phraseMenu
+            }
+            // Moved under the controls when the tempo joined them, so neither line crowds on a small phone.
+            HStack(spacing: 8) {
                 Text("\(noun.capitalized) \(active + 1) of \(labels.count)")
                     .font(.futura(.footnote, weight: .bold))
                     .monospacedDigit()
@@ -20,8 +28,6 @@ extension NameTheNotesSheet {
                     .font(.futura(.caption))
                     .foregroundStyle(PocketColor.textSecondary)
                     .lineLimit(1)
-                Spacer(minLength: 4)
-                phraseMenu
             }
             let snagged = Set(pieceSnags.compactMap(\.note))
             ScrollViewReader { proxy in
