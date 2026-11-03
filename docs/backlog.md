@@ -67,8 +67,9 @@ takes the next free `pocket-` number when its item starts.
    fixes, **5b** the sweep, which is the slow part and goes last. **5a built 2026-11-03**
    (`pocket-407`). Owed on the device: an import of several files, and the delete-version pop-up
    pointing at its own Delete (a headless render can't open a dialog).
-6. **A tempo control inside Name the notes** (S, after the beat map): `LoopTempoControl` beside the play
-   button, as in Watch on the neck.
+6. `pocket-405` **A tempo control inside Name the notes** (S, after the beat map): `LoopTempoControl` beside
+   the play button, as in Watch on the neck. **Built 2026-11-03**; the note count moved to a line under
+   it. Owed on the device: slow a run down and name it.
 7. `pocket-404` **Swipe to delete in the Journal** (S, ADR 0285 amends 0100, after the beat map): trailing,
    no full swipe, undo toast kept, no multi-select. A plain button tinted danger, **not**
    `role: .destructive`, which plays a fake removal under the deferred delete. **Built 2026-11-03**;

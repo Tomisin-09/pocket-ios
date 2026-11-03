@@ -217,8 +217,10 @@ from there: nothing is named on a pass, because `Clear` would throw the names aw
 `Name the notes` lays the saved piece out as a strip of numbered notes. Tap one to hear it with the
 notes just before it, ending on it, so you hear how the line got there; each is ringed as it plays.
 *Hear 3 notes* at the top right of the strip sets how many, from *Just the note* to eight, and Red Moon
-remembers it. To hear the notes as a line, the play button at the start of the strip plays the whole
-loop at the speed you set, ringing each note as it goes by; on Fret & string, where you placed each
+remembers it. Beside the play button, − and + set the speed, the same control as under `Train your
+ear`: a run too fast to name at full speed can be slowed down here, and a tapped note plays at that
+speed too. To hear the notes as a line, the play button at the start of the strip plays the whole
+loop at that speed, ringing each note as it goes by; on Fret & string, where you placed each
 note also lights up on the neck as it plays, moving the way you played it: a bend glides up to where it
 lands, vibrato shakes, a hammer-on or pull-off lights where it started and snaps across, and a slide
 travels along the string. With Reduce Motion each only fades in. Tap a note to stop and hear it.
