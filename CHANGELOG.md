@@ -56,6 +56,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **See everything on one exercise or loop, from the Journal** (ADR 0286). Each row in the Journal is
+  one moment, and nothing used to say the same exercise or loop had more. Now its caption line ends with
+  a count, *6 entries*, and tapping it, or **Show all** in the row's hold menu, opens that exercise or
+  loop on a screen of its own: its notes, takes and saved piece together, by day, under a header that
+  shows where its first note and its latest one had the tempo (*80 → 96 BPM since 12 Oct*). **Open**
+  goes to the exercise or loop itself, and Back returns you to the same place in the Journal.
 - **Group your references by site, or by where they're used.** **⋯** in References now offers three
   layouts. **Newest** is the list as it was. **Site** puts every reference under the site it's from, A
   to Z, then pictures, PDFs and text files under their own headings. One kept for later sits with the

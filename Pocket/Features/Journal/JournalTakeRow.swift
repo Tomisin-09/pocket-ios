@@ -18,6 +18,8 @@ struct JournalTakeRow: View {
     /// this row already spends its second line on the owner caption, which is its own link, and a
     /// whole-row tap target would sit on top of it.
     let onOpen: () -> Void
+    /// The count that ends the caption line when the take's unit has more than one row (ADR 0286).
+    var thread: JournalThreadLink?
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -68,7 +70,7 @@ struct JournalTakeRow: View {
                 .accessibilityHint("Opens the take")
                 .accessibilityIdentifier(UITestHooks.takeRowOpen)
                 if let ownerLabel {
-                    JournalOwnerCaption(label: ownerLabel, onOpen: onOpenOwner)
+                    JournalOwnerCaption(label: ownerLabel, onOpen: onOpenOwner, thread: thread)
                 }
             }
         }
