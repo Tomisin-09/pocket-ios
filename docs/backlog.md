@@ -32,6 +32,18 @@ bug goes under **After the freeze** at the end of this entry, not into 1.4.
   of the tempo editor (hold the metronome). The metronome takes the loop's local tempo when a loop is
   armed, and the song's median otherwise. An odd-length bar is handled by an ADR 0154 correction for
   now.
+- **A date (2026-11-03).** 1.4 is **submitted on Sunday 8 Nov**. After that, Red Moon time goes to
+  marketing for the rest of November, away from development. **Feature merges stop on Saturday 7 Nov
+  at 12:00**, so the release work (items 19–23) has Saturday afternoon and Sunday. An item not merged
+  by then keeps its branch and moves under *After the freeze*. A half-built item never merges.
+  - **Order to the cutoff:** 7, 6, then **7b** (the Journal thread, new), 5a (the three polish
+    fixes), then Phase 3 as 14, 16, 17, 18, 15, and last 5b (the dialog sweep). Tomisin: *"I'm feeling
+    ambitious, lets try all 5... if it's not done by Sunday, we freeze the other items to after
+    1.4"*.
+  - ***Tap through the song* stays** as #394 lists it, for a song that moves. Reconfirmed with
+    Tomisin.
+  - The `uk-site` half of item 20 (the privacy page, site PR #78) belongs to availability ON, so it can
+    land in the marketing weeks. The in-repo half is done before the archive.
 
 **The list.** One branch and one PR per item, merged once CI is green. S is about a day, M a few days,
 L a week or more. Item numbers are stable names, not the build order (see *Order* above). A branch
@@ -51,12 +63,22 @@ takes the next free `pocket-` number when its item starts.
    welcomed back* below. **Built 2026-11-02**; the sandbox account switch on the device is still owed.
 5. **Polish** (S, after the beat map): an opaque import card that names the file in progress, a taller notes
    field, the delete-version pop-up attached to its button, and a sweep of the other
-   `.confirmationDialog`s, each screenshotted open.
+   `.confirmationDialog`s, each screenshotted open. Split in two on 2026-11-03: **5a** is the three
+   fixes, **5b** the sweep, which is the slow part and goes last.
 6. **A tempo control inside Name the notes** (S, after the beat map): `LoopTempoControl` beside the play
    button, as in Watch on the neck.
 7. **Swipe to delete in the Journal** (S, ADR amends 0100, after the beat map): trailing, no full swipe,
    undo toast kept, no multi-select. A plain button tinted danger, **not** `role: .destructive`, which
    plays a fake removal under the deferred delete.
+
+    **7b. The Journal thread** (S–M, ADR amends 0190, added 2026-11-03). Each Journal row is one
+    moment, and nothing on it says the same exercise or loop has more. The mockup is
+    https://claude.ai/artifact/XHW8kNppGcJ8GbSiVHJvYC. When a unit has two or more rows, the caption
+    line ends with a count, *6 entries*, that follows the scope picker. The count, and *Show all 6 for
+    …* in the hold menu, push a screen holding that unit's notes, takes and piece by day, without
+    captions, under a header with the first-to-latest line (*80 → 96 BPM since 12 Oct*). The caption
+    still opens the unit (ADR 0142 J5 stands). Nothing is persisted. **No Write button** in the thread.
+    No count on an orphan, a Just me row, Metronome or a session note.
 
 *Phase 2: the beat map (now built first)*
 
@@ -111,7 +133,8 @@ takes the next free `pocket-` number when its item starts.
 13. **B6, the tempo lane** (M, **after 1.4**): a lane under the waveform, "BPM here" on loop rows, and
     the metronome carry (ADR 0170).
 
-*Phase 3: the remaining features*
+*Phase 3: the remaining features* (all five tried before the Saturday cutoff, in the order 14, 16,
+17, 18, 15; see *A date* above)
 
 14. **The metronome records a take** (M, ADR amends 0069). The next entry below.
 15. **An import loading screen** (M, ADR amends 0011): a sheet showing each file's state,
@@ -129,7 +152,7 @@ takes the next free `pocket-` number when its item starts.
 19. What was owed for 1.4.1: the iOS 27 header and search asset, and the FAQ wording.
 20. The stale "free" text: the site and privacy policy (`uk-site` `app/privacy/page.tsx`),
     `docs/privacy-policy.md`, the CHANGELOG line "Red Moon is free.", and the listing doc's StoreKit
-    line.
+    line. The `uk-site` part goes with availability ON, not with the archive.
 21. Manual reference pages for controls that were renamed or added. Then **one** reshoot of every
     stale figure, and a check that the ADR 0279 App Store screenshots don't show the old grid or tempo
     sheet.
