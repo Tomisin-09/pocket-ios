@@ -42,7 +42,10 @@ extension JournalTabView {
     /// tapped, which under a *deferred* delete means the row leaves on a lie and never comes back on
     /// Undo. The row disappears here because `items` filters out anything pending — and reappears for
     /// the same reason.
-    @ViewBuilder func holdMenu(for item: JournalTimeline.Item) -> some View {
+    ///
+    /// **Show all** (ADR 0286) sits above Delete when the row's unit has more rows than this one. It opens
+    /// the same thread as the count on the row, and it is VoiceOver's way to it as well.
+    @ViewBuilder func holdMenu(for item: JournalTimeline.Item, thread: JournalThreadLink? = nil) -> some View {
         Button {
             togglePin(item)
         } label: {
@@ -56,6 +59,11 @@ extension JournalTabView {
                 Label(take.title == nil ? "Name this take" : "Rename", systemImage: "pencil")
             }
             ExportTakeMenuItem(take: take)
+        }
+        if let thread {
+            Button(action: thread.open) {
+                Label("Show all \(thread.count) for \(thread.name)", systemImage: "square.stack")
+            }
         }
         Button(role: .destructive) {
             requestDelete(item)

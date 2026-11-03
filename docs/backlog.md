@@ -72,7 +72,8 @@ takes the next free `pocket-` number when its item starts.
    `role: .destructive`, which plays a fake removal under the deferred delete. **Built 2026-11-03**;
    a unit's Takes list stays hold-only. Owed on the device: swipe, Delete, Undo.
 
-    **7b. The Journal thread** (S–M, ADR amends 0190, added 2026-11-03). Each Journal row is one
+    **7b. `pocket-406` The Journal thread** (S–M, ADR 0286 amends 0190, added 2026-11-03). **Built
+    2026-11-03**; owed on the device: a real unit's thread, and the count beside a long caption. Each Journal row is one
     moment, and nothing on it says the same exercise or loop has more. The mockup is
     https://claude.ai/artifact/XHW8kNppGcJ8GbSiVHJvYC. When a unit has two or more rows, the caption
     line ends with a count, *6 entries*, that follows the scope picker. The count, and *Show all 6 for

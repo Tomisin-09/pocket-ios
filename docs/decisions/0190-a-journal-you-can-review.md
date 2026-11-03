@@ -19,6 +19,9 @@
   the player still pins and the app still never does, and pinned is still a filter and never a sort.
   D9's at-or-before rule survives in `JournalTimeline.jumpTarget`, now used by the look-back card
   rather than by the picker.
+- **Amended by:** ADR 0286 (the Journal thread, 2026-11-03). Beside D5's facets, which narrow the feed by
+  *kind* of owner, a row's count opens **one** owner's rows on a pushed screen. Being a screen and not a
+  filter, it is never saved, so D8's rule is not engaged. D1–D10 stand.
 - **Relates to:** ADR 0100 (the Journal space is read-only for owned entries — this establishes that
   a *review verb* sits inside that rule), ADR 0038 / 0058 / 0143 / 0155 / 0160 / 0175 (the authoring
   half, which is what made the imbalance), ADR 0151 (a note outlives its unit — and what it loses

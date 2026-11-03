@@ -315,6 +315,25 @@ opens Train your ear, not the practice ramp. A caption with no chevron is a subj
 exists, or one with no screen to open, so the affordance is never a promise the tap cannot keep. The pills on a session note behave the
 same way, and a unit deleted since the session renders dimmed.
 
+### Everything on one exercise or loop
+
+When an exercise or loop has more than one row in the journal, its caption line ends with a count —
+*6 entries*. Tap it, or hold a row and choose **Show all 6 for Spider**, and you get that exercise or
+loop on a screen of its own: its notes, takes and saved piece together, by day, each still showing the
+tempo or mastery it kept when it was written. The count is the number of rows you will find there, so
+it follows **All**, **Notes** and **Takes**; under Takes, an exercise with five notes and one take shows
+none.
+
+The screen has its own All, Notes and Takes, and its header names the exercise or loop. Under the name
+is where the first note left it and where the latest did — *80 → 96 BPM · 8ths since 12 Oct*, or a
+loop's mastery and speed at each end. That is two of your own notes side by side, nothing more; it is
+left out when the two are the same. **Open** goes to the exercise or loop, as the caption does, and Back
+returns you to the same place in the journal. Rows here work as they do in the feed: play, pin, rename,
+delete with Undo.
+
+A row with no count belongs to nothing one exercise or loop could gather: a session note, a note or take
+filed under **Just me**, the metronome, or something whose exercise or loop has since been deleted.
+
 ## Changing and removing
 
 The journal **shows** history; it does not edit it. To change a note, open it where it was written —
