@@ -94,6 +94,16 @@ struct RecordingRecord: Codable, Equatable, Sendable {
     /// for the same reason as `isStandalone`: an archive written before this decodes as `nil`, and a
     /// take restored from it falls back to ADR 0142's precedence, as it did when it was written.
     var loopRunMode: String?
+
+    /// A take recorded at the metronome (ADR 0287), and the click it was played to — the same six
+    /// columns, raw, that `JournalEntryRecord` carries for a metronome note. **Optional**, like
+    /// `isStandalone`: without them a restored metronome take would come back reading as an orphan.
+    var isMetronome: Bool?
+    var metronomeBpmAtTake: Int?
+    var metronomeBeatsAtTake: Int?
+    var metronomeNoteValueAtTake: Int?
+    var metronomeSubdivisionRaw: String?
+    var metronomeWithdrawalRaw: String?
 }
 
 /// A note pinned to a point in a take (ADR 0175).

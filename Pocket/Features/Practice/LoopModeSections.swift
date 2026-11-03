@@ -156,7 +156,7 @@ struct ContinuousLoopControls: View {
                 .foregroundStyle(PocketColor.textSecondary)
                 .multilineTextAlignment(.center)
         } else {
-            TakeSavedNote(recorder: recorder, takeCount: takeCount, owner: "loop",
+            TakeSavedNote(recorder: recorder, takeCount: takeCount, place: "on this loop",
                           onOpenTakes: onOpenTakes)
         }
     }

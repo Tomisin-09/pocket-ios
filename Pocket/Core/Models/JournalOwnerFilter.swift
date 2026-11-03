@@ -98,6 +98,8 @@ extension JournalTimeline {
             // A take recorded against nothing sits with the notes written against nothing (ADR 0224):
             // the filter is about what an item belongs to, not whether it is words or audio.
             case .standalone: .standalone
+            // And a take recorded at the click sits with the notes written there (ADR 0287).
+            case .metronome: .metronome
             case .song, .none: nil
             }
         }

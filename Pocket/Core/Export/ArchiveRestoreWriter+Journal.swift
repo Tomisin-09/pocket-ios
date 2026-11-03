@@ -89,6 +89,12 @@ extension ArchiveRestoreWriter {
             take.isPinned = record.isPinned ?? false
             take.isStandalone = record.isStandalone
             take.loopRunModeRaw = record.loopRunMode
+            take.isMetronome = record.isMetronome
+            take.metronomeBpmAtTake = record.metronomeBpmAtTake
+            take.metronomeBeatsAtTake = record.metronomeBeatsAtTake
+            take.metronomeNoteValueAtTake = record.metronomeNoteValueAtTake
+            take.metronomeSubdivisionRaw = record.metronomeSubdivisionRaw
+            take.metronomeWithdrawalRaw = record.metronomeWithdrawalRaw
             let moments = record.moments.map { moment in
                 TakeNote(time: moment.time, text: moment.text, uid: moment.uid, createdAt: moment.createdAt)
             }

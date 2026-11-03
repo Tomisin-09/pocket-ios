@@ -551,6 +551,20 @@ state it was left in, not the sitting the note describes. The pure `MetronomeJou
 raw round trip and the caption; there is no backfill, since older notes written there were never
 marked.
 
+A **take** can be recorded at the metronome too (ADR 0287), and it reuses that note's whole shape:
+`Recording.isMetronome` plus five raw snapshot columns (additive optionals, no declaration defaults),
+`OwnerKind.metronome` read before `.standalone` (the two flags partition), and the same
+`MetronomeJournalContext` for the round trip and the caption. It is written through
+`RecordingOwner.metronome(context)`, the choke point every owner goes through, which also writes the
+constant `JournalTimeline.metronomeLabel` into `ownerLabelAtTake`, so the take screen and the export
+file name read it through their existing fallback. The snapshot is taken when the take **begins**:
+`MetronomeView.startClick` begins the armed take before the click starts (Start and the automator's
+Start ramp both go through it, so the session never flips to record under a running click) and reads
+`engine.journalContext` once the click is running, so the withdrawal is the tier in force. No model
+owns a metronome take, so `TakesSheet` lists them from a `@Query` filtered in memory
+(`Recording.metronomeTakes(in:)`), never a `#Predicate` on the optional. The archive carries the six
+columns as optionals on `RecordingRecord`.
+
 **`RecordingStore`** owns the
 app-container `Recordings/` directory and the retention story — delete/size plus a pure orphan sweep
 that reaps files whose model row was deleted (dropping a row never drops the on-disk audio).

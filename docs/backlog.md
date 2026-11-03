@@ -37,9 +37,10 @@ bug goes under **After the freeze** at the end of this entry, not into 1.4.
   at 12:00**, so the release work (items 19–23) has Saturday afternoon and Sunday. An item not merged
   by then keeps its branch and moves under *After the freeze*. A half-built item never merges.
   - **Order to the cutoff:** 7, 6, then **7b** (the Journal thread, new), 5a (the three polish
-    fixes), then Phase 3 as 14, 16, 17, 18, 15, and last 5b (the dialog sweep). Tomisin: *"I'm feeling
+    fixes), then Phase 3 as 14, 17, 18, 15, and last 5b (the dialog sweep). Tomisin: *"I'm feeling
     ambitious, lets try all 5... if it's not done by Sunday, we freeze the other items to after
-    1.4"*.
+    1.4"*. **Item 16 was deprioritised the same day** (*"lets deprioritise turn a take into a
+    song"*) and moved under *After the freeze*.
   - ***Tap through the song* stays** as #394 lists it, for a song that moves. Reconfirmed with
     Tomisin.
   - The `uk-site` half of item 20 (the privacy page, site PR #78) belongs to availability ON, so it can
@@ -138,14 +139,16 @@ takes the next free `pocket-` number when its item starts.
 13. **B6, the tempo lane** (M, **after 1.4**): a lane under the waveform, "BPM here" on loop rows, and
     the metronome carry (ADR 0170).
 
-*Phase 3: the remaining features* (all five tried before the Saturday cutoff, in the order 14, 16,
-17, 18, 15; see *A date* above)
+*Phase 3: the remaining features* (four tried before the Saturday cutoff, in the order 14, 17, 18,
+15; 16 was deprioritised on 2026-11-03; see *A date* above)
 
-14. **The metronome records a take** (M, ADR amends 0069). The next entry below.
+14. **The metronome records a take** (M, ADR amends 0069). The next entry below. **Built
+    2026-11-03** as ADR 0287 (`pocket-408-metronome-takes`); the upgrade check over an existing store
+    and the device takes (speaker, headphones, Start ramp, leaving the app) are in its PR.
 15. **An import loading screen** (M, ADR amends 0011): a sheet showing each file's state,
     where any imported song can be opened.
-16. **Make a song from this take** (M, short ADR), in the take's hold menu. Needs 9
-    and 14.
+16. ~~**Make a song from this take**~~ (M, short ADR). **Deprioritised 2026-11-03, after 1.4**: see
+    *After the freeze*.
 17. **Pre-bends** (M, ADR amends 0227): all four shapes (bend, bend and release,
     pre-bend, pre-bend and release). A note is named by the fret it lands on, as with lead-ins. The
     new field on `FrettedNote` is optional, because a Codable default doesn't survive a missing key.
@@ -176,6 +179,9 @@ click through the speaker and through headphones.
 
 ### After the freeze
 
+- **Make a song from this take** (item 16, M, short ADR), in the take's hold menu. Needs 9 and 14.
+  Planned for 1.4, deprioritised on 2026-11-03 (Tomisin: *"lets deprioritise turn a take into a
+  song"*), before any of it was built.
 - **Estimate the tempo at import? Open, not decided** (raised 2026-11-03, Tomisin: *"maybe we should
   make estimating the bpm part of the import process?"*, then *"we'll put the estimating at import as
   a decision to come back to, we won't make the final decision today"*). The idea is that a song

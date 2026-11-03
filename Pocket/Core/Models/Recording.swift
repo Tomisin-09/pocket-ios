@@ -119,6 +119,52 @@ final class Recording {
     /// unknown mode has to fall back to the precedence, not be read as the ramp.
     var loopRunMode: LoopRunMode? { loopRunModeRaw.flatMap(LoopRunMode.init(rawValue:)) }
 
+    /// Marks a take recorded at the **free-play metronome** (ADR 0287). Set once at capture, never
+    /// cleared.
+    ///
+    /// Its own flag, for the reason `JournalEntry.isMetronome` gives: the take's kind must not be a
+    /// function of its payload. It **partitions** with `isStandalone` (never both true), so `ownerKind`
+    /// never has to choose between two true flags. Additive optional with **no declaration default**
+    /// (CoreData 134110), and `nil` on every earlier take is right: none was recorded at the click.
+    var isMetronome: Bool?
+
+    /// The click a metronome take was played to, snapshotted when the take began (ADR 0287), in the
+    /// raw columns `JournalEntry`'s metronome note uses (ADR 0160 §2): the meter as two `Int`s and the
+    /// subdivision and withdrawal as raw strings, **never** the struct or the enums, which crash a
+    /// migration on device only (`docs/swiftdata-gotchas.md`). `nil` on every other take.
+    var metronomeBpmAtTake: Int?
+    var metronomeBeatsAtTake: Int?
+    var metronomeNoteValueAtTake: Int?
+    /// `Subdivision.rawValue`. **`.none` is `""`**, so an empty string is a recorded "no subdivision".
+    var metronomeSubdivisionRaw: String?
+    /// `ClickWithdrawal.rawValue`, the tier in force when the take began.
+    var metronomeWithdrawalRaw: String?
+
+    /// The click this take was played to, or `nil` for a take not recorded at the metronome. Rebuilt
+    /// from the raw columns through the same initialiser a metronome note uses, so the two read alike.
+    var metronomeContext: MetronomeJournalContext? {
+        MetronomeJournalContext(beats: metronomeBeatsAtTake, noteValue: metronomeNoteValueAtTake,
+                                bpm: metronomeBpmAtTake, subdivisionRaw: metronomeSubdivisionRaw,
+                                withdrawalRaw: metronomeWithdrawalRaw)
+    }
+
+    /// The metronome's takes among `takes`, in the order given — what the metronome's Takes list
+    /// shows. In memory, never a `#Predicate` on this optional, which freezes the query on device
+    /// (`docs/swiftdata-gotchas.md`).
+    static func metronomeTakes(in takes: [Recording]) -> [Recording] {
+        takes.filter { $0.isMetronome == true }
+    }
+
+    /// Write the metronome flag and snapshot — the take's half of `RecordingOwner.metronome`.
+    func markMetronome(_ sitting: MetronomeJournalContext) {
+        isMetronome = true
+        metronomeBpmAtTake = sitting.bpm
+        metronomeBeatsAtTake = sitting.timeSignature.beats
+        metronomeNoteValueAtTake = sitting.timeSignature.noteValue
+        metronomeSubdivisionRaw = sitting.subdivision.rawValue
+        metronomeWithdrawalRaw = sitting.withdrawal.rawValue
+    }
+
     init(fileName: String, duration: TimeInterval, uid: UUID = UUID(), createdAt: Date = Date(),
          loop: Loop? = nil, exercise: Exercise? = nil, song: Song? = nil) {
         self.uid = uid
@@ -134,16 +180,19 @@ final class Recording {
     /// drift from the stored links (no stored enum, dodging the SwiftData enum-attribute migration
     /// footgun — `docs/swiftdata-gotchas.md`). `loop` wins, then `exercise`, then `song`.
     ///
-    /// `.standalone` is a take recorded against nothing (ADR 0224); `.none` is a take whose owner was
-    /// deleted (ADR 0151). They are told apart by the stored flag, never by the absent owner.
-    enum OwnerKind: Equatable { case loop, exercise, song, standalone, none }
+    /// `.metronome` is a take recorded at the free-play click (ADR 0287), `.standalone` one recorded
+    /// against nothing (ADR 0224), and `.none` one whose owner was deleted (ADR 0151). They are told
+    /// apart by stored flags, never by the absent owner.
+    enum OwnerKind: Equatable { case loop, exercise, song, metronome, standalone, none }
 
     /// The take's owner kind. Precedence is fixed so a stray double-set still resolves the same way,
-    /// but a well-formed take only ever has one owner set (ADR 0058).
+    /// but a well-formed take only ever has one owner set (ADR 0058). The metronome flag is read
+    /// before the standalone one, as `JournalEntry.ownerKind` reads them.
     var ownerKind: OwnerKind {
         if loop != nil { return .loop }
         if exercise != nil { return .exercise }
         if song != nil { return .song }
+        if isMetronome == true { return .metronome }
         if isStandalone == true { return .standalone }
         return .none
     }

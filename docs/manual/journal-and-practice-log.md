@@ -82,7 +82,9 @@ A **take** is a recording of you playing, captured through the microphone. Arm t
 **record** button
 <!-- shot: journal/record-arm | role: glyph | alt: | crop: 967,2306,160,160 -->
 next to **Start training** on a run screen — it turns red once armed — and the take starts when the
-run does and ends when it does. Takes land in this same timeline alongside your notes.
+run does and ends when it does. The [metronome](metronome.md#recording-yourself) has the same button
+beside **Start**. Takes land in this same timeline alongside your notes, and a take recorded at the
+metronome says the click it was played to, like *96 BPM · 4/4*.
 
 Leaving Red Moon also ends a take: going to another app, locking the phone, or a call coming in. What
 you played up to then is saved, and the microphone is let go.

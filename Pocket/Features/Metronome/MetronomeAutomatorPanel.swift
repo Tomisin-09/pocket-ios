@@ -12,6 +12,9 @@ import SwiftUI
 /// only while the automator was armed, and one door that is always visible replaced it.
 struct MetronomeAutomatorPanel: View {
     let engine: StandaloneMetronomeEngine
+    /// What **Start ramp** does: the screen's own, so a ramp that starts the click also begins an
+    /// armed take **before** the click sounds (ADR 0287), exactly as the main Start does.
+    let startRamp: () -> Void
 
     private typealias Mode = StandaloneMetronomeEngine.AutomatorMode
 
@@ -42,7 +45,7 @@ struct MetronomeAutomatorPanel: View {
     /// its own run gesture rather than climbing silently the moment you arm it.
     private var startStopButton: some View {
         Button {
-            if engine.automatorRunning { engine.stopAutomatorRun() } else { engine.startAutomatorRun() }
+            if engine.automatorRunning { engine.stopAutomatorRun() } else { startRamp() }
             haptic(.medium)
         } label: {
             // **"ramp", not bare "Start"** — with the automator on, the screen carried two controls

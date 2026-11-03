@@ -72,6 +72,13 @@ struct JournalTakeRow: View {
                 if let ownerLabel {
                     JournalOwnerCaption(label: ownerLabel, onOpen: onOpenOwner, thread: thread)
                 }
+                // The click a metronome take was played to (ADR 0287), in the line a metronome note
+                // uses for the same snapshot.
+                if let sitting = take.metronomeContext {
+                    Text(sitting.summary)
+                        .font(.pocketMono(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                }
             }
         }
         .padding(.vertical, 6)

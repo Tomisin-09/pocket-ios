@@ -27,7 +27,10 @@ slider sits between two `Tap to set tempo` buttons, one under each thumb.
 `No limit` switch, the ramp staircase, and `Start ramp`.
 
 **The transport** is pinned at the bottom: `Start`, becoming `Pause` and then `Resume`, with
-`Stop and reset` appearing beside it once anything is running.
+`Stop and reset` appearing beside it once anything is running. While the click is stopped, the record
+button `Record this session` sits on the other side of `Start`, and under them a line counts the takes
+recorded here, *3 takes on the metronome*, which opens them. While a take is recording, a red dot and
+its running time sit above the buttons.
 
 ### The metronome settings sheet
 

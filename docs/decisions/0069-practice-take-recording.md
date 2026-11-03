@@ -2,6 +2,9 @@
 
 - **Status:** Accepted (2026-07-16)
 - **Date:** 2026-07-07 (proposed), 2026-07-16 (accepted)
+- **Amended by:** ADR 0287 (2026-11-03), which adds the free-play metronome to the places a take is
+  recorded against. §1 (the microphone only) and §2 (isolation by route) stand: through the speaker,
+  the click reaches the take as sound in the room, and is never mixed into the file.
 
 ## Build (accepted 2026-07-16)
 
