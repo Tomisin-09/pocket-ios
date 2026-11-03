@@ -60,10 +60,9 @@ final class RowUndoUITests: UITestCase {
     }
 
     /// The **Journal** feed's undo, which the library test above does not reach: a different screen,
-    /// a different coordinator, and — since 2026-08-06 — a different *gesture*. Delete here is a
-    /// press-and-hold, never a swipe, because a reflection has no source to rebuild it from the way
-    /// an exercise does. That makes this the only test that would catch the hold menu being wired to
-    /// nothing.
+    /// a different coordinator, and a second *gesture*. Delete here is on the hold menu as well as a
+    /// trailing swipe (ADR 0285, which ended 2026-08-06's hold-only rule), and this is the only test
+    /// that would catch the hold menu being wired to nothing. The swipe has its own test below.
     ///
     /// A clean install's Journal is empty, so the test **writes its own note** through the app's real
     /// capture path rather than a seeded fixture — no test-only code in the app, and the write half of
@@ -98,6 +97,46 @@ final class RowUndoUITests: UITestCase {
 
         undo.tap()
         XCTAssertTrue(note.waitForExistence(timeout: Self.uiTimeout), "Undo did not restore the journal note")
+    }
+
+    /// The Journal's **trailing swipe** (ADR 0285), which sits beside the hold menu above. Two things
+    /// it must do, and the first is the reason the swipe was refused until then: a swipe on its own
+    /// deletes **nothing** (`allowsFullSwipe: false`), and the button it shows is a plain one, so Undo
+    /// brings the row back rather than a `.destructive` animation taking it away for good.
+    @MainActor
+    func testJournalSwipeShowsDeleteAndUndoRestoresTheNote() throws {
+        let app = launchApp()
+        let noteText = "Swipe test note \(UUID().uuidString.prefix(6))"
+        try writeAJournalNote(noteText, in: app)
+        try openJournal(in: app)
+
+        let note = app.cells.containing(.staticText, identifier: noteText).firstMatch
+        XCTAssertTrue(note.waitForExistence(timeout: Self.uiTimeout), "the note just written isn't on the feed")
+
+        // A drag across the **whole row**, not `swipeLeft()`. XCUITest's swipe stops short of a full
+        // swipe, so with `allowsFullSwipe: true` it still only shows the button, and this test passed
+        // against that mutant (2026-11-03). Edge to edge is the gesture a full swipe deletes on.
+        note.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5))
+            .press(forDuration: 0.05, thenDragTo: note.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.5)))
+        let deleteButton = app.buttons["Delete"]
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: Self.uiTimeout), "the trailing swipe offered no Delete")
+        // The swipe alone removed nothing: no toast, and the note is still there.
+        XCTAssertFalse(app.buttons["Undo"].exists, "a full swipe on its own started a delete (it must be off)")
+        XCTAssertTrue(note.exists, "a full swipe on its own removed the note")
+        // Kept, so the row with its Delete showing can be looked at, not only asserted on.
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "journal-swipe-delete"
+        shot.lifetime = .keepAlways
+        add(shot)
+        deleteButton.tap()
+
+        // Undo first — it is the thing on a clock. See the flake note on the first test.
+        let undo = app.buttons["Undo"]
+        XCTAssertTrue(undo.waitForExistence(timeout: Self.uiTimeout), "no Undo toast after the swipe's Delete")
+        XCTAssertTrue(waitForDisappearance(of: note), "the swiped-away note stayed on screen")
+
+        undo.tap()
+        XCTAssertTrue(note.waitForExistence(timeout: Self.uiTimeout), "Undo did not restore the swiped-away note")
     }
 
     // MARK: - Helpers

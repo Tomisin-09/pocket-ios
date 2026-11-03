@@ -197,6 +197,7 @@ extension JournalTabView {
             JournalEntryRow(entry: entry, ownerLabel: JournalTimeline.ownerLabel(for: item),
                             onOpenOwner: openAction(for: item),
                             openUnit: openAction(for:))
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) { deleteSwipe(for: item) }
                 .contextMenu { holdMenu(for: item) }
         case .take(let take):
             JournalTakeRow(take: take,
@@ -206,13 +207,13 @@ extension JournalTabView {
                            onToggle: { player.toggle(take.fileName) },
                            onOpen: { openedTake = StableRef(value: take) })
             // Naming is a take-only verb: every other row already says what it is in its own words.
-            // It also survives as a swipe where **delete** doesn't, because renaming destroys nothing.
             .swipeActions(edge: .leading) {
                 Button { renaming = StableRef(value: take) } label: {
                     Label("Rename", systemImage: "pencil")
                 }
                 .tint(PocketColor.journal)
             }
+            .swipeActions(edge: .trailing, allowsFullSwipe: false) { deleteSwipe(for: item) }
             .contextMenu { holdMenu(for: item) }
         case .piece(let piece):
             // No hold menu: a piece isn't pinned or deleted from the feed (ADR 0229).

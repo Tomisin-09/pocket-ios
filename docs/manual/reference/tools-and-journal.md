@@ -77,8 +77,9 @@ and `Record a take`. Underneath, a search field prompting
   command tempo. A line left on a snag in `Name the notes` names its note (*Intro lick · note 23*) and
   opens `Name the notes` there.
 
-**Deleting is hold-only**, on every row. A take's hold menu leads with `Name this take`, or
-`Rename` once it has one, then `Export take…`; renaming is also a right swipe.
+**Delete** is a left swipe on a note or a take (the swipe shows the button; it never deletes on its
+own) and the last item in the hold menu. A take's hold menu leads with `Name this take`, or `Rename`
+once it has one, then `Export take…`; renaming is also a right swipe.
 
 Empty, the wording follows the scope you are in — `Nothing here yet`, `No notes yet` or
 `No takes yet` — and a search with no hits says `No matches`.
