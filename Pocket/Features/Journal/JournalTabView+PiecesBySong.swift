@@ -8,7 +8,7 @@ import SwiftUI
 extension JournalTabView {
 
     /// Whether the feed is grouped by song rather than by day.
-    var groupsBySong: Bool { scope == .pieces }
+    var groupsBySong: Bool { thread == nil && scope == .pieces }
 
     /// One section per song, headed by the song with *Map the song* beside it. The heading is pinned while
     /// its pieces scroll, like a day's, so the way into the map stays in reach.

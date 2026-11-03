@@ -29,8 +29,9 @@ struct JournalTabView: View {
     // caption**. Those are loose **id copies**, not relationships — that is what lets an entry outlive
     // the units it names — so there is nothing to follow and the uid has to be looked up. Unsorted and
     // unfiltered, like the two above and for the same reason.
-    @Query private var exercises: [Exercise]
-    @Query private var loops: [Loop]
+    // Not `private`: the thread (ADR 0286) resolves its unit from them in `JournalTabView+Thread.swift`.
+    @Query var exercises: [Exercise]
+    @Query var loops: [Loop]
     @Query private var routines: [Routine]
 
     /// Which medium the feed shows. Not `private`: `private` is file-scoped, and the empty state
@@ -113,6 +114,11 @@ struct JournalTabView: View {
     @State var mappingFrom: StableRef<Loop>?
     /// The loop a piece row opened in *Watch it on the neck* (ADR 0254), by its stable uid (ADR 0090).
     @State var watching: StableRef<Loop>?
+    /// Set when this screen **is** a thread (ADR 0286), one unit's rows; `nil` is the feed. Its scope is
+    /// its own and never saved (ADR 0190 D8 persists the feed's), and `openingThread` pushes one by `uid`.
+    var thread: JournalTimeline.UnitRef?
+    @State var threadScope = JournalTimeline.Scope.all
+    @State var openingThread: JournalTimeline.UnitRef?
 
     /// Whether the journal holds anything at all, **before** any filter. Gates the month rail: a
     /// fresh install should not meet a filter control before it has met an entry (ADR 0207 D6).
@@ -128,13 +134,19 @@ struct JournalTabView: View {
     /// than at the row is what makes `sections` and the empty state follow automatically. Not
     /// `private`: the Pieces scope groups it by song in `JournalTabView+PiecesBySong.swift`.
     var items: [JournalTimeline.Item] {
-        let merged = JournalTimeline.merge(entries: entries, takes: takes, pieces: JournalPiece.all(in: loops))
-            .filter { !rowDeletion.isPending($0.id) }
+        // A thread is the whole unit under its own scope: search, pins and Show don't narrow it (ADR 0286).
+        if let thread { return JournalTimeline.filter(threadItems(thread), scope: threadScope) }
         let scoped = JournalTimeline.filter(merged, scope: scope)
         let owned = JournalTimeline.filter(scoped, owner: ownerFilter)
         let tagged = JournalTimeline.filter(owned, tags: tagFilter)
         let pinned = JournalTimeline.filter(tagged, pinnedOnly: pinnedOnly)
         return JournalTimeline.filter(pinned, query: query)
+    }
+
+    /// Everything on the feed, minus anything awaiting deletion, before any filter.
+    var merged: [JournalTimeline.Item] {
+        JournalTimeline.merge(entries: entries, takes: takes, pieces: JournalPiece.all(in: loops))
+            .filter { !rowDeletion.isPending($0.id) }
     }
 
     /// Day-sectioned for display (pure helper, shared with `JournalSheet`); `oldest` reverses both the
@@ -154,6 +166,59 @@ struct JournalTabView: View {
 
     /// Free for good (ADR 0263 D1), so the screen carries no `PlanGated`.
     var body: some View {
+        screen
+            // Above the list-vs-empty-state branch on purpose: deleting the last row swaps the `List` for
+            // the empty state, and a host applied inside either branch would take the toast with it.
+            .pocketRowUndoHost(rowDeletion)
+            .renameTakeAlert($renaming, context: modelContext)
+            // Cap to a readable column at regular width (iPad / landscape); no-op at compact
+            // width, dormant on the iPhone-only v1 build (ADR 0105).
+            .readableWidth()
+            .navigationBarTitleDisplayMode(.inline)
+            .background(PocketColor.background.ignoresSafeArea())
+            .navigationDestination(item: $openingOwner) { route in
+                JournalOwnerDestinationView(route: route)
+            }
+            // A thread (ADR 0286) is this screen again, narrowed to one unit, opening on the feed's scope.
+            .navigationDestination(item: $openingThread) { JournalTabView(thread: $0, scope: scope) }
+            // The take's own screen (ADR 0174), carrying this space's shared player so a take auditioned
+            // from the feed and then opened is still the one playing. Delete goes back through the
+            // feed's deferred, undoable path — the audio file is only removed once the toast closes.
+            .navigationDestination(item: $openedTake) { ref in
+                TakeDetailView(take: ref.value, player: player) { requestDelete(.take(ref.value)) }
+            }
+            // The Journal space's own write seam (ADR 0155 §3, widened by ADR 0224): standalone notes
+            // and standalone takes, and nothing owned. No owner picker — filing a note against a unit you
+            // are not currently practising is what makes a snapshot dishonest, and that prohibition
+            // outlives this screen.
+            .sheet(isPresented: $composing) {
+                QuickJournalSheet(owner: .standalone)
+            }
+            .sheet(isPresented: $recordingTake) { StandaloneTakeSheet() }
+            // Jump to a date (ADR 0190 D9) — the sheet and its rule live in `JournalTabView+Options`.
+            .sheet(isPresented: $jumping) { jumpSheet }
+            // The two Show facets — owner kind and tag (ADR 0190 D5, D10; ADR 0207 D11) — in the same
+            // file.
+            .sheet(isPresented: $choosingKinds) { showSheet }
+            // Full screen, as from Song details: the board is wide (ADR 0232 D1). No way to the waveform
+            // from here, so the Tab view just says what's missing.
+            .fullScreenCover(item: $mappingFrom) { ref in
+                if let song = ref.value.song { SongMapView(song: song) }
+            }
+            .sheet(item: $watching) { WatchOnNeckSheet(loop: $0.value) }
+            .onDisappear { player.stop() }
+    }
+
+    /// The feed, or one unit's thread (ADR 0286): what differs is above the list (`JournalTabView+Thread`).
+    @ViewBuilder private var screen: some View {
+        if let thread {
+            threadScreen(thread)
+        } else {
+            feedScreen
+        }
+    }
+
+    private var feedScreen: some View {
         VStack(spacing: 0) {
             scopePicker
             // Above the practice-log row and always on when there is history, because it carries the
@@ -165,16 +230,7 @@ struct JournalTabView: View {
             // did before ADR 0207, not one thing more.
             if sections.isEmpty { emptyState } else { list }
         }
-        // Above the list-vs-empty-state branch on purpose: deleting the last row swaps the `List` for
-        // the empty state, and a host applied inside either branch would take the toast with it.
-        .pocketRowUndoHost(rowDeletion)
-        .renameTakeAlert($renaming, context: modelContext)
-        // Cap to a readable column at regular width (iPad / landscape); no-op at compact
-        // width, dormant on the iPhone-only v1 build (ADR 0105).
-        .readableWidth()
         .navigationTitle("Journal")
-        .navigationBarTitleDisplayMode(.inline)
-        .background(PocketColor.background.ignoresSafeArea())
         .searchable(text: $query, prompt: "Search by song, exercise, template or date")
         .toolbar {
             // ADR 0126's grammar is `ellipsis.circle` then `+`, and three bare trailing items is
@@ -195,35 +251,6 @@ struct JournalTabView: View {
                                onRecordTake: { player.stop(); recordingTake = true })
             }
         }
-        .navigationDestination(item: $openingOwner) { route in
-            JournalOwnerDestinationView(route: route)
-        }
-        // The take's own screen (ADR 0174), carrying this space's shared player so a take auditioned
-        // from the feed and then opened is still the one playing. Delete goes back through the
-        // feed's deferred, undoable path — the audio file is only removed once the toast closes.
-        .navigationDestination(item: $openedTake) { ref in
-            TakeDetailView(take: ref.value, player: player) { requestDelete(.take(ref.value)) }
-        }
-        // The Journal space's own write seam (ADR 0155 §3, widened by ADR 0224): standalone notes
-        // and standalone takes, and nothing owned. No owner picker — filing a note against a unit you
-        // are not currently practising is what makes a snapshot dishonest, and that prohibition
-        // outlives this screen.
-        .sheet(isPresented: $composing) {
-            QuickJournalSheet(owner: .standalone)
-        }
-        .sheet(isPresented: $recordingTake) { StandaloneTakeSheet() }
-        // Jump to a date (ADR 0190 D9) — the sheet and its rule live in `JournalTabView+Options`.
-        .sheet(isPresented: $jumping) { jumpSheet }
-        // The two Show facets — owner kind and tag (ADR 0190 D5, D10; ADR 0207 D11) — in the same
-        // file.
-        .sheet(isPresented: $choosingKinds) { showSheet }
-        // Full screen, as from Song details: the board is wide (ADR 0232 D1). No way to the waveform
-        // from here, so the Tab view just says what's missing.
-        .fullScreenCover(item: $mappingFrom) { ref in
-            if let song = ref.value.song { SongMapView(song: song) }
-        }
-        .sheet(item: $watching) { WatchOnNeckSheet(loop: $0.value) }
-        .onDisappear { player.stop() }
     }
 
     /// Follow an item's owner caption (ADR 0142).
@@ -259,8 +286,8 @@ struct JournalTabView: View {
         }
     }
 
-    /// Follow a resolved route.
-    private func open(_ route: JournalOwnerRoute) {
+    /// Follow a resolved route. Not `private`: the thread's **Open** (ADR 0286) lives in another file.
+    func open(_ route: JournalOwnerRoute) {
         openingOwner = route
     }
 
@@ -280,6 +307,16 @@ struct JournalTabView: View {
         .padding(.bottom, 12)
     }
 
+}
+
+extension JournalTabView {
+    /// A thread (ADR 0286) on the feed's scope; under Pieces there are no counts to open one, so All.
+    /// Here, not in `+Thread`: a wrapper's `_threadScope` is private to the file that declares it.
+    init(thread: JournalTimeline.UnitRef, scope: JournalTimeline.Scope) {
+        self.init()
+        self.thread = thread
+        _threadScope = State(initialValue: scope == .pieces ? .all : scope)
+    }
 }
 
 #Preview("Journal — mixed") {

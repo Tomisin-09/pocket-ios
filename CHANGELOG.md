@@ -56,6 +56,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **See everything on one exercise or loop, from the Journal** (ADR 0286). Each row in the Journal is
+  one moment, and nothing used to say the same exercise or loop had more. Now its caption line ends with
+  a count, *6 entries*, and tapping it, or **Show all** in the row's hold menu, opens that exercise or
+  loop on a screen of its own: its notes, takes and saved piece together, by day, under a header that
+  shows where its first note and its latest one had the tempo (*80 → 96 BPM since 12 Oct*). **Open**
+  goes to the exercise or loop itself, and Back returns you to the same place in the Journal.
 - **Group your references by site, or by where they're used.** **⋯** in References now offers three
   layouts. **Newest** is the list as it was. **Site** puts every reference under the site it's from, A
   to Z, then pictures, PDFs and text files under their own headings. One kept for later sits with the
@@ -376,6 +382,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Slow the loop down without leaving Name the notes.** − and + beside the strip's play button set
   the speed, as in Watch on the neck, and a tapped note plays at that speed too. The note count moves
   to a line of its own under them.
+- **Swipe a Journal note or take to delete it** (ADR 0285). Until now the Journal was the one list
+  where deleting meant holding a row. Swipe left and a **Delete** button appears; the swipe never
+  deletes on its own, so a row brushed while scrolling stays put. Delete still raises **Undo**, and
+  nothing is removed, a take's audio included, until it passes. The hold menu keeps its **Delete**.
 - **The tempo editor starts with Find the tempo** (ADR 0284). It used to open on a tap pad, with the
   estimate further down, so tapping looked like the way to do it. Now **Find the tempo** comes first
   and the rest follows from what it finds. The tempo shows large, with where it came from and a line
@@ -671,6 +681,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **The import card says what it's doing, and can be read.** It was see-through, so the screen behind
+  showed under its words, and it counted files finished, so one long file read *Importing 0 of 1…* the
+  whole time. It now sits on a solid card and names the song it's reading, with *2 of 5* when there
+  are several.
+- **More room to write a note.** The note box under a practice run, ear training and improvise opens
+  three lines tall, not two, and grows to eight before it scrolls.
+- **Deleting an earlier version of a piece asks from its own button.** *Delete this version?* used to
+  point at the top of the Versions list; it now comes from the Delete you tapped.
 - **A new Apple Account isn't welcomed back.** If you switched App Store accounts while Red Moon was
   open, after an account that had bought the plan, the plan's wall greeted the new account with
   *"Everything you made is still here."* It now asks the App Store again each time, so only an account

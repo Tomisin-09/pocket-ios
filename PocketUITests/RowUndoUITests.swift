@@ -30,7 +30,7 @@ final class RowUndoUITests: UITestCase {
     func testUndoRestoresADeletedRowWithoutLeavingTheScreen() throws {
         let app = launchApp()
 
-        try openExercisesLibrary(in: app)
+        try openExercisesFromHome(in: app)
 
         // "Alternate Picking" is in `PracticePresets.firstRunSlugs`, so a clean install has it, and it
         // collides with no section header (unlike "Legato", which is also a template section).
@@ -60,10 +60,9 @@ final class RowUndoUITests: UITestCase {
     }
 
     /// The **Journal** feed's undo, which the library test above does not reach: a different screen,
-    /// a different coordinator, and — since 2026-08-06 — a different *gesture*. Delete here is a
-    /// press-and-hold, never a swipe, because a reflection has no source to rebuild it from the way
-    /// an exercise does. That makes this the only test that would catch the hold menu being wired to
-    /// nothing.
+    /// a different coordinator, and a second *gesture*. Delete here is on the hold menu as well as a
+    /// trailing swipe (ADR 0285, which ended 2026-08-06's hold-only rule), and this is the only test
+    /// that would catch the hold menu being wired to nothing. The swipe has its own test below.
     ///
     /// A clean install's Journal is empty, so the test **writes its own note** through the app's real
     /// capture path rather than a seeded fixture — no test-only code in the app, and the write half of
@@ -81,7 +80,7 @@ final class RowUndoUITests: UITestCase {
         // still on screen after this run's is deleted, failing on a bug that isn't there.
         let noteText = "Undo test note \(UUID().uuidString.prefix(6))"
         try writeAJournalNote(noteText, in: app)
-        try openJournal(in: app)
+        try openJournalFromHome(in: app)
 
         let note = app.cells.containing(.staticText, identifier: noteText).firstMatch
         XCTAssertTrue(note.waitForExistence(timeout: Self.uiTimeout), "the note just written isn't on the feed")
@@ -100,102 +99,43 @@ final class RowUndoUITests: UITestCase {
         XCTAssertTrue(note.waitForExistence(timeout: Self.uiTimeout), "Undo did not restore the journal note")
     }
 
-    // MARK: - Helpers
-
-    /// Write one note against a seeded drill, through the app's own capture path: Exercises → the
-    /// drill's run screen → Start → the nav-bar quick-note button → Save → Stop. Leaves the app back
-    /// on Home.
-    ///
-    /// Deliberately the **toolbar** button (ADR 0142) rather than the review bar's Journal pill: the
-    /// bar is the last thing in a long `ScrollView`, so on a fresh run screen it isn't in the
-    /// accessibility tree at all until you scroll it in. A toolbar item always is.
-    ///
-    /// **The run is started first** because since ADR 0221 D7 the pencil shows only where the review
-    /// bar doesn't — running, or inside a routine. A stopped screen has the bar's Journal instead.
-    /// Nothing here waits for the ramp: the note is written over the live run, which is the state the
-    /// quick-note sheet exists for, and Stop ends it before a completion screen could appear.
+    /// The Journal's **trailing swipe** (ADR 0285), which sits beside the hold menu above. Two things
+    /// it must do, and the first is the reason the swipe was refused until then: a swipe on its own
+    /// deletes **nothing** (`allowsFullSwipe: false`), and the button it shows is a plain one, so Undo
+    /// brings the row back rather than a `.destructive` animation taking it away for good.
     @MainActor
-    private func writeAJournalNote(_ text: String, in app: XCUIApplication) throws {
-        try openExercisesLibrary(in: app)
+    func testJournalSwipeShowsDeleteAndUndoRestoresTheNote() throws {
+        let app = launchApp()
+        let noteText = "Swipe test note \(UUID().uuidString.prefix(6))"
+        try writeAJournalNote(noteText, in: app)
+        try openJournalFromHome(in: app)
 
-        let drill = app.cells.containing(.staticText, identifier: "Alternate Picking").firstMatch
-        XCTAssertTrue(drill.waitForExistence(timeout: Self.uiTimeout), "no seeded exercise to write a note against")
-        scrollIntoView(drill, in: app)
-        drill.tap()
+        let note = app.cells.containing(.staticText, identifier: noteText).firstMatch
+        XCTAssertTrue(note.waitForExistence(timeout: Self.uiTimeout), "the note just written isn't on the feed")
 
-        let start = app.buttons["Start training routine"]
-        XCTAssertTrue(start.waitForExistence(timeout: Self.uiTimeout), "no Start on the run screen")
-        // Stopped and standalone, the review bar's Journal writes, so the pencil is not offered too.
-        // Checked only once Start proves the screen is up, and the same query must then find the
-        // pencil below — so this can't pass by looking too early or at the wrong label.
-        let quickNote = app.buttons["Write a quick journal note"]
-        XCTAssertFalse(quickNote.exists, "the pencil shows on a stopped run screen (ADR 0221 D7)")
-        start.tap()
+        // A drag across the **whole row**, not `swipeLeft()`. XCUITest's swipe stops short of a full
+        // swipe, so with `allowsFullSwipe: true` it still only shows the button, and this test passed
+        // against that mutant (2026-11-03). Edge to edge is the gesture a full swipe deletes on.
+        note.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5))
+            .press(forDuration: 0.05, thenDragTo: note.coordinate(withNormalizedOffset: CGVector(dx: 0.02, dy: 0.5)))
+        let deleteButton = app.buttons["Delete"]
+        XCTAssertTrue(deleteButton.waitForExistence(timeout: Self.uiTimeout), "the trailing swipe offered no Delete")
+        // The swipe alone removed nothing: no toast, and the note is still there.
+        XCTAssertFalse(app.buttons["Undo"].exists, "a full swipe on its own started a delete (it must be off)")
+        XCTAssertTrue(note.exists, "a full swipe on its own removed the note")
+        // Kept, so the row with its Delete showing can be looked at, not only asserted on.
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "journal-swipe-delete"
+        shot.lifetime = .keepAlways
+        add(shot)
+        deleteButton.tap()
 
-        XCTAssertTrue(quickNote.waitForExistence(timeout: Self.uiTimeout),
-                      "no quick-note button on the running screen (ADR 0221 D7)")
-        quickNote.tap()
+        // Undo first — it is the thing on a clock. See the flake note on the first test.
+        let undo = app.buttons["Undo"]
+        XCTAssertTrue(undo.waitForExistence(timeout: Self.uiTimeout), "no Undo toast after the swipe's Delete")
+        XCTAssertTrue(waitForDisappearance(of: note), "the swiped-away note stayed on screen")
 
-        // `TextField(axis: .vertical)` surfaces as a text *view* on some runtimes and a text field on
-        // others, so accept either rather than pinning the test to one of them.
-        let field = composerField(in: app)
-        XCTAssertTrue(field.waitForExistence(timeout: Self.uiTimeout), "the quick-note sheet has no field")
-        field.tap()
-        field.typeText(text)
-
-        let save = app.buttons["Save"]
-        XCTAssertTrue(save.waitForExistence(timeout: Self.uiTimeout), "no Save button on the quick-note sheet")
-        save.tap()
-
-        let stop = app.buttons["Stop and reset"]
-        XCTAssertTrue(stop.waitForExistence(timeout: Self.uiTimeout), "no Stop on the running screen")
-        stop.tap()
-
-        try returnHome(in: app)
-    }
-
-    @MainActor
-    private func composerField(in app: XCUIApplication) -> XCUIElement {
-        let placeholder = "What just happened?"
-        let asField = app.textFields[placeholder]
-        return asField.waitForExistence(timeout: Self.uiTimeout) ? asField : app.textViews[placeholder]
-    }
-
-    /// Pop back to Home. The run screen is three levels deep (Home → Practice hub → Exercises
-    /// library → run), so this walks the back button until Home's own first card shows up rather
-    /// than counting taps.
-    @MainActor
-    private func returnHome(in app: XCUIApplication) throws {
-        let homeMarker = app.buttons["Practice, your exercises and training runs"]
-        var backs = 0
-        while !homeMarker.exists && backs < 5 {
-            let back = app.navigationBars.buttons.firstMatch
-            guard back.waitForExistence(timeout: Self.uiTimeout) else { break }
-            back.tap()
-            backs += 1
-        }
-        XCTAssertTrue(homeMarker.waitForExistence(timeout: Self.uiTimeout), "never got back to Home")
-    }
-
-    /// Home → Journal.
-    @MainActor
-    private func openJournal(in app: XCUIApplication) throws {
-        let journalCard = app.buttons["Journal, your notes and practice takes"]
-        XCTAssertTrue(journalCard.waitForExistence(timeout: Self.uiTimeout), "Journal card missing")
-        XCTAssertTrue(scrollIntoView(journalCard, in: app), "Journal card not reachable by scrolling")
-        journalCard.tap()
-    }
-
-    /// Home → Practice → Exercises.
-    @MainActor
-    private func openExercisesLibrary(in app: XCUIApplication) throws {
-        let practiceCard = app.buttons["Practice, your exercises and training runs"]
-        XCTAssertTrue(practiceCard.waitForExistence(timeout: Self.uiTimeout), "Practice card missing")
-        XCTAssertTrue(scrollIntoView(practiceCard, in: app), "Practice card not reachable by scrolling")
-        practiceCard.tap()
-
-        XCTAssertTrue(app.navigationBars["Practice"].waitForExistence(timeout: Self.uiTimeout),
-                      "Practice hub did not open from Home")
-        openPracticeLibrary("Exercises", in: app)
+        undo.tap()
+        XCTAssertTrue(note.waitForExistence(timeout: Self.uiTimeout), "Undo did not restore the swiped-away note")
     }
 }

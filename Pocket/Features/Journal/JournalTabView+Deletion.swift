@@ -18,15 +18,13 @@ import SwiftUI
 /// Split out of `JournalTabView` for the 400-line cap, the same reason `JournalTakeRow` was.
 extension JournalTabView {
 
-    /// The **hold menu** — the *only* way to delete from this feed, deliberately.
+    /// The **hold menu** — one of the two ways to delete from this feed, and the one VoiceOver and a
+    /// player who never swipes will find.
     ///
-    /// Every other list in the app deletes on a trailing swipe. This one doesn't, because the cost of
-    /// the mistake is different in kind: a deleted exercise or routine can be rebuilt from the same
-    /// idea, but a note about how a session actually went — and a take of someone playing — has no
-    /// source to regenerate it from. A swipe is the cheapest gesture in a list and the easiest to
-    /// trigger while scrolling, and the Undo window is four seconds, which only helps if you noticed.
-    /// A hold is deliberate, so the gesture now costs about what the mistake does. Rename keeps its
-    /// swipe: it destroys nothing.
+    /// Until ADR 0285 it was the *only* way, on the reasoning that a note about how a session went has
+    /// no source to rebuild it from, and a swipe is the gesture most easily fired while scrolling. The
+    /// trailing swipe that now sits beside it answers that with `allowsFullSwipe: false`: the swipe
+    /// only shows the button, so deleting still takes a second, deliberate tap. See `deleteSwipe(for:)`.
     ///
     /// Ordered by how often the verb is reached for and how much it costs: **Pin** first (every row,
     /// reversible by the same gesture), then **Rename** and **Export take…** on a take (ADR 0236 D2),
@@ -44,7 +42,10 @@ extension JournalTabView {
     /// tapped, which under a *deferred* delete means the row leaves on a lie and never comes back on
     /// Undo. The row disappears here because `items` filters out anything pending — and reappears for
     /// the same reason.
-    @ViewBuilder func holdMenu(for item: JournalTimeline.Item) -> some View {
+    ///
+    /// **Show all** (ADR 0286) sits above Delete when the row's unit has more rows than this one. It opens
+    /// the same thread as the count on the row, and it is VoiceOver's way to it as well.
+    @ViewBuilder func holdMenu(for item: JournalTimeline.Item, thread: JournalThreadLink? = nil) -> some View {
         Button {
             togglePin(item)
         } label: {
@@ -59,11 +60,32 @@ extension JournalTabView {
             }
             ExportTakeMenuItem(take: take)
         }
+        if let thread {
+            Button(action: thread.open) {
+                Label("Show all \(thread.count) for \(thread.name)", systemImage: "square.stack")
+            }
+        }
         Button(role: .destructive) {
             requestDelete(item)
         } label: {
             Label("Delete", systemImage: "trash")
         }
+    }
+
+    /// The **trailing swipe's** Delete (ADR 0285) — the same deferred, undoable delete as the hold
+    /// menu's, on a note or a take. Not on a piece, which belongs to its loop (ADR 0229).
+    ///
+    /// A plain button tinted danger, **never** `role: .destructive`: on a swipe that role plays
+    /// SwiftUI's own row-removal animation on tap, which under the deferred delete removes the row on
+    /// a lie that Undo can't take back (`RowUndoUITests`, cause 2). The row leaves because `items`
+    /// filters out anything pending, and comes back on Undo for the same reason.
+    @ViewBuilder func deleteSwipe(for item: JournalTimeline.Item) -> some View {
+        Button {
+            requestDelete(item)
+        } label: {
+            Label("Delete", systemImage: "trash")
+        }
+        .tint(PocketColor.danger)
     }
 
     /// Hide the row, raise the Undo toast, and schedule the real delete for when the window closes.

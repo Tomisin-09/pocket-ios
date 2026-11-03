@@ -21,6 +21,8 @@ struct JournalEntryRow: View {
     /// a unit that no longer resolves. The default sends every pill to plain text, which is right for
     /// the per-owner sheet: it never shows session entries, since they belong to no unit.
     var openUnit: (SessionUnitRef) -> (() -> Void)? = { _ in nil }
+    /// The count that ends the caption line when the row's unit has more than one (ADR 0286), or `nil`.
+    var thread: JournalThreadLink?
 
     /// Whether the note is showing in full. **Expanding happens in place**, because ADR 0142 J5
     /// refused a journal-entry detail screen — *"a second place to read one entry"* — and a session
@@ -79,7 +81,7 @@ struct JournalEntryRow: View {
                         expanded.toggle()
                     }
                 if let ownerLabel {
-                    JournalOwnerCaption(label: ownerLabel, onOpen: onOpenOwner)
+                    JournalOwnerCaption(label: ownerLabel, onOpen: onOpenOwner, thread: thread)
                 }
                 snapshot
             }
@@ -156,8 +158,20 @@ struct JournalEntryRow: View {
 struct JournalOwnerCaption: View {
     let label: String
     let onOpen: (() -> Void)?
+    /// The count at the end of the line (ADR 0286), when the unit has more rows than this one.
+    var thread: JournalThreadLink?
 
     var body: some View {
+        HStack(spacing: 8) {
+            caption
+            if let thread {
+                Spacer(minLength: 0)
+                JournalThreadCount(link: thread)
+            }
+        }
+    }
+
+    @ViewBuilder private var caption: some View {
         if let onOpen {
             Button {
                 onOpen()
@@ -180,6 +194,51 @@ struct JournalOwnerCaption: View {
                 .foregroundStyle(PocketColor.journal)
                 .lineLimit(1)
         }
+    }
+}
+
+/// What a row's count needs (ADR 0286): how many rows its unit has, the unit's short name for the words
+/// around the number, and what opening the thread does. Built by the feed, which counts once per render.
+struct JournalThreadLink {
+    let count: Int
+    let name: String
+    let open: () -> Void
+}
+
+/// **The count at the end of a caption line** (ADR 0286): *6 entries*, when a row's exercise or loop has
+/// more than one row in the Journal. It opens the thread, that unit's rows on a screen of their own.
+///
+/// Its own button beside the caption rather than part of it, because the caption already goes somewhere,
+/// to the unit (ADR 0142 J5), and the two taps lead to different places. Neutral, not the caption's gold, so
+/// the line doesn't read as one long link: the gold half opens the unit, the grey pill opens its history.
+struct JournalThreadCount: View {
+    let link: JournalThreadLink
+
+    var body: some View {
+        Button {
+            link.open()
+            haptic(.light)
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "square.stack")
+                    .font(.futura(.caption2, weight: .semibold))
+                    .accessibilityHidden(true)
+                Text("\(link.count) entries")
+                    .font(.futura(.caption2, weight: .semibold))
+                    .monospacedDigit()
+            }
+            .foregroundStyle(PocketColor.textSecondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(PocketColor.surfaceStandard))
+            // The pill is small; the hit area isn't.
+            .frame(minHeight: 30)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
+        .accessibilityLabel("Show all \(link.count) entries for \(link.name)")
+        .accessibilityIdentifier("journal.thread.count")
     }
 }
 

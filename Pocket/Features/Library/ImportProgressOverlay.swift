@@ -1,27 +1,44 @@
 import SwiftUI
 
-/// A dimmed, centred "Importing N of M…" card shown while a batch song import runs
-/// (ADR 0011 Slice 2). Decoding several files takes a beat, so this reassures the
-/// user the app is working and blocks re-triggering the picker mid-import.
+/// A dimmed, centred card shown while a batch song import runs (ADR 0011 Slice 2). Decoding several
+/// files takes a beat, so this reassures the user the app is working and blocks re-triggering the
+/// picker mid-import.
+///
+/// **Opaque, and naming the file** (2026-11-03, item 5a of the last push before 1.4). The card used to
+/// be `surfaceStandard`, ink at 9%, so the screen behind showed through it and the words sat on
+/// whatever was there. And it counted files *done*, so a single long decode read "Importing 0 of 1…"
+/// throughout and looked stuck. It now draws on the app's own background, and says which song it is on.
 struct ImportProgressOverlay: View {
     let progress: SongImportProgress
 
     var body: some View {
         ZStack {
             Color.black.opacity(0.35).ignoresSafeArea()
-            VStack(spacing: 14) {
+            VStack(spacing: 10) {
                 ProgressView()
                     .tint(PocketColor.active)
-                Text("Importing \(progress.completed) of \(progress.total)…")
-                    .font(.futura(.subheadline))
+                    .padding(.bottom, 4)
+                Text(progress.headline)
+                    .font(.futura(.subheadline, weight: .semibold))
                     .foregroundStyle(PocketColor.textPrimary)
-                    .monospacedDigit()
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                if let position = progress.position {
+                    Text(position)
+                        .font(.pocketMono(.caption))
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .monospacedDigit()
+                }
             }
             .padding(24)
-            .background(PocketColor.surfaceStandard, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .frame(maxWidth: 280)
+            .background(PocketColor.background, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(PocketColor.surfaceBorder, lineWidth: 1))
+            .shadow(color: .black.opacity(0.25), radius: 16, y: 6)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Importing \(progress.completed) of \(progress.total) songs")
+        .accessibilityLabel([progress.headline, progress.position].compactMap { $0 }.joined(separator: ", "))
     }
 }
 
@@ -44,5 +61,5 @@ extension View {
 }
 
 #Preview {
-    ImportProgressOverlay(progress: SongImportProgress(completed: 2, total: 5))
+    ImportProgressOverlay(progress: SongImportProgress(completed: 1, total: 5, current: "Binta"))
 }
