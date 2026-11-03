@@ -72,7 +72,9 @@ struct JournalNoteComposer: View {
 
     private var noteField: some View {
         TextField(placeholder, text: $draftNote, axis: .vertical)
-            .lineLimit(2...5)
+            // Three lines to start, eight before it scrolls (item 5a, 2026-11-03): at two, a sentence or two
+            // about how a run went filled the box before it was finished, and looked like a one-liner field.
+            .lineLimit(3...8)
             // Needs a `KeyboardFollowingScroll` around the host's container — every host has one;
             // inert if a new one forgets.
             .scrollsIntoViewWhenFocused("mode-note", focused: $noteFocused)

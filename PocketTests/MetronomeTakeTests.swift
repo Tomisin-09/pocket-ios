@@ -88,6 +88,13 @@ final class MetronomeTakeTests: XCTestCase {
         XCTAssertNil(JournalOwnerRoute.route(for: .take(metronomeTake(sitting()))))
     }
 
+    /// Nor does it join a thread (ADR 0286): the count is per exercise or loop, and the click is neither.
+    func testAMetronomeTakeBelongsToNoThread() {
+        let take = metronomeTake(sitting())
+        XCTAssertNil(JournalTimeline.unit(for: .take(take)))
+        XCTAssertTrue(JournalTimeline.unitCounts([.take(take), .take(metronomeTake(sitting()))]).isEmpty)
+    }
+
     // MARK: - The archive
 
     /// The six columns travel out through the builder and back through the restore writer.

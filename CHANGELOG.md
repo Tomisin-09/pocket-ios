@@ -64,6 +64,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   playing. Each take remembers the click it was played to (*96 BPM · 4/4*), shows up in the Journal
   under **Metronome**, and is listed under Start: *3 takes on the metronome*. Free, like every take.
   (ADR 0287)
+- **See everything on one exercise or loop, from the Journal** (ADR 0286). Each row in the Journal is
+  one moment, and nothing used to say the same exercise or loop had more. Now its caption line ends with
+  a count, *6 entries*, and tapping it, or **Show all** in the row's hold menu, opens that exercise or
+  loop on a screen of its own: its notes, takes and saved piece together, by day, under a header that
+  shows where its first note and its latest one had the tempo (*80 → 96 BPM since 12 Oct*). **Open**
+  goes to the exercise or loop itself, and Back returns you to the same place in the Journal.
 - **Group your references by site, or by where they're used.** **⋯** in References now offers three
   layouts. **Newest** is the list as it was. **Site** puts every reference under the site it's from, A
   to Z, then pictures, PDFs and text files under their own headings. One kept for later sits with the
@@ -680,6 +686,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **The import card says what it's doing, and can be read.** It was see-through, so the screen behind
+  showed under its words, and it counted files finished, so one long file read *Importing 0 of 1…* the
+  whole time. It now sits on a solid card and names the song it's reading, with *2 of 5* when there
+  are several.
+- **More room to write a note.** The note box under a practice run, ear training and improvise opens
+  three lines tall, not two, and grows to eight before it scrolls.
+- **Deleting an earlier version of a piece asks from its own button.** *Delete this version?* used to
+  point at the top of the Versions list; it now comes from the Delete you tapped.
 - **A new Apple Account isn't welcomed back.** If you switched App Store accounts while Red Moon was
   open, after an account that had bought the plan, the plan's wall greeted the new account with
   *"Everything you made is still here."* It now asks the App Store again each time, so only an account

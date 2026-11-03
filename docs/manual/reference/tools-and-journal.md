@@ -79,6 +79,11 @@ and `Record a take`. Underneath, a search field prompting
   an Improv note opens `Improvise`, and anything else opens the loop's ordinary practice once it has a
   command tempo. A line left on a snag in `Name the notes` names its note (*Intro lick · note 23*) and
   opens `Name the notes` there.
+- **The count** (*6 entries*) ends the caption line when that exercise or loop has more than one row
+  under the current scope. It, and *Show all 6 for …* in the hold menu, open the exercise's or loop's
+  rows on their own screen: a header with its name and the first and latest tempo or mastery its notes
+  kept, `All` / `Notes` / `Takes`, the rows without captions, and `Open` in the top bar. Nothing on
+  that screen is saved; Back returns to the feed where you left it.
 
 **Delete** is a left swipe on a note or a take (the swipe shows the button; it never deletes on its
 own) and the last item in the hold menu. A take's hold menu leads with `Name this take`, or `Rename`

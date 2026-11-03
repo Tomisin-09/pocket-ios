@@ -79,16 +79,19 @@ extension JournalTabView {
     /// indices so a header can see the section *before* it and decide whether a month has turned
     /// over, and without the explicit id that change would silently break every jump.
     var list: some View {
-        ScrollViewReader { proxy in
+        // Counted **once** per render and looked up per row (ADR 0286), over the feed's scope and nothing
+        // else, so a count is the rows its thread opens on. A thread's own rows carry no count.
+        let counts = thread == nil ? JournalTimeline.unitCounts(JournalTimeline.filter(merged, scope: scope)) : [:]
+        return ScrollViewReader { proxy in
             List {
-                lookbackRow
+                if let thread { threadHeaderRow(thread) } else { lookbackRow }
                 if groupsBySong {
                     songSections
                 } else {
                     ForEach(Array(sections.enumerated()), id: \.element.day) { index, section in
                         Section {
                             ForEach(section.entries) { item in
-                                row(item).listRowBackground(PocketColor.background)
+                                row(item, counts: counts).listRowBackground(PocketColor.background)
                             }
                         } header: {
                             sectionHeader(section.day, startsMonth: startsNewMonth(at: index))
@@ -191,21 +194,27 @@ extension JournalTabView {
 
     // MARK: - Rows
 
-    @ViewBuilder func row(_ item: JournalTimeline.Item) -> some View {
+    /// One feed row. In a thread (ADR 0286) the caption goes: every row is the same unit, and the header
+    /// names it once, as the Pieces list's song heading does for its rows.
+    @ViewBuilder func row(_ item: JournalTimeline.Item,
+                          counts: [JournalTimeline.UnitRef: Int] = [:]) -> some View {
+        let link = threadLink(for: item, counts: counts)
+        let caption = thread == nil ? JournalTimeline.ownerLabel(for: item) : nil
         switch item {
         case .note(let entry):
-            JournalEntryRow(entry: entry, ownerLabel: JournalTimeline.ownerLabel(for: item),
+            JournalEntryRow(entry: entry, ownerLabel: caption,
                             onOpenOwner: openAction(for: item),
-                            openUnit: openAction(for:))
+                            openUnit: openAction(for:), thread: link)
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) { deleteSwipe(for: item) }
-                .contextMenu { holdMenu(for: item) }
+                .contextMenu { holdMenu(for: item, thread: link) }
         case .take(let take):
             JournalTakeRow(take: take,
-                           ownerLabel: JournalTimeline.ownerLabel(for: item),
+                           ownerLabel: caption,
                            onOpenOwner: openAction(for: item),
                            isPlaying: player.isPlaying(take.fileName),
                            onToggle: { player.toggle(take.fileName) },
-                           onOpen: { openedTake = StableRef(value: take) })
+                           onOpen: { openedTake = StableRef(value: take) },
+                           thread: link)
             // Naming is a take-only verb: every other row already says what it is in its own words.
             .swipeActions(edge: .leading) {
                 Button { renaming = StableRef(value: take) } label: {
@@ -214,11 +223,11 @@ extension JournalTabView {
                 .tint(PocketColor.journal)
             }
             .swipeActions(edge: .trailing, allowsFullSwipe: false) { deleteSwipe(for: item) }
-            .contextMenu { holdMenu(for: item) }
+            .contextMenu { holdMenu(for: item, thread: link) }
         case .piece(let piece):
             // No hold menu: a piece isn't pinned or deleted from the feed (ADR 0229).
-            JournalPieceRow(piece: piece, ownerLabel: JournalTimeline.ownerLabel(for: item),
-                            onOpen: openAction(for: item), onWatch: watchAction(for: piece))
+            JournalPieceRow(piece: piece, ownerLabel: caption,
+                            onOpen: openAction(for: item), onWatch: watchAction(for: piece), thread: link)
         }
     }
 }

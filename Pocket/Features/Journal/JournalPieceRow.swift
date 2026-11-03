@@ -19,6 +19,8 @@ struct JournalPieceRow: View {
     var stamp: String?
     /// Open *Watch it on the neck*; `nil` when there's nothing to watch (ADR 0254 D2).
     var onWatch: (() -> Void)?
+    /// The count that ends the caption line when the loop has notes or takes too (ADR 0286).
+    var thread: JournalThreadLink?
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -27,7 +29,7 @@ struct JournalPieceRow: View {
                 header
                 PieceDrawing(piece: piece.piece, spelling: CountTheNotesModel.spelling(for: piece.loop), folds: true)
                 if let ownerLabel {
-                    JournalOwnerCaption(label: ownerLabel, onOpen: onOpen)
+                    JournalOwnerCaption(label: ownerLabel, onOpen: onOpen, thread: thread)
                 }
                 if let onWatch { watchLink(onWatch) }
             }

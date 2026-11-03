@@ -61,4 +61,24 @@ final class SongImportSummaryTests: XCTestCase {
         XCTAssertFalse(SongImportSummary(imported: 0, failedNames: []).isSingleCleanImport)
         XCTAssertFalse(SongImportSummary(imported: 0, failedNames: ["broken"]).isSingleCleanImport)
     }
+
+    // MARK: - The import card (item 5a, 2026-11-03)
+
+    /// The card names the file it's on, and counts it: the second of five is "2 of 5", not "1 of 5".
+    func testTheCardNamesTheFileAndCountsTheOneInProgress() {
+        let progress = SongImportProgress(completed: 1, total: 5, current: "Binta")
+        XCTAssertEqual(progress.headline, "Importing “Binta”")
+        XCTAssertEqual(progress.position, "2 of 5")
+    }
+
+    /// One file never says "1 of 1", and a file with no name yet says "Importing…".
+    func testOneFileHasNoPositionAndNoNameFallsBack() {
+        XCTAssertNil(SongImportProgress(completed: 0, total: 1, current: "Binta").position)
+        XCTAssertEqual(SongImportProgress(completed: 0, total: 1).headline, "Importing…")
+    }
+
+    /// After the last file, before the card goes, the position stays on the last file.
+    func testThePositionNeverRunsPastTheTotal() {
+        XCTAssertEqual(SongImportProgress(completed: 3, total: 3, current: "Last").position, "3 of 3")
+    }
 }

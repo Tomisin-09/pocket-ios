@@ -65,7 +65,9 @@ takes the next free `pocket-` number when its item starts.
 5. **Polish** (S, after the beat map): an opaque import card that names the file in progress, a taller notes
    field, the delete-version pop-up attached to its button, and a sweep of the other
    `.confirmationDialog`s, each screenshotted open. Split in two on 2026-11-03: **5a** is the three
-   fixes, **5b** the sweep, which is the slow part and goes last.
+   fixes, **5b** the sweep, which is the slow part and goes last. **5a built 2026-11-03**
+   (`pocket-407`). Owed on the device: an import of several files, and the delete-version pop-up
+   pointing at its own Delete (a headless render can't open a dialog).
 6. **A tempo control inside Name the notes** (S, after the beat map): `LoopTempoControl` beside the play
    button, as in Watch on the neck.
 7. `pocket-404` **Swipe to delete in the Journal** (S, ADR 0285 amends 0100, after the beat map): trailing,
@@ -73,7 +75,8 @@ takes the next free `pocket-` number when its item starts.
    `role: .destructive`, which plays a fake removal under the deferred delete. **Built 2026-11-03**;
    a unit's Takes list stays hold-only. Owed on the device: swipe, Delete, Undo.
 
-    **7b. The Journal thread** (S–M, ADR amends 0190, added 2026-11-03). Each Journal row is one
+    **7b. `pocket-406` The Journal thread** (S–M, ADR 0286 amends 0190, added 2026-11-03). **Built
+    2026-11-03**; owed on the device: a real unit's thread, and the count beside a long caption. Each Journal row is one
     moment, and nothing on it says the same exercise or loop has more. The mockup is
     https://claude.ai/artifact/XHW8kNppGcJ8GbSiVHJvYC. When a unit has two or more rows, the caption
     line ends with a count, *6 entries*, that follows the scope picker. The count, and *Show all 6 for
