@@ -373,6 +373,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Slow the loop down without leaving Name the notes.** − and + beside the strip's play button set
+  the speed, as in Watch on the neck, and a tapped note plays at that speed too. The note count moves
+  to a line of its own under them.
 - **The tempo editor starts with Find the tempo** (ADR 0284). It used to open on a tap pad, with the
   estimate further down, so tapping looked like the way to do it. Now **Find the tempo** comes first
   and the rest follows from what it finds. The tempo shows large, with where it came from and a line
