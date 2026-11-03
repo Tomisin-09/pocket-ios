@@ -266,8 +266,13 @@ one switch), since anchoring the pinch to the playhead rather than to your finge
 choice. **Holding the metronome** on the speed bar opens a tempo
 editor (`BPMSheet`) — ADR 0124 retired the "Set BPM" capsule, giving its slot to **repeat**; while
 the song's tempo is **unknown** the metronome also badges itself (`plus`) and takes a plain tap, so
-the state where nothing grids, snaps or clicks doesn't depend on discovering a hold. The editor is: **tap-tempo** (each tap captures song-time, so in-loop / slowed tapping
-still reads the true tempo — pure `TempoMath.bpm(fromTapTimes:)`) or **manual** entry, plus
+the state where nothing grids, snaps or clicks doesn't depend on discovering a hold. Since **ADR
+0284** the editor opens on **Find the tempo** (the estimate below), and the tempo it holds heads it
+with where it came from (pure `TempoDraft`, which also holds Half, Double and the typed-tempo rule,
+and `TempoSheetTop`, which decides what heads the sheet). **Tap along** (a pushed page, each tap
+capturing song-time so in-loop / slowed tapping still reads the true tempo — pure
+`TempoMath.bpm(fromTapTimes:)`), **Type a tempo** and **Tap through the song** are listed under it as
+the other ways, plus
 **the 1** placed by dragging a waveform handle that **snaps to the loudest transient**
 (pure `TempoPeaks`) or marked at the playhead. Tempo is stored full-precision in
 `Song.preciseBPM` (`Song.bpm: Int?` is the rounded display mirror; `tempoBPM` feeds the grid)
@@ -277,11 +282,19 @@ the track's onset envelope (`WaveformExtractor.extractOnsetEnvelope`, spectral f
 `AudioMath.spectralFlux` so it hears new notes as well as drums, + pure `TempoEstimator`):
 autocorrelation for the BPM (weighted by a ~120 BPM prior to fold half/double errors, then read
 again across many beats so a steady song's tempo is exact, ADR 0282) and a
-comb-filter for the downbeat phase. It **prefills** both, flagged as estimated for the user to
-confirm, never auto-committing (rung 2 of ADR 0004). Confirmed unedited, the estimate is saved
-exactly, not as the whole BPM the field shows (`TempoMath.manualBPM`). **Half** and **Double** under
-it read the same beat at another speed, still exact, with the 1 placed again
-(`TempoEstimator.Reading`, ADR 0282 D5). A **Click** toggle on the **speed bar**
+comb-filter for the downbeat phase. It **proposes** both, labelled as estimated, for Done to
+confirm, never auto-committing (rung 2 of ADR 0004), and saved exactly (ADR 0282). **Half** and
+**Double** under it read the same beat at another speed, still exact, with the 1 placed again
+(`TempoEstimator.Reading`, ADR 0282 D5); on a tapped or typed tempo they multiply it (ADR 0284 D2).
+A tempo found, tapped or typed turns the editor's click on, and the strip says what the click still
+needs instead of greying out a switch (ADR 0284 D3). **ADR 0283** pins **Play** and a **Click** switch above the
+editor's form (`TempoSheetTransport`), and the click plays the editor's values before Done
+(`previewClick`, through `gridIfCommitted`, which applies `commitTempo`'s rules); Done keeps the
+switch, any other way out puts the song's click back (`endClickPreview`). The section for the 1
+asks **Beats in a bar** (3, 4, More…, replacing the time signature picker) and **Which beat is the
+1?** (one button a beat; the pure `DownbeatChoice`/`BeatGrid.one` move the 1 by whole beats of the
+grid, along a beat map's own beats when there is one), and a static note says one tempo works best
+on a song played to a click. A **Click** toggle on the **speed bar**
 (beside the BPM, its own teal — ADR 0027) plays a
 **metronome** over the song that **follows the speed control** (50% → half-BPM, locked to the
 slowed track): pure unit-tested `MetronomeSchedule` schedules each beat `delay = (beat − now) /

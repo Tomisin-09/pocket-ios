@@ -373,6 +373,28 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **The tempo editor starts with Find the tempo** (ADR 0284). It used to open on a tap pad, with the
+  estimate further down, so tapping looked like the way to do it. Now **Find the tempo** comes first
+  and the rest follows from what it finds. The tempo shows large, with where it came from and a line
+  for the bar and its 1. **Half** and **Double** each show the tempo they'd give, and work on a tapped
+  or typed tempo too. Finding a tempo turns the click on, so pressing Play is the check. The section
+  for the 1 appears once there's a tempo. **Tap along**, **Type a tempo** and **Tap through the
+  song** are listed under it, each saying when to use it, in place of the *Tap* and *Manual*
+  segments. Tap along has a page of its own with a bigger pad. Until there's something to click,
+  the top of the editor says what's missing instead of showing a switch that does nothing. The
+  editor now has the app's own look.
+- **Hear the tempo while you set it** (ADR 0283). The tempo editor now has **Play** and a **Click**
+  switch at the top, in view whichever part you're on. The click plays what you've set before you
+  tap Done: the tempo, the 1 and the bar. **Cancel** puts the song's click back as it was; **Done**
+  keeps the switch as you left it. Until now the only switch was the metronome on the speed bar,
+  under the editor.
+- **Count the bar by ear** (ADR 0283). The section for the 1 asks two questions. **Beats in a bar**:
+  3, 4, or **More…** for 2/4, 5/4, 6/8, 7/8 and 12/8, in place of the old *Time signature* picker.
+  **Which beat is the 1?**: one button a beat. The click plays the 1 higher, so choosing a beat moves
+  that accent; keep the one that sounds like the start of the bar. It's the fix for an estimate that
+  puts the 1 a beat off.
+- **The tempo editor says what one tempo can't do.** *Works best with songs played to a click. A song
+  that speeds up or slows down will drift.*
 - **Estimate from audio finds a steady song's exact tempo** (ADR 0282). It used to time a single beat,
   to the nearest hundredth of a second, so a song at 83 BPM could read 83.9, and the grid ended up
   more than a beat early by the last bar. It now times many beats at once, so *Binta* reads 83.00. A

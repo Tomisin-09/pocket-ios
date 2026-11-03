@@ -129,16 +129,20 @@ song if the ramp was playing. If you only opened it to look, **Cancel** leaves t
 The metronome button on the speed bar turns a click on over the top of the song. For it to land in
 the right place the app needs two things: the song's tempo, and where beat one is.
 
-**The tempo.** Hold the metronome button to open the tempo editor. You can tap it out, type a BPM,
-or let the app guess it from the audio. The editor also carries the time signature.
+**The tempo.** Hold the metronome button to open the tempo editor. Start with **Find the tempo**:
+the app listens to the song for its beat and the 1, and turns the click on so you can press **Play**
+and hear whether it's right. If the click is twice as fast as the song, or half, **Half** and
+**Double** fix it. The editor then asks how many beats are in a bar, and which beat is the 1: choose
+one, and the click's higher note moves to it. It works best on a song played to a click; one that
+speeds up or slows down will drift.
 
-Tapping reads the playhead rather than your finger, so a loop or a slowed-down speed still reads the
-song's true tempo. The reading follows your **last few taps** rather than everything you have tapped,
-so on a song that drifts you can keep tapping through the section you actually care about and the
-number will settle on it.
+If you'd rather, **Tap along** or **Type a tempo** instead. Tapping reads the playhead rather than
+your finger, so a loop or a slowed-down speed still reads the song's true tempo. The reading follows
+your **last few taps** rather than everything you have tapped, so on a song that drifts you can keep
+tapping through the section you actually care about and the number will settle on it.
 
 <!-- shot: looping/tempo-editor | role: screen
-     | alt: The tempo editor with a tap area, a typed BPM field, the guess-from-audio option, setting the 1, and the time signature
+     | alt: The tempo editor on a song with a tempo: the tempo with Half and Double, beats in a bar, which beat is the 1, and the other ways to set it
      | state: seeded library, Binta, tempo editor open -->
 
 **The 1.** **Set the 1** on the status line tells the app where the bar starts. Play along and tap

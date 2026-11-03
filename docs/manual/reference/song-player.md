@@ -208,27 +208,49 @@ One way in — hold the metronome button on the speed bar. (Holding the **BPM** 
 to open this too; it now carries the tempo out instead.)
 
 <!-- shot: reference/tempo-editor | role: screen
-     | alt: The tempo sheet with the Tap and Manual segments, the tap pad, Estimate from audio, and the downbeat section
+     | alt: The tempo sheet on a song with a tempo: the tempo card with Half and Double, the section for the 1, and the other ways to set it
      | state: seeded library, Binta, tempo editor open -->
 
-- **`Tap`** — `Tap to the beat`. The app's own explanation: *Play the song and tap along. Tapping
-  reads the playhead, so a loop or slowed speed still reads the true tempo. The reading follows your
-  last few taps, so on a song that drifts, keep tapping through the section you care about.*
-- **`Tap through the song`**, under the tap pad, opens a screen of its own for a song whose tempo
-  moves. Play the song and tap every beat to the end. Each tap becomes a beat, so the grid follows
-  the band when it speeds up or slows down. `From the start` plays the song from the top, letting go
-  of a loop first, and `Done` keeps them. A tap near a clear hit moves onto it, and a beat
-  you miss is filled in. With no 1 set, start on a 1: the first tap becomes it.
-- **`Manual`** — type the number.
-- **`Estimate from audio`** analyses the track and proposes one, exact enough for a song played to
-  a click to stay on the beat to the end. A guitar playing every half-beat can read as double time:
-  if the click comes twice a beat, `Half` fixes it, and `Double` does the reverse. Both keep the
-  estimate exact and place the 1 again.
-- **`The 1 (downbeat)`** — `Mark the 1 at the playhead`, or `Set the 1 on the waveform`.
+Titled `Set tempo`, it runs in the order you'd use it: find the tempo, hear it, then line up the bar.
+
+- **`Play`** and **`Click`** sit at the top, so you can hear the tempo while you set it. The click
+  plays what you've set before `Done`: the tempo, the 1 and the bar. `Cancel` puts the song's click
+  back as it was, and `Done` keeps the switch as you left it. Until there's something to click, the
+  strip says what's missing instead: *The click comes with a tempo*, or *Mark the 1 to hear the
+  click*.
+- **`Find the tempo`** comes first on a song with no tempo. It listens to the song for its beat and
+  the 1, exact enough for a song played to a click to stay on the beat to the end. If it can't hear
+  a steady beat, it says so.
+- **The tempo** then takes its place: the number, where it came from (found, tapped, typed, or the
+  song's own), and a line for the bar and its 1, such as *4 beats a bar · the 1 at 0:02*. Finding,
+  tapping or typing a tempo turns the click on, so pressing `Play` is the check. A guitar playing
+  every half-beat can read as double time: if the click comes twice a beat, `Half` fixes it, and
+  `Double` does the reverse. Each shows the tempo it gives. On a found tempo both stay exact and
+  place the 1 again.
+- **`The 1`** appears once there's a tempo, with two questions to answer by ear with the click on.
+  `Beats in a bar`: 3, 4, or `More…` for the other time signatures. `Which beat is the 1?`: one
+  button a beat. The click plays the 1 higher, so choosing a beat moves that accent. Keep the one
+  that sounds like the start of the bar. Under them, `Mark the 1 at the playhead` or
+  `Set the 1 on the waveform`.
+- Under that, the editor says what one tempo can't do: *Works best with songs played to a click. A
+  song that speeds up or slows down will drift.*
+- **The other ways to set it**, each saying when it's the one:
+  - `Tap along` opens a page with a big pad, `Tap to the beat`. Play the song and tap along. *The
+    reading follows your last few taps*, and tapping reads the playhead, so a loop or a slower speed
+    still reads the song's true tempo. `Reset` starts again, and *Use 89 BPM* (with your reading)
+    sets it and takes you back. The click stays quiet on this page.
+  - `Type a tempo` opens a field in place. Type the number and press `Use`.
+  - `Tap through the song` opens a screen of its own for a song whose tempo moves. Play the song and
+    tap every beat to the end. Each tap becomes a beat, so the grid follows the band when it speeds
+    up or slows down. `From the start` plays the song from the top, letting go of a loop first, and
+    `Done` keeps them. A tap near a clear hit moves onto it, and a beat you miss is filled in. With
+    no 1 set, start on a 1: the first tap becomes it.
+  - `Find the tempo` is listed here too once the tempo shown came another way.
 
 A song that has its beats opens the editor with **`The beats`**: how many there are, how far the
-tempo moves, and `Use one tempo` to go back to a steady one. Setting a tempo by tapping the pad or
-typing it goes back to one tempo too. Either can be undone from the bar that appears.
+tempo moves, and `Use one tempo` to go back to a steady one. Setting a tempo any other way goes back
+to one tempo too, and the tempo's card says so before `Done`. Either can be undone from the bar that
+appears.
 
 ### The player settings sheet
 
