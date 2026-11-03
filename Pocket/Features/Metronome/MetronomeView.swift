@@ -17,7 +17,7 @@ import UIKit
 /// whatever tempo is on screen into Practice's create flow, as a drill that plays that tempo and
 /// nothing else. The metronome feeds Practice; it never owns an exercise.
 struct MetronomeView: View {
-    @State private var engine: StandaloneMetronomeEngine
+    @State var engine: StandaloneMetronomeEngine
     /// Wall-clock times of recent taps for tap-tempo (`TempoMath.bpm(fromTapTimes:)`).
     @State private var taps: [TimeInterval] = []
     @Environment(\.dismiss) private var dismiss
@@ -39,10 +39,17 @@ struct MetronomeView: View {
     /// aside while it is: the field being typed into otherwise ends up squeezed against the Start
     /// button, half hidden, and the keyboard's checkmark floats over Start's trailing edge.
     @State private var keyboardUp = false
-    @Environment(\.modelContext) private var modelContext
+    @Environment(\.modelContext) var modelContext
     /// When the click started, so that ending it can log the time as practice (ADR 0242). See
     /// `endSession()`.
-    @State private var runLog = MetronomeRunLog()
+    @State var runLog = MetronomeRunLog()
+    /// The take recorder (ADR 0287): armed beside Start, begun before the click sounds, ended with it.
+    @State var recorder = RecordingController()
+    /// The click as it stood when the rolling take began — what the take is saved with. See
+    /// `RecordingOwner.metronome`.
+    @State var takeSitting: MetronomeJournalContext?
+    /// Whether the metronome's own Takes list is showing.
+    @State var showingTakes = false
 
     /// A tap gap longer than this starts a fresh measurement — an old, stale tap shouldn't
     /// average against a new one.
@@ -80,7 +87,7 @@ struct MetronomeView: View {
                         }
                         tempoReadout
                         tempoControls
-                        MetronomeAutomatorPanel(engine: engine)
+                        MetronomeAutomatorPanel(engine: engine) { startClick(engine.startAutomatorRun) }
                     }
                     .padding(24)
                 }
@@ -127,6 +134,8 @@ struct MetronomeView: View {
         .onAppear { engine.allowsClickWithdrawal = true }
         .onChange(of: engine.transport) { old, new in runLog.transportChanged(from: old, to: new) }
         .onDisappear(perform: endSession)
+        // The take ends when the player leaves the app; the click plays on, as it always has.
+        .endsTakeOnLeavingApp(finishTake)
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
             keyboardUp = true
         }
@@ -135,6 +144,10 @@ struct MetronomeView: View {
         }
         .sheet(isPresented: $showingSettings) {
             MetronomeSettingsSheet(engine: engine)
+        }
+        .sheet(isPresented: $showingTakes) {
+            // The context is never read here: the sheet lists by query, and saves nothing.
+            TakesSheet(owner: .metronome(engine.journalContext), onDelete: deleteTake)
         }
         .sheet(item: $saving) { pending in
             // The template picker runs (ADR 0261): a tempo found here can seed any kind of drill, as
@@ -260,66 +273,6 @@ struct MetronomeView: View {
                       glyphFont: .futura(.title3, weight: .semibold)) {
             engine.adjustBPM(by: delta)
         }
-    }
-
-    // MARK: - Transport
-
-    /// Primary play/pause/resume button, with a secondary **stop** (end + reset to 0:00)
-    /// that appears once a session is live. Pause keeps the session; stop zeroes it.
-    private var transport: some View {
-        HStack(spacing: 14) {
-            if engine.transport != .stopped {
-                Button { endSession(); haptic(.medium) } label: {
-                    Image(systemName: "stop.fill")
-                        .font(.futura(.title3))
-                        .foregroundStyle(PocketColor.textPrimary)
-                        .frame(width: 56, height: 56)
-                        .background(Circle().fill(PocketColor.textSecondary.opacity(0.18)))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Stop and reset")
-            }
-            Button { engine.toggle(); haptic(.medium) } label: {
-                Label(primaryLabel, systemImage: primarySymbol)
-                    .font(.futura(.headline))
-                    .foregroundStyle(PocketColor.background)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 56)
-                    .background(RoundedRectangle(cornerRadius: 14).fill(PocketColor.metronomeCTA))
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    /// Stop the click and log the time it sounded (ADR 0242). The two ways a sitting here ends — the
-    /// Stop button and leaving the screen — both come through here.
-    ///
-    /// `elapsed` is read **before** `stop()`, which zeroes it. It is the engine's own session clock:
-    /// kept across pauses, and advanced by the same tick that schedules the clicks, so while the click
-    /// is sounding it is never more than a tick behind. Runs under 30 seconds are dropped by the
-    /// writer — a tempo check, not practice.
-    ///
-    /// **Not on going to the background.** The click plays on through the lock screen by design, so
-    /// backgrounding ends nothing. A sitting ended by closing the app from the app switcher is the one
-    /// that goes unlogged: no seam runs.
-    private func endSession() {
-        let sounded = engine.elapsed
-        engine.stop()
-        guard let run = runLog.finish(soundedSeconds: sounded) else { return }
-        PracticeLogWriter.log(kind: .metronome, startedAt: run.start, endedAt: run.end,
-                              unitUID: nil, into: modelContext)
-    }
-
-    private var primaryLabel: String {
-        switch engine.transport {
-        case .stopped: return "Start"
-        case .playing: return "Pause"
-        case .paused: return "Resume"
-        }
-    }
-
-    private var primarySymbol: String {
-        engine.transport == .playing ? "pause.fill" : "play.fill"
     }
 
     // MARK: - Tap tempo (reuses TempoMath, ADR 0024 / 0043)

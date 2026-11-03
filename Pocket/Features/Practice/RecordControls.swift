@@ -61,6 +61,9 @@ struct RecordArmToggle: View {
     var recorder: RecordingController
     var disabled = false
     var onStopTake: (() -> Void)?
+    /// What VoiceOver hears while armed. A parameter for the metronome, where nothing is "training"
+    /// (ADR 0287).
+    var armedHint = "A take will record when you start training"
 
     private var isRecording: Bool { recorder.isRecording }
     private var lit: Bool { recorder.isArmed || isRecording }
@@ -91,7 +94,7 @@ struct RecordArmToggle: View {
 
     private var accessibilityHint: String {
         if isRecording { return onStopTake == nil ? "The take ends when the run does" : "" }
-        if recorder.isArmed { return "A take will record when you start training" }
+        if recorder.isArmed { return armedHint }
         return disabled ? "Stop the backing track first" : ""
     }
 }
@@ -176,6 +179,10 @@ struct RecordSetupHint: View {
     /// parameter rather than a second view: the hint's job is identical on both, and two copies would
     /// drift the headphone nudge apart one fix at a time.
     var startPhrase = "when training starts"
+    /// What the hint says on a speaker route. Elsewhere that is a nudge toward headphones; at the
+    /// metronome the click coming through the speaker is the timing reference, so the hint says it
+    /// will be in the take instead (ADR 0287).
+    var bleedNote = "headphones give a cleaner take"
 
     var body: some View {
         if recorder.isArmed {
@@ -183,7 +190,7 @@ struct RecordSetupHint: View {
             // route so it stays one hint, not two (device feedback 2026-07-17).
             Label(recorder.route.isClean
                   ? "Records your playing \(startPhrase)."
-                  : "Records \(startPhrase) — headphones give a cleaner take.",
+                  : "Records \(startPhrase) — \(bleedNote).",
                   systemImage: recorder.route.isClean ? "checkmark.circle" : "headphones")
                 .font(.futura(.caption))
                 .foregroundStyle(recorder.route.isClean ? PocketColor.practice
@@ -211,9 +218,9 @@ struct TakeSavedNote: View {
     var recorder: RecordingController
     /// How many takes this owner holds, for the resting line.
     var takeCount: Int
-    /// What this surface calls the thing being recorded against — "block" on a freeform exercise,
-    /// "loop" on improvise.
-    var owner = "block"
+    /// Where the takes are, after the count — "on this block" on a freeform exercise, "on this loop"
+    /// on improvise, "on the metronome" at the click.
+    var place = "on this block"
     /// Makes the resting count a **way in** to the takes rather than a readout. Non-nil on the
     /// open-ended screens, which have no `PracticeReviewBar` to reach the list from — without it a
     /// take recorded on improvise or ear training is only playable from the Journal tab, which means
@@ -246,7 +253,7 @@ struct TakeSavedNote: View {
     }
 
     private var countText: String {
-        takeCount == 1 ? "1 take on this \(owner)" : "\(takeCount) takes on this \(owner)"
+        takeCount == 1 ? "1 take \(place)" : "\(takeCount) takes \(place)"
     }
 
     /// The durable count — a button where the surface can open its takes, plain text where it can't.
@@ -287,6 +294,9 @@ private extension LabelStyle where Self == TrailingChevronLabelStyle {
 /// recording.
 struct RecordingStatusView: View {
     var recorder: RecordingController
+    /// Said in place of the route's own nudge on a speaker route — for the metronome, where the click
+    /// in the room is wanted rather than warned about (ADR 0287).
+    var bleedNudge: String?
 
     var body: some View {
         if recorder.isRecording {
@@ -299,7 +309,7 @@ struct RecordingStatusView: View {
                         .contentTransition(.numericText())
                 }
                 if let nudge = recorder.route.nudge {
-                    Text(nudge)
+                    Text(bleedNudge ?? nudge)
                         .font(.futura(.caption2))
                         .foregroundStyle(PocketColor.textSecondary)
                         .multilineTextAlignment(.center)

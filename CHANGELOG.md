@@ -56,6 +56,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Record yourself at the metronome.** The record button now sits beside **Start** on the metronome,
+  as it does on an exercise. Arm it, and the take begins when the click does, from **Start** or from
+  **Start ramp**. It carries on through Pause and ends at **■**, when you leave the screen, or when you
+  leave the app (the click keeps playing on the lock screen, as before). Through the speaker the click
+  is in the take, which is what you want for checking your timing; through headphones it's just your
+  playing. Each take remembers the click it was played to (*96 BPM · 4/4*), shows up in the Journal
+  under **Metronome**, and is listed under Start: *3 takes on the metronome*. Free, like every take.
+  (ADR 0287)
 - **Group your references by site, or by where they're used.** **⋯** in References now offers three
   layouts. **Newest** is the list as it was. **Site** puts every reference under the site it's from, A
   to Z, then pictures, PDFs and text files under their own headings. One kept for later sits with the

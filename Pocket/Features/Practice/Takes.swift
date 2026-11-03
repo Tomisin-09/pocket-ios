@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// Relisten to **practice takes** (ADR 0069, slice 3) — the audio counterpart to the journal. The
@@ -28,11 +29,15 @@ struct TakesSheet: View {
     /// Deferred, undoable deletion, sheet-owned. The host screens are untouched: their existing
     /// `onDelete` becomes the *deferred action* rather than the immediate one.
     @State private var rowDeletion = RowDeletionCoordinator()
+    /// Every take, newest-first — read only for the **metronome's** list (ADR 0287), which has no
+    /// owning model to read its takes from. Filtered in memory by `Recording.metronomeTakes(in:)`.
+    @Query(sort: \Recording.createdAt, order: .reverse) private var allTakes: [Recording]
 
     /// Newest-first, minus anything awaiting deletion — so the row leaves on the request and comes
     /// back on Undo, and the empty state follows without a second rule.
     private var takes: [Recording] {
-        owner.recordingsByRecent.filter { !rowDeletion.isPending($0.uid) }
+        let source = owner.isMetronome ? Recording.metronomeTakes(in: allTakes) : owner.recordingsByRecent
+        return source.filter { !rowDeletion.isPending($0.uid) }
     }
 
     var body: some View {
@@ -173,6 +178,13 @@ private struct TakeRow: View {
                         }
                         .font(.pocketMono(.caption2))
                         .foregroundStyle(PocketColor.textSecondary)
+                        // At the metronome every take has the same caption, so what tells them apart
+                        // is the click each was played to (ADR 0287).
+                        if let sitting = take.metronomeContext {
+                            Text(sitting.summary)
+                                .font(.pocketMono(.caption2))
+                                .foregroundStyle(PocketColor.textSecondary)
+                        }
                     }
                     Spacer(minLength: 0)
                     // The note itself stays on the take's screen — a row this dense has room to say

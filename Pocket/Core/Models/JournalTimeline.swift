@@ -137,6 +137,10 @@ enum JournalTimeline {
     /// A session's name comes from the entry's own `routineNameAtEntry`, never from a lookup through
     /// `routineUID` — that is the point of snapshotting it. The routine may since have been renamed
     /// or deleted, and the entry still says what the sitting was called when it happened (ADR 0038).
+    /// The caption for anything written or recorded at the metronome — a note (ADR 0160 §6) or a take
+    /// (ADR 0287). One constant, so a search for "metronome" finds both.
+    static let metronomeLabel = "Metronome"
+
     static func ownerLabel(for item: Item) -> String? {
         switch item {
         case .note(let entry):
@@ -156,7 +160,7 @@ enum JournalTimeline {
                 // screen rather than a row, and it can be neither renamed nor deleted — so there is
                 // nothing for `ownerLabelAtEntry` to protect the caption from. It also makes
                 // "metronome" a search term, since `searchHaystack` folds this in.
-                return "Metronome"
+                return metronomeLabel
             case .exercise, .loop, .orphan:
                 let label = ownerLabel(loop: entry.loop, exercise: entry.exercise, song: nil)
                     ?? entry.ownerLabelAtEntry

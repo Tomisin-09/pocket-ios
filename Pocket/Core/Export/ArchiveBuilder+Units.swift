@@ -211,7 +211,13 @@ extension ArchiveBuilder {
                 },
             isPinned: recording.isPinned,
             isStandalone: recording.isStandalone,
-            loopRunMode: recording.loopRunModeRaw
+            loopRunMode: recording.loopRunModeRaw,
+            isMetronome: recording.isMetronome,
+            metronomeBpmAtTake: recording.metronomeBpmAtTake,
+            metronomeBeatsAtTake: recording.metronomeBeatsAtTake,
+            metronomeNoteValueAtTake: recording.metronomeNoteValueAtTake,
+            metronomeSubdivisionRaw: recording.metronomeSubdivisionRaw,
+            metronomeWithdrawalRaw: recording.metronomeWithdrawalRaw
         )
     }
 }
