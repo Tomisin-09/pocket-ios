@@ -69,9 +69,10 @@ takes the next free `pocket-` number when its item starts.
    pointing at its own Delete (a headless render can't open a dialog).
 6. **A tempo control inside Name the notes** (S, after the beat map): `LoopTempoControl` beside the play
    button, as in Watch on the neck.
-7. **Swipe to delete in the Journal** (S, ADR amends 0100, after the beat map): trailing, no full swipe,
-   undo toast kept, no multi-select. A plain button tinted danger, **not** `role: .destructive`, which
-   plays a fake removal under the deferred delete.
+7. `pocket-404` **Swipe to delete in the Journal** (S, ADR 0285 amends 0100, after the beat map): trailing,
+   no full swipe, undo toast kept, no multi-select. A plain button tinted danger, **not**
+   `role: .destructive`, which plays a fake removal under the deferred delete. **Built 2026-11-03**;
+   a unit's Takes list stays hold-only. Owed on the device: swipe, Delete, Undo.
 
     **7b. The Journal thread** (S–M, ADR amends 0190, added 2026-11-03). Each Journal row is one
     moment, and nothing on it says the same exercise or loop has more. The mockup is

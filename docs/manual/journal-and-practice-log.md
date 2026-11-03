@@ -321,10 +321,10 @@ The journal **shows** history; it does not edit it. To change a note, open it wh
 its own loop's or exercise's journal — because that is the only screen where its snapshot means
 anything.
 
-Deleting works everywhere here, and it is **hold-only**. Hold a row and the menu offers **Delete**
-(under **Pin**, and the naming verb on a take). There is no delete swipe in this list on purpose: a note about
-how a session went and a recording of someone playing have no source to regenerate them from, so the
-gesture is a deliberate one rather than the cheapest one in a list.
+Deleting works on every note and take here, two ways. Swipe a row left and tap **Delete**, or hold
+it and choose **Delete** from the menu (under **Pin**, and the naming verb on a take). The swipe only
+shows the button and never deletes on its own, so a row brushed while scrolling stays put: a note
+about how a session went, or a recording of someone playing, has no source to regenerate it from.
 
 Deleting raises an **Undo** toast, and nothing is actually removed until it passes — including a
 take's audio file, which is what makes offering the delete safe at all.

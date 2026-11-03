@@ -7,6 +7,10 @@
   declares it with a stored flag, and nothing else. An entry with an owner is still written and edited
   on that owner's screen, and the space offers no owner picker. (0224 later let it record a
   standalone take on the same terms.)
+- **Amended by:** ADR 0285 (a Journal row can be swiped to delete, 2026-11-03). The 2026-08-05
+  amendment's *press-and-hold only* gives way on this feed: a trailing swipe offers Delete too, without
+  a full swipe. The hold menu, the Undo toast and the deferred delete stand, and a unit's Takes list
+  stays hold-only.
 
 ## Context
 
@@ -47,7 +51,8 @@ triad and the indigo reference hub.
   **Amended 2026-08-05 — see below: every row can now be deleted, and a take
   renamed. Editing still lives in the per-owner sheet.** **Delete is a
   press-and-hold only — there is no delete swipe on this feed, nor on a unit's
-  Takes list.** That departs from the libraries, which offer both, and the reason
+  Takes list.** *(Superseded on this feed by ADR 0285, 2026-11-03: a trailing
+  swipe offers Delete too, without a full swipe. A unit's Takes list is unchanged.)* That departs from the libraries, which offer both, and the reason
   is what the row *is*: an exercise deleted by a stray swipe can be built again,
   but a note about how a session went, and a recording of someone playing, cannot.
   A swipe is the gesture most easily fired by accident while scrolling a list, so
