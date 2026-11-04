@@ -22,8 +22,13 @@ extension SongMapView {
         watchingSpan = span
     }
 
+    /// Whether the map opens a stretch of the song on the neck at all. **Held back from 1.4** (ADR 0291): both
+    /// doors are closed and everything behind them stays, so reopening them is this one line.
+    static let opensSectionWatch = false
+
     /// A section's door, or `nil` when it has nothing to light or its audio can't play here (0254 D2).
     func watchDoor(_ section: SongMap.Section, sources: [SectionWatch.Source]) -> (() -> Void)? {
+        guard Self.opensSectionWatch else { return nil }
         let name: String
         switch section.heading {
         case .none: return nil
@@ -36,6 +41,7 @@ extension SongMapView {
 
     /// The whole song's door (ADR 0289), or `nil` behind the gate.
     func watchSongDoor(_ map: SongMap, sources: [SectionWatch.Source]) -> (() -> Void)? {
+        guard Self.opensSectionWatch else { return nil }
         let end = map.sections.last?.end ?? song.duration
         guard PieceNeck.canWatch(sources, from: 0, to: end, on: song) else { return nil }
         return { watch(WatchSpan(name: "The whole song", start: 0, end: end, isWholeSong: true)) }

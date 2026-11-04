@@ -164,8 +164,8 @@ takes the next free `pocket-` number when its item starts.
 18. **Watch the section** on the neck (M, ADR amends 0254): straight through with gaps.
     Where loops overlap, the one that starts later shows. **Built 2026-11-04** as ADR 0289
     (`pocket-410-watch-the-section`): a section heading's hold menu and the map's toolbar eye; repeats
-    light on every pass; one tuning per sheet. Device check owed: a section with two loops, and the
-    whole song.
+    light on every pass; one tuning per sheet. **Held back from 1.4 on 2026-11-04** (ADR 0291) after
+    Tomisin's device check: its doors are closed and it's under *After the freeze*.
 
 *Phase 4: release, then freeze*
 
@@ -193,6 +193,12 @@ click through the speaker and through headphones.
 
 ### After the freeze
 
+- **Watch the section, rethought** (item 18, ADR 0289, held back by ADR 0291). Built and merged (#402),
+  then held back after Tomisin's device check of 2026-11-04: *"I feel like it could be better thought
+  out. let's drop it then put it in the post 1.4 backlog"*. The lag felt that day was most likely the
+  Journal's (#406). `SongMapView.opensSectionWatch` closes both doors; the code, `SectionWatchTests` and
+  the skipped whole-song UI test stay. What it should be is **open**: think it through again before
+  reopening, rather than flipping the flag.
 - **Make a song from this take** (item 16, M, short ADR), in the take's hold menu. Needs 9 and 14.
   Planned for 1.4, deprioritised on 2026-11-03 (Tomisin: *"lets deprioritise turn a take into a
   song"*), before any of it was built.

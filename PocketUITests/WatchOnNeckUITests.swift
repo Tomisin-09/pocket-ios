@@ -76,8 +76,11 @@ final class WatchOnNeckUITests: UITestCase {
     /// **The whole song** from the song map's toolbar (ADR 0289): the sheet plays the song from its top, not
     /// one loop, and the riff's notes still light when the song reaches them. The seed's song has no
     /// sections, so this is the map's one door here; a section's merge is unit-tested (`SectionWatchTests`).
+    /// **Skipped while the map's doors are closed** (ADR 0291 holds the section watch back from 1.4); it runs
+    /// again as it is once `SongMapView.opensSectionWatch` is `true`.
     @MainActor
-    func testTheWholeSongPlaysFromTheMapAndLightsTheRiff() {
+    func testTheWholeSongPlaysFromTheMapAndLightsTheRiff() throws {
+        try XCTSkipIf(true, "Watch the section is held back from 1.4 (ADR 0291): the map has no eye to open")
         let app = launchApp(extraArguments: [UITestHooks.watchPieceArgument])
         openSongDetails(in: app)
         let map = app.buttons["Map the song"]
