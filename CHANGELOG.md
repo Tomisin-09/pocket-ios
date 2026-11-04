@@ -708,6 +708,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **The Journal opens and answers faster.** It built its whole feed again for every day heading, three
+  times over, decoding every saved piece each time, so it got slower with every day you practised: a
+  journal of about 40 days built it 277 times to open. It now builds it once, which halves the time to
+  open and makes changing All, Notes or Takes about three times quicker.
+
 - **Confirmations point at what asked for them.** On iOS 26 a confirmation is a small pop-up with an
   arrow, and eight of them pointed at the top of the screen or the first row rather than the button you
   tapped: replacing a song's audio, trimming a take, deleting a progression, a chord, a folder or a skill

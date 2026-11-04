@@ -24,7 +24,8 @@ struct JournalTabView: View {
     // Not `private`: the look-back card reads the unfiltered notes from `JournalTabView+List.swift`,
     // and `private` is file-scoped.
     @Query(sort: \JournalEntry.createdAt, order: .reverse) var entries: [JournalEntry]
-    @Query(sort: \Recording.createdAt, order: .reverse) private var takes: [Recording]
+    // Not `private` either: the feed is built in `JournalTabView+List.swift` (`makeFeed`).
+    @Query(sort: \Recording.createdAt, order: .reverse) var takes: [Recording]
     // The library, for resolving a session entry's practised-unit pills (ADR 0143) **and its routine
     // caption**. Those are loose **id copies**, not relationships — that is what lets an entry outlive
     // the units it names — so there is nothing to follow and the uid has to be looked up. Unsorted and
@@ -126,47 +127,11 @@ struct JournalTabView: View {
         !entries.isEmpty || !takes.isEmpty || loops.contains { $0.transcriptionData != nil }
     }
 
-    /// Whether there is anywhere to jump *to* — more than one day on the feed. Shared by the day
-    /// header (ADR 0207 D7) and the ⋯ item, so the two doors to one sheet cannot disagree.
-    var canJump: Bool { visibleDays.count > 1 }
-
-    /// The scope- then search-filtered feed, minus anything awaiting deletion. Filtering here rather
-    /// than at the row is what makes `sections` and the empty state follow automatically. Not
-    /// `private`: the Pieces scope groups it by song in `JournalTabView+PiecesBySong.swift`.
-    var items: [JournalTimeline.Item] {
-        // A thread is the whole unit under its own scope: search, pins and Show don't narrow it (ADR 0286).
-        if let thread { return JournalTimeline.filter(threadItems(thread), scope: threadScope) }
-        let scoped = JournalTimeline.filter(merged, scope: scope)
-        let owned = JournalTimeline.filter(scoped, owner: ownerFilter)
-        let tagged = JournalTimeline.filter(owned, tags: tagFilter)
-        let pinned = JournalTimeline.filter(tagged, pinnedOnly: pinnedOnly)
-        return JournalTimeline.filter(pinned, query: query)
-    }
-
-    /// Everything on the feed, minus anything awaiting deletion, before any filter.
-    var merged: [JournalTimeline.Item] {
-        JournalTimeline.merge(entries: entries, takes: takes, pieces: JournalPiece.all(in: loops))
-            .filter { !rowDeletion.isPending($0.id) }
-    }
-
-    /// Day-sectioned for display (pure helper, shared with `JournalSheet`); `oldest` reverses both the
-    /// day order and the within-day order. Not `private`: the list that renders it lives in
-    /// `JournalTabView+List.swift`, and `private` is file-scoped.
-    var sections: [JournalGrouping.DaySection<JournalTimeline.Item>] {
-        let grouped = JournalGrouping.byDay(items) { $0.date }
-        switch sortOrder {
-        case .newest:
-            return grouped
-        case .oldest:
-            return grouped.reversed().map {
-                JournalGrouping.DaySection(day: $0.day, entries: Array($0.entries.reversed()))
-            }
-        }
-    }
-
     /// Free for good (ADR 0263 D1), so the screen carries no `PlanGated`.
     var body: some View {
-        screen
+        // Built once per render and handed down (`Feed`, in `JournalTabView+List.swift`).
+        let feed = makeFeed()
+        screen(feed)
             // Above the list-vs-empty-state branch on purpose: deleting the last row swaps the `List` for
             // the empty state, and a host applied inside either branch would take the toast with it.
             .pocketRowUndoHost(rowDeletion)
@@ -196,7 +161,7 @@ struct JournalTabView: View {
             }
             .sheet(isPresented: $recordingTake) { StandaloneTakeSheet() }
             // Jump to a date (ADR 0190 D9) — the sheet and its rule live in `JournalTabView+Options`.
-            .sheet(isPresented: $jumping) { jumpSheet }
+            .sheet(isPresented: $jumping) { jumpSheet(days: feed.visibleDays) }
             // The two Show facets — owner kind and tag (ADR 0190 D5, D10; ADR 0207 D11) — in the same
             // file.
             .sheet(isPresented: $choosingKinds) { showSheet }
@@ -210,25 +175,25 @@ struct JournalTabView: View {
     }
 
     /// The feed, or one unit's thread (ADR 0286): what differs is above the list (`JournalTabView+Thread`).
-    @ViewBuilder private var screen: some View {
+    @ViewBuilder private func screen(_ feed: Feed) -> some View {
         if let thread {
-            threadScreen(thread)
+            threadScreen(thread, feed: feed)
         } else {
-            feedScreen
+            feedScreen(feed)
         }
     }
 
-    private var feedScreen: some View {
+    private func feedScreen(_ feed: Feed) -> some View {
         VStack(spacing: 0) {
             scopePicker
             // Above the practice-log row and always on when there is history, because it carries the
             // Show chip — the thing ADR 0190 D8 requires to be legible without opening anything.
-            monthRail
+            monthRail(feed)
             // **No Practice log row** since ADR 0208 — Home's *This week* strip is the door now, and
             // two doors to one screen is what ADR 0176 was tidying up. The band it occupied is the
             // band the month rail spends, so the screen carries the same amount above the list as it
             // did before ADR 0207, not one thing more.
-            if sections.isEmpty { emptyState } else { list }
+            if feed.sections.isEmpty { emptyState } else { list(feed) }
         }
         .navigationTitle("Journal")
         .searchable(text: $query, prompt: "Search by song, exercise, template or date")
@@ -242,7 +207,7 @@ struct JournalTabView: View {
             // top-level slot all along.
             // The menu itself is `JournalTabView+Options.swift` — it grew a second filter with ADR
             // 0190 S2 and took this file past the 400-line cap.
-            ToolbarItem(placement: .topBarTrailing) { optionsMenu }
+            ToolbarItem(placement: .topBarTrailing) { optionsMenu(feed) }
             // ＋ holds both of this space's writes since ADR 0224 — a note and a take, each against
             // nothing. The take stops any audition first: the feed's player and the mic would
             // otherwise share the session, and the take would record what the speaker was playing.

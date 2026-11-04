@@ -12,7 +12,7 @@ extension JournalTabView {
 
     /// One section per song, headed by the song with *Map the song* beside it. The heading is pinned while
     /// its pieces scroll, like a day's, so the way into the map stays in reach.
-    @ViewBuilder var songSections: some View {
+    @ViewBuilder func songSections(_ items: [JournalTimeline.Item]) -> some View {
         ForEach(JournalSongPieces.group(items, order: sortOrder)) { group in
             Section {
                 ForEach(group.pieces, id: \.loop.uid) { piece in
