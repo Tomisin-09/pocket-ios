@@ -1,8 +1,9 @@
 # Privacy Policy — Red Moon Practice
 
-_Last updated: 2 October 2026_
+_Last updated: 4 November 2026_
 
-Red Moon Practice ("the app") is a free guitar and bass practice tool published by **Deco
+Red Moon Practice ("the app") is a guitar and bass practice tool, free to download with one optional
+paid plan, published by **Deco
 Operations Ltd** (registered in England and Wales, company number **17032490**;
 ICO registration **ZC112793**). This policy explains what the app does and does
 not do with your information. It is written to match what the app actually does —
@@ -146,8 +147,12 @@ information never leaves your device and is not stored between launches.
 
 ## Purchases
 
-Red Moon Practice is free. There is no subscription and nothing to buy in the app,
-so it handles no payment details.
+Red Moon Practice is free to download. It offers one optional plan, paid monthly or once, which you
+buy through Apple's App Store. Apple takes the payment: the app never sees or stores your card or
+payment details, and neither do we. To know whether to open the parts the plan covers, the app asks
+the App Store on your device whether your Apple Account has the plan, and that check stays between your
+device and Apple. Apple gives us sales reports, which don't name you. If you stop paying, nothing you
+made is deleted.
 
 ## Your rights
 

@@ -620,13 +620,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **The privacy policy no longer promises the app will never contain advertising software.** It
   contains none today and shows no ads. The permanent promise is now about tracking: Red Moon will
   never use the advertising identifier or the App Tracking Transparency prompt. (ADR 0240)
-- **Red Moon is free.** Everything in the app is open to everyone, with nothing to buy: Practice, the
-  Song library, routines, Today's session and building your own exercises all open from Home with no
-  padlock, no **PRO** badge and no paywall, and the full-screen offer that came up at launch is gone.
-  Settings no longer has a *Red Moon Pro* row, Help & FAQs drops its two subscription questions, and
-  the Toolkit's Tuner row shows its instrument where it used to say *Free*. Nobody had subscribed, so
-  nothing changes for anyone's data. If a trial reminder was pending from a test, the app clears it on
-  launch. The starter song stays, as the first thing to practise on (ADR 0237).
+- **Red Moon Pro is gone, and so is the offer at launch.** No more **PRO** badges, and the full-screen
+  offer that came up at launch is gone. Settings no longer has a *Red Moon Pro* row, Help & FAQs drops
+  its two subscription questions, and the Toolkit's Tuner row shows its instrument where it used to
+  say *Free*. In their place is the one plan described above. Nobody had subscribed to Pro, so nothing
+  changes for anyone's data. If a trial reminder was pending from a test, the app clears it on launch.
+  The starter song stays, as the first thing to practise on (ADR 0237).
 - **Save a pass, then name it.** *Count the notes* ends with **Clear** and **Save**; **Name the notes**
   now opens from the saved piece under *Saved on this loop*, so names are never left on a pass that
   **Clear** would throw away. A small **▶** beside *Show beats* starts and stops the loop, so you can
