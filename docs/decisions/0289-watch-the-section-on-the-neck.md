@@ -2,8 +2,11 @@
 
 - **Status:** Accepted. Planned with Tomisin as item 18 of the last feature push before 1.4 (the approved
   plan of 2026-11-02: *"Watch the section, playing straight through with gaps. When loops overlap, the one
-  that starts later shows."*), and built that week.
+  that starts later shows."*), and built that week. **Held back from 1.4**: its doors are closed.
 - **Date:** 2026-11-04 (`pocket-410-watch-the-section`)
+- **Amended by:** ADR 0291 — both doors (the section heading's hold menu and the map's toolbar eye) are
+  closed for 1.4, by `SongMapView.opensSectionWatch`. Every decision below still holds, unreachable until
+  they reopen.
 - **Amends:** ADR 0254 — **D1**: the sheet also opens on a stretch of a song, a section or the whole
   song, under the same name and icon. **D2**: two more doors on the song map, the section heading's hold
   menu and an eye in the toolbar, each behind the same gate read over the stretch. **D4**: every piece in

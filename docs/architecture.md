@@ -710,6 +710,8 @@ each note you hear, then name them. The pieces, from the audio up:
   `Run` in song time (the later-starting loop showing where two overlap, repeats on every pass, one
   tuning, joins dropped across loops), each tap carrying when it stops being heard, so a gap lights
   nothing (`Run.heard(at:)`, which the loop's sheet reads too, through a run of one loop).
+  **Held back from 1.4** (ADR 0291): `SongMapView.opensSectionWatch` is `false`, so both map doors return
+  `nil` and nothing reaches a stretch; the code and `SectionWatchTests` stay for the rethink.
   `LoopRunModel` loops either a loop's region or a span of a song (`init(song:start:end:)`), and
   `ContinuousLoopPlayer(song:from:to:)` plays it at 100%.
 - **Storage.** `Loop.transcriptionData: Data?` (additive, Optional) holds a `PieceTranscription`: taps

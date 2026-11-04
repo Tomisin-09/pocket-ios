@@ -62,7 +62,9 @@ CRASHED=$(awk '
     sub(/\047 started.*$/, "", running)
     next
   }
-  /^Test Case \047[^\047]+\047 (passed|failed)/ { running = ""; next }
+  # A skip (`XCTSkip`) ends a test too: it prints `skipped`, and until ADR 0291 skipped the whole-song watch
+  # test, no UI test ever had, so each skip was reported as a crash.
+  /^Test Case \047[^\047]+\047 (passed|failed|skipped)/ { running = ""; next }
   /^Restarting after unexpected exit, crash, or test timeout/ {
     if (running != "") print running
     running = ""

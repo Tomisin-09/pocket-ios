@@ -54,12 +54,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
   The reading is still written on your device, still weekly, and still never grades you.
 
-### Added
-
-- **Importing several songs shows each one.** Pick more than one file and a sheet lists them all as
-  they're read: waiting, reading, added, or skipped, with why (*There's no audio in it*, or *A
-  copy-protected file can't be imported*). Tap a song that was added to open it straight away. One
-  file still opens on its waveform as soon as it's read (ADR 0290).
+> **Watch a whole section on the neck** is held back from 1.4 by **ADR 0291**: it's built, and its two
+> doors on the song map are closed, because it needs thinking through again. The entry stays here until
+> it reopens; `docs/backlog.md` holds it under *After the freeze*.
 
 - **Watch a whole section on the neck.** On the song map, hold a section's name and choose **Watch it on
   the neck**: the song plays from the top of the section to its end, and every loop in it with notes on
@@ -67,6 +64,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   that starts later shows; where there's no piece, the neck goes quiet until the next. The eye at the top
   of the map does the same for the whole song. A riff that repeats to the end of its section lights on
   every pass. It plays at the record's tempo, and − and + change it (ADR 0289).
+
+### Added
+
+- **Importing several songs shows each one.** Pick more than one file and a sheet lists them all as
+  they're read: waiting, reading, added, or skipped, with why (*There's no audio in it*, or *A
+  copy-protected file can't be imported*). Tap a song that was added to open it straight away. One
+  file still opens on its waveform as soon as it's read (ADR 0290).
 
 - **Bend releases and pre-bends on the neck.** In Name the notes and Write a tab, a bent note now has
   two more switches under **Bend**: **Pre-bend**, for a string pushed up before you pick it, and
