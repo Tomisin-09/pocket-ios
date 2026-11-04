@@ -82,10 +82,10 @@ final class WatchOnNeckUITests: UITestCase {
         openSongDetails(in: app)
         let map = app.buttons["Map the song"]
         XCTAssertTrue(reveal(map, in: app), "Song details has no Map the song")
-        map.tap()
-
+        // Tapped until the map is up: on the iOS 18 simulator the first tap, just after Song details had
+        // risen, was lost and the test waited on a map that never opened.
         let eye = app.buttons["map.watchSong"]
-        XCTAssertTrue(eye.waitForExistence(timeout: Self.uiTimeout), "no \(title) in the map's toolbar")
+        XCTAssertTrue(tap(map, until: eye, in: app), "no \(title) in the map's toolbar")
         eye.tap()
         XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: Self.uiTimeout),
                       "\(title) didn't open from the map")
@@ -93,12 +93,18 @@ final class WatchOnNeckUITests: UITestCase {
         let neck = app.descendants(matching: .any)["watch.neck"]
         XCTAssertEqual(neck.value as? String, "6 on the neck", "the riff's six aren't all on the neck")
 
+        // At the slowest tempo. At 100% the riff is lit for 4.6 s of the song's 30, and on CI's simulator
+        // one read of the neck took 5–10 s, so the lit stretch fell between two reads and the test failed
+        // with the app showing the note (PR #403's recording). At 25% it's lit for 18 s, from 38 s in.
+        let slower = app.buttons["Slow down"]
+        for _ in 0..<20 where slower.isEnabled { slower.tap() }
+        XCTAssertFalse(slower.isEnabled, "the tempo didn't reach its slowest")
         let play = app.buttons["watch.play"]
         XCTAssertEqual(play.label, "Play the song")
         play.tap()
         XCTAssertTrue(waitForLabel("Stop the song", on: play, timeout: audioTimeout),
                       "the song never started: \(play.label)")
-        XCTAssertTrue(waitForValue(of: neck, matching: "value CONTAINS %@", "string, fret"),
+        XCTAssertTrue(waitForValue(of: neck, matching: "value CONTAINS %@", "string, fret", timeout: 90),
                       "the neck never lit the riff as the song played: \(String(describing: neck.value))")
         attach(app, named: "watch-song-playing")
         play.tap()
@@ -166,9 +172,10 @@ final class WatchOnNeckUITests: UITestCase {
     /// Wait for `element`'s value to match: what the neck says changes with the loop's clock, so reading it
     /// outright asks what it said at an instant.
     @MainActor
-    private func waitForValue(of element: XCUIElement, matching format: String, _ argument: String) -> Bool {
+    private func waitForValue(of element: XCUIElement, matching format: String, _ argument: String,
+                              timeout: TimeInterval? = nil) -> Bool {
         let settled = expectation(for: NSPredicate(format: format, argument), evaluatedWith: element)
-        return XCTWaiter().wait(for: [settled], timeout: audioTimeout) == .completed
+        return XCTWaiter().wait(for: [settled], timeout: timeout ?? audioTimeout) == .completed
     }
 
     /// Drag up until `element` is drawn and in reach, as `NameTheNotesUITests` does it: a Form draws its rows

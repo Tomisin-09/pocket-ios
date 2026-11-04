@@ -13,9 +13,14 @@ are the exception, and the reason is the audio itself rather than a policy choic
 
 ## Importing
 
-Tap **+** on Home, or open **Song library** and use **Import a song**. You can select more than one
-file at once; while they are read, a card names the song it is on and, for several, how far through
-it is (*2 of 5*).
+Tap **+** on Home, or open **Song library** and use **Import a song**. One file is read under a card
+that names it, and then the song opens, ready to practise.
+
+You can select more than one file at once. Then a sheet lists them all as they're read: *Waiting*,
+*Reading the file…*, *Added*, or why one was skipped, such as *There's no audio in it*. Its title counts
+along (*Importing 2 of 5*). When they're all read, tap a song that was added to open it, or **Done** to
+close the sheet. A file that couldn't be read is left out and nothing else is affected; a copy-protected
+file, bought from a store with DRM, can't be imported at all.
 
 Each import does three things: it copies the file into Red Moon's own storage, reads the whole file
 once to draw the waveform, and takes the title from the file name. So a file called
