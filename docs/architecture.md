@@ -704,6 +704,14 @@ each note you hear, then name them. The pieces, from the audio up:
   of `PieceNeck` and `NeckFollow` is pure (`Core/Theory`). Five doors (Edit loop, the Loops hold menu,
   the map's tab sheet, *Saved on this loop*, the Journal's piece row) ask one gate,
   `PieceNeck.canWatch`: a tap on the neck and `LoopModeAccess.Facts.audioResolves`.
+  Since ADR 0289 the sheet also takes a **stretch of a song** (`WatchOnNeckSheet.Subject.span`): a
+  section from its heading's hold menu on the song map, or the whole song from the map's toolbar
+  (`SongMapView+Watch`). The pure `SectionWatch` merges every piece on the neck in the stretch into one
+  `Run` in song time (the later-starting loop showing where two overlap, repeats on every pass, one
+  tuning, joins dropped across loops), each tap carrying when it stops being heard, so a gap lights
+  nothing (`Run.heard(at:)`, which the loop's sheet reads too, through a run of one loop).
+  `LoopRunModel` loops either a loop's region or a span of a song (`init(song:start:end:)`), and
+  `ContinuousLoopPlayer(song:from:to:)` plays it at 100%.
 - **Storage.** `Loop.transcriptionData: Data?` (additive, Optional) holds a `PieceTranscription`: taps
   with optional `PieceLabel`s (pitch class · notes on the neck · chord root + `ChordQuality` suffix ·
   since ADR 0262 a dead note, `muted`, with the strings when placed, and an optional `muted` key of

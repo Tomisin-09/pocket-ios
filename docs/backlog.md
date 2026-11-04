@@ -156,7 +156,10 @@ takes the next free `pocket-` number when its item starts.
     stored under its own key so an older build names it by its fret. Device check owed: name each
     shape, play the strip, read the tab.
 18. **Watch the section** on the neck (M, ADR amends 0254): straight through with gaps.
-    Where loops overlap, the one that starts later shows.
+    Where loops overlap, the one that starts later shows. **Built 2026-11-04** as ADR 0289
+    (`pocket-410-watch-the-section`): a section heading's hold menu and the map's toolbar eye; repeats
+    light on every pass; one tuning per sheet. Device check owed: a section with two loops, and the
+    whole song.
 
 *Phase 4: release, then freeze*
 

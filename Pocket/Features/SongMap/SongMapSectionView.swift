@@ -11,12 +11,14 @@ struct SongMapSectionView: View {
     let highlighted: Set<UUID>
     /// The pieces picked to put together (D11), while picking. `nil` otherwise.
     var selected: Set<UUID>?
+    /// *Watch it on the neck* for this section (ADR 0289), on the heading's hold menu, or `nil` behind the gate.
+    var onWatch: (() -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             SongMapSectionHeading(heading: section.heading, bars: section.bars, start: section.start,
                                   end: section.end, sameAs: section.sameAs, openMarker: actions.openMarker,
-                                  showSection: actions.showSection)
+                                  showSection: actions.showSection, onWatch: onWatch)
                 .disabled(selected != nil)
             ForEach(section.rows) { row in
                 SongMapRowView(row: row, map: map, loops: loops, actions: actions, highlighted: highlighted,
@@ -46,6 +48,8 @@ struct SongMapSectionHeading: View {
     let openMarker: (UUID) -> Void
     /// Go to the section this one repeats.
     let showSection: (TimeInterval) -> Void
+    /// *Watch it on the neck* for the section (ADR 0289), held from the heading. The Tab view passes none.
+    var onWatch: (() -> Void)?
 
     var body: some View {
         switch heading {
@@ -62,14 +66,23 @@ struct SongMapSectionHeading: View {
         }
     }
 
-    private func headingRow(_ title: some View) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 10) {
+    @ViewBuilder private func headingRow(_ title: some View) -> some View {
+        let row = HStack(alignment: .firstTextBaseline, spacing: 10) {
             title.font(.futura(.headline))
             if let sameAs { repeatLink(sameAs) }
             Spacer(minLength: 8)
             Text(range)
                 .font(.pocketMono(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
+        }
+        if let onWatch {
+            row.contextMenu {
+                Button(action: onWatch) {
+                    Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
+                }
+            }
+        } else {
+            row
         }
     }
 

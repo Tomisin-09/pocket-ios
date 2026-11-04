@@ -309,6 +309,13 @@ after `Train your ear`, in the loop's hold menu in `Loops`, on the song map's ta
 piece in the journal. It doesn't show for a piece named only by ear, which has nothing to light, or for a
 song whose audio can't play on this phone.
 
+On the song map it also plays **a section**, from the hold menu on the section's name, or **the whole
+song**, from the eye at the top. The song plays from the start of the stretch to its end, and each loop's
+notes light in turn; with more than one loop, each one's name sits under the neck where its notes begin. Where two loops overlap, the
+one that starts later shows; where none has a piece, nothing lights. Every loop in it should be named in
+the same tuning: the first one's is used, and the top of the sheet says if one in another tuning is left
+out. A section starts at the record's own tempo.
+
 <!-- shot: reference/watch-on-neck | role: screen
      | alt: Watch it on the neck for the Verse riff, stopped: every spot the lick uses drawn on the neck, the notes in order under it, and the play button beside the tempo
      | state: map seed, Slow Bend ▸ Verse riff ▸ Edit loop ▸ Watch it on the neck, stopped -->

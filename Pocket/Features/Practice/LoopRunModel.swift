@@ -19,7 +19,14 @@ final class LoopRunModel {
 
     enum Transport { case stopped, playing, paused }
 
-    let loop: Loop
+    /// What's looped: a loop's region, or a stretch of a song with no loop of its own (ADR 0289).
+    private enum Region {
+        case loop(Loop)
+        /// Fractions of the song, as a loop's `start` and `end` are.
+        case span(Song, start: Double, end: Double)
+    }
+
+    private let region: Region
     private let engine = PracticeAudioEngine()
 
     private(set) var transport: Transport = .stopped
@@ -46,7 +53,20 @@ final class LoopRunModel {
     /// its auto-advance off this. `nil` for a standalone `LoopRunView`. Not persisted.
     var onFinished: (() -> Void)?
 
-    init(loop: Loop) { self.loop = loop }
+    init(loop: Loop) { region = .loop(loop) }
+
+    /// A stretch of `song`, from `start` to `end` as fractions of it, looped the way a loop's region is:
+    /// *Watch it on the neck* for a section or the whole song (ADR 0289).
+    init(song: Song, start: Double, end: Double) { region = .span(song, start: start, end: end) }
+
+    /// The song being played. Read through the region rather than kept, so a loop's is read when the audio
+    /// loads, as it always was.
+    private var song: Song? {
+        switch region {
+        case .loop(let loop): loop.song
+        case .span(let song, _, _): song
+        }
+    }
 
     var isRunning: Bool { transport != .stopped }
 
@@ -77,7 +97,7 @@ final class LoopRunModel {
         guard !loaded, !isPreview else { return }
         isLoading = true
         defer { isLoading = false }
-        if let song = loop.song, song.hasImportedAudio {
+        if let song, song.hasImportedAudio {
             await loadImportedFile(song: song)
         } else {
             await loadDemoSample()
@@ -103,7 +123,7 @@ final class LoopRunModel {
     }
 
     private func loadDemoSample() async {
-        let duration = loop.song?.duration ?? 0
+        let duration = song?.duration ?? 0
         guard let sample = try? await SampleToneGenerator.makeDemoSample(duration: duration) else {
             AudioPlumbing.log.error("Loop run: demo sample render failed — audio unavailable")
             loadFailed = true
@@ -117,10 +137,14 @@ final class LoopRunModel {
         }
     }
 
-    /// Loop the engine on this loop's region, in seconds, against the loaded file's duration.
+    /// Loop the engine on the region, in seconds, against the loaded file's duration.
     private func armRegion() {
         guard engine.duration > 0 else { return }
-        engine.setLoop(start: loop.start * engine.duration, end: loop.end * engine.duration)
+        let bounds: (start: Double, end: Double) = switch region {
+        case .loop(let loop): (loop.start, loop.end)
+        case .span(_, let start, let end): (start, end)
+        }
+        engine.setLoop(start: bounds.start * engine.duration, end: bounds.end * engine.duration)
     }
 
     // MARK: - Transport

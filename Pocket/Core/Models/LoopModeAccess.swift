@@ -54,9 +54,13 @@ extension LoopModeAccess.Facts {
     /// for no mode that needs sound — correct, and the reason this isn't just a `song != nil` check.
     init(_ loop: Loop) {
         self.init(hasCommandTempo: loop.commandTempo != nil,
-                  audioResolves: loop.song.map { $0.ref.source != .appleMusic } ?? false,
+                  audioResolves: loop.song.map(Self.audioResolves) ?? false,
                   isBackingTrack: loop.isBackingTrack)
     }
+
+    /// A song's audio can be played here: anything but Apple Music, which streams under DRM (ADR 0001).
+    /// One rule, read by a loop's facts and by *Watch it on the neck* for a section (ADR 0289).
+    static func audioResolves(_ song: Song) -> Bool { song.ref.source != .appleMusic }
 }
 
 extension LoopModeAccess {

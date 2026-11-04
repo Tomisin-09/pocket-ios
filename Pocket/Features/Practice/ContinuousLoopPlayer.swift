@@ -41,6 +41,15 @@ final class ContinuousLoopPlayer {
         percent = Self.clamp(startPercent ?? loop.ramp.command)
     }
 
+    /// A stretch of a song rather than one loop (ADR 0289): *Watch it on the neck* for a section, or the
+    /// whole song, from `start` to `end` in song seconds. It opens at the record's own tempo, since the loops
+    /// in a section can each have a different command.
+    init(song: Song, from start: TimeInterval, to end: TimeInterval) {
+        let duration = max(song.duration, 1)
+        model = LoopRunModel(song: song, start: max(0, start / duration), end: min(1, end / duration))
+        percent = 100
+    }
+
     private static func clamp(_ value: Int) -> Int { min(max(value, minPercent), maxPercent) }
 
     /// Nudge the tempo by one `step`, clamped — drives the −/+ controls; takes effect live if playing.

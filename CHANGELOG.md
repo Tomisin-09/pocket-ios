@@ -56,6 +56,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Watch a whole section on the neck.** On the song map, hold a section's name and choose **Watch it on
+  the neck**: the song plays from the top of the section to its end, and every loop in it with notes on
+  the neck lights in turn, each one's name under the neck where its notes begin. Where two loops overlap, the one
+  that starts later shows; where there's no piece, the neck goes quiet until the next. The eye at the top
+  of the map does the same for the whole song. A riff that repeats to the end of its section lights on
+  every pass. It plays at the record's tempo, and − and + change it (ADR 0289).
+
 - **Bend releases and pre-bends on the neck.** In Name the notes and Write a tab, a bent note now has
   two more switches under **Bend**: **Pre-bend**, for a string pushed up before you pick it, and
   **Release**, for a bend let back down before the next note. Together they make the four shapes, and
