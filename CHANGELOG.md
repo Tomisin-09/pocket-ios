@@ -8,9 +8,12 @@ which is the only durable record of where a build was taken (there are no releas
 build 2 at `8062382` (2026-07-22), build 3 at `de4614b` (2026-08-07), build 4 at the 1.2
 cut (2026-08-12 — squash hash added on merge, as the others were), build 5 at the beta-grant
 fix (2026-08-18 — the closed beta's second build, cut because build 4 walled every tester
-out of the app), build 7 at the 1.3 cut (2026-09-10 — squash hash added on merge). **There is no
-build 6 here**: it was uploaded to TestFlight from `pocket-273-beta-grant-unconditional` and never
-merged, so no commit on `main` records it. One `### Added`
+out of the app), build 7 at the 1.3 cut (2026-09-10 — squash hash added on merge), build 10 at
+the 1.4 cut (2026-11-04). **There is no build 6 here**: it was uploaded to TestFlight from
+`pocket-273-beta-grant-unconditional` and never merged, so no commit on `main` records it.
+**Nor are builds 8 and 9**: 8 went to review on 2026-10-27 without a section of its own and was
+pulled on 2026-11-02, and 9 was a second upload of the same code. Both are inside 1.4's section,
+because neither was released. One `### Added`
 group straddled that line — collection sessions landed after the 1.0 build was cut,
 ear training before it — so 1.0 and 1.1 each carry their own copy of that heading.
 
@@ -64,6 +67,8 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   that starts later shows; where there's no piece, the neck goes quiet until the next. The eye at the top
   of the map does the same for the whole song. A riff that repeats to the end of its section lights on
   every pass. It plays at the record's tempo, and − and + change it (ADR 0289).
+
+## [1.4] — build 10, cut 2026-11-04, for the resubmission on 2026-11-08
 
 ### Added
 
@@ -798,6 +803,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Internal
 
+- **The privacy manifest declares the file dates it reads.** Clearing out old exports reads each
+  staged folder's creation date (`ExportStaging.sweep`, since ADR 0236), which is one of Apple's
+  required-reason APIs, and the manifest didn't say so. It now declares the file timestamp category
+  with reason C617.1, for the app's own files. Builds 8 and 9 went without it. Found by
+  `/ready-to-ship` before build 10.
 - **The App Store screenshots are shot and captioned from the repo** (ADR 0279). `AppStoreShots`
   captures the two frames no manual figure shows: *Binta*'s *Chords* loop playing slowed, and a
   routine built for a gig. The history seed now includes *Open mic, Friday* (Pop Changes, the strumming

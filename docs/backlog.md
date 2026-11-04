@@ -182,9 +182,15 @@ takes the next free `pocket-` number when its item starts.
 21. Manual reference pages for controls that were renamed or added. Then **one** reshoot of every
     stale figure, and a check that the ADR 0279 App Store screenshots don't show the old grid or tempo
     sheet.
-22. `/ready-to-ship`, including `scripts/main-ui-green.sh`.
+22. `/ready-to-ship`, including `scripts/main-ui-green.sh`. **Run 2026-11-04** on 39194ef: lint, the
+    build, 4,422 unit tests and main's UI job all green. It found one gap: the privacy manifest didn't
+    declare the file creation date that clearing old exports reads (a required-reason API, missing
+    since ADR 0236). `pocket-417-release-1-4-prep` declares it, sets build 10, cuts `[1.4]` in the
+    CHANGELOG and adds this week's work to *What's New* (Tomisin approved the wording; the description
+    stays as approved on 10-27).
 23. Archive 1.4 (build 10 or later) by hand in Organizer and submit. On approval: availability on,
-    release, update `uk-site`, tag `v1.4`.
+    release, update `uk-site`, tag `v1.4`. The steps are in `docs/app-store-listing-copy.md` ▸
+    *1.4 (10), the resubmission*.
 24. **Freeze.** Bug fixes only.
 
 **Checks on top of the usual ones.** Any `@Model` change (items 9 and 14) gets an upgrade check over an

@@ -103,13 +103,26 @@
 		</dict>
 		<!-- The metronome engine reads CACurrentMediaTime() (backed by
 		     mach_absolute_time) to measure elapsed session/tick time between
-		     in-app events — never wall-clock or across launches. Reason 35F9.1. -->
+		     in-app events, and the tuner reads ProcessInfo.systemUptime to pause
+		     detection while a reference tone sounds — never wall-clock or across launches. Reason 35F9.1. -->
 		<dict>
 			<key>NSPrivacyAccessedAPIType</key>
 			<string>NSPrivacyAccessedAPICategorySystemBootTime</string>
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
 				<string>35F9.1</string>
+			</array>
+		</dict>
+		<!-- ExportStaging.sweep reads each staged export's creationDateKey to remove
+		     the ones left in tmp/RedMoonOutbox by an earlier send (ADR 0236). The
+		     folders are the app's own, inside its container, and the date never
+		     leaves the device. Reason C617.1. Missing from builds 8 and 9. -->
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
 			</array>
 		</dict>
 	</array>
