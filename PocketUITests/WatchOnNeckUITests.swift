@@ -73,7 +73,56 @@ final class WatchOnNeckUITests: UITestCase {
                        "Name the notes opened once the sheet closed: the tap fired both buttons")
     }
 
+    /// **The whole song** from the song map's toolbar (ADR 0289): the sheet plays the song from its top, not
+    /// one loop, and the riff's notes still light when the song reaches them. The seed's song has no
+    /// sections, so this is the map's one door here; a section's merge is unit-tested (`SectionWatchTests`).
+    @MainActor
+    func testTheWholeSongPlaysFromTheMapAndLightsTheRiff() {
+        let app = launchApp(extraArguments: [UITestHooks.watchPieceArgument])
+        openSongDetails(in: app)
+        let map = app.buttons["Map the song"]
+        XCTAssertTrue(reveal(map, in: app), "Song details has no Map the song")
+        map.tap()
+
+        let eye = app.buttons["map.watchSong"]
+        XCTAssertTrue(eye.waitForExistence(timeout: Self.uiTimeout), "no \(title) in the map's toolbar")
+        eye.tap()
+        XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: Self.uiTimeout),
+                      "\(title) didn't open from the map")
+        XCTAssertTrue(app.staticTexts["The whole song"].exists, "the sheet isn't headed for the whole song")
+        let neck = app.descendants(matching: .any)["watch.neck"]
+        XCTAssertEqual(neck.value as? String, "6 on the neck", "the riff's six aren't all on the neck")
+
+        let play = app.buttons["watch.play"]
+        XCTAssertEqual(play.label, "Play the song")
+        play.tap()
+        XCTAssertTrue(waitForLabel("Stop the song", on: play, timeout: audioTimeout),
+                      "the song never started: \(play.label)")
+        XCTAssertTrue(waitForValue(of: neck, matching: "value CONTAINS %@", "string, fret"),
+                      "the neck never lit the riff as the song played: \(String(describing: neck.value))")
+        attach(app, named: "watch-song-playing")
+        play.tap()
+        XCTAssertTrue(waitForLabel("Play the song", on: play), "the song didn't stop: \(play.label)")
+
+        app.navigationBars[title].buttons["Done"].tap()
+    }
+
     // MARK: - The way in
+
+    /// Song library ▸ the seeded song ▸ hold its title for Song details.
+    @MainActor
+    private func openSongDetails(in app: XCUIApplication) {
+        let library = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Song library,")).firstMatch
+        XCTAssertTrue(library.waitForExistence(timeout: Self.uiTimeout), "no Song library on Home")
+        XCTAssertTrue(tap(library, until: app.navigationBars["Library"], in: app), "the library didn't open")
+        let song = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Naming test")).firstMatch
+        XCTAssertTrue(song.waitForExistence(timeout: Self.uiTimeout), "the seeded song isn't in the library")
+        XCTAssertTrue(scrollIntoView(song, in: app), "the seeded song isn't reachable")
+        song.tap()
+        let heading = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Naming test,")).firstMatch
+        XCTAssertTrue(heading.waitForExistence(timeout: playerTimeout), "the song player never opened")
+        heading.press(forDuration: 1.0)
+    }
 
     @MainActor
     private func openWatch(file: StaticString = #filePath, line: UInt = #line) -> XCUIApplication {

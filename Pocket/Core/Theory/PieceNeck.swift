@@ -117,6 +117,14 @@ extension PieceNeck {
     /// for a loop another hides. Its audio resolves as ear training's does (`LoopModeAccess.Facts`).
     static func canWatch(_ loop: Loop) -> Bool { canWatch(loop.transcription, on: loop) }
 
+    /// The gate for a stretch of a song (ADR 0289): something in it is placed on the neck, and the song's
+    /// audio plays here. The song map's section headings and its toolbar ask this.
+    static func canWatch(_ sources: [SectionWatch.Source], from start: TimeInterval, to end: TimeInterval,
+                         on song: Song) -> Bool {
+        canWatch(hasFrettedLabels: SectionWatch.hasSomethingToWatch(sources, from: start, to: end),
+                 audioResolves: LoopModeAccess.Facts.audioResolves(song))
+    }
+
     /// The same, for a caller already holding the loop's piece decoded: the Journal's piece rows.
     static func canWatch(_ piece: PieceTranscription?, on loop: Loop) -> Bool {
         canWatch(hasFrettedLabels: piece?.hasFrettedLabels ?? false,

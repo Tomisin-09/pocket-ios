@@ -13,6 +13,11 @@
   uid) · 0232 D2 (the map's tab sheet, which gains a way in) · 0229 (the Journal's piece row, which has no
   hold menu)
 - **Schema:** none. It reads the piece the loop already stores (`Loop.transcriptionData`).
+- **Amended by:** ADR 0289 (Watch the section on the neck, 2026-11-04) — **D1**: the sheet also opens on
+  a section or the whole song, under the same name and icon. **D2**: two more doors on the song map, a
+  section heading's hold menu and an eye in the toolbar, behind the same gate read over the stretch.
+  **D4**: every piece in the stretch is drawn, merged, the later loop showing where two overlap.
+  **D6**: a stretch opens at 100%. D3, D5 and D7 stand, and so does a loop's own sheet.
 
 ## Context
 

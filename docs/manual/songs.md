@@ -217,6 +217,11 @@ To split the song into sections, open a marker and switch on **Starts a section*
 begins a new row with its name above it, and anything before the first one sits under **Start**.
 Markers without it stay on the map as pins. Tap a section's name or a pin to open its marker.
 
+To watch a whole section on the neck, hold its name and choose **Watch it on the neck**: the song plays
+from the top of the section to its end, and every loop in it with notes on the neck lights as it's heard,
+one after another. Where two loops overlap, the one that starts later shows. Where no loop has a piece, the
+neck goes quiet until the next one. The eye at the top of the map does the same for the whole song.
+
 If the song has markers but no sections yet, the map asks once: **Use your markers as sections?**
 **Choose sections** lists your markers, with the ones named like a part of a song (*Intro*, *Verse 2*,
 *Chorus*…) already ticked, and **Use** makes the ticked ones sections. Nothing changes until you tap it.
