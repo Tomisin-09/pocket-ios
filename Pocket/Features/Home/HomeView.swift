@@ -197,7 +197,7 @@ struct HomeView: View {
             } message: {
                 Text(importError ?? "")
             }
-            .songImportFeedback(importModel)
+            .songImportFeedback(importModel, open: { openingSong = $0 }, afterBatch: { showingLibrary = true })
             .navigationDestination(isPresented: $showingLibrary) { LibraryView() }
             // Import a single song from the hub and it opens for practice. Bool-bound, not
             // `item:`-bound: a just-inserted `Song`'s `persistentModelID` flips on the first autosave
@@ -289,14 +289,10 @@ struct HomeView: View {
         case .success(let urls):
             Task {
                 let outcome = await importModel.run(urls: urls, into: context)
-                // One song: open it — importing a single file is the start of practising it.
-                if let song = importModel.takeSongToOpen(after: outcome) {
-                    openingSong = song
-                    return
-                }
-                // Otherwise land the user in the library so they see the songs they just added;
-                // if nothing imported (all skipped), stay put — the summary alert explains.
-                if outcome.imported > 0 { showingLibrary = true }
+                // One song: open it — importing a single file is the start of practising it. A batch
+                // reads under the import sheet, and closing it lands the user in the library to see
+                // what was added (`afterBatch`); if nothing was, the sheet has said why.
+                if let song = importModel.takeSongToOpen(after: outcome) { openingSong = song }
             }
         case .failure(let error):
             importError = error.localizedDescription

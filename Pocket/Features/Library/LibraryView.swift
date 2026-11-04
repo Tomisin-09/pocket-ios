@@ -87,7 +87,7 @@ struct LibraryView: View {
         } message: {
             Text(importError ?? "")
         }
-        .songImportFeedback(importModel)
+        .songImportFeedback(importModel, open: { openingSong = $0 })
         // Open on create: a lone imported song goes straight to its waveform. Bool-bound for the same
         // identity-flip reason as the sheets below — a just-inserted `Song`'s `persistentModelID`
         // changes on the first autosave, which item-based presentation would read as "different

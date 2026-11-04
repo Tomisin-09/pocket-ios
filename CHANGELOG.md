@@ -56,6 +56,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Importing several songs shows each one.** Pick more than one file and a sheet lists them all as
+  they're read: waiting, reading, added, or skipped, with why (*There's no audio in it*, or *A
+  copy-protected file can't be imported*). Tap a song that was added to open it straight away. One
+  file still opens on its waveform as soon as it's read (ADR 0290).
+
 - **Watch a whole section on the neck.** On the song map, hold a section's name and choose **Watch it on
   the neck**: the song plays from the top of the section to its end, and every loop in it with notes on
   the neck lights in turn, each one's name under the neck where its notes begin. Where two loops overlap, the one

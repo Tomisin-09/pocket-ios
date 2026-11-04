@@ -152,8 +152,9 @@ The rest is behind a row each, and each row says what is behind it:
 
 ### Importing
 
-`Import songs` opens the system file picker; you can choose several at once, and a card names each
-song as it is read, with *2 of 5* when there are several. Files are copied into the app, so the original can move without
+`Import songs` opens the system file picker. One file is read under a card that names it, then opens.
+Several are listed in a sheet as they're read, each *Added* or skipped with its reason, under a title
+that counts along (*Importing 2 of 5*); tap an added song to open it, or `Done`. Files are copied into the app, so the original can move without
 breaking the song. The empty library offers **`Import a song`** and **`Try the demo`** instead.
 
 Procedure for all of this is in [songs](../songs.md).

@@ -146,7 +146,10 @@ takes the next free `pocket-` number when its item starts.
     2026-11-03** as ADR 0287 (`pocket-408-metronome-takes`); the upgrade check over an existing store
     and the device takes (speaker, headphones, Start ramp, leaving the app) are in its PR.
 15. **An import loading screen** (M, ADR amends 0011): a sheet showing each file's state,
-    where any imported song can be opened.
+    where any imported song can be opened. **Built 2026-11-04** as ADR 0290
+    (`pocket-411-import-sheet`), relating to 0011 rather than amending it (0011 never described the
+    card or the alert). One file keeps the card; share-in keeps it too. Device check owed: several
+    files with one that won't read, and open one from the sheet.
 16. ~~**Make a song from this take**~~ (M, short ADR). **Deprioritised 2026-11-03, after 1.4**: see
     *After the freeze*.
 17. **Pre-bends** (M, ADR amends 0227): all four shapes (bend, bend and release,
