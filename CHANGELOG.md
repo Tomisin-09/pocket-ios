@@ -56,6 +56,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Bend releases and pre-bends on the neck.** In Name the notes and Write a tab, a bent note now has
+  two more switches under **Bend**: **Pre-bend**, for a string pushed up before you pick it, and
+  **Release**, for a bend let back down before the next note. Together they make the four shapes, and
+  the tab writes them the usual way: *7b9*, *7b9r7*, *7pb9*, *7pb9r7*. A note is named by where it
+  lands, so a bend and release reads as the fret you came back to, and a pre-bend as the note it was
+  bent to. On the neck the bend's arrow points the way the pitch moves, and when the strip plays, the
+  glow goes up and back for a release and lights where a pre-bend is heard (ADR 0288).
+
 - **Record yourself at the metronome.** The record button now sits beside **Start** on the metronome,
   as it does on an exercise. Arm it, and the take begins when the click does, from **Start** or from
   **Start ramp**. It carries on through Pause and ends at **■**, when you leave the screen, or when you

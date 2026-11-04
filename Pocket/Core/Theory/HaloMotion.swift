@@ -5,15 +5,20 @@ import Foundation
 ///
 /// How a note was reached comes first, since that's what's heard first: a hammer-on, pull-off or slide from
 /// the tap before, or a lead-in inside the note (ADR 0230). A note reached plainly then shows what's done
-/// to it: a bend glides to where it lands, vibrato shakes. Anything else pops. With Reduce Motion every one
+/// to it: a bend glides to where it lands, a released one glides there and back, a pre-bend lights at the
+/// pitch it was bent to and, let down, glides down from it (ADR 0288), vibrato shakes. Anything else pops.
+/// With Reduce Motion every one
 /// of them only fades, where the note is placed (the view decides that, not this).
 ///
 /// Pure and SwiftUI-free (AGENTS.md), so which glow a note gets is unit-tested.
 enum HaloMotion: Equatable, Sendable {
     /// Picked: it pops in where it was played.
     case pop(NeckSpot)
-    /// Bent: it lights where it was fretted, then glides to where the bend lands.
+    /// Bent: it lights where the bend starts, then glides to where it lands. Up from the fret for a bend;
+    /// down to the fret for a pre-bend let down (ADR 0288).
     case bend(from: NeckSpot, to: NeckSpot)
+    /// Bent and released (ADR 0288): it lights on the fret, glides up to `peak`, and comes back.
+    case bendAndRelease(from: NeckSpot, peak: NeckSpot)
     /// Vibrato: it shakes on the note.
     case vibrato(NeckSpot)
     /// Hammered on or pulled off: the fret it came from flashes, then the glow snaps to the note.
@@ -27,7 +32,7 @@ enum HaloMotion: Equatable, Sendable {
     /// Where the glow ends up.
     var end: NeckSpot {
         switch self {
-        case .pop(let spot), .vibrato(let spot): return spot
+        case .pop(let spot), .vibrato(let spot), .bendAndRelease(let spot, _): return spot
         case .bend(_, let to), .legato(_, let to), .slide(_, let to), .slideIn(let to, _): return to
         }
     }
@@ -52,10 +57,23 @@ enum HaloMotion: Equatable, Sendable {
             if let join, let previous = before.first(where: { $0.string == note.string }) {
                 return reached(spot, from: NeckSpot(string: note.string, fret: previous.fret), by: join)
             }
-            if note.bend > 0 {
-                return .bend(from: spot, to: NeckSpot(string: note.string, fret: min(note.fret + note.bend, maxFret)))
+            if let shape = note.bendShape {
+                return bent(spot, shape, to: NeckSpot(string: note.string, fret: min(note.bentFret, maxFret)),
+                            vibrato: note.vibrato)
             }
             return note.vibrato ? .vibrato(spot) : .pop(spot)
+        }
+    }
+
+    /// A bent note's glow, from the fret `spot` and the bent pitch `peak`. A pre-bend is heard only at the
+    /// bent pitch, so that's where it lights, and where it shakes when it has vibrato.
+    private static func bent(_ spot: NeckSpot, _ shape: FrettedNote.BendShape, to peak: NeckSpot,
+                             vibrato: Bool) -> HaloMotion {
+        switch shape {
+        case .bend: return .bend(from: spot, to: peak)
+        case .bendAndRelease: return .bendAndRelease(from: spot, peak: peak)
+        case .preBend: return vibrato ? .vibrato(peak) : .pop(peak)
+        case .preBendAndRelease: return .bend(from: peak, to: spot)
         }
     }
 

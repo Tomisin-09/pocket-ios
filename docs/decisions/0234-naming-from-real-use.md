@@ -41,6 +41,9 @@
 - **Amended by:** ADR 0252 (One note moves inside a chord, 2026-10-04) — **D6**: ↶ ↷ move from the
   strip's bottom row to the right of the picker's first row, in the same spot on Fret & string and By
   ear. The bottom row keeps *Next unnamed*. The history, the keys and the rest of D6 stand.
+- **Amended by:** ADR 0288 (Bend releases and pre-bends, 2026-11-04) — **D5**: a released bend's glow
+  glides up and back, a pre-bend lights where it's heard, and a pre-bend let down glides down from the
+  bent pitch. The rest of D5 stands, Reduce Motion's fade included.
 
 ## Context
 

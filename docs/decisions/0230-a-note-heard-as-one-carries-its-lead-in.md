@@ -8,6 +8,8 @@
   placed note gains an optional `leadIn` key.
   **D10**: a slide **into** a note from nowhere (`/7`) is lifted. A slide out to nowhere (`7\`), bend
   releases and pre-bends stay out, and so does everything else D10 lists.
+- **Later:** 0288 (2026-11-04) lifts bend releases and pre-bends from 0227 D10, following this ADR's
+  rule that a note moving inside one tap is named by where it lands. A slide out to nowhere stays out.
 - **Amended by:** ADR 0252 (One note moves inside a chord, 2026-10-04) — **D6**: in a chord, a
   hammer-on or pull-off moves the note on the string tapped and the rest are held; *The whole chord
   moved?* moves them all as one. A slide, *Moved into place as one?* and a shape moving as one keep D6

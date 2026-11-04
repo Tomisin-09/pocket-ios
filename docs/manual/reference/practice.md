@@ -222,7 +222,7 @@ ear`: a run too fast to name at full speed can be slowed down here, and a tapped
 speed too. To hear the notes as a line, the play button at the start of the strip plays the whole
 loop at that speed, ringing each note as it goes by; on Fret & string, where you placed each
 note also lights up on the neck as it plays, moving the way you played it: a bend glides up to where it
-lands, vibrato shakes, a hammer-on or pull-off lights where it started and snaps across, and a slide
+lands, and back down if you released it, a pre-bend lights where it's heard, vibrato shakes, a hammer-on or pull-off lights where it started and snaps across, and a slide
 travels along the string. With Reduce Motion each only fades in. Tap a note to stop and hear it.
 If you find a note you didn't count, or one you counted that isn't there, you don't have to count again.
 *Missed a note?* under the strip plays from the note before the one you're on to the note after, with a
@@ -254,10 +254,12 @@ is held, so a B string hammered from the barre writes *5h7* while the other stri
 always the fret you tap, whether that's the barre or the middle finger of an m7. If the whole chord moved,
 `The whole chord moved?` under it moves every note as many frets. A slide moves the whole chord: tap
 where one of its notes started and the rest follow. `Heard as one note?` moves a join from the note
-before into the note. `Bend` and `~ Vibrato` mark the note itself. A bend
-changes the note, so a bent note reads as the note it reaches, and so does a note with a quick start.
-The marks go into the tab the usual way, the same however you tapped them: *7b9*, *7~*, *5h7*, *8/10*,
-*/10*. Turn on
+before into the note. `Bend` and `~ Vibrato` mark the note itself. Once a note is bent, `Pre-bend`
+and `Release` say how: `Pre-bend` if you pushed the string before you picked it, `Release` if you let it
+back down before the next note, and both for a pre-bend let down. A bend changes the note, so a bent
+note reads as the note it reaches, as a note with a quick start does, and a released bend as the fret
+it comes back to. The marks go into the tab the usual way, the same however you tapped them: *7b9*,
+*7b9r7*, *7pb9*, *7~*, *5h7*, *8/10*, */10*. Turn on
 `Chords` to place more than one note: one per string, as in My chords, so a double-stop, a triad and a
 full chord are the same taps. The neck names what you placed, a chord such as *Am/C* or, for two notes
 that aren't one, the interval between them. A **muted note**, struck with no pitch, is the ✕ beside each

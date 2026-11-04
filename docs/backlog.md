@@ -152,6 +152,9 @@ takes the next free `pocket-` number when its item starts.
 17. **Pre-bends** (M, ADR amends 0227): all four shapes (bend, bend and release,
     pre-bend, pre-bend and release). A note is named by the fret it lands on, as with lead-ins. The
     new field on `FrettedNote` is optional, because a Codable default doesn't survive a missing key.
+    **Built 2026-11-04** as ADR 0288 (`pocket-409-pre-bends`): two switches under *Bend*, a release
+    stored under its own key so an older build names it by its fret. Device check owed: name each
+    shape, play the strip, read the tab.
 18. **Watch the section** on the neck (M, ADR amends 0254): straight through with gaps.
     Where loops overlap, the one that starts later shows.
 

@@ -150,6 +150,11 @@ struct FrettedNote: Equatable, Hashable, Sendable {
     var fret: Int
     /// Semitones the note is bent up: 0 none, then ½, whole and 1½ steps.
     var bend: Int = 0
+    /// The bend comes back down to the fret before the next note: `7b9r7` (ADR 0288). Only on a bent note.
+    var releases = false
+    /// The string was bent before it was picked, so the note starts at the bent pitch: `7pb9` (ADR 0288).
+    /// Only on a bent note.
+    var preBent = false
     var vibrato = false
     /// A grace note hammered, pulled or slid into this one, or a slide in from nowhere, when the player
     /// heard the two as one note and tapped once. On a single note, on every note of a shape moving as
@@ -160,9 +165,10 @@ struct FrettedNote: Equatable, Hashable, Sendable {
     /// The bends the neck offers, in semitones.
     static let bends = 0...3
 
-    /// The note it sounds, bend included, or `nil` for a string outside `openMidi`.
+    /// The note it sounds, bend included, or `nil` for a string outside `openMidi`. A released bend lands
+    /// back on its fret, and a note is named by where it lands, as a lead-in's is (ADR 0288).
     func sounding(openMidi: [Int]) -> Int? {
-        openMidi.indices.contains(string) ? openMidi[string] + fret + bend : nil
+        openMidi.indices.contains(string) ? openMidi[string] + fret + (releases ? 0 : bend) : nil
     }
 }
 
@@ -300,9 +306,14 @@ extension PieceLabel: Codable {
 
 /// A note's keys: `string` and `fret` always, `bend`, `vibrato` and `leadIn` only when set, so an unmarked
 /// note is written exactly as 0225 wrote it.
+///
+/// **A released bend keeps its size under `release`, not `bend`** (ADR 0288 D3), and a pre-bend adds
+/// `preBend`. An older build drops keys it doesn't know, so it reads `7b9r7` as fret 7, the note it lands
+/// on, and `7pb9` as `7b9`, the right pitch with the wrong motion. Writing a release under `bend` would have
+/// had it name fret 9.
 extension FrettedNote: Codable {
     private enum CodingKeys: String, CodingKey {
-        case string, fret, bend, vibrato, leadIn
+        case string, fret, bend, release, preBend, vibrato, leadIn
     }
 
     init(from decoder: Decoder) throws {
@@ -310,7 +321,17 @@ extension FrettedNote: Codable {
         string = try container.decode(Int.self, forKey: .string)
         fret = try container.decode(Int.self, forKey: .fret)
         let bend = try container.decodeIfPresent(Int.self, forKey: .bend) ?? 0
-        self.bend = Self.bends.contains(bend) ? bend : 0
+        let release = try container.decodeIfPresent(Int.self, forKey: .release) ?? 0
+        // `bend` first, the key every build reads, so this build and an older one agree on a note that has
+        // both. Nothing writes both.
+        if bend > 0, Self.bends.contains(bend) {
+            self.bend = bend
+        } else if release > 0, Self.bends.contains(release) {
+            self.bend = release
+            releases = true
+        }
+        let preBend = try container.decodeIfPresent(Bool.self, forKey: .preBend) ?? false
+        preBent = preBend && self.bend > 0
         vibrato = try container.decodeIfPresent(Bool.self, forKey: .vibrato) ?? false
         // A lead-in this build can't read, or one that can't be played into this fret, reads as none.
         let leadIn = (try? container.decodeIfPresent(LeadIn.self, forKey: .leadIn)) ?? nil
@@ -321,7 +342,10 @@ extension FrettedNote: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(string, forKey: .string)
         try container.encode(fret, forKey: .fret)
-        if bend != 0 { try container.encode(bend, forKey: .bend) }
+        if bend != 0 {
+            try container.encode(bend, forKey: releases ? .release : .bend)
+            if preBent { try container.encode(preBent, forKey: .preBend) }
+        }
         if vibrato { try container.encode(vibrato, forKey: .vibrato) }
         try container.encodeIfPresent(leadIn, forKey: .leadIn)
     }

@@ -92,11 +92,11 @@ extension NameTheNotesSheet {
         return Text("Read from the neck: a \(shape.word.lowercased()), \(name) (\(notes))")
     }
 
-    /// ", G7 bent a whole step" when the placed note is bent, so the read name isn't a surprise.
+    /// ", G7 bent a whole step" when the placed note sounds bent, so the read name isn't a surprise. A
+    /// released bend lands back on its fret and is named by it (ADR 0288), so it has nothing to explain.
     private func bentFrom(_ label: PieceLabel?) -> String {
-        guard let note = label?.singleNote, note.bend > 0 else { return "" }
-        let size = ["", "a half step", "a whole step", "a step and a half"][min(note.bend, 3)]
-        return ", \(fretText([FrettedNote(string: note.string, fret: note.fret)])) bent \(size)"
+        guard let note = label?.singleNote, !note.releases, let words = note.bendWords else { return "" }
+        return ", \(fretText([FrettedNote(string: note.string, fret: note.fret)])) \(words)"
     }
 
     /// The kind a name saves as: the current answer's own when it was named by ear, else the one left

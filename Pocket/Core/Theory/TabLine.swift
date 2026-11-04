@@ -70,11 +70,10 @@ enum TabLine {
         return lines.map { $0 + "--|" }.joined(separator: "\n")
     }
 
-    /// A note as tab writes it: any lead-in (`11h`, `/`), the fret, then `b` and the fret it bends to,
-    /// then `~` for vibrato.
+    /// A note as tab writes it: any lead-in (`11h`, `/`), the fret, then the bend (`b9`, and `r7` for a
+    /// release, or `pb9` for a pre-bend, ADR 0288), then `~` for vibrato.
     static func cell(_ note: FrettedNote) -> String {
-        leadIn(note) + "\(note.fret)" + (note.bend > 0 ? "b\(note.fret + note.bend)" : "")
-            + (note.vibrato ? "~" : "")
+        leadIn(note) + "\(note.fret)" + note.bendTab + (note.vibrato ? "~" : "")
     }
 
     /// A lead-in as tab writes it before the fret: its start and the join's mark (`11h`, `13p`, `11/`), or
