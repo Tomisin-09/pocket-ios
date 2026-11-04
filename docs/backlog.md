@@ -13,6 +13,10 @@ good enough to ask people to pay for. The list below gets built, 1.4 goes back t
 The list is the release's definition of done. Anything new that turns up while building it and isn't a
 bug goes under **After the freeze** at the end of this entry, not into 1.4.
 
+**Features froze on 2026-11-04**, after the device check (Tomisin: *"this is a good place to stop for
+1.4, anything else will come after"*). Every feature item is merged except 16 (deprioritised) and 18
+(held back, ADR 0291). What's left is Phase 4's release work, and bug fixes.
+
 **Decided with Tomisin:**
 - **No TestFlight beta.** Each piece is tested on Tomisin's device as it lands. The next archive is the
   submission.
@@ -193,6 +197,40 @@ click through the speaker and through headphones.
 
 ### After the freeze
 
+- **Pre-bends in the FAQ.** From the device check on 2026-11-04 (Tomisin: *"pre-bends are fine though we
+  could include a FAQ aspect later"*): an entry on naming a pre-bend and a bend and release (ADR 0288),
+  in the Toolkit's FAQ. C9 holds the FAQ to what the app says, so quote the controls (*Pre-bend*,
+  *Release*) as they read.
+- **The import sheet's design.** From the same check (Tomisin: *"I feel like we could improve upon the
+  design of the importing screen"*). It works as ADR 0290 built it; what to change is open. Needs
+  Tomisin's direction before any build, and a short ADR amending 0290 if it changes what the sheet says
+  or when it shows.
+- **Scrolling a long Journal.** #406 made opening and filtering quick (the feed was rebuilt 277 times on
+  opening). Scrolling wasn't part of that and costs the same: 5.6 s of main-thread time to scroll the whole
+  feed of the phone's own Journal (85 notes, about 40 days; Debug, simulator). It's in drawing the rows,
+  not undiagnosed further: Time Profiler recorded nothing on the simulator or the Mac. Tomisin, the same
+  day: *"the journal feels a lot smoother now even without the scrolling fix"*. Profile it on the device
+  first, in Instruments.
+- **What else grows with use: audited 2026-11-04, nothing else runs away.** Asked after the Journal fix
+  (Tomisin: *"are there any other features like this … so we can be more proactive"*). Eight screens were
+  opened on a copy of the phone's store, at its own history (285 runs, 85 notes, 20 takes) and at four
+  times it (each copied 95, 190 and 285 days back: about a year at this pace), in a throwaway hosted test
+  (main-thread CPU, Debug, simulator).
+  - **No second Journal.** Opening the Journal stayed flat (622 → 580 ms). The Practice log, Songs, Loops,
+    Exercises and Routines didn't grow. Their per-render work is a filter or a single map over each query.
+  - **Home's *This week* strip grows in step with practice.** It queries every run and every note to show
+    one week: about 100 ms at today's history and about 350 ms at four times it. It's linear, so it isn't
+    urgent, but Home is the most-opened screen. Fetch only this week's runs (a plain `Date` predicate on
+    `PracticeRun.startedAt`, which isn't the optional-predicate freeze in `docs/swiftdata-gotchas.md`).
+  - **Two backfills run on every launch, on the main actor:** `PieceDateBackfill` (decodes every piece,
+    49 ms) and `MasteryStaleBackfill` (69 ms). They grow with the library, not with history. They run
+    every launch on purpose, for restored archives, so running them only after a restore would recover it.
+  - **Not measured:** Practice and *Today's session* drew the plan wall in the harness, so only their code
+    was read. Each maps the runs once per render (about 40 ms for 1,140 runs). Disk use from takes and
+    imported songs wasn't looked at.
+  - **Method, for next time:** pull the store with `devicectl`, open it in a hosted-window test with
+    `ModelConfiguration(url:)`, and time each screen before and after multiplying the history. The first
+    draw after a bulk insert pays a one-off cost (2.6 s here), so draw each screen twice and read the second.
 - **Watch the section, rethought** (item 18, ADR 0289, held back by ADR 0291). Built and merged (#402),
   then held back after Tomisin's device check of 2026-11-04: *"I feel like it could be better thought
   out. let's drop it then put it in the post 1.4 backlog"*. The lag felt that day was most likely the
