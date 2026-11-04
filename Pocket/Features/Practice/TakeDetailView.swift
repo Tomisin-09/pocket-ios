@@ -74,12 +74,6 @@ struct TakeDetailView: View {
         .renameTakeAlert($renaming, context: modelContext)
         .takeNoteSheet($editingNote, context: modelContext)
         .takeMomentSheet($editing, take: take, context: modelContext)
-        .confirmationDialog("Trim this take?", isPresented: $confirmingTrim, titleVisibility: .visible) {
-            Button("Trim", role: .destructive) { Task { await commitTrim() } }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text(trimWarning)
-        }
         .alert("Couldn’t trim", isPresented: trimFailurePresented) {
             Button("OK", role: .cancel) { trimFailure = nil }
         } message: {

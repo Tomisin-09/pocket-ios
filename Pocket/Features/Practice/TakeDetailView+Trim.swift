@@ -39,6 +39,14 @@ extension TakeDetailView {
                     .tint(PocketColor.danger)
                     .disabled(isTrimming || TakeTrim.isNoOp(start: keep.start, end: keep.end,
                                                             duration: audioDuration))
+                    // On the button it asks about: on iOS 26 a dialog points at the view it hangs from.
+                    .confirmationDialog("Trim this take?", isPresented: $confirmingTrim,
+                                        titleVisibility: .visible) {
+                        Button("Trim", role: .destructive) { Task { await commitTrim() } }
+                        Button("Cancel", role: .cancel) { }
+                    } message: {
+                        Text(trimWarning)
+                    }
             }
             if isTrimming {
                 ProgressView().progressViewStyle(.linear)

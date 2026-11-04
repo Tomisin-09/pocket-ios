@@ -15,9 +15,12 @@ struct PlannerGoalsSection: View {
     let usesLongTerm: Bool
     let onAdd: () -> Void
     let onEdit: (Goal) -> Void
-    /// Ask to clear every active goal. The owning screen confirms — this only reports the tap.
+    /// Clear every active goal, once the player has confirmed it here. The confirmation hangs on the
+    /// Clear button, because on iOS 26 a dialog points at the view it hangs from; the clearing itself
+    /// stays with the owning screen.
     let onClear: () -> Void
     let onDelete: (Goal) -> Void
+    @State private var confirmingClear = false
 
     var body: some View {
         thisSessionSection
@@ -53,7 +56,10 @@ struct PlannerGoalsSection: View {
             // single goal away is already the cheaper gesture. This earns its place when the list
             // has accumulated enough that clearing one at a time is the annoyance.
             if !activeGoals.isEmpty {
-                Button(role: .destructive, action: onClear) {
+                Button(role: .destructive) {
+                    confirmingClear = true
+                    haptic(.medium)
+                } label: {
                     Label("Clear this session's goals", systemImage: "xmark.circle")
                         .font(.futura(.body))
                         // `role: .destructive` reddens the *title* only; the glyph keeps the list's
@@ -62,6 +68,18 @@ struct PlannerGoalsSection: View {
                         .foregroundStyle(PocketColor.danger)
                 }
                 .listRowBackground(PocketColor.background)
+                .confirmationDialog("Clear this session's goals?", isPresented: $confirmingClear,
+                                    titleVisibility: .visible) {
+                    Button("Clear \(activeGoals.count) goal\(activeGoals.count == 1 ? "" : "s")",
+                           role: .destructive, action: onClear)
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    // Says what it spares as well as what it removes. Long-term goals are the ones a
+                    // player would most fear losing here, and they live on a different screen entirely
+                    // — so the dialog states that rather than leaving it to be discovered.
+                    Text("Removes the goals you set for this session. Your long-term goals aren't "
+                         + "touched, and neither is anything you've practised.")
+                }
             }
         } header: {
             // "Goals" alone stopped being unambiguous when the long-term tier arrived

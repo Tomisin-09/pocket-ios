@@ -142,6 +142,17 @@ struct MyChordDetailView: View {
                     }
                     .buttonStyle(.bordered)
                     .tint(PocketColor.danger)
+                    // On the button it asks about: on iOS 26 a dialog points at the view it hangs from.
+                    .confirmationDialog("Delete this chord?", isPresented: $confirmingDelete,
+                                        titleVisibility: .visible) {
+                        Button("Delete", role: .destructive) {
+                            modelContext.delete(chord)
+                            dismiss()
+                        }
+                        Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("“\(chord.name)” will be removed from My chords. This can't be undone.")
+                    }
                 }
                 .font(.futura(.subheadline, weight: .semibold))
             }
@@ -158,16 +169,6 @@ struct MyChordDetailView: View {
                 .autocorrectionDisabled()
             Button("Save") { chord.rename(to: draftName) }
             Button("Cancel", role: .cancel) {}
-        }
-        .confirmationDialog("Delete this chord?", isPresented: $confirmingDelete,
-                            titleVisibility: .visible) {
-            Button("Delete", role: .destructive) {
-                modelContext.delete(chord)
-                dismiss()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("“\(chord.name)” will be removed from My chords. This can't be undone.")
         }
     }
 }

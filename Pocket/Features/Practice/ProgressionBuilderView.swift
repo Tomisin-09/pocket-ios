@@ -66,12 +66,6 @@ struct ProgressionBuilderView: View {
             }
         }
         .tint(tint)
-        .confirmationDialog("Delete this progression?", isPresented: $confirmingDelete, titleVisibility: .visible) {
-            Button("Delete", role: .destructive) { delete() }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Drills you've already filled from it keep their chords. This can't be undone.")
-        }
     }
 
     // MARK: - Sections
@@ -215,6 +209,14 @@ struct ProgressionBuilderView: View {
     private var deleteSection: some View {
         Section {
             Button("Delete progression", role: .destructive) { confirmingDelete = true }
+                // On the button it asks about: on iOS 26 a dialog points at the view it hangs from.
+                .confirmationDialog("Delete this progression?", isPresented: $confirmingDelete,
+                                    titleVisibility: .visible) {
+                    Button("Delete", role: .destructive) { delete() }
+                    Button("Cancel", role: .cancel) {}
+                } message: {
+                    Text("Drills you've already filled from it keep their chords. This can't be undone.")
+                }
         }
     }
 
