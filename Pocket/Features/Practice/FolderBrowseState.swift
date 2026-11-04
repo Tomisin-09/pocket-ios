@@ -64,7 +64,9 @@ struct FolderCrumb: Identifiable, Hashable {
 }
 
 extension View {
-    /// Hang the folder prompts — New folder, Rename, and the delete confirmation — on a library.
+    /// Hang the folder prompts — New folder and Rename — on a library. The delete confirmation hangs
+    /// on each folder's row instead (`folderDeleteConfirmation`), since on iOS 26 a dialog points at the
+    /// view it hangs from.
     ///
     /// One modifier for both libraries because all three verbs act on the **shared** namespace: a
     /// folder renamed from the Exercises library is renamed for routines too, and doing it twice in
@@ -98,35 +100,10 @@ private struct FolderBrowsingModifier: ViewModifier {
             } message: {
                 Text("Anything filed inside it moves with it.")
             }
-            .confirmationDialog(deleteTitle, isPresented: deletePrompt, titleVisibility: .visible) {
-                Button("Delete folder", role: .destructive, action: delete)
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                // Said in words on purpose (D10). "Delete folder" in nearly every other app on this
-                // device means something considerably more frightening than what this does.
-                Text(deleteMessage)
-            }
     }
 
     private var renamePrompt: Binding<Bool> {
         Binding(get: { state.renaming != nil }, set: { if !$0 { state.renaming = nil } })
-    }
-
-    private var deletePrompt: Binding<Bool> {
-        Binding(get: { state.deleting != nil }, set: { if !$0 { state.deleting = nil } })
-    }
-
-    private var deleteTitle: String {
-        "Delete “\(FolderPath.leaf(state.deleting ?? ""))”?"
-    }
-
-    /// What actually happens, counted rather than asserted — the numbers are the reassurance.
-    private var deleteMessage: String {
-        guard let folder = state.deleting else { return "" }
-        let held = PracticeFolderStore.contents(of: folder, in: context)
-        let items = [held.exercises == 1 ? "1 exercise" : "\(held.exercises) exercises",
-                     held.routines == 1 ? "1 routine" : "\(held.routines) routines"]
-        return "The folder goes. The \(items.joined(separator: " and ")) in it stay in your library."
     }
 
     private func create() {
@@ -148,13 +125,53 @@ private struct FolderBrowsingModifier: ViewModifier {
         state.draftName = ""
         haptic(.medium)
     }
+}
+
+extension View {
+    /// The delete confirmation for one folder, on that folder's row: on iOS 26 a dialog points at the view
+    /// it hangs from, and from the library it pointed elsewhere. Shown when `state.deleting` is this folder.
+    func folderDeleteConfirmation(_ folder: String, state: FolderBrowseState) -> some View {
+        modifier(FolderDeleteModifier(folder: folder, state: state))
+    }
+}
+
+/// Deleting a folder, through `PracticeFolderStore` like every other folder write.
+private struct FolderDeleteModifier: ViewModifier {
+    let folder: String
+    @Environment(\.modelContext) private var context
+    @Bindable var state: FolderBrowseState
+
+    func body(content: Content) -> some View {
+        content
+            .confirmationDialog("Delete “\(FolderPath.leaf(folder))”?", isPresented: asking,
+                                titleVisibility: .visible) {
+                Button("Delete folder", role: .destructive, action: delete)
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                // Said in words on purpose (D10). "Delete folder" in nearly every other app on this
+                // device means something considerably more frightening than what this does.
+                Text(message)
+            }
+    }
+
+    private var asking: Binding<Bool> {
+        Binding(get: { state.deleting == folder }, set: { if !$0 { state.deleting = nil } })
+    }
+
+    /// What actually happens, counted rather than asserted — the numbers are the reassurance.
+    private var message: String {
+        let held = PracticeFolderStore.contents(of: folder, in: context)
+        let items = [held.exercises == 1 ? "1 exercise" : "\(held.exercises) exercises",
+                     held.routines == 1 ? "1 routine" : "\(held.routines) routines"]
+        return "The folder goes. The \(items.joined(separator: " and ")) in it stay in your library."
+    }
 
     private func delete() {
-        guard let folder = state.deleting else { return }
         PracticeFolderStore.deleteFolder(folder, in: context)
         if FolderPath.isUnder(state.path, prefix: folder) {
             state.path = FolderPath.parent(folder) ?? ""
         }
+        state.deleting = nil
         haptic(.medium)
     }
 }

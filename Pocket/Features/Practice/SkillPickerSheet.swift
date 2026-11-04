@@ -81,12 +81,6 @@ struct SkillPickerSheet: View {
         .sheet(item: $editing) { ref in
             CustomSkillEditor(existing: ref.value)
         }
-        .confirmationDialog(deleting?.title ?? "", isPresented: isConfirmingDelete,
-                            titleVisibility: .visible, presenting: deleting) { pending in
-            Button("Delete skill", role: .destructive) { remove(pending.skill.value) }
-        } message: { pending in
-            Text(pending.message)
-        }
     }
 
     // MARK: - Your own
@@ -143,6 +137,14 @@ struct SkillPickerSheet: View {
                         .tint(PocketColor.practice)
                 }
             }
+            // On the row it deletes: on iOS 26 a dialog points at the view it hangs from, and the swipe
+            // action that asked is gone by the time it shows.
+            .confirmationDialog(deleting?.title ?? "", isPresented: isConfirmingDelete(skillID),
+                                titleVisibility: .visible, presenting: deleting) { pending in
+                Button("Delete skill", role: .destructive) { remove(pending.skill.value) }
+            } message: { pending in
+                Text(pending.message)
+            }
     }
 
     // MARK: - Rows
@@ -195,8 +197,9 @@ struct SkillPickerSheet: View {
         haptic(.light)
     }
 
-    private var isConfirmingDelete: Binding<Bool> {
-        Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } })
+    /// Whether this row's skill is the one being asked about, so only its own row shows the dialog.
+    private func isConfirmingDelete(_ skillID: String) -> Binding<Bool> {
+        Binding(get: { deleting?.skill.value.skillID == skillID }, set: { if !$0 { deleting = nil } })
     }
 
     private func confirmDelete(_ skill: CustomSkill) {

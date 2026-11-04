@@ -70,6 +70,7 @@ extension RoutineLibraryView {
                             Label("Delete folder", systemImage: "trash")
                         }
                     }
+                    .folderDeleteConfirmation(folder, state: folderBrowse)
                 }
             }
         }

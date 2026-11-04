@@ -67,7 +67,10 @@ takes the next free `pocket-` number when its item starts.
    `.confirmationDialog`s, each screenshotted open. Split in two on 2026-11-03: **5a** is the three
    fixes, **5b** the sweep, which is the slow part and goes last. **5a built 2026-11-03**
    (`pocket-407`). Owed on the device: an import of several files, and the delete-version pop-up
-   pointing at its own Delete (a headless render can't open a dialog).
+   pointing at its own Delete (a headless render can't open a dialog). **5b built 2026-11-04**
+   (`pocket-412-dialog-anchors`): eight dialogs moved onto the button or row that asks; *Make a piece
+   here* on the map left (no arrow, floats over the gap). Shot open on iOS 26.5: replace audio, clear
+   goals, delete chord, delete skill, the map. Only iOS 26 shows anchoring; iOS 18.5 is a bottom sheet.
 6. `pocket-405` **A tempo control inside Name the notes** (S, after the beat map): `LoopTempoControl` beside
    the play button, as in Watch on the neck. **Built 2026-11-03**; the note count moved to a line under
    it. Owed on the device: slow a run down and name it.

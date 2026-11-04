@@ -226,14 +226,6 @@ struct ProgressionPickerSheet: View {
                 }
             }
         }
-        .confirmationDialog("Add \(selectionTitle)?", isPresented: $confirmingInsert, titleVisibility: .visible) {
-            Button("Replace them") { commit(.replace) }
-            Button("Add after them") { commit(.append) }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text(existingCount == 1 ? "This drill already has 1 chord."
-                                    : "This drill already has \(existingCount) chords.")
-        }
     }
 
     // MARK: - Shared sections
@@ -282,6 +274,15 @@ struct ProgressionPickerSheet: View {
         }
         .buttonStyle(.borderedProminent)
         .disabled(count == 0)
+        // On the button it asks about: on iOS 26 a dialog points at the view it hangs from.
+        .confirmationDialog("Add \(selectionTitle)?", isPresented: $confirmingInsert, titleVisibility: .visible) {
+            Button("Replace them") { commit(.replace) }
+            Button("Add after them") { commit(.append) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(existingCount == 1 ? "This drill already has 1 chord."
+                                    : "This drill already has \(existingCount) chords.")
+        }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(.bar)

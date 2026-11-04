@@ -57,14 +57,6 @@ struct SongAudioScreen: View {
         // Single selection: this repairs *this* song, unlike the library's multi-select import.
         .fileImporter(isPresented: $picking, allowedContentTypes: [.audio],
                       allowsMultipleSelection: false, onCompletion: handlePick)
-        .confirmationDialog("Replace this song's audio?", isPresented: $confirming,
-                            titleVisibility: .visible) {
-            Button("Choose a file…") { picking = true }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("The new file replaces this song's audio. Your loops, markers, takes and practice "
-                 + "history stay with the song.")
-        }
         // Bool-bound rather than `.alert(item:)`, which only has the deprecated `Alert`-returning
         // form — same shape as `WaveformPracticeView`'s relink alert.
         .alert(alert?.title ?? "", isPresented: alertBinding) {
@@ -106,6 +98,16 @@ struct SongAudioScreen: View {
         // A second pick landing mid-replace would race two decodes onto one `sourceID` and the
         // loser would overwrite the winner's copy — the same guard the practice screen keeps.
         .disabled(busy)
+        // On the button, not the Form: on iOS 26 a dialog points at the view it hangs from, and from
+        // the Form it pointed at the first row rather than this one.
+        .confirmationDialog("Replace this song's audio?", isPresented: $confirming,
+                            titleVisibility: .visible) {
+            Button("Choose a file…") { picking = true }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The new file replaces this song's audio. Your loops, markers, takes and practice "
+                 + "history stay with the song.")
+        }
     }
 
     /// Both doors out need the copy Red Moon keeps (`Song.exportedAudioFile`), so the section is there

@@ -709,6 +709,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **Confirmations point at what asked for them.** On iOS 26 a confirmation is a small pop-up with an
+  arrow, and eight of them pointed at the top of the screen or the first row rather than the button you
+  tapped: replacing a song's audio, trimming a take, deleting a progression, a chord, a folder or a skill
+  of your own, adding chords to a drill that already has some, and clearing this session's goals. Each
+  now points at its own button, or at the row it's about.
+
 - **The import card says what it's doing, and can be read.** It was see-through, so the screen behind
   showed under its words, and it counted files finished, so one long file read *Importing 0 of 1…* the
   whole time. It now sits on a solid card and names the song it's reading, with *2 of 5* when there

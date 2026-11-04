@@ -45,9 +45,6 @@ struct PlannerView: View {
 
     @State private var editingGoal: StableRef<Goal>?
     @State private var addingGoal = false
-    /// Confirming "clear this session's goals" — a bulk delete gets a dialog, like every other
-    /// destructive bulk action in the app.
-    @State private var clearingGoals = false
     /// A freshly-generated session awaiting review — pushed as a provisional `RoutineDetailView`.
     @State private var draft: QuickSessionDraft?
     /// Shown when generation yields nothing runnable (no exercises, no resolvable target song).
@@ -112,7 +109,7 @@ struct PlannerView: View {
                                     usesLongTerm: goalPlan.usesLongTerm,
                                     onAdd: { addingGoal = true; haptic(.light) },
                                     onEdit: { editingGoal = StableRef(value: $0); haptic(.light) },
-                                    onClear: { clearingGoals = true; haptic(.medium) },
+                                    onClear: clearGoals,
                                     onDelete: deleteGoal)
             }
             if effectiveSource.drawsOnLongTerm, !activeLongTermGoals.isEmpty {
@@ -130,18 +127,6 @@ struct PlannerView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: seedLengthFromProfile)
         .safeAreaInset(edge: .bottom) { generateBar }
-        .confirmationDialog("Clear this session's goals?", isPresented: $clearingGoals,
-                            titleVisibility: .visible) {
-            Button("Clear \(activeGoals.count) goal\(activeGoals.count == 1 ? "" : "s")",
-                   role: .destructive, action: clearGoals)
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            // Says what it spares as well as what it removes. Long-term goals are the ones a player
-            // would most fear losing here, and they live on a different screen entirely — so the
-            // dialog states that rather than leaving it to be discovered.
-            Text("Removes the goals you set for this session. Your long-term goals aren't touched, "
-                 + "and neither is anything you've practised.")
-        }
         .sheet(isPresented: $addingGoal) {
             GoalEditorView(existing: nil, songs: songs)
         }
