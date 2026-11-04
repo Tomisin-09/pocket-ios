@@ -13,11 +13,6 @@ import SwiftUI
 /// persisted filters are untouched, and leaving is the Back button, which puts the feed back where it was.
 extension JournalTabView {
 
-    /// Every item of one unit, before the thread's scope.
-    func threadItems(_ unit: JournalTimeline.UnitRef) -> [JournalTimeline.Item] {
-        JournalTimeline.filter(merged, unit: unit)
-    }
-
     /// The count a feed row carries, or `nil`: in a thread, for a row with no unit, and for a unit with only
     /// this row. Looked up in counts made once per render, never counted here.
     func threadLink(for item: JournalTimeline.Item,
@@ -52,7 +47,7 @@ extension JournalTabView {
 
     // MARK: - The screen
 
-    func threadScreen(_ unit: JournalTimeline.UnitRef) -> some View {
+    func threadScreen(_ unit: JournalTimeline.UnitRef, feed: Feed) -> some View {
         VStack(spacing: 0) {
             Picker("Show", selection: $threadScope) {
                 Text("All").tag(JournalTimeline.Scope.all)
@@ -63,7 +58,7 @@ extension JournalTabView {
             .padding(.horizontal, 20)
             .padding(.top, 8)
             .padding(.bottom, 12)
-            if sections.isEmpty { threadEmpty(unit) } else { list }
+            if feed.sections.isEmpty { threadEmpty(unit) } else { list(feed) }
         }
         .navigationTitle(threadName(unit))
         .toolbar {
@@ -79,14 +74,14 @@ extension JournalTabView {
 
     /// The first row of a thread's list, so it scrolls away like the feed's look-back card: what kind of
     /// unit, how many rows under this scope, its full name, and the first-to-latest line.
-    @ViewBuilder func threadHeaderRow(_ unit: JournalTimeline.UnitRef) -> some View {
+    @ViewBuilder func threadHeaderRow(_ unit: JournalTimeline.UnitRef, feed: Feed) -> some View {
         // A loop by its song as well, as the feed's caption names it; an exercise by its name.
         let fullName: String? = if let loop = threadLoop(unit) {
             JournalTimeline.ownerLabel(loop: loop, exercise: nil, song: nil)
         } else {
             threadExercise(unit)?.name
         }
-        let count = items.count
+        let count = feed.items.count
         VStack(alignment: .leading, spacing: 6) {
             Text("\(unit.kind == .loop ? "Loop" : "Exercise") · \(count) \(count == 1 ? "entry" : "entries")")
                 .font(.futura(.caption2, weight: .semibold))
@@ -99,7 +94,8 @@ extension JournalTabView {
                     .font(.futura(.title3, weight: .medium))
                     .foregroundStyle(PocketColor.textPrimary)
             }
-            if let span = JournalTimeline.readingSpan(threadItems(unit)) {
+            // Every item of the unit, before the thread's scope.
+            if let span = JournalTimeline.readingSpan(JournalTimeline.filter(feed.merged, unit: unit)) {
                 JournalReadingSpanLine(span: span)
             }
         }

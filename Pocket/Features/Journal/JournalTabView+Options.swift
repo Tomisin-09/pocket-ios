@@ -33,13 +33,13 @@ extension JournalTabView {
     /// Sort, then the filters. The practice log used to share this menu and no longer does (ADR
     /// 0176) — it is a *destination*, and a destination reached only from a menu is one most players
     /// never find.
-    var optionsMenu: some View {
+    func optionsMenu(_ feed: Feed) -> some View {
         Menu {
             // Actions above list options — `LibraryOptionsMenu`'s own grammar. Jumping is not a
             // filter: it changes where you are looking, not what is in the list.
-            if canJump {
+            if feed.canJump {
                 Section {
-                    Button { beginJump() } label: {
+                    Button { beginJump(days: feed.visibleDays) } label: {
                         Label("Jump to…", systemImage: "calendar")
                     }
                 }
@@ -211,12 +211,12 @@ extension JournalTabView {
     ///
     /// The picker is bounded to `visibleDays`, so every date it offers is a date the list can
     /// actually reach.
-    var jumpSheet: some View {
+    func jumpSheet(days: [Date]) -> some View {
         NavigationStack {
             VStack(spacing: 0) {
-                JournalMonthGrid(daysWithEntries: Set(visibleDays),
+                JournalMonthGrid(daysWithEntries: Set(days),
                                  month: $jumpMonth,
-                                 onPick: { day in jump(to: day) })
+                                 onPick: { day in jump(to: day, in: days) })
                     .padding(.top, 8)
                 Spacer(minLength: 0)
             }
@@ -241,8 +241,8 @@ extension JournalTabView {
     /// Seeded from the newest visible day rather than today: a grid opening on a month with nothing
     /// in it is a control that looks broken before it is touched — the same reasoning the old picker's
     /// seed carried, applied to a month instead of a day.
-    func beginJump() {
-        jumpMonth = JournalMonthLayout.month(containing: visibleDays.max() ?? Date())
+    func beginJump(days: [Date]) {
+        jumpMonth = JournalMonthLayout.month(containing: days.max() ?? Date())
         jumping = true
     }
 
@@ -252,8 +252,8 @@ extension JournalTabView {
     /// the feed holds — which is why the sheet lost the footnote that used to explain it.
     /// `JournalTimeline.jumpTarget` is still the resolver: it is pure and tested, it costs nothing,
     /// and the look-back card (ADR 0207 D8) hands it dates that genuinely need the rule.
-    private func jump(to day: Date) {
+    private func jump(to day: Date, in days: [Date]) {
         jumping = false
-        scrollTarget = JournalTimeline.jumpTarget(for: day, in: visibleDays)
+        scrollTarget = JournalTimeline.jumpTarget(for: day, in: days)
     }
 }

@@ -8,14 +8,57 @@ import SwiftUI
 /// `list` and `monthRail`.
 extension JournalTabView {
 
-    // MARK: - The month rail (ADR 0207 D6)
+    // MARK: - The feed, built once
 
-    /// The distinct months the feed can currently reach, in display order.
-    ///
-    /// Derived from `visibleDays` — the *sections*, not every stored entry — so the rail inherits
-    /// every active filter for free. A rail offering a month the filters have emptied would be a door
-    /// to an empty room, and the fix would otherwise have to be repeated in four places.
-    var monthsInFeed: [Date] { JournalMonthLayout.months(in: visibleDays) }
+    /// One render's feed, built **once** in `body` and handed to everything that reads it. These used to be
+    /// computed properties, and every read rebuilt the feed from the queries: each day header read three of
+    /// them, so a journal of 40 days rebuilt it 277 times on opening, decoding every piece each time.
+    struct Feed {
+        /// Everything, minus anything awaiting deletion, before any filter: what the counts are made from,
+        /// and a thread's first-to-latest line.
+        let merged: [JournalTimeline.Item]
+        /// The feed's scope and filters applied, or a thread's unit under its own scope. Filtering here
+        /// rather than at the row is what makes `sections` and the empty state follow automatically.
+        let items: [JournalTimeline.Item]
+        /// Day-sectioned for display; `oldest` reverses both the day order and the within-day order.
+        let sections: [JournalGrouping.DaySection<JournalTimeline.Item>]
+        /// The days the feed is showing: what a jump can land on, and what the month rail and the month
+        /// grid are both built from. Read from `sections` rather than from every entry, since you can only
+        /// jump to a day that is on screen. None under **Pieces**, which is grouped by song (ADR 0232 D20),
+        /// so its rail offers no months and **Jump to…** goes.
+        let visibleDays: [Date]
+        /// Whether there is anywhere to jump *to*: more than one day on the feed. Shared by the day header
+        /// (ADR 0207 D7) and the ⋯ item, so the two doors to one sheet cannot disagree.
+        var canJump: Bool { visibleDays.count > 1 }
+    }
+
+    /// This render's feed. Call it once, from `body`.
+    func makeFeed() -> Feed {
+        let merged = JournalTimeline.merge(entries: entries, takes: takes, pieces: JournalPiece.all(in: loops))
+            .filter { !rowDeletion.isPending($0.id) }
+        let items: [JournalTimeline.Item]
+        if let thread {
+            // A thread is the whole unit under its own scope: search, pins and Show don't narrow it (ADR 0286).
+            items = JournalTimeline.filter(JournalTimeline.filter(merged, unit: thread), scope: threadScope)
+        } else {
+            let scoped = JournalTimeline.filter(merged, scope: scope)
+            let owned = JournalTimeline.filter(scoped, owner: ownerFilter)
+            let tagged = JournalTimeline.filter(owned, tags: tagFilter)
+            let pinned = JournalTimeline.filter(tagged, pinnedOnly: pinnedOnly)
+            items = JournalTimeline.filter(pinned, query: query)
+        }
+        let grouped = JournalGrouping.byDay(items) { $0.date }
+        let sections = switch sortOrder {
+        case .newest: grouped
+        case .oldest: grouped.reversed().map {
+            JournalGrouping.DaySection(day: $0.day, entries: Array($0.entries.reversed()))
+        }
+        }
+        return Feed(merged: merged, items: items, sections: sections,
+                    visibleDays: groupsBySong ? [] : sections.map(\.day))
+    }
+
+    // MARK: - The month rail (ADR 0207 D6)
 
     /// Shown whenever the journal holds **anything at all**, filters aside.
     ///
@@ -25,15 +68,19 @@ extension JournalTabView {
     /// a genuinely empty journal, because a fresh install should
     /// not meet a filter control before it has met a single entry — the same rule `HomeStatsStrip`
     /// applies to a week with no runs.
-    @ViewBuilder var monthRail: some View {
+    ///
+    /// Its months come from `visibleDays`, the *sections*, not every stored entry, so the rail inherits
+    /// every active filter for free. A rail offering a month the filters have emptied would be a door to
+    /// an empty room.
+    @ViewBuilder func monthRail(_ feed: Feed) -> some View {
         if hasAnyHistory {
-            JournalMonthRail(months: monthsInFeed,
+            JournalMonthRail(months: JournalMonthLayout.months(in: feed.visibleDays),
                              showTitle: showRowTitle,
                              isFiltering: showIsFiltering,
                              onChooseKinds: { choosingKinds = true },
                              onPickMonth: { month in
                                  scrollTarget = JournalMonthLayout.firstDay(inMonth: month,
-                                                                           of: visibleDays)
+                                                                           of: feed.visibleDays)
                              })
         }
     }
@@ -56,14 +103,14 @@ extension JournalTabView {
     /// Hidden while searching (a search is a question, and this is not part of the answer — the same
     /// reasoning the practice-log row carries) and under the **Takes** and **Pieces** scopes, where the
     /// player has asked for something else and this card only ever quotes writing.
-    @ViewBuilder var lookbackRow: some View {
+    @ViewBuilder func lookbackRow(_ feed: Feed) -> some View {
         if !searching, scope == .all || scope == .notes, let hit = lookback {
             JournalLookbackCard(
                 heading: hit.reach.heading(for: JournalLookback.Period(raw: lookbackPeriod)),
                 text: hit.element.text,
                 ownerLabel: JournalTimeline.ownerLabel(for: .note(hit.element)),
                 day: hit.day,
-                onOpen: { scrollTarget = JournalTimeline.jumpTarget(for: hit.day, in: visibleDays) })
+                onOpen: { scrollTarget = JournalTimeline.jumpTarget(for: hit.day, in: feed.visibleDays) })
                 .listRowBackground(PocketColor.background)
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 6, trailing: 16))
@@ -78,23 +125,25 @@ extension JournalTabView {
     /// The id is set explicitly rather than inherited from `ForEach(_:id:)` — the loop now runs over
     /// indices so a header can see the section *before* it and decide whether a month has turned
     /// over, and without the explicit id that change would silently break every jump.
-    var list: some View {
+    func list(_ feed: Feed) -> some View {
         // Counted **once** per render and looked up per row (ADR 0286), over the feed's scope and nothing
         // else, so a count is the rows its thread opens on. A thread's own rows carry no count.
-        let counts = thread == nil ? JournalTimeline.unitCounts(JournalTimeline.filter(merged, scope: scope)) : [:]
+        let counts = thread == nil
+            ? JournalTimeline.unitCounts(JournalTimeline.filter(feed.merged, scope: scope)) : [:]
         return ScrollViewReader { proxy in
             List {
-                if let thread { threadHeaderRow(thread) } else { lookbackRow }
+                if let thread { threadHeaderRow(thread, feed: feed) } else { lookbackRow(feed) }
                 if groupsBySong {
-                    songSections
+                    songSections(feed.items)
                 } else {
-                    ForEach(Array(sections.enumerated()), id: \.element.day) { index, section in
+                    ForEach(Array(feed.sections.enumerated()), id: \.element.day) { index, section in
                         Section {
                             ForEach(section.entries) { item in
                                 row(item, counts: counts).listRowBackground(PocketColor.background)
                             }
                         } header: {
-                            sectionHeader(section.day, startsMonth: startsNewMonth(at: index))
+                            sectionHeader(section.day, startsMonth: startsNewMonth(at: index, in: feed.sections),
+                                          feed: feed)
                         }
                         .id(section.day)
                     }
@@ -112,17 +161,10 @@ extension JournalTabView {
         }
     }
 
-    /// The days the feed is currently showing — what a jump can land on, and what the month rail and
-    /// the month grid are both built from. Read from `sections` rather than from every entry: you can
-    /// only jump to a day that is on screen, so offering days the filters have removed would be
-    /// offering a dead end. None under **Pieces**, which is grouped by song (ADR 0232 D20), so its rail
-    /// offers no months and **Jump to…** goes.
-    var visibleDays: [Date] { groupsBySong ? [] : sections.map(\.day) }
-
     /// Whether this section opens a month the one above it was not in. `true` for the first section,
     /// which is what puts a month label at the top of the feed rather than leaving the first month
     /// the only unnamed one.
-    func startsNewMonth(at index: Int) -> Bool {
+    func startsNewMonth(at index: Int, in sections: [JournalGrouping.DaySection<JournalTimeline.Item>]) -> Bool {
         guard index > 0 else { return true }
         let current = JournalMonthLayout.month(containing: sections[index].day)
         let previous = JournalMonthLayout.month(containing: sections[index - 1].day)
@@ -142,11 +184,11 @@ extension JournalTabView {
     ///
     /// The ⋯ item stays. This one is discoverable, that one is labelled, and VoiceOver reaches the
     /// menu without having to find a header that happens to be a button.
-    @ViewBuilder func sectionHeader(_ day: Date, startsMonth: Bool) -> some View {
+    @ViewBuilder func sectionHeader(_ day: Date, startsMonth: Bool, feed: Feed) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             if startsMonth { monthDivider(day) }
-            if canJump {
-                Button { beginJump() } label: {
+            if feed.canJump {
+                Button { beginJump(days: feed.visibleDays) } label: {
                     HStack(spacing: 5) {
                         Text(dayHeader(day))
                         Image(systemName: "calendar")
