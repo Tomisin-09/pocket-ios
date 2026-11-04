@@ -172,7 +172,9 @@ takes the next free `pocket-` number when its item starts.
 19. What was owed for 1.4.1: the iOS 27 header and search asset, and the FAQ wording.
 20. The stale "free" text: the site and privacy policy (`uk-site` `app/privacy/page.tsx`),
     `docs/privacy-policy.md`, the CHANGELOG line "Red Moon is free.", and the listing doc's StoreKit
-    line. The `uk-site` part goes with availability ON, not with the archive.
+    line. The `uk-site` part goes with availability ON, not with the archive. **In-repo half done 2026-11-04**
+    (`pocket-413-stale-free-text`): the policy's intro and *Purchases*, the CHANGELOG entry (now *Red
+    Moon Pro is gone*), the listing's StoreKit line. The `uk-site` privacy page and site copy remain.
 21. Manual reference pages for controls that were renamed or added. Then **one** reshoot of every
     stale figure, and a check that the ADR 0279 App Store screenshots don't show the old grid or tempo
     sheet.

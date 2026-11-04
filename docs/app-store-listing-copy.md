@@ -387,8 +387,8 @@ Questionnaire answers are all "None" → **4+**.
 - **In-app purchases:** the two products above. *History, kept for the record:* the two auto-renewable subscriptions that ADR 0144
   set up (`click.decooperations.pocket.pro.annual` and `…pro.monthly`, group
   **"Red Moon Pro"**) were never sold and are **removed from sale** in App Store
-  Connect; the app no longer links StoreKit at all. If the Oracle is ever priced,
-  it is strictly additive (0237 D3) and gets new products.
+  Connect. The app links StoreKit again for the plan above (ADR 0256), and only for it. If the Oracle
+  is ever priced, it is strictly additive (0237 D3) and gets new products.
 - **Paid Applications Agreement:** needed again, because the app sells a plan (ADR 0256). Without it
   the products cannot be sold.
 - **Availability:** All territories, unless you want a phased rollout.
