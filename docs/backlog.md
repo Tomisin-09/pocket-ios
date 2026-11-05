@@ -181,7 +181,13 @@ takes the next free `pocket-` number when its item starts.
     Moon Pro is gone*), the listing's StoreKit line. The `uk-site` privacy page and site copy remain.
 21. Manual reference pages for controls that were renamed or added. Then **one** reshoot of every
     stale figure, and a check that the ADR 0279 App Store screenshots don't show the old grid or tempo
-    sheet.
+    sheet. **Shot 2026-11-04/05** on `pocket-417`: all 11 passes, 104 figures driven, after four shoot
+    tests were brought up to ADR 0258's layouts. The 25 figures that moved were looked at beside the
+    old ones; three crop rects (`terms/*`) and four alt texts were corrected. Not reshot: the three
+    phone figures (`reference/tuner`, `toolkit/tuner`, `song-player/landscape`, 28 Aug), and two
+    `references/library` and `references/source` figures have no shoot test yet. Built into
+    `shots/figures-1.4-final/`, not yet on `uk-site`. **App Store frames: all ten still match the app**
+    (the check is in the listing doc's resubmission list).
 22. `/ready-to-ship`, including `scripts/main-ui-green.sh`. **Run 2026-11-04** on 39194ef: lint, the
     build, 4,422 unit tests and main's UI job all green. It found one gap: the privacy manifest didn't
     declare the file creation date that clearing old exports reads (a required-reason API, missing

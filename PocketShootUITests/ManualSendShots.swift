@@ -10,7 +10,7 @@ import XCTest
 /// suite's: Slow Bend sent by Jack Trader, and *Low Road, start to finish* with *Low Road* in it.
 final class ManualSendShots: ManualShotCase {
 
-    /// `songs/send-song` — Song details ▸ Send this song…, on Feels. The song is played first, because a
+    /// `songs/send-song` — Song details ▸ Audio file ▸ Send this song…, on Feels. The song is played first, because a
     /// seeded song is linked to its file until it plays (`SongAudioResolver.adoptIfNeeded`), and Send
     /// needs Red Moon's own copy.
     @MainActor
@@ -26,6 +26,15 @@ final class ManualSendShots: ManualShotCase {
         let title = playerTitle("Feels", in: app)
         let details = app.navigationBars["Song details"]
         hold(title, labelled: "the title", revealing: details, called: "Song details")
+
+        // **One screen further in since ADR 0258.** Send this song was a button in the sheet's Audio
+        // section; the sections became rows, and it now lives on the `Audio file` screen behind one.
+        // The marker's state already said so; this walk went on swiping the sheet for a button that
+        // had left it. Revealed, not waited for: the row is the third of the fourth section, below
+        // the fold, and a lazy list has not built it until it is scrolled to.
+        let audioFile = revealRow(labelStartingWith: "Audio file", in: app)
+        tap(audioFile, labelled: "Audio file", revealing: app.navigationBars["Audio file"],
+            called: "the Audio file screen")
 
         let send = app.buttons["Send this song…"]
         scrollIntoFrame(send, called: "Send this song…", in: app)

@@ -345,16 +345,24 @@ extension ManualShotCase {
             """, file: file, line: line)
     }
 
-    /// Bring a Home card into reach with slow swipes. Returns whether it ended up hittable.
+    /// Bring a Home card into reach with slow swipes: hittable, whole in the window and 40 pt clear of
+    /// its foot. `isHittable` alone stopped short on 2026-11-04 — Song library under *Jump back in*,
+    /// a strip of it showing, and three taps there taken by the home indicator, which is what
+    /// `NameTheNotesUITests.inReach` found on iOS 18.
     @MainActor
     private func scrollToCard(_ card: XCUIElement,
                               in app: XCUIApplication,
                               maxSwipes: Int) -> Bool {
+        let window = app.windows.firstMatch.frame
+        func inReach() -> Bool {
+            card.exists && card.isHittable && card.frame.minY >= window.minY
+                && card.frame.maxY <= window.maxY - 40
+        }
         for _ in 0...maxSwipes {
-            if card.exists && card.isHittable { return true }
+            if inReach() { return true }
             app.swipeUp(velocity: .slow)
         }
-        return card.exists && card.isHittable
+        return inReach()
     }
 
     /// Wait for a row, scroll it into reach, tap it, and log all three — the shape every navigation

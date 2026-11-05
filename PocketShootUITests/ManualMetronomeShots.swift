@@ -92,12 +92,16 @@ final class ManualMetronomeShots: ManualShotCase {
         byBars.tap()
         note("armed the automator By Bars")
 
-        // `Start ramp` exists only while a mode is armed — the panel draws its fields, the no-limit
-        // toggle, the progress line and this button behind `automatorMode != .off`. It is therefore
-        // the one string that separates the armed panel from the idle one.
+        // The panel draws its fields, the no-limit toggle, the progress line and `Start ramp` behind
+        // `automatorMode != .off`, so any of them separates the armed panel from the idle one.
+        // **`Start ramp` was the gate, and it was never in the picture.** The controls scroll above a
+        // pinned transport, and at this text size the panel's own button sits under it: its frame is
+        // inside the window, so `isInFrame` passed, while the photograph ended at the staircase and
+        // the alt text promised a button the reader could not see (found 2026-11-05). The gate is now
+        // two things the frame genuinely shows.
         capture(app, slug: "metronome/automator",
                 assertingOnScreen: "Metronome",
-                alsoRequiring: ["Start ramp"])
+                alsoRequiring: ["Increase by", "No limit"])
     }
 
     // MARK: - Driving

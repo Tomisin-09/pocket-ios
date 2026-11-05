@@ -682,7 +682,11 @@ it. This block covers only what's different for build 10.
       the UI job runs on it
 - [ ] `/ready-to-ship` clean (run 2026-11-04 on 39194ef: lint, build, 4,422 unit tests, the Release
       build; it found the manifest gap this PR fixes)
-- [ ] The ten App Store frames checked against the app as it is now (backlog item 21)
+- [x] The ten App Store frames checked against the app as it is now (backlog item 21). Done
+      2026-11-05, each 10-27 frame beside a fresh capture of its subject on iPhone 17 Pro: no screen in
+      them has changed. Only seed state differs: frame 4's take is now on *Binta*, frame 9's month is
+      November, frame 10's *Jump back in* names another song. Frame 6 is the loop's door to *Watch it
+      on the neck* (ADR 0254), which ships; the section's door is the one ADR 0291 holds back
 
 **The build**
 - [ ] Archived from main's head in Organizer with **Xcode 26.5**. After `xcodegen generate`, re-tick
@@ -696,7 +700,7 @@ it. This block covers only what's different for build 10.
 - [ ] Pay once reads **£4.99** (ADR 0280)
 - [ ] Description and What's New pasted again through `./scripts/export-listing.py --copy`, since
       both changed after 10-27
-- [ ] Screenshots: the 10-27 set stays, unless the frame check above says otherwise
+- [ ] Screenshots: the 10-27 set stays. The frame check above found nothing to reshoot
 - [ ] Review notes: unchanged, and re-checked on 2026-11-04 (*Try the demo* is in the empty Song
       library on a fresh install, *Restore purchases* is on the plan screen)
 - [ ] Submit, with **Manually release this version**

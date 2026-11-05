@@ -135,7 +135,7 @@ The panel in the middle of the screen ramps the tempo for you. Its job is **disc
 you are comfortable, let it climb, and the tempo your hands fall apart at is worth knowing.
 
 <!-- shot: metronome/automator | role: panel
-     | alt: The automator panel set to By Bars, with the Increase by, Every and Up to fields, the No limit toggle, the ramp staircase and the Start ramp button
+     | alt: The automator panel set to By Bars, with the Increase by, Every and Up to fields, the No limit toggle and the ramp staircase, above the Start button pinned at the bottom
      | state: Metronome open, automator armed By Bars -->
 
 1. Set the tempo you want to **start** from on the main controls. That is the ramp's floor — there is

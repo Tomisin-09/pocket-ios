@@ -144,7 +144,7 @@ Nothing on this screen is a grade, and there is no target anywhere on it.
 Reached from `Toolkit` on Home. Six sections, each carrying a count or a state.
 
 <!-- shot: reference/toolkit | role: screen
-     | alt: The Toolkit hub listing My chords, Tuner, Glossary and Help & FAQs
+     | alt: The Toolkit hub listing My chords, My progressions, My tabs, References, Tuner, Glossary and Help & FAQs
      | state: Toolkit open -->
 
 | Section | Subtitle | Trailing |

@@ -808,6 +808,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   required-reason APIs, and the manifest didn't say so. It now declares the file timestamp category
   with reason C617.1, for the app's own files. Builds 8 and 9 went without it. Found by
   `/ready-to-ship` before build 10.
+- **The manual's figures are reshot for 1.4.** Four shoot tests had fallen behind ADR 0258's
+  layouts: *Send this song…* is behind *Audio file* now, the review screen's estimate is below the
+  fold, the Add sheet's `Done` was gated on a `Save` its own presenter held, and a Home card at the
+  foot of the screen passed `isHittable` while its taps went to the home indicator. Home cards are now
+  scrolled until they are whole and 40 pt clear. Three `terms/*` crop rects and four alt texts that
+  described the old screens are corrected, and the automator figure is no longer gated on a
+  `Start ramp` the transport covers.
 - **The App Store screenshots are shot and captioned from the repo** (ADR 0279). `AppStoreShots`
   captures the two frames no manual figure shows: *Binta*'s *Chords* loop playing slowed, and a
   routine built for a gig. The history seed now includes *Open mic, Friday* (Pop Changes, the strumming
