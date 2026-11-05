@@ -1,6 +1,6 @@
 # Privacy Policy — Red Moon Practice
 
-_Last updated: 4 November 2026_
+_Last updated: 5 November 2026_
 
 Red Moon Practice ("the app") is a guitar and bass practice tool, free to download with one optional
 paid plan, published by **Deco
@@ -127,13 +127,18 @@ that screen and again in the form before you send.
 
 ## Device permissions
 
-The app asks for one system permission, used only on-device for the features that
-need it:
+The app asks for two system permissions, each only when you use the feature that
+needs it, and both used only on-device:
 
 - **Microphone** — for the tuner, which listens to a played string to work out its
   pitch, and for the practice takes you choose to record, which are saved locally.
   The app shows the system recording indicator whenever the microphone is active.
   Nothing the microphone hears is uploaded; the app has no audio upload path.
+- **Notifications** — if you switch on a practice reminder on a routine, the app
+  asks iOS for permission to notify you, at that moment and not before. The
+  reminder is scheduled on your device, and iOS delivers it on the days you chose.
+  There is no push service, so nothing about your reminders, or about whether you
+  practised, reaches us.
 
 The app does **not** ask for access to your music library. It practises against
 DRM-free audio files you import from Files or iCloud Drive, and cannot play Apple
