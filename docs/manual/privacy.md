@@ -57,7 +57,10 @@ show the name before anything is sent.
 
 ## The microphone
 
-The app asks for one system permission, and uses it in exactly two places:
+The app asks for two system permissions. One is notifications, and only when you switch on
+**Remind me** on a routine ([Reminding yourself](routines.md#reminding-yourself)): the reminder is
+scheduled on the phone, and nothing about it reaches us. The other is the microphone, used in exactly
+two places:
 
 - **The [tuner](toolkit.md)**, which listens to a played string while you are on that screen.
 - **A [take](journal-and-practice-log.md)** you start yourself, which is saved to the device as a file.
