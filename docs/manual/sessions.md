@@ -185,11 +185,11 @@ ranking them still means something.
 committed.
 
 <!-- shot: sessions/review | role: screen
-     | alt: A generated session on the review screen, with its dated name, its blocks, the estimated length and Save in the toolbar
+     | alt: A generated session on the review screen, with its dated name, its blocks and Save in the toolbar
      | state: seeded library, Today's session, Generate tapped, result showing -->
 
 What you get is a provisional routine: a dated name you can change on the spot, the blocks it picked,
-and the estimated length against the time you asked for. Nothing is in your library yet.
+and, below them, the estimated length against the time you asked for. Nothing is in your library yet.
 
 - **Start** plays it for today. It does not join your routines, so using the planner every day
   doesn't fill them with a dated session a day.

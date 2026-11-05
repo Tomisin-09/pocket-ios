@@ -241,6 +241,12 @@ own custom-EULA field instead of the description — and then all three surfaces
 > and the Toolkit are free, and practising is the plan, at the founding price.
 >
 > Also new:
+> • Find the tempo gets a steady song's tempo exact, and you can hear the click and count the bar
+>   while you set it
+> • Record yourself at the metronome
+> • The Journal shows everything on one exercise or loop together, and a swipe deletes a note or take
+> • Pre-bends, and bends that release, in Name the notes and Write a tab
+> • Pick several songs to import at once, and see how each one went
 > • The Practice hub is shelves: today's session, your routines, and your drills by kind
 > • References: keep every lesson, video and file you learn from, and attach them where they belong
 > • Save to Red Moon from any app's share sheet, and audio shared from Voice Memos or Files lands
@@ -251,6 +257,12 @@ own custom-EULA field instead of the description — and then all three surfaces
 history. It names no price and no trial length. Each line is a CHANGELOG entry: the hub (ADR 0257),
 References and Save to Red Moon (ADR 0264), audio shared in (ADR 0273), the month grid (ADRs 0268,
 0269).*
+
+*The first five lines were added on 2026-11-04 (approved by Tomisin) for the work built after 1.4 (8)
+was pulled: the tempo (ADRs 0282–0284, *Find the tempo* and *Beats in a bar* as the Set tempo sheet
+says them), metronome takes (ADR 0287), the Journal thread and swipe (ADRs 0286, 0285), pre-bends
+(ADR 0288) and the import sheet (ADR 0290). Watch the section is held back (ADR 0291), so it isn't
+named.*
 
 ## What's New — the free release (draft) — HISTORY, do not paste (ADR 0256)
 
@@ -657,7 +669,46 @@ Old set (superseded): `Documents/Red Moon Screenshots 2/appstore-final/` (01–0
 
 ## Pre-submission checklist
 
-### 1.4 (2026-10-26): work through this one
+### 1.4 (10), the resubmission on 2026-11-08: work through this one first
+
+1.4 (8) went to review on 2026-10-27 and was pulled on 2026-11-02. Build 9 was a second upload. The
+10-26 list below still describes App Store Connect's setup; tick what's still open there as you pass
+it. This block covers only what's different for build 10.
+
+**In the repo, before the archive**
+- [ ] The prep PR merged (`pocket-417`): build 10, the file-timestamp declaration in
+      `PrivacyInfo.xcprivacy`, the `[1.4]` CHANGELOG cut and this What's New
+- [ ] main's UI job green **on that merge** (`scripts/main-ui-green.sh`). It changes `project.yml`, so
+      the UI job runs on it
+- [ ] `/ready-to-ship` clean (run 2026-11-04 on 39194ef: lint, build, 4,422 unit tests, the Release
+      build; it found the manifest gap this PR fixes)
+- [x] The ten App Store frames checked against the app as it is now (backlog item 21). Done
+      2026-11-05, each 10-27 frame beside a fresh capture of its subject on iPhone 17 Pro: no screen in
+      them has changed. Only seed state differs: frame 4's take is now on *Binta*, frame 9's month is
+      November, frame 10's *Jump back in* names another song. Frame 6 is the loop's door to *Watch it
+      on the neck* (ADR 0254), which ships; the section's door is the one ADR 0291 holds back
+
+**The build**
+- [ ] Archived from main's head in Organizer with **Xcode 26.5**. After `xcodegen generate`, re-tick
+      automatic signing on **Pocket and PocketShare**
+- [ ] On upload, leave *Manage Version and Build Number* **off**, so the build stays 10 and matches
+      the CHANGELOG. 9 came from it renumbering a second upload
+- [ ] 1.4 (10) processed, and swapped in for build 8 on version 1.4. No *ITMS-91053 Missing API
+      declaration* email this time
+
+**App Store Connect**
+- [ ] Pay once reads **£4.99** (ADR 0280)
+- [ ] Description and What's New pasted again through `./scripts/export-listing.py --copy`, since
+      both changed after 10-27
+- [ ] Screenshots: the 10-27 set stays. The frame check above found nothing to reshoot
+- [ ] Review notes: unchanged, and re-checked on 2026-11-04 (*Try the demo* is in the empty Song
+      library on a fresh install, *Restore purchases* is on the plan screen)
+- [ ] Submit, with **Manually release this version**
+
+**On the phone:** no TestFlight round (decided 2026-11-02). The sandbox pass ran on 2026-11-04 on a
+`run-device.sh -s` build from 39194ef: an account switch, then the free week bought.
+
+### 1.4 (2026-10-26): the first submission's list
 
 **App Store Connect**
 - [x] The version record renamed from 1.2 to 1.4 (2026-10-26)

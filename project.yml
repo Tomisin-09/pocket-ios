@@ -36,7 +36,11 @@ settings:
     # duplicate. The number skips because the upload happened, not because the code did.
     #
     # **8** is 1.4's first build (2026-10-26).
-    CURRENT_PROJECT_VERSION: "8"
+    #
+    # **10, not 9.** 1.4 (8) went to review on 2026-10-27 and was pulled on 2026-11-02. A second
+    # upload from Organizer, which bumped the number itself, made 1.4 (9), and ASC holds both. 10 is
+    # the build that is resubmitted (2026-11-08), so the number skips for the same reason 6 did.
+    CURRENT_PROJECT_VERSION: "10"
     DEVELOPMENT_TEAM: "" # set via CI / local xcconfig; do not hard-code
 
 # Per-configuration backend base URL (Debug → dev, Release → prod).

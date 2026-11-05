@@ -97,10 +97,16 @@ final class ManualSessionShots: ManualShotCase {
         tap(app.buttons["Generate today's session"], labelled: "Generate today's session",
             revealing: app.buttons["Save"], called: "the review screen")
 
+        // **`Estimated length` is not asserted, for the reason `routines/editor` dropped it.** The
+        // review screen is the routine editor, so it took ADR 0258's layout with it: Name, About and
+        // Practise above the blocks, and the Add row straight after them. Four generated blocks fill
+        // the frame from there, and the Progress section the estimate lives in is below the fold —
+        // out of the tree, not merely out of sight. The marker's alt was corrected to match, rather
+        // than scrolling the figure to somewhere the reader never lands.
         captureChromeless(app, slug: "sessions/review",
                           screen: "the generated session, under review",
                           ownedBy: ["Save"],
-                          orBeginningWith: ["Estimated length"])
+                          alsoRequiring: ["Practise", "Add exercise, loop or song"])
     }
 
     // MARK: - Steps

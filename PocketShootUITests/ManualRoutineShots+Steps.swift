@@ -95,8 +95,33 @@ extension ManualRoutineShots {
         //
         // `Save` is in the editor's toolbar, always drawn, and the Add sheet's own toolbar carries
         // `Done` and `Cancel` but no `Save` — so it cannot be satisfied from the sheet being left.
-        tap(app.buttons["Done"], labelled: "Done",
-            revealing: app.buttons["Save"], called: "the routine editor")
+        //
+        // **But `Save` alone cannot say the sheet closed.** A sheet keeps its presenter in the tree,
+        // so the editor's `Save` exists *behind* the open sheet, before the tap and after a lost one.
+        // On 2026-11-04 the tap was lost — `Done` landed while `Exercises` was still sliding back —
+        // and `tap` reported the editor on its first probe; `routines/editor` was then asserted
+        // against the editor underneath the sheet, and the block tap after it found its row covered.
+        // The sheet's own bar going away is what says it closed, and `Done` is re-tapped only while
+        // that bar is still there.
+        let addSheet = app.navigationBars["Add to routine"]
+        let done = addSheet.buttons["Done"]
+        for attempt in 1...3 where addSheet.exists {
+            guard awaitHittable(done) else {
+                XCTFail(unreachable(done, labelled: "Done"))
+                return
+            }
+            done.tap()
+            note("tapped 'Done'" + (attempt > 1 ? " (attempt \(attempt))" : ""))
+            if addSheet.waitForNonExistence(timeout: Self.tapProbeTimeout) { break }
+            note("tap \(attempt) left the Add sheet up, retrying")
+        }
+        XCTAssertFalse(addSheet.exists, """
+            the Add sheet is still up after Done, so the editor's figures would be shot through it.
+            \(stepLog)
+            """)
+        XCTAssertTrue(app.buttons["Save"].waitForExistence(timeout: Self.shootTimeout),
+                      "the Add sheet closed onto something that is not the routine editor.\n\(stepLog)")
+        note("the routine editor appeared after 'Done'")
     }
 
     /// Move past whichever unit is showing, without finishing it.

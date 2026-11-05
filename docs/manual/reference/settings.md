@@ -6,7 +6,7 @@ out to where you were.
 ## The hub
 
 <!-- shot: reference/settings-hub | role: screen
-     | alt: The Settings hub with You above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Your data and Help & About in a group below
+     | alt: The Settings hub with You and Your plan above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Your data and Help & About in a group below
      | state: Settings open -->
 
 Nine destinations, and a tenth row while it is needed. **Each row states its current value on the
