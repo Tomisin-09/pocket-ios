@@ -62,7 +62,7 @@ extension HomeView {
 
     /// The top-level **Practice** space (ADR 0046) — where trainable units live and
     /// command-anchored runs happen. A push (it's a *place* with its own list and run screens),
-    /// in the brand teal accent (`PocketColor.practice`, the brand hero).
+    /// in the brand terracotta accent (`PocketColor.practice`, the brand hero).
     private var practiceTile: some View {
         NavigationLink { PracticeView() } label: {
             HomeTile(icon: "figure.run", title: "Practice",
@@ -93,9 +93,9 @@ extension HomeView {
 
     // MARK: - Your stuff
 
-    /// The songs place, in its own warm **terracotta** identity (baked `library` tokens — no opacity
-    /// blend, ADR 0062/0081). Together with the teal Practice and plum Metronome tiles this is the
-    /// teal · plum · terracotta home triad (content / tool / songs).
+    /// The songs place, in its own **teal** identity (baked `library` tokens — no opacity blend,
+    /// ADR 0062/0081; teal since ADR 0292). Together with the terracotta Practice and plum Metronome
+    /// tiles this is the terracotta · plum · teal home triad (content / tool / songs).
     ///
     /// **The one tile that can carry a caption**, and only while the library is empty. The strip's
     /// subtitle was count-aware, and on a fresh install — the first-run drills, one routine, no
@@ -118,7 +118,7 @@ extension HomeView {
 
     /// The **Journal** space (ADR 0100) — the read-only practice-history destination that aggregates
     /// notes + takes across loops and exercises, in its own warm **gold** identity
-    /// (`PocketColor.journal`), a fifth home hue kept clear of the teal · plum · terracotta triad and
+    /// (`PocketColor.journal`), a fifth home hue kept clear of the terracotta · plum · teal triad and
     /// the indigo reference hub. Free, so it draws no lock (ADR 0263 D1).
     private var journalTile: some View {
         NavigationLink { JournalTabView() } label: {
@@ -202,8 +202,8 @@ extension HomeView {
 
     /// The **Red Moon Oracle** (ADR 0187) — the reflective reading over the practice you have
     /// already done. The **sixth** home hue: crimson (`PocketColor.oracle`), kept clear of the
-    /// teal · plum · terracotta triad, the indigo hub and the journal's gold. Not ADR 0081's Blood
-    /// Moon, which D16 nominated and which turned out to *be* the terracotta family.
+    /// terracotta · plum · teal triad, the indigo hub and the journal's gold. Not ADR 0081's Blood
+    /// Moon, which D16 nominated and which turned out to *be* the terracotta family, now Practice's.
     ///
     /// A push, like the Toolkit beside it — it is a *place*, and one the player walks to. That is
     /// D2 in the navigation: the Oracle is **pull**. Nothing notifies that a reading is ready, this

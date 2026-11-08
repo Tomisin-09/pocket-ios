@@ -41,7 +41,7 @@ struct CollapsibleLibrarySection<Content: View>: View {
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                     if let icon {
                         // A category, so it reads like the Practice hub's tile for it (ADR 0257 D5):
-                        // the teal glyph in its wash, the name in the primary ink.
+                        // the Practice glyph in its wash, the name in the primary ink.
                         Image(systemName: icon)
                             .font(.futura(.caption, weight: .semibold))
                             .foregroundStyle(PocketColor.practice)

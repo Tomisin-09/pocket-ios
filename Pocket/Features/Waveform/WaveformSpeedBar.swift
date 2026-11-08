@@ -189,7 +189,7 @@ private struct RepeatToggle: View {
 }
 
 /// In-song metronome click (ADR 0027) **and** the tempo entry point (ADR 0124). Icon-only, in the
-/// song's teal accent (`waveformAccent`, ADR 0081) so it sits with the waveform cockpit rather than
+/// song's accent (`waveformAccent`, ADR 0081; terracotta since ADR 0292) so it sits with the waveform cockpit rather than
 /// reading as a transport control. A 44 pt target around a 30 pt badge.
 ///
 /// Three states, and the button is never dead:

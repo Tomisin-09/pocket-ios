@@ -22,7 +22,7 @@ struct SongMapActions {
     let toggle: (UUID) -> Void
 }
 
-/// The colours of the two layers (ADR 0232 D2): Indigo for chords, Teal for notes. Lane colours only,
+/// The colours of the two layers (ADR 0232 D2): Indigo for chords, Practice's terracotta for notes. Lane colours only,
 /// never a status (D4).
 enum SongMapStyle {
     static func tint(_ layer: SongMap.Layer) -> Color {

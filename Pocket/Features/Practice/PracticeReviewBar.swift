@@ -45,7 +45,7 @@ private struct PracticeReviewPill: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                // Teal icon keeps the practice identity; the label is white for contrast (device
+                // The Practice-coloured icon keeps the identity; the label is white for contrast (device
                 // feedback 2026-07-17 — teal-on-teal-wash read too faint).
                 Image(systemName: systemImage)
                     .foregroundStyle(PocketColor.practice)

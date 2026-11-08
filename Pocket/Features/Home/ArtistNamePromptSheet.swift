@@ -49,7 +49,7 @@ struct ArtistNamePromptSheet: View {
 
                 // The Red Moon crescent as the seal over the moment — the symbol alone (no
                 // wordmark, `RedMoonMark`), so it reads as an emblem, not a logo lockup.
-                // Theme-aware artwork (ADR 0061/0062), so it sits right in either appearance.
+                // The blood-moon artwork (ADR 0292), one image for either appearance.
                 // Sized by **height**: the vector mark is a tall crescent (roughly 2:3), where the
                 // raster it replaced was wider than tall, so a width cap would grow it vertically.
                 Image("RedMoonMark")
@@ -101,8 +101,8 @@ struct ArtistNamePromptSheet: View {
         }
         // The ceremony is always dark, whatever the app's appearance — the near-black ground and
         // the moon read stronger, and it sets the moment apart from the rest of the UI. This also
-        // resolves the theme-aware assets/colours (`RedMoonMark`, `PocketColor.*`) to their dark
-        // variants regardless of the device setting.
+        // resolves the theme-aware colours (`PocketColor.*`) to their dark variants regardless of the
+        // device setting.
         .preferredColorScheme(.dark)
         .task { await enter() }
     }

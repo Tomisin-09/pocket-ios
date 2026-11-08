@@ -7,7 +7,7 @@ import SwiftUI
 struct BeatIndicator: View {
     let engine: StandaloneMetronomeEngine
     /// The accent-dot colour — defaults to the metronome tint, overridden to `PocketColor.practice`
-    /// on the Practice run screens so the count-in dots read in that space's colour, not teal.
+    /// on the Practice run screens so the count-in dots read in that space's colour, not the metronome's plum.
     var tint: Color = PocketColor.metronome
 
     var body: some View {

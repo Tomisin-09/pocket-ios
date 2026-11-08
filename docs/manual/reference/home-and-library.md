@@ -14,7 +14,7 @@ on the right is `Add a song` and opens the file picker.
 **The greeting** changes with the time of day and, once you have given one, carries your artist name.
 Under it, `Ready to practice?`.
 
-**`Start today's session`** is the filled teal card, and the primary action. It builds a session from
+**`Start today's session`** is the filled red card, and the primary action. It builds a session from
 your goals.
 
 **`JUMP BACK IN`** appears once you have practised anything, and carries the last thing you

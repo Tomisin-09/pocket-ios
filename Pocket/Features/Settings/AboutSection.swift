@@ -112,12 +112,11 @@ struct AboutSection: View {
         } header: {
             Text("About")
         } footer: {
-            // Brand mark. `RedMoonLogo` is a **vector** (SVG) asset carrying a light and a
-            // dark appearance (ADR 0061) — the two-tone crescent means it can't be a single
-            // template image tinted in code, so the pair stays. Genuinely transparent, so it
-            // sits directly on `PocketColor.background` with no seam in either appearance.
-            // The app follows the system appearance (ADR 0062), so no colour-scheme pin
-            // is needed here.
+            // Brand mark. `RedMoonLogo` is a **vector** (SVG) asset: the blood-moon lockup
+            // (ADR 0292), one universal image whose two reds read on cream and near-black alike
+            // — two-tone, so it can't be a single template image tinted in code. Genuinely
+            // transparent, so it sits directly on `PocketColor.background` with no seam in
+            // either appearance, and needs no colour-scheme pin.
             Image("RedMoonLogo")
                 .resizable()
                 .scaledToFit()

@@ -13,18 +13,20 @@ revision, this script derives them: it keeps the chosen `<path>` elements and re
 to their exact bounding box (true cubic-bezier extrema, not the control-point hull, so the crop is
 tight rather than merely close).
 
-…and the **App Icon**, which is the same crescent-and-stars mark in its dark-background colouring,
+…and the **App Icon**, which is the same crescent-and-stars mark in the blood-moon colouring,
 composited on an opaque near-black square. That one can't be vector: App Store icons must be a flat
 1024² PNG with no alpha channel, so it is rasterised here rather than left to the asset catalog.
 
-    ./scripts/derive-brand-svgs.py                     # light + dark, into the asset catalog
+    ./scripts/derive-brand-svgs.py                     # the blood moon art, into the asset catalog
     ./scripts/derive-brand-svgs.py --app-icon          # …and re-render AppIcon/icon-1024.png
-    ./scripts/derive-brand-svgs.py --variants blood    # the Blood Moon theme's artwork
+    ./scripts/derive-brand-svgs.py --variants light dark --out /tmp/blue  # the retired blue pair
     ./scripts/derive-brand-svgs.py --out /tmp/preview  # loose files, catalog untouched
 
-`--variants blood` is the seam for the parked Blood Moon theme (see `docs/backlog.md`): the
-artwork already exists, it just has no consumer yet, so it is deliberately **not** in the catalog.
-Adding it is this one command plus the imageset entries.
+**The brand is the blood moon (ADR 0292).** One lockup serves both appearances: its two reds read
+on cream and on near-black alike, so each imageset holds a single universal SVG rather than the
+light/dark pair the blue art needed (its colours inverted between appearances). The blue sources
+are still named below, so the old pair can be cut again for reference; a catalog run removes the
+SVGs it no longer writes, so a switch never leaves the previous art behind.
 
 Source files live outside the repo (they're 300 KB Pixelmator documents alongside the SVGs);
 point `--source` at wherever the current revision sits.
@@ -63,13 +65,13 @@ ASSETS = {
 # small enough to be a sane default if one is ever drawn unsized.
 INTRINSIC_MAX_POINTS = 512.0
 
-# App Icon composition. The mark in its **dark-background** colouring on an opaque near-black
-# square: `#0F0F0F` and a mark occupying 66.8% of the canvas height are both measured off the
+# App Icon composition. The mark in its **blood-moon** colouring (ADR 0292; the blue dark-background
+# colouring before it) on an opaque near-black square: `#0F0F0F` and a mark occupying 66.8% of the canvas height are both measured off the
 # icon this replaced, so the swap is like-for-like on the home screen rather than a resize too.
 APP_ICON_SIZE = 1024
 APP_ICON_BACKGROUND = "#0F0F0F"
 APP_ICON_MARK_HEIGHT_FRACTION = 0.668
-APP_ICON_VARIANT = "dark"
+APP_ICON_VARIANT = "blood"
 
 def parse_path(data):
     """Split an absolute-coordinate path into ('P'|'L'|'C', points) segments.
@@ -322,12 +324,12 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--source", default=DEFAULT_SOURCE,
                         help="folder holding the Pixelmator lockup SVGs")
-    parser.add_argument("--variants", nargs="+", default=["light", "dark"],
+    parser.add_argument("--variants", nargs="+", default=["blood"],
                         choices=sorted(VARIANT_FILES), help="appearances to derive")
     parser.add_argument("--out", default=None,
                         help="write loose SVGs here instead of updating the asset catalog")
     parser.add_argument("--app-icon", action="store_true",
-                        help="also re-render AppIcon/icon-1024.png from the dark mark")
+                        help="also re-render AppIcon/icon-1024.png from the brand mark")
     args = parser.parse_args()
     if args.app_icon and APP_ICON_VARIANT not in args.variants:
         args.variants = list(args.variants) + [APP_ICON_VARIANT]
@@ -348,6 +350,12 @@ def main():
         entries = []
         target = args.out or os.path.join(catalog, f"{imageset}.imageset")
         os.makedirs(target, exist_ok=True)
+        if not args.out:
+            # The catalog holds exactly what this run writes: Contents.json is rewritten below, and
+            # an SVG left from a previous variant set would sit in the bundle unreferenced.
+            for stale in os.listdir(target):
+                if stale.endswith(".svg"):
+                    os.remove(os.path.join(target, stale))
         for variant in args.variants:
             filename = f"{asset}-{variant}.svg"
             with open(os.path.join(target, filename), "w", encoding="utf-8") as handle:

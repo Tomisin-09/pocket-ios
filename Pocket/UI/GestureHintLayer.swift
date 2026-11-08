@@ -297,7 +297,7 @@ private struct GestureHintTag: View {
         .padding(.trailing, 2)
         .padding(.vertical, 4)
         .frame(width: width)
-        // The CTA fill, not the waveform's own teal: it is the one the background ink is measured
+        // The CTA fill, not the waveform's own terracotta: it is the one the background ink is measured
         // against (≥ 4.5 : 1 in both appearances, ADR 0062), and it is what the walkthrough's
         // *Show me* already uses on this screen.
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(PocketColor.practiceCTA))

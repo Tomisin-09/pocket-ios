@@ -48,7 +48,7 @@ struct RunTempoCaption: View {
 /// (The older "and `exerciseAnimates` defaults off" half of this argument no longer holds — that
 /// preference defaults **on** since ADR 0157. The decision is unchanged; only this reason retires.)
 ///
-/// The colour is the Practice space's own teal, because the signal is the edge's **presence**, not its
+/// The colour is the Practice space's own colour, because the signal is the edge's **presence**, not its
 /// hue: the drill surfaces carry no border at all the rest of the time, so its appearing is already
 /// unambiguous. That also means colour vision isn't needed to read it, and no other space's identity
 /// (metronome plum, marker orange) has to be borrowed onto a Practice screen.

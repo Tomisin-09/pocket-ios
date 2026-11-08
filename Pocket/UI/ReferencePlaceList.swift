@@ -236,8 +236,8 @@ extension ReferencePlaceKind {
         }
     }
 
-    /// Each place in its own home's colour: drills and routines are Practice's teal, songs and loops the
-    /// Library's terracotta.
+    /// Each place in its own home's colour: drills and routines are Practice's terracotta, songs and loops the
+    /// Library's teal.
     var tint: Color {
         switch self {
         case .exercise, .routine: PocketColor.practice

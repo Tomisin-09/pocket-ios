@@ -45,7 +45,7 @@ struct TempoSheetTopSection: View {
     }
 }
 
-/// **Find the tempo**: the sheet's first move, one wide teal button saying what it does. While it
+/// **Find the tempo**: the sheet's first move, one wide terracotta button saying what it does. While it
 /// listens it says so and can't be pressed again.
 struct FindTheTempoButton: View {
     let isListening: Bool
