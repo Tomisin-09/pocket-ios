@@ -1,7 +1,13 @@
 # 0081 — Brand-led home theme (teal hero · plum · terracotta) + Blood Moon theme
 
-- **Status:** Accepted (Slice 1 built); Blood Moon theme (Slice 2) planned
+- **Status:** Accepted (Slice 1 built). Slice 2 built differently: ADR 0292 made Blood Moon the only
+  colouring, with no picker
 - **Date:** 2026-07-11
+- **Amended by:** ADR 0292 (2026-11-08) — the Blood Moon mapping below is the app's **only** colouring,
+  for everyone: Practice terracotta, Library teal, mastery tracking Practice. The teal default and Slice
+  2's Settings picker are dropped, and light-mode Terracotta darkens to `#B0391B` for text contrast.
+  `waveformAccent` is terracotta too (its D4), no longer a fixed teal, though still never the plum.
+  Slice 1's hue assets and the plum Metronome stand.
 - **Amends:** [ADR 0023](0023-blue-theme-bordered-loop-identity.md) (retires the
   song-surface **blue**), [ADR 0062](0062-light-dark-appearance.md) /
   [ADR 0063](0063-appearance-vibrancy-and-loop-editing-lock.md) (the teal was the *metronome* hue; it

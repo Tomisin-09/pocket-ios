@@ -6,7 +6,7 @@ import UIKit
 /// **A4, or US Letter where the locale measures in inches.** A row's lines are kept together on a page,
 /// with its section's heading, so a page never ends between a tab's strings. The ink is the app's
 /// light-mode palette, since a PDF is printed and read on white: chords in the chords lane's indigo,
-/// names in the notes lane's teal (ADR 0232 D3), everything else near-black.
+/// names in the notes lane's terracotta (ADR 0232 D3, ADR 0292), everything else near-black.
 ///
 /// UIKit, so it lives here rather than beside `TabDocument`, which stays pure. On the main actor: the
 /// drawing APIs are thread-safe in practice, but the SDKs don't all say so, and CI's older one is the
@@ -63,7 +63,7 @@ enum TabPDF {
         /// `toolkit`, light (design-brief §3): the chords lane.
         let chords = UIColor(red: 0x4B / 255, green: 0x3F / 255, blue: 0x94 / 255, alpha: 1)
         /// `practice`, light: the notes lane.
-        let names = UIColor(red: 0x2B / 255, green: 0x69 / 255, blue: 0x82 / 255, alpha: 1)
+        let names = UIColor(red: 0xB0 / 255, green: 0x39 / 255, blue: 0x1B / 255, alpha: 1)
 
         init(document: TabDocument, pageWidth: CGFloat) {
             let widest = CGFloat(document.blocks.flatMap(\.lines).map(\.text.count).max() ?? 1)

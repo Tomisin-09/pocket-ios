@@ -77,19 +77,21 @@ struct SongCard: View {
     }
 
     /// Mastery tier → accent colour (mirrors `LibrarySectioning.masteryTier`): unrated
-    /// (no loops) neutral, needs work warm, solid blue, polished green. Colour is a UI
+    /// (no loops) neutral, needs work warm, solid teal, polished green. Colour is a UI
     /// concern, so the mapping lives here rather than in the pure module (ADR 0036).
     static func accentColor(for mastery: Int?) -> Color {
         guard let mastery else { return PocketColor.barDefault }
         switch mastery {
         case ...1: return PocketColor.marker
-        case 2...3: return PocketColor.waveformBar
+        // The Library's own teal, not the song player's bars: those went terracotta (ADR 0292), a
+        // shade from the orange tier below, and a tier is only worth drawing if it reads apart.
+        case 2...3: return PocketColor.library
         default: return PocketColor.active
         }
     }
 }
 
-/// Mastery as up to five small dots (0–5), the brand teal when filled. The one way the app draws
+/// Mastery as up to five small dots (0–5), the brand terracotta when filled. The one way the app draws
 /// mastery: the song player's title and Song details used stars until the 2026-10-03 review, beside
 /// loop rows that already used these.
 struct MasteryDots: View {

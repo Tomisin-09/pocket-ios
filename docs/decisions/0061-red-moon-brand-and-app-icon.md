@@ -2,6 +2,9 @@
 
 - **Status:** Accepted
 - **Date:** 2026-07-02
+- **Amended by:** ADR 0292 (2026-11-08) — the mark, the wordmark and the App Icon are the **blood moon**
+  artwork, not the slate-teal described below, and each brand imageset is one universal image rather
+  than a light/dark pair. The display name, Futura and the internal *Pocket* names stand.
 
 ## Context
 

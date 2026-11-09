@@ -36,7 +36,7 @@ struct NeckNoteEditor<Trailing: View>: View {
     /// What the owner puts at the right of the instrument row: Name the notes' ↶ ↷ (ADR 0252 D3). The tab
     /// writer's sit above the neck already, so it passes nothing.
     let trailing: Trailing
-    /// Name the notes' practice teal, unless the owner sets another (`neckAccent`).
+    /// Name the notes' practice terracotta, unless the owner sets another (`neckAccent`).
     @Environment(\.neckAccent) var accent
 
     var body: some View {
@@ -277,7 +277,7 @@ private struct NeckAccentKey: EnvironmentKey {
 
 extension EnvironmentValues {
     /// The neck editor's colour: the current spot, the neighbours, the marks and the switches. Name the
-    /// notes' practice teal by default; the tab writer sets Toolkit's indigo, where it lives.
+    /// notes' practice terracotta by default; the tab writer sets Toolkit's indigo, where it lives.
     var neckAccent: Color {
         get { self[NeckAccentKey.self] }
         set { self[NeckAccentKey.self] = newValue }

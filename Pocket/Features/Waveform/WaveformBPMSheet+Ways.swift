@@ -155,7 +155,7 @@ struct TapAlongView: View {
     }
 }
 
-/// The tap pad, teal as the metronome's TAP buttons are plum, and lit while it's pressed so each tap
+/// The tap pad, terracotta as the metronome's TAP buttons are plum, and lit while it's pressed so each tap
 /// is seen as well as felt. It fills the height it's given. Quiet while the song is paused, when a
 /// tap has no playhead to read.
 struct TapPadStyle: ButtonStyle {

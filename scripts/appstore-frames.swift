@@ -11,10 +11,11 @@
 // the one App Store Connect requires**: its slot, *iPhone with Dynamic Island (medium display)*, takes
 // only 1206×2622 or 1179×2556, and rejected both other sizes on 2026-10-27.
 //
-// The look is the app's: the near-black background (`#040404`), the brand teal (`#60A8C7`) for the
-// verb, white Futura for the headline. The capture sits below, whole, with the phone's rounded
-// corners. Frames are written with **no alpha channel**, which App Store Connect requires. A
-// non-breaking space in a headline keeps two words on one line.
+// The look is the app's: the near-black background (`#040404`), the brand terracotta (`#E07E57`,
+// Practice in dark mode since ADR 0292) for the verb, white Futura for the headline. The capture
+// sits below, whole, with the phone's rounded corners. Frames are written with **no alpha
+// channel**, which App Store Connect requires. A non-breaking space in a headline keeps two words
+// on one line.
 //
 // Nothing here knows what a frame says: the captions live in the manifest, so wording changes
 // without touching code. The storyboard itself is in `docs/app-store-listing-copy.md`.
@@ -43,7 +44,7 @@ let canvases = [
     Canvas(folder: "6.5", width: 1242, height: 2688)
 ]
 let background = NSColor(srgbRed: 4 / 255, green: 4 / 255, blue: 4 / 255, alpha: 1)
-let teal = NSColor(srgbRed: 0x60 / 255, green: 0xA8 / 255, blue: 0xC7 / 255, alpha: 1)
+let terracotta = NSColor(srgbRed: 0xE0 / 255, green: 0x7E / 255, blue: 0x57 / 255, alpha: 1)
 
 func font(_ name: String, _ size: CGFloat) -> NSFont {
     guard let found = NSFont(name: name, size: size) else {
@@ -64,12 +65,12 @@ func makeContext(_ canvas: Canvas) -> CGContext? {
     return context
 }
 
-/// The near-black ground, with a faint teal glow behind the caption.
+/// The near-black ground, with a faint terracotta glow behind the caption.
 func drawBackground(_ size: NSSize) {
     background.setFill()
     NSRect(origin: .zero, size: size).fill()
     let centre = NSPoint(x: size.width / 2, y: size.height * 0.04)
-    NSGradient(colors: [teal.withAlphaComponent(0.22), background.withAlphaComponent(0)])?
+    NSGradient(colors: [terracotta.withAlphaComponent(0.22), background.withAlphaComponent(0)])?
         .draw(fromCenter: centre, radius: 0, toCenter: centre, radius: size.width * 0.9, options: [])
 }
 
@@ -82,7 +83,7 @@ func drawCaption(_ frame: Frame, in size: NSSize) -> CGFloat {
     centred.lineBreakMode = .byWordWrapping
 
     let verb = NSAttributedString(string: frame.verb, attributes: [
-        .font: font("Futura-Medium", size.width * 0.034), .foregroundColor: teal,
+        .font: font("Futura-Medium", size.width * 0.034), .foregroundColor: terracotta,
         .kern: size.width * 0.0045, .paragraphStyle: centred
     ])
     let headline = NSAttributedString(string: frame.headline, attributes: [

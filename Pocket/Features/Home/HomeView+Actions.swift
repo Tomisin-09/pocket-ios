@@ -6,7 +6,7 @@ import SwiftUI
 
 extension HomeView {
     /// Solid green disc with a bold dark plus — mirrors the app's dark-content-on-filled-colour
-    /// convention (e.g. the teal CTA). Its enclosing `ToolbarItem` drops the iOS 26 shared glass
+    /// convention (e.g. the Practice CTA). Its enclosing `ToolbarItem` drops the iOS 26 shared glass
     /// background so the disc reads as a flat fill.
     var addSongButton: some View {
         Button { importing = true } label: {
@@ -19,7 +19,7 @@ extension HomeView {
         .accessibilityLabel("Add a song")
     }
 
-    /// The **primary** home action (planner, ADR 0046/0015): a filled teal CTA that pushes
+    /// The **primary** home action (planner, ADR 0046/0015): a filled terracotta CTA that pushes
     /// `PlannerView`, where goals (set once) drive a freshly-generated, goal-adaptive session each
     /// run. In its own extension so `HomeView`'s body stays within `type_body_length`.
     var startTodaySessionCard: some View {

@@ -96,7 +96,7 @@ extension LoopEditSheet {
     private var backingTrackRow: some View {
         Toggle(isOn: $isBackingTrack) {
             // The icon in the secondary grey: it is a setting among launches, and right under Improvise's
-            // teal guitars the system blue it fell back to read as a mistake (pocket-369 screenshot).
+            // coloured guitars the system blue it fell back to read as a mistake (pocket-369 screenshot).
             Label {
                 Text("Backing track")
             } icon: {

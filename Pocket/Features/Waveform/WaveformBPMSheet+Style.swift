@@ -3,9 +3,9 @@ import SwiftUI
 // MARK: - The tempo sheet in the player's own look (ADR 0284 D7)
 
 // The sheet is dressed as the player it opens from rather than as a stock form: the app's
-// background under `surfaceStandard` cards, Futura on the words, teal (`waveformAccent`) on what you
+// background under `surfaceStandard` cards, Futura on the words, terracotta (`waveformAccent`) on what you
 // press and green (`active`) on what's chosen. That's the speed bar's split, whose presets fill green
-// and whose metronome button is teal. The background is the metronome settings sheet's.
+// and whose metronome button is terracotta. The background is the metronome settings sheet's.
 extension View {
     func tempoSheetStyle() -> some View {
         font(.futura(.body))
@@ -81,7 +81,7 @@ struct TempoPills<Value: Hashable>: View {
     }
 }
 
-/// A one-shot action as a small capsule (Half, Double, Reset): teal on `surfaceStandard`, greyed
+/// A one-shot action as a small capsule (Half, Double, Reset): terracotta on `surfaceStandard`, greyed
 /// when it can't be used.
 struct TempoActionPillStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
@@ -104,7 +104,7 @@ struct TempoActionPillStyle: ButtonStyle {
     }
 }
 
-/// The sheet's one strong action at a time (Use, Use 89 BPM): filled teal, greyed when it can't
+/// The sheet's one strong action at a time (Use, Use 89 BPM): filled terracotta, greyed when it can't
 /// be used.
 struct TempoPrimaryPillStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
@@ -127,7 +127,7 @@ struct TempoPrimaryPillStyle: ButtonStyle {
     }
 }
 
-/// A row of the other ways to set a tempo (ADR 0284 D5): a teal glyph, what it is, and when it's the
+/// A row of the other ways to set a tempo (ADR 0284 D5): a terracotta glyph, what it is, and when it's the
 /// one to use.
 struct TempoWayLabel: View {
     let title: String

@@ -161,7 +161,7 @@ struct ReferenceSourceView: View {
             Section {
                 Button { startingExercise = true } label: {
                     // White throughout, glyph and lock too: a List draws a row's label icon in the
-                    // screen's indigo, which on teal can't be read, and the grey badge can't either.
+                    // screen's indigo, which on the Practice fill can't be read, and the grey badge can't either.
                     HStack(spacing: 8) {
                         Label(start, systemImage: "metronome")
                         if plan.showsPlanLocks {
@@ -191,7 +191,7 @@ struct ReferenceSourceView: View {
                 attachButton(source)
                 Button { startingExercise = true } label: {
                     HStack(spacing: 8) {
-                        // Teal, glyph included: left alone the List draws the glyph in indigo.
+                        // Practice's colour, glyph included: left alone the List draws the glyph in indigo.
                         Label(start, systemImage: "metronome").foregroundStyle(PocketColor.practice)
                         if plan.showsPlanLocks { PlanLockBadge() }
                     }

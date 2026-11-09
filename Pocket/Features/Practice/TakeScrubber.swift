@@ -167,7 +167,7 @@ struct TakeScrubber: View {
     }
 
     /// The moments, as pins along the top edge in the Journal's own colour — writing, against a
-    /// strip that is otherwise all Practice teal.
+    /// strip that is otherwise all Practice terracotta.
     ///
     /// **In trim mode a pin outside the keep-span is drawn faint**, by the same rule the bars follow,
     /// because those are the notes the trim is about to take with the audio (ADR 0175). Seeing which

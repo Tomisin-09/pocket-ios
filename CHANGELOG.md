@@ -68,6 +68,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   of the map does the same for the whole song. A riff that repeats to the end of its section lights on
   every pass. It plays at the record's tempo, and − and + change it (ADR 0289).
 
+### Changed
+
+- **Red Moon is red now.** The app icon, the logo in Settings and the name at the top of Home are the
+  blood moon, and Practice wears its terracotta: *Start today's session*, the Practice tile, the run
+  screens' buttons, the progress dots. So does the song player: the waveform, the speed slider and its
+  buttons, and the tempo sheet. The song library takes the teal Practice had, so the two still never
+  look alike. The Metronome, Journal and Toolkit keep their colours. In light mode the red is a shade
+  deeper than the logo's, so small text in it is as easy to read as the teal was (ADR 0292).
+
 ## [1.4] — build 10, cut 2026-11-04, for the resubmission on 2026-11-08
 
 ### Added

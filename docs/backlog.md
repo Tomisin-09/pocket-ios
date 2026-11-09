@@ -2873,7 +2873,8 @@ crescent + stars, same near-black, no text. Notes worth carrying forward:
   went from 0.87 to 1.14 — Settings' `maxWidth: 160` now yields a shorter block. Check every consumer
   when the art changes shape, not just that it still renders.
 
-**Colour tokens: no work needed.** The palette already sits on the logo — `TealCTA` light is
+**Colour tokens: no work needed.** *(Superseded 2026-11-08 by ADR 0292: the blood moon is the brand and
+Practice wears its terracotta; light-mode Terracotta is now `#B0391B`, not the logo's `#C24A2C`.)* The palette already sits on the logo — `TealCTA` light is
 `18698B` against the logo's `17698A`, and `Terracotta` light is `C24A2C`, an *exact* match for the
 blood-moon outer colour. Decision: **logos stay their own thing**; the per-space accent families
 (Teal / Terracotta / Plum / Gold / Indigo) are what tell you which space you're in and must not be
@@ -3432,7 +3433,12 @@ name carries it.
   decides the qualifier (e.g. "Red Moon: Practice"). Reservation is free and
   immediate.
 
-## Blood Moon theme — Slice 2 (parked 2026-07-11)
+## ~~Blood Moon theme — Slice 2~~ — **BUILT differently by ADR 0292** (parked 2026-07-11, built 2026-11-08)
+
+**Blood Moon is now the only colouring, for everyone, with no picker** (ADR 0292, for 1.4.1). The notes
+below are the plan as it stood; the picker they describe was dropped, and the art-vs-tint question was
+settled by the designer's blood-moon lockup (`derive-brand-svgs.py` now defaults to it).
+
 
 The default brand re-theme shipped in **ADR 0081 / Slice 1** (Practice = brand
 teal, Metronome = plum, Song library = terracotta `#C24A2C`; mastery tracks the

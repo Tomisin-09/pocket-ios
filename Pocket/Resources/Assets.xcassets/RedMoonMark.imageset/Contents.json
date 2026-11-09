@@ -1,18 +1,8 @@
 {
   "images": [
     {
-      "filename": "mark-light.svg",
+      "filename": "mark-blood.svg",
       "idiom": "universal"
-    },
-    {
-      "filename": "mark-dark.svg",
-      "idiom": "universal",
-      "appearances": [
-        {
-          "appearance": "luminosity",
-          "value": "dark"
-        }
-      ]
     }
   ],
   "info": {

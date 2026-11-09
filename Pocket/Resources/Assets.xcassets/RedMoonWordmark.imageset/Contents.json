@@ -1,18 +1,8 @@
 {
   "images": [
     {
-      "filename": "wordmark-light.svg",
+      "filename": "wordmark-blood.svg",
       "idiom": "universal"
-    },
-    {
-      "filename": "wordmark-dark.svg",
-      "idiom": "universal",
-      "appearances": [
-        {
-          "appearance": "luminosity",
-          "value": "dark"
-        }
-      ]
     }
   ],
   "info": {

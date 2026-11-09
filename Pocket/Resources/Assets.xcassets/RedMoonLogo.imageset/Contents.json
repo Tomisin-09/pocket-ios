@@ -1,18 +1,8 @@
 {
   "images": [
     {
-      "filename": "logo-light.svg",
+      "filename": "logo-blood.svg",
       "idiom": "universal"
-    },
-    {
-      "filename": "logo-dark.svg",
-      "idiom": "universal",
-      "appearances": [
-        {
-          "appearance": "luminosity",
-          "value": "dark"
-        }
-      ]
     }
   ],
   "info": {
