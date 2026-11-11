@@ -4,6 +4,11 @@
 - **Date:** 2026-07-12
 - **Builds on:** ADR 0065 (exercise content templates; the `FretboardRun` / `ScaleRun`
   generative-authoring model and the `.fretboard` renderer).
+- **Amended by:** ADR 0293 (2026-11-11) — the editor layout below changes: Up and back is no longer on
+  the primary face but opens the **Movement** group, with Coming back directly under it, and there is no
+  Advanced beside Movement any more (Rhythm is a plain row). Movement's settings are rows of the form
+  under a header row rather than the inside of a `DisclosureGroup`. The shift and stagger controls,
+  their ranges and the neck-fit cap stand.
 
 ## Context
 

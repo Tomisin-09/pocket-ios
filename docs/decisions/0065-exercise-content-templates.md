@@ -11,7 +11,10 @@
   warm-up. **Legato** opens on a hammer-on / pull-off figure (`FretboardRun.hammerOnPullOff`) and
   plays every drill with its joins worked out from the frets (`ExerciseTemplate.articulating`), so the
   `FretTechnique.hammerOn` / `.pullOff` cases this ADR added are finally set. The shared run editor,
-  the generate-or-draw split, and Warm-up, Picking and Fingerstyle stand.
+  the generate-or-draw split, and Warm-up, Picking and Fingerstyle stand. · ADR 0293 (2026-11-11) —
+  the warm-up / picking / legato editor no longer has the "Advanced" disclosure build 2 demoted the
+  subdivision into: Rhythm is a plain row, and Up and back moved into Movement. The editor is laid out
+  as several Form rows. The scale and arpeggio editors keep their Advanced.
 
 ## Context
 

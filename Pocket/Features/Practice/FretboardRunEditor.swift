@@ -4,8 +4,13 @@ import SwiftUI
 /// every note by hand, the player declares the *shape* of a warm-up / picking / legato run and the
 /// app expands it: a **finger pattern** (e.g. 1-3-2-4) anchored to a **base fret**, travelling a
 /// **string span**, optionally **back**. A live preview walks the resulting run so the shape is
-/// visible before it's saved; the rhythm is demoted to an "Advanced" row (default quarters) so
-/// the common controls stay uncluttered.
+/// visible before it's saved.
+///
+/// **It is several Form rows, not one** (ADR 0293). The body is a `Group`, so the `Section` it sits in
+/// gets a row per control: opening **Movement** inserts rows rather than resizing one tall row that also
+/// holds the preview, whose `TimelineView` redraws every frame. As a single row, every open and close
+/// re-measured all of it, and on device the screen looked as if it rebuilt itself. Each row carries its
+/// own clear background and hidden separator, so the editor still reads as one surface.
 ///
 /// A thin skin over `FretboardRun` — every control mutates one field of the bound recipe, and the
 /// preview reads `run.expanded()`; the view holds no timing logic (T5). **T10** — every colour is a
@@ -20,11 +25,8 @@ struct FretboardRunEditor: View {
     var template: ExerciseTemplate = .warmup
     var tint: Color = PocketColor.practice
 
-    /// Whether the demoted subdivision control is revealed — eighths suits nearly every run, so it
-    /// starts collapsed (the feedback that the subdivision picker was confusing up front).
-    @State private var showsAdvanced = false
-    /// Whether the position-shifting controls (ADR 0083) are revealed — off by default so a plain
-    /// warm-up stays four taps and the power controls are one tap away.
+    /// Whether the Movement rows (Up and back, Coming back, ADR 0083's shifts) are revealed. Collapsed by
+    /// default so a plain warm-up stays four taps and the power controls are one tap away.
     @State private var showsMovement = false
     /// The global note-caption preference, so this preview matches the scale editor and practice board.
     /// A warm-up run is a pure finger pattern with no tonal centre, so an inherited Interval mode
@@ -43,43 +45,33 @@ struct FretboardRunEditor: View {
     private static let staggerRange = -2...3
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint, hasRoot: false)
-            FretboardDrillPreview(drill: template.articulating(run.expanded(instrument: instrument)),
-                                  tint: tint, labelMode: labelMode, playOnceToken: playOnceToken)
+        Group {
+            previewRow
             patternField
             baseFretField
             StringSpanStrip(from: $run.fromString, to: $run.toString,
                             instrument: instrument, tint: tint)
-            movement
-            advanced
-            Text("Set the finger pattern, then where it sits and how far it travels — the run builds "
-                 + "itself. Watch it walk above before you save.")
-                .font(.futura(.caption))
-                .foregroundStyle(PocketColor.textSecondary)
-        }
-    }
-
-    // MARK: - Advanced
-
-    /// **Finger pattern · Starts on fret · Across stay above the fold**; how the run is *played* drops
-    /// into the single Advanced disclosure (2026-07-28) — Rhythm and Up-and-back. This editor has no
-    /// root, so no octaves, sequence or starting-note axis; **Movement** stays its own named group
-    /// rather than a second thing called "Advanced".
-    private var advanced: some View {
-        EditorDisclosure(title: "Advanced", isExpanded: $showsAdvanced,
-                         summaryParts: advancedSummary, tint: tint) {
+            movementHeader
+            if showsMovement { movementRows }
+            // Rhythm is a plain row now (ADR 0293): with Up and back moved into Movement it was the only
+            // thing left under "Advanced", and a disclosure that opens onto one dropdown is two taps for
+            // one value that it also printed twice.
             RhythmRow(notesPerBeat: $run.notesPerBeat, accessibilityLabel: "Fretboard rhythm", tint: tint)
-            Toggle("Up and back", isOn: $run.roundTrip)
-                .font(.futura(.subheadline, weight: .semibold))
-                .tint(tint)
         }
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
     }
 
-    private var advancedSummary: [String] {
-        var parts = [FretboardSubdivisions.label(forPerBeat: run.notesPerBeat)]
-        if !run.roundTrip { parts.append("One way") }
-        return parts
+    // MARK: - Preview
+
+    /// Watch · Display over the walking board — one row, so the other rows coming and going never
+    /// re-measure the board that redraws every frame.
+    private var previewRow: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint, hasRoot: false)
+            FretboardDrillPreview(drill: template.articulating(run.expanded(instrument: instrument)),
+                                  tint: tint, labelMode: labelMode, playOnceToken: playOnceToken)
+        }
     }
 
     // MARK: - Finger pattern
@@ -97,21 +89,22 @@ struct FretboardRunEditor: View {
                     }
                 }
                 Spacer()
+                // Tinted like every other action on the editor (the Across reverse, the steppers) —
+                // they were grey here and terracotta there for the same kind of button (ADR 0293).
                 Button { reverseFingers() } label: {
                     Image(systemName: "arrow.left.arrow.right")
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(PocketColor.textSecondary)
+                .buttonStyle(.borderless)
                 .disabled(run.fingers.count < 2)
                 .accessibilityLabel("Reverse the finger pattern")
                 Button { removeLastFinger() } label: {
                     Image(systemName: "delete.left")
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(PocketColor.textSecondary)
+                .buttonStyle(.borderless)
                 .disabled(run.fingers.isEmpty)
                 .accessibilityLabel("Remove last finger")
             }
+            .tint(tint)
             HStack(spacing: 8) {
                 ForEach(1...4, id: \.self) { finger in
                     Button { appendFinger(finger) } label: {
@@ -179,35 +172,29 @@ struct FretboardRunEditor: View {
     }
 }
 
-// MARK: - Movement (position-shifting, ADR 0083 — demoted)
+// MARK: - Movement (Up and back + ADR 0083 position shifting)
 
-/// The ADR 0083 position-shifting controls, split into their own extension so the primary editor
-/// body stays lean: climb the neck after each run, stagger the pattern diagonally per string, and —
-/// when the run comes back — pick how the descent is fingered. All default off, tucked under a
-/// disclosure so the common path stays calm (S3, the ADR 0065 over-busy-editor caution).
+/// How the run travels once it has a shape: whether it comes back and how, then ADR 0083's climb and
+/// stagger. **Up and back lives here** (ADR 0293). Its own follow-on, Coming back, always did, so turning
+/// it on under Advanced used to make a control appear in a different group; now the two sit together,
+/// Coming back directly under the switch that reveals it. All of it is rows of the editor's `Section`.
 extension FretboardRunEditor {
-    var movement: some View {
-        EditorDisclosure(title: "Movement", isExpanded: $showsMovement,
-                         summaryParts: movementSummary, emptyLabel: "Off", tint: tint) {
-            shiftPerPassField
-            if run.fretShiftPerPass != 0 { passCountField }
-            staggerPerStringField
-            if run.roundTrip { returnStyleField }
-        }
-        .onChange(of: run.baseFret) { _, _ in clampPassCount() }
-        .onChange(of: run.fretShiftPerPass) { _, _ in clampPassCount() }
-        .onChange(of: run.fretShiftPerString) { _, _ in clampPassCount() }
+    var movementHeader: some View {
+        EditorDisclosureHeader(title: "Movement", isExpanded: $showsMovement,
+                               summaryParts: run.movementSummaryParts, tint: tint)
+            .onChange(of: run.baseFret) { _, _ in clampPassCount() }
+            .onChange(of: run.fretShiftPerPass) { _, _ in clampPassCount() }
+            .onChange(of: run.fretShiftPerString) { _, _ in clampPassCount() }
     }
 
-    /// A terse "what's on" read for the collapsed row, so a run's movement is legible without opening.
-    private var movementSummary: [String] {
-        var parts: [String] = []
-        if run.fretShiftPerPass != 0 {
-            parts.append("↑\(run.fretShiftPerPass)/run × \(run.passCount)")
-        }
-        if run.fretShiftPerString != 0 { parts.append("diag \(signed(run.fretShiftPerString))") }
-        if run.roundTrip, run.returnStyle == .restate { parts.append("restate") }
-        return parts
+    @ViewBuilder var movementRows: some View {
+        Toggle("Up and back", isOn: $run.roundTrip)
+            .font(.futura(.subheadline, weight: .semibold))
+            .tint(tint)
+        if run.roundTrip { returnStyleField.editorDependentRow(tint: tint) }
+        shiftPerPassField
+        if run.fretShiftPerPass != 0 { passCountField.editorDependentRow(tint: tint) }
+        staggerPerStringField
     }
 
     private var shiftPerPassField: some View {
@@ -250,7 +237,8 @@ extension FretboardRunEditor {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
-            EditorStepper(value: run.fretShiftPerString == 0 ? "Off" : signed(run.fretShiftPerString),
+            EditorStepper(value: run.fretShiftPerString == 0
+                            ? "Off" : FretboardRun.signedFrets(run.fretShiftPerString),
                           canGoDown: run.fretShiftPerString > Self.staggerRange.lowerBound,
                           canGoUp: run.fretShiftPerString < Self.staggerRange.upperBound,
                           tint: tint,
@@ -283,9 +271,25 @@ extension FretboardRunEditor {
     private func clampPassCount() {
         if run.passCount > maxPasses { run.passCount = maxPasses }
     }
+}
 
-    /// A signed fret count for a stagger/shift read (`+2`, `−1`).
-    private func signed(_ value: Int) -> String {
+extension FretboardRun {
+    /// The collapsed **Movement** row's read (ADR 0293): the path first, always — *Up and back* or *One
+    /// way* — then only the settings that differ from their defaults (*restate*, the climb, the stagger).
+    ///
+    /// The scale editor's Advanced summary leaves *Up and back* out as noise, because there it sits
+    /// beside things that say more. Here the path is what Movement is about: with Up and back inside it,
+    /// the old empty read, *Off*, would sit on a row whose run still goes up and back.
+    var movementSummaryParts: [String] {
+        var parts = [roundTrip ? "Up and back" : "One way"]
+        if roundTrip, returnStyle == .restate { parts.append("restate") }
+        if fretShiftPerPass != 0 { parts.append("↑\(fretShiftPerPass)/run × \(passCount)") }
+        if fretShiftPerString != 0 { parts.append("diag \(Self.signedFrets(fretShiftPerString))") }
+        return parts
+    }
+
+    /// A signed fret count for a stagger/shift read (`+2`, `−1`, with a true minus sign).
+    static func signedFrets(_ value: Int) -> String {
         value < 0 ? "−\(abs(value))" : "+\(value)"
     }
 }
@@ -294,9 +298,11 @@ extension FretboardRunEditor {
     struct Harness: View {
         @State private var run = FretboardRun.chromaticWarmup
         var body: some View {
-            FretboardRunEditor(run: $run)
-                .padding()
-                .background(PocketColor.background)
+            // A Form, as in the app: the editor is a run of rows (ADR 0293), and outside a List its
+            // `Group` would just stack them with each row's modifiers doing nothing.
+            Form {
+                Section { FretboardRunEditor(run: $run) }
+            }
         }
     }
     return Harness().preferredColorScheme(.dark)

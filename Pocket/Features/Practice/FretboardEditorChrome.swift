@@ -123,8 +123,12 @@ struct LabeledMenuRow<Trailing: View>: View {
 
 /// A ‹ › stepper row shared by the run editors. `.expanding` centres a long value between the controls
 /// (the scale/arpeggio root-anchor label, "Root on low E · Fret 5", ADR 0091); `.compact` keeps a
-/// short numeric value snug against them (the picking-run's base fret / shift counts). Both fire a
-/// light haptic on each step.
+/// short value snug against them (the picking-run's base fret / shift counts). Both fire a light haptic
+/// on each step.
+///
+/// Both widths set the value in **Futura** (ADR 0293). `.compact` was monospace, which the design brief
+/// keeps for times and BPM: on a fret count it made a word like "Off" read as "0ff", in a third face
+/// beside the Futura labels and the menus.
 ///
 /// The arrows are **chevrons**, not ∓: minus/plus read as "remove/add a thing" rather than "move
 /// through a list of positions", which is what these actually do (device feedback 2026-07-28). Note the
@@ -177,7 +181,7 @@ struct EditorStepper: View {
                 .foregroundStyle(PocketColor.textPrimary)
                 .multilineTextAlignment(.center)
         case .compact:
-            Text(value).font(.pocketMono(.body)).frame(minWidth: 28)
+            Text(value).font(.futura(.body)).frame(minWidth: 36)
                 .foregroundStyle(PocketColor.textPrimary)
         }
     }
@@ -240,16 +244,17 @@ struct MostCommonBadge: View {
 /// and read as secondary chrome next to the controls it governs (device feedback 2026-07-28).
 ///
 /// **"Advanced" means one thing** (triage decision, 2026-07-28): each editor has at most one
-/// disclosure by that name. The picking editor's second group is named **Movement** and uses this
-/// same shell, so the two read as siblings rather than as two flavours of "advanced".
+/// disclosure by that name. The scale and arpeggio editors use this shell for theirs. The picking-run
+/// editor has no Advanced any more and lays its **Movement** out as rows under an
+/// `EditorDisclosureHeader` instead (ADR 0293).
 struct EditorDisclosure<Content: View>: View {
     let title: String
     @Binding var isExpanded: Bool
     /// What's on inside, one item per setting that deviates from its default — spelled out for the
     /// first couple and counted after that (see `EditorSummary.line`).
     let summaryParts: [String]
-    /// What the row reads when nothing deviates ("Off" for Movement; blank for Advanced, whose Rhythm
-    /// item is always present).
+    /// What the row reads when nothing deviates (blank for Advanced, whose Rhythm item is always
+    /// present).
     var emptyLabel: String = ""
     var tint: Color = PocketColor.practice
     @ViewBuilder let content: Content
@@ -262,8 +267,10 @@ struct EditorDisclosure<Content: View>: View {
             HStack {
                 EditorFieldLabel(title)
                 Spacer()
+                // The label's size, not caption (ADR 0293): the summary is the row's value, and at
+                // caption it was the smallest text on the editor.
                 Text(summaryParts.isEmpty ? emptyLabel : EditorSummary.line(summaryParts))
-                    .font(.futura(.caption))
+                    .font(.futura(.subheadline))
                     .foregroundStyle(PocketColor.textSecondary)
                     .lineLimit(1)
                     // VoiceOver gets the whole list — the "+N" is a *visual* budget, not a decision to
@@ -273,6 +280,55 @@ struct EditorDisclosure<Content: View>: View {
             }
         }
         .tint(tint)
+    }
+}
+
+/// The header row of a disclosure whose contents are **sibling Form rows** (ADR 0293), not the inside of
+/// a `DisclosureGroup`. It reads like `EditorDisclosure` (title, summary, chevron), but opening it
+/// inserts rows into the `Section` instead of growing the row it sits in, so an editor whose preview
+/// redraws every frame doesn't re-measure that preview each time. The caller lays the rows out under it
+/// behind its own `if isExpanded`.
+struct EditorDisclosureHeader: View {
+    let title: String
+    @Binding var isExpanded: Bool
+    /// What the collapsed row says, as for `EditorDisclosure`: spelled out for two, `+N` after.
+    let summaryParts: [String]
+    var tint: Color = PocketColor.practice
+
+    var body: some View {
+        Button {
+            withAnimation(.snappy(duration: 0.25)) { isExpanded.toggle() }
+        } label: {
+            HStack(spacing: 10) {
+                EditorFieldLabel(title)
+                    .layoutPriority(1)
+                Spacer(minLength: 8)
+                Text(EditorSummary.line(summaryParts))
+                    .font(.futura(.subheadline))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .lineLimit(1)
+                Image(systemName: "chevron.right")
+                    .font(.futura(.subheadline, weight: .semibold))
+                    .foregroundStyle(tint)
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityValue(summaryParts.joined(separator: ", "))
+        .accessibilityHint(isExpanded ? "Hides its settings" : "Shows its settings")
+    }
+}
+
+extension View {
+    /// A row that only exists because the row above it is on: Coming back under Up and back, Passes
+    /// under Shift up. Inset behind a hairline in the tint, so the dependency reads without a word.
+    func editorDependentRow(tint: Color) -> some View {
+        padding(.leading, 12)
+            .overlay(alignment: .leading) {
+                Capsule().fill(tint.opacity(0.3)).frame(width: 2)
+            }
     }
 }
 
@@ -292,8 +348,13 @@ enum EditorSummary {
 
 /// The note-density control, **renamed from "Subdivision" to "Rhythm"** and demoted from a segmented
 /// control to a dropdown (2026-07-28): "subdivision" is engine vocabulary, and four segments ate a
-/// full row inside a disclosure that now holds several settings. Lives inside `EditorDisclosure`;
-/// the custom-drill editor keeps its own inline picker, because changing it there re-grids the drill.
+/// full row inside a disclosure that now holds several settings. Lives inside the scale and arpeggio
+/// editors' `EditorDisclosure`, and is a row of its own in the picking-run editor (ADR 0293); the
+/// custom-drill editor keeps its own inline picker, because changing it there re-grids the drill.
+///
+/// A `Menu` around the `Picker` rather than a `.menu` picker, so the value is drawn in Futura at the
+/// label's size like every other value on the editor; a `.menu` picker draws its own label in the
+/// system face. Same pattern as `FretboardDisplayOptionsBar`'s Display menu.
 struct RhythmRow: View {
     @Binding var notesPerBeat: Int
     let accessibilityLabel: String
@@ -301,14 +362,21 @@ struct RhythmRow: View {
 
     var body: some View {
         LabeledMenuRow(label: "Rhythm") {
-            Picker("Rhythm", selection: $notesPerBeat) {
-                ForEach(FretboardSubdivisions.options, id: \.perBeat) { option in
-                    Text(option.label).tag(option.perBeat)
+            Menu {
+                Picker("Rhythm", selection: $notesPerBeat) {
+                    ForEach(FretboardSubdivisions.options, id: \.perBeat) { option in
+                        Text(option.label).tag(option.perBeat)
+                    }
                 }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(FretboardSubdivisions.label(forPerBeat: notesPerBeat))
+                    Image(systemName: "chevron.up.chevron.down")
+                        .imageScale(.small)
+                }
+                .font(.futura(.subheadline))
+                .foregroundStyle(tint)
             }
-            .pickerStyle(.menu)
-            .labelsHidden()
-            .tint(tint)
             .accessibilityLabel(accessibilityLabel)
             .accessibilityValue(FretboardSubdivisions.label(forPerBeat: notesPerBeat))
         }

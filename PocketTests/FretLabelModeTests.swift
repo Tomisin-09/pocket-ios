@@ -96,3 +96,48 @@ final class EditorSummaryTests: XCTestCase {
         }
     }
 }
+
+/// `FretboardRun.movementSummaryParts` — what the picking-run editor's collapsed **Movement** row says
+/// (ADR 0293). Up and back moved in with its Coming back, so the row leads with the path every time
+/// rather than reading "Off" over a run that still comes back; the rest is only what deviates.
+final class MovementSummaryTests: XCTestCase {
+
+    private func run(roundTrip: Bool = true, returnStyle: ReturnStyle = .retrace,
+                     shift: Int = 0, passes: Int = 1, stagger: Int = 0) -> FretboardRun {
+        FretboardRun(fingers: [1, 2, 3, 4], baseFret: 1, fromString: 0, toString: 5,
+                     roundTrip: roundTrip, fretShiftPerPass: shift, passCount: passes,
+                     fretShiftPerString: stagger, returnStyle: returnStyle)
+    }
+
+    /// The defaults say the path, never nothing and never "Off".
+    func testDefaultsReadAsTheRoundTrip() {
+        XCTAssertEqual(run().movementSummaryParts, ["Up and back"])
+        XCTAssertEqual(run(roundTrip: false).movementSummaryParts, ["One way"])
+    }
+
+    /// Restate only means something on the way back, so a one-way run doesn't mention it.
+    func testRestateShowsOnlyWhenTheRunComesBack() {
+        XCTAssertEqual(run(returnStyle: .restate).movementSummaryParts, ["Up and back", "restate"])
+        XCTAssertEqual(run(roundTrip: false, returnStyle: .restate).movementSummaryParts, ["One way"])
+    }
+
+    func testClimbAndStaggerFollowThePath() {
+        XCTAssertEqual(run(shift: 2, passes: 3).movementSummaryParts, ["Up and back", "↑2/run × 3"])
+        XCTAssertEqual(run(stagger: -1).movementSummaryParts, ["Up and back", "diag −1"])
+        XCTAssertEqual(run(roundTrip: false, shift: 1, passes: 2, stagger: 2).movementSummaryParts,
+                       ["One way", "↑1/run × 2", "diag +2"])
+    }
+
+    /// Everything on at once still fits the row: two spelled out, the rest counted.
+    func testEverythingOnIsBudgetedByTheSummaryLine() {
+        let parts = run(returnStyle: .restate, shift: 2, passes: 3, stagger: 1).movementSummaryParts
+        XCTAssertEqual(EditorSummary.line(parts), "Up and back · restate +2")
+    }
+
+    /// A true minus sign, so "−1" doesn't read as a hyphen beside "+1".
+    func testSignedFretsUsesATrueMinus() {
+        XCTAssertEqual(FretboardRun.signedFrets(2), "+2")
+        XCTAssertEqual(FretboardRun.signedFrets(-2), "−2")
+        XCTAssertEqual(FretboardRun.signedFrets(0), "+0")
+    }
+}
