@@ -272,15 +272,58 @@ click through the speaker and through headphones.
 
   Needs its own ADR, amending 0004's rung 2 and 0011's import if it goes ahead. **Not decided.**
 
-## Two run-editor follow-ups ADR 0293 left open (logged 2026-11-11)
+## Split the Scales and Arpeggios editors into rows (logged 2026-11-11, follows ADR 0293)
 
-ADR 0293 split the warm-up / picking / legato editor into Form rows, so opening Movement inserts rows
-rather than resizing one tall row that also holds the per-frame preview. Two things it did not do:
+**Ready to pick up.** ADR 0293 (#412) fixed the lag in the Warm-up / Picking / Legato editor by making
+it Form rows. The Scales and Arpeggios editors have the same structure that caused that lag, so they
+very likely stutter the same way when Advanced opens.
 
-- **The Scales and Arpeggios editors are still one row each,** with their Advanced as a
-  `DisclosureGroup`, so they likely stutter the same way when it opens. The fix is 0293's D1 applied to
-  `ScaleRunEditor` and `ArpeggioRunEditor`. The device check has since confirmed that D1 helped
-  (2026-11-11: Movement "much smoother" on an iPhone 16 Pro), so this is ready to pick up.
+**Why it's worth doing.** Each editor is one `VStack` that
+`ConfigureExerciseForm.scaleSection` / `arpeggioSection` and `ExerciseShapeSheet` host as a **single**
+Form row. That row holds the `FretboardDrillPreview`, which is a `TimelineView(.animation)` and redraws
+every frame. Opening `EditorDisclosure` ("Advanced") resizes that whole cell while it keeps redrawing.
+Splitting the picking editor into rows was the fix there: on an iPhone 16 Pro (iOS 26.6, 2026-11-11)
+Tomisin found Movement "much smoother". That is by feel, not profiled. Nobody has opened Scales or
+Arpeggios Advanced on a device since, so check that they stutter before starting, to be sure the work
+is needed.
+
+**What's in them today:**
+- **Scales** (`ScaleRunEditor`). The main face has the preview, title, Scale, Root, Layout (guitar
+  only, when there is more than one) and Position (when there is more than one). Advanced has Rhythm,
+  Octaves (layouts that use octaves), Sequence, Up and back, and "Start from the lowest root note"
+  (box only).
+- **Arpeggios** (`ArpeggioRunEditor`). The main face has the preview, title, Arpeggio, Root and
+  Position. Advanced has Rhythm, Octaves, Up and back and "Start from the lowest root note".
+  Arpeggios have no Sequence.
+
+**Decided: the structural move is 0293's D1.**
+- Make each body a `Group` of rows with `.listRowBackground(Color.clear)` and
+  `.listRowSeparator(.hidden)` inside the editor, as `FretboardRunEditor` does.
+- Replace `EditorDisclosure` with `EditorDisclosureHeader`, with its rows as siblings behind
+  `if showsAdvanced`.
+- Wrap the `#Preview`s in `Form { Section { … } }`, so the canvas shows the rows.
+- Once neither editor uses `EditorDisclosure`, delete it from `FretboardEditorChrome`; nothing else
+  calls it.
+
+**Not decided: whether the contents regroup the way 0293 did** (Rhythm as a plain row, Up and back
+under a path-led header). The rows-only version can keep "Advanced" exactly as it reads now. A regroup
+is a separate design call: mock it first, as with 0293's canvas, and if it happens it needs its own ADR
+amending 0065 and 0293.
+
+**Checks** (the same as #412):
+- Hosted-window snapshots on iOS 26.5 and 18.5, light and dark, Advanced open and closed. Do this for
+  Scales on a box layout and on a neck-spanning one, because Octaves and the start-note toggle come and
+  go with the layout.
+- A throwaway UI test on New Scales and New Arpeggios that opens Advanced and finds its rows. Mind the
+  lazy List: swipe until the row exists and is hittable.
+- The rendered `ExerciseShapeSheet`, because it hosts both editors too.
+- A device check before calling the stutter gone.
+
+**Docs.** Add a CHANGELOG entry. If the regroup is decided, write the new ADR with its back edges.
+Figures showing either editor go on the reshoot list.
+
+## A run-editor follow-up ADR 0293 left open (logged 2026-11-11)
+
 - **A small board docked under the title once the full preview scrolls away.** It was in the approved
   mockup, so the run stays in view while you adjust Movement. It needs scroll-position tracking, which on
   the iOS 17 floor means measuring the preview's frame by hand. **Not decided.**
