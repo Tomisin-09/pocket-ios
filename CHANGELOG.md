@@ -76,6 +76,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   buttons, and the tempo sheet. The song library takes the teal Practice had, so the two still never
   look alike. The Metronome, Journal and Toolkit keep their colours. In light mode the red is a shade
   deeper than the logo's, so small text in it is as easy to read as the teal was (ADR 0292).
+- **The Warm-up, Picking and Legato editors are easier to set.** **Up and back** now opens **Movement**,
+  with **Coming back** directly under it, so the switch and the choice it reveals are together.
+  **Rhythm** is a row of its own; **Advanced**, which held only it, is gone. Opening Movement adds its
+  settings beneath it rather than resizing the whole editor. The values down the right (*Off*,
+  *Eighths*, a fret number) are as large as the labels beside them and in the app's own type, and
+  Movement's collapsed row says how the run travels: *Up and back*, *One way*, *diag +1*. The finger
+  pattern's reverse and delete buttons are in the same colour as the other buttons on the editor, and
+  the second caption that repeated the first is gone. The Scales and Arpeggios editors get the larger
+  values too (ADR 0293).
 
 ## [1.4] — build 10, cut 2026-11-04, for the resubmission on 2026-11-08
 

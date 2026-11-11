@@ -272,6 +272,19 @@ click through the speaker and through headphones.
 
   Needs its own ADR, amending 0004's rung 2 and 0011's import if it goes ahead. **Not decided.**
 
+## Two run-editor follow-ups ADR 0293 left open (logged 2026-11-11)
+
+ADR 0293 split the warm-up / picking / legato editor into Form rows, so opening Movement inserts rows
+rather than resizing one tall row that also holds the per-frame preview. Two things it did not do:
+
+- **The Scales and Arpeggios editors are still one row each,** with their Advanced as a
+  `DisclosureGroup`, so they likely stutter the same way when it opens. The fix is 0293's D1 applied to
+  `ScaleRunEditor` and `ArpeggioRunEditor`. The device check has since confirmed that D1 helped
+  (2026-11-11: Movement "much smoother" on an iPhone 16 Pro), so this is ready to pick up.
+- **A small board docked under the title once the full preview scrolls away.** It was in the approved
+  mockup, so the run stays in view while you adjust Movement. It needs scroll-position tracking, which on
+  the iOS 17 floor means measuring the preview's frame by hand. **Not decided.**
+
 ## The metronome records a take (logged 2026-10-30, extends ADR 0069) — in 1.4, item 14 of the final push
 
 Planned on 2026-10-28, not built. The metronome is the one practice screen with a click and no
