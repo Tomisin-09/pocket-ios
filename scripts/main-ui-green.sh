@@ -4,9 +4,10 @@
 #   scripts/main-ui-green.sh
 #
 # Since ADR 0255 the UI tests run in their own CI job, `UI tests`, which is not a
-# required check: a PR can merge while it is red. So nothing stops a red one reaching
-# `main`, and the rule is **no release build until main's UI job is green**. This is
-# the check `/ready-to-ship` runs before an archive. Exits 0 only when it passes.
+# required check, and since ADR 0294 the whole suite runs on pushes to `main` only: a
+# pull request runs a smoke, under the name `UI smoke`. So nothing stops a red suite
+# reaching `main`, and the rule is **no release build until main's UI job is green**.
+# This is the check `/ready-to-ship` runs before an archive. Exits 0 only when it passes.
 #
 # It walks back from main's head to the newest commit whose `UI tests` job actually
 # ran, because a docs-only commit skips the job, and the code at the head is the code

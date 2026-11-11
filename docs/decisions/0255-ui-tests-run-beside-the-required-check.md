@@ -6,6 +6,11 @@
 - **Amends:** ADR 0053 — CI no longer runs `PocketAll`. It runs `PocketLogic` in the required job
   and a new plan, `PocketUI`, in a second job (D1, D2). The plans, the boundary between them and the
   rejection of parallel testing stand.
+- **Amended by:** ADR 0294 (2026-11-11) — the two jobs no longer both run on every event. The
+  required job runs on pull requests and not on pushes to `main`. The UI job runs a smoke plan,
+  `PocketSmoke`, on pull requests as `UI smoke`, and the whole suite on `main` only, so the "UI tests
+  on `main` only" alternative below was taken after all, with a smoke run in the gap. D3's release
+  rule, the check names, D4 and D5 stand.
 - **Relates to:** 0133 (the required check always reports, and a docs-only change skips the work, not
   the check; both still hold for the required job) · 0146 (the retry allowance and the report that
   names every retry, now in both jobs) · 0165 D8 (the manual check stays inside the required job)

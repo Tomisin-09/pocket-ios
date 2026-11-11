@@ -254,13 +254,17 @@ schemes:
       # and with `-s` they read the real sandbox.
       storeKitConfiguration: Configuration/RedMoon.storekit
     test:
-      # Four test plans (see docs/decisions/0053). The default is the fast
+      # Five test plans (see docs/decisions/0053). The default is the fast
       # logic-only plan (unit tests, no coverage) run on local pre-push.
       # `PocketAll` is both suites, for running everything locally.
       #
       # CI runs the other two side by side (ADR 0255): `PocketLogic` in the required
       # job, and `PocketUI`, the UI tests alone, in a second job of its own. They are
       # plans rather than `-only-testing:` flags on `PocketAll` for the reason below.
+      #
+      # Since ADR 0294 `PocketUI` runs on pushes to `main` only. A pull request runs
+      # `PocketSmoke` in its place: the same target, narrowed by `selectedTests` to the
+      # few classes that prove the app launches and its main doors open.
       #
       # `PocketShoot` is the manual's screenshot run (ADR 0165 Phase 5) and exists
       # because those four classes are not tests. They photograph an erased device
@@ -278,4 +282,5 @@ schemes:
           defaultPlan: true
         - path: PocketAll.xctestplan
         - path: PocketUI.xctestplan
+        - path: PocketSmoke.xctestplan
         - path: PocketShoot.xctestplan

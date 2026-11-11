@@ -100,7 +100,8 @@ See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild te
 the ~498 unit tests, no coverage — for a fast local loop (~59s vs ~123s for the
 full suite). **`PocketAll`** is both suites, for running everything locally. CI runs
 `PocketLogic` in its required job and **`PocketUI`**, the UI tests alone, in a second
-job beside it (`docs/decisions/0255`). A fourth plan, **`PocketShoot`**, holds the user
+job beside it (`docs/decisions/0255`), on `main`; a pull request runs **`PocketSmoke`**, 15 of
+those UI tests, in its place (`docs/decisions/0294`). A fifth plan, **`PocketShoot`**, holds the user
 manual's screenshot classes; it is driven only by `scripts/shoot-manual.sh` and no
 other plan reaches it. See `docs/decisions/0053`.
 
@@ -132,14 +133,18 @@ docs/          architecture.md, positioning.md (who we're up against and the lin
 
 ## CI/CD
 
-- **On PR and on `main`:** two jobs side by side (`.github/workflows/ci.yml`,
-  `docs/decisions/0255`). **`Lint · Build · Test`**, the one required check, runs the manual check,
-  SwiftLint, the build and the unit tests (`PocketLogic`). **`UI tests`** runs `PocketUI` on a
-  second runner and is *not* required, so a PR can merge before it finishes. The guard is on the
-  release instead: **no release build until main's UI job is green** (`scripts/main-ui-green.sh`,
-  run by `/ready-to-ship`). Both jobs test on a pinned simulator, iPhone 16 Pro on iOS 18.5
+- **On a PR:** two jobs side by side (`.github/workflows/ci.yml`, `docs/decisions/0255`,
+  `docs/decisions/0294`). **`Lint · Build · Test`**, the one required check, runs the manual check,
+  SwiftLint, the build and the unit tests (`PocketLogic`). **`UI smoke`** runs `PocketSmoke`, 15 UI
+  tests, on a second runner and is *not* required.
+- **On `main`:** **`UI tests`** runs `PocketUI`, the whole UI suite, once per merge. The required
+  job does not run again, because a PR must be up to date to merge and its run already tested that
+  tree. A UI break outside the smoke is therefore found after the merge, and the guard is on the
+  release: **no release build until main's UI job is green** (`scripts/main-ui-green.sh`, run by
+  `/ready-to-ship`). To run the whole suite on a branch first: `gh workflow run CI --ref <branch>`.
+- **Everywhere:** both jobs test on a pinned simulator, iPhone 16 Pro on iOS 18.5
   (`scripts/ci-simulator.sh`), and each fails if its plan ran no tests (`scripts/assert-tests-ran.sh`).
-  A documentation-only change (`**/*.md`, `docs/**`, `LICENSE`) skips all three and finishes in
+  A documentation-only change (`**/*.md`, `docs/**`, `LICENSE`) skips lint, build and tests and finishes in
   ~20s on a Linux runner — the required check still reports, it just has nothing to do, and the
   UI job is skipped. The rule lives in `scripts/docs-only.sh` and is shared with the pre-push hook. See `docs/decisions/0133`;
   note in particular why the workflow must *not* grow a `paths-ignore` filter.

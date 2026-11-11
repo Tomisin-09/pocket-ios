@@ -1,0 +1,39 @@
+{
+  "configurations": [
+    {
+      "id": "9E3F2B7A-5C41-4D8E-A0B6-1F7C3D9E2A54",
+      "name": "Smoke",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {
+    "codeCoverage": false,
+    "targetForVariableExpansion": {
+      "containerPath": "container:Pocket.xcodeproj",
+      "identifier": "7D169845C7D92117E36B994A",
+      "name": "Pocket"
+    }
+  },
+  "testTargets": [
+    {
+      "selectedTests": [
+        "ExportUITests\/testAReceivedSongLandsInTheLibrary()",
+        "ExportUITests\/testASongsAudioExportsFromSongDetails()",
+        "HomeToolTileUITests",
+        "PlanWallUITests",
+        "PocketLaunchUITests",
+        "PracticeRunUITests",
+        "SettingsHubUITests",
+        "SharedAudioUITests",
+        "StarterTrackUITests",
+        "ToolkitUITests"
+      ],
+      "target": {
+        "containerPath": "container:Pocket.xcodeproj",
+        "identifier": "23D16638A9045581F3F038B5",
+        "name": "PocketUITests"
+      }
+    }
+  ],
+  "version": 1
+}
