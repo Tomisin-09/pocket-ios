@@ -6,6 +6,9 @@
   `PocketLogic`, and a second, non-required job runs a fourth plan, `PocketUI` (the UI tests alone).
   `PocketAll` stays as the local "run everything" plan. The plans, the target boundary and the
   rejection of parallel testing stand.
+- **Amended by:** ADR 0294 (2026-11-11) — a fifth plan, `PocketSmoke`: the `PocketUITests` target
+  narrowed by `selectedTests`, which a pull request runs in place of `PocketUI`. `PocketUI` runs on
+  pushes to `main`.
 
 ## Context
 

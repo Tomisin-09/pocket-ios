@@ -1,9 +1,20 @@
 name: CI
 
+# What runs when (ADR 0294):
+#
+#   pull request      `Lint · Build · Test` (required) and `UI smoke`
+#   push to `main`    `UI tests`, the whole UI suite, and nothing else
+#   manual dispatch   `Lint · Build · Test` and `UI tests`, on any branch
+#
+# Branch protection makes a PR catch up with `main` before it merges, so the commit a merge
+# puts on `main` has the tree the PR's last run already tested. Running the required job on
+# it again tested nothing new. The whole UI suite is the one thing a PR did not run, so that
+# is what the push runs.
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -46,6 +57,10 @@ jobs:
     # all, and a required check that never reports can never be satisfied.
     name: Lint · Build · Test
     needs: scope
+    # Skipped on a push to `main` (ADR 0294): the PR's run already tested this tree. This `if:`
+    # is safe where a paths filter is not (ADR 0133), because it never skips the job on a pull
+    # request, and a pull request is the only place the check is required.
+    if: github.event_name != 'push'
     runs-on: ${{ needs.scope.outputs.docs_only == 'true' && 'ubuntu-latest' || 'macos-15' }}
     # A backstop for a hung run, not a budget. Since ADR 0255 this job runs the unit tests only (the
     # UI tests moved to `ui-tests` below), and on main's last combined run the build and unit tests
@@ -96,8 +111,8 @@ jobs:
         if: needs.scope.outputs.docs_only != 'true'
         run: scripts/ci-simulator.sh "$SIM_NAME" "$SIM_OS"
 
-      # The unit tests, `PocketLogic`. The UI tests run beside this job, in `ui-tests`, so the
-      # required check reports in minutes rather than waiting on them (ADR 0255).
+      # The unit tests, `PocketLogic`. The UI smoke run is beside this job, in `ui-tests`, so the
+      # required check reports in minutes rather than waiting on it (ADR 0255).
       - name: Build & test
         if: needs.scope.outputs.docs_only != 'true'
         shell: bash
@@ -155,22 +170,29 @@ jobs:
         run: scripts/report-test-retries.sh xcodebuild-raw.log
 
   ui-tests:
-    # The UI tests, beside the required job rather than inside it (ADR 0255). They were 22 of
-    # the 28 minutes of main's last combined run, and every PR waited on them to merge.
+    # The UI tests, beside the required job rather than inside it (ADR 0255).
     #
-    # NOT a required check, deliberately: a UI test that flakes on this runner no longer holds
-    # a PR. What it costs is a rule instead of a gate — **no release build until main's UI job
-    # is green**, which `scripts/main-ui-green.sh` checks and `/ready-to-ship` runs. That is why
-    # this job runs on pushes to `main` as well as on PRs.
+    # One job, two sizes (ADR 0294). On a pull request it is `UI smoke` and runs `PocketSmoke`:
+    # the few classes that prove the app launches and its main doors open, under 4 minutes of
+    # tests. On a push to `main`, or a manual dispatch, it is `UI tests` and runs `PocketUI`, the
+    # whole suite, which had grown to 64 tests and 39 minutes and was running twice per merge.
+    # To run the whole suite on a branch before merging, dispatch this workflow on it.
+    #
+    # NOT a required check under either name, deliberately: a UI test that flakes on this runner
+    # does not hold a PR. What it costs is a rule instead of a gate — **no release build until
+    # main's UI job is green**, which `scripts/main-ui-green.sh` checks and `/ready-to-ship` runs.
+    # That script asks for the check named `UI tests`, so the smoke run can never satisfy it.
     #
     # A job-level `if:` is safe here and would not be on the required job (ADR 0133): a skipped
     # job reports as skipped, and nothing waits on this one. A docs-only change skips it.
-    name: UI tests
+    name: ${{ github.event_name == 'pull_request' && 'UI smoke' || 'UI tests' }}
     needs: scope
     if: needs.scope.outputs.docs_only != 'true'
     runs-on: macos-15
-    # A backstop for a hung run. The UI tests alone took 22 minutes on main's last run, and the
-    # build adds about 5.
+    env:
+      UI_PLAN: ${{ github.event_name == 'pull_request' && 'PocketSmoke' || 'PocketUI' }}
+    # A backstop for a hung run. The whole suite took 39 minutes on main's run of 2026-11-11,
+    # and the build adds about 10.
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -195,7 +217,7 @@ jobs:
           set -euo pipefail   # without pipefail, '| xcbeautify' masks xcodebuild failures
           xcodebuild test \
             -scheme Pocket \
-            -testPlan PocketUI \
+            -testPlan "$UI_PLAN" \
             -destination "id=$SIM_UDID" \
             -resultBundlePath UITestResults.xcresult \
             -retry-tests-on-failure \

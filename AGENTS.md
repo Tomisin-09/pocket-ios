@@ -50,12 +50,15 @@ Run these before every commit that touches app code. Do not push until all pass.
 > break the required check.
 >
 > **The UI tests run in their own job, and it is not required** (ADR 0255). The
-> required check, `Lint · Build · Test`, runs the unit tests (`PocketLogic`). A
-> second job, `UI tests`, runs `PocketUI` beside it, so a PR can merge before
-> the UI tests finish. If a PR's UI job has already gone red, read why before
-> merging. The guard is on the release instead: **no release build until
-> main's UI job is green.** `scripts/main-ui-green.sh` checks it, and
-> `/ready-to-ship` runs that script.
+> required check, `Lint · Build · Test`, runs the unit tests (`PocketLogic`). On
+> a PR a second job, `UI smoke`, runs `PocketSmoke` beside it: 13 UI tests, not
+> the suite (ADR 0294). If a PR's smoke has gone red, read why before merging.
+> The whole suite (`PocketUI`) runs as `UI tests` on the push to `main`, once
+> per merge, and the required job does not run there. So a UI break outside the
+> smoke shows up after the merge: when a change reworks a screen, run the suite
+> on the branch first with `gh workflow run CI --ref <branch>`. The guard is on
+> the release: **no release build until main's UI job is green.**
+> `scripts/main-ui-green.sh` checks it, and `/ready-to-ship` runs that script.
 
 1. **Lint** — `swiftlint`. Fix all errors. Suppress only with
    `// swiftlint:disable:next <rule>` on the exact line, never file-wide.
@@ -71,7 +74,8 @@ Run these before every commit that touches app code. Do not push until all pass.
    coverage — do not skip it.
 3. **Tests** — `xcodebuild test -scheme Pocket -destination 'platform=iOS Simulator,name=iPhone 17'`.
    (Use `-testPlan PocketAll` to include `PocketUITests`, or `-testPlan PocketUI`
-   for those alone, as CI's `UI tests` job does.)
+   for those alone, as CI's `UI tests` job does on `main`. `-testPlan PocketSmoke`
+   is the 13 a PR runs.)
    When adding or changing a feature, update the relevant test. When adding a
    new module with non-trivial logic, add a test under `PocketTests/`. Pure,
    UI-free logic (tempo math, slider mapping, automator stepping, planner
