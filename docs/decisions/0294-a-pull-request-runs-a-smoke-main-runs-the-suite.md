@@ -42,10 +42,20 @@ is the only place the check is required, so 0133's rule holds: this is not a pat
 can never leave a pull request waiting on a check that does not report.
 
 **D2 — A pull request runs `UI smoke`.** A fifth plan, `PocketSmoke`, is the `PocketUITests` target
-narrowed by `selectedTests` to 15 tests: the launch tests, a practice run, the starter track, a
-shared audio file arriving, one song received and one exported, the Toolkit and Settings hubs, the
-Home tool tile and the plan wall. They took 4 minutes 43 seconds of the 39 on the measured run. It
-is a plan, not `-only-testing:` flags, for 0053's reason.
+narrowed by `selectedTests` to 13 tests: the launch tests, a practice run, the starter track, a
+shared audio file arriving, the Toolkit and Settings hubs, the Home tool tile and the plan wall.
+They took 3 minutes 40 seconds of the 39 on the measured run. It is a plan, not `-only-testing:`
+flags, for 0053's reason.
+
+The two Export tests (a song received, a song's audio exported) were in the first cut and came out
+after its first run on CI (PR #414, 2026-11-12). That runner was slow throughout: the unit job's
+build and tests took 18 minutes against 10 on main's last run, and every smoke test took 1.3 to 8.7
+times as long as on main. The Export tests were worst, because classes run in alphabetical order and
+they ran first, on the coldest simulator: the suite took 11 of the 20 test minutes, and
+`testASongsAudioExportsFromSongDetails` missed its 10-second wait for the Start here card, spent 5½
+minutes failing and passed on its retry. In the full suite they run fifth and have not failed that
+way. A file arriving is still covered by `SharedAudioUITests`, and both Export tests still run on
+`main`.
 
 **D3 — `main` runs `UI tests`, the whole suite, once per merge.** Same job, same plan (`PocketUI`),
 same check name, so `scripts/main-ui-green.sh` and the release rule are untouched: **no release
@@ -60,7 +70,7 @@ it merges.
 
 - **No UI tests on pull requests at all.** Simpler, and a UI break is found after merge either way.
   But a change that stops the app launching would then reach `main` unseen, and the smoke costs
-  about five minutes of tests on a runner nobody pays for.
+  under four minutes of tests on a runner nobody pays for.
 - **Keep the whole suite on pull requests and drop the push run.** The release rule would have to
   follow each commit on `main` back to its pull request's run. It also keeps the 50-minute run on
   every push to a branch.
@@ -73,9 +83,11 @@ it merges.
 
 ## Consequences
 
-- A pull request's UI job runs about 5 minutes of tests instead of 39. Its build is unchanged, so
-  the job should take a little under 20 minutes instead of 50. That figure is an estimate until the
-  first run.
+- A pull request's UI job runs under 4 minutes of tests instead of 39. Its simulator boot and build,
+  about 12 minutes, are unchanged, so on a runner as fast as main's of 2026-11-11 the job should take
+  about 17 minutes instead of 50. A slow runner stretches all of it: the first run took 38, with the
+  Export tests still in it. Those fixed 12 minutes are now most of the job, which is why building
+  once is the next change.
 - Each merge runs the whole UI suite once instead of twice, and the unit tests once instead of twice.
 - **A UI break outside the smoke is found on `main`, after the merge.** 0255 already allowed a merge
   before the UI job finished; this makes that the normal case. The release rule is what stops the

@@ -23,7 +23,7 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 - **A pull request runs a UI smoke, and `main` runs the whole UI suite once** (ADR 0294). The UI
   suite had grown to 64 tests and 39 minutes, and every merge ran it twice: once on the PR and once
-  more on the same tree on `main`. A PR now runs `PocketSmoke`, 15 UI tests, as `UI smoke`; the push
+  more on the same tree on `main`. A PR now runs `PocketSmoke`, 13 UI tests, as `UI smoke`; the push
   to `main` runs the whole suite as `UI tests`, and no longer repeats the required job. The release
   rule is unchanged: no release build until main's UI job is green. `gh workflow run CI --ref
   <branch>` runs the whole suite on a branch.

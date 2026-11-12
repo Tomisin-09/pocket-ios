@@ -173,7 +173,7 @@ jobs:
     # The UI tests, beside the required job rather than inside it (ADR 0255).
     #
     # One job, two sizes (ADR 0294). On a pull request it is `UI smoke` and runs `PocketSmoke`:
-    # the few classes that prove the app launches and its main doors open, about 5 minutes of
+    # the few classes that prove the app launches and its main doors open, under 4 minutes of
     # tests. On a push to `main`, or a manual dispatch, it is `UI tests` and runs `PocketUI`, the
     # whole suite, which had grown to 64 tests and 39 minutes and was running twice per merge.
     # To run the whole suite on a branch before merging, dispatch this workflow on it.

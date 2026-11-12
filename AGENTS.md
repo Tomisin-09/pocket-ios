@@ -51,7 +51,7 @@ Run these before every commit that touches app code. Do not push until all pass.
 >
 > **The UI tests run in their own job, and it is not required** (ADR 0255). The
 > required check, `Lint · Build · Test`, runs the unit tests (`PocketLogic`). On
-> a PR a second job, `UI smoke`, runs `PocketSmoke` beside it: 15 UI tests, not
+> a PR a second job, `UI smoke`, runs `PocketSmoke` beside it: 13 UI tests, not
 > the suite (ADR 0294). If a PR's smoke has gone red, read why before merging.
 > The whole suite (`PocketUI`) runs as `UI tests` on the push to `main`, once
 > per merge, and the required job does not run there. So a UI break outside the
@@ -75,7 +75,7 @@ Run these before every commit that touches app code. Do not push until all pass.
 3. **Tests** — `xcodebuild test -scheme Pocket -destination 'platform=iOS Simulator,name=iPhone 17'`.
    (Use `-testPlan PocketAll` to include `PocketUITests`, or `-testPlan PocketUI`
    for those alone, as CI's `UI tests` job does on `main`. `-testPlan PocketSmoke`
-   is the 15 a PR runs.)
+   is the 13 a PR runs.)
    When adding or changing a feature, update the relevant test. When adding a
    new module with non-trivial logic, add a test under `PocketTests/`. Pure,
    UI-free logic (tempo math, slider mapping, automator stepping, planner

@@ -100,7 +100,7 @@ See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild te
 the ~498 unit tests, no coverage — for a fast local loop (~59s vs ~123s for the
 full suite). **`PocketAll`** is both suites, for running everything locally. CI runs
 `PocketLogic` in its required job and **`PocketUI`**, the UI tests alone, in a second
-job beside it (`docs/decisions/0255`), on `main`; a pull request runs **`PocketSmoke`**, 15 of
+job beside it (`docs/decisions/0255`), on `main`; a pull request runs **`PocketSmoke`**, 13 of
 those UI tests, in its place (`docs/decisions/0294`). A fifth plan, **`PocketShoot`**, holds the user
 manual's screenshot classes; it is driven only by `scripts/shoot-manual.sh` and no
 other plan reaches it. See `docs/decisions/0053`.
@@ -135,7 +135,7 @@ docs/          architecture.md, positioning.md (who we're up against and the lin
 
 - **On a PR:** two jobs side by side (`.github/workflows/ci.yml`, `docs/decisions/0255`,
   `docs/decisions/0294`). **`Lint · Build · Test`**, the one required check, runs the manual check,
-  SwiftLint, the build and the unit tests (`PocketLogic`). **`UI smoke`** runs `PocketSmoke`, 15 UI
+  SwiftLint, the build and the unit tests (`PocketLogic`). **`UI smoke`** runs `PocketSmoke`, 13 UI
   tests, on a second runner and is *not* required.
 - **On `main`:** **`UI tests`** runs `PocketUI`, the whole UI suite, once per merge. The required
   job does not run again, because a PR must be up to date to merge and its run already tested that

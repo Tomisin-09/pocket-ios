@@ -17,8 +17,6 @@
   "testTargets": [
     {
       "selectedTests": [
-        "ExportUITests\/testAReceivedSongLandsInTheLibrary()",
-        "ExportUITests\/testASongsAudioExportsFromSongDetails()",
         "HomeToolTileUITests",
         "PlanWallUITests",
         "PocketLaunchUITests",
