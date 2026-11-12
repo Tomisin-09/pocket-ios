@@ -53,8 +53,11 @@ Run these before every commit that touches app code. Do not push until all pass.
 > required check, `Lint · Build · Test`, runs the unit tests (`PocketLogic`). On
 > a PR a second job, `UI smoke`, runs `PocketSmoke` beside it: 13 UI tests, not
 > the suite (ADR 0294). If a PR's smoke has gone red, read why before merging.
-> The whole suite (`PocketUI`) runs as `UI tests` on the push to `main`, once
-> per merge, and the required job does not run there. So a UI break outside the
+> The whole suite runs on the push to `main`, once per merge, split across
+> three runners (`UI tests 1/3`–`3/3`, plans `PocketUIShard1`–`3`, ADR 0295),
+> and a job named `UI tests` is green only when all three are. The required job
+> does not run there. A new UI test class runs in shard 3 without being listed;
+> `check-manual.py` C17 fails if the shard lists leave a class out. So a UI break outside the
 > smoke shows up after the merge: when a change reworks a screen, run the suite
 > on the branch first with `gh workflow run CI --ref <branch>`. The guard is on
 > the release: **no release build until main's UI job is green.**
@@ -74,8 +77,8 @@ Run these before every commit that touches app code. Do not push until all pass.
    coverage — do not skip it.
 3. **Tests** — `xcodebuild test -scheme Pocket -destination 'platform=iOS Simulator,name=iPhone 17'`.
    (Use `-testPlan PocketAll` to include `PocketUITests`, or `-testPlan PocketUI`
-   for those alone, as CI's `UI tests` job does on `main`. `-testPlan PocketSmoke`
-   is the 13 a PR runs.)
+   for those alone; CI splits them across `PocketUIShard1`–`3` on `main`.
+   `-testPlan PocketSmoke` is the 13 a PR runs.)
    When adding or changing a feature, update the relevant test. When adding a
    new module with non-trivial logic, add a test under `PocketTests/`. Pure,
    UI-free logic (tempo math, slider mapping, automator stepping, planner

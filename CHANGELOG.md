@@ -21,6 +21,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed — build and CI
 
+- **`main` runs the UI suite across three runners at once** (ADR 0295). The whole suite was one
+  job of about 50 minutes; it is now three shards of about 13 minutes of tests each, side by side,
+  plus a `UI tests` job that is green only when all three are, so the release rule still has one
+  check to read. Each shard builds the app itself. `check-manual.py` gains C17, which fails if the
+  shard plans leave a UI test class out or put one in two shards.
+
 - **A pull request runs a UI smoke, and `main` runs the whole UI suite once** (ADR 0294). The UI
   suite had grown to 64 tests and 39 minutes, and every merge ran it twice: once on the PR and once
   more on the same tree on `main`. A PR now runs `PocketSmoke`, 13 UI tests, as `UI smoke`; the push

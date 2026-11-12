@@ -1,10 +1,11 @@
 name: CI
 
-# What runs when (ADR 0294):
+# What runs when (ADR 0294, ADR 0295):
 #
 #   pull request      `Lint · Build · Test` (required) and `UI smoke`
-#   push to `main`    `UI tests`, the whole UI suite, and nothing else
-#   manual dispatch   `Lint · Build · Test` and `UI tests`, on any branch
+#   push to `main`    the whole UI suite as `UI tests 1/3`, `2/3` and `3/3`, one runner each,
+#                     and `UI tests`, which passes only if all three did. Nothing else.
+#   manual dispatch   `Lint · Build · Test` and the whole UI suite, as on `main`, on any branch
 #
 # Branch protection makes a PR catch up with `main` before it merges, so the commit a merge
 # puts on `main` has the tree the PR's last run already tested. Running the required job on
@@ -35,6 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       docs_only: ${{ steps.check.outputs.docs_only }}
+      ui_plans: ${{ steps.plans.outputs.ui_plans }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -47,6 +49,20 @@ jobs:
           echo "docs_only=$RESULT" >> "$GITHUB_OUTPUT"
           echo "Docs-only: $RESULT"
           git diff --name-only "$BASE" "${{ github.sha }}" 2>/dev/null || true
+
+      # Which UI plans run, one runner each: the `ui` job's matrix. A pull request runs the smoke
+      # (ADR 0294); anything else runs the whole suite in three shards (ADR 0295). Decided here
+      # because a matrix can read `needs` and `github` but not `env`.
+      - id: plans
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = pull_request ]; then
+            PLANS='[{"plan":"PocketSmoke","name":"UI smoke"}]'
+          else
+            PLANS='[{"plan":"PocketUIShard1","name":"UI tests 1/3"},{"plan":"PocketUIShard2","name":"UI tests 2/3"},{"plan":"PocketUIShard3","name":"UI tests 3/3"}]'
+          fi
+          echo "ui_plans=$PLANS" >> "$GITHUB_OUTPUT"
+          echo "UI plans: $PLANS"
 
   lint-build-test:
     # NOTE: this name is the required status check on `main` — branch protection
@@ -169,30 +185,39 @@ jobs:
         shell: bash
         run: scripts/report-test-retries.sh xcodebuild-raw.log
 
-  ui-tests:
-    # The UI tests, beside the required job rather than inside it (ADR 0255).
+  ui:
+    # The UI tests, beside the required job rather than inside it (ADR 0255), one runner per plan
+    # in `scope`'s `ui_plans`.
     #
-    # One job, two sizes (ADR 0294). On a pull request it is `UI smoke` and runs `PocketSmoke`:
-    # the few classes that prove the app launches and its main doors open, under 4 minutes of
-    # tests. On a push to `main`, or a manual dispatch, it is `UI tests` and runs `PocketUI`, the
-    # whole suite, which had grown to 64 tests and 39 minutes and was running twice per merge.
-    # To run the whole suite on a branch before merging, dispatch this workflow on it.
+    # On a pull request that is one runner, `UI smoke`, running `PocketSmoke`: the few classes that
+    # prove the app launches and its main doors open, under 4 minutes of tests (ADR 0294). On a push
+    # to `main`, or a manual dispatch, it is three, `UI tests 1/3` to `3/3`, running the whole suite
+    # split by `PocketUIShard1`–`3`: 39 minutes of tests on one runner became about 13 on each (ADR
+    # 0295). Each shard builds the app itself. Building once and handing the products on would put
+    # an upload and a download in front of every shard's tests, and macOS minutes cost nothing
+    # here, so three builds side by side finish sooner. Three shards plus a pull request's two macOS
+    # jobs is GitHub Free's limit of five concurrent macOS jobs; a fourth shard would queue.
     #
-    # NOT a required check under either name, deliberately: a UI test that flakes on this runner
-    # does not hold a PR. What it costs is a rule instead of a gate — **no release build until
-    # main's UI job is green**, which `scripts/main-ui-green.sh` checks and `/ready-to-ship` runs.
-    # That script asks for the check named `UI tests`, so the smoke run can never satisfy it.
+    # NOT a required check under any name, deliberately: a UI test that flakes on this runner does
+    # not hold a PR. What it costs is a rule instead of a gate — **no release build until main's UI
+    # job is green**. The job that rule reads is `UI tests`, below, not these.
     #
     # A job-level `if:` is safe here and would not be on the required job (ADR 0133): a skipped
     # job reports as skipped, and nothing waits on this one. A docs-only change skips it.
-    name: ${{ github.event_name == 'pull_request' && 'UI smoke' || 'UI tests' }}
+    name: ${{ matrix.name }}
     needs: scope
     if: needs.scope.outputs.docs_only != 'true'
     runs-on: macos-15
+    strategy:
+      # Every shard runs to the end when one fails: a red shard should not hide what the other
+      # two would have said.
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.scope.outputs.ui_plans) }}
     env:
-      UI_PLAN: ${{ github.event_name == 'pull_request' && 'PocketSmoke' || 'PocketUI' }}
-    # A backstop for a hung run. The whole suite took 39 minutes on main's run of 2026-11-11,
-    # and the build adds about 10.
+      UI_PLAN: ${{ matrix.plan }}
+    # A backstop for a hung run, not a budget. A shard is about 13 minutes of tests and 12 of boot
+    # and build; the smoke's first run took 38 minutes on a slow runner.
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -228,12 +253,13 @@ jobs:
         env:
           NSUnbufferedIO: YES
 
-      # Named apart from the unit job's `TestResults`: two artifacts in one run can't share a name.
+      # Named apart from the unit job's `TestResults` and from each other: two artifacts in one run
+      # can't share a name.
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: UITestResults
+          name: UITestResults-${{ matrix.plan }}
           path: |
             UITestResults.xcresult
             xcodebuild-raw.log
@@ -244,3 +270,29 @@ jobs:
         if: always()
         shell: bash
         run: scripts/report-test-retries.sh xcodebuild-raw.log
+
+  ui-tests:
+    # One answer for the whole suite (ADR 0295): green only when all three shards are. This is the
+    # check `scripts/main-ui-green.sh` reads, by this exact name, so the release rule — **no release
+    # build until main's UI job is green** — still has one job to ask. Renaming it breaks that
+    # script without failing anything; change both or neither.
+    #
+    # `always()` because the answer must exist whenever the shards were meant to run. Without it a
+    # failed or cancelled shard would *skip* this job, and the script reads `skipped` as a docs-only
+    # commit and walks back past it to an older green. With it, the job runs and reports red. It is
+    # still skipped on a pull request, which runs the smoke instead, and on a docs-only change,
+    # which is the one `skipped` the script is right to step over.
+    name: UI tests
+    needs: [scope, ui]
+    if: always() && github.event_name != 'pull_request' && needs.scope.outputs.docs_only != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every shard passed
+        env:
+          SHARDS: ${{ needs.ui.result }}
+        run: |
+          echo "The UI shards: $SHARDS"
+          if [ "$SHARDS" != success ]; then
+            echo "::error title=UI tests not green::A UI shard reported '$SHARDS'. No release build until all three pass (ADR 0255, ADR 0295)."
+            exit 1
+          fi

@@ -9,6 +9,9 @@
 # reaching `main`, and the rule is **no release build until main's UI job is green**.
 # This is the check `/ready-to-ship` runs before an archive. Exits 0 only when it passes.
 #
+# Since ADR 0295 the suite runs in three shards, `UI tests 1/3` to `3/3`, and `UI tests` is a
+# separate job that is green only when all three are. It is still the one check read here, by name.
+#
 # It walks back from main's head to the newest commit whose `UI tests` job actually
 # ran, because a docs-only commit skips the job, and the code at the head is the code
 # that commit tested. That run must have passed. A cancelled, failed, timed-out or

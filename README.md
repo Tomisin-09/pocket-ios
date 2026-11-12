@@ -100,8 +100,9 @@ See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild te
 the ~498 unit tests, no coverage — for a fast local loop (~59s vs ~123s for the
 full suite). **`PocketAll`** is both suites, for running everything locally. CI runs
 `PocketLogic` in its required job and **`PocketUI`**, the UI tests alone, in a second
-job beside it (`docs/decisions/0255`), on `main`; a pull request runs **`PocketSmoke`**, 13 of
-those UI tests, in its place (`docs/decisions/0294`). A fifth plan, **`PocketShoot`**, holds the user
+job beside it (`docs/decisions/0255`), on `main` split across **`PocketUIShard1`**–**`3`**
+(`docs/decisions/0295`); a pull request runs **`PocketSmoke`**, 13 of those UI tests, in its place
+(`docs/decisions/0294`). One more plan, **`PocketShoot`**, holds the user
 manual's screenshot classes; it is driven only by `scripts/shoot-manual.sh` and no
 other plan reaches it. See `docs/decisions/0053`.
 
@@ -137,7 +138,11 @@ docs/          architecture.md, positioning.md (who we're up against and the lin
   `docs/decisions/0294`). **`Lint · Build · Test`**, the one required check, runs the manual check,
   SwiftLint, the build and the unit tests (`PocketLogic`). **`UI smoke`** runs `PocketSmoke`, 13 UI
   tests, on a second runner and is *not* required.
-- **On `main`:** **`UI tests`** runs `PocketUI`, the whole UI suite, once per merge. The required
+- **On `main`:** the whole UI suite runs once per merge, split across three runners, **`UI tests
+  1/3`**–**`3/3`** (`PocketUIShard1`–`3`, `docs/decisions/0295`), each building the app itself. A
+  job named **`UI tests`** is green only when all three are; it is the one the release rule reads.
+  A new UI test class runs in shard 3 without being listed, and `check-manual.py` C17 fails if the
+  lists leave one out. The required
   job does not run again, because a PR must be up to date to merge and its run already tested that
   tree. A UI break outside the smoke is therefore found after the merge, and the guard is on the
   release: **no release build until main's UI job is green** (`scripts/main-ui-green.sh`, run by

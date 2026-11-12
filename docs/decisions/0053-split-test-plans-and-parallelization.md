@@ -9,6 +9,9 @@
 - **Amended by:** ADR 0294 (2026-11-11) — a fifth plan, `PocketSmoke`: the `PocketUITests` target
   narrowed by `selectedTests`, which a pull request runs in place of `PocketUI`. `PocketUI` runs on
   pushes to `main`.
+- **Amended by:** ADR 0295 (2026-11-12) — three more plans, `PocketUIShard1` to `3`, which split
+  `PocketUITests` between three runners on `main`. `PocketUI` stays, for running the UI tests alone
+  locally.
 
 ## Context
 

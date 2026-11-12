@@ -1,0 +1,40 @@
+{
+  "configurations": [
+    {
+      "id": "8520862E-5043-4AB0-9DB8-F63BA7FAE95E",
+      "name": "UI shard 2",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {
+    "codeCoverage": false,
+    "targetForVariableExpansion": {
+      "containerPath": "container:Pocket.xcodeproj",
+      "identifier": "7D169845C7D92117E36B994A",
+      "name": "Pocket"
+    }
+  },
+  "testTargets": [
+    {
+      "selectedTests": [
+        "AddToRoutineUITests",
+        "ExerciseInstrumentUITests",
+        "GestureHintUITests",
+        "JournalThreadUITests",
+        "OracleUITests",
+        "PlanWallUITests",
+        "PracticeRunUITests",
+        "ProgressionPickerUITests",
+        "RoutineLibraryUITests",
+        "SettingsHubUITests",
+        "SharedAudioUITests"
+      ],
+      "target": {
+        "containerPath": "container:Pocket.xcodeproj",
+        "identifier": "23D16638A9045581F3F038B5",
+        "name": "PocketUITests"
+      }
+    }
+  ],
+  "version": 1
+}

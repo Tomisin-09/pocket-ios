@@ -1193,6 +1193,91 @@ def check_c16():
     return OK, ["%d declared supersessions, every back edge present" % claims]
 
 
+# ---------------------------------------------------------------------------
+# C17 — every UI test class runs in exactly one of main's shards (ADR 0295)
+
+
+SHARD_PLANS = ("PocketUIShard1.xctestplan", "PocketUIShard2.xctestplan",
+               "PocketUIShard3.xctestplan")
+
+
+def check_c17():
+    """`main` runs the UI suite as three shards, and none of it may fall between them.
+
+    Shards 1 and 2 *select* their classes. Shard 3 *skips* exactly those, so it runs everything
+    else: a class added since, or renamed, lands in shard 3 by construction rather than in no
+    shard at all. That only holds while shard 3's skip list is the two selections and nothing
+    more. A name skipped there and selected nowhere is a class CI never runs, and nothing else
+    would say so — every shard still goes green, and `assert-tests-ran.sh` only notices a shard
+    that ran nothing. A name selected in both runs twice, which costs time and nothing worse.
+
+    Entries are whole classes, not `Class/test()`: a single test selected in shard 1 and its
+    class skipped in shard 3 would drop the class's other tests, and the arithmetic below would
+    not see it. Stale names (a class since renamed) are harmless, since the renamed class runs in
+    shard 3, and are only reported.
+    """
+    paths = [os.path.join(REPO, name) for name in SHARD_PLANS]
+    if not all(os.path.isfile(path) for path in paths):
+        return PENDING, ["a shard plan is missing"]
+
+    classes = set()
+    for name in sorted(os.listdir(UITESTS)):
+        if name.endswith(".swift"):
+            classes |= set(re.findall(r"^final class (\w+)\s*:",
+                                      read(os.path.join(UITESTS, name)), re.M))
+    if not classes:
+        return FAIL, ["found no classes in PocketUITests — the parser has drifted, "
+                      "which fails silently as a pass"]
+
+    problems = []
+    lists = []
+    for index, path in enumerate(paths, 1):
+        name = SHARD_PLANS[index - 1][:-len(".xctestplan")]
+        targets = json.loads(read(path)).get("testTargets", [])
+        if [t.get("target", {}).get("name") for t in targets] != ["PocketUITests"]:
+            problems.append("%s must hold PocketUITests and nothing else" % name)
+            lists.append(set())
+            continue
+        target = targets[0]
+        want, unwanted = (("skippedTests", "selectedTests") if index == 3
+                          else ("selectedTests", "skippedTests"))
+        if unwanted in target:
+            problems.append("%s has `%s`; only `%s` belongs there" % (name, unwanted, want))
+        entries = target.get(want, [])
+        if not entries:
+            problems.append("%s has no `%s`" % (name, want))
+        for entry in entries:
+            if "/" in entry:
+                problems.append("%s names a single test, %s; shards take whole classes"
+                                % (name, entry))
+        lists.append(set(entries))
+
+    if not problems:
+        first, second, skipped = lists
+        for both in sorted(first & second):
+            problems.append("%s is selected by shard 1 and shard 2, so it runs twice" % both)
+        for lost in sorted(skipped - first - second):
+            problems.append("%s is skipped by shard 3 and selected by neither 1 nor 2, so CI "
+                            "never runs it" % lost)
+        for unskipped in sorted((first | second) - skipped):
+            problems.append("%s is selected by shard %d but not skipped by shard 3, so it runs "
+                            "twice" % (unskipped, 1 if unskipped in first else 2))
+        counts = (len(first & classes), len(second & classes), len(classes - skipped))
+        for index, count in enumerate(counts, 1):
+            if count == 0:
+                problems.append("shard %d runs no class that exists" % index)
+    if problems:
+        return FAIL, problems
+
+    stale = sorted((first | second) - classes)
+    notes = ["%d classes: %d + %d + %d, each in exactly one shard"
+             % (len(classes), counts[0], counts[1], counts[2])]
+    if stale:
+        notes.append("listed but no longer a class (now running in shard 3 if renamed): %s"
+                     % ", ".join(stale))
+    return OK, notes
+
+
 CHECKS = [
     ("C1", "Settings destinations are named in the reference", check_c1),
     ("C2", "Toolkit sections are named in toolkit.md", check_c2),
@@ -1209,6 +1294,7 @@ CHECKS = [
     ("C14", "shoot classes are driven by the shoot, not by CI", check_c14),
     ("C15", "multi-site claims stay in step", check_c15),
     ("C16", "superseded ADRs know they were superseded", check_c16),
+    ("C17", "every UI test class runs in exactly one of main's shards", check_c17),
     ("C8", "count tripwires still match the source", check_c8),
 ]
 

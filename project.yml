@@ -254,7 +254,7 @@ schemes:
       # and with `-s` they read the real sandbox.
       storeKitConfiguration: Configuration/RedMoon.storekit
     test:
-      # Five test plans (see docs/decisions/0053). The default is the fast
+      # Eight test plans (see docs/decisions/0053). The default is the fast
       # logic-only plan (unit tests, no coverage) run on local pre-push.
       # `PocketAll` is both suites, for running everything locally.
       #
@@ -265,6 +265,12 @@ schemes:
       # Since ADR 0294 `PocketUI` runs on pushes to `main` only. A pull request runs
       # `PocketSmoke` in its place: the same target, narrowed by `selectedTests` to the
       # few classes that prove the app launches and its main doors open.
+      #
+      # Since ADR 0295 `main` runs the whole UI suite as three shards, one runner each:
+      # `PocketUIShard1` and `2` select their classes, and `PocketUIShard3` skips exactly
+      # those, so a class nobody has placed runs in shard 3 rather than nowhere.
+      # `check-manual.py` C17 holds the three to that. `PocketUI` stays, for running the
+      # UI tests alone locally.
       #
       # `PocketShoot` is the manual's screenshot run (ADR 0165 Phase 5) and exists
       # because those four classes are not tests. They photograph an erased device
@@ -283,4 +289,7 @@ schemes:
         - path: PocketAll.xctestplan
         - path: PocketUI.xctestplan
         - path: PocketSmoke.xctestplan
+        - path: PocketUIShard1.xctestplan
+        - path: PocketUIShard2.xctestplan
+        - path: PocketUIShard3.xctestplan
         - path: PocketShoot.xctestplan

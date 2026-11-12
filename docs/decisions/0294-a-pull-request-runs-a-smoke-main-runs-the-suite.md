@@ -8,6 +8,9 @@
   rejected, taken with a smoke run in the gap. The required check, its name, the release rule, the
   pinned simulator and the tests-ran assertion stand. · ADR 0053 — a fifth plan, `PocketSmoke` (D2).
   The other four and the target boundary stand.
+- **Amended by:** ADR 0295 (2026-11-12) — D3's one `UI tests` job on `main` is now three shard jobs,
+  `UI tests 1/3` to `3/3`, and a job named `UI tests` that is green only when all three are, so the
+  release rule still reads one check. D1, D2, D4 and the release rule stand.
 - **Relates to:** 0133 (the required check always reports on a pull request; D1 skips it only where
   nothing requires it) · 0146 (the retry allowance, unchanged) · 0191 (the last time CI's minutes
   were counted; its refusal to drop UI tests from pull requests was about the required check, which

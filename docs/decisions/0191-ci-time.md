@@ -2,6 +2,10 @@
 
 - **Status:** Accepted — **D1 and D3 measured and REJECTED**; only D2 ships (branch `pocket-297-ci-time`)
 - **Date:** 2026-09-04
+- **Amended by:** ADR 0295 (2026-11-12) — sharding across jobs, rejected below until a warm build had
+  been measured, is taken: the build is 9–10 minutes of every UI run, and `main` runs the suite in
+  three shards. Each shard builds the app itself instead of handing products between jobs. D1 and D3
+  stay reverted.
 - **Relates to:** ADR 0146 (test-suite reliability — the retry allowance and the simulator pre-boot
   this builds on) · ADR 0133 (never `paths-ignore` on `ci.yml`; the `scope` job is the sanctioned way
   to skip work) · ADR 0165 D8 (`check-manual.py` runs regardless of scope)
