@@ -52,12 +52,14 @@ enum WritingInfo {
         "How you get to this note: picked, a hammer-on or pull-off (fretted from a lower or higher fret on "
         + "the same string, without picking it), or a slide.\n\nFrom the note before? It joins from that "
         + "note. One note that starts elsewhere, like a grace note? Pick how it starts, then tap the fret it "
-        + "comes from; a slide can also come in From below or From above.\n\nIn a chord, a hammer-on or "
+        + "comes from; a slide can also come in From below or From above.\n\nA bend held, then let down "
+        + "as a note of its own? Choose Release on that note: it goes where the bend was. Let straight back "
+        + "down, it's one note: turn on Release under Bend.\n\nIn a chord, a hammer-on or "
         + "pull-off moves the note on the string you tap, and the rest of the chord is held. If the whole "
         + "chord moves, say so under it. A slide moves the whole chord. The tab reads the same either way."
 }
 
-/// What the ⓘ beside *Chords* and *Into it* say (ADR 0227 D4, D5; ADR 0230, 0252), kept together so the two
+/// What the ⓘ beside *Chords* and *Into it* say (ADR 0227 D4, D5; ADR 0230, 0252, 0296), kept together so the two
 /// read as one voice.
 enum NamingInfo {
     static let chords =
@@ -72,7 +74,9 @@ enum NamingInfo {
         "How you got to this note: picked, a hammer-on or pull-off (fretted from a lower or higher fret on "
         + "the same string, without picking it), or a slide.\n\nTapped twice, heard as two notes? It "
         + "joins from the note before. Tapped once, heard as one? Pick how it started, then tap the fret "
-        + "it came from; a slide can also come in From below or From above.\n\nIn a chord, a hammer-on or "
+        + "it came from; a slide can also come in From below or From above.\n\nA bend held, then let down? "
+        + "Tapped twice, choose Release on the second: it goes where the bend was. Let straight back down, "
+        + "it's one note: turn on Release under Bend.\n\nIn a chord, a hammer-on or "
         + "pull-off moves the note on the string you tap, and the rest of the chord is held. If the whole "
         + "chord moved, say so under it. A slide moves the whole chord. The tab reads the same however you "
         + "tapped it."

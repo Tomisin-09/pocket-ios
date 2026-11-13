@@ -4,7 +4,8 @@ import Foundation
 /// lick is seen the way it's played and not only where. It replaces 0227 D2's one pop for every note.
 ///
 /// How a note was reached comes first, since that's what's heard first: a hammer-on, pull-off or slide from
-/// the tap before, or a lead-in inside the note (ADR 0230). A note reached plainly then shows what's done
+/// the tap before, or a lead-in inside the note (ADR 0230). A bend held on the tap before and let down on
+/// this one glides down from the bent pitch, at this tap's own time (ADR 0296 D7). A note reached plainly then shows what's done
 /// to it: a bend glides to where it lands, a released one glides there and back, a pre-bend lights at the
 /// pitch it was bent to and, let down, glides down from it (ADR 0288), vibrato shakes. Anything else pops.
 /// With Reduce Motion every one
@@ -43,7 +44,7 @@ enum HaloMotion: Equatable, Sendable {
         guard labels.indices.contains(index), case .fretted(let notes, _, let into)? = labels[index] else { return [] }
         let before = index > 0 ? labels[index - 1]?.frettedNotes ?? [] : []
         // A join from the tap before counts only when it still fits, as the tab and the strip read it.
-        let join = NeckJoin.direction(into: index, of: labels) == nil ? nil : into
+        let join = into.flatMap { NeckJoin.fits($0, into: index, of: labels) ? $0 : nil }
         return notes.map { note in
             let spot = NeckSpot(string: note.string, fret: note.fret)
             if let leadIn = note.leadIn, leadIn.direction(into: note.fret) != nil {
@@ -53,6 +54,14 @@ enum HaloMotion: Equatable, Sendable {
                 case .below: return .slideIn(to: spot, fromBelow: true)
                 case .above: return .slideIn(to: spot, fromBelow: false)
                 }
+            }
+            if join == .release {
+                // The bent note comes down from where it was bent; one held beside it in a shape glows as
+                // its own marks say.
+                if let previous = before.first(where: { $0.string == note.string }), previous.bend > 0 {
+                    return .bend(from: NeckSpot(string: note.string, fret: min(previous.bentFret, maxFret)), to: spot)
+                }
+                return note.vibrato ? .vibrato(spot) : .pop(spot)
             }
             if let join, let previous = before.first(where: { $0.string == note.string }) {
                 return reached(spot, from: NeckSpot(string: note.string, fret: previous.fret), by: join)

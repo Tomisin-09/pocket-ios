@@ -214,7 +214,11 @@ click through the speaker and through headphones.
   group, *Naming notes & tabs*: how many taps a hammer-on, slide or bend takes, a release tapped as its
   own note, and the tab's letters (pinned to `TabLine.cell` in `FAQEntryTests`). The Glossary gained the
   technique words around them.
-- **A held bend tied across taps. Going ahead, for 1.4.1** (raised 2026-11-13, while Tomisin named a
+- ~~**A held bend tied across taps.**~~ **DONE 2026-11-13** (`pocket-426`, ADR 0296): *Release* under
+  *Into it*, after a bent note, written `10b11r10` across the two columns rather than the tied note
+  proposed below, so the tab reads the same however it was tapped (0230 D5). The release tap counts,
+  and an older build reads it as picked. The rest of this entry is the case as it was made.
+  (Raised 2026-11-13, while Tomisin named a
   solo with a half-step bend, a release and a pull-off). ADR 0288 D7 kept it out. The case for it: it is
   the one move where the app breaks ADR 0230 D1, *two notes heard, two taps*. A hammer-on, pull-off or
   slide can be one tap (a lead-in) or two (a join), but a bend can only be one, so a bend held and then
@@ -231,6 +235,14 @@ click through the speaker and through headphones.
   2026-11-13**, the same day, pulled forward from after the freeze (Tomisin: *"let's build it then...
   we'll release it with 1.4.1"*). It goes on its own branch once `pocket-425` merges, and its ADR
   settles the questions above before any code.
+- **A bent note's number covers its arc** (found 2026-11-13 on `pocket-426`, from Tomisin's screenshot of
+  the tab writer). Once the editor moves past a note, the note carries its number at its top right
+  (`NeighbourNumber`, ADR 0234 D3), which is where every bend arc meets the note (`NeckMarksLayer.drawBend`,
+  ADR 0288 D4). For a bend, the arc's start is hidden; for a bend and release or a pre-bend let down, the
+  arrowhead at the note is, and that's the part saying the pitch came back. ADR 0296's release lifts its
+  arrowhead clear (`lift`); the four 0288 shapes don't, since changing them wants its own look on the
+  device. Small: pass the same `lift` for the shapes with an arrowhead at the note, or draw the number
+  under the marks.
 - **The import sheet's design.** From the same check (Tomisin: *"I feel like we could improve upon the
   design of the importing screen"*). It works as ADR 0290 built it; what to change is open. Needs
   Tomisin's direction before any build, and a short ADR amending 0290 if it changes what the sheet says

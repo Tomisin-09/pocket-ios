@@ -26,10 +26,16 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   onto how that time was spent: ear training, improvising, loops, play-alongs, and exercises linked
   to that song. A song that is the target of a long-term goal says so underneath. The list still opens
   by kind, and remembers which you chose.
+- **A bend held, then let down on a note of its own.** When the note before is bent, **Into it** offers
+  a fifth choice, **Release**: the bend comes back down on this note, without picking again. Choosing
+  it puts the note where the bend was. The tab writes the two as one bend and release (*10b11r10*), the
+  glow holds the bend and comes down on the second note, and the neck draws it coming down, marked
+  *r*. Until now a bend could only be one note, so a release you heard as a note of its own had to be
+  taken out. Write a tab gets it too. A build from before this reads the second note as picked again
+  (ADR 0296).
 - **Help for naming bends, slides and hammer-ons.** Help & FAQs has a new group, **Naming notes &
-  tabs**, with three answers: when to tap a hammer-on, slide or bend once and when twice (a bend and
-  release is one note), what to do with a release tapped as a note of its own, and what each letter
-  in the tab means. The Glossary gains *Bend and release*, *Pre-bend*, *Grace note*, *Muted note*,
+  tabs**, with three answers: when to tap a hammer-on, slide or bend once and when twice, what to do
+  with a bend and its release tapped as two notes, and what each letter in the tab means. The Glossary gains *Bend and release*, *Pre-bend*, *Grace note*, *Muted note*,
   *Double-stop* and four picking styles (economy, hybrid, sweep, tremolo), and *Bend* and *Slide* now
   say which one stays on its fret.
 

@@ -5,13 +5,15 @@ import Foundation
 enum JoinDirection: Equatable, Sendable {
     case upward, downward
 
-    /// The mark a join writes in the tab and between the chips: `h`, `p`, `/` or `\`.
+    /// The mark a join writes in the tab and between the chips: `h`, `p`, `/` or `\`, and `r` for a
+    /// release, which only ever comes down (ADR 0296 D6).
     func symbol(for join: Join) -> String {
         switch (join, self) {
         case (.legato, .upward): return "h"
         case (.legato, .downward): return "p"
         case (.slide, .upward): return "/"
         case (.slide, .downward): return "\\"
+        case (.release, _): return NeckJoin.releaseMark
         }
     }
 }
@@ -67,13 +69,47 @@ enum NeckJoin {
         return .joinable(moves[0] > 0 ? .upward : .downward)
     }
 
-    /// The join into tap `index` as written (`h`, `p`, `/`, `\`), or `nil` when it has none or one that
-    /// no longer fits. A note heard as one carries its join inside it, as its lead-in, and has none here.
+    /// The join into tap `index` as written (`h`, `p`, `/`, `\`, `r`), or `nil` when it has none or one
+    /// that no longer fits. A note heard as one carries its join inside it, as its lead-in, and has none
+    /// here.
     static func symbol(into index: Int, of labels: [PieceLabel?]) -> String? {
         guard labels.indices.contains(index), case .fretted(let notes, _, let into?) = labels[index],
-              !notes.contains(where: { $0.leadIn != nil }),
-              let direction = direction(into: index, of: labels) else { return nil }
-        return direction.symbol(for: into)
+              !notes.contains(where: { $0.leadIn != nil }) else { return nil }
+        if into == .release { return releases(into: index, of: labels) ? releaseMark : nil }
+        return direction(into: index, of: labels)?.symbol(for: into)
+    }
+
+    /// The mark a release writes: `10b11r10` across two columns, as a release inside one tap writes it.
+    static let releaseMark = "r"
+
+    /// Whether `join` still fits tap `index`: a release by `releases(into:of:)`, and any other join when
+    /// the notes move from the tap before. The one answer the tab, the strip, the glow and the tidy step
+    /// all read.
+    static func fits(_ join: Join, into index: Int, of labels: [PieceLabel?]) -> Bool {
+        join == .release ? releases(into: index, of: labels) : direction(into: index, of: labels) != nil
+    }
+
+    // MARK: - A bend let down on a tap of its own (ADR 0296)
+
+    /// Whether tap `index` can be where a bend held on the tap before comes back down (ADR 0296 D4): the
+    /// tap before is on the neck, on the same strings and frets, with a note bent and held (a pre-bend
+    /// counts); this tap's notes are unbent and have no lead-in. In a shape the other notes are held.
+    static func releases(into index: Int, of labels: [PieceLabel?]) -> Bool {
+        guard index > 0, labels.indices.contains(index), let current = labels[index]?.frettedNotes,
+              !current.isEmpty, let previous = labels[index - 1]?.frettedNotes, !previous.isEmpty,
+              previous.count == current.count else { return false }
+        let samePlaces = current.allSatisfy { note in
+            previous.contains { $0.string == note.string && $0.fret == note.fret }
+        }
+        let unbent = current.allSatisfy { $0.bend == 0 && $0.leadIn == nil }
+        return samePlaces && unbent && previous.contains { $0.bend > 0 && !$0.releases }
+    }
+
+    /// Whether *Release* is offered on tap `index` (ADR 0296 D2): the tap before has a bent note on the
+    /// neck, held or released. Choosing it moves this tap to fit (`NeckEditing.release(at:of:)`).
+    static func canRelease(into index: Int, of labels: [PieceLabel?]) -> Bool {
+        guard index > 0, labels.indices.contains(index) else { return false }
+        return (labels[index - 1]?.frettedNotes ?? []).contains { $0.bend > 0 }
     }
 
     /// The answers with every join that no longer fits dropped: when the note before moves, the join
@@ -86,7 +122,7 @@ enum NeckJoin {
             if notes.contains(where: { $0.leadIn != nil }), !leadInsFit(notes) {
                 for position in notes.indices { notes[position].leadIn = nil }
             }
-            if notes.contains(where: { $0.leadIn != nil }) || direction(into: index, of: labels) == nil {
+            if notes.contains(where: { $0.leadIn != nil }) || into.map({ fits($0, into: index, of: labels) }) != true {
                 into = nil
             }
             return .fretted(notes, muted: muted, into: into)
@@ -188,9 +224,10 @@ extension NeckJoin {
 // MARK: - The four ways in (ADR 0230)
 
 /// The choices under the neck: **Picked**, **Hammer-on**, **Pull-off** and **Slide**, always all four, so
-/// a pull-off is there to be seen before a note goes down to one.
+/// a pull-off is there to be seen before a note goes down to one; and **Release** after a bent note (ADR
+/// 0296 D2).
 enum IntoChoice: CaseIterable, Equatable, Sendable {
-    case picked, hammerOn, pullOff, slide
+    case picked, hammerOn, pullOff, slide, release
 
     var title: String {
         switch self {
@@ -198,7 +235,13 @@ enum IntoChoice: CaseIterable, Equatable, Sendable {
         case .hammerOn: "Hammer-on"
         case .pullOff: "Pull-off"
         case .slide: "Slide"
+        case .release: "Release"
         }
+    }
+
+    /// The choices shown for tap `index`: the four, and *Release* when the tap before is bent.
+    static func offered(into index: Int, of labels: [PieceLabel?]) -> [IntoChoice] {
+        allCases.filter { $0 != .release || NeckJoin.canRelease(into: index, of: labels) }
     }
 }
 
@@ -235,6 +278,8 @@ extension NeckJoin {
         case fromBefore(Join)
         /// Start inside this note: ask for where, on the neck.
         case inside(LeadInRequest)
+        /// Let the bend on the tap before down on this tap, which goes where the bend was (ADR 0296 D3).
+        case release
         /// Nothing to do here: the note isn't on the neck, or it's a shape the tap before doesn't fit.
         case unavailable
     }
@@ -243,6 +288,8 @@ extension NeckJoin {
     /// a hammer-on or pull-off on the note whose string is tapped (ADR 0252 D1); a slide for the shape as
     /// one.
     static func route(_ choice: IntoChoice, into index: Int, of labels: [PieceLabel?]) -> Route {
+        // A release places the note itself, so it needs only a bend before it.
+        if choice == .release { return canRelease(into: index, of: labels) ? .release : .unavailable }
         guard labels.indices.contains(index), let notes = labels[index]?.frettedNotes, !notes.isEmpty else {
             return .unavailable
         }
@@ -257,6 +304,8 @@ extension NeckJoin {
         case .slide:
             if before != nil { return .fromBefore(.slide) }
             return .inside(LeadInRequest(join: .slide, direction: nil))
+        case .release:
+            return .unavailable
         }
     }
 
@@ -274,6 +323,7 @@ extension NeckJoin {
         case .hammerOn: return join == .legato && way == .upward
         case .pullOff: return join == .legato && way == .downward
         case .slide: return join == .slide
+        case .release: return join == .release
         }
     }
 

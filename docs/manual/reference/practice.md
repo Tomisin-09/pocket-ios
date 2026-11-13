@@ -244,7 +244,7 @@ with its number, so a lick reads in order even where it comes back to the same f
 pass sits faintly behind them. The row over the neck, *Guitar · Standard* until you change it, sets
 guitar or bass and the tuning for this piece only; a new tuning keeps your frets, and a new instrument
 clears them after asking. Under the neck, `Into it` says how you got to the note: `Picked`,
-`Hammer-on`, `Pull-off` or `Slide`. A quick hammer-on or slide can sound like one note or two, so it
+`Hammer-on`, `Pull-off` or `Slide`, and after a bent note, `Release`. A quick hammer-on or slide can sound like one note or two, so it
 goes however you tapped it. If you heard two notes and tapped twice, the join comes from the note
 before when it's on the same string, and the line under the choices names it. If you heard one note
 and tapped once, pick how it started and tap the fret it started on (the frets it can't have come from
@@ -256,10 +256,13 @@ always the fret you tap, whether that's the barre or the middle finger of an m7.
 where one of its notes started and the rest follow. `Heard as one note?` moves a join from the note
 before into the note. `Bend` and `~ Vibrato` mark the note itself. Once a note is bent, `Pre-bend`
 and `Release` say how: `Pre-bend` if you pushed the string before you picked it, `Release` if you let it
-back down before the next note, and both for a pre-bend let down. A bend changes the note, so a bent
+back down before the next note, and both for a pre-bend let down. A bend held and then let down as a
+note of its own is two taps: on the second, `Release` under `Into it` puts it where the bend was, and
+the line under the choices names the bent note it comes down from. A bend changes the note, so a bent
 note reads as the note it reaches, as a note with a quick start does, and a released bend as the fret
 it comes back to. The marks go into the tab the usual way, the same however you tapped them: *7b9*,
-*7b9r7*, *7pb9*, *7~*, *5h7*, *8/10*, */10*. Turn on
+*7b9r7*, *7pb9*, *7~*, *5h7*, *8/10*, */10*, and a bend released on its own tap writes *7b9r7* across
+the two. Turn on
 `Chords` to place more than one note: one per string, as in My chords, so a double-stop, a triad and a
 full chord are the same taps. The neck names what you placed, a chord such as *Am/C* or, for two notes
 that aren't one, the interval between them. A **muted note**, struck with no pitch, is the ✕ beside each
