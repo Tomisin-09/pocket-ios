@@ -25,6 +25,13 @@ enum PracticeBreakdown {
         var loops: [UUID: LoopName] = [:]
         /// Song titles by `Song.sourceID`.
         var songs: [String: String] = [:]
+        /// The song an exercise is **for** (ADR 0111), by `Song.sourceID`. Only an exercise linked to
+        /// exactly one song is here: one linked to several has no single song to count under, and
+        /// counting it under each would make the songs add up to more than was played (ADR 0295 D3).
+        var exerciseSongs: [UUID: String] = [:]
+        /// The title of the long-term goal that names a song as its target, by `Song.sourceID`
+        /// (ADR 0295 D4). The highest-ranked goal when two name the same song.
+        var songGoals: [String: String] = [:]
     }
 
     /// A live loop as the log needs it: its name, and the song it belongs to by `Song.sourceID`.
@@ -174,6 +181,175 @@ enum PracticeBreakdown {
         return Described(name: label, detail: [song, "deleted"].compactMap { $0 }.joined(separator: " · ")
                                                  .capitalisingFirstLetter(),
                          isUnnamed: false)
+    }
+}
+
+// MARK: - By song
+
+extension PracticeBreakdown {
+
+    /// How *What you played* is grouped (ADR 0295): by the kind of practice, or by the song it was on.
+    /// `String`-raw so the choice is kept in `@AppStorage`, and the key and default live here so the
+    /// two lists on the screen cannot spell them differently.
+    enum Grouping: String, CaseIterable, Identifiable, Sendable {
+        case kind, song
+
+        static let storageKey = "practiceLogGrouping"
+        static let standard = Grouping.kind
+
+        var id: String { rawValue }
+
+        /// The segment's title.
+        var label: String {
+            switch self {
+            case .kind: "By kind"
+            case .song: "By song"
+            }
+        }
+    }
+
+    /// One row of *What you played* in either grouping, with what opens under it. The list draws
+    /// these and nothing else, so a kind and a song are laid out by one piece of code.
+    struct Row: Identifiable, Equatable, Sendable {
+        let id: String
+        let title: String
+        /// A second line: the goal a song is the target of, or that the song has been deleted.
+        let detail: String?
+        /// The log cannot say what this was. Set in a quieter style.
+        let isUnnamed: Bool
+        let seconds: Double
+        /// Largest first. Empty when there is nothing to open.
+        let items: [Item]
+
+        var minutes: Int { PracticeLog.minutes(seconds) }
+    }
+
+    /// The rows for `grouping`, largest first.
+    static func rows(_ records: [SessionRecord], names: Names, grouping: Grouping) -> [Row] {
+        switch grouping {
+        case .kind:
+            groups(records, names: names).map { group in
+                Row(id: "kind:\(group.kind.rawValue)", title: group.kind.groupLabel, detail: nil,
+                    isUnnamed: false, seconds: group.seconds, items: group.items)
+            }
+        case .song:
+            songRows(records, names: names)
+        }
+    }
+
+    /// **By song** (ADR 0295): each song with the time spent on it, opening onto the kinds of work
+    /// that time went on. Practice on no song keeps the row it has by kind.
+    ///
+    /// Every run lands in exactly one row, so the rows add up to the period's total, the same as the
+    /// grouping by kind. A song's time is its play-alongs, every run on one of its loops (the loop's
+    /// song **as it is now**, then the song the run was logged with), and the exercises linked to it
+    /// and to no other song.
+    ///
+    /// **Ranked by minutes and nothing else (ADR 0070).** No song is marked as neglected.
+    static func songRows(_ records: [SessionRecord], names: Names) -> [Row] {
+        var homes: [SongHome: HomeBucket] = [:]
+        for record in records.sorted(by: { $0.startedAt < $1.startedAt }) {
+            let home = songHome(record, names: names)
+            var bucket = homes[home] ?? HomeBucket()
+            bucket.seconds += record.durationSeconds
+            // A play-along's label is its song's title; a loop's is the loop's name. Only the first
+            // can name a song that has since been deleted. Oldest first, so the latest wins.
+            if record.kind == .song, let label = record.unitLabel { bucket.songLabel = label }
+            let key = home.opensOntoUnits ? itemKey(record) : "kind:\(record.kind.rawValue)"
+            var inner = bucket.items[key] ?? Bucket()
+            inner.seconds += record.durationSeconds
+            inner.latest = record
+            bucket.items[key] = inner
+            homes[home] = bucket
+        }
+
+        let order = PracticeRunKind.allCases
+        return homes.map { home, bucket -> Row in
+            let items = bucket.items.compactMap { key, inner -> (item: Item, rank: Int)? in
+                guard let record = inner.latest else { return nil }
+                let rank = order.firstIndex(of: record.kind) ?? 0
+                guard home.opensOntoUnits else {
+                    return (Item(id: key, name: record.kind.groupLabel, detail: nil,
+                                 seconds: inner.seconds, isUnnamed: false), rank)
+                }
+                let described = describe(record, names: names)
+                return (Item(id: key, name: described.name, detail: described.detail,
+                             seconds: inner.seconds, isUnnamed: described.isUnnamed), rank)
+            }
+            .sorted { lhs, rhs in
+                if lhs.item.seconds != rhs.item.seconds { return lhs.item.seconds > rhs.item.seconds }
+                if lhs.rank != rhs.rank { return lhs.rank < rhs.rank }
+                return lhs.item.name < rhs.item.name
+            }
+            .map(\.item)
+            return row(for: home, bucket: bucket, items: items, names: names)
+        }
+        .sorted { lhs, rhs in
+            if lhs.seconds != rhs.seconds { return lhs.seconds > rhs.seconds }
+            return lhs.title == rhs.title ? lhs.id < rhs.id : lhs.title < rhs.title
+        }
+    }
+
+    /// Where a run is counted when the list is by song.
+    private enum SongHome: Hashable {
+        case song(String)
+        /// A loop or play-along whose song the log never knew.
+        case unrecordedSong
+        /// Exercises that are for no one song. Opens onto the exercises themselves.
+        case exercises
+        case metronome
+        case other
+
+        var opensOntoUnits: Bool { self == .exercises }
+    }
+
+    private struct HomeBucket {
+        var seconds = 0.0
+        var songLabel: String?
+        var items: [String: Bucket] = [:]
+    }
+
+    private static func songHome(_ record: SessionRecord, names: Names) -> SongHome {
+        switch record.kind {
+        case .song:
+            return record.songSourceID.map(SongHome.song) ?? .unrecordedSong
+        case .loop, .earLoop, .improvise:
+            let live = record.unitUID.flatMap { names.loops[$0] }
+            return (live?.songSourceID ?? record.songSourceID).map(SongHome.song) ?? .unrecordedSong
+        case .exercise:
+            return record.unitUID.flatMap { names.exerciseSongs[$0] }.map(SongHome.song) ?? .exercises
+        case .metronome:
+            return .metronome
+        case .other:
+            return .other
+        }
+    }
+
+    private static func row(for home: SongHome, bucket: HomeBucket, items: [Item], names: Names) -> Row {
+        switch home {
+        case .song(let sourceID):
+            if let live = names.songs[sourceID] {
+                return Row(id: "song:\(sourceID)", title: live.isEmpty ? "Untitled song" : live,
+                           detail: names.songGoals[sourceID].map { "Goal · \($0)" },
+                           isUnnamed: false, seconds: bucket.seconds, items: items)
+            }
+            return Row(id: "song:\(sourceID)", title: bucket.songLabel ?? "A deleted song",
+                       detail: bucket.songLabel == nil ? nil : "Deleted",
+                       isUnnamed: bucket.songLabel == nil, seconds: bucket.seconds, items: items)
+        case .unrecordedSong:
+            return Row(id: "song:unrecorded", title: "Song not recorded", detail: nil, isUnnamed: true,
+                       seconds: bucket.seconds, items: items)
+        case .exercises:
+            return Row(id: "exercises", title: PracticeRunKind.exercise.groupLabel, detail: nil,
+                       isUnnamed: false, seconds: bucket.seconds, items: items)
+        case .metronome:
+            // Nothing to open, for the reason the grouping by kind gives (ADR 0242).
+            return Row(id: "metronome", title: PracticeRunKind.metronome.groupLabel, detail: nil,
+                       isUnnamed: false, seconds: bucket.seconds, items: [])
+        case .other:
+            return Row(id: "other", title: PracticeRunKind.other.groupLabel, detail: nil,
+                       isUnnamed: false, seconds: bucket.seconds, items: [])
+        }
     }
 }
 

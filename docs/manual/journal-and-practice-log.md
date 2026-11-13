@@ -410,6 +410,13 @@ to open it and see the exercise, loop or song itself, with each loop's song unde
 **Metronome** is the one kind with nothing inside it, so it doesn't open: the click isn't an
 exercise or a song, and its row is the whole of what there is to say.
 
+Under the heading, **By kind** and **By song** choose how the list is grouped. **By song** lists each
+song with the time you spent on it, largest first, and tapping a song shows how that time was spent:
+ear training, improvising, loops, play-alongs, and any exercise you have linked to that song and no
+other. Practice that isn't on a song keeps its own rows: **Exercises**, **Metronome**. A song that
+is the target of one of your long-term goals says so under its title. The list opens by kind, and
+remembers which you chose; the week and the month always use the same one.
+
 Tap a day — a bar in the week, a cell in the month — and the section turns to that day. The figures
 above the chart become the day's: its minutes, and in the month any new tempo. A chip with the day's
 date sits just above the chart, the other days dim, and the list narrows to that day. In the month

@@ -4,6 +4,10 @@
   checked on the simulator and on a device. Still owed: the Practice log figures in the reshoot
   (Consequences).
 - **Date:** 2026-10-02
+- **Amended by:** ADR 0295 (2026-11-13) — **D3**: *What you played* gains a second grouping, by
+  song, behind a switch under its header; a song opens onto the kinds of work its time went on. The
+  grouping by kind is unchanged and is what the list opens on, and D3's refusal to time parts of the
+  app stands.
 - **Amended by:** ADR 0269 (2026-10-21) — **D4**: a tap still narrows the list and still opens
   nothing, but it also turns the section's figures into the chosen day's, and the chip that gives
   the period back moves from beside *What you played* to just above the chart. The month's other

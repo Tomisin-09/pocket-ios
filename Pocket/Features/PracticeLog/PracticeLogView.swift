@@ -39,6 +39,7 @@ struct PracticeLogView: View {
     @Query private var exercises: [Exercise]
     @Query private var songs: [Song]
     @Query private var journalEntries: [JournalEntry]
+    @Query private var longTermGoals: [LongTermGoal]
 
     /// Where each section's pager has settled, by the period's start (ADR 0241). `nil` until it has
     /// settled anywhere, which reads as the current period — the screen always opens on now.
@@ -55,7 +56,16 @@ struct PracticeLogView: View {
             exercises: Dictionary(exercises.map { ($0.uid, $0.name) }, uniquingKeysWith: { first, _ in first }),
             loops: Dictionary(loops.map { ($0.uid, .init(name: $0.name, songSourceID: $0.song?.sourceID)) },
                               uniquingKeysWith: { first, _ in first }),
-            songs: Dictionary(songs.map { ($0.sourceID, $0.title) }, uniquingKeysWith: { first, _ in first }))
+            songs: Dictionary(songs.map { ($0.sourceID, $0.title) }, uniquingKeysWith: { first, _ in first }),
+            // Only an exercise that is for one song: see `Names.exerciseSongs` (ADR 0295 D3).
+            exerciseSongs: Dictionary(exercises.compactMap { exercise in
+                exercise.linkedSongs.count == 1 ? (exercise.uid, exercise.linkedSongs[0].sourceID) : nil
+            }, uniquingKeysWith: { first, _ in first }),
+            // In rank order, so the highest-ranked goal names a song two goals share (ADR 0295 D4).
+            songGoals: Dictionary(LongTermGoalStore.inRankOrder(longTermGoals).compactMap { goal in
+                guard let song = goal.targetSong, !goal.title.isEmpty else { return nil }
+                return (song.sourceID, goal.title)
+            }, uniquingKeysWith: { first, _ in first }))
     }
 
     /// The derived inventory counts the achievement wall shows — the existing `PracticeStats` roll-up,
