@@ -236,7 +236,9 @@ final class ReferenceFilingUITests: UITestCase {
         let add = app.navigationBars["References"].buttons["Add a reference"]
         XCTAssertTrue(add.waitForExistence(timeout: Self.uiTimeout), "no ＋ on References")
         add.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        let addLink = app.buttons["Add a link"]
+        // The menu's, not the empty state's: an empty library shows both (UITestHooks.referencesEmptyAddLink).
+        let addLink = app.buttons.matching(NSPredicate(format: "label == %@ AND identifier != %@",
+                                                       "Add a link", UITestHooks.referencesEmptyAddLink)).firstMatch
         XCTAssertTrue(addLink.waitForExistence(timeout: Self.uiTimeout), "＋ didn't offer Add a link")
         addLink.tap()
 

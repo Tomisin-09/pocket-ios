@@ -147,6 +147,7 @@ struct ReferencesLibraryView: View {
             Button { editing = .adding } label: { Label("Add a link", systemImage: "plus") }
                 .buttonStyle(.borderedProminent)
                 .tint(PocketColor.toolkit)
+                .accessibilityIdentifier(UITestHooks.referencesEmptyAddLink)
         }
     }
 }

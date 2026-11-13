@@ -127,6 +127,13 @@ enum UITestHooks {
     /// An identifier we set ourselves is neither.
     static let referenceLinkField = "reference.linkField"
 
+    /// The References library's **empty-state** *Add a link* (ADR 0295). With the library empty and ＋
+    /// open there are two buttons of that label, this and the menu's, and `buttons["Add a link"]`
+    /// fails on finding both. The menu's is the one the test means, so it is found as the one
+    /// without this identifier. An empty library is a real state, not a fault: it is what a shard
+    /// sees when the classes that used to leave a reference behind run on another runner.
+    static let referencesEmptyAddLink = "references.emptyAddLink"
+
     /// The routine's **Description** field (ADR 0177) — the gate that says *edit mode is on and the
     /// prose section is drawn*.
     ///

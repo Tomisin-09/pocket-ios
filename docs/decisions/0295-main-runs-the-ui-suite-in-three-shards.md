@@ -89,6 +89,13 @@ limit. A fourth shard would queue whenever a pull request was running.
 - Three result bundles per run, `UITestResults-PocketUIShard1` to `3`, each with its raw log, and a
   retry report per shard.
 - Each shard pays the first-test cold start, where one run did before.
+- **A class no longer runs after the ones it used to.** Each runner's simulator starts empty and
+  only its own shard's classes write to it, so a test that relied on something an earlier class
+  left in the store breaks when the two land on different runners. The first dispatch found one:
+  `ReferenceFilingUITests` had only ever met a References library that something else had already
+  added to. Empty, the library shows its own *Add a link* beside the ＋ menu's, and the test's query
+  matched both. It now picks the menu's out by `UITestHooks.referencesEmptyAddLink`. A failure that
+  appears only under sharding, with no app change behind it, should be read as this first.
 - **The balance drifts.** New classes land in shard 3, so it grows. Rebalancing means moving classes
   between the lists, in all three plans together, and C17 says if the move left a gap.
 - A push to `main` while a pull request runs uses all five macOS slots. A second pull request at the
