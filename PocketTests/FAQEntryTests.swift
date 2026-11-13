@@ -94,6 +94,40 @@ final class FAQEntryTests: XCTestCase {
                       "Must quote PracticeFieldInfo.commandTempo verbatim, not paraphrase it (D5)")
     }
 
+    // MARK: - The tab letters answer quotes the tab
+
+    func testTabLettersAnswerWritesWhatTheTabWrites() {
+        // Each example in the answer is checked twice: the tab really writes it for that note, and the
+        // answer really shows it as a token of its own. So a change to how `TabLine` writes a mark fails
+        // here instead of leaving the help explaining a tab nobody sees.
+        let answer = FAQEntry.all.first { $0.question == "What do the letters in the tab mean?" }?.answer
+        XCTAssertNotNil(answer, "The tab letters entry is gone")
+        let examples: [(note: FrettedNote, written: String)] = [
+            (FrettedNote(string: 2, fret: 7, leadIn: LeadIn(from: .fret(5), join: .legato)), "5h7"),
+            (FrettedNote(string: 2, fret: 5, leadIn: LeadIn(from: .fret(7), join: .legato)), "7p5"),
+            (FrettedNote(string: 2, fret: 7, leadIn: LeadIn(from: .fret(5), join: .slide)), "5/7"),
+            (FrettedNote(string: 2, fret: 5, leadIn: LeadIn(from: .fret(7), join: .slide)), "7\\5"),
+            (FrettedNote(string: 2, fret: 7, leadIn: LeadIn(from: .below, join: .slide)), "/7"),
+            (FrettedNote(string: 2, fret: 5, leadIn: LeadIn(from: .above, join: .slide)), "\\5"),
+            (FrettedNote(string: 2, fret: 5, bend: 2), "5b7"),
+            (FrettedNote(string: 2, fret: 5, bend: 2, releases: true), "5b7r5"),
+            (FrettedNote(string: 2, fret: 5, bend: 2, preBent: true), "5pb7"),
+            (FrettedNote(string: 2, fret: 5, bend: 2, releases: true, preBent: true), "5pb7r5"),
+            (FrettedNote(string: 2, fret: 7, vibrato: true), "7~")
+        ]
+        for example in examples {
+            XCTAssertEqual(TabLine.cell(example.note), example.written)
+            XCTAssertTrue(shows(answer ?? "", example.written), "The answer doesn't show \(example.written)")
+        }
+        XCTAssertTrue(shows(answer ?? "", PieceLabel.mutedTab), "The answer doesn't show the muted mark")
+    }
+
+    /// `tab` stands alone in `text`: not just inside a longer example, so `5b7` isn't found in `5b7r5`.
+    private func shows(_ text: String, _ tab: String) -> Bool {
+        let pattern = "(^|\\s)" + NSRegularExpression.escapedPattern(for: tab) + "($|[\\s,.;:])"
+        return text.range(of: pattern, options: .regularExpression) != nil
+    }
+
     // MARK: - The support address (the fallback behind the contact form)
 
     func testSupportAddressAppearsInAnAnswerAsPlainText() {

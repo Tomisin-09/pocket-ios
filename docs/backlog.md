@@ -209,10 +209,28 @@ click through the speaker and through headphones.
 
 ### After the freeze
 
-- **Pre-bends in the FAQ.** From the device check on 2026-11-04 (Tomisin: *"pre-bends are fine though we
-  could include a FAQ aspect later"*): an entry on naming a pre-bend and a bend and release (ADR 0288),
-  in the Toolkit's FAQ. C9 holds the FAQ to what the app says, so quote the controls (*Pre-bend*,
-  *Release*) as they read.
+- ~~**Pre-bends in the FAQ.**~~ **DONE 2026-11-13** (`pocket-425`). From the device check on 2026-11-04
+  (Tomisin: *"pre-bends are fine though we could include a FAQ aspect later"*). Help & FAQs gained a
+  group, *Naming notes & tabs*: how many taps a hammer-on, slide or bend takes, a release tapped as its
+  own note, and the tab's letters (pinned to `TabLine.cell` in `FAQEntryTests`). The Glossary gained the
+  technique words around them.
+- **A held bend tied across taps. Going ahead, for 1.4.1** (raised 2026-11-13, while Tomisin named a
+  solo with a half-step bend, a release and a pull-off). ADR 0288 D7 kept it out. The case for it: it is
+  the one move where the app breaks ADR 0230 D1, *two notes heard, two taps*. A hammer-on, pull-off or
+  slide can be one tap (a lead-in) or two (a join), but a bend can only be one, so a bend held and then
+  let down, heard as two, means taking out a tap the player heard: the rewrite 0230 refused (*it rewrites
+  what was heard to fit the tab*). The tap pad asks for *once for every note you hear*, so every player
+  who names a held bend will meet it. Tomisin's first pass tapped one as two bends, `10b11` then
+  `10b11r10`. Until then, the FAQ's *I tapped a bend and its release as two notes* gives the workaround.
+  The shape, if it goes ahead: a **release as a join** from the tap before, on the same string and fret
+  as a bend held there, written the way printed tab writes a tied note, `10b11 (11)r10`, and read as the
+  fret it lands on (0288 D2). For the ADR to settle: whether a release tap counts in *N notes*; what a
+  build without it reads from a `Join` value it doesn't know (an unknown raw value must not break the
+  whole piece's decode); the glow, which would glide down at the release's own tap; and whether My tabs,
+  which is order only, offers it at all. Amends 0288 D7, and 0227 D5 and 0230 for the join. **Decided
+  2026-11-13**, the same day, pulled forward from after the freeze (Tomisin: *"let's build it then...
+  we'll release it with 1.4.1"*). It goes on its own branch once `pocket-425` merges, and its ADR
+  settles the questions above before any code.
 - **The import sheet's design.** From the same check (Tomisin: *"I feel like we could improve upon the
   design of the importing screen"*). It works as ADR 0290 built it; what to change is open. Needs
   Tomisin's direction before any build, and a short ADR amending 0290 if it changes what the sheet says

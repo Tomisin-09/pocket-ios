@@ -18,6 +18,7 @@ struct FAQEntry: Identifiable, Equatable {
         case gettingStarted = "Getting started"
         case audio = "Audio & files"
         case concepts = "How practice works"
+        case tab = "Naming notes & tabs"
         case plan = "Your plan"
         case privacy = "Your data"
 
@@ -194,6 +195,46 @@ extension FAQEntry {
                 + "minutes shown are an estimate derived from the blocks; edit a session and the "
                 + "estimate follows.",
               area: .concepts),
+
+        // MARK: Naming notes & tabs
+        // Name the notes and My tabs share one neck editor (ADR 0235 D3), so these answer both. Tap counts
+        // follow ADR 0230 D1 (heard as one, one tap); bend shapes follow ADR 0288. The controls are quoted
+        // as they read: *Into it*, *Bend*, *Release*, *Pre-bend*, *Take note … out*. Every tab example in
+        // the letters answer is pinned to what `TabLine.cell` writes (`FAQEntryTests`).
+        .init(question: "Do I tap a hammer-on, slide or bend once or twice?",
+              answer: "Tap what you hear. A quick hammer-on, pull-off or slide can sound like one note "
+                + "or two. Heard as two, tap twice, and pick the move under Into it on the second: it "
+                + "joins from the note before. Heard as one, tap once, pick the move, then tap the fret "
+                + "it started on. The tab writes it the same either way.\n\nA bend is different: the "
+                + "finger never leaves its fret, so however far the pitch moves it's one note. Tap once, "
+                + "where the string was picked, and choose its size under Bend. Turn on Release if it "
+                + "comes back down before the next note, and Pre-bend if the string was pushed before "
+                + "it was picked.",
+              area: .tab),
+        .init(question: "I tapped a bend and its release as two notes. What now?",
+              answer: "Take the extra tap out. A bend held for a while and then let down can sound "
+                + "like two notes, but the release belongs to the bent note and has no tap of its own. "
+                + "Pick the chip you tapped on the release, and under the strip choose Take note … out. "
+                + "Then pick the note before it, where the string was picked, give it the "
+                + "bend if it hasn't one, and turn on Release. If the string was picked again while it "
+                + "was still bent, keep "
+                + "both taps: the second is a pre-bend, so give it the same bend with Pre-bend and "
+                + "Release on.",
+              area: .tab),
+        .init(question: "What do the letters in the tab mean?",
+              answer: "Numbers are frets, and 0 is an open string. The marks around them say how a note "
+                + "is played:\n\n"
+                + "h · hammer-on: 5h7\n"
+                + "p · pull-off: 7p5\n"
+                + "/ · slide up: 5/7, or /7 slid in from below\n"
+                + "\\ · slide down: 7\\5, or \\5 slid in from above\n"
+                + "b · bend: 5b7 is fret 5 bent up to fret 7's pitch, a whole step\n"
+                + "r · release, back down to the fret: 5b7r5\n"
+                + "pb · pre-bend, bent before it's picked: 5pb7, or 5pb7r5 let down\n"
+                + "~ · vibrato: 7~\n"
+                + "x · muted note, struck with no pitch\n\n"
+                + "After b, the number is the pitch the bend reaches, not a fret you press.",
+              area: .tab),
 
         // MARK: Your plan (ADR 0256; the free line as ADR 0263 moved it). No price is written here: the
         // prices are the storefront's, and the wall and Settings ▸ Your plan state them in the player's

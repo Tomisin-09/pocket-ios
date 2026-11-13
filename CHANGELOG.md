@@ -26,6 +26,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   onto how that time was spent: ear training, improvising, loops, play-alongs, and exercises linked
   to that song. A song that is the target of a long-term goal says so underneath. The list still opens
   by kind, and remembers which you chose.
+- **Help for naming bends, slides and hammer-ons.** Help & FAQs has a new group, **Naming notes &
+  tabs**, with three answers: when to tap a hammer-on, slide or bend once and when twice (a bend and
+  release is one note), what to do with a release tapped as a note of its own, and what each letter
+  in the tab means. The Glossary gains *Bend and release*, *Pre-bend*, *Grace note*, *Muted note*,
+  *Double-stop* and four picking styles (economy, hybrid, sweep, tremolo), and *Bend* and *Slide* now
+  say which one stays on its fret.
 
 ### Changed — build and CI
 
