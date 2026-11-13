@@ -178,4 +178,6 @@ enum UITestHooks {
     /// label would cost VoiceOver the very minutes the controls exist to read out.
     static let practiceLogDay = "practiceLog.day"
     static let practiceLogKind = "practiceLog.kind"
+    /// The *By kind* / *By song* switch over *What you played* (ADR 0295).
+    static let practiceLogGrouping = "practiceLog.grouping"
 }

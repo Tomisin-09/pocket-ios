@@ -19,6 +19,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Added
+
+- **What you played, by song** (ADR 0295). The Practice log's *What you played* has a switch, **By
+  kind** and **By song**. By song, each song shows the time spent on it that week or month, and opens
+  onto how that time was spent: ear training, improvising, loops, play-alongs, and exercises linked
+  to that song. A song that is the target of a long-term goal says so underneath. The list still opens
+  by kind, and remembers which you chose.
+
 ### Changed — build and CI
 
 - **A pull request runs a UI smoke, and `main` runs the whole UI suite once** (ADR 0294). The UI

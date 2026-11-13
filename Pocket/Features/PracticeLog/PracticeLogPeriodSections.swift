@@ -45,7 +45,8 @@ struct PracticeLogWeekSection: View {
                                      onSelectDay: toggle)
                 }
                 if !week.isEmpty {
-                    WhatYouPlayedList(groups: PracticeBreakdown.groups(scoped(to: week.interval), names: names),
+                    WhatYouPlayedList(records: scoped(to: week.interval),
+                                      names: names,
                                       wholePeriodLabel: "Whole week",
                                       selectedDay: selectedDay)
                 }
@@ -135,7 +136,8 @@ struct PracticeLogMonthSection: View {
                 }
                 MonthHeatmapKey()
                 if !month.isEmpty {
-                    WhatYouPlayedList(groups: PracticeBreakdown.groups(scoped(to: month.interval), names: names),
+                    WhatYouPlayedList(records: scoped(to: month.interval),
+                                      names: names,
                                       wholePeriodLabel: "Whole month",
                                       selectedDay: selectedDay)
                 }
