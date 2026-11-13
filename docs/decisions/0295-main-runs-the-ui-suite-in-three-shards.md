@@ -94,7 +94,10 @@ limit. A fourth shard would queue whenever a pull request was running.
   left in the store breaks when the two land on different runners. The first dispatch found one:
   `ReferenceFilingUITests` had only ever met a References library that something else had already
   added to. Empty, the library shows its own *Add a link* beside the ＋ menu's, and the test's query
-  matched both. It now picks the menu's out by `UITestHooks.referencesEmptyAddLink`. A failure that
+  matched both. It now picks the menu's out by `UITestHooks.referencesEmptyAddLink`. The second
+  dispatch found its neighbour: without the plan, the attach picker's footer is drawn only under a
+  list of songs and loops, and a fresh store has none, so that test now seeds the naming piece's
+  song. A failure that
   appears only under sharding, with no app change behind it, should be read as this first.
 - **The balance drifts.** New classes land in shard 3, so it grows. Rebalancing means moving classes
   between the lists, in all three plans together, and C17 says if the move left a gap.

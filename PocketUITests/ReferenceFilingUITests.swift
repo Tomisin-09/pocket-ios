@@ -67,9 +67,14 @@ final class ReferenceFilingUITests: UITestCase {
     /// **Without the plan** (D6): the start button wears the lock and leads to the wall, and the picker
     /// offers songs and loops only, saying why. The rules are unit-tested; this is the screen reading
     /// the player's real standing from `PlanStore`.
+    ///
+    /// The naming piece's song is seeded so there is a song and a loop to offer. With none, the picker
+    /// draws *Nowhere to attach it yet* and no footer, which is what a shard's empty store showed
+    /// (ADR 0295): the one-job suite had always met songs another class left behind.
     @MainActor
     func testWithoutThePlanThePickerOffersSongsAndLoopsAndStartingShowsTheWall() {
-        let app = launchApp(extraArguments: [UITestHooks.planArgument, UITestHooks.planFree])
+        let app = launchApp(extraArguments: [UITestHooks.planArgument, UITestHooks.planFree,
+                                             UITestHooks.namingPieceArgument])
         let host = "free\(String(UUID().uuidString.prefix(6)).lowercased()).example.com"
 
         openReferences(in: app)
