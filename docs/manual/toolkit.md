@@ -4,7 +4,7 @@ The reference shelf: a tuner, the chord shapes you have saved, the progressions 
 written, the lessons and files you learned from, a glossary of the words, and the help catalogue.
 Nothing here practises anything or keeps score — it is the stuff you reach for *around* playing.
 
-<!-- faq-entries: 22 -->
+<!-- faq-entries: 25 -->
 
 Reach it from **Toolkit** on Home. Seven sections:
 
@@ -190,8 +190,8 @@ matter, and they are in [the app's own words](terms.md).
 
 ## Help & FAQs
 
-Eighteen questions with their answers, grouped by **Getting started**, **Audio & files**, **How
-practice works** and **Your data**.
+Twenty-five questions with their answers, grouped by **Getting started**, **Audio & files**,
+**How practice works**, **Naming notes & tabs**, **Your plan** and **Your data**.
 
 <!-- shot: toolkit/faq | role: screen
      | alt: The Help & FAQs screen with questions grouped by area, one expanded to show its answer

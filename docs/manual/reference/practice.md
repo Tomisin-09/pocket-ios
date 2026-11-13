@@ -278,6 +278,8 @@ this visit: a fret, a mark, a name, a note taken out or tapped in, a new tuning.
 never plays your answer: tap the note in the strip, play it on your own instrument, and you decide
 whether they match.
 
+**See Help & FAQs: "Do I tap a hammer-on, slide or bend once or twice?"**
+
 <!-- shot: reference/name-by-ear | role: screen
      | alt: Name the notes on By ear: the strip of notes over the twelve note names and the kinds of chord grouped by how many notes they hold
      | state: map seed, the same sheet switched to By ear -->

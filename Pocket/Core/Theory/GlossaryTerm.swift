@@ -63,6 +63,9 @@ extension GlossaryTerm {
               definition: "A triad with a lowered 5th (root, minor 3rd, flat 5th) — tense and unstable. "
                 + "Written “dim” or “°”, e.g. B°.",
               area: .chords),
+        .init(term: "Double-stop",
+              definition: "Two notes played together, usually on neighbouring strings.",
+              area: .chords),
         .init(term: "Extension",
               definition: "A chord tone stacked beyond the 7th — the 9th, 11th or 13th — that adds "
                 + "colour without changing the chord's basic quality.",
@@ -198,27 +201,61 @@ extension GlossaryTerm {
               area: .technique),
         .init(term: "Bend",
               definition: "Pushing or pulling a string across the fret to raise its pitch, gliding up to "
-                + "the target note.",
+                + "the target note. The finger stays on its fret throughout. A half-step bend reaches the "
+                + "pitch of the next fret up, a whole step the one after that.",
+              area: .technique),
+        .init(term: "Bend and release",
+              definition: "A bend let back down to the fret's own pitch without picking again: one note "
+                + "that rises and falls back.",
               area: .technique),
         .init(term: "Downstroke / upstroke",
               definition: "A strum or pick toward the floor (down) or ceiling (up); alternating them "
                 + "drives most strumming patterns.",
               area: .technique),
+        .init(term: "Economy picking",
+              definition: "Alternate picking, except when crossing to the next string in the direction "
+                + "the pick is already moving: then one stroke carries on through it.",
+              area: .technique),
+        .init(term: "Grace note",
+              definition: "A very quick note just before the main one, often hammered, pulled or slid "
+                + "into it, so the two are heard almost as one.",
+              area: .technique),
         .init(term: "Hammer-on / pull-off",
               definition: "Sounding a note by tapping a finger onto the fret (hammer-on) or pulling it "
                 + "off to a lower note (pull-off) instead of picking.",
+              area: .technique),
+        .init(term: "Hybrid picking",
+              definition: "Playing with the pick and the free fingers of the picking hand together, so "
+                + "strings that aren't next to each other can sound at once.",
               area: .technique),
         .init(term: "Legato",
               definition: "Smoothly connected notes, often played with hammer-ons and pull-offs rather "
                 + "than picking each one.",
               area: .technique),
+        .init(term: "Muted note",
+              definition: "A string struck while the fretting hand rests on it without pressing it down: "
+                + "a percussive click with no pitch. Also called a dead note; tab writes it x.",
+              area: .technique),
         .init(term: "Palm mute",
               definition: "Resting the picking-hand palm lightly on the strings near the bridge to "
                 + "dampen and shorten the notes.",
               area: .technique),
+        .init(term: "Pre-bend",
+              definition: "Bending the string before it's picked, so the note starts at the bent pitch. "
+                + "Often let down after picking: a pre-bend and release.",
+              area: .technique),
         .init(term: "Slide",
               definition: "Moving a fretting finger along a string from one fret to another without "
-                + "re-picking, so the pitch glides.",
+                + "re-picking, so the pitch runs through the frets in between. Unlike a bend, it lands "
+                + "on a different fret.",
+              area: .technique),
+        .init(term: "Sweep picking",
+              definition: "Dragging the pick across several strings in one motion, one note per string, "
+                + "often to play an arpeggio quickly.",
+              area: .technique),
+        .init(term: "Tremolo picking",
+              definition: "Picking one note over and over, very fast and evenly, so it sounds like a "
+                + "continuous roll.",
               area: .technique),
         .init(term: "Vibrato",
               definition: "A small, repeated bend that wavers a note's pitch to add warmth and sustain.",

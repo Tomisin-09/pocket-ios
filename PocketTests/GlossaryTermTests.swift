@@ -62,4 +62,20 @@ final class GlossaryTermTests: XCTestCase {
                           "Expected glossary term “\(term)” to be present and searchable")
         }
     }
+
+    // MARK: - Technique terms for the neck editor's marks (pocket-425)
+
+    func testTechniqueTermsArePresentAndSearchable() {
+        for term in ["Bend and release", "Pre-bend", "Grace note", "Muted note", "Double-stop",
+                     "Economy picking", "Hybrid picking", "Sweep picking", "Tremolo picking"] {
+            XCTAssertTrue(GlossaryTerm.matching(term).contains { $0.term == term },
+                          "Expected glossary term “\(term)” to be present and searchable")
+        }
+    }
+
+    func testMutedNoteNamesTheTabsMark() {
+        // The definition says how tab writes it, so it must be the mark the tab really writes.
+        let muted = GlossaryTerm.all.first { $0.term == "Muted note" }
+        XCTAssertTrue(muted?.definition.contains("tab writes it \(PieceLabel.mutedTab).") == true)
+    }
 }
