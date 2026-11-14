@@ -8,6 +8,10 @@
   saved chords).
 - **Closes off:** the flat native-`Menu` approach to inserting a chord in
   `ChordProgressionEditor`.
+- **Amended by:** ADR 0297 (A swap opens on the chord it replaces, 2026-11-14) — **D4**: a movable chip
+  is a root-agnostic picture over a root menu only while the picker's new root row is on **Any**. With a
+  root chosen, the chip is the chord the shape makes there, and a tap inserts it. A swap opens on the
+  replaced chord's root with its shape marked. The browse picture and the menu stand, as do D1–D3 and D5.
 
 ## Context
 
