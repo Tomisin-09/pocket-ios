@@ -9,21 +9,45 @@ import SwiftUI
 /// it reads `ChordVoicing.library`, the `SavedChord` `@Query`, and generated `ChordGrip`s (browse
 /// pictures via `ChordGrip.browseVoicing`); no new model, renderer untouched.
 ///
-/// Movable chips are root-agnostic pictures of a shape: tapping one opens a compact **root menu**, and
-/// choosing a root places the grip there (`ChordGrip.voicing(rootPitchClass:)`) and inserts it (ADR 0103
-/// D4). Picking any chip inserts and dismisses; managing saved chords lives in the Toolkit hub, not here
-/// (ADR 0103 D5).
+/// A **root row** sits over the grid (ADR 0297). With a root chosen, every movable chip is drawn *as the
+/// chord it makes there* — "Cm7" at its real frets — and a tap inserts it; the fixed chips (My chords,
+/// open shapes) narrow to that root. With **Any**, the movable chips are root-agnostic pictures of a
+/// shape again, and tapping one opens a compact root menu (ADR 0103 D4). *Add* opens on Any. A **swap**
+/// opens on the root of the chord it replaces, with that chord's shape marked and scrolled to, so
+/// another shape at the same root is one tap and the same shape at another root is two.
+///
+/// Picking any chip inserts and dismisses; managing saved chords lives in the Toolkit hub, not here
+/// (ADR 0103 D5). The chips themselves are in `ChordPickerSheet+Chips.swift`.
 struct ChordPickerSheet: View {
     /// Called with the chosen / generated voicing. The caller routes it to the add or swap slot.
     let onInsert: (ChordVoicing) -> Void
     /// Persist a voicing built in the custom placer to "My chords" (passed through to `CustomChordSheet`).
     let onSave: (ChordVoicing) -> Void
     /// Sheet title — "Add a chord" when appending, "Swap chord" when replacing an existing slot.
-    var title: String = "Add a chord"
+    let title: String
     /// The neck being authored for (ADR 0164). On bass the guitar sections stand down entirely —
     /// barres, triads and open shapes are six-string geometry and there is no honest four-string
     /// reading of them — and `BassChordShape`'s dyads and shells take their place.
-    var instrument: Instrument = .guitar
+    let instrument: Instrument
+    /// What a swap is replacing (ADR 0297) — its root and the shape to mark. `nil` on *Add*.
+    let current: ChordPickerCurrent?
+
+    /// - Parameter current: the chord a swap replaces. The sheet opens on its root, with its shape
+    ///   marked; leave it out for *Add*, which opens on **Any**.
+    init(onInsert: @escaping (ChordVoicing) -> Void, onSave: @escaping (ChordVoicing) -> Void,
+         title: String = "Add a chord", instrument: Instrument = .guitar, current: ChordVoicing? = nil) {
+        self.onInsert = onInsert
+        self.onSave = onSave
+        self.title = title
+        self.instrument = instrument
+        let found = current.map(ChordPickerCurrent.init)
+        self.current = found
+        _root = State(initialValue: found?.rootPitchClass)
+        // The Tier-2 section starts folded (ADR 0122) — unless the chord being swapped is in it, which
+        // would hide the very chip the sheet opened to show.
+        let swapsATier2Shape = found?.grip.map { ChordGrip.tier2.contains($0) } ?? false
+        _collapsedSections = State(initialValue: swapsATier2Shape ? [] : [Self.tier2Title])
+    }
 
     @Environment(\.dismiss) private var dismiss
 
@@ -31,11 +55,12 @@ struct ChordPickerSheet: View {
     @Query(sort: \SavedChord.createdAt, order: .reverse) private var savedChords: [SavedChord]
 
     @State private var query = ""
-    @State private var showCustomBuilder = false
+    @State var showCustomBuilder = false
     /// Insert section headers the player has collapsed (ADR 0109) — tapping a header toggles it. Ignored
     /// while searching (a query force-expands every section so a match can't hide in a collapsed one).
-    /// Seeded with the Tier-2 section so the advanced shapes start folded away (ADR 0122).
-    @State private var collapsedSections: Set<String> = [ChordPickerSheet.tier2Title]
+    @State private var collapsedSections: Set<String>
+    /// The root the grid is drawn at (ADR 0297), or `nil` for **Any**.
+    @State var root: Int?
 
     /// The segmented control's two positions. **Insert** is the only state the sheet ever rests in;
     /// **Build** is a spring-loaded action (see `modeSelection`), which is why nothing stores a `Mode`.
@@ -47,6 +72,8 @@ struct ChordPickerSheet: View {
 
     /// The Tier-2 section's title — needed as a constant because it seeds `collapsedSections`.
     private static let tier2Title = "Sus, 6ths & 9ths"
+    /// The one chip the sheet scrolls to — the swapped chord's (see `currentChip`).
+    nonisolated static let currentChipID = "chordPicker.current"
 
     /// **Build** is an action, not a tab (ADR 0122): selecting it opens the custom placer and leaves the
     /// segment on Insert, so dismissing the placer returns to the grid rather than to an empty pane.
@@ -60,10 +87,10 @@ struct ChordPickerSheet: View {
     @AppStorage(AppSettings.Key.accidentalPreference)
     private var accidentalRaw = NoteSpelling.default.rawValue
 
-    private var spelling: NoteSpelling { NoteSpelling(rawValue: accidentalRaw) ?? .default }
+    var spelling: NoteSpelling { NoteSpelling(rawValue: accidentalRaw) ?? .default }
 
-    /// Root menu order C … B (pitch class 0 … 11), the way a key is spoken.
-    private var rootNames: [String] { (0..<12).map { spelling.name(pitchClass: $0) } }
+    /// Root order C … B (pitch class 0 … 11), the way a key is spoken.
+    var rootNames: [String] { (0..<12).map { spelling.name(pitchClass: $0) } }
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 9), count: 3)
 
@@ -72,42 +99,58 @@ struct ChordPickerSheet: View {
     /// Saved chords **for this neck only**. A six-string shape inserted into a bass drill would draw a
     /// guitar box mid-progression and sound in the wrong octave, and My Chords is a single global
     /// library shared by both (ADR 0095), so the filter belongs here at the point of insertion.
-    private var filteredSaved: [SavedChord] {
+    var filteredSaved: [SavedChord] {
         savedChords.filter {
             $0.voicing.isBass == (instrument == .bass)
                 && ChordPicker.matches(query: query, in: $0.name)
+                && ChordPicker.fixedChord($0.voicing, isAt: root)
         }
     }
     /// The bass vocabulary — empty on guitar, which is what keeps its section out of the pane.
     private var filteredBass: [BassChordShape] {
         guard instrument == .bass else { return [] }
-        return BassChordShape.all.filter { ChordPicker.matches(query: query, in: $0.name) }
+        return BassChordShape.all.filter {
+            let placed = placedBass($0)?.name
+            return ChordPicker.matches(query: query, in: [placed, $0.name].compactMap { $0 }.joined(separator: " "))
+        }
     }
     private var filteredMovable: [ChordGrip] {
         guard instrument == .guitar else { return [] }
         return ChordPicker.insertMovableGrips.filter {
-            ChordPicker.matches(query: query, in: ChordPicker.movableSearchText($0))
+            ChordPicker.matches(query: query, in: ChordPicker.movableSearchText($0, placedName: placed($0)?.name))
         }
     }
     private var filteredTier2: [ChordGrip] {
         guard instrument == .guitar else { return [] }
         return ChordPicker.insertTier2Grips.filter {
-            ChordPicker.matches(query: query, in: ChordPicker.movableSearchText($0))
+            ChordPicker.matches(query: query, in: ChordPicker.movableSearchText($0, placedName: placed($0)?.name))
         }
     }
     private var filteredTriads: [ChordGrip] {
         guard instrument == .guitar else { return [] }
         return ChordPicker.insertTriadGrips.filter {
-            ChordPicker.matches(query: query, in: ChordPicker.triadSearchText($0))
+            ChordPicker.matches(query: query, in: ChordPicker.triadSearchText($0, placedName: placed($0)?.name))
         }
     }
-    private var filteredOpen: [ChordVoicing] {
+    var filteredOpen: [ChordVoicing] {
         guard instrument == .guitar else { return [] }
-        return ChordVoicing.library.filter { ChordPicker.matches(query: query, in: $0.name) }
+        return ChordVoicing.library.filter {
+            ChordPicker.matches(query: query, in: $0.name) && ChordPicker.fixedChord($0, isAt: root)
+        }
     }
     private var insertIsEmpty: Bool {
         filteredSaved.isEmpty && filteredMovable.isEmpty && filteredTriads.isEmpty
             && filteredOpen.isEmpty && filteredTier2.isEmpty && filteredBass.isEmpty
+    }
+
+    /// A grip as the chord it makes at the chosen root — `nil` on **Any**.
+    func placed(_ grip: ChordGrip) -> ChordVoicing? {
+        root.map { grip.voicing(rootPitchClass: $0, spelling: spelling) }
+    }
+
+    /// A bass shape at the chosen root — `nil` on **Any**, or where the shape can't reach that root.
+    func placedBass(_ shape: BassChordShape) -> ChordVoicing? {
+        root.flatMap { shape.voicing(rootPitchClass: $0, spelling: spelling) }
     }
 
     // MARK: - Body
@@ -117,6 +160,7 @@ struct ChordPickerSheet: View {
             VStack(spacing: 0) {
                 searchField
                 modePicker
+                rootRow
                 Divider().overlay(PocketColor.surfaceBorder)
                 insertPane
             }
@@ -137,12 +181,16 @@ struct ChordPickerSheet: View {
     }
 
     /// Route a chosen voicing to the caller and close — picking a chip is the whole interaction.
-    private func insert(_ voicing: ChordVoicing) {
+    func insert(_ voicing: ChordVoicing) {
         onInsert(voicing)
         dismiss()
     }
 
-    // MARK: - Search + mode
+}
+
+// MARK: - Search, mode and the insert pane
+
+extension ChordPickerSheet {
 
     private var searchField: some View {
         HStack(spacing: 9) {
@@ -184,57 +232,61 @@ struct ChordPickerSheet: View {
     // MARK: - Insert pane
 
     private var insertPane: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                if !filteredSaved.isEmpty {
-                    group(title: "My chords", count: filteredSaved.count, slide: false) {
-                        ForEach(filteredSaved) { saved in
-                            chip(voicing: saved.voicing, title: saved.name, subtitle: nil, saved: true) {
-                                insert(saved.voicing)
-                            }
-                        }
-                    }
-                }
-                if !filteredBass.isEmpty {
-                    group(title: "Bass shapes", count: filteredBass.count, slide: true) {
-                        ForEach(filteredBass) { shape in
-                            bassChip(shape)
-                        }
-                    }
-                }
-                if !filteredMovable.isEmpty {
-                    group(title: "Movable shapes", count: filteredMovable.count, slide: true) {
-                        ForEach(Array(filteredMovable.enumerated()), id: \.offset) { _, grip in
-                            movableChip(grip)
-                        }
-                    }
-                }
-                if !filteredTriads.isEmpty {
-                    group(title: "Triads", count: filteredTriads.count, slide: true) {
-                        ForEach(Array(filteredTriads.enumerated()), id: \.offset) { _, grip in
-                            triadChip(grip)
-                        }
-                    }
-                }
-                if !filteredOpen.isEmpty {
-                    group(title: "Open shapes", count: filteredOpen.count, slide: false) {
-                        ForEach(filteredOpen) { voicing in
-                            chip(voicing: voicing, title: voicing.name, subtitle: nil, saved: false) {
-                                insert(voicing)
-                            }
-                        }
-                    }
-                }
-                if !filteredTier2.isEmpty {
-                    group(title: Self.tier2Title, count: filteredTier2.count, slide: true) {
-                        ForEach(Array(filteredTier2.enumerated()), id: \.offset) { _, grip in
-                            movableChip(grip)
-                        }
-                    }
-                }
-                if insertIsEmpty { emptyState }
+        ScrollViewReader { proxy in
+            ScrollView {
+                insertGroups.padding(16)
             }
-            .padding(16)
+            // A swap opens scrolled to the chord it replaces, and keeps it in view as the root changes —
+            // the marked chip is where *the same shape, another root* is tapped.
+            .onAppear { scrollToCurrent(proxy) }
+            .onChange(of: root) { withAnimation { scrollToCurrent(proxy) } }
+        }
+    }
+
+    private func scrollToCurrent(_ proxy: ScrollViewProxy) {
+        guard currentChip != nil else { return }
+        proxy.scrollTo(Self.currentChipID, anchor: .center)
+    }
+
+    private var insertGroups: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            if !filteredSaved.isEmpty {
+                group(title: "My chords", count: filteredSaved.count, slide: false) {
+                    ForEach(filteredSaved) { savedChip($0) }
+                }
+            }
+            if !filteredBass.isEmpty {
+                group(title: "Bass shapes", count: filteredBass.count, slide: true) {
+                    ForEach(filteredBass) { bassChip($0) }
+                }
+            }
+            if !filteredMovable.isEmpty {
+                group(title: "Movable shapes", count: filteredMovable.count, slide: true) {
+                    ForEach(Array(filteredMovable.enumerated()), id: \.offset) { _, grip in
+                        movableChip(grip)
+                    }
+                }
+            }
+            if !filteredTriads.isEmpty {
+                group(title: "Triads", count: filteredTriads.count, slide: true) {
+                    ForEach(Array(filteredTriads.enumerated()), id: \.offset) { _, grip in
+                        triadChip(grip)
+                    }
+                }
+            }
+            if !filteredOpen.isEmpty {
+                group(title: "Open shapes", count: filteredOpen.count, slide: false) {
+                    ForEach(filteredOpen) { openChip($0) }
+                }
+            }
+            if !filteredTier2.isEmpty {
+                group(title: Self.tier2Title, count: filteredTier2.count, slide: true) {
+                    ForEach(Array(filteredTier2.enumerated()), id: \.offset) { _, grip in
+                        movableChip(grip)
+                    }
+                }
+            }
+            if insertIsEmpty { emptyState }
         }
     }
 
@@ -300,97 +352,5 @@ struct ChordPickerSheet: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 44)
-    }
-
-}
-
-// MARK: - Chips (split out to keep the picker's struct body within bounds)
-
-private extension ChordPickerSheet {
-    func chip(voicing: ChordVoicing, title: String, subtitle: String?, saved: Bool,
-              action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            chipBody(voicing: voicing, title: title, subtitle: subtitle, saved: saved)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Insert \(title)")
-    }
-
-    /// A movable grip's chip: tap opens a compact root menu, and choosing a root places + inserts the
-    /// shape there (ADR 0103 D4). The picture is `browseVoicing` (fret-5 barre); the label is the
-    /// quality + family, so the chip stays honestly root-agnostic.
-    func movableChip(_ grip: ChordGrip) -> some View {
-        gripChip(grip, subtitle: ChordPicker.movableSubtitle(grip),
-                 accessibility: "\(grip.quality.displayName) \(ChordPicker.movableSubtitle(grip)), "
-                     + "choose a root")
-    }
-
-    /// A triad grip's chip (ADR 0109) — same root-menu interaction as a movable shape; subtitle is the
-    /// string set it voices.
-    func triadChip(_ grip: ChordGrip) -> some View {
-        gripChip(grip, subtitle: ChordPicker.triadSubtitle(grip),
-                 accessibility: "\(grip.quality.displayName) triad on \(grip.name), choose a root")
-    }
-
-    /// A bass shape's chip (ADR 0164) — the same root-menu interaction as a movable grip, because a
-    /// dyad is movable in exactly the same sense: the picture is the shape, the root is chosen on tap.
-    /// The browse picture is the shape rooted on the low E at fret 5, which is where a hand meets it.
-    ///
-    /// A root the shape can't reach is **omitted from the menu** rather than offered and silently
-    /// dropped — `BassChordShape.voicing` refuses instead of clamping (that's the point of it), so an
-    /// unreachable root would otherwise be a button that does nothing.
-    func bassChip(_ shape: BassChordShape) -> some View {
-        let browse = shape.voicing(rootString: ChordVoicing.bassStringCount - 1, rootFret: 5,
-                                   spelling: spelling)
-        return Menu {
-            ForEach(rootNames.indices, id: \.self) { pitchClass in
-                if let voicing = shape.voicing(rootPitchClass: pitchClass, spelling: spelling) {
-                    Button(rootNames[pitchClass]) { insert(voicing) }
-                }
-            }
-        } label: {
-            chipBody(voicing: browse ?? ChordVoicing(shape.name, frets: [nil, nil, nil, 0]),
-                     title: shape.name, subtitle: "bass", saved: false)
-        }
-        .accessibilityLabel("\(shape.name), choose a root")
-    }
-
-    /// Shared chip for any `ChordGrip` browsed by root: a menu of the 12 roots over the grip's browse
-    /// picture. Choosing a root places (`voicing(rootPitchClass:)`) and inserts.
-    func gripChip(_ grip: ChordGrip, subtitle: String, accessibility: String) -> some View {
-        Menu {
-            ForEach(rootNames.indices, id: \.self) { pitchClass in
-                Button(rootNames[pitchClass]) { insert(grip.voicing(rootPitchClass: pitchClass, spelling: spelling)) }
-            }
-        } label: {
-            chipBody(voicing: grip.browseVoicing, title: grip.quality.displayName,
-                     subtitle: subtitle, saved: false)
-        }
-        .accessibilityLabel(accessibility)
-    }
-
-    func chipBody(voicing: ChordVoicing, title: String, subtitle: String?,
-                  saved: Bool) -> some View {
-        VStack(spacing: 6) {
-            ChordDiagramView(voicing: voicing, tint: PocketColor.practice, showsName: false)
-                .frame(height: 54)
-            Text(title)
-                .font(.futura(.caption, weight: .semibold))
-                .foregroundStyle(saved ? PocketColor.practice : PocketColor.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            // A single reserved line keeps every chip the same height whether or not it has a subtitle.
-            Text(subtitle ?? " ")
-                .font(.futura(.caption2))
-                .foregroundStyle(PocketColor.textSecondary)
-                .lineLimit(1)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 9)
-        .padding(.horizontal, 8)
-        .background(RoundedRectangle(cornerRadius: 13).fill(PocketColor.surfaceSubtle))
-        .overlay(RoundedRectangle(cornerRadius: 13).strokeBorder(
-            saved ? PocketColor.practice.opacity(0.35) : PocketColor.surfaceBorder, lineWidth: 1))
-        .contentShape(Rectangle())
     }
 }

@@ -233,6 +233,13 @@ opens the picker to swap it, the stepper sets how many beats it is held for, and
 arrows move it along the progression. So an order you got wrong is a couple of taps to fix rather
 than a chord to delete and rebuild. The arrows appear once there are two chords to order.
 
+The picker has a **Root** row above the chords. Choose a root and every movable shape is drawn as the
+chord it makes there, *Cm7* at its real fret, so one tap puts that chord in. Your chords and the open
+shapes narrow to that root. **Any** shows everything, and a shape then asks for its root when you tap
+it. **Add chord** opens on **Any**. Swapping opens on the root of the chord you're changing, with its
+shape marked: another shape at the same root is one tap, and the same shape somewhere else is two, the
+root and then the marked shape.
+
 **Use a progression**, under **Add chord**, fills the drill for you instead. Nothing is added until you
 ask — a chord drill still starts empty.
 

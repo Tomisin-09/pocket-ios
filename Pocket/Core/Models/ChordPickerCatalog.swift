@@ -26,9 +26,12 @@ enum ChordPicker {
     /// The text a movable chip matches search against — its quality **and** family ("Major E-shape
     /// barre"), so "minor", "e-shape", "dom", and "barre" all filter it. Power chords omit "barre" (they
     /// aren't one) but pick up "power chord" / "5" via `quality.displayName` / `nameSuffix`.
-    static func movableSearchText(_ grip: ChordGrip) -> String {
+    ///
+    /// With a root chosen the chip shows a real chord ("Cm7", ADR 0297), so that name leads: a chip you
+    /// can read must be one you can type.
+    static func movableSearchText(_ grip: ChordGrip, placedName: String? = nil) -> String {
         let barre = grip.quality == .fifth ? "" : " barre"
-        return "\(grip.quality.displayName) \(grip.name)\(barre)"
+        return leading(placedName) + "\(grip.quality.displayName) \(grip.name)\(barre)"
     }
 
     /// **Tier 2** as Insert chips (ADR 0122) — the suspensions, 6ths and 9ths. These were the whole
@@ -50,8 +53,13 @@ enum ChordPicker {
 
     /// The text a triad chip matches search against — quality, "triad", the string set, and the inversion,
     /// so "triad", "major", "g-b-e", "inversion", and "1st" all filter it.
-    static func triadSearchText(_ grip: ChordGrip) -> String {
-        "\(grip.quality.displayName) triad \(grip.name) \(grip.inversionName) inversion"
+    static func triadSearchText(_ grip: ChordGrip, placedName: String? = nil) -> String {
+        leading(placedName) + "\(grip.quality.displayName) triad \(grip.name) \(grip.inversionName) inversion"
+    }
+
+    /// A placed chip's chord name, ahead of the words that describe its shape.
+    private static func leading(_ placedName: String?) -> String {
+        placedName.map { "\($0) " } ?? ""
     }
 
     /// Case- and diacritic-insensitive substring match driving the picker's live search (ADR 0103 D1).

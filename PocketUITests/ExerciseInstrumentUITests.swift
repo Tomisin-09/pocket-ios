@@ -100,6 +100,24 @@ final class ExerciseInstrumentUITests: UITestCase {
         shot.name = "bass-chords-configure-step"
         shot.lifetime = .keepAlways
         add(shot)
+
+        // A bass swap opens on the chord's root with its shape marked, as a guitar one does (ADR 0297),
+        // and still offers only bass shapes.
+        let swap = app.buttons["Swap chord C5"]
+        XCTAssertTrue(swap.waitForExistence(timeout: Self.uiTimeout), "no C5 row to swap")
+        swap.tap()
+        XCTAssertTrue(app.navigationBars["Swap chord"].waitForExistence(timeout: Self.uiTimeout),
+                      "the picker did not open for a swap")
+        XCTAssertTrue(app.buttons["chordPicker.root.0"].isSelected, "the bass swap should open on C")
+        let marked = app.buttons["Insert C5, Power (root + 5th)"]
+        XCTAssertTrue(marked.waitForExistence(timeout: Self.uiTimeout), "the placed C5 chip is missing")
+        XCTAssertEqual(marked.value as? String, "Current shape", "the bass shape being swapped isn't marked")
+        XCTAssertFalse(app.otherElements["chord.strings.6"].exists,
+                       "a six-string chord box is on screen for a bass swap")
+        let swapShot = XCTAttachment(screenshot: app.screenshot())
+        swapShot.name = "bass-swap-opens-on-the-chord"
+        swapShot.lifetime = .keepAlways
+        add(swapShot)
     }
 }
 

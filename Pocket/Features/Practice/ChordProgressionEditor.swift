@@ -13,7 +13,8 @@ import SwiftUI
 ///
 /// The flat insert `Menu` this used to carry was replaced by the search-first picker (ADR 0103) — both
 /// the Add button and a row's chord-name button now present `ChordPickerSheet`, which owns the Insert
-/// grid + the Movable / Custom authoring sub-sheets.
+/// grid + the Movable / Custom authoring sub-sheets. A swap hands the picker the chord it replaces, so it
+/// opens on that chord's root with its shape marked (ADR 0297).
 struct ChordProgressionEditor: View {
     @Binding var progression: ChordProgression
     /// The owning drill's neck (ADR 0164) — passed to the picker so a bass drill is offered bass
@@ -96,7 +97,8 @@ struct ChordProgressionEditor: View {
                 ChordPickerSheet(onInsert: { apply($0, to: target) },
                                  onSave: save,
                                  title: target.isReplace ? "Swap chord" : "Add a chord",
-                                 instrument: instrument)
+                                 instrument: instrument,
+                                 current: voicing(in: target))
             case .progression:
                 ProgressionPickerSheet(existingCount: progression.changeCount, instrument: instrument,
                                        beatsPerBar: beatsPerBar,
@@ -110,6 +112,13 @@ struct ChordProgressionEditor: View {
     private func save(_ voicing: ChordVoicing) {
         guard !SavedChord.isAlreadySaved(voicing, among: savedChords.map(\.voicing)) else { return }
         modelContext.insert(SavedChord(voicing))
+    }
+
+    /// The chord a swap replaces, so the picker opens on its root with its shape marked (ADR 0297).
+    /// `nil` for *Add*, which has nothing to start from.
+    private func voicing(in target: ChordSlot) -> ChordVoicing? {
+        guard case .replace(let index) = target, progression.changes.indices.contains(index) else { return nil }
+        return progression.changes[index].voicing
     }
 
     /// Route a generated or placed voicing to the slot the sheet was opened for.

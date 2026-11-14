@@ -7,6 +7,9 @@
   movable set at six) and **ADR 0103 D2** (the two-card Build pane); retires `MovableChordSheet`, the
   authoring surface ADR 0084 M4 introduced. ADR 0109's collapsible Insert sections are what make the
   wider grid affordable.
+- **Amended by:** ADR 0297 (A swap opens on the chord it replaces, 2026-11-14) — **§3**: the Tier-2
+  section still starts folded, except when the chord being swapped is one of its shapes. Then it opens
+  expanded so the marked chip isn't hidden. The rest of §3 stands.
 - **Number note:** 0120 is reserved for the analytics/privacy ADR in `docs/backlog.md` Slice 8.
 
 ## Context

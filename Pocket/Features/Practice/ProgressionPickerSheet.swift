@@ -219,7 +219,7 @@ struct ProgressionPickerSheet: View {
             switch route {
             case .picker(let slot):
                 ChordPickerSheet(onInsert: { place($0, in: slot) }, onSave: onSaveChord,
-                                 title: slot.title, instrument: instrument)
+                                 title: slot.title, instrument: instrument, current: voicing(in: slot))
             case .builder:
                 NavigationStack {
                     ProgressionBuilderView(showsCancel: true) { select($0) }
@@ -292,6 +292,15 @@ struct ProgressionPickerSheet: View {
     // MARK: - Actions
 
     /// Route a chord from the picker to the slot it was opened for.
+    /// The chord already in a slot, so the picker opens on it (ADR 0297) — the previewed chord for a
+    /// swap, the chosen one for an own-pair slot that has one.
+    private func voicing(in slot: PickerSlot) -> ChordVoicing? {
+        switch slot {
+        case .swap(let index): return preview.first { $0.id == index }?.voicing
+        case .own(let index): return ownPair.indices.contains(index) ? ownPair[index] : nil
+        }
+    }
+
     private func place(_ voicing: ChordVoicing, in slot: PickerSlot) {
         switch slot {
         case .swap(let index):

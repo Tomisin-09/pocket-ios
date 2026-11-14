@@ -99,6 +99,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Swapping a chord starts from the chord you have** (ADR 0297). Tapping a chord's name in a chord
+  drill used to open the picker from scratch, so you found the shape again and chose its root again. It
+  now opens on that chord's root, with its shape marked and scrolled into view. A new **Root** row over
+  the chords picks the root: with one chosen, every movable shape shows the actual chord it makes there
+  (*Cm7*, at its real fret) and one tap puts it in, and My chords and Open shapes show only chords of
+  that root. So another shape at the same root is one tap, and the same shape somewhere else is two:
+  the root, then the marked shape. **Any** shows everything, as before, and *Add chord* opens on it.
+  *Use a progression*'s swaps work the same way, on bass as well as guitar.
 - **Red Moon is red now.** The app icon, the logo in Settings and the name at the top of Home are the
   blood moon, and Practice wears its terracotta: *Start today's session*, the Practice tile, the run
   screens' buttons, the progress dots. So does the song player: the waveform, the speed slider and its

@@ -302,6 +302,17 @@ click through the speaker and through headphones.
 
   Needs its own ADR, amending 0004's rung 2 and 0011's import if it goes ahead. **Not decided.**
 
+## A bass 10th draws without its 10th (logged 2026-11-14, found building ADR 0297)
+
+`BassChordShape.majorTenth` and `.minorTenth` put the 10th six frets above the root: C on the low E at
+fret 8, its E on the D string at fret 14. `ChordDiagramView` draws a four-fret window from the lowest
+fret (`ChordVoicing.displayBaseFret`), so only the root dot appears. This happens on every surface that
+draws one: the picker's chip, its fret-5 browse picture, and the row of an inserted 10th in the editor.
+It is not new with 0297, which only made the chip easier to see under a chosen root. The shell
+*root · ♭7 · 10* is fine, because its 10th is on the G string, closer in. A fix probably widens the
+window to the shape's span (capped) rather than special-casing bass. Check the guitar diagrams don't
+shift when it lands, since none of them span more than four frets today.
+
 ## Split the Scales and Arpeggios editors into rows (logged 2026-11-11, follows ADR 0293)
 
 **Ready to pick up.** ADR 0293 (#412) fixed the lag in the Warm-up / Picking / Legato editor by making
