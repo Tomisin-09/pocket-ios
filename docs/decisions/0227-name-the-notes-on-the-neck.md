@@ -37,6 +37,9 @@
   released bend is stored under `release` rather than `bend`, a pre-bend adds `preBend`, and a note is
   named by where its bend lands, so an older build reads a release as its plain fret. **D10**: bend
   releases and pre-bends are lifted; a slide out to nowhere (`7\`) still stays out. The rest stands.
+- **Amended by:** ADR 0296 (A bend released on a tap of its own, 2026-11-13) — **D5**: the joins gain
+  **release**, a bend held on the tap before let down on this one, valid on the same strings and frets.
+  **D9**: `into` gains the value `release`, which an older build reads as no join. The rest stands.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the
   synth withdrawn here, and D4.3, the route back) · 0093 (the chord namer that names a shape) · 0095
   (My chords, whose one-note-per-string rule the Chords switch follows) · 0065 (exercise templates, whose scales editor

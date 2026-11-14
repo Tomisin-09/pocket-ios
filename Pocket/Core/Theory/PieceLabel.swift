@@ -172,11 +172,14 @@ struct FrettedNote: Equatable, Hashable, Sendable {
     }
 }
 
-/// How a tap was reached from the tap before (ADR 0227 D5): hammered or pulled (**legato**), or slid.
-/// Which of hammer-on or pull-off, `/` or `\`, is worked out from the direction, never stored, so it can't
-/// disagree with the frets.
+/// How a tap was reached from the tap before (ADR 0227 D5): hammered or pulled (**legato**), slid, or a
+/// bend held on the tap before let back down (**release**, ADR 0296). Which of hammer-on or pull-off, `/`
+/// or `\`, is worked out from the direction, never stored, so it can't disagree with the frets.
+///
+/// A release is only ever a join between taps. Let down inside one tap it's the bent note's own
+/// `releases` (ADR 0288), so a lead-in never holds one (`LeadIn.direction(into:)`).
 enum Join: String, Codable, Sendable, CaseIterable {
-    case legato, slide
+    case legato, slide, release
 }
 
 /// A quick start **inside** one tap (ADR 0230). A hammer-on, pull-off or slide played fast is heard as one
@@ -196,8 +199,9 @@ struct LeadIn: Equatable, Hashable, Sendable {
     var join: Join
 
     /// Which way it moves into a note at `fret`, or `nil` when it can't be played: a start on the same
-    /// fret or off the neck, or a hammer-on from nowhere.
+    /// fret or off the neck, a hammer-on from nowhere, or a release, which is never a lead-in (ADR 0296 D8).
     func direction(into fret: Int) -> JoinDirection? {
+        guard join != .release else { return nil }
         switch from {
         case .fret(let start):
             guard (0...PieceLabel.maxFret).contains(start), start != fret else { return nil }

@@ -14,6 +14,10 @@
   hammer-on or pull-off moves the note on the string tapped and the rest are held; *The whole chord
   moved?* moves them all as one. A slide, *Moved into place as one?* and a shape moving as one keep D6
   as written, the carry of a note moved or added included. D1–D5 and D7 stand.
+- **Amended by:** ADR 0296 (A bend released on a tap of its own, 2026-11-13) — **D1**: two notes heard,
+  two taps, now covers a bend: one held, then let down as a note of its own, is two taps, the second
+  joined as a *Release*. **D3**: the four ways in stay on every note, and a fifth, *Release*, appears
+  after a bent note. The rest stands.
 - **Relates to:** 0225 (count what you hear: the tap is the record, and nothing is detected) · 0070
   (never grades).
 

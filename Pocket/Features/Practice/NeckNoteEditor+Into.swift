@@ -5,8 +5,8 @@ import SwiftUI
 // were heard as one: a grace note hammered, pulled or slid from another fret, or a slide in from nowhere,
 // for one note or a shape moving as one (a double-stop slid into place). In a chord a hammer-on or
 // pull-off moves one note and the rest are held (ADR 0252 D1); *The whole chord moved?* moves them all.
-// All four ways in are always shown, so a pull-off is there to be seen before a note goes down to one.
-// Split out for file length.
+// All four ways in are always shown, so a pull-off is there to be seen before a note goes down to one; after
+// a bent note a fifth, Release, lets the bend down on this tap (ADR 0296). Split out for file length.
 extension NeckNoteEditor {
 
     /// *Into it* and its ⓘ on a line of their own, the four ways in under them at full width: with the ⓘ
@@ -18,14 +18,24 @@ extension NeckNoteEditor {
                 InfoPopoverButton(subject: "Into it", info: voice.intoInfo)
                     .padding(.vertical, -8)
             }
-            MarkSegments(options: IntoChoice.allCases.map { choice in
-                let route = NeckJoin.route(choice, into: marked, of: labels)
-                return MarkSegments.Option(title: choice.title, isOn: isLit(choice),
-                                           isEnabled: route != .unavailable) {
-                    apply(NeckEditing.choose(choice, labels: labels, cursor: cursor))
+            let options = IntoChoice.offered(into: marked, of: labels).map(intoOption)
+            // Five don't fit one row on the smallest phone or at the larger text sizes: Release goes under
+            // the four, which stay one row as they always were.
+            ViewThatFits(in: .horizontal) {
+                MarkSegments(options: options)
+                VStack(alignment: .leading, spacing: 6) {
+                    MarkSegments(options: Array(options.prefix(4)))
+                    if options.count > 4 { MarkSegments(options: Array(options.dropFirst(4))) }
                 }
-            })
+            }
             intoLine
+        }
+    }
+
+    private func intoOption(_ choice: IntoChoice) -> MarkSegments.Option {
+        let route = NeckJoin.route(choice, into: marked, of: labels)
+        return MarkSegments.Option(title: choice.title, isOn: isLit(choice), isEnabled: route != .unavailable) {
+            apply(NeckEditing.choose(choice, labels: labels, cursor: cursor))
         }
     }
 
@@ -82,7 +92,8 @@ extension NeckNoteEditor {
                 return "Tap the fret one of its notes was hammered on from, below it. The others move with it."
             case (.legato, _, true):
                 return "Tap the fret one of its notes was pulled off from, above it. The others move with it."
-            case (.slide, _, _):
+            case (.slide, _, _), (.release, _, _):
+                // A release never waits for a start (ADR 0296 D8); it's listed only so the switch is whole.
                 return "Tap the fret one of its notes slid from; the others move with it. Or it slid in from nowhere:"
             }
         }
@@ -90,7 +101,8 @@ extension NeckNoteEditor {
         switch (request.join, request.direction) {
         case (.legato, .upward?): return "Tap the fret it was hammered on from, below it on the \(string)."
         case (.legato, _): return "Tap the fret it was pulled off from, above it on the \(string)."
-        case (.slide, _): return "Tap the fret it slid from on the \(string), or it slid in from nowhere:"
+        case (.slide, _), (.release, _):
+            return "Tap the fret it slid from on the \(string), or it slid in from nowhere:"
         }
     }
 
@@ -98,7 +110,12 @@ extension NeckNoteEditor {
     /// join could go here and none has.
     private var intoText: String? {
         if labels[marked]?.isMuted == true { return "A muted note has no way in." }
-        guard let notes = labels[marked]?.frettedNotes, !notes.isEmpty else { return "Place the note first." }
+        guard let notes = labels[marked]?.frettedNotes, !notes.isEmpty else {
+            // Release places the note itself (ADR 0296 D3), so it's the other way to start one here.
+            return NeckJoin.canRelease(into: marked, of: labels)
+                ? "Place the note first, or choose Release if note \(marked)’s bend comes down here."
+                : "Place the note first."
+        }
         if let moving = notes.first(where: { $0.leadIn != nil }), let leadIn = moving.leadIn {
             if notes.count > 1, !NeckJoin.movesAsOne(notes) { return heldText(moving, leadIn) }
             let heard = notes.count == 1 ? voice.asOneNote : "moving as one"
@@ -115,6 +132,9 @@ extension NeckNoteEditor {
         // The tap before, as its chip numbers it.
         let before = "Note \(marked)"
         let placedBefore = marked > 0 ? fretText(labels[marked - 1]?.frettedNotes ?? []) : ""
+        if case .fretted(_, _, .release?) = labels[marked], NeckJoin.releases(into: marked, of: labels) {
+            return "Let down from \(before.lowercased()) (\(placedBefore)), \(voice.asTwoNotes)."
+        }
         if NeckJoin.symbol(into: marked, of: labels) != nil {
             return "From \(before.lowercased()) (\(placedBefore)), \(voice.asTwoNotes)."
         }
@@ -130,7 +150,12 @@ extension NeckNoteEditor {
         case .otherStrings:
             reason = notes.count > 1 ? "\(before) isn’t on the same strings."
                 : "\(before) (\(placedBefore)) is on another string."
-        case .sameFret: reason = "\(before) (\(placedBefore)) is on the same fret."
+        case .sameFret:
+            // Bent, it may be this note's bend coming down (ADR 0296 D2).
+            if NeckJoin.canRelease(into: marked, of: labels) {
+                return "\(before) (\(placedBefore)) is on the same fret. If its bend comes down here, choose Release."
+            }
+            reason = "\(before) (\(placedBefore)) is on the same fret."
         case .mixedDirections: reason = "The notes don’t all move the same way from \(before.lowercased())."
         }
         // On the first note of a pair, the join belongs to the second; say so rather than offer a start here.
@@ -148,7 +173,8 @@ extension NeckNoteEditor {
         case (.legato, .fret(let start)):
             let how = leadIn.direction(into: note.fret) == .downward ? "pulled off" : "hammered on"
             return "\(string) \(how) from fret \(start); the others held."
-        case (.slide, .fret(let start)): return "\(string) slid from fret \(start); the others held."
+        case (.slide, .fret(let start)), (.release, .fret(let start)):
+            return "\(string) slid from fret \(start); the others held."
         case (_, .below): return "\(string) slid in from below; the others held."
         case (_, .above): return "\(string) slid in from above; the others held."
         }
@@ -179,7 +205,9 @@ extension NeckNoteEditor {
             }
             return offers
         }
-        guard let into, NeckJoin.symbol(into: marked, of: labels) != nil else { return [] }
+        // A release heard as one note is the bend's own Release and one tap fewer: taking a note out (ADR
+        // 0231), not a way into this one (ADR 0296 D1).
+        guard let into, into != .release, NeckJoin.symbol(into: marked, of: labels) != nil else { return [] }
         let way = into == .legato ? NeckJoin.direction(into: marked, of: labels) : nil
         let title = notes.count == 1 ? voice.oneNoteOffer : "Moved into place as one?"
         return [(title, { awaitingStart = LeadInRequest(join: into, direction: way, together: true) })]

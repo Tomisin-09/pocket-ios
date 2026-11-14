@@ -198,28 +198,28 @@ extension FAQEntry {
 
         // MARK: Naming notes & tabs
         // Name the notes and My tabs share one neck editor (ADR 0235 D3), so these answer both. Tap counts
-        // follow ADR 0230 D1 (heard as one, one tap); bend shapes follow ADR 0288. The controls are quoted
+        // follow ADR 0230 D1 (heard as one, one tap); bend shapes follow ADR 0288, and a bend let down on a
+        // tap of its own, Release under Into it, ADR 0296. The controls are quoted
         // as they read: *Into it*, *Bend*, *Release*, *Pre-bend*, *Take note … out*. Every tab example in
         // the letters answer is pinned to what `TabLine.cell` writes (`FAQEntryTests`).
         .init(question: "Do I tap a hammer-on, slide or bend once or twice?",
               answer: "Tap what you hear. A quick hammer-on, pull-off or slide can sound like one note "
                 + "or two. Heard as two, tap twice, and pick the move under Into it on the second: it "
                 + "joins from the note before. Heard as one, tap once, pick the move, then tap the fret "
-                + "it started on. The tab writes it the same either way.\n\nA bend is different: the "
-                + "finger never leaves its fret, so however far the pitch moves it's one note. Tap once, "
-                + "where the string was picked, and choose its size under Bend. Turn on Release if it "
-                + "comes back down before the next note, and Pre-bend if the string was pushed before "
-                + "it was picked.",
+                + "it started on. The tab writes it the same either way.\n\nA bend works the same way. "
+                + "Tap once where the string was picked, and choose its size under Bend, with Pre-bend "
+                + "on if the string was pushed before it was picked. Let straight back down, it's still "
+                + "one note: turn on Release. Held, then let down as a note of its own, tap that too, "
+                + "and choose Release under Into it on the second.",
               area: .tab),
         .init(question: "I tapped a bend and its release as two notes. What now?",
-              answer: "Take the extra tap out. A bend held for a while and then let down can sound "
-                + "like two notes, but the release belongs to the bent note and has no tap of its own. "
-                + "Pick the chip you tapped on the release, and under the strip choose Take note … out. "
-                + "Then pick the note before it, where the string was picked, give it the "
-                + "bend if it hasn't one, and turn on Release. If the string was picked again while it "
-                + "was still bent, keep "
-                + "both taps: the second is a pre-bend, so give it the same bend with Pre-bend and "
-                + "Release on.",
+              answer: "Keep both, if you heard two. Give the first its bend, where the string was "
+                + "picked. Then pick the second and choose Release under Into it: it goes where the "
+                + "bend was, and the tab writes the two as one bend and release. If the string was "
+                + "picked again while it was still bent, the second is a pre-bend instead: give it the "
+                + "same bend with Pre-bend and Release on.\n\nIf it came straight back down and was "
+                + "really one note, take the extra tap out: pick its chip, and under the strip choose "
+                + "Take note … out. Then turn on Release under Bend on the note before.",
               area: .tab),
         .init(question: "What do the letters in the tab mean?",
               answer: "Numbers are frets, and 0 is an open string. The marks around them say how a note "

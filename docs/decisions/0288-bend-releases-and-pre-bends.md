@@ -11,6 +11,10 @@
 - **Amends:** ADR 0234 — **D5**: the glow gains two motions. A released bend glides up and back, and a
   pre-bend let down glides down from the bent pitch. A pre-bend held lights where it's heard. The rest
   of D5 stands.
+- **Amended by:** ADR 0296 (A bend released on a tap of its own, 2026-11-13) — **D7**: *a held bend
+  tied across taps* is lifted. A bend held on one tap can come down on the next, as a join, *Release*
+  under *Into it*, written `10b11r10` across the two columns. The rest of D7 stands, and D1–D6 are
+  unchanged.
 - **Relates to:** 0230 (the lead-in, whose rule this follows: a note that moves inside one tap is named
   by where it lands), 0235 (Write a tab, which takes the same marks from the same editor), 0225 D6 (the
   versioned piece JSON), 0070 (never detected, never suggested)
@@ -87,7 +91,8 @@ disagree.
 
 **D7. What stays out.** Never detected, never suggested (0227 D10, 0070): every shape is the player's
 own. Still out: a slide out to nowhere (`7\`), a bend that reaches a pitch other than its own (a bend to
-9 released to 8), a held bend tied across taps, harmonics, tapping, palm muting and rakes.
+9 released to 8), a held bend tied across taps, harmonics, tapping, palm muting and rakes. *(Amended by
+0296: a held bend tied across taps is lifted, as a release on the next tap.)*
 
 ## Consequences
 

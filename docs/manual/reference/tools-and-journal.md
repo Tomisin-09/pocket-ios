@@ -200,7 +200,8 @@ offers `Write a tab`.
 The writer: a title field (`Name this tab`); the strip, its **+** and the line under it, which offers
 `Back to the end` while the **+** is in front of a note; **↶ ↷**, `Bar line` and `Section`, which opens a
 list of names, `Or type a name` and `Take the heading off`; the neck, under the instrument and tuning,
-with `Chords`, `Into it`, `Bend` (and `Pre-bend` and `Release` once a note is bent) and vibrato; and
+with `Chords`, `Into it` (and `Release` after a bent note), `Bend` (and `Pre-bend` and `Release` once a
+note is bent) and vibrato; and
 `The tab so far`. `Done` goes back.
 
 ### `Glossary`

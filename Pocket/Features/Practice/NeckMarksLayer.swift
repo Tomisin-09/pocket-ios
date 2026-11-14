@@ -3,12 +3,13 @@ import SwiftUI
 /// The note being named's marks, drawn on the neck (ADR 0227 D5): a bend as an arrow to a dashed ghost
 /// where it lands (the fretLIVE idea), pointing the way the pitch moves (ADR 0288), vibrato as a wave over the note, a hammer-on or pull-off as a curve
 /// under the string marked *h* or *p*, a slide as an arrow marked `/` or `\`. A lead-in draws the same
-/// curve or arrow from a ring where it started, or, from nowhere, a short arrow in. Only the current note's.
+/// curve or arrow from a ring where it started, or, from nowhere, a short arrow in. A bend let down on a tap
+/// of its own is drawn coming down from where it was bent, marked *r* (ADR 0296 D7). Only the current note's.
 struct NeckMarksLayer: View {
     let notes: [FrettedNote]
     /// The tap before's notes, where a join starts.
     let previous: [FrettedNote]
-    /// The join into this tap as written (`h`, `p`, `/`, `\`), when it has one that fits.
+    /// The join into this tap as written (`h`, `p`, `/`, `\`, `r`), when it has one that fits.
     let join: String?
     let stringCount: Int
     let maxFret: Int
@@ -81,13 +82,15 @@ struct NeckMarksLayer: View {
     /// A bend: a dashed ghost where it lands, and an arc from the note to it with the arrow the way the pitch
     /// is heard to move (ADR 0288). Up for a bend, up and back for a release, down for a pre-bend let down. A
     /// pre-bend held has its arc dashed, since the string was pushed before anything sounded.
-    private func drawBend(_ shape: FrettedNote.BendShape, from: CGPoint, to ghost: CGPoint,
+    /// `lift` raises the note's end of the arc, and leaves its height: a release from the tap before lands
+    /// its arrowhead above the note's number, which a note the editor has moved past carries at its top right.
+    private func drawBend(_ shape: FrettedNote.BendShape, from: CGPoint, to ghost: CGPoint, lift: CGFloat = 0,
                           in context: GraphicsContext) {
         let ink = GraphicsContext.Shading.color(accent)
         var style = StrokeStyle(lineWidth: 1.75, lineCap: .round, lineJoin: .round)
         context.stroke(Path(ellipseIn: CGRect(x: ghost.x - 12, y: ghost.y - 12, width: 24, height: 24)),
                        with: ink, style: StrokeStyle(lineWidth: 1.5, dash: [3, 2.5]))
-        let start = CGPoint(x: from.x + 4, y: from.y - 12)
+        let start = CGPoint(x: from.x + 4 - lift / 2, y: from.y - 12 - lift)
         let control = CGPoint(x: (from.x + ghost.x) / 2 + 2, y: from.y - 34)
         let end = CGPoint(x: ghost.x - 3, y: ghost.y - 13)
         var arc = Path()
@@ -102,10 +105,30 @@ struct NeckMarksLayer: View {
     }
 
     private func drawJoin(_ join: String, in context: GraphicsContext) {
+        if join == NeckJoin.releaseMark { return drawRelease(in: context) }
         for (position, note) in notes.sorted(by: { $0.string < $1.string }).enumerated() {
             guard let before = previous.first(where: { $0.string == note.string }) else { continue }
             drawLink(join, from: center(note.string, before.fret), to: center(note.string, note.fret),
                      labelled: position == 0, in: context)
+        }
+    }
+
+    /// The bend held on the tap before, coming down on this one: a pre-bend let down's ghost and arc, from
+    /// where it was bent to the note (0288 D4), and the *r* in a pill under the string, once, as a join's.
+    private func drawRelease(in context: GraphicsContext) {
+        let bent = notes.sorted { $0.string < $1.string }.filter { note in
+            previous.contains { $0.string == note.string && $0.bend > 0 && $0.bentFret <= maxFret }
+        }
+        for (position, note) in bent.enumerated() {
+            guard let before = previous.first(where: { $0.string == note.string }) else { continue }
+            let end = center(note.string, note.fret)
+            let ghost = center(note.string, before.bentFret)
+            drawBend(.preBendAndRelease, from: end, to: ghost, lift: 6, in: context)
+            // Between the frets, under the string, where *h* and *p* sit: under the note itself it would cover
+            // the next string's dot.
+            if position == 0 {
+                pill(NeckJoin.releaseMark, at: CGPoint(x: (end.x + ghost.x) / 2, y: end.y + 21), in: context)
+            }
         }
     }
 

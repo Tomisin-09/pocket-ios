@@ -129,6 +129,8 @@ enum NeckEditing {
         case .inside(let request):
             cursor.awaitingStart = request
             return Edit(labels: labels, cursor: cursor)
+        case .release:
+            return Edit(labels: release(at: marked, of: labels), cursor: cursor)
         case .unavailable:
             return Edit(labels: labels, cursor: cursor)
         }
@@ -142,6 +144,25 @@ enum NeckEditing {
         for position in notes.indices { notes[position].leadIn = nil }
         var labels = labels
         labels[index] = .fretted(notes, muted: muted, into: notes.isEmpty ? nil : join)
+        return labels
+    }
+
+    /// *Release* (ADR 0296 D3): the bend on the tap before comes down on tap `index`, which goes where the
+    /// bend was, on the same strings and frets, unbent, whatever it held. Vibrato already on one of those
+    /// notes stays. A bend that had its own release keeps the bend and loses the release, which is now
+    /// this tap's. No change when the tap before isn't bent.
+    static func release(at index: Int, of labels: [PieceLabel?]) -> [PieceLabel?] {
+        guard NeckJoin.canRelease(into: index, of: labels),
+              case .fretted(var bent, let muted, let into)? = labels[index - 1] else { return labels }
+        let current = labels[index]?.frettedNotes ?? []
+        let landed = bent.map { note in
+            let shaking = current.contains { $0.string == note.string && $0.fret == note.fret && $0.vibrato }
+            return FrettedNote(string: note.string, fret: note.fret, vibrato: shaking)
+        }
+        for position in bent.indices { bent[position].releases = false }
+        var labels = labels
+        labels[index - 1] = .fretted(bent, muted: muted, into: into)
+        labels[index] = .fretted(landed, into: .release)
         return labels
     }
 
