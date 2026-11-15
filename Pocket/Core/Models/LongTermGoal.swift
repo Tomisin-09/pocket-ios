@@ -44,19 +44,29 @@ final class LongTermGoal {
     /// link and the goal survives, its Path-B candidates simply stop resolving.
     @Relationship(deleteRule: .nullify) var targetSong: Song?
 
+    /// The songs of a **set** (ADR 0299): a goal made from *Prepare a set* holds several, by
+    /// `Song.sourceID`, unordered. **A goal with any is a set** (D3), and its `targetSong` is `nil`.
+    /// Ids rather than a to-many relationship: no inverse on `Song`, none of the to-many traps, and a
+    /// deleted song's id simply resolves to nothing when read. Declaration default, so a store from
+    /// before it migrates additively.
+    var setSongIDs: [String] = []
+
     /// Whether the player has marked this goal **met** (ADR 0015 S6, same semantics as `Goal`) — a
     /// met goal contributes no candidates without being deleted, and still shows in the list and
     /// the Progress echo.
     var isMet: Bool = false
 
     /// When the goal was created. A record, **not a horizon** — nothing reads it to compute
-    /// lateness, elapsed time, or a "since" figure, and nothing may start.
+    /// lateness, elapsed time, or a "since" figure, and nothing may start. Its one reader is a filter:
+    /// *By goal* doesn't list a goal at nothing for practice from before it was set (ADR 0298 D4).
+    /// It is never shown.
     var dateAdded: Date = Date.now
 
     init(title: String = "",
          skillIDs: [String] = [],
          order: Int = 0,
          targetSong: Song? = nil,
+         setSongIDs: [String] = [],
          isMet: Bool = false,
          dateAdded: Date = .now) {
         self.uid = UUID()
@@ -64,6 +74,7 @@ final class LongTermGoal {
         self.skillIDs = skillIDs
         self.order = order
         self.targetSong = targetSong
+        self.setSongIDs = setSongIDs
         self.isMet = isMet
         self.dateAdded = dateAdded
     }
@@ -77,11 +88,15 @@ final class LongTermGoal {
                     weight: LongTermRank.weight(forOrder: order),
                     skillIDs: skillIDs,
                     targetSongUID: targetSong.map { PlannerID.uid(from: $0.sourceID) },
+                    setSongUIDs: setSongIDs.map(PlannerID.uid(from:)),
                     isMet: isMet)
     }
 }
 
 extension LongTermGoal {
+    /// Whether this goal is a set (ADR 0299 D3): known by its songs, not by a flag.
+    var isSet: Bool { !setSongIDs.isEmpty }
+
     /// The name to show: *Play Sunday Morning* for a goal still carrying the song template's
     /// placeholder, otherwise the name as typed (`GoalTitle`, ADR 0298 D1).
     var displayTitle: String { GoalTitle.display(title, songTitle: targetSong?.title) }

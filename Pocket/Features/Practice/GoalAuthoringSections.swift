@@ -17,11 +17,13 @@ struct GoalTemplatePicker: View {
     /// Called for **Something else** — go straight to the form with nothing seeded, and pick from
     /// the full catalogue instead.
     let onStartBlank: () -> Void
+    /// The starting points to offer. The long-term editor adds *Prepare a set* (ADR 0299 D2).
+    var templates: [GoalTemplate] = GoalTemplateLibrary.all
 
     var body: some View {
         List {
             Section {
-                ForEach(GoalTemplateLibrary.all) { candidate in
+                ForEach(templates) { candidate in
                     Button { onPick(candidate) } label: {
                         HStack(spacing: 14) {
                             Image(systemName: candidate.iconName)
@@ -189,11 +191,12 @@ struct GoalTargetSongSection: View {
 /// kept skill needs one, matching what `save()` would store, so the line never counts a song the
 /// goal won't keep.
 @MainActor
-func goalSkillReach(_ skillIDs: [String], targetSong: Song?, exercises: [Exercise], loops: [Loop],
-                    songs: [Song]) -> [String: SkillReach] {
+func goalSkillReach(_ skillIDs: [String], targetSong: Song?, setSongIDs: [String] = [],
+                    exercises: [Exercise], loops: [Loop], songs: [Song]) -> [String: SkillReach] {
     let library = PracticePlanner.library(exercises: exercises, loops: loops, songs: songs)
     let songUID = targetSong.map { PlannerID.uid(from: $0.sourceID) }
-    let reach = GoalReach.reach(skillIDs: skillIDs, targetSongUID: songUID, library: library)
+    let reach = GoalReach.reach(skillIDs: skillIDs, targetSongUID: songUID,
+                                setSongUIDs: setSongIDs.map(PlannerID.uid(from:)), library: library)
     return Dictionary(reach.map { ($0.skillID, $0) }, uniquingKeysWith: { first, _ in first })
 }
 
@@ -201,4 +204,18 @@ func goalSkillReach(_ skillIDs: [String], targetSong: Song?, exercises: [Exercis
 /// can't disagree about when the song picker is relevant.
 func goalNeedsTargetSong(_ keptSkillIDs: Set<String>) -> Bool {
     keptSkillIDs.contains { TechniqueTaxonomy.mode($0)?.isRepertoire == true }
+}
+
+/// The line under a long-term goal in the ranked list and the planner's copy of it: a skill **count**,
+/// then the target song, or for a set how many of its songs are still in the library (ADR 0299).
+/// Never a count over a total: a denominator states a target (`PracticeLog`).
+func longTermGoalLine(_ goal: LongTermGoal, songs: [Song]) -> String {
+    let skills = goal.skillIDs.count == 1 ? "1 skill" : "\(goal.skillIDs.count) skills"
+    if goal.isSet {
+        let live = Set(songs.map(\.sourceID))
+        let count = goal.setSongIDs.filter(live.contains).count
+        return "\(skills) · \(count == 1 ? "1 song" : "\(count) songs")"
+    }
+    guard let song = goal.targetSong else { return skills }
+    return "\(skills) · \(song.title.isEmpty ? "a song" : song.title)"
 }

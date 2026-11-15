@@ -14,6 +14,9 @@
   session card, as chips with an *Edit goals* link. A chip opens that goal's editor, so editing can
   start there; ranking stays in the list, which is still the only place that shows the order. The
   echo on Progress is untouched.
+- **Amended by:** ADR 0299 (2026-11-15) — a long-term goal can be a **set**: D2's fields gain
+  `setSongIDs` (song ids, unordered), and D5's shared templates gain *Prepare a set*, which only this
+  tier offers. D1 (no date), the ranking and the echo are unchanged.
 - **Relates to:** ADR 0015 (the planner's goal model — S1 "the goals are *not equal*", S5 weight,
   S6 met, S7 "one near-term goal"), ADR 0014 (the session layout the goals feed),
   ADR 0129 (the block model that cut Quick to three items and forced round-robin),

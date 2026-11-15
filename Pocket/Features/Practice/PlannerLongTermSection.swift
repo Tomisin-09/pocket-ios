@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// The planner's **read-only view of the standing goal list** (ADR 0171 D10).
@@ -18,6 +19,8 @@ import SwiftUI
 /// render this at all; by the time it appears, it is in use.
 struct PlannerLongTermSection: View {
     let goals: [LongTermGoal]
+    /// For a set's song count, which leaves out songs since deleted (ADR 0299).
+    @Query private var songs: [Song]
 
     var body: some View {
         Section {
@@ -53,11 +56,6 @@ struct PlannerLongTermSection: View {
         }
     }
 
-    /// A skill **count**, and the target song when there is one — the same line the ranked list
-    /// shows. Never a count over a total: a denominator states a target (`PracticeLog`).
-    private func subtitle(for goal: LongTermGoal) -> String {
-        let skills = goal.skillIDs.count == 1 ? "1 skill" : "\(goal.skillIDs.count) skills"
-        guard let song = goal.targetSong else { return skills }
-        return "\(skills) · \(song.title.isEmpty ? "a song" : song.title)"
-    }
+    /// The same line the ranked list shows (`longTermGoalLine`).
+    private func subtitle(for goal: LongTermGoal) -> String { longTermGoalLine(goal, songs: songs) }
 }

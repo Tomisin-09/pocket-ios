@@ -426,8 +426,10 @@ the way the goal uses it. Ear training on a backing loop doesn't count toward im
 minute is in exactly one row: when two goals could claim the same practice, the higher-ranked one
 gets it.
 
-Tap a goal to see the kinds of work its time went on. Tap **Free play** to see the songs it went
-on instead, which is often where the next goal is. A goal you have practised nothing toward still
+Tap a goal to see the kinds of work its time went on. A [set](sessions.md#preparing-a-set) opens
+onto its songs instead, with the ones you haven't played yet at 0 minutes, so you can see what's left
+to work on. Tap **Free play** to see the songs it went on instead, which is often where the next
+goal is. A goal you have practised nothing toward still
 has a row, at 0 minutes, so a gap is in the list rather than missing from it. It's a fact, not a
 mark against you: the list never says how much is enough. A goal you have marked met only appears
 when it had time. Changing a goal happens where goals live, in **Practice ▸ Edit goals**.

@@ -43,7 +43,8 @@ final class GoalAttributionTests: XCTestCase {
     func testATargetSongIsCountedThroughItsSongNotItsLoops() {
         let claims = GoalAttribution.claims([source(["rep.learn-song"], song: "sunday", title: "Play Sunday Morning")],
                                             library: PlannerLibrary())
-        XCTAssertEqual(claims.first?.songSourceID, "sunday")
+        XCTAssertEqual(claims.first?.songSourceIDs, ["sunday"])
+        XCTAssertEqual(claims.first?.isSet, false)
         XCTAssertEqual(claims.first?.title, "Play Sunday Morning")
     }
 

@@ -209,8 +209,9 @@ click through the speaker and through headphones.
 
 ### After the freeze
 
-- **"Prepare a set": a long-term goal that holds several songs.** Direction agreed 2026-11-15, not yet
-  built or written as an ADR. Raised by the 2026-11-13 store check, where October and November went on
+- ~~**"Prepare a set": a long-term goal that holds several songs.**~~ **DONE 2026-11-15**
+  (`pocket-429`, ADR 0299, all three of its open questions decided as recommended). The entry below
+  is the case as it was made. Raised by the 2026-11-13 store check, where October and November went on
   open-mic covers no goal named. Four options were weighed: a goal holding several songs (**A, chosen**),
   a bundle of song goals, a routine as the set, and a third tier between session and long-term. Tomisin's
   answers settled it:

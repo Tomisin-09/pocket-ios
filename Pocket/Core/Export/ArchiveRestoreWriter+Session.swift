@@ -98,6 +98,9 @@ extension ArchiveRestoreWriter {
                                     skillIDs: resolver.skillIDs(record.skillIDs),
                                     order: record.order,
                                     targetSong: record.targetSongID.flatMap { resolver.songs[$0] },
+                                    // Loose ids, kept as exported (ADR 0299 D3): a song the archive
+                                    // didn't carry resolves to nothing when read, as in the live app.
+                                    setSongIDs: record.setSongIDs ?? [],
                                     isMet: record.isMet,
                                     dateAdded: record.dateAdded)
             goal.uid = record.uid

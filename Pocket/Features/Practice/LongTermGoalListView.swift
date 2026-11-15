@@ -136,14 +136,10 @@ struct LongTermGoalListView: View {
         .accessibilityLabel("\(goal.displayTitle), rank \(rank)")
     }
 
-    /// Skills, and the target song when there is one. A **count**, never a numerator — a skill count
-    /// over a total would state a target, and a target is habit-pressure under another name
-    /// (`PracticeLog`).
-    private func subtitle(for goal: LongTermGoal) -> String {
-        let skills = goal.skillIDs.count == 1 ? "1 skill" : "\(goal.skillIDs.count) skills"
-        guard let song = goal.targetSong else { return skills }
-        return "\(skills) · \(song.title.isEmpty ? "a song" : song.title)"
-    }
+    /// Skills, and the target song or a set's song count (`longTermGoalLine`). A **count**, never a
+    /// numerator — a count over a total would state a target, and a target is habit-pressure under
+    /// another name (`PracticeLog`).
+    private func subtitle(for goal: LongTermGoal) -> String { longTermGoalLine(goal, songs: songs) }
 
     // MARK: - Met
 

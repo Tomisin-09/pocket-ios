@@ -213,10 +213,21 @@ enum CandidateDeriver {
                                              emphasis: PracticeEmphasis) -> [PlannerCandidate] {
         // Repertoire is always the `.repertoire` mode; the emphasis lift applies to the whole path.
         let priority = goal.weight * emphasis.multiplier(forSkillID: skillID, mode: .repertoire)
-        guard let songUID = goal.targetSongUID else {
+        let songUIDs = goal.repertoireSongUIDs
+        guard !songUIDs.isEmpty else {
             return directLoopCandidates(goal: goal, skillID: skillID, priority: priority,
                                         library: library)
         }
+        // A set resolves each of its songs the same way (ADR 0299 D4). They all carry this goal's
+        // uid, so `roundRobin` deals one of them per pass and dueness picks which.
+        return songUIDs.flatMap { songUID in
+            songCandidates(songUID, goal: goal, skillID: skillID, priority: priority, library: library)
+        }
+    }
+
+    /// One song's loops, then its play-through: what a repertoire skill resolves to for that song.
+    private static func songCandidates(_ songUID: UUID, goal: PlannerGoal, skillID: String,
+                                       priority: Double, library: PlannerLibrary) -> [PlannerCandidate] {
         var result: [PlannerCandidate] = library.loops
             .filter { $0.songUID == songUID }
             .map { loop in
