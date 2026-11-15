@@ -163,7 +163,7 @@ extension JournalTabView {
         case .takes:
             return "Arm recording next to Start training to capture your playing."
         case .pieces:
-            return "Count the notes in Train your ear and save a pass. Each loop's piece shows here under "
+            return "Count the notes in Active listening and save a pass. Each loop's piece shows here under "
                 + "its song, and Map the song lays them out where they play."
         }
     }

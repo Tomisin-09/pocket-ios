@@ -43,7 +43,7 @@ extension LoopEditSheet {
             if commandTempo != nil {
                 practiceNowButton
             }
-            // "Train your ear" (ADR 0104): ears-only playback of this loop to internalise by ear —
+            // "Active listening" (ADR 0104): ears-only playback of this loop to internalise by ear —
             // ungated by command tempo (unlike Practice now), since ear training needs only audio,
             // not a measured practice target. Opens in place (not a staged full-screen run).
             earTrainingButton
@@ -136,10 +136,10 @@ extension LoopEditSheet {
             onOpenNestedAudio()
             showingEarTraining = true
         } label: {
-            Label("Train your ear", systemImage: "ear")
+            Label("Active listening", systemImage: "ear")
                 .foregroundStyle(PocketColor.journal)
         }
-        .accessibilityLabel("Train your ear on this loop")
+        .accessibilityLabel("Active listening on this loop")
     }
 
     private var watchButton: some View {

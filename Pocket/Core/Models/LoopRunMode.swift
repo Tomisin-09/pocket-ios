@@ -28,17 +28,17 @@ enum LoopRunMode: String, CaseIterable, Identifiable, Codable {
     var label: String {
         switch self {
         case .trainer: "Practice"
-        case .ear: "Train your ear"
+        case .ear: "Active listening"
         case .improvise: "Improvise"
         }
     }
 
-    /// The compact form, for a caption under an icon where "Train your ear" doesn't fit. Matches the
+    /// The compact form, for a caption under an icon where "Active listening" doesn't fit. Matches the
     /// `EntryKind` label each mode's Journal notes carry, so a row and a journal chip agree.
     var rowLabel: String {
         switch self {
         case .trainer: "Practice"
-        case .ear: "Ear"
+        case .ear: "Listen"
         case .improvise: "Improv"
         }
     }

@@ -56,7 +56,7 @@ final class PracticeBreakdownGoalTests: XCTestCase {
 
         let goal = rows.first { $0.title == "Play Slow Bend" }
         XCTAssertEqual(goal?.minutes, 72, "learning a song by ear is learning the song")
-        XCTAssertEqual(goal?.items.map(\.name), ["Ear training", "Loops", "Play-alongs"],
+        XCTAssertEqual(goal?.items.map(\.name), ["Active listening", "Loops", "Play-alongs"],
                        "a goal opens onto kinds of work, as a song does")
     }
 

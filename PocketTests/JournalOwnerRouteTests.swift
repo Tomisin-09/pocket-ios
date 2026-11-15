@@ -102,7 +102,7 @@ final class JournalOwnerRouteTests: XCTestCase {
     }
 
     func testATranscribedOrEarNoteOpensEarTrainingEvenOnAMeasuredLoop() {
-        // The piece was saved from Count the notes, inside Train your ear; the ramp is not where it was made.
+        // The piece was saved from Count the notes, inside Active listening; the ramp is not where it was made.
         let loop = makeLoop(measured: true)
         XCTAssertEqual(mode(of: loopNote(on: loop, kind: .transcribed)), .ear)
         XCTAssertEqual(mode(of: loopNote(on: loop, kind: .ear)), .ear)

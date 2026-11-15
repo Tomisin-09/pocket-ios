@@ -25,7 +25,7 @@ final class SkillExplainerTests: XCTestCase {
                        + "and loops tagged Picking or Arpeggios.")
         // Not "loops tagged Ear Training, and any loop…" — the second route already contains the first.
         XCTAssertEqual(SkillExplainer.workedOnBy("ear.transcribe"),
-                       "By default, worked on by any loop you run in Train your ear.")
+                       "By default, worked on by any loop you run in Active listening.")
         XCTAssertEqual(SkillExplainer.workedOnBy("improv.vocabulary"),
                        "By default, worked on by Scales exercises, loops tagged Scales, backing tracks you run in "
                        + "Improvise, and the target song you give a goal.")

@@ -6,7 +6,7 @@ import SwiftUI
 ///
 /// **Folded to its count** since ADR 0234 D8: "98 notes · Guitar · Standard", and *See the notes* opens
 /// the piece in place (`PieceDrawing`), tab or names alike, so a long piece is one line on the feed until
-/// it's asked for. The loop's caption opens it in *Train your ear*, where **Name the notes** opens on it.
+/// it's asked for. The loop's caption opens it in *Active listening*, where **Name the notes** opens on it.
 /// No hold menu: a piece isn't pinned or deleted from here, and it has no text of its own to edit. So
 /// *Watch it on the neck* is a link under the caption (ADR 0254), once something is named on the neck.
 struct JournalPieceRow: View {

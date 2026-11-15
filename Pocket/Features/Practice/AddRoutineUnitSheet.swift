@@ -138,14 +138,14 @@ struct AddRoutineUnitSheet: View {
             }
             .listRowBackground(PocketColor.background)
 
-            // Ear training (ADR 0104 Slice 2): the same loops, added as an ears-only block —
+            // Active listening (ADR 0104 Slice 2, named by ADR 0302): the same loops, added as an ears-only block —
             // hum/sing a loop inside the routine. Kept a peer bucket so it's discoverable
             // without burying a mode toggle under Loops.
             NavigationLink {
-                GroupPickList(title: "Ear training", groups: earLoopGroups,
+                GroupPickList(title: "Active listening", groups: earLoopGroups,
                               allRows: allEarLoopRows)
             } label: {
-                bucketRow(title: "Ear training", subtitle: "Hum & sing a loop",
+                bucketRow(title: "Active listening", subtitle: "Hum & sing a loop",
                           icon: LoopRunMode.ear.symbolName, count: earLoops.count)
             }
             .listRowBackground(PocketColor.background)

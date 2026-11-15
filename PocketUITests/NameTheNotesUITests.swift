@@ -5,7 +5,7 @@ import XCTest
 /// into a shared editor, and until this nothing opened the sheet, so a broken binding would have shipped.
 ///
 /// The way in is a seeded song (`-seedNamingPiece`) whose *Verse riff* has six unnamed notes: Song library
-/// ▸ the song ▸ hold the loop ▸ *Train your ear* ▸ *Name the notes*. The seed is put back as it was on each
+/// ▸ the song ▸ hold the loop ▸ *Active listening* ▸ *Name the notes*. The seed is put back as it was on each
 /// launch, and every other test's launch takes it out, so the shared store is left as the rest expect.
 final class NameTheNotesUITests: UITestCase {
 
@@ -164,11 +164,11 @@ final class NameTheNotesUITests: UITestCase {
         XCTAssertTrue(app.navigationBars["Edit loop"].waitForExistence(timeout: Self.uiTimeout),
                       "holding the loop didn't open Edit loop", file: file, line: line)
 
-        let train = app.buttons["Train your ear on this loop"]
-        XCTAssertTrue(reveal(train, in: app), "no Train your ear in Edit loop", file: file, line: line)
+        let train = app.buttons["Active listening on this loop"]
+        XCTAssertTrue(reveal(train, in: app), "no Active listening in Edit loop", file: file, line: line)
         train.tap()
-        XCTAssertTrue(app.navigationBars["Train your ear"].waitForExistence(timeout: Self.uiTimeout),
-                      "Train your ear didn't open", file: file, line: line)
+        XCTAssertTrue(app.navigationBars["Active listening"].waitForExistence(timeout: Self.uiTimeout),
+                      "Active listening didn't open", file: file, line: line)
 
         let name = app.buttons["count.saved.name"]
         XCTAssertTrue(reveal(name, in: app), "no saved piece on the loop — did the seed run?", file: file, line: line)

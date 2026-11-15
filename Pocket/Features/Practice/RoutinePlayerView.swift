@@ -167,7 +167,7 @@ struct RoutinePlayerView: View {
         }
         if let loop = stage.loop {
             if stage.kind == .earLoop {
-                return loop.song.map { "Ear training · \($0.title)" } ?? "Ear training"
+                return loop.song.map { "Active listening · \($0.title)" } ?? "Active listening"
             }
             return loop.song?.title
         }

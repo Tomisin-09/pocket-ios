@@ -117,8 +117,8 @@ struct LoopLibraryView: View {
     private var emptyStateMessage: String {
         hasAnyLoops
             ? "No measured loops yet. Set a loop's command tempo on the waveform and it'll show up "
-              + "here to train — or show all loops from the options menu to train your ear with any "
-              + "of them, no tempo needed."
+              + "here to train — or show all loops from the options menu to run any of them in "
+              + "Active listening, no tempo needed."
             : "No loops yet. Open a song, draw a loop on the waveform, and it'll show up here."
     }
 

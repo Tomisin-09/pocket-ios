@@ -84,7 +84,7 @@ once you save it, where it sits with the routine's history — see
 routine…**. Tap a routine and the drill or loop goes in as its last block, saved on the spot — no
 Edit, no Save. Tap the same routine again to take it back out, or tap another to add it there too;
 a routine that already has it says *already in it*. A loop asks whether it goes in as **Practice**,
-**Ear** or **Improv** when it can be more than one. **New routine…** makes one with it as the first
+**Listen** or **Improv** when it can be more than one. **New routine…** makes one with it as the first
 block. To put it anywhere but the end, open the routine and drag it.
 
 **Or from a song's map.** On **Map the song**, hold a piece and choose **Put it together…** to make a
@@ -136,7 +136,7 @@ a block you set to record shows its recording timer here, which is a readout, no
 
 A block that ends when you say so has its own **Done**, or **Finish** on the last block. It is never
 up beside **✕**, which leaves the whole routine: **Done** finishes only this block. On a song
-block it sits under the play-along speed once the song is playing. On an ear training, improvise or
+block it sits under the play-along speed once the song is playing. On an active listening, improvise or
 **Your own practice** block it is at the bottom right, in a bar that also shows the time left when the
 block has a length. While you type a note, **Done** steps out of the way and the time left stays.
 
@@ -259,7 +259,7 @@ The first time you turn this on, the app asks for the microphone. That happens h
 building, and never mid-session: a routine cannot wait on a permission prompt. If microphone access
 is off, the switch says so and points at Settings.
 
-**Ear training** and **improvise** blocks take the mark too, and it means something slightly
+**Active listening** and **improvise** blocks take the mark too, and it means something slightly
 different on them. Those blocks have always been able to record from their own screens, because they
 never start on their own — but only if you remembered to reach for the button mid-session. Marked,
 the take starts with the backing track instead, and the block's own record ring is still there,

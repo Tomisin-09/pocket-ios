@@ -45,7 +45,7 @@ enum EntryKind: String, CaseIterable, Identifiable, Codable {
         case .idea: return "Idea"
         case .note: return "Note"
         case .session: return "Session"
-        case .ear: return "Ear"
+        case .ear: return "Listen"
         case .improvise: return "Improv"
         case .transcribed: return "Transcribed"
         }

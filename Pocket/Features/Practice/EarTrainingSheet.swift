@@ -192,7 +192,7 @@ struct EarTrainingSheet: View {
         NavigationStack {
             EarTrainingView(loop: loop, player: player, recorder: recorder,
                             routineContext: nil)
-                .navigationTitle("Train your ear")
+                .navigationTitle("Active listening")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
@@ -238,7 +238,7 @@ struct EarTrainingScreen: View {
     }
 }
 
-#Preview("Train your ear") {
+#Preview("Active listening") {
     let song = Song.sample()
     let loop = Loop(name: "Verse riff", start: 0.2, end: 0.35, speed: 0.85, repeats: 4)
     loop.song = song

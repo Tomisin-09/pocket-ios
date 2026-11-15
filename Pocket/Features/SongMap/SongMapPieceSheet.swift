@@ -73,18 +73,18 @@ struct SongMapPieceSheet: View {
     @ViewBuilder private var content: some View {
         switch piece.content {
         case .empty:
-            hint("Not counted yet. Count it in Train your ear, then name the notes to see its tab here.")
+            hint("Not counted yet. Count it in Active listening, then name the notes to see its tab here.")
         case .handTagged:
             Text("\(EntryKind.transcribed.emoji) Tagged Transcribed in a note.")
                 .font(.futura(.body))
                 .foregroundStyle(PocketColor.textPrimary)
-            hint("Count it in Train your ear to see it here.")
+            hint("Count it in Active listening to see it here.")
         case .piece(let transcription):
             // The same drawing as Saved on this loop (ADR 0234 D8). The tab could be selected as text here,
             // so it keeps a way to copy it.
             PieceDrawing(piece: transcription, spelling: spelling, copyable: true)
             if !transcription.hasFrettedLabels, piece.layer == .notes {
-                hint("Name the notes on the neck in Train your ear and their tab appears here.")
+                hint("Name the notes on the neck in Active listening and their tab appears here.")
             }
         }
     }

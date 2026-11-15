@@ -30,10 +30,10 @@ final class EntryKindTests: XCTestCase {
     }
 
     func testEarKindDecodesAndHasGlyph() {
-        // The ADR 0104 addition: 👂 "Ear", storable and round-tripping like every other kind.
+        // The ADR 0104 addition: 👂 "Listen" since ADR 0302, storable and round-tripping like every other kind.
         XCTAssertEqual(EntryKind(raw: "ear"), .ear)
         XCTAssertEqual(EntryKind.ear.emoji, "👂")
-        XCTAssertEqual(EntryKind.ear.label, "Ear")
+        XCTAssertEqual(EntryKind.ear.label, "Listen")
         XCTAssertTrue(EntryKind.pickerOrder.contains(.ear))
     }
 

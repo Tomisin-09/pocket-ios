@@ -8,7 +8,7 @@ import XCTest
 /// as much as the sheet, so read the attachment before the code.
 ///
 /// The way in is the naming seed with its six notes placed on the neck (`-seedWatchPiece`): Song library ▸
-/// the song ▸ hold the loop ▸ *Watch it on the neck*, or on into *Train your ear* ▸ *Saved on this loop*.
+/// the song ▸ hold the loop ▸ *Watch it on the neck*, or on into *Active listening* ▸ *Saved on this loop*.
 /// The seed is put back on each launch, and every other test's launch takes it out.
 final class WatchOnNeckUITests: UITestCase {
 
@@ -55,11 +55,11 @@ final class WatchOnNeckUITests: UITestCase {
     @MainActor
     func testSavedOnThisLoopOpensItAndNotNameTheNotes() {
         let app = openEditLoop()
-        let train = app.buttons["Train your ear on this loop"]
-        XCTAssertTrue(reveal(train, in: app), "no Train your ear in Edit loop")
+        let train = app.buttons["Active listening on this loop"]
+        XCTAssertTrue(reveal(train, in: app), "no Active listening in Edit loop")
         train.tap()
-        XCTAssertTrue(app.navigationBars["Train your ear"].waitForExistence(timeout: Self.uiTimeout),
-                      "Train your ear didn't open")
+        XCTAssertTrue(app.navigationBars["Active listening"].waitForExistence(timeout: Self.uiTimeout),
+                      "Active listening didn't open")
 
         let watch = app.buttons["count.saved.watch"]
         XCTAssertTrue(reveal(watch, in: app), "no \(title) under Saved on this loop — did the seed place the notes?")

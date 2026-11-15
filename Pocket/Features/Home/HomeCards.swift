@@ -242,7 +242,7 @@ struct JumpBackInCard: View {
                                       subtitle: "Command 90 → 120 BPM · 8ths",
                                       practiced: .now.addingTimeInterval(-172_800),
                                       trailing: .mastery(nil)))
-        JumpBackInCard(content: .init(title: "Verse riff", subtitle: "Slow Bend · Train your ear",
+        JumpBackInCard(content: .init(title: "Verse riff", subtitle: "Slow Bend · Active listening",
                                       practiced: .now.addingTimeInterval(-7200),
                                       trailing: .mastery(2)),
                        locked: true)

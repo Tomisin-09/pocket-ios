@@ -189,7 +189,7 @@ human, and it is the first thing to reread when a page starts to feel thin.
 - **The AI planner.** Charter only (ADR 0092); nothing ships.
 - **Streaks, "this year", weekly goals on the Practice log.** These do not exist and are checked for by
   name, because there is no legitimate use of those words here.
-- **Ear training and theory as *creatable* templates.** Ear training shipped as a loop mode.
+- **Ear training and theory as *creatable* templates.** Ear training shipped as a loop mode, now called Active listening.
 - **Any price, any trial length, or what is free and what is the plan.** StoreKit owns the numbers and the app's own plan screens own the line (ADR 0256); a manual page that names either is stale the day it changes. Say *the plan* and stop.
 - **Instruments beyond guitar and 4-string bass.** Ukulele and the rest are parked (ADR 0116).
 - **Take sharing.** Parked pending legal advice (ADR 0150).

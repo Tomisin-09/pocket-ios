@@ -78,13 +78,13 @@ final class AddToRoutineTests: XCTestCase {
         let loop = Loop(name: "Riff", start: 0.1, end: 0.2, speed: 1, repeats: 4)
         loop.song = song
 
-        XCTAssertEqual(labels(AddToRoutineRequest.loop(loop, named: "Riff")), ["Ear"],
+        XCTAssertEqual(labels(AddToRoutineRequest.loop(loop, named: "Riff")), ["Listen"],
                        "unmeasured and unflagged: ear training only")
 
         loop.commandTempo = 0.8
         loop.isBackingTrack = true
         XCTAssertEqual(labels(AddToRoutineRequest.loop(loop, named: "Riff")),
-                       ["Practice", "Ear", "Improv"])
+                       ["Practice", "Listen", "Improv"])
 
         // Unmeasured, with no audio to hear: no mode qualifies. (A *measured* songless loop still
         // qualifies for the trainer — its gate is the command tempo alone, `LoopModeAccess`.)

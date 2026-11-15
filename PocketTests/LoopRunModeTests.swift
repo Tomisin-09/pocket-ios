@@ -70,7 +70,7 @@ final class LoopRunModeTests: XCTestCase {
     }
 
     func testTheRowLabelIsNoLongerThanTheActionLabel() {
-        // `rowLabel` exists because "Train your ear" doesn't fit under an icon. If one ever grew past
+        // `rowLabel` exists because "Active listening" doesn't fit under an icon. If one ever grew past
         // its action label, the compact form has stopped being compact.
         for mode in LoopRunMode.allCases {
             XCTAssertLessThanOrEqual(mode.rowLabel.count, mode.label.count, "\(mode)")

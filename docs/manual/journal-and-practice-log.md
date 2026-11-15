@@ -48,7 +48,7 @@ happened.
 | 💡 **Idea** | Something to try — a direction, not a result. |
 | 📝 **Note** | A neutral observation — the default. |
 | 🎬 **Session** | A log of a whole sitting. |
-| 👂 **Ear** | What you heard, on an ear-training loop. |
+| 👂 **Listen** | What you heard, in Active listening. |
 | 🎸 **Improv** | What you played over a backing loop. |
 
 The last three assert that the note was written *during* something, so they are offered only where
@@ -122,8 +122,8 @@ here, there is no picker to file it under a drill.
 
 Inside a **routine**, a block records only if you set it to. Swipe the block right for **Record**, or
 open it and turn on **Record this block**; the take then starts and stops with the block, and the
-block's completion screen offers it back. See [Recording a block](routines.md#recording-a-block). Ear
-training and improvise blocks can be marked the same way, and keep their own record button as well.
+block's completion screen offers it back. See [Recording a block](routines.md#recording-a-block).
+Active listening and improvise blocks can be marked the same way, and keep their own record button as well.
 Your own practice blocks are live-only — their start and stop button is the whole of it.
 
 ### Opening a take
@@ -218,7 +218,7 @@ because the day is part of what the entry says.
 
 - The **All · Notes · Takes · Pieces** control at the top narrows the feed to one of them. **Pieces**
   are the loops you've transcribed with Count the notes, one row per loop, showing the version in use.
-  Saving a new count keeps the one before; **Versions**, under *Saved on this loop* in Train your ear,
+  Saving a new count keeps the one before; **Versions**, under *Saved on this loop* in Active listening,
   can use it again or delete it. Once a piece has a note on the neck, **Watch it on the neck** under the
   loop's name plays it back on the neck with the loop.
 - **Pieces** is grouped by song rather than by day. Each song has a heading with **Map the song**
@@ -239,7 +239,7 @@ because the day is part of what the entry says.
   that last one is the notes you wrote and the takes you recorded from the journal itself, about
   nothing in particular.
   **Tagged** is the chips you put on your notes: **Any tag**, then **Goal**, **Breakthrough**,
-  **Struggle**, **Idea**, **Note or untagged**, **Ear** and **Improv**. Tick as many as you like in
+  **Struggle**, **Idea**, **Note or untagged**, **Listen** and **Improv**. Tick as many as you like in
   either — see below.
 - **⋯ ▸ Pinned only** shows just what you have pinned.
 - **The months** beside that chip are the months your journal actually has something in — tap one to
@@ -312,8 +312,8 @@ your homework, which it does not do.
 
 The caption under a note or take names what it was about — *Slow Bend · Verse riff*, *Spider ·
 exercise* — and where it has somewhere to go it is a link with a chevron. Tap it to open the thing
-itself. A loop opens in the mode the note or take came from: a take recorded in **Train your ear**
-opens Train your ear, not the practice ramp. A caption with no chevron is a subject that no longer
+itself. A loop opens in the mode the note or take came from: a take recorded in **Active listening**
+opens Active listening, not the practice ramp. A caption with no chevron is a subject that no longer
 exists, or one with no screen to open, so the affordance is never a promise the tap cannot keep. The pills on a session note behave the
 same way, and a unit deleted since the session renders dimmed.
 
@@ -405,14 +405,14 @@ than in a quiet one. Days with nothing on them are a distinct neutral rather tha
 ### What you played
 
 Under both the week and the month, **What you played** shows where the time went: by kind —
-exercises, loops, ear training, improvising, play-alongs, the metronome — largest first. Tap a kind
+exercises, loops, active listening, improvising, play-alongs, the metronome — largest first. Tap a kind
 to open it and see the exercise, loop or song itself, with each loop's song underneath it.
 **Metronome** is the one kind with nothing inside it, so it doesn't open: the click isn't an
 exercise or a song, and its row is the whole of what there is to say.
 
 Under the heading, **By kind** and **By song** choose how the list is grouped. **By song** lists each
 song with the time you spent on it, largest first, and tapping a song shows how that time was spent:
-ear training, improvising, loops, play-alongs, and any exercise you have linked to that song and no
+active listening, improvising, loops, play-alongs, and any exercise you have linked to that song and no
 other. Practice that isn't on a song keeps its own rows: **Exercises**, **Metronome**. A song that
 is the target of one of your long-term goals says so under its title. The list opens by kind, and
 remembers which you chose; the week and the month always use the same one.
@@ -422,7 +422,7 @@ It lists each goal with the time that went toward it, and **Free play** for ever
 names. It's there so you can compare what you set out to work on with what you actually played,
 then change your goals if they no longer fit. A song goal counts all the time on its song. A skill
 goal counts what a session built from it would hand you, and a loop counts only when it was played
-the way the goal uses it. Ear training on a backing loop doesn't count toward improvising. Every
+the way the goal uses it. Active listening on a backing loop doesn't count toward improvising. Every
 minute is in exactly one row: when two goals could claim the same practice, the higher-ranked one
 gets it.
 

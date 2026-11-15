@@ -90,7 +90,7 @@ enum SkillExplainer {
             routes.append("loops tagged \(listed(tagTypes, joiner: "or"))")
         }
         switch directMode {
-        case .ear: routes.append("any loop you run in Train your ear")
+        case .ear: routes.append("any loop you run in Active listening")
         case .improvise: routes.append("backing tracks you run in Improvise")
         case .trainer, nil: break
         }

@@ -36,7 +36,7 @@ struct RampLessBlockPreview: View {
     /// The one-line description of what this block is — the mode's job, in the player's words.
     private var blurb: String {
         switch mode {
-        case .ear: "Ear training — hum or sing it back"
+        case .ear: "Active listening — hum or sing it back"
         case .improvise: "Improvise — this section on repeat, as a bed to play over"
         case .trainer: "Loop trainer"   // never previewed here; the trainer has its own screen
         }

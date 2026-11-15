@@ -22,7 +22,7 @@ practised — a song with its artist and mastery, a routine with its block count
 its command tempos, or a loop with its song and the mode you used — along with when you last played
 it. Tapping it reopens that thing: a song in the [song player](song-player.md), a routine on its own
 screen, an exercise on its run screen, and a loop in the mode you left it in: `Practice`,
-`Train your ear` or `Improvise`. Only a loop you opened on its own counts; one you played inside a
+`Active listening` or `Improvise`. Only a loop you opened on its own counts; one you played inside a
 routine leaves the routine on the card.
 
 **Hold the card** to pin what it offers: `Most recent`, `Song`, `Routine`, `Exercise` or `Loop`. The
