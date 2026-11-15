@@ -45,6 +45,10 @@
 │              PracticeRunKind decodes an unknown raw value as .other, so a newer build's row can't fail an archive.
 │              ADR 0295 adds PracticeBreakdown.songRows (the same runs by song, each song opening onto kinds of
 │              work; every run in exactly one row) behind a By kind / By song switch on the list.
+│              ADR 0298 adds By goal (PracticeBreakdown+Goal: goalRows over GoalClaims that GoalAttribution builds
+│              from CandidateDeriver.resolve, the planner's own per-skill step, so a loop counts only in the mode
+│              the goal would run it in and a target song counts whole; the rest is Free play, opening onto songs)
+│              and GoalTitle, which names a song-template goal for its song wherever a goal is shown.
 │              ADR 0269 adds PracticeProgress.day: a chosen day's figures, read off the same bucket the chart draws.
 │   Services — Persistence (SwiftData), Sync (CloudKit, planned), AIClient (→ proxy).
 │              MusicKit (browse) is PLANNED-ONLY and not shipped — no MusicKit import,

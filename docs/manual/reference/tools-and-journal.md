@@ -131,8 +131,10 @@ been practised, so neither is the way in.
   with `This month` to return.
 - **`What you played`** — under both, the period's time by kind, largest first; tap a kind to open it
   onto the exercises, loops or songs. `By kind` and `By song` regroup it: by song, each song with its
-  time, opening onto the kinds of work that time went on. Tap a practised bar or day to narrow it to
-  that day, and the date beside the title to widen it again.
+  time, opening onto the kinds of work that time went on. With a long-term goal, `By goal` joins
+  them: each goal with its time, opening onto kinds of work, and `Free play` (*Practice no goal
+  names*) opening onto the songs it went on. A goal with no time reads *0 min*. Tap a practised bar
+  or day to narrow it to that day, and the date beside the title to widen it again.
 - **`All-time`** — time played and sessions with the date you started, and
   **`What you've built`**: counts of `Exercises`, `Loops`, `Mastered` and `Notes`.
 

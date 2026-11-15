@@ -30,6 +30,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         // Install the global Futura navigation-title appearance once, before any bar is built
         // (ADR 0110). Isolated here so the whole feature is this call plus `NavigationBarStyle`.
         NavigationBarStyle.apply()
+        // The same for every segmented control's labels (ADR 0061), which SwiftUI gives no font hook.
+        SegmentedControlStyle.apply()
         // The one way off the keyboard, on every text surface — its own window, not a toolbar that
         // each screen has to remember to attach (see `KeyboardDismissAccessory`).
         KeyboardDismissAccessory.install()

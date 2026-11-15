@@ -98,7 +98,7 @@ extension PracticeView {
                 }
                 ForEach(activeGoals, id: \.uid) { goal in
                     Button { editingGoal = StableRef(value: goal); haptic(.light) } label: {
-                        GoalChip(title: goal.title.isEmpty ? "Untitled goal" : goal.title)
+                        GoalChip(title: goal.displayTitle)
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint("Edits this goal")

@@ -417,6 +417,21 @@ other. Practice that isn't on a song keeps its own rows: **Exercises**, **Metron
 is the target of one of your long-term goals says so under its title. The list opens by kind, and
 remembers which you chose; the week and the month always use the same one.
 
+Once you have a [long-term goal](sessions.md#long-term-goals), a third choice appears: **By goal**.
+It lists each goal with the time that went toward it, and **Free play** for everything no goal
+names. It's there so you can compare what you set out to work on with what you actually played,
+then change your goals if they no longer fit. A song goal counts all the time on its song. A skill
+goal counts what a session built from it would hand you, and a loop counts only when it was played
+the way the goal uses it. Ear training on a backing loop doesn't count toward improvising. Every
+minute is in exactly one row: when two goals could claim the same practice, the higher-ranked one
+gets it.
+
+Tap a goal to see the kinds of work its time went on. Tap **Free play** to see the songs it went
+on instead, which is often where the next goal is. A goal you have practised nothing toward still
+has a row, at 0 minutes, so a gap is in the list rather than missing from it. It's a fact, not a
+mark against you: the list never says how much is enough. A goal you have marked met only appears
+when it had time. Changing a goal happens where goals live, in **Practice ▸ Edit goals**.
+
 Tap a day — a bar in the week, a cell in the month — and the section turns to that day. The figures
 above the chart become the day's: its minutes, and in the month any new tempo. A chip with the day's
 date sits just above the chart, the other days dim, and the list narrows to that day. In the month

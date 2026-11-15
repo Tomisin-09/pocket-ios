@@ -93,7 +93,7 @@ struct PlannerGoalsSection: View {
             ForEach(metGoals) { goal in
                 Button { onEdit(goal) } label: {
                     HStack {
-                        Text(goal.title.isEmpty ? "Untitled goal" : goal.title)
+                        Text(goal.displayTitle)
                             .font(.futura(.body))
                             .foregroundStyle(PocketColor.textSecondary)
                             .strikethrough()
@@ -114,7 +114,7 @@ struct PlannerGoalsSection: View {
         Button { onEdit(goal) } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(goal.title.isEmpty ? "Untitled goal" : goal.title)
+                    Text(goal.displayTitle)
                         .font(.futura(.body))
                         .foregroundStyle(PocketColor.textPrimary)
                     Text(subtitle(for: goal))

@@ -209,6 +209,27 @@ click through the speaker and through headphones.
 
 ### After the freeze
 
+- **"Prepare a set": a long-term goal that holds several songs.** Direction agreed 2026-11-15, not yet
+  built or written as an ADR. Raised by the 2026-11-13 store check, where October and November went on
+  open-mic covers no goal named. Four options were weighed: a goal holding several songs (**A, chosen**),
+  a bundle of song goals, a routine as the set, and a third tier between session and long-term. Tomisin's
+  answers settled it:
+  - **Not time-bound.** That removes the old blocker, *a performance has a date, so it can't be a goal*
+    (ADR 0171 D1). The name can carry the occasion (*Symposium set*) without the app counting anything down.
+  - **Running order doesn't matter** while preparing. A set is a group of songs, unordered. No routine bridge.
+  - **Done or reused depends on the gig.** Both already work: *Mark as met* for a one-off gig, or leave it
+    open and swap songs to reuse it. A met set reopens by turning *Mark as met* off. No new controls.
+  - Why it feels "neither long nor short": the tiers are split by scope, not length (ADR 0171). The label
+    *Long-term* says duration, so it reads wrong even though the definition fits. A rename was considered
+    and not proposed (0171 D9, the manual).
+
+  For its ADR: the goal stores its songs as a list of `Song.sourceID`s, like `skillIDs`, rather than a
+  to-many relationship. It is an additive attribute, but still the first schema change after 1.4, so it
+  needs the store upgrade check on the simulator. The planner's repertoire path takes one song today and
+  would rotate across the set. By goal would count every song in the set whole and open onto the songs.
+  Its own branch, after `pocket-428` merges. Related: Note 11 (bandmate sharing of a set list).
+- ~~**Two goals both titled *Play a specific song*.**~~ **DONE 2026-11-15** (`pocket-428`, ADR 0298
+  D1): a song-template goal reads *Play* and its song everywhere a goal is named.
 - ~~**Pre-bends in the FAQ.**~~ **DONE 2026-11-13** (`pocket-425`). From the device check on 2026-11-04
   (Tomisin: *"pre-bends are fine though we could include a FAQ aspect later"*). Help & FAQs gained a
   group, *Naming notes & tabs*: how many taps a hammer-on, slide or bend takes, a release tapped as its

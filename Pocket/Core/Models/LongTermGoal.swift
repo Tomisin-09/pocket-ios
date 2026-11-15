@@ -81,6 +81,12 @@ final class LongTermGoal {
     }
 }
 
+extension LongTermGoal {
+    /// The name to show: *Play Sunday Morning* for a goal still carrying the song template's
+    /// placeholder, otherwise the name as typed (`GoalTitle`, ADR 0298 D1).
+    var displayTitle: String { GoalTitle.display(title, songTitle: targetSong?.title) }
+}
+
 /// Ordering + reorder mechanics for the ranked list. Mirrors `ReferenceLinkStore.move` (ADR 0167)
 /// with a contiguous renumber, for the same reason: `order` must stay gap-free or the rank → weight
 /// mapping starts skipping steps.

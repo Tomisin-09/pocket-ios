@@ -186,6 +186,11 @@ Elsewhere, don't reach for a literal hex in views; go through
   (`NavigationBarStyle`, applied once at launch — ADR 0110), since SwiftUI's `.navigationTitle` has no
   native font hook. Only the title font changes; bar backgrounds are untouched. Screens that need a
   custom centre (Home wordmark, Metronome header) still use a `.principal` toolbar item.
+- **Segmented controls** are Futura-Medium the same way, via `UISegmentedControl.appearance()`
+  (`SegmentedControlStyle`, applied at launch beside the bar style), because SwiftUI ignores `.font`
+  on a segmented `Picker`. Medium in both states, since Bold would change a label's width as the
+  selection moves. 13 pt, scaled with Dynamic Type up to 17 pt so a five-segment control doesn't
+  truncate. Until 2026-11-15 every segmented control drew in the system font.
 
 ### 3.3 Motion
 

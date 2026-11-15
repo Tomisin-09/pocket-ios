@@ -32,6 +32,9 @@ enum PracticeBreakdown {
         /// The title of the long-term goal that names a song as its target, by `Song.sourceID`
         /// (ADR 0295 D4). The highest-ranked goal when two name the same song.
         var songGoals: [String: String] = [:]
+        /// The long-term goals, each with what counts toward it (ADR 0298), unmet goals in rank order
+        /// and then met ones. Empty when there are none, which takes *By goal* off the switch.
+        var goals: [GoalClaim] = []
     }
 
     /// A live loop as the log needs it: its name, and the song it belongs to by `Song.sourceID`.
@@ -192,7 +195,7 @@ extension PracticeBreakdown {
     /// `String`-raw so the choice is kept in `@AppStorage`, and the key and default live here so the
     /// two lists on the screen cannot spell them differently.
     enum Grouping: String, CaseIterable, Identifiable, Sendable {
-        case kind, song
+        case kind, song, goal
 
         static let storageKey = "practiceLogGrouping"
         static let standard = Grouping.kind
@@ -204,6 +207,7 @@ extension PracticeBreakdown {
             switch self {
             case .kind: "By kind"
             case .song: "By song"
+            case .goal: "By goal"
             }
         }
     }
@@ -234,6 +238,8 @@ extension PracticeBreakdown {
             }
         case .song:
             songRows(records, names: names)
+        case .goal:
+            goalRows(records, names: names)
         }
     }
 
@@ -307,6 +313,13 @@ extension PracticeBreakdown {
         var seconds = 0.0
         var songLabel: String?
         var items: [String: Bucket] = [:]
+    }
+
+    /// The song a run counts under By song, by `Song.sourceID`, or `nil` when it counts under none.
+    /// What a goal with a target song counts (ADR 0298 D3), so the two groupings agree on that song.
+    static func songSourceID(of record: SessionRecord, names: Names) -> String? {
+        if case .song(let sourceID) = songHome(record, names: names) { return sourceID }
+        return nil
     }
 
     private static func songHome(_ record: SessionRecord, names: Names) -> SongHome {
