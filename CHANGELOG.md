@@ -21,6 +21,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Hear up to the note** (ADR 0300). In *Name the notes*, the menu at the top right of the strip
+  (*Hear 3 notes*) has a new last choice, **Up to the note**. Tapping a note then plays every note of
+  the pass before it and stops on it, so the note you're naming is still the last thing you hear. The
+  play button stops a long one, and tapping another note cuts it off.
+
 - **Prepare a set** (ADR 0299). A long-term goal can now hold several songs: a set you're getting ready
   to play for people. Start one from *Prepare a set* in Long-term goals, name it, and tick its songs.
   There's no running order and no date. A session built from it takes its songs in turn, the one you've

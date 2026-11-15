@@ -115,20 +115,21 @@ extension NameTheNotesSheet {
     }
 
     /// **How many notes a tap plays** (0227 D2, after the device check): the note alone, or the note and
-    /// the ones before it, so it's heard arriving from the line rather than cut out of it. Always ending on
-    /// the chip being named, which is the sound left in the ear when the finger goes to the neck.
+    /// the ones before it, so it's heard arriving from the line rather than cut out of it, as far back as
+    /// the pass's first (ADR 0300). Always ending on the chip being named, which is the sound left in the
+    /// ear when the finger goes to the neck.
     private var phraseMenu: some View {
         Menu {
             Section("Ending on the \(noun) you're naming") {
                 Picker("Notes to hear", selection: $phraseNotes) {
                     ForEach(NamingStrip.phraseChoices, id: \.self) { count in
-                        Text(count == 1 ? "Just the \(noun)" : "\(count) \(noun)s").tag(count)
+                        Text(NamingStrip.choiceTitle(count, noun: noun)).tag(count)
                     }
                 }
             }
         } label: {
             HStack(spacing: 3) {
-                Text("Hear \(phraseNotes) \(noun)\(phraseNotes == 1 ? "" : "s")")
+                Text(NamingStrip.hearTitle(phraseNotes, noun: noun))
                     .lineLimit(1)
                 Image(systemName: "chevron.up.chevron.down")
                     .font(.system(size: 9, weight: .semibold))
@@ -141,7 +142,9 @@ extension NameTheNotesSheet {
         .padding(.vertical, -7)
         .fixedSize()
         .accessibilityLabel("Notes to hear")
-        .accessibilityValue("\(phraseNotes), ending on the \(noun) you're naming")
+        .accessibilityValue(phraseNotes == NamingStrip.upToTheNote
+                            ? "Every \(noun) up to the one you're naming"
+                            : "\(phraseNotes), ending on the \(noun) you're naming")
         .accessibilityIdentifier("naming.phraseLength")
     }
 
