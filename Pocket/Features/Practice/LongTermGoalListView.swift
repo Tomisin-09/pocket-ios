@@ -121,7 +121,7 @@ struct LongTermGoalListView: View {
                     .foregroundStyle(PocketColor.practice)
                     .frame(width: 20, alignment: .leading)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(goal.title.isEmpty ? "Untitled goal" : goal.title)
+                    Text(goal.displayTitle)
                         .font(.futura(.body))
                         .foregroundStyle(PocketColor.textPrimary)
                     Text(subtitle(for: goal))
@@ -133,7 +133,7 @@ struct LongTermGoalListView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(goal.title), rank \(rank)")
+        .accessibilityLabel("\(goal.displayTitle), rank \(rank)")
     }
 
     /// Skills, and the target song when there is one. A **count**, never a numerator — a skill count
@@ -154,7 +154,7 @@ struct LongTermGoalListView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(PocketColor.practice)
-                        Text(goal.title.isEmpty ? "Untitled goal" : goal.title)
+                        Text(goal.displayTitle)
                             .font(.futura(.body))
                             .foregroundStyle(PocketColor.textSecondary)
                         Spacer(minLength: 8)

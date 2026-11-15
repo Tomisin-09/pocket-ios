@@ -65,7 +65,7 @@ struct LongTermGoalEchoSection: View {
                 .foregroundStyle(PocketColor.textSecondary)
                 .frame(width: 14, alignment: .leading)
             VStack(alignment: .leading, spacing: 2) {
-                Text(goal.title.isEmpty ? "Untitled goal" : goal.title)
+                Text(goal.displayTitle)
                     .font(.futura(.subheadline))
                     .foregroundStyle(PocketColor.textPrimary)
                 Text(factLine(for: goal, reading: reading))
@@ -96,13 +96,13 @@ struct LongTermGoalEchoSection: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.futura(.caption))
                         .foregroundStyle(PocketColor.practice)
-                    Text(goal.title.isEmpty ? "Untitled goal" : goal.title)
+                    Text(goal.displayTitle)
                         .font(.futura(.subheadline))
                         .foregroundStyle(PocketColor.textSecondary)
                     Spacer(minLength: 0)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel("\(goal.title), met")
+                .accessibilityLabel("\(goal.displayTitle), met")
             }
         }
         .padding(.top, 2)

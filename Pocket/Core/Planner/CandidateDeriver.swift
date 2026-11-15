@@ -48,19 +48,7 @@ enum CandidateDeriver {
 
         for goal in goals where !goal.isMet {
             for skillID in goal.skillIDs {
-                let resolved: [PlannerCandidate]
-                if let info = TechniqueTaxonomy.info(skillID) {
-                    resolved = info.mode.isRepertoire
-                        ? repertoireCandidates(goal: goal, skillID: skillID, library: library,
-                                               emphasis: emphasis)
-                        : techniqueCandidates(goal: goal, info: info, library: library,
-                                              emphasis: emphasis)
-                } else if SkillAssociation.isCustom(skillID) {
-                    resolved = customCandidates(goal: goal, skillID: skillID, library: library)
-                } else {
-                    continue  // unknown ⇒ skip
-                }
-                for candidate in resolved {
+                for candidate in resolve(skillID, of: goal, library: library, emphasis: emphasis) {
                     // Keyed on the **unit**, never on unit-plus-mode (ADR 0139 O2b): a loop that both
                     // a repertoire goal and an ear goal claim must appear once, with the stronger
                     // claim's mode, rather than twice — once to train and once to sing back.
@@ -72,6 +60,27 @@ enum CandidateDeriver {
             }
         }
         return constrained(Array(strongest.values), to: constraint, library: library)
+    }
+
+    /// Everything **one** of `goal`'s skills resolves to, by the path its taxonomy mode routes it down
+    /// — before `deriveCandidates` keeps one claim per unit. Empty for an id no taxonomy or custom
+    /// skill knows. `isMet` is not consulted here; the caller decides whether a met goal derives.
+    ///
+    /// Exposed so the Practice log's grouping by goal (ADR 0298) reads the planner's own answer
+    /// rather than a lookalike. It needs the claims this function returns **all** of: a loop that
+    /// states an ear skill is claimed twice by that one skill — to train (it states it) and by ear
+    /// (it can be run that way) — and the one-claim-per-unit rule below keeps only the first.
+    static func resolve(_ skillID: String, of goal: PlannerGoal, library: PlannerLibrary,
+                        emphasis: PracticeEmphasis = .neutral) -> [PlannerCandidate] {
+        if let info = TechniqueTaxonomy.info(skillID) {
+            return info.mode.isRepertoire
+                ? repertoireCandidates(goal: goal, skillID: skillID, library: library, emphasis: emphasis)
+                : techniqueCandidates(goal: goal, info: info, library: library, emphasis: emphasis)
+        }
+        if SkillAssociation.isCustom(skillID) {
+            return customCandidates(goal: goal, skillID: skillID, library: library)
+        }
+        return []  // unknown ⇒ skip
     }
 
     /// Narrow a derived pool to what can be practised in `constraint`'s situation (ADR 0139 O3).

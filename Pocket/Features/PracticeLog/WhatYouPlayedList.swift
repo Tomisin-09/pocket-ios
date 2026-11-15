@@ -3,8 +3,9 @@ import SwiftUI
 /// **What you played** (ADR 0241) — under a week or a month, the period's practice grouped by kind,
 /// each kind opening in place onto the exercises, loops and songs inside it.
 ///
-/// **Or by song (ADR 0295).** A switch under the header regroups the same runs by the song they were
-/// on, each song opening onto the kinds of work its time went on. The choice is kept, and the week's
+/// **Or by song (ADR 0295), or by goal (ADR 0298).** A switch under the header regroups the same runs
+/// by the song they were on, each song opening onto the kinds of work its time went on, or by the
+/// long-term goal they served, with *Free play* for the rest. The choice is kept, and the week's
 /// list and the month's share it, so the screen is never grouped two ways at once.
 ///
 /// **A list with bars, not a chart.** A day usually holds one to four runs, which is too few marks for
@@ -34,8 +35,13 @@ struct WhatYouPlayedList: View {
     /// switching the grouping shows the new rows closed.
     @State private var expanded: Set<String> = []
 
+    /// The stored choice, unless *By goal* is stored and the last goal has since gone.
+    private var shownGrouping: PracticeBreakdown.Grouping {
+        grouping.effective(hasGoals: !names.goals.isEmpty)
+    }
+
     var body: some View {
-        let rows = PracticeBreakdown.rows(records, names: names, grouping: grouping)
+        let rows = PracticeBreakdown.rows(records, names: names, grouping: shownGrouping)
         let scale = max(1, rows.first?.seconds ?? 1)
         VStack(alignment: .leading, spacing: 2) {
             header
@@ -79,11 +85,13 @@ struct WhatYouPlayedList: View {
         .frame(minHeight: 30)
     }
 
-    /// *By kind* or *By song*. A segmented control, because there are two answers and both should be
-    /// in view: a menu would hide that the list can be read the other way.
+    /// *By kind*, *By song* or *By goal*. A segmented control, because every answer should be in view:
+    /// a menu would hide that the list can be read another way. *By goal* is offered once a
+    /// long-term goal exists (ADR 0298).
     private var groupingPicker: some View {
-        Picker("Group what you played", selection: $grouping) {
-            ForEach(PracticeBreakdown.Grouping.allCases) { option in
+        Picker("Group what you played",
+               selection: Binding(get: { shownGrouping }, set: { grouping = $0 })) {
+            ForEach(PracticeBreakdown.Grouping.offered(hasGoals: !names.goals.isEmpty)) { option in
                 Text(option.label).tag(option)
             }
         }
@@ -199,6 +207,10 @@ struct WhatYouPlayedList: View {
 
 /// A thin horizontal bar, filled to `fraction` of the available width. Decoration for sighted readers
 /// only — every row states its minutes in words beside it.
+///
+/// Any time at all shows at least a dot, so a minute doesn't vanish beside an hour. **Nothing shows
+/// no fill**: a goal with no time (ADR 0298 D4) is an empty track, so "nothing" never reads as "a
+/// little", the rule the month grid keeps for an empty day.
 private struct ProportionBar: View {
     let fraction: Double
     let height: CGFloat
@@ -210,7 +222,7 @@ private struct ProportionBar: View {
                 Capsule().fill(PocketColor.surfaceStandard)
                 Capsule()
                     .fill(PocketColor.practice.opacity(emphasis))
-                    .frame(width: max(height, proxy.size.width * min(1, max(0, fraction))))
+                    .frame(width: fraction > 0 ? max(height, proxy.size.width * min(1, fraction)) : 0)
             }
         }
         .frame(height: height)

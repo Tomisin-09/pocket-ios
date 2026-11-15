@@ -21,6 +21,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **What you played, by goal** (ADR 0298). Once you have a long-term goal, the Practice log's *What
+  you played* switch gains **By goal**: each goal with the time that went toward it that week or
+  month, and **Free play** for everything no goal names. Tap a goal to see the kinds of work its time
+  went on, and Free play to see the songs it went on instead. A goal you practised nothing toward
+  still shows, at 0 minutes, so you can see the gap and change your goals if they no longer fit. A
+  loop counts toward a goal only when it was played the way the goal uses it.
+- **Song goals are named for their song.** A goal started from *Play a specific song* now reads
+  *Play Sunday Morning* everywhere it appears, so two song goals can be told apart. A name you type
+  yourself is kept.
 - **What you played, by song** (ADR 0295). The Practice log's *What you played* has a switch, **By
   kind** and **By song**. By song, each song shows the time spent on it that week or month, and opens
   onto how that time was spent: ear training, improvising, loops, play-alongs, and exercises linked
@@ -38,6 +47,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   with a bend and its release tapped as two notes, and what each letter in the tab means. The Glossary gains *Bend and release*, *Pre-bend*, *Grace note*, *Muted note*,
   *Double-stop* and four picking styles (economy, hybrid, sweep, tremolo), and *Bend* and *Slide* now
   say which one stays on its fret.
+
+### Changed
+
+- **Segmented controls are in Futura**, like the rest of the app's text. Every switch of this kind,
+  such as *By kind · By song · By goal* and *Build from*, had been drawn in the system font.
 
 ### Changed — build and CI
 

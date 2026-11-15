@@ -125,6 +125,10 @@ struct GoalEditorView: View {
         .sheet(isPresented: $showingSkillPicker) {
             SkillPickerSheet(offeredSkillIDs: $offeredSkillIDs, keptSkillIDs: $keptSkillIDs)
         }
+        // The name follows the song until the player types one of their own (ADR 0298 D1).
+        .onChange(of: targetSong?.title) { old, new in
+            title = GoalTitle.following(title, from: old, to: new)
+        }
         .skillFixSheet($fixExercise, profile: profiles.first, context: context)
     }
 
@@ -162,7 +166,8 @@ struct GoalEditorView: View {
     /// via `choose(_:)` instead.
     private func loadExisting() {
         guard let existing, offeredSkillIDs.isEmpty else { return }
-        title = existing.title
+        // A goal saved under the song template's placeholder opens named for its song (ADR 0298 D1).
+        title = GoalTitle.following(existing.title, from: nil, to: existing.targetSong?.title)
         priority = GoalPriority.nearest(toWeight: existing.weight)
         offeredSkillIDs = existing.skillIDs
         keptSkillIDs = Set(existing.skillIDs)

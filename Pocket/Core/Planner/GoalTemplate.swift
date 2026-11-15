@@ -24,13 +24,17 @@ struct GoalTemplate: Identifiable, Equatable {
 
 /// The offered goal templates, in menu order — mirrors ADR 0015 S1's four canonical intents.
 enum GoalTemplateLibrary {
+    /// The one template that asks for a song. Named on its own because its title is a placeholder
+    /// the song replaces on screen (`GoalTitle`), and that rule has to know which title it is.
+    static let playSong = GoalTemplate(id: "play-song",
+                                       title: "Play a specific song",
+                                       blurb: "Learn a song from your library end-to-end.",
+                                       skillIDs: ["rep.learn-song", "rep.master-song"],
+                                       requiresTargetSong: true,
+                                       iconName: "music.note")
+
     static let all: [GoalTemplate] = [
-        GoalTemplate(id: "play-song",
-                     title: "Play a specific song",
-                     blurb: "Learn a song from your library end-to-end.",
-                     skillIDs: ["rep.learn-song", "rep.master-song"],
-                     requiresTargetSong: true,
-                     iconName: "music.note"),
+        playSong,
         GoalTemplate(id: "build-speed",
                      title: "Build speed",
                      blurb: "Push picking and legato technique faster, cleanly.",

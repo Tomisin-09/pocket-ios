@@ -63,9 +63,22 @@ struct PracticeLogView: View {
             }, uniquingKeysWith: { first, _ in first }),
             // In rank order, so the highest-ranked goal names a song two goals share (ADR 0295 D4).
             songGoals: Dictionary(LongTermGoalStore.inRankOrder(longTermGoals).compactMap { goal in
-                guard let song = goal.targetSong, !goal.title.isEmpty else { return nil }
-                return (song.sourceID, goal.title)
-            }, uniquingKeysWith: { first, _ in first }))
+                guard let song = goal.targetSong else { return nil }
+                return (song.sourceID, goal.displayTitle)
+            }, uniquingKeysWith: { first, _ in first }),
+            goals: goalClaims)
+    }
+
+    /// What counts toward each long-term goal, from the planner's own resolution (ADR 0298 D2).
+    /// Empty with no goals, which skips building the library at all.
+    private var goalClaims: [PracticeBreakdown.GoalClaim] {
+        guard !longTermGoals.isEmpty else { return [] }
+        let library = PracticePlanner.library(exercises: exercises, loops: loops, songs: songs)
+        let sources = LongTermGoalStore.inRankOrder(longTermGoals).map { goal in
+            GoalAttribution.Source(goal: goal.plannerProjection, title: goal.displayTitle,
+                                   songSourceID: goal.targetSong?.sourceID, since: goal.dateAdded)
+        }
+        return GoalAttribution.claims(sources, library: library)
     }
 
     /// The derived inventory counts the achievement wall shows — the existing `PracticeStats` roll-up,

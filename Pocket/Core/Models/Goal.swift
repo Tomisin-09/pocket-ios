@@ -67,3 +67,9 @@ final class Goal {
                     isMet: isMet)
     }
 }
+
+extension Goal {
+    /// The name to show: *Play Sunday Morning* for a goal still carrying the song template's
+    /// placeholder, otherwise the name as typed (`GoalTitle`, ADR 0298 D1).
+    var displayTitle: String { GoalTitle.display(title, songTitle: targetSong?.title) }
+}

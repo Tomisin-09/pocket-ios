@@ -28,7 +28,7 @@ struct PlannerLongTermSection: View {
                         .foregroundStyle(PocketColor.practice)
                         .frame(width: 20, alignment: .leading)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(pair.element.title.isEmpty ? "Untitled goal" : pair.element.title)
+                        Text(pair.element.displayTitle)
                             .font(.futura(.body))
                             .foregroundStyle(PocketColor.textPrimary)
                         Text(subtitle(for: pair.element))

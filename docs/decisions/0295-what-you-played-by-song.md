@@ -6,6 +6,11 @@
   time visible only through its loops. The list gains a second grouping, by song (D1, D2). D3's
   refusal to time parts of the app stands, the grouping by kind is unchanged and is still what the
   list opens on, and D4 (a tap narrows the list) and D7 (no comparison between periods) are untouched.
+- **Amended by:** ADR 0298 (2026-11-15) — **D1's rejection of per-goal minutes is reversed**, for a
+  review of set-out against played rather than credit toward a goal: the list gains a third
+  grouping, by goal, counting a loop only in the mode the goal would run it in. *What stays out*'s
+  goal-title item is also done there (a song goal reads *Play* and its song). D1's grouping by song,
+  D2, D3 and D4 stand.
 - **Relates to:** 0171 (long-term goals: its echo on this screen and its ban on a denominator are
   unchanged; D4 here adds a label, not a measure) · 0111 (the exercise → song link D3 reads) · 0070
   (never grades: ranked by minutes, nothing marked) · 0242 (the metronome row has nothing to open)
@@ -50,7 +55,7 @@ there are two answers and a menu would hide that the list reads another way.
 with no songs gets nothing from the other grouping. The week's list and the month's share one
 stored choice, so the screen is never grouped two ways at once.
 
-**Rejected: per-goal minutes.** The context above is the reason. For a skill goal the figure is an
+**Rejected: per-goal minutes.** *(Reversed by 0298: see the header.)* The context above is the reason. For a skill goal the figure is an
 inference a player cannot check, and on real data it left most practice outside every goal.
 
 ### D2 — A song opens onto kinds of work

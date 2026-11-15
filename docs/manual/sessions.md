@@ -113,7 +113,9 @@ all of them.
   before it.
 - **Target song** — this row appears only when you have kept a skill that needs a song to mean
   anything. Pick one and the goal schedules that song's loops and a play-through of it, which is
-  what turns "learn this song" into actual blocks.
+  what turns "learn this song" into actual blocks. A goal started from **Play a specific song**
+  takes the song's name: pick *Sunday Morning* and it is called **Play Sunday Morning**, so two
+  song goals never look alike. Type a name of your own and it keeps yours.
 
 Reopening a goal you have already made goes straight to this form.
 
