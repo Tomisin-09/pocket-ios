@@ -13,7 +13,8 @@ struct NeckSpotDot: View {
     var number: Int?
     /// In a shape, the note bend and vibrato go on.
     var isRinged = false
-    /// Faded, while *Into it* waits for a start this spot can't be.
+    /// Faded, while *Into it* waits for a start this spot can't be, or a lit *Higher*, *Same* or *Lower*
+    /// says the note can't be here (ADR 0301). Only drawn: a dimmed spot takes a tap like any other.
     var isDimmed = false
     @Environment(\.neckAccent) private var accent
 

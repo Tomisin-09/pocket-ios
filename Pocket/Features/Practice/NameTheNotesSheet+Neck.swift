@@ -6,12 +6,17 @@ import SwiftUI
 extension NameTheNotesSheet {
 
     var neckPicker: some View {
-        NeckNoteEditor(answers: labels, cursor: $cursor, tuning: tuning, spelling: spelling, noun: noun,
-                       voice: .naming, scrollTarget: neckTarget, hearing: hearing,
-                       write: { labels = $0 },
-                       onPlace: { string, fret in place(string: string, fret: fret) },
-                       onMute: { string in mute(string: string) },
-                       onInstrument: { showingInstrument = true }, trailing: historyButtons)
+        VStack(alignment: .leading, spacing: 16) {
+            // Its own row over the neck, so it reads as a step of its own (ADR 0301 D1).
+            if showsDirection { directionRow }
+            NeckNoteEditor(answers: labels, cursor: $cursor, tuning: tuning, spelling: spelling, noun: noun,
+                           voice: .naming, scrollTarget: neckTarget, hearing: hearing,
+                           narrowing: narrowing, footnote: directionLine,
+                           write: { labels = $0 },
+                           onPlace: { string, fret in place(string: string, fret: fret) },
+                           onMute: { string in mute(string: string) },
+                           onInstrument: { showingInstrument = true }, trailing: historyButtons)
+        }
     }
 
     /// A tap on the neck, by `NeckEditing.place`: with Chords off it replaces the note (which keeps its
@@ -24,7 +29,11 @@ extension NameTheNotesSheet {
     /// notes every time. The marks stay on the note just placed until the next one is (`placedNote`), and
     /// the board stays put. Tapping the note already there confirms it and moves on.
     private func place(string: Int, fret: Int) {
-        if awaitingStart == nil { replacing = nil }
+        if awaitingStart == nil {
+            replacing = nil
+            // Placing wins (ADR 0301 D4), even a tap that confirms the note already there.
+            clearArrow()
+        }
         let edit = NeckEditing.place(string: string, fret: fret, labels: labels, cursor: cursor)
         if edit.labels != labels { labels = edit.labels }
         cursor = edit.cursor
@@ -34,6 +43,7 @@ extension NameTheNotesSheet {
     /// muted and the strip moves on, as placing a note does; with Chords on it goes into the chord.
     private func mute(string: Int) {
         replacing = nil
+        clearArrow()
         let edit = NeckEditing.mute(string: string, labels: labels, cursor: cursor)
         if edit.labels != labels { labels = edit.labels }
         cursor = edit.cursor

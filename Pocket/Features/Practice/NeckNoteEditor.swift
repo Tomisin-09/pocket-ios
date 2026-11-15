@@ -25,6 +25,11 @@ struct NeckNoteEditor<Trailing: View>: View {
     let scrollTarget: Int?
     /// While the owner plays, the note being heard, which glows moving the way it was played.
     var hearing: Int?
+    /// What a lit *Higher*, *Same* or *Lower* dims (ADR 0301 D3), from Name the notes; the tab writer has
+    /// no recording to compare by ear, so it passes none. *Into it*'s own dim wins while it waits (D8).
+    var narrowing: NeckNarrowing?
+    /// The owner's line under the neck: what a lit arrow is doing (ADR 0301 D7).
+    var footnote: String?
     /// New answers, as one step of the owner's history.
     let write: ([PieceLabel?]) -> Void
     /// A tap on the neck.
@@ -74,6 +79,13 @@ struct NeckNoteEditor<Trailing: View>: View {
             } pinned: { string in
                 muteSpot(string: string, mark: mutes[string])
             }
+            if let footnote {
+                Text(footnote)
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("naming.direction.line")
+            }
             if labels[active] == .muted {
                 Text("Named by ear as \(Text("muted").bold()), with no string. Tap a ✕ to say which, or place a "
                      + "note to replace it.")
@@ -118,11 +130,12 @@ struct NeckNoteEditor<Trailing: View>: View {
         let isRinged = markedNotes.count > 1 && string == ringed
             && markedNotes.contains { $0.string == string && $0.fret == fret }
         let name = spelling.name(pitchClass: ((tuning.openMidi[string] + fret) % 12 + 12) % 12)
-        // While *Into it* waits for a start, only the frets it could have come from stay bright.
+        // While *Into it* waits for a start, only the frets it could have come from stay bright; otherwise a
+        // lit arrow dims the spots the note can't be (ADR 0301 D3, D8). Dimmed, never locked.
         let dimmed = awaitingStart.map { request in
             !markedNotes.contains { $0.string == string && $0.fret == fret }
                 && !NeckJoin.accepts(string: string, fret: fret, asStartOf: markedNotes, for: request)
-        } ?? false
+        } ?? narrowing?.dims(string: string, fret: fret) ?? false
         return Button {
             onPlace(string, fret)
         } label: {
@@ -131,29 +144,32 @@ struct NeckNoteEditor<Trailing: View>: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(stringNames[string]) string, \(fret == 0 ? "open" : "fret \(fret)"), \(name)"
-                            + Self.neighbourWords(mark, noun: noun))
+                            + Self.neighbourWords(mark, noun: noun) + (dimmed ? ", dimmed" : ""))
         .accessibilityAddTraits(isPlaced ? .isSelected : [])
         .accessibilityHint(isRinged ? "Ringed. Tap again to take it out." : "")
     }
 
     /// A string's ✕ (ADR 0262 D2), pinned beside the letters so it's in reach at any fret, and tapped like
     /// any spot. Drawn as a dot is, by where the nearest tap that muted the string sits from the one being
-    /// named; a heard ✕ glows. While *Into it* waits for a start it's dimmed: a start is a fret.
+    /// named; a heard ✕ glows. While *Into it* waits for a start it's dimmed and off: a start is a fret. A lit
+    /// arrow dims it too, since a muted note has no pitch, but it still takes a tap (ADR 0301 D3).
     private func muteSpot(string: Int, mark: NeckNeighbours.Mark?) -> some View {
         let isPlaced = mark?.tier == .current
         let isHeard = PieceNeck.heardMutes(hearing, of: labels).contains(string)
+        let dimmed = awaitingStart != nil || narrowing?.dimsMute(string: string) == true
         return Button {
             onMute(string)
         } label: {
             NeckSpotDot(name: PieceLabel.mutedName, tier: mark?.tier, number: mark.map { $0.note + 1 },
-                        isDimmed: awaitingStart != nil)
+                        isDimmed: dimmed)
                 .background {
                     if isHeard { Circle().fill(accent.opacity(0.42)).frame(width: 36, height: 36) }
                 }
         }
         .buttonStyle(.plain)
         .disabled(awaitingStart != nil)
-        .accessibilityLabel("\(stringNames[string]) string, muted" + Self.neighbourWords(mark, noun: noun))
+        .accessibilityLabel("\(stringNames[string]) string, muted" + Self.neighbourWords(mark, noun: noun)
+                            + (dimmed ? ", dimmed" : ""))
         .accessibilityAddTraits(isPlaced ? .isSelected : [])
         .accessibilityIdentifier("neck.mute.\(string)")
     }
