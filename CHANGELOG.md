@@ -21,6 +21,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Prepare a set** (ADR 0299). A long-term goal can now hold several songs: a set you're getting ready
+  to play for people. Start one from *Prepare a set* in Long-term goals, name it, and tick its songs.
+  There's no running order and no date. A session built from it takes its songs in turn, the one you've
+  left longest first. In the Practice log's *By goal*, a set shows the time on all its songs and opens
+  onto them, with any you haven't played yet at 0 minutes. Mark it met after the gig, or keep it open
+  and change its songs for the next one.
 - **What you played, by goal** (ADR 0298). Once you have a long-term goal, the Practice log's *What
   you played* switch gains **By goal**: each goal with the time that went toward it that week or
   month, and **Free play** for everything no goal names. Tap a goal to see the kinds of work its time

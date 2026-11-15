@@ -11,6 +11,8 @@ struct SkillReach: Equatable {
     var loops: Int
     /// Whether the target song's own play-through is among what it pulls (Path B).
     var songRun: Bool
+    /// How many songs' play-throughs: more than one only for a set (ADR 0299).
+    var songCount: Int = 0
 
     /// Nothing at all — the case the editor offers a fix for.
     var isEmpty: Bool { exercises == 0 && loops == 0 && !songRun }
@@ -31,16 +33,18 @@ enum GoalReach {
 
     /// A reach per skill, in the order given. `targetSongUID` is the goal's chosen song, which is
     /// what a repertoire skill resolves through.
-    static func reach(skillIDs: [String], targetSongUID: UUID?,
+    /// `setSongUIDs` are a set's songs (ADR 0299), resolved the same way.
+    static func reach(skillIDs: [String], targetSongUID: UUID?, setSongUIDs: [UUID] = [],
                       library: PlannerLibrary) -> [SkillReach] {
         skillIDs.map { skillID in
             let probe = PlannerGoal(weight: 1.0, skillIDs: [skillID], targetSongUID: targetSongUID,
-                                    isMet: false)
+                                    setSongUIDs: setSongUIDs, isMet: false)
             let units = CandidateDeriver.deriveCandidates(goals: [probe], library: library).map(\.unit)
+            let songs = units.filter { $0.kind == .song }.count
             return SkillReach(skillID: skillID,
                               exercises: units.filter { $0.kind == .exercise }.count,
                               loops: units.filter { $0.kind == .loop }.count,
-                              songRun: units.contains { $0.kind == .song })
+                              songRun: songs > 0, songCount: songs)
         }
     }
 
@@ -50,7 +54,11 @@ enum GoalReach {
         var parts: [String] = []
         if reach.exercises > 0 { parts.append(counted(reach.exercises, "exercise")) }
         if reach.loops > 0 { parts.append(counted(reach.loops, "loop")) }
-        if reach.songRun { parts.append("the song itself") }
+        if reach.songCount > 1 {
+            parts.append("\(reach.songCount) songs")
+        } else if reach.songRun {
+            parts.append("the song itself")
+        }
         return parts.isEmpty ? "Nothing in your library yet" : parts.joined(separator: " · ")
     }
 

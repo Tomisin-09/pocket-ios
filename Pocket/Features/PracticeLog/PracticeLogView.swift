@@ -62,9 +62,9 @@ struct PracticeLogView: View {
                 exercise.linkedSongs.count == 1 ? (exercise.uid, exercise.linkedSongs[0].sourceID) : nil
             }, uniquingKeysWith: { first, _ in first }),
             // In rank order, so the highest-ranked goal names a song two goals share (ADR 0295 D4).
-            songGoals: Dictionary(LongTermGoalStore.inRankOrder(longTermGoals).compactMap { goal in
-                guard let song = goal.targetSong else { return nil }
-                return (song.sourceID, goal.displayTitle)
+            // A set names each of its songs too (ADR 0299 D5).
+            songGoals: Dictionary(LongTermGoalStore.inRankOrder(longTermGoals).flatMap { goal in
+                ([goal.targetSong?.sourceID].compactMap { $0 } + goal.setSongIDs).map { ($0, goal.displayTitle) }
             }, uniquingKeysWith: { first, _ in first }),
             goals: goalClaims)
     }
@@ -76,7 +76,8 @@ struct PracticeLogView: View {
         let library = PracticePlanner.library(exercises: exercises, loops: loops, songs: songs)
         let sources = LongTermGoalStore.inRankOrder(longTermGoals).map { goal in
             GoalAttribution.Source(goal: goal.plannerProjection, title: goal.displayTitle,
-                                   songSourceID: goal.targetSong?.sourceID, since: goal.dateAdded)
+                                   songSourceID: goal.targetSong?.sourceID, setSongIDs: goal.setSongIDs,
+                                   since: goal.dateAdded)
         }
         return GoalAttribution.claims(sources, library: library)
     }

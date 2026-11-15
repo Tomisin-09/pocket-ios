@@ -142,6 +142,7 @@ extension ArchiveBuilder {
                            skillIDs: goal.skillIDs.sorted(),
                            order: goal.order,
                            targetSongID: goal.targetSong?.sourceID,
+                           setSongIDs: goal.isSet ? goal.setSongIDs.sorted() : nil,
                            isMet: goal.isMet,
                            dateAdded: goal.dateAdded)
     }

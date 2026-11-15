@@ -14,7 +14,8 @@ import Foundation
 ///   claims, whether it is there to train, to hear or to solo over (ADR 0139 O2a); only runs of that
 ///   kind count. A loop a skill states, with no mode of its own, counts as the trainer.
 /// - **A target song counts whole.** Every run *By song* counts under the song counts toward a goal
-///   that names it, whatever kind of work it was: learning a song by ear is learning the song.
+///   that names it, whatever kind of work it was: learning a song by ear is learning the song. A set
+///   counts each of its songs the same way (ADR 0299 D5).
 ///
 /// Pure and Foundation-only.
 enum GoalAttribution {
@@ -26,6 +27,8 @@ enum GoalAttribution {
         var title: String
         /// The target song by `Song.sourceID`. `PlannerGoal` holds only the planner's id for it.
         var songSourceID: String?
+        /// A set's songs by `Song.sourceID` (ADR 0299).
+        var setSongIDs: [String] = []
         /// When the goal was set (`LongTermGoal.dateAdded`).
         var since: Date?
     }
@@ -49,8 +52,10 @@ enum GoalAttribution {
             }
             return PracticeBreakdown.GoalClaim(id: source.goal.uid, title: source.title,
                                                isMet: source.goal.isMet,
-                                               songSourceID: source.songSourceID, units: units,
-                                               since: source.since)
+                                               songSourceIDs: Set([source.songSourceID].compactMap { $0 }
+                                                                     + source.setSongIDs),
+                                               units: units, since: source.since,
+                                               isSet: !source.setSongIDs.isEmpty)
         }
     }
 

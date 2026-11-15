@@ -7,6 +7,8 @@
   grouping, by goal (D2–D5), and a goal made from the song template is named for its song (D1). The
   rest of 0295 stands. By kind is still what the list opens on, by song is unchanged, and its D4
   caption now carries the goal's shown name.
+- **Amended by:** ADR 0299 (2026-11-15) — a **set** counts each of its songs the way D2 counts a target
+  song, and opens onto its songs rather than kinds of work (an exception to D5). D3, D4 and D6 stand.
 - **Relates to:** 0171 (long-term goals: the echo is untouched, D7's ban on a denominator holds, and
   D1's "no date" holds, since `dateAdded` is read in D4 and never shown) · 0241 (the list this
   regroups) · 0070 (never grades: ranked by minutes, nothing marked) · 0139 (O2a, the mode a loop is

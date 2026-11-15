@@ -27,7 +27,7 @@ final class PracticeBreakdownGoalTests: XCTestCase {
 
     private func claim(_ id: UUID, _ title: String, song: String? = nil, met: Bool = false,
                        units: [(UUID, PracticeRunKind)] = []) -> PracticeBreakdown.GoalClaim {
-        PracticeBreakdown.GoalClaim(id: id, title: title, isMet: met, songSourceID: song,
+        PracticeBreakdown.GoalClaim(id: id, title: title, isMet: met, songSourceIDs: Set([song].compactMap { $0 }),
                                     units: Set(units.map { PracticeBreakdown.UnitClaim(uid: $0.0, kind: $0.1) }))
     }
 
@@ -148,7 +148,7 @@ final class PracticeBreakdownGoalTests: XCTestCase {
     func testAGoalIsNotListedAtNothingForPracticeFromBeforeItWasSet() {
         var later = names
         later.goals[2] = PracticeBreakdown.GoalClaim(id: speedGoal, title: "Build speed", isMet: false,
-                                                     songSourceID: nil, units: [],
+                                                     songSourceIDs: [], units: [],
                                                      since: start.addingTimeInterval(60 * 60))
         let before = PracticeBreakdown.goalRows([run(.song, minutes: 20, song: sunday)], names: later)
         XCTAssertFalse(before.contains { $0.title == "Build speed" }, "it had nothing to get yet")

@@ -82,6 +82,10 @@ struct LongTermGoalRecord: Codable, Equatable, Sendable {
     var skillIDs: [String]
     var order: Int
     var targetSongID: String?
+    /// A set's songs by `Song.sourceID` (ADR 0299). **Optional**, so an archive made before sets
+    /// existed still decodes: a synthesised default does not survive a missing key. `nil` for a goal
+    /// that isn't a set, so its record encodes exactly as before.
+    var setSongIDs: [String]?
     var isMet: Bool
     var dateAdded: Date
 }

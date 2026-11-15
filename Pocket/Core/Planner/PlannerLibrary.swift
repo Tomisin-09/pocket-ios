@@ -103,19 +103,26 @@ struct PlannerGoal: Equatable {
     var weight: Double
     var skillIDs: [String]
     var targetSongUID: UUID?
+    /// A set's songs (ADR 0299), each resolved the way a target song is. Empty for every other goal.
+    var setSongUIDs: [UUID]
     var isMet: Bool
 
     init(uid: UUID = UUID(),
          weight: Double = 1.0,
          skillIDs: [String],
          targetSongUID: UUID? = nil,
+         setSongUIDs: [UUID] = [],
          isMet: Bool = false) {
         self.uid = uid
         self.weight = weight
         self.skillIDs = skillIDs
         self.targetSongUID = targetSongUID
+        self.setSongUIDs = setSongUIDs
         self.isMet = isMet
     }
+
+    /// The songs the repertoire path resolves through: the target song, or a set's songs.
+    var repertoireSongUIDs: [UUID] { targetSongUID.map { [$0] } ?? setSongUIDs }
 }
 
 /// A **deterministic** UUID derived from a stable string identity — used so the planner can key

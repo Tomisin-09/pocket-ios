@@ -37,6 +37,10 @@ struct LongTermGoalEditorView: View {
     @State private var offeredSkillIDs: [String] = []
     @State private var keptSkillIDs: Set<String> = []
     @State private var targetSong: Song?
+    /// A set's songs by `Song.sourceID` (ADR 0299), and whether this goal is one. A set is known by its
+    /// songs once saved (D3); while editing, by the starting point it came from.
+    @State private var setSongIDs: Set<String> = []
+    @State private var holdsSet = false
     @State private var isMet = false
     @State private var showingSkillPicker = false
     /// Whether the player chose **Something else** — no template, straight to the form. Its own flag
@@ -44,7 +48,15 @@ struct LongTermGoalEditorView: View {
     /// and a blank start deliberately has none.
     @State private var startedBlank = false
 
-    private var needsTargetSong: Bool { goalNeedsTargetSong(keptSkillIDs) }
+    private var needsTargetSong: Bool { !holdsSet && goalNeedsTargetSong(keptSkillIDs) }
+
+    /// Save waits for a skill, and for a set, a song: a set saved with none would not be one (D3).
+    private var canSave: Bool { !keptSkillIDs.isEmpty && (!holdsSet || !liveSetSongIDs.isEmpty) }
+
+    /// The chosen songs still in the library, in a stable order for the store.
+    private var liveSetSongIDs: [String] {
+        songs.map(\.sourceID).filter { setSongIDs.contains($0) }.sorted()
+    }
 
     private var isPickingTemplate: Bool { existing == nil && template == nil && !startedBlank }
 
@@ -52,7 +64,8 @@ struct LongTermGoalEditorView: View {
         NavigationStack {
             Group {
                 if isPickingTemplate {
-                    GoalTemplatePicker(onPick: choose, onStartBlank: startBlank)
+                    GoalTemplatePicker(onPick: choose, onStartBlank: startBlank,
+                                       templates: GoalTemplateLibrary.offered(longTerm: true))
                 } else {
                     editorForm
                 }
@@ -70,7 +83,7 @@ struct LongTermGoalEditorView: View {
                         Button("Save") { save() }
                             .font(.futura(.body, weight: .bold))
                             .tint(PocketColor.practice)
-                            .disabled(keptSkillIDs.isEmpty)
+                            .disabled(!canSave)
                     }
                 }
             }
@@ -98,10 +111,15 @@ struct LongTermGoalEditorView: View {
                               showingSkillPicker: $showingSkillPicker,
                               reach: goalSkillReach(offeredSkillIDs,
                                                     targetSong: needsTargetSong ? targetSong : nil,
+                                                    setSongIDs: holdsSet ? liveSetSongIDs : [],
                                                     exercises: exercises, loops: loops, songs: songs),
                               onFix: applyFix)
 
-            if needsTargetSong { GoalTargetSongSection(songs: songs, targetSong: $targetSong) }
+            if holdsSet {
+                GoalSetSongsSection(songs: songs, songIDs: $setSongIDs)
+            } else if needsTargetSong {
+                GoalTargetSongSection(songs: songs, targetSong: $targetSong)
+            }
 
             metAndDeleteSection
         }
@@ -152,12 +170,15 @@ struct LongTermGoalEditorView: View {
         offeredSkillIDs = existing.skillIDs
         keptSkillIDs = Set(existing.skillIDs)
         targetSong = existing.targetSong
+        setSongIDs = Set(existing.setSongIDs)
+        holdsSet = existing.isSet
         isMet = existing.isMet
     }
 
     private func choose(_ candidate: GoalTemplate) {
         template = candidate
         title = candidate.title
+        holdsSet = candidate.holdsSet
         offeredSkillIDs = candidate.skillIDs
         keptSkillIDs = Set(candidate.skillIDs)
         haptic(.light)
@@ -182,6 +203,7 @@ struct LongTermGoalEditorView: View {
         goal.title = finalTitle.isEmpty ? (template?.title ?? "Long-term goal") : finalTitle
         goal.skillIDs = keptOrdered
         goal.targetSong = needsTargetSong ? targetSong : nil
+        goal.setSongIDs = holdsSet ? liveSetSongIDs : []
         goal.isMet = isMet
         if existing == nil { context.insert(goal) }
         try? context.save()

@@ -64,7 +64,9 @@ The goal editor, the review screen and what happens when nothing resolves are al
      | state: seeded library, Practice ▸ Long-term goals, two goals ranked -->
 
 A numbered list under `Ranked`, each row carrying the goal's name and its skill count — plus its
-target song when it has one. Below them, `Add a long-term goal`.
+target song when it has one, or for a set how many songs it holds. Below them, `Add a long-term goal`.
+Its starting points add `Prepare a set` to the shared list. A set's editor has a `Songs` section
+instead of a target song, with `Choose songs` to tick several at once.
 
 The toolbar carries one control, `Reorder goals`, which is off until there are two to reorder.
 

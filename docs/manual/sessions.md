@@ -137,8 +137,21 @@ Today's session, it stays put: you set it once and it keeps steering sessions un
 
 The ones you pick on the [first run](getting-started.md#the-first-run) start this list. They live
 in their own list, in **Practice ▸ Edit goals**, and they are authored exactly like
-the goals above — same four starting points, same skill trimming, same target song, same **Mark as
+the goals above — same starting points, same skill trimming, same target song, same **Mark as
 met**. What they do not have is a priority control, and what they do not have is a deadline.
+
+### Preparing a set
+
+A long-term goal can hold several songs at once: a set you are getting ready to play for people.
+Start one from **Prepare a set**, which sits beside **Play a specific song** in the long-term list
+only, and give it a name of your own, such as *Symposium set*. Under **Songs**, tap **Choose songs**
+and tick as many as you like. There is no running order. **Save** waits until at least one song is
+in it.
+
+A set works like any other long-term goal. It ranks with the rest, and when a session is built from
+it, its songs take turns: one at a time, the one you have left longest first, so a set never fills a
+whole session. When the gig is done, mark it met. If you will play the same set again, leave it open
+and change its songs instead. A met set comes back if you turn **Mark as met** off.
 
 **There is no deadline, and there is nothing to be late for.** Nothing here counts down, nothing
 turns red, and nothing tells you a goal is overdue. That is deliberate: a goal you set for yourself

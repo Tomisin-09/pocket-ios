@@ -14,6 +14,8 @@ struct GoalTemplate: Identifiable, Equatable {
     /// that need a song attached to produce candidates.
     var requiresTargetSong: Bool
     var iconName: String
+    /// Whether the goal holds **several** songs, a set (ADR 0299), rather than one target song.
+    var holdsSet: Bool = false
 
     /// Build a fresh `Goal` from this template (neutral weight, no target yet). Impure only in that
     /// it constructs a `@Model`; the seeded data is all pure.
@@ -32,6 +34,23 @@ enum GoalTemplateLibrary {
                                        skillIDs: ["rep.learn-song", "rep.master-song"],
                                        requiresTargetSong: true,
                                        iconName: "music.note")
+
+    /// **Prepare a set** (ADR 0299): several songs got ready to play for people. Offered by the
+    /// long-term tier only (D2), so it is not in `all`, which both tiers share (ADR 0171 D5).
+    static let prepareSet = GoalTemplate(id: "prepare-set",
+                                         title: "Prepare a set",
+                                         blurb: "Get a handful of songs ready to play for people.",
+                                         skillIDs: ["rep.learn-song", "rep.master-song"],
+                                         requiresTargetSong: false,
+                                         iconName: "music.note.list",
+                                         holdsSet: true)
+
+    /// The starting points an editor offers: the shared ten, and for a long-term goal *Prepare a set*
+    /// beside *Play a specific song*.
+    static func offered(longTerm: Bool) -> [GoalTemplate] {
+        guard longTerm else { return all }
+        return [playSong, prepareSet] + all.dropFirst()
+    }
 
     static let all: [GoalTemplate] = [
         playSong,
@@ -92,5 +111,5 @@ enum GoalTemplateLibrary {
     ]
 
     /// A template by id, or `nil` when unknown.
-    static func template(_ id: String) -> GoalTemplate? { all.first { $0.id == id } }
+    static func template(_ id: String) -> GoalTemplate? { offered(longTerm: true).first { $0.id == id } }
 }
