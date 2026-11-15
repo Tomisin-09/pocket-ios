@@ -52,14 +52,45 @@ enum NamingStrip {
 
     // MARK: - A phrase (0227 D2, after the device check)
 
-    /// How many notes a tap can play: the note alone, up to eight, about a bar of quavers. Past that the
-    /// strip's play button, the whole loop, is the better listen.
-    static let phraseChoices = [1, 2, 3, 4, 6, 8]
+    /// How many notes a tap can play: the note alone, up to eight, about a bar of quavers, or every note
+    /// before it (`upToTheNote`, ADR 0300). The whole loop, which doesn't stop on the note, is the strip's
+    /// play button.
+    static let phraseChoices = [1, 2, 3, 4, 6, 8, upToTheNote]
 
-    /// The taps a phrase ending on `index` plays: up to `notes` of them, `index` the last. Near the start
-    /// of the pass there are fewer before it to take.
+    /// *Up to the note* (ADR 0300): the pass from its first tap, ending on the one being named. Stored as
+    /// 0, which a build before it clamps to the note alone, so going back a version plays *Just the note*.
+    static let upToTheNote = 0
+
+    /// The taps a phrase ending on `index` plays: up to `notes` of them, `index` the last, or all of them
+    /// from the first for `upToTheNote`. Near the start of the pass there are fewer before it to take.
     static func phrase(endingAt index: Int, notes: Int) -> ClosedRange<Int> {
-        max(0, index - max(1, notes) + 1)...index
+        notes == upToTheNote ? 0...index : max(0, index - max(1, notes) + 1)...index
+    }
+
+    /// The strip header's menu, said for a phrase length: *Hear 3 notes*, *Hear 1 note*, *Hear up to the
+    /// note*.
+    static func hearTitle(_ notes: Int, noun: String) -> String {
+        notes == upToTheNote ? "Hear up to the \(noun)" : "Hear \(notes) \(noun)\(notes == 1 ? "" : "s")"
+    }
+
+    /// One choice in that menu: *Just the note*, *3 notes*, *Up to the note*.
+    static func choiceTitle(_ notes: Int, noun: String) -> String {
+        switch notes {
+        case upToTheNote: "Up to the \(noun)"
+        case 1: "Just the \(noun)"
+        default: "\(notes) \(noun)s"
+        }
+    }
+
+    /// What a tap plays, in the subtitle's words, so the header's *Hear 3 notes* is said in full once:
+    /// "Tap a note to hear *it with the 2 notes before it*".
+    static func tapPlays(_ notes: Int, noun: String) -> String {
+        if notes == upToTheNote { return "it with every \(noun) before it" }
+        switch max(1, notes) - 1 {
+        case 0: return "just that moment"
+        case 1: return "it with the \(noun) before it"
+        case let before: return "it with the \(before) \(noun)s before it"
+        }
     }
 
     /// The chip being heard while a phrase plays: the last of its taps the ear has reached, or `nil` before
@@ -254,17 +285,9 @@ struct NameTheNotesSheet: View {
 
     private var subtitle: String {
         let count = taps.count
-        return "Your saved piece · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear \(tapPlays), "
+        let plays = NamingStrip.tapPlays(phraseNotes, noun: noun)
+        return "Your saved piece · \(count) \(noun)\(count == 1 ? "" : "s"). Tap a \(noun) to hear \(plays), "
             + "or play the whole loop."
-    }
-
-    /// What a tap plays, in the subtitle's words, so the header's *Hear 3 notes* is said in full once.
-    private var tapPlays: String {
-        switch max(1, phraseNotes) - 1 {
-        case 0: "just that moment"
-        case 1: "it with the \(noun) before it"
-        case let before: "it with the \(before) \(noun)s before it"
-        }
     }
 
     /// The fret the neck scrolls to for an answer on it: the middle of its frets, bends included.

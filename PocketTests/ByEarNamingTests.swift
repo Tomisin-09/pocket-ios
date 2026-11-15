@@ -146,7 +146,32 @@ final class ByEarNamingTests: XCTestCase {
         XCTAssertEqual(NamingStrip.phrase(endingAt: 5, notes: 3), 3...5)
         XCTAssertEqual(NamingStrip.phrase(endingAt: 1, notes: 3), 0...1, "near the start, fewer before it")
         XCTAssertEqual(NamingStrip.phrase(endingAt: 4, notes: 1), 4...4, "just the note")
-        XCTAssertEqual(NamingStrip.phrase(endingAt: 4, notes: 0), 4...4, "never less than the note")
+        XCTAssertEqual(NamingStrip.phrase(endingAt: 4, notes: -1), 4...4, "never less than the note")
+        XCTAssertEqual(NamingStrip.phrase(endingAt: 2, notes: 8), 0...2, "more asked for than there is")
+    }
+
+    /// *Up to the note* (ADR 0300) plays the pass from its first tap, wherever the note is, and on the first
+    /// note it is the note alone. It is stored as 0, the value a build before it clamps to *Just the note*.
+    func testUpToTheNotePlaysThePassFromItsFirstTap() {
+        XCTAssertEqual(NamingStrip.upToTheNote, 0, "an older build reads 0 as just the note: keep it 0")
+        XCTAssertEqual(NamingStrip.phrase(endingAt: 59, notes: NamingStrip.upToTheNote), 0...59)
+        XCTAssertEqual(NamingStrip.phrase(endingAt: 0, notes: NamingStrip.upToTheNote), 0...0)
+        XCTAssertEqual(NamingStrip.phraseChoices.last, NamingStrip.upToTheNote, "last in the menu, after 8")
+        XCTAssertEqual(Set(NamingStrip.phraseChoices).count, NamingStrip.phraseChoices.count)
+    }
+
+    func testThePhraseMenuAndSubtitleSayEachLength() {
+        let upTo = NamingStrip.upToTheNote
+        XCTAssertEqual(NamingStrip.hearTitle(3, noun: "note"), "Hear 3 notes")
+        XCTAssertEqual(NamingStrip.hearTitle(1, noun: "note"), "Hear 1 note")
+        XCTAssertEqual(NamingStrip.hearTitle(upTo, noun: "chord"), "Hear up to the chord")
+        XCTAssertEqual(NamingStrip.choiceTitle(1, noun: "note"), "Just the note")
+        XCTAssertEqual(NamingStrip.choiceTitle(6, noun: "chord"), "6 chords")
+        XCTAssertEqual(NamingStrip.choiceTitle(upTo, noun: "note"), "Up to the note")
+        XCTAssertEqual(NamingStrip.tapPlays(1, noun: "note"), "just that moment")
+        XCTAssertEqual(NamingStrip.tapPlays(2, noun: "note"), "it with the note before it")
+        XCTAssertEqual(NamingStrip.tapPlays(3, noun: "chord"), "it with the 2 chords before it")
+        XCTAssertEqual(NamingStrip.tapPlays(upTo, noun: "note"), "it with every note before it")
     }
 
     /// The phrase's slice starts just before its first tap, which is after the tap before the phrase: that

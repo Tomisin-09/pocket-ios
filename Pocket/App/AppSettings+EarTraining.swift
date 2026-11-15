@@ -19,7 +19,8 @@ extension AppSettings {
 
     /// How many notes a tap in Name the notes plays, ending on the one being named, remembered across
     /// loops and launches. **Three**: the note and the two before it, enough to hear how the line arrived
-    /// at it; one is the note alone, as the sheet first played it. Named for the reason
-    /// `countShowsBeatsDefault` is, and clamped where it's used (`NamingStrip.phrase`).
+    /// at it; one is the note alone, as the sheet first played it, and 0 is *Up to the note*
+    /// (`NamingStrip.upToTheNote`, ADR 0300). Named for the reason `countShowsBeatsDefault` is, and
+    /// clamped where it's used (`NamingStrip.phrase`).
     static let namingPhraseNotesDefault = 3
 }
