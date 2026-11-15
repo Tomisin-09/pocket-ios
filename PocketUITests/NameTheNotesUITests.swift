@@ -83,7 +83,62 @@ final class NameTheNotesUITests: UITestCase {
         app.navigationBars["Name the notes"].buttons["Cancel"].tap()
     }
 
+    /// *Higher* dims the spots the note can't be, a dimmed spot still takes a tap, and placing takes the arrow
+    /// off; an arrow on a note whose note before isn't placed waits on its chip (ADR 0301 D3–D5). The rules
+    /// are `PitchDirectionTests`'; this is the wiring from the row to the neck.
+    @MainActor
+    func testAnArrowDimsTheNeckAndPlacingTakesItOff() {
+        let app = openNameTheNotes()
+        let first = app.descendants(matching: .any)["naming.chip.0"]
+        XCTAssertTrue(first.waitForExistence(timeout: Self.uiTimeout))
+        let higher = app.buttons["naming.direction.higher"]
+        XCTAssertTrue(higher.waitForExistence(timeout: Self.uiTimeout), "no direction row over the neck")
+        XCTAssertFalse(higher.isEnabled, "note 1 has nothing before it")
+
+        // Note 1 on G5, a C.
+        neckSpot("G string, fret 5,", in: app).tap()
+        let second = app.descendants(matching: .any)["naming.chip.1"]
+        XCTAssertTrue(waitForLabel("Note 1, G5", on: first), "placing didn't fill the chip: \(first.label)")
+        XCTAssertTrue(second.isSelected, "placing a note should move on to the next")
+
+        higher.tap()
+        XCTAssertTrue(higher.isSelected, "Higher didn't light")
+        let below = neckSpot("G string, fret 3,", in: app)
+        XCTAssertTrue(below.label.hasSuffix(", dimmed"), "G3 is lower than G5 but isn't dimmed: \(below.label)")
+        let above = neckSpot("G string, fret 7,", in: app)
+        XCTAssertFalse(above.label.contains("dimmed"), "G7 is higher than G5 but is dimmed: \(above.label)")
+        XCTAssertFalse(neckSpot("G string, fret 5,", in: app).label.contains("dimmed"),
+                       "the note compared with should stay bright")
+        attach(app, named: "naming-direction-higher")
+
+        // Dimmed, never locked, and placing wins.
+        below.tap()
+        XCTAssertTrue(waitForLabel("Note 2, G3", on: second), "a dimmed spot didn't take the tap: \(second.label)")
+        second.tap()
+        XCTAssertTrue(second.isSelected)
+        XCTAssertFalse(higher.isSelected, "placing should have taken the arrow off")
+
+        // Note 4 isn't placed, so an arrow on note 5 waits on its chip and dims nothing.
+        let fifth = app.descendants(matching: .any)["naming.chip.4"]
+        fifth.tap()
+        app.buttons["naming.direction.lower"].tap()
+        XCTAssertTrue(waitForLabel("Note 5, not named, heard lower", on: fifth), "no arrow on the chip: \(fifth.label)")
+        XCTAssertEqual(app.staticTexts["naming.direction.line"].label, "Nothing is dimmed until note 4 is placed.")
+        XCTAssertFalse(neckSpot("G string, fret 3,", in: app).label.contains("dimmed"), "nothing should dim yet")
+        attach(app, named: "naming-direction-waiting")
+
+        app.navigationBars["Name the notes"].buttons["Cancel"].tap()
+    }
+
     // MARK: - The way in
+
+    /// A spot on the neck by the start of its label: *"G string, fret 5,"*.
+    @MainActor
+    private func neckSpot(_ start: String, in app: XCUIApplication) -> XCUIElement {
+        let spot = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", start)).firstMatch
+        XCTAssertTrue(spot.waitForExistence(timeout: Self.uiTimeout), "no \(start) on the neck")
+        return spot
+    }
 
     @MainActor
     private func openNameTheNotes(file: StaticString = #filePath, line: UInt = #line) -> XCUIApplication {

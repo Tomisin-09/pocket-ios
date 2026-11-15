@@ -13,12 +13,22 @@ struct PieceChip: View {
     var dim = false
     /// Filled: the chip being named.
     var isCurrent = false
+    /// The symbol of the arrow the player gave it, *Higher*, *Same* or *Lower* (ADR 0301 D7), shown beside
+    /// its number. Only Name the notes' strip sets one.
+    var arrow: String?
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("\(number)")
-                .font(.futura(.caption2))
-                .monospacedDigit()
+            HStack(spacing: 2) {
+                Text("\(number)")
+                    .font(.futura(.caption2))
+                    .monospacedDigit()
+                if let arrow {
+                    Image(systemName: arrow)
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(isCurrent ? PocketColor.background : PocketColor.practice)
+                }
+            }
             Text(text ?? "?")
                 .font(.futura(.subheadline, weight: text == nil || dim ? nil : .bold))
                 .lineLimit(1)

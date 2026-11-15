@@ -154,7 +154,10 @@ extension NameTheNotesSheet {
     private func chip(_ index: Int, snagged: Bool) -> some View {
         let shown = chipText(index)
         let isActive = index == active
-        return PieceChip(number: index + 1, text: shown.text, dim: shown.dim, isCurrent: isActive)
+        // An arrow shows on Fret & string, where it can dim, as the joins between chips do (ADR 0301 D7).
+        let arrow = showsDirection ? arrows[taps[index].seconds] : nil
+        return PieceChip(number: index + 1, text: shown.text, dim: shown.dim, isCurrent: isActive,
+                         arrow: arrow?.symbol)
         // The note just placed, which the marks are still on while the strip has moved past it (ADR
         // 0234 D3): outlined in dashes, the way a bend's landing is drawn on the neck.
         .overlay {
@@ -179,7 +182,7 @@ extension NameTheNotesSheet {
         .onLongPressGesture(minimumDuration: 0.4) { toggleSnag(on: index) }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(noun.capitalized) \(index + 1), \(shown.text.map(PieceLabel.spoken) ?? "not named")"
-                            + (snagged ? ", snagged" : ""))
+                            + (arrow.map { ", \($0.heard)" } ?? "") + (snagged ? ", snagged" : ""))
         .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : .isButton)
         .accessibilityAction { select(index) }
         .accessibilityAction(named: snagged ? "Take the snag off" : "Snag this \(noun)") { toggleSnag(on: index) }

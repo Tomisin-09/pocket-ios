@@ -697,6 +697,12 @@ each note you hear, then name them. The pieces, from the audio up:
     change to it through `write`, so a change is still one `commit`; the rules are the pure
     `NeckEditing`. The `.naming` voice keeps every string, and `neckAccent` (practice teal by default)
     is the only colour it takes.
+  - Since ADR 0301, a row over the neck (`NameTheNotesSheet+Direction`) holds *Higher*, *Same* and
+    *Lower*. The arrows live in the sheet's `arrows`, keyed by tap time, and are never saved.
+    `PitchDirection` (`Core/Theory`, pure) reads the note before (`Before`) at its landing pitch, and
+    `NeckNarrowing` is the dim, which `NeckNoteEditor` takes as an optional input (the tab writer passes
+    none). `commit` and ↶ ↷ run `PitchDirection.kept`, so an arrow goes when its note is answered or
+    the note before it changes.
 - **Watching** (ADR 0254). `WatchOnNeckSheet` plays a named piece back on the neck while the loop's own
   audio plays: a viewing sheet, not a `LoopRunMode`, so it has no routine block, no log and no takes. It
   holds its own `ContinuousLoopPlayer` (starting at `loop.ramp.command`) and the same one clock leaf as

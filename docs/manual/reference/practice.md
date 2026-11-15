@@ -284,6 +284,19 @@ this visit: a fret, a mark, a name, a note taken out or tapped in, a new tuning.
 never plays your answer: tap the note in the strip, play it on your own instrument, and you decide
 whether they match.
 
+On Fret & string you can say which way a note went before you place it. The row over the neck names
+the note before the one you're naming, *From note 5 · D*, with `Higher`, `Same` and `Lower` beside it.
+Pick one and the neck dims every spot the note can't be. `Same` leaves only the four or five places
+that pitch is played. Dimmed spots still take a tap. Placing the note takes the arrow off, and Red Moon
+never says your note and your arrow disagree. The note before is compared where it lands: a held bend
+counts at its bent pitch, and a released one at its fret.
+
+Nothing dims until the note before is placed, so you can go through a pass saying only which way each
+note went, then place the notes afterwards. Tap a note, listen, and pick an arrow. Each arrow waits on
+its note in the strip and dims the neck once the note before it is placed. Tap a lit arrow again to take
+it off. The arrows aren't saved. The row isn't on By ear, where a name has no octave, and it isn't on a
+loop of chords.
+
 **See Help & FAQs: "Do I tap a hammer-on, slide or bend once or twice?"**
 
 <!-- shot: reference/name-by-ear | role: screen

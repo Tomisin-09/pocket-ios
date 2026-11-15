@@ -21,6 +21,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Higher, same or lower** (ADR 0301). In *Name the notes*, on *Fret & string*, a new row over the neck
+  lets you say which way a note went from the one before: **Higher**, **Same** or **Lower**. The neck
+  then dims every spot the note can't be, so a *Same* leaves only the few places that pitch is played.
+  Dimmed spots still take a tap, and placing the note takes the arrow off. You can go through a pass
+  saying only the directions first. Each arrow waits on its note in the strip and starts dimming as
+  soon as the note before it is placed. The arrows aren't saved.
+
 - **Hear up to the note** (ADR 0300). In *Name the notes*, the menu at the top right of the strip
   (*Hear 3 notes*) has a new last choice, **Up to the note**. Tapping a note then plays every note of
   the pass before it and stops on it, so the note you're naming is still the last thing you hear. The

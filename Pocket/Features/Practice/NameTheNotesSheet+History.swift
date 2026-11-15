@@ -90,7 +90,10 @@ extension NameTheNotesSheet {
     /// Write a new pass (a correction adds or takes out a tap) as one step, tidied.
     func commit(taps next: [PieceTranscription.Tap], tuning nextTuning: NamingTuning? = nil) {
         let before = currentStep
-        taps = PassCorrection.tidied(next)
+        let tidied = PassCorrection.tidied(next)
+        // An arrow goes when its note is answered or the note before it changes (ADR 0301 D6).
+        arrows = PitchDirection.kept(arrows, from: taps, to: tidied)
+        taps = tidied
         if let nextTuning { tuning = nextTuning }
         history.record(before, now: currentStep)
     }
@@ -111,6 +114,8 @@ extension NameTheNotesSheet {
         if player.isSlicePlaying { player.stopSlice() }
         // The ring's taps may have moved under it.
         sounding = nil
+        // ↶ ↷ step through answers, not arrows, but an arrow whose note they change still goes (ADR 0301 D6).
+        arrows = PitchDirection.kept(arrows, from: taps, to: step.taps)
         taps = step.taps
         tuning = NamingTuning(openMidi: step.openMidi, label: step.tuningLabel)
         placedNote = nil

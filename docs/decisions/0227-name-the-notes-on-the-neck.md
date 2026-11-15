@@ -43,6 +43,11 @@
 - **Amended by:** ADR 0300 (Hear up to the note, 2026-11-15) — **D2**: *Hear a phrase* gains a last
   choice, *Up to the note*: every note from the pass's first tap, ending on the one being named, with no
   cap on length. It is stored as 0, which an older build reads as *Just the note*. The rest of D2 stands.
+- **Amended by:** ADR 0301 (Higher, same or lower, 2026-11-15) — **D3**: a row over the neck on Fret &
+  string, *From note 5 · D* with *Higher*, *Same* and *Lower*; while one is lit, the spots the note can't
+  be are dimmed and still take a tap. **D10**: the player saying which way a note went is added past it;
+  the arrows are never saved. The rest of D3 and D10 stands, *never detected, never suggested* and *no
+  scale shape behind the neck* included.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the
   synth withdrawn here, and D4.3, the route back) · 0093 (the chord namer that names a shape) · 0095
   (My chords, whose one-note-per-string rule the Chords switch follows) · 0065 (exercise templates, whose scales editor

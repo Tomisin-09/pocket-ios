@@ -171,6 +171,9 @@ struct NameTheNotesSheet: View {
     @State var lineDraft: String?
     /// Bumped when the pad is tapped with nothing playing, to say why nothing was added.
     @State var missedNudge = 0
+    /// *Higher*, *Same* or *Lower* the player gave a note, by its tap's time (ADR 0301). Kept while the sheet
+    /// is open and never saved (D6); `PitchDirection.kept` says which survive a change to the pass.
+    @State var arrows: [TimeInterval: PitchDirection] = [:]
 
     init(request: NamingRequest, loop: Loop, player: ContinuousLoopPlayer, spelling: NoteSpelling,
          onDone: @escaping (NamingResult) -> Void) {
