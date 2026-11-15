@@ -165,7 +165,7 @@ extension HomeView {
     }
 
     private static func content(_ loop: Loop, mode: LoopRunMode, practiced: Date) -> JumpBackInCard.Content {
-        // The second line says where a tap goes — *Slow Bend · Train your ear* — because one `Loop`
+        // The second line says where a tap goes — *Slow Bend · Active listening* — because one `Loop`
         // value covers three screens (ADR 0267). Improvise draws no mastery: a bed to solo over isn't
         // something you rate yourself on, which is why its run logs no tempo either.
         let subtitle = [loop.song?.title, mode.label].compactMap { $0 }.filter { !$0.isEmpty }

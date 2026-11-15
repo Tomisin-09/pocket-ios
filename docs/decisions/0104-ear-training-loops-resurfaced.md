@@ -22,6 +22,10 @@
 - **Amended by:** ADR 0271 (2026-10-22) — **S2.6**: the routine ear block's Done leaves the nav bar,
   where it read as done with the whole routine, for a bar along the bottom beside the time left. It
   stays quiet, a bordered button and not the full-width pill S2.6 removed, so S2.6's finding stands.
+- **Amended by:** ADR 0302 (Active listening, 2026-11-15) — **E1**: the mode is renamed *Active
+  listening*, not *Train your ear*. **E4**: the 👂 chip reads *Listen*, not *Ear*; the stored kind stays
+  `ear`. **S2.4**: the routine bucket is *Active listening*. The rest stands. The Goals template keeps
+  the name *Train your ear*, and the exercise category keeps *Ear Training*.
 
 ## Context
 

@@ -149,8 +149,8 @@ struct SongMapView: View {
         } message: { gap in
             Text("A new loop \(span(of: gap, in: map)), on the \(gap.layer.name) lane. "
                  + (SongMapCopy.sources(for: gap, in: map).isEmpty
-                    ? "Count it in Train your ear and it fills in here."
-                    : "Count it in Train your ear, or start from a copy of a piece you've counted."))
+                    ? "Count it in Active listening and it fills in here."
+                    : "Count it in Active listening, or start from a copy of a piece you've counted."))
         }
         .sheet(item: $viewing, onDismiss: openPicked) { ref in
             if let piece = map.pieces[ref.value.uid] {

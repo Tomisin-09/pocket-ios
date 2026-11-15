@@ -65,13 +65,13 @@ marker grammar in [README.md](README.md).
 | `reference/metronome` | `screen` | `tools-and-journal` | Metronome open, stopped |  |
 | `reference/metronome-settings` | `screen` | `tools-and-journal` | Metronome open, meter control tapped, scrolled to the top |  |
 | `reference/name-by-ear` | `screen` | `practice` | map seed, the same sheet switched to By ear |  |
-| `reference/name-the-notes` | `screen` | `practice` | map seed, Slow Bend ▸ Verse riff ▸ Train your ear ▸ Name the notes |  |
+| `reference/name-the-notes` | `screen` | `practice` | map seed, Slow Bend ▸ Verse riff ▸ Active listening ▸ Name the notes |  |
 | `reference/player` | `screen` | `song-player` | seeded library, Binta, idle, Loops panel expanded |  |
 | `reference/practice-hub` | `screen` | `practice` | seeded library, Practice hub, goals and routines present |  |
 | `reference/progress` | `screen` | `tools-and-journal` | seeded library, Home, This week strip tapped, several weeks of history |  |
 | `reference/quick-note` | `screen` | `tools-and-journal` | an exercise run screen, quick note tapped |  |
 | `reference/routines-library` | `screen` | `practice` | seeded library, Practice ▸ Routines, at least one routine run before |  |
-| `reference/saved-piece` | `screen` | `practice` | map seed, Slow Bend ▸ Verse riff ▸ Train your ear, scrolled to the saved piece |  |
+| `reference/saved-piece` | `screen` | `practice` | map seed, Slow Bend ▸ Verse riff ▸ Active listening, scrolled to the saved piece |  |
 | `reference/settings-hub` | `screen` | `settings` | Settings open |  |
 | `reference/settings-routines` | `panel` | `settings` | Settings ▸ Routines |  |
 | `reference/settings-sound` | `panel` | `settings` | Settings ▸ Sound & feel |  |

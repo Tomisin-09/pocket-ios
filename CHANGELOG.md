@@ -68,6 +68,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **Train your ear is now Active listening** (ADR 0302). The mode on a loop where you hum it back,
+  count the notes and name them is renamed, because what you do there is listen on purpose; it never
+  grades. Routines and the Practice log say *Active listening* too, and the short label under a loop
+  and on the 👂 Journal chip is *Listen*. The Goals template *Train your ear* keeps its name, and so
+  does the *Ear Training* exercise category.
+
 - **Segmented controls are in Futura**, like the rest of the app's text. Every switch of this kind,
   such as *By kind · By song · By goal* and *Build from*, had been drawn in the system font.
 

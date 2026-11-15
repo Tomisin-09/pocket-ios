@@ -75,7 +75,7 @@ enum PlanAccess: String, Equatable, Sendable {
 }
 
 /// A screen behind the plan (ADR 0256 D2, as amended by ADR 0263). The case names the wall's title, so
-/// a player who tapped *Train your ear* reads that at the top, not a generic "Upgrade".
+/// a player who tapped *Active listening* reads that at the top, not a generic "Upgrade".
 ///
 /// **Only the gated side is listed**, and only practising is on it: a feature that plays or keeps is
 /// free (0263 D2), so the Journal, the Practice log and the whole Toolkit have no door. A free screen
@@ -98,7 +98,7 @@ enum PlanDoor: String, CaseIterable, Sendable {
         case .practice: "Practice"
         case .todaysSession: "Today's session"
         case .loopTrainer: "Practice now"
-        case .earTraining: "Train your ear"
+        case .earTraining: "Active listening"
         case .watchOnNeck: "Watch it on the neck"
         case .improvise: "Improvise"
         case .drill: "Exercise"

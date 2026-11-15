@@ -41,7 +41,7 @@ final class PracticeBreakdownSongTests: XCTestCase {
         XCTAssertEqual(rows.map(\.title), ["Slow Bend", "Sunday Morning"])
         guard rows.count == 2 else { return }
         XCTAssertEqual(rows[0].minutes, 102)
-        XCTAssertEqual(rows[0].items.map(\.name), ["Ear training", "Improvising", "Play-alongs"],
+        XCTAssertEqual(rows[0].items.map(\.name), ["Active listening", "Improvising", "Play-alongs"],
                        "a song opens onto kinds of work, and two loops' ear work is one row")
         XCTAssertEqual(rows[0].items.map(\.minutes), [60, 30, 12])
     }

@@ -5,7 +5,7 @@ import SwiftData
 /// once at launch, beside the other backfills.
 ///
 /// Until 0265 a take stored no mode, so its Journal caption opened ADR 0142's precedence, and a take
-/// recorded in Train your ear on a loop with a tempo opened the ramp. A take's `createdAt` is its
+/// recorded in Active listening on a loop with a tempo opened the ramp. A take's `createdAt` is its
 /// **stop** time (`RecordingController.stopRecording` builds the row), so it falls inside the run it
 /// was recorded in, and that run's kind names the mode.
 ///

@@ -50,7 +50,7 @@ extension AddRoutineUnitSheet {
             resultSection("Loops", rows: matchingTrainerLoops.map(loopRow))
             // Loops appear again as ear-training picks — the same units, a different block (ADR 0104),
             // and a wider set of them (ADR 0138): ear needs audio, not a measured tempo.
-            resultSection("Ear training", rows: matchingEarLoops.map(earLoopRow))
+            resultSection("Active listening", rows: matchingEarLoops.map(earLoopRow))
             // And a third time as improvise picks — the narrowest of the three sections, since only
             // flagged backing tracks qualify (ADR 0135).
             resultSection("Improvise", rows: matchingImproviseLoops.map(improviseLoopRow))

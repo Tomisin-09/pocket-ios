@@ -181,7 +181,7 @@ screen; one you stop by hand does not log.
 
 Every loop you have measured, across all your songs, in one list — the practice-side view of what the
 [song player](song-player.md) creates. A loop is measured once it has a command tempo.
-`Show all loops`, in the `List options` menu, adds the rest, for `Train your ear`, which needs no
+`Show all loops`, in the `List options` menu, adds the rest, for `Active listening`, which needs no
 tempo. A search field above the list prompts `Loops and songs`.
 
 Hold a row for the ways it can run, `Watch it on the neck` once its piece has a note on the neck,
@@ -198,14 +198,14 @@ A loop can be run three ways, launched from its edit sheet in the song player or
 - **The ordinary loop run** — play it, slow it, ramp it. Its `Practice Settings` are the drill run
   screen's four phase rows, with every tempo a percentage of the song's speed and every hold a
   number of passes through the loop rather than bars.
-- **`Train your ear`** — hear it and answer, rather than play along.
+- **`Active listening`** — hear it and answer, rather than play along.
 - **`Improvise`** — the loop as a bed to solo over.
 
 Each has its own run screen, and each writes into the journal with its own tag.
 
 ### Count the notes
 
-`Train your ear` carries a `Count the notes` section under its play and tempo controls and its
+`Active listening` carries a `Count the notes` section under its play and tempo controls and its
 `Note what you hear` box, for working a lick out by ear. The small play button beside `Show beats` starts
 and stops the same loop as the big one, so you don't have to scroll back up. While the loop plays, tap the
 pad once for every note you hear. Each pass through the loop gets its own row of dots, the one playing now on top, so you
@@ -220,7 +220,7 @@ from there: nothing is named on a pass, because `Clear` would throw the names aw
 notes just before it, ending on it, so you hear how the line got there; each is ringed as it plays.
 *Hear 3 notes* at the top right of the strip sets how many: *Just the note*, up to eight, or *Up to the
 note*, which plays every note of the pass before it. Red Moon remembers it. Beside the play button,
-− and + set the speed, the same control as under `Train your ear`: a run too fast to name at full
+− and + set the speed, the same control as under `Active listening`: a run too fast to name at full
 speed can be slowed down here, and a tapped note plays at that speed too. To hear the notes as a line,
 the play button at the start of the strip plays the whole
 loop at that speed, ringing each note as it goes by; on Fret & string, where you placed each
@@ -235,7 +235,7 @@ else.
 
 <!-- shot: reference/name-the-notes | role: screen
      | alt: Name the notes on Fret & string for the Verse riff: the strip of numbered notes, some named and one snagged, the neck with the notes before and after the current one, and Into it and Bend under it
-     | state: map seed, Slow Bend ▸ Verse riff ▸ Train your ear ▸ Name the notes -->
+     | state: map seed, Slow Bend ▸ Verse riff ▸ Active listening ▸ Name the notes -->
 
 Then say what it was on one of two sheets (the ⓘ beside `Chords` and `Into it` explains each): `Fret & string` for where you played it, or `By ear` for what
 you heard. Fret & string is the neck: tap where you played the note, and it moves straight on to the
@@ -319,14 +319,14 @@ on that note. The piece is listed in the journal under `Pieces`. Saving another 
 an earlier version.
 
 <!-- shot: reference/saved-piece | role: screen
-     | alt: Train your ear for the Verse riff scrolled to Saved on this loop: the piece's line, its tab, Snags on this piece with a line under one, then Name the notes with Watch it on the neck under it
-     | state: map seed, Slow Bend ▸ Verse riff ▸ Train your ear, scrolled to the saved piece -->
+     | alt: Active listening for the Verse riff scrolled to Saved on this loop: the piece's line, its tab, Snags on this piece with a line under one, then Name the notes with Watch it on the neck under it
+     | state: map seed, Slow Bend ▸ Verse riff ▸ Active listening, scrolled to the saved piece -->
 
 ### `Watch it on the neck`
 
 Once a piece has a note placed on the neck, `Watch it on the neck` plays the loop and shows you the lick
 on the neck as it goes. It sits under `Name the notes` in `Saved on this loop`, in the loop's edit sheet
-after `Train your ear`, in the loop's hold menu in `Loops`, on the song map's tab for the loop, and on the
+after `Active listening`, in the loop's hold menu in `Loops`, on the song map's tab for the loop, and on the
 piece in the journal. It doesn't show for a piece named only by ear, which has nothing to light, or for a
 song whose audio can't play on this phone.
 

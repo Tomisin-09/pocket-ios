@@ -128,7 +128,7 @@ extension SongMapView {
                     + "make one in a gap."
         }
         return tab.isEmpty
-            ? "Nothing counted yet. Count a loop in Train your ear and it's drawn here, where it plays."
+            ? "Nothing counted yet. Count a loop in Active listening and it's drawn here, where it plays."
             : "Drawn from your pieces, where they play. Tap a row to see the pieces that drew it."
     }
 

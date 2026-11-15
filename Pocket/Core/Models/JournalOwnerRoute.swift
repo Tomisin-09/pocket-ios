@@ -21,7 +21,7 @@ enum JournalOwnerRoute: Hashable {
     /// same terms (ADR 0265).
     case loop(Loop, LoopRunMode)
     /// A loop's piece, open in Name the notes at a note (ADR 0234 D7): where a line written on a snag
-    /// leads, so the words and the note they're about come back together. Train your ear, with the
+    /// leads, so the words and the note they're about come back together. Active listening, with the
     /// naming sheet already up on the snag's note.
     case naming(Loop, note: Int)
     /// The **routine a session note was written about** (2026-08-06). A session entry's caption was

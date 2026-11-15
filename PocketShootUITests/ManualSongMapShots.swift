@@ -50,22 +50,22 @@ final class ManualSongMapShots: ManualShotCase {
     }
 
     /// `reference/saved-piece` · `reference/name-the-notes` · `reference/name-by-ear` — the riff's saved
-    /// piece under Train your ear, then Name the notes on each of its two sheets. Cancelled, not saved.
+    /// piece under Active listening, then Name the notes on each of its two sheets. Cancelled, not saved.
     @MainActor
     func testSavedPieceAndNaming() {
         let app = launchForShoot(seeding: [UITestHooks.songMapArgument])
         openVerseRiff(in: app)
 
-        let train = app.buttons["Train your ear on this loop"]
-        scrollIntoFrame(train, called: "Train your ear on this loop", in: app)
-        tap(train, labelled: "Train your ear on this loop",
-            revealing: app.navigationBars["Train your ear"], called: "Train your ear")
+        let train = app.buttons["Active listening on this loop"]
+        scrollIntoFrame(train, called: "Active listening on this loop", in: app)
+        tap(train, labelled: "Active listening on this loop",
+            revealing: app.navigationBars["Active listening"], called: "Active listening")
 
         // Scrolled until Name the notes, the last of the saved piece, is in frame, so its tab and its
         // snags are in view with it. The riff's first snag is on its fifth note and carries the line.
         let name = app.buttons["count.saved.name"]
         scrollPastTapPad(until: name, called: "Name the notes", in: app)
-        capture(app, slug: "reference/saved-piece", assertingOnScreen: "Train your ear",
+        capture(app, slug: "reference/saved-piece", assertingOnScreen: "Active listening",
                 alsoRequiring: ["count.saved.name", "Snags on this piece"],
                 orBeginningWith: ["Saved on this loop", "Note 5 · \(ScreenshotSeedText.snagLine)"])
 
@@ -139,7 +139,7 @@ final class ManualSongMapShots: ManualShotCase {
                 alsoRequiring: ["Map the song"], orBeginningWith: ["Slow Bend"])
     }
 
-    /// `scrollIntoFrame` swipes from the middle of the screen, and under Train your ear the middle is
+    /// `scrollIntoFrame` swipes from the middle of the screen, and under Active listening the middle is
     /// soon Count the notes' tap pad, which takes a swipe as taps: the sheet stopped with the saved
     /// piece's heading in frame and its tab below (2026-10-03). So the drag starts on that heading, which
     /// sits under the pad and moves with the sheet, and only falls back to the middle once it's gone.

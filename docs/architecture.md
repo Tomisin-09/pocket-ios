@@ -613,8 +613,8 @@ comment naming the lease as what makes them safe. `Recording` also gains an opti
 is the only Journal row with nothing but a timestamp to identify it, so it is the only kind that can
 be renamed (one shared `RenameTakeAlert`, keyed on the stable `uid`, ADR 0090).
 
-**Ear training — "the loops, re-surfaced"** (ADR 0104): a loop's settings sheet carries a **Train your
-ear** button opening `EarTrainingSheet`, an *away-from-the-guitar* mode that plays the loop's own audio
+**Ear training — "the loops, re-surfaced"** (ADR 0104): a loop's settings sheet carries an **Active
+listening** button (*Train your ear* until ADR 0302) opening `EarTrainingSheet`, an *away-from-the-guitar* mode that plays the loop's own audio
 cycling continuously (a `ContinuousLoopPlayer` wrapping a `LoopRunModel`, with **no** auto-stop — the
 difference from the routine-preview `LoopAudioPreviewPlayer`) so the player can **hum or sing it back**,
 with a live **−/+ tempo control** (25–150% of original in 5% steps, `LoopRunModel.setAuditionPercent`
@@ -1884,7 +1884,7 @@ empty, because that line was Home's only word about adding a first song.
   reads it that way too, because a snag belongs to the song while a Journal belongs to a loop, so the
   two places would otherwise split one line in two. **`home`**: a new line goes to the loop the snag
   was made under, else the tightest loop that holds it now, else nowhere, since a song has no Journal.
-  **`kind`**: 🧗 Struggle for a stumble, 👂 Ear for a note snagged while naming, never 🧩. D3's no-toast
+  **`kind`**: 🧗 Struggle for a stumble, 👂 Listen (*Ear* until ADR 0302) for a note snagged while naming, never 🧩. D3's no-toast
   rule stands, because the line is a Journal note, not part of the snag, and outlives it.
 - **`LoopSpanChange`** (ADR 0199) is *how the loop got this narrow* — one row per edit to a loop's
   span, carrying `changedAt`, the span after, **the span before**, the playback `speed` in force and

@@ -27,7 +27,7 @@ struct NamingResult: Equatable {
     let tuningLabel: String
 }
 
-/// The state behind **Count the notes** in Train your ear (ADR 0225). One per ear-training visit, owned
+/// The state behind **Count the notes** in Active listening (ADR 0225). One per ear-training visit, owned
 /// by `EarTrainingView` so the section, the pass rows and the naming sheet share it, and so the sheet can
 /// sit at the view's body root.
 ///

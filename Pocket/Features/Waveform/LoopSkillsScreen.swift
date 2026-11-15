@@ -45,7 +45,7 @@ struct LoopSkillsScreen: View {
             Text("Works on")
         } footer: {
             Text("A skill from a tag goes when the tag does. Any loop with audio can also be run in "
-                 + "Train your ear, which works on your ear.")
+                 + "Active listening, which works on your ear.")
         }
     }
 

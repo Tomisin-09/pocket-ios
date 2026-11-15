@@ -43,7 +43,7 @@ enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
         switch self {
         case .exercise: "Exercise"
         case .loop: "Loop"
-        case .earLoop: "Ear training"
+        case .earLoop: "Active listening"
         case .improvise: "Improvising"
         case .song: "Song"
         case .metronome: "Metronome"
@@ -52,14 +52,14 @@ enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
     }
 
     /// How the kind heads a group of runs in the Practice log's *What you played* (ADR 0241) — the
-    /// plural of `label`, except where the plural is not a word anyone would say: you do "ear
-    /// training" and "improvising", not "ear trainings". A `.song` run is named for what it was, a
+    /// plural of `label`, except where the plural is not a word anyone would say: you do "active
+    /// listening" and "improvising", not "active listenings". A `.song` run is named for what it was, a
     /// play-along, since the songs themselves are the rows inside the group.
     var groupLabel: String {
         switch self {
         case .exercise: "Exercises"
         case .loop: "Loops"
-        case .earLoop: "Ear training"
+        case .earLoop: "Active listening"
         case .improvise: "Improvising"
         case .song: "Play-alongs"
         case .metronome: "Metronome"

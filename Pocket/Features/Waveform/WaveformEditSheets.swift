@@ -26,7 +26,7 @@ struct LoopEditSheet: View {
     /// "Practice now" (ADR 0082): the parent stages this loop for a full-screen training run,
     /// launched once the sheet dismisses. Shown only when a command tempo is set.
     var onPracticeNow: () -> Void = {}
-    /// "Train your ear" (ADR 0104) and "Improvise" (ADR 0135): both nested modes bring their own
+    /// "Active listening" (ADR 0104) and "Improvise" (ADR 0135): both nested modes bring their own
     /// engine, so the parent stops whatever it was playing before either opens — otherwise two
     /// streams run over each other. One callback serves both; the host's response is identical.
     var onOpenNestedAudio: () -> Void = {}
@@ -74,7 +74,7 @@ struct LoopEditSheet: View {
     @State var isBackingTrack: Bool
     // The loop's journal now lives here in settings (read-only), off the waveform row (ADR 0067).
     @State var showingJournal = false
-    // "Train your ear" ear-training mode on this loop (ADR 0104) — ears-only playback + journal capture.
+    // "Active listening" ear-training mode on this loop (ADR 0104) — ears-only playback + journal capture.
     @State var showingEarTraining = false
     // "Improvise" over this loop as a backing track (ADR 0135) — continuous playback + journal capture.
     @State var showingImprovise = false

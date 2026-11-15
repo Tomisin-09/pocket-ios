@@ -66,7 +66,7 @@ struct GoalSkillRow: View {
         case .runLoopIn(let mode):
             hint(mode == .improvise
                  ? "Mark a loop as a backing track, then run it in Improvise."
-                 : "Set a loop on one of your songs, then run it in Train your ear.")
+                 : "Set a loop on one of your songs, then run it in Active listening.")
         case .pickTargetSong:
             hint("Pick a target song below.")
         }

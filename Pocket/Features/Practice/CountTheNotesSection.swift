@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// **Count the notes** (ADR 0225), a section of Train your ear: tap once for each note you hear while
+/// **Count the notes** (ADR 0225), a section of Active listening: tap once for each note you hear while
 /// the loop plays, one row of dots per pass, and **Save** the pass you trust. Naming what each note was
 /// starts from the saved piece, under *Saved on this loop* (ADR 0234 D1), never from a pass.
 ///

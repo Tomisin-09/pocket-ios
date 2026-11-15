@@ -83,7 +83,9 @@ struct EarLoopRunView: View {
     /// (ADR 0271) — quiet, because an ear block has nothing to grade. `nil` without a routine,
     /// which this screen is never shown outside of.
     private var done: BlockDone? {
-        routineContext.map { BlockDone(title: $0.finishTitle, accessibilityLabel: "Done with this ear-training block") }
+        routineContext.map {
+            BlockDone(title: $0.finishTitle, accessibilityLabel: "Done with this active listening block")
+        }
     }
 
     /// The one completion seam, shared by the Done button and the block running its planned length
