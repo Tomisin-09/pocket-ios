@@ -72,11 +72,20 @@ Alternates:
 - `The guitar woodshed in your pocket` — too long (34); trim if you love it.
 
 ## Promotional text — 170 char max (editable anytime, no review)
-> Work out the hard bar, build it up against a click, run it in a routine, and keep what you learn.
-> A practice studio for guitar players who learn from everywhere. *(161)*
+> A guitar practice studio built from the music that inspires you. Loop the hard bar, slow it down
+> without dropping the pitch, and pick up tomorrow where you left off. *(165)*
 
-*1.4 (2026-10-27), chosen by Tomisin: the four verbs and the line (ADR 0279). Replace the live text in
-App Store Connect with this. The field needs no review.*
+*Live in App Store Connect from 2026-11-16, written by Tomisin for 1.4.1. The opening is new: the
+music that inspires you, which Red Moon runs on, since it works on your own recordings. The rest keeps
+the two concrete halves of the text it replaced: the slow-down that keeps the pitch, and practice
+that carries over to the next day. Together they hold both ends, the audio engine on your own music
+and the practice that adds up, which is the job this field has had since 2026-08-16 (history below).*
+
+*Replaced 2026-11-16: ADR 0276's candidate, which was the text actually live, not the 0279 one below.*
+
+*Chosen for 1.4 (2026-10-27) and never pasted into App Store Connect: the four verbs and the line
+(ADR 0279), "Work out the hard bar, build it up against a click, run it in a routine, and keep what you
+learn. A practice studio for guitar players who learn from everywhere." (161)*
 
 *Considered for 1.4 the day before, from ADR 0276's candidate (trimmed from 171 to fit): "Loop the
 hard bar in your own tracks and slow it down without dropping the pitch. Then line your loops up with
@@ -235,7 +244,30 @@ Apple's standard terms. Only if that ever changes does the link move into ASC's
 own custom-EULA field instead of the description — and then all three surfaces
 (description, paywall, Settings) must point at the custom one, not Apple's.
 
-## What's New in This Version — 1.4 (paste this)
+## What's New in This Version — 1.4.1 (paste this)
+
+> Red Moon is red now: a new icon, and Practice and the song player wear the blood moon's terracotta.
+>
+> Also new:
+> • Prepare a set: a long-term goal that holds the songs you're getting ready to play for people
+> • The Practice log shows where your time went by song and by goal, and what no goal covered
+> • Name the notes: say whether a note went higher, the same or lower, and the neck dims where it
+>   can't be
+> • Hear every note of a pass up to the one you're naming
+> • Bends that release onto a note of their own, in Name the notes and Write a tab
+> • Train your ear is now Active listening
+> • Swapping a chord in a drill starts from the chord you have, with a Root row to change it
+> • The Warm-up, Picking and Legato editors are easier to set
+> • Help & FAQs explains how to name bends, slides and hammer-ons, and the Glossary has nine new terms
+
+*Live in App Store Connect from 2026-11-16 (pasted by Tomisin). Each line is a `[1.4.1]` CHANGELOG
+entry: the red brand (ADR 0292), Prepare a set (ADR 0299), By song and By goal (ADRs 0295, 0298),
+Higher, same or lower (ADR 0301), Up to the note (ADR 0300), bend releases (ADR 0296), Active listening
+(ADR 0302), the chord swap (ADR 0297), the editors (ADR 0293) and the Help & FAQs and Glossary entries.
+Left out as too small: song goals named for their song, and Futura on segmented controls. Nothing held
+back is named (the Oracle, ADR 0211; Watch the section, ADR 0291), and, like 1.4's, it names no price.*
+
+## What's New in This Version — 1.4 — history, do not paste
 
 > Red Moon is now a practice studio with one plan. Your songs and loops, the Metronome, the Journal
 > and the Toolkit are free, and practising is the plan, at the founding price.
