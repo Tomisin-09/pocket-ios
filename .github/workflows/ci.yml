@@ -191,9 +191,12 @@ jobs:
     runs-on: macos-15
     env:
       UI_PLAN: ${{ github.event_name == 'pull_request' && 'PocketSmoke' || 'PocketUI' }}
-    # A backstop for a hung run. The whole suite took 39 minutes on main's run of 2026-11-11,
-    # and the build adds about 10.
-    timeout-minutes: 60
+    # A backstop for a hung run, not a budget. Was 60, and main's run on 2026-11-16 (`2f4719f`)
+    # hit it: 67 tests, 0 failures, cancelled in the runner's cleanup, which the release gate
+    # (`scripts/main-ui-green.sh`) reads as not green. The suite took 46 minutes there (42 on
+    # 2026-11-15, 39 on 2026-11-11), and the build and simulator boot add about 14. 90 leaves
+    # room for the suite to grow and for a slow runner; a genuinely hung run still stops.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
