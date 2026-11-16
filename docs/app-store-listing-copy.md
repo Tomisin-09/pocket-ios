@@ -526,16 +526,58 @@ exists / receives before submission. Marketing URL: leave blank for v1 (full
 marketing site is a post-launch project; point the Marketing URL at it later — no
 new build needed).
 
-## Screenshots — 1.4 (2026-10-27, ADR 0279)
+## Header and search art — iOS 27 (2026-11-16)
+
+Two images the App Store shows from iOS 27 on: the **product page header** and the **search result
+artwork** (ADR 0279 D3: they follow the screenshots). Both are the designer's Nov 2026 lockup, *Red
+Moon / PRACTICE STUDIO*, centred on the frames' near-black with the same terracotta glow, so the
+header, the search art and the ten frames read as one set. Upload them in App Store Connect's
+**Asset Library**, which takes them without a build or a version. The finished pair is in
+`~/Documents/Red Moon Screenshots 2/appstore-2026-11-16/headers/` (the lockup with its crescent),
+with a wordmark-only pair beside it in `wordmark-only/`.
+
+| Placement | Size | Safe area (Apple's) | File |
+|---|---|---|---|
+| Product page header | 3840×1646 (21:9) | 1646×661 at (1097, 493) | `header.png` |
+| Search result | 3840×2560 (3:2, the largest; 1920×1280 is the smallest) | 2168×1030 at (836, 765) | `search.png` |
+
+The sizes and safe areas are from *Creative assets specifications* in App Store Connect Help, read on
+2026-11-16. Apple's rules: no alpha channel, JPEG or PNG, critical art inside the safe area with the
+background running to the edges, and a **4+** age rating whatever the app's own. Apple also offers a
+single 16:9 *universal* asset (5244×2950) for both placements. It isn't used, because the y offset of
+its listed safe area isn't centred and nothing explains why.
+
+**To draw them again** (after a logo revision, for instance):
+
+```sh
+L="$HOME/Documents/Red Moon Nov 2026 Logos"
+swift scripts/appstore-headers.swift "$L/red_moon_logo_transparent_for_blood_moon_studio+logo.svg" <out> --guides
+```
+
+The `-logo` file is the same lockup without the crescent. `--guides` also writes `*-guides.png` with
+the safe area outlined, for checking only, never for upload.
+
+*Watch-out:* the lockups set **PRACTICE STUDIO as live text** (Futura, italic, weight 500), not as
+outlines. AppKit's SVG renderer draws it upright, so the script cuts each `<text>` out and sets it
+itself in the face the file names, and stops if that face isn't installed. Anything else that renders
+these SVGs gets the same problem, a browser off Apple hardware included, since it has no Futura. For
+the site and anywhere else, ask the designer for an export with the text converted to outlines.
+
+## Screenshots — 1.4.1 (reshot 2026-11-16 for ADR 0292; the story is ADR 0279's)
 
 Ten frames, one story: the four verbs twice, then the roof. Shot dark at 09:41 on the iPhone 17 Pro
 Max simulator by the manual's harness, with the plan unlocked (no padlocks, no prices: Guideline
 2.3.7), and captioned by `scripts/appstore-frames.swift`. The finished set is in
-`~/Documents/Red Moon Screenshots 2/appstore-2026-10-27/`: **`6.3/`** (1206×2622), `6.9/` (1320×2868)
-and `6.5/` (1242×2688). Upload **`6.3/`**, in filename order: App Store Connect's one required iPhone
+`~/Documents/Red Moon Screenshots 2/appstore-2026-11-16/`: **`6.3/`** (1206×2622), `6.9/` (1320×2868)
+and `6.5/` (1242×2688), with the captures in `captures/` and the manifest that captioned them,
+`frames.json`, beside them. Upload **`6.3/`**, in filename order: App Store Connect's one required iPhone
 slot is now *iPhone with Dynamic Island (medium display)*, which takes only 1206×2622 or 1179×2556. It
 rejected the other two sizes there on 2026-10-27 ("File dimensions are invalid"). The 6.9" set fits the
 optional *large display* slot; App Store Connect scales the 6.3" set for every size left empty.
+
+The storyboard and the captions are unchanged from 1.4's set (`appstore-2026-10-27/`). Only the colours
+moved: 1.4.1 makes Red Moon red (ADR 0292), so the app's teal and blue became terracotta, and the
+frames' verb and glow went with them. Shot on main at 2f4719f, the 1.4.1 (11) cut.
 
 | # | Verb | Headline | Capture (test → slug) |
 |---|---|---|---|
@@ -547,19 +589,25 @@ optional *large display* slot; App Store Connect scales the 6.3" set for every s
 | 6 | WORK IT OUT | Name the notes by ear. See them on the neck. | `reference/watch-on-neck` |
 | 7 | BUILD IT UP | Ramp a loop up to full speed. | `reference/loop-automator` |
 | 8 | RUN IT | Today's session, shaped by your goals. | `reference/practice-hub` |
-| 9 | KEEP IT | See the days you played. Never a score. | `journal/progress` |
+| 9 | KEEP IT | See the days you played. Never a score. | `AppStoreShots.testKeepItLog` (the Practice log stepped back to last week) |
 | 10 | YOUR METHOD | Your songs, drills and routines, in one place. | `reference/home` |
 
 **To shoot them again:**
 1. `POCKET_SIM="iPhone 17 Pro Max" POCKET_SHOT_OUT=build/shots-appstore POCKET_SHOOT_ONLY=AppStoreShots ./scripts/shoot-manual.sh`
-   for frames 1 and 3. Their images land in `build/shots-appstore/export/`, named in its `manifest.json`.
+   for frames 1, 3 and 9. Their images land in `build/shots-appstore/export/`, named in its `manifest.json`.
 2. `POCKET_SIM="iPhone 17 Pro Max" POCKET_SHOT_OUT=build/shots-appstore-manual POCKET_SHOOT_PASS="base player exercises map" ./scripts/shoot-manual.sh`
    for the rest (`filed-partial/`).
-3. Write a `frames.json` from the table, then `swift scripts/appstore-frames.swift frames.json <out>`.
-   A non-breaking space (`\u00a0`) keeps two words of a headline together.
+3. Copy the ten captures into the set's `captures/`, then
+   `swift scripts/appstore-frames.swift frames.json <out>`. Start from the last set's `frames.json`
+   rather than the table. It has the non-breaking spaces (`\u00a0`) that keep *a click* (frame 2) and
+   *full speed* (frame 7) together. Without them each headline leaves its last word alone on a line.
 
-*Watch-outs:* frame 4's take is on *I'd Rather Go Blind (Cover)*, one of the seed's covers credited to
-Jack Trader, so a real song title is on screen. Frame 5's links read `example.com`. The practice log's
+*Watch-outs:* frame 10's *Jump back in* names *I'd Rather Go Blind (Cover)*, one of the seed's covers
+credited to Jack Trader, so a real song title is on screen (in 1.4's set it was frame 4's take, and that
+set passed review). Frame 9 is **last week**, not this one: the seed is dated back from the day of the
+shoot, so the current week holds only the days gone by, and the 2026-11-16 shoot, on a Monday, drew one
+bar. Last week is always whole. Its header reads the dates, with a *This week* button beside them.
+Frame 5's links read `example.com`. The practice log's
 lower half (`journal/month-heatmap`) is unusable as a frame: its header ghosts under the navigation bar,
 and it ends on *0 Mastered*.
 

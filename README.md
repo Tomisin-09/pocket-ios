@@ -91,6 +91,11 @@ mark composited on an opaque near-black square and rasterised via QuickLook — 
 has to stay PNG, because App Store icons must be opaque 1024² with no alpha
 channel, which the script asserts before writing.
 
+The App Store's iOS 27 header and search-result art is drawn from the *Red
+Moon / PRACTICE STUDIO* lockup by `scripts/appstore-headers.swift`, at
+Apple's sizes and inside Apple's safe areas. `docs/app-store-listing-copy.md`
+has the command and the specs.
+
 ## Pre-push checks
 
 See `AGENTS.md`. In short: `swiftlint` → `xcodebuild build` → `xcodebuild test`

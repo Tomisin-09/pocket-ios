@@ -10,6 +10,9 @@ import XCTest
 ///   slower speed as two separate figures.
 /// - **Run it**: *Open mic, Friday*, the seeded routine built for something coming up
 ///   (`PracticeHistorySeed+Authored`).
+/// - **Keep it (the log)**: the Practice log stepped back one week. The seed is dated back from the
+///   real day, so the current week holds only the days gone by, and a shoot on a Monday drew one bar
+///   (2026-11-16). Last week is always whole, whatever day the shoot runs.
 ///
 /// Driven only by `POCKET_SHOOT_ONLY=AppStoreShots ./scripts/shoot-manual.sh`. No pass of the full
 /// shoot names this class, so these never land in the manual's `filed/` set.
@@ -55,5 +58,25 @@ final class AppStoreShots: ManualShotCase {
 
         capture(app, slug: "appstore/run-it", assertingOnScreen: "Open mic, Friday",
                 orBeginningWith: ["Pop Changes"])
+    }
+
+    /// Reached the way `ManualShotsUITests.testPracticeLog` reaches it, from Home's *This week* strip,
+    /// then one tap on *Earlier week*. The gate is the **This week** button the header shows once it
+    /// has left the current week: it isn't there on the week the log opens on, so a swallowed tap
+    /// can't pass as last week.
+    @MainActor
+    func testKeepItLog() {
+        let app = launchForShoot()
+
+        let door = app.buttons[UITestHooks.practiceLogDoor]
+        XCTAssertTrue(door.waitForExistence(timeout: Self.shootTimeout),
+                      "the This week strip never appeared on Home. \(stepLog)")
+        tap(door, labelled: "This week",
+            revealing: app.navigationBars["Practice log"], called: "the Practice log screen")
+        tap(app.buttons["Earlier week"], labelled: "Earlier week",
+            revealing: app.buttons["This week"], called: "last week, with the way back to this one")
+
+        capture(app, slug: "appstore/keep-it-log", assertingOnScreen: "Practice log",
+                alsoRequiring: ["This week", "What you played"])
     }
 }
