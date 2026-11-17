@@ -133,6 +133,7 @@ PocketTests/      Unit tests (pure logic)
 PocketUITests/    XCUITest flows
 PocketShootUITests/  The user manual's screenshot run — not tests (ADR 0165)
 infrastructure/  Terraform for the Phase 4 Claude proxy (prod)
+(branch `site`)  Red Moon's website, a Next.js app with no history in common with main (ADR 0306)
 docs/          architecture.md, positioning.md (who we're up against and the line we take), messaging.md (how it is said, to whom), decisions/ (ADRs), manual/ (user manual), practice-techniques.md, research/ (3rd-party refs, git-ignored raw)
 ```
 
@@ -158,8 +159,10 @@ docs/          architecture.md, positioning.md (who we're up against and the lin
   docs-only change is exactly what it guards, and exactly what switches everything else off. Stdlib
   Python, no dependencies, so it runs on either runner; it sits inside `lint-build-test` rather than
   in `scope` or a job of its own, for the reason 0133 gives. Publishing the manual is
-  `scripts/export-manual.py` into the site repo (`docs/decisions/0217`), which runs this check first
-  and pushes nothing.
+  `scripts/export-manual.py` into a checkout of the `site` branch (`docs/decisions/0217`, `0306`),
+  which runs this check first and pushes nothing.
+- **The website** has its own check on its own branch: `site`'s `.github/workflows/site.yml` runs
+  on PRs into `site`, and nothing above runs there (`docs/decisions/0306`).
 - **Flake control** (`docs/decisions/0146`): the UI tests wait on a readiness signal the app raises
   when first-launch seeding completes, not on a guess about how slow the runner is — every test
   launches through `UITestCase.launchApp()`, which carries the one generous wait. CI also boots and

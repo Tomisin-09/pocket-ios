@@ -43,8 +43,8 @@ if [ -z "$(printf '%s' "$CHANGED" | tr -d '[:space:]')" ]; then
 fi
 
 # Docs = Markdown anywhere (CHANGELOG.md, PROJECT.md, AGENTS.md, README.md,
-# docs/decisions/*.md), anything under docs/ (includes the static docs/site
-# pages, which are not part of the Xcode build), and LICENSE.
+# docs/decisions/*.md), anything under docs/, and LICENSE. The website is not
+# here at all: it lives on the `site` branch with its own check (ADR 0306).
 DOCS_RE='^docs/|(^|/)[^/]*\.md$|^LICENSE$'
 
 if printf '%s\n' "$CHANGED" | grep -qvE "$DOCS_RE"; then
