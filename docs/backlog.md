@@ -4,6 +4,60 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## 1.5: what it holds (decided 2026-11-17)
+
+Tomisin chose these for 1.5 on 2026-11-17, the day 1.4.1 (11) was submitted. Each item points at the
+entry that holds its detail; this list only says what 1.5 is. Everything else in this file stays
+parked, and not being on the list is not a decision against it.
+
+**When:** not set. November is still the marketing month, and its guard holds: no build session in a
+week until that week's marketing piece is cut (before day 1) or posted (after).
+
+**The list.** One branch and one PR per item, as in 1.4. Item numbers are names, not the build order.
+S is about a day, M a few days, L a week or more; the sizes are estimates.
+
+1. **Another key** (ADR 0305). The first bullet under *After the freeze* below.
+   - **1a. Slice 1, the engine and Active listening** (S–M). No schema. D7 is the gate before it
+     merges: on the phone, a guitar loop at 0, −6 and +6, each at 100% and at 25%, passes if Tomisin
+     would practise to it. 0305 D7 has the fallbacks if one end fails.
+   - **1b. Slice 2, the song's shift** (M–L). One `Song` attribute, so the store upgrade check on the
+     simulator and the device, proved by timestamps (`docs/swiftdata-gotchas.md`). Saved names (D5)
+     are the hard part. It takes D8, the key picker wrapping *D♯* and *G♯*, unless that's fixed sooner
+     as a bug.
+2. **The four that are ready to build.**
+   - **2a. Home's *This week* strip reads only the week** (S). `HomeStatsStrip` queries every
+     `PracticeRun` and every `JournalEntry` to count one week: about 100 ms now, 350 ms at four times
+     the history (*What else grows with use*, under *After the freeze*). Both dates (`startedAt`,
+     `createdAt`) are non-optional, so a date predicate isn't the optional-predicate freeze. Measure
+     before and after on the copied phone store, as the audit did.
+   - **2b. A bass 10th draws its 10th** (S). The entry *A bass 10th draws without its 10th* below.
+     Check that the guitar diagrams don't move.
+   - **2c. A bent note's number clears its arc** (S). The *After the freeze* bullet *A bent note's
+     number covers its arc*. Wants a look on the device.
+   - **2d. The Scales and Arpeggios editors as rows** (M). The entry *Split the Scales and Arpeggios
+     editors into rows* below. It starts with a device check that they stutter; if they don't, the
+     item closes without a build. Whether their contents regroup is not decided.
+3. **Watch the section, rethought** (sized after the rethink). The *After the freeze* bullet, and ADR
+   0291 D4: what it becomes is open, so this is not a flag flip. In order: try it again on the device
+   with `SongMapView.opensSectionWatch` flipped locally, since 0291 puts that day's lag on the Journal
+   (#406) and what's left is the design; Tomisin says what *better thought out* means; a mockup; then
+   an ADR amending 0289 and 0291 before any code.
+4. **Review the unfinished slices** (a decision, not a build). For each one: build it in 1.5, keep it
+   parked, or close it. Checked against the ADRs on 2026-11-17, two of the five this file listed as
+   unfinished were done in August: 0140 slice 3 (Apple's high-quality stretcher, adopted 2026-08-04)
+   and 0139 slice 2 (a freeform block can be away from your instrument, #211). Their entries are
+   corrected. Three are left:
+   - **4a. The click withdrawal, slice 2** (ADR 0132): a per-exercise override. It can't be built as
+     written, because withdrawal only runs on the metronome tool. The question before it is whether
+     withdrawal belongs in exercise runs at all, and 0132 says to revisit that on user feedback.
+   - **4b. Command moves both ways, slice 2** (ADR 0134): settling mid-run, which drops a live run to
+     its backoff and keeps playing. It needs its own ADR, and it's audio-engine work.
+   - **4c. Improvise, a fine-tuning pass.** Its entry asks for Tomisin's list of refinements before
+     anything starts.
+
+**Order: proposed, not decided.** 2a, 2b and 2c first (small, a branch each), then 4, which is a
+conversation and may add items. Then 1a and 1b, then 2d, and 3 last because it's the most open.
+
 ## The last feature push before 1.4, then a freeze (decided 2026-11-02)
 
 1.4 was taken **off review** on 2026-11-02. Setting the tempo (the tap UI, finding the 1, drift) isn't
@@ -209,7 +263,8 @@ click through the speaker and through headphones.
 
 ### After the freeze
 
-- **Another key: pitch in Active listening, and a song raised to meet your tuning.** Logged
+- **Another key: pitch in Active listening, and a song raised to meet your tuning.** **In 1.5, item
+  1.** Logged
   2026-11-17 as **ADR 0305, accepted the same day** for **1.5**. Tomisin's idea: play a stolen lick in other keys so it
   becomes your own. In another key the fingering stops matching the sound, so the lick gets rebuilt
   from its intervals. Agreed in the conversation: **±6 semitones in whole steps** (all twelve keys),
@@ -275,7 +330,7 @@ click through the speaker and through headphones.
   2026-11-13**, the same day, pulled forward from after the freeze (Tomisin: *"let's build it then...
   we'll release it with 1.4.1"*). It goes on its own branch once `pocket-425` merges, and its ADR
   settles the questions above before any code.
-- **A bent note's number covers its arc** (found 2026-11-13 on `pocket-426`, from Tomisin's screenshot of
+- **A bent note's number covers its arc.** **In 1.5, item 2c.** (Found 2026-11-13 on `pocket-426`, from Tomisin's screenshot of
   the tab writer). Once the editor moves past a note, the note carries its number at its top right
   (`NeighbourNumber`, ADR 0234 D3), which is where every bend arc meets the note (`NeckMarksLayer.drawBend`,
   ADR 0288 D4). For a bend, the arc's start is hidden; for a bend and release or a pre-bend let down, the
@@ -300,7 +355,7 @@ click through the speaker and through headphones.
   (main-thread CPU, Debug, simulator).
   - **No second Journal.** Opening the Journal stayed flat (622 → 580 ms). The Practice log, Songs, Loops,
     Exercises and Routines didn't grow. Their per-render work is a filter or a single map over each query.
-  - **Home's *This week* strip grows in step with practice.** It queries every run and every note to show
+  - **Home's *This week* strip grows in step with practice.** **In 1.5, item 2a.** It queries every run and every note to show
     one week: about 100 ms at today's history and about 350 ms at four times it. It's linear, so it isn't
     urgent, but Home is the most-opened screen. Fetch only this week's runs (a plain `Date` predicate on
     `PracticeRun.startedAt`, which isn't the optional-predicate freeze in `docs/swiftdata-gotchas.md`).
@@ -313,7 +368,7 @@ click through the speaker and through headphones.
   - **Method, for next time:** pull the store with `devicectl`, open it in a hosted-window test with
     `ModelConfiguration(url:)`, and time each screen before and after multiplying the history. The first
     draw after a bulk insert pays a one-off cost (2.6 s here), so draw each screen twice and read the second.
-- **Watch the section, rethought** (item 18, ADR 0289, held back by ADR 0291). Built and merged (#402),
+- **Watch the section, rethought** (item 18, ADR 0289, held back by ADR 0291). **In 1.5, item 3.** Built and merged (#402),
   then held back after Tomisin's device check of 2026-11-04: *"I feel like it could be better thought
   out. let's drop it then put it in the post 1.4 backlog"*. The lag felt that day was most likely the
   Journal's (#406). `SongMapView.opensSectionWatch` closes both doors; the code, `SectionWatchTests` and
@@ -342,7 +397,7 @@ click through the speaker and through headphones.
 
   Needs its own ADR, amending 0004's rung 2 and 0011's import if it goes ahead. **Not decided.**
 
-## A bass 10th draws without its 10th (logged 2026-11-14, found building ADR 0297)
+## A bass 10th draws without its 10th (logged 2026-11-14, found building ADR 0297) — in 1.5, item 2b
 
 `BassChordShape.majorTenth` and `.minorTenth` put the 10th six frets above the root: C on the low E at
 fret 8, its E on the D string at fret 14. `ChordDiagramView` draws a four-fret window from the lowest
@@ -353,7 +408,7 @@ It is not new with 0297, which only made the chip easier to see under a chosen r
 window to the shape's span (capped) rather than special-casing bass. Check the guitar diagrams don't
 shift when it lands, since none of them span more than four frets today.
 
-## Split the Scales and Arpeggios editors into rows (logged 2026-11-11, follows ADR 0293)
+## Split the Scales and Arpeggios editors into rows (logged 2026-11-11, follows ADR 0293) — in 1.5, item 2d
 
 **Ready to pick up.** ADR 0293 (#412) fixed the lag in the Warm-up / Picking / Legato editor by making
 it Form rows. The Scales and Arpeggios editors have the same structure that caused that lag, so they
@@ -1935,7 +1990,11 @@ do: almost certainly rewind to 0 and play, matching `handleReachedEnd`, rather t
 range. Unit-testable off `primeSchedule`'s return plus the `seekFrame == totalFrames` case; the
 `AudioMath.loopSegment` clamping the old entry pointed at is not where the bug lives.
 
-## ADR 0140, slowed-audio quality — slices 1–2 SHIPPED (#209), slice 3 deferred
+## ADR 0140, slowed-audio quality — COMPLETE: slices 1–2 SHIPPED (#209), slice 3 adopted 2026-08-04 (#211)
+
+> **Corrected 2026-11-17:** this heading said slice 3 was deferred for three months after it shipped.
+> The A/B ran on 2026-08-04 (`pocket-226`), `'tmpt'` won, and `pocket-228` made it the default with no
+> toggle (ADR 0140's status, `TimeStretcher.Kind`). The rest is the entry as it stood on 2026-08-02.
 
 **Was the priority ahead of the queue below, and is now largely discharged.** Track A/B are new
 features; this was the oldest feature in the app sounding worse than it needed to, on the surface that
@@ -1987,7 +2046,7 @@ Three slices, in [ADR 0140](decisions/0140-slowing-down-shouldnt-cost-the-sound.
   would be credited to the wrong thing.
 - Simulator lies about all of this. Every claim here except the two pure functions is device-only.
 
-## Build order — ADRs 0135–0139 (decided 2026-08-01; all shipped except 0139 slice 2)
+## Build order — ADRs 0135–0139 (decided 2026-08-01; all shipped, 0139 slice 2 last, #211)
 
 Five ADRs landed as **decisions only, no Swift**: 0135–0138 on main (squash `0187282`, PR #203) and
 0139 on `pocket-217-off-guitar-session`. Each ADR carries its own slices; this is the sequence
@@ -2077,7 +2136,7 @@ slice 2 only adds a second source of off-guitar-eligible units to a pool that al
 - Per branch as usual: `swiftlint --strict`, the generic-simulator build, `-testPlan PocketAll`,
   `CHANGELOG.md` for the user-visible ones, and device verification before calling anything done.
 
-## Improvise — a fine-tuning pass (parked 2026-08-02, after ADR 0140)
+## Improvise — a fine-tuning pass (parked 2026-08-02, after ADR 0140) — in 1.5's review, item 4c
 
 The improvise surfaces shipped across ADR 0135 slices 1–3 (`ImproviseSheet`, `ImproviseLoopRunView`,
 the Improvise bucket, the `improv.vocabulary` resolution and the trailing `play` block) are **a good
@@ -2164,7 +2223,7 @@ Still open, in the ADR and deliberately unbuilt:
 - **§7's loop warning.** Currently quiet rather than broken (a one-pass plateau's clamped window can't
   be reached by an integer rep count). Needs a fractional rep position on `LoopRunModel`.
 
-## The click withdrawal (ADR 0132 — **slice 1 SHIPPED**, slice 2 out of v2)
+## The click withdrawal (ADR 0132 — **slice 1 SHIPPED**, slice 2 out of v2) — in 1.5's review, item 4a
 
 Silent bars: the click thins to the downbeat and then out on a fixed eight-bar cycle, so the player
 carries the pulse and hears their own drift when it returns.
@@ -2195,7 +2254,7 @@ the beat, so the eyes keep a pulse the ear has lost and the withdrawal is partia
 construction (§7a). Whether that is worth a further answer is a device-testing question — and it only
 comes back into scope if the guard above is relaxed.
 
-## Command moves both ways (ADR 0134 — **slice 1 SHIPPED**, slice 2 parked)
+## Command moves both ways (ADR 0134 — **slice 1 SHIPPED**, slice 2 parked) — in 1.5's review, item 4b
 
 The post-run offer can only ever raise `command`, so a run that fell apart still lands on a Done
 screen reading "you summited it — bump the drill up". The ramp completes on a timer (the app never
@@ -2268,8 +2327,11 @@ Rejected on the way (ADR 0135): synthesising a bed from a `ChordProgression` thr
 `.loopDrill` (wider blast radius than the hole). Parked: a scale/box overlay driven by `Song.key`,
 bulk-flagging via ADR 0125's multi-select, and exposure surfacing on the Practice log.
 
-## Practice you can do without your instrument (ADR 0139 — slice 1 SHIPPED #208, slice 2 deferred)
+## Practice you can do without your instrument (ADR 0139 — slice 1 SHIPPED #208, slice 2 SHIPPED #211)
 
+> **Corrected 2026-11-17:** slice 2 was built on 2026-08-04 (`pocket-227-freeform-blocks`, #211),
+> straight after ADR 0136 unblocked it; ADR 0139's status says so. The next line is how it stood before.
+>
 > Slice 1 shipped; **slice 2 is the outstanding half** and is blocked on ADR 0136. Original decision
 > record below.
 
