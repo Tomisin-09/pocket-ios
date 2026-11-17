@@ -1,14 +1,17 @@
 # ADR 0305 — Another key: a lick moved to practise it, a song moved to meet your tuning
 
-- **Status:** Proposed. Raised by Tomisin on 2026-11-17 and written up the same day. Nothing is built.
-  It's not for 1.4.1, and not before the November marketing month ends; the backlog carries it under
-  *After the freeze*. The open questions at the end are Tomisin's to decide.
-- **Date:** 2026-11-17 (`pocket-438-another-key`)
-- **Would amend:** ADR 0140, *What this closes off*: *"No pitch shifting. `pitch` stays 0"* is lifted
-  for the two shifts below and nothing else. Speed stays pitch-preserving, and there is still no
-  varispeed. ADR 0227 **D9**: a piece named while its song is raised or lowered records the open
-  strings that match the recording, not the strings the player tuned to (D5). On acceptance these
-  become `Amends` fields, and the notes this left in 0140 and 0227 become `Amended by`.
+- **Status:** Accepted on 2026-11-17, with every lean under *Decided* taken as recommended. Not built.
+  It targets 1.5, after the November marketing month (the backlog carries it under *After the
+  freeze*). Proposed on `pocket-438-another-key` (#429), accepted on `pocket-439-accept-another-key`.
+  The same day, Tomisin approved the design against a canvas mockup of the three screens
+  (`https://claude.ai/artifact/XGN3XZoBnL1WVhRdr8Suq9`, private). That moved D4's song-player mark,
+  filled in D3's and D4's layout, and added D8, the key-picker bug fix.
+- **Date:** 2026-11-17
+- **Amends:** ADR 0140, *What this closes off*: *"No pitch shifting. `pitch` stays 0"* is lifted for
+  the two shifts below and nothing else. Speed stays pitch-preserving, and there is still no varispeed.
+  ADR 0227 **D9**: a piece named while its song is raised or lowered records the open strings that
+  match the recording, not the strings the player tuned to (D5). Names made at an Active listening
+  shift are not saved.
 - **Relates to:** 0302 (Active listening, where the first shift lives) · 0225 (the piece, one per loop)
   · 0301 (higher, same or lower, which is the same in any key) · 0097 (Hear, which plays named notes) ·
   0123 (key-first spelling) · 0115/0116 (the curated tunings) · 0188 (the archive, which would carry the
@@ -72,8 +75,9 @@ Changing one never changes the other. Every shift is in whole semitones.
 
 ### D3 — Active listening: the shift starts at 0, every time
 
-- A stepper on the Active listening screen: down and up by a semitone, and a way back to the
-  original.
+- A **key** stepper beside the **tempo** control, under the play button, in the same −/+ shape, its
+  value in mono over the word *key*. Under both, one line says the key you're hearing, with an
+  *Original key* button while you're off 0.
 - **Not saved.** It's 0 each time the screen opens, and a routine block doesn't store one.
 - The shift sounds in every step: hum-it-back, *Count the notes*, *Higher, same or lower* and *Name the
   notes*.
@@ -84,14 +88,22 @@ Changing one never changes the other. Every shift is in whole semitones.
 
 ### D4 — On a song: raised or lowered, and saved with it
 
-- The song gains one saved shift, in semitones, default 0. It is set in **Edit song**, beside the key
-  picker, because like the key it describes the recording. It doesn't go on the speed bar, which holds
-  what you change while you practise.
+- The song gains one saved shift, in semitones, default 0. It is set in **Edit song**, in its own
+  **Pitch** section straight under Key, because like the key it describes the recording. The section
+  has a *Raise or lower* row with the key it lands in (*Up 1 semitone · F♯ minor → G minor*), its value
+  in mono and a stepper, then *Back to the recording*, greyed at 0, and a footer for the
+  half-step-down case. It doesn't go on the speed bar, which holds what you change while you practise.
 - **It sounds wherever the song's audio plays:** the song player, loop runs, play-along, Active
   listening, improvising, routine blocks and the routine preview. All of them share the one engine.
-- **Never hidden.** When it isn't 0, the song player shows it beside the speed (*+1 semitone*). A song
-  that sounds a half step off with nothing on screen to explain it would look like a bug.
+- **Never hidden.** When it isn't 0, the song player shows it with the song's facts, under *slowest
+  75%*: a teal *+1 semitone* chip, which opens Edit song. A song that sounds a half step off with
+  nothing on screen to explain it would look like a bug. *(Changed 2026-11-17 after the mockup. This
+  first said "beside the speed", but the speed bar's shortcut row has no room for it beside Reset at
+  phone width. A fact about the recording belongs with the song's other facts anyway. It only changes
+  when the song is edited, so the header never moves during practice.)*
 - **The song's key stays the recording's key**, and the shift is shown against it: *E♭ → E*.
+- **It's free** (decided Q1). Speed on the song player is free, and fixing a recording's tuning is a
+  basic need, not something to sell.
 - **The archive carries it** (0188). An archive or a build without it reads 0, so decode it with
   `decodeIfPresent` and apply the default after.
 
@@ -116,6 +128,11 @@ shift.
 the loop. The frets are shown as saved, against the strings they were saved with, because that is the
 recording's tab. For a piece named at the song's shift, those are exactly the frets the player
 played. When the shift isn't 0, the tuning line says so. The wording is the build's to settle.
+
+**A piece saved before the song's shift changed** (decided Q5). Its frets are right for the strings it
+was saved with, but no longer match what you hear. When it's opened to edit, the sheet says so and
+offers to move every fret by the shift, on the same string. Where a fret would fall off the neck (an
+open string lowered), it asks rather than guessing a string. Nothing moves until the player says so.
 
 **Named at an Active listening shift: not saved.**
 - What you name at +3 is the lick in another key. It's your version, not the recording.
@@ -146,6 +163,22 @@ If one end fails, there is a fallback that keeps every key. −6 and +6 are the 
 can stop one short (at 5) on the weaker side. If more than that fails, either the range narrows and
 the screen says it reaches fewer keys, or the third-party stretcher 0140 deferred comes back.
 
+### D8 — Edit song's key picker stops wrapping (a bug fix, in slice 2)
+
+This is a bug, seen in the 1.4 and 1.4.1 manual figures. In Edit song's key picker, *D♯* and *G♯*
+wrap onto two lines and their chips grow into circles, while *C♯* and *F♯* fit. The likely cause:
+each root's label (`KeyPickerSection.rootChip`) is a `Text` with no line limit, in one of six flexible
+columns, and in Futura D and G are wider than C and F. So a sharp on D or G breaks the line.
+
+Slice 2 puts the Pitch section straight under the key picker, so the fix goes in there:
+- every chip is one line, whatever its root;
+- the grid is checked at the largest Dynamic Type size, and drops to fewer columns if one line can't fit
+  in six;
+- a screenshot is the check, because a layout bug like this passes every test.
+
+Because it is a real bug, it can also be fixed sooner on its own. The marketing month allows real
+bugs. If that happens, this decision is met, and slice 2 only re-checks it.
+
 ## Alternatives not taken
 
 - **±12, the first idea.** Practising in other keys doesn't need the octave. On guitar, a lick an
@@ -168,27 +201,30 @@ the screen says it reaches fewer keys, or the third-party stretcher 0140 deferre
   one matches, if the build finds that clearer.
 - **Turning *Name the notes* off while shifted.** Simpler, but it drops the step the whole idea is for.
 
-## Open questions
+## Decided
 
-1. **Is the song's shift free?** Speed on the song player is free, and a tuning fix reads like a basic
-   need. Lean: free. Either way, `docs/manual/` says what is free and what is Pro.
-2. **Is a pass named at a shift kept anywhere,** such as a Journal line, *Named in B♭ (+3)*? Lean: not
-   in slice 1. The value is in doing it, and D5's copy says plainly that it isn't kept.
-3. **After naming at a shift, can the player reveal their saved names moved to that key?** It would
-   show their own earlier answer, with nothing marked right or wrong. Lean: later, and only if 0070's
-   line still holds once someone has used it.
-4. **Can a routine block hold a shift,** such as *Slow Bend riff in B♭*? Lean: not now. It would be the
-   first thing to make D3's shift a saved setting.
-5. **What happens to a piece saved before the song's shift changed?** Its frets are right for the
-   strings it was saved with, but those no longer match what you hear. Lean: when it's opened to edit,
-   the sheet says so and offers to move every fret by the shift on the same string. Where a fret would
-   fall off the neck (an open string lowered), it asks rather than guessing a string.
+The five open questions, decided by Tomisin on 2026-11-17. Every lean was taken as recommended.
+
+1. **The song's shift is free.** Speed on the song player is free, and a tuning fix is a basic need
+   (D4). `docs/manual/` says so when slice 2 ships.
+2. **A pass named at a shift isn't kept anywhere,** not even as a Journal line. The value is in doing
+   it, and D5's copy says plainly that it isn't kept. It can come back (Deferred).
+3. **No reveal of your saved names moved into the new key, for now.** It would show your own earlier
+   answer with nothing marked, but it is the closest this comes to 0070's line. It comes back only if
+   that line still holds once someone has used the feature (Deferred).
+4. **A routine block doesn't hold a shift.** It would be the first thing to make D3's shift a saved
+   setting.
+5. **A piece saved before the song's shift changed** offers to move its frets, and asks where a fret
+   would fall off the neck (D5).
 
 ## Deferred
 
 - Cents, for recordings that aren't at A440.
 - The octave, unless D7 says it sounds good.
 - A third-party stretcher (0140's Deferred list), if D7 fails.
+- A Journal line for a pass named at a shift (Q2).
+- Revealing your saved names moved to the key you're hearing (Q3).
+- A shift held by a routine block (Q4).
 
 ## Slices
 
@@ -196,18 +232,20 @@ the screen says it reaches fewer keys, or the third-party stretcher 0140 deferre
    in total. It writes on both backends and is written again after `engine.start()`, as rate is
    (`reassertRate`). Then the stepper, D3's copy, D5's rule for an Active listening shift, and D7's
    gate. Pure unit tests: the clamp and the sum, and the key label for a shift (beside `NoteSpelling`).
-2. **The song's shift (schema).** The `Song` attribute, the control in Edit song, the mark on the song
-   player, the archive key, and D5's translation on save and its display. Unit tests: *Standard* at
+2. **The song's shift (schema).** The `Song` attribute, the Pitch section in Edit song with D8's
+   key-picker fix above it, the mark with the song's facts, the archive key, and D5's translation on
+   save and its display. Unit tests: *Standard* at
    +1 saves as *Half step down* with the frets kept; by-ear names and chord roots move down by the
    shift; a player who retuned and one who raised the song save equal pieces; the archive decodes a
-   missing key as 0. Then the store upgrade check on the simulator.
+   missing key as 0; and Q5's fret move, including the open-string case that has to ask. Then the
+   store upgrade check on the simulator.
 
 ## Consequences
 
-- 0140's *No pitch shifting* line and 0227's D9 each carry a note pointing here. They become
-  `Amended by` when this is accepted.
+- 0140's *No pitch shifting* line and 0227's D9 each carry an `Amended by` note pointing here, which
+  `check-manual.py` C16 now holds them to.
 - Slice 1 changes `TimeStretcher.writePitchZero()` and its comment ("Pitch is never touched again").
 - `PieceTranscription.openMidi`'s comment gains *against the recording*. The version stays 1: every
   piece saved so far was named at a shift of 0, where both readings agree.
-- `docs/manual/` gains the stepper and the song's shift, and the figures that show either need a
-  reshoot.
+- `docs/manual/` gains the stepper and the song's shift. The figures that show either need a reshoot,
+  and so do the two Edit song figures (`songs/song-edit`, `reference/song-edit`) once D8 lands.

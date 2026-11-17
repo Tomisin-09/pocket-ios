@@ -210,7 +210,7 @@ click through the speaker and through headphones.
 ### After the freeze
 
 - **Another key: pitch in Active listening, and a song raised to meet your tuning.** Logged
-  2026-11-17 as **ADR 0305 (Proposed)**. Tomisin's idea: play a stolen lick in other keys so it
+  2026-11-17 as **ADR 0305, accepted the same day** for **1.5**. Tomisin's idea: play a stolen lick in other keys so it
   becomes your own. In another key the fingering stops matching the sound, so the lick gets rebuilt
   from its intervals. Agreed in the conversation: **±6 semitones in whole steps** (all twelve keys),
   because **sound quality comes first**. 0305 adds a second use: a saved shift on a song, so a record
@@ -219,8 +219,13 @@ click through the speaker and through headphones.
   adds one `Song` attribute. The hard part is **saved names** (0305 D5). A piece always describes the
   recording: named at a song's shift, it keeps its frets and records the open strings moved the other
   way (*Standard* at +1 saves as *Half step down*). Named at an Active listening shift, it isn't saved.
-  **Before building:** Tomisin accepts 0305 and answers its five open questions, then D7's phone
-  listening check at ±6 and 25% speed gates slice 1. Its own branch, after day 1.
+  All five open questions were decided as recommended (0305 *Decided*): the song's shift is free; a
+  pass named at a shift isn't kept; no reveal of moved names; no shift in a routine block; and an older
+  piece offers to move its frets. **Before slice 1 merges:** D7's phone listening check at ±6 and 25%
+  speed. Its own branch, after day 1. Tomisin approved the design against a canvas mockup on
+  2026-11-17. The song player's mark sits with the song's facts, not on the speed bar.
+  **Bug, D8:** Edit song's key picker wraps *D♯* and *G♯* onto two lines (chips grow into circles).
+  It's fixed in slice 2, or sooner as a real bug.
 
 - ~~**"Prepare a set": a long-term goal that holds several songs.**~~ **DONE 2026-11-15**
   (`pocket-429`, ADR 0299, all three of its open questions decided as recommended). The entry below
