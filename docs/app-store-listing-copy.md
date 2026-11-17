@@ -467,6 +467,10 @@ shipping code, not aspiration.
 > optional practice recordings the player starts themselves. Audio is analysed and
 > stored on the device and is never uploaded — the app has no audio upload path.
 >
+> **Background audio:** practice playback, and a recording the player started, keep going when the
+> screen locks. Both can be paused from the lock screen, and iOS shows its recording indicator while
+> the microphone is on.
+>
 > **Notifications:** asked for only when the player switches on a practice reminder for
 > one of their routines.
 >
@@ -474,6 +478,11 @@ shipping code, not aspiration.
 > cross-device sync and no user account. The app collects no usage data and contains
 > no analytics. No advertising identifier is collected and no third-party SDK of any
 > kind is present.
+
+*Live in App Store Connect from 2026-11-17 for 1.4.1 (11). Tomisin added the Background audio paragraph
+there, for ADR 0304: a take now keeps recording with the screen locked. The live copy spells it the US way,
+"Practicing" and "practicing", in the plan paragraph. This file keeps "practising". Otherwise the export
+matches the live text exactly.*
 
 **Before pasting, re-check each claim still holds** — a stale one is worse than no
 note at all. For 1.4, confirm the plan sentence on the TestFlight build during the sandbox pass:
