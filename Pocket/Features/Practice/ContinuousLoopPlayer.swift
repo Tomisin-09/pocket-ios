@@ -31,6 +31,18 @@ final class ContinuousLoopPlayer {
     private(set) var percent: Int
     private var startTask: Task<Void, Never>?
 
+    /// The lock screen (ADR 0303), claimed when the loop starts and held until `stop()`. Its pause is a
+    /// **stop** and its play starts the loop again, because this player has two states, ▶ and ■, and the
+    /// screens built on it handle exactly those: Count the notes reads `isPlaying` falling as a pass
+    /// ending, and a take is finalised before the bed stops. The claim outlives a lock-screen stop, so
+    /// there is still a play to press; the on-screen ■, or leaving the screen, lets it go.
+    private let nowPlaying = NowPlayingController()
+    /// The lock screen's clock: time spent sounding, across lock-screen stops, since the on-screen start.
+    @ObservationIgnored private var clock = PlayClock()
+    /// Runs before a lock-screen stop silences the loop. A host that records sets it to its take finish,
+    /// so the take is finalised before the bed stops, as the on-screen ■ does it (ADR 0304).
+    @ObservationIgnored var onRemoteStop: (() -> Void)?
+
     /// - Parameter startPercent: where the adjuster opens, in integer percent-of-original. Defaults
     ///   to the loop's own command (`loop.ramp.command`) — the tempo the player owns the passage at,
     ///   which is the right place to start *internalising* it. `ImproviseView` passes the loop's
@@ -85,6 +97,7 @@ final class ContinuousLoopPlayer {
             await model.loadIfNeeded()
             guard !Task.isCancelled, !model.loadFailed else { return }
             model.startAudition(percent: self.percent)
+            claimLockScreen()
         }
     }
 
@@ -105,14 +118,61 @@ final class ContinuousLoopPlayer {
         RampLessBlockLength.cycleSeconds(regionSeconds: loop.regionSeconds, percent: percent)
     }
 
-    /// Stop playback and cancel any pending load. Idempotent — safe to call on disappear.
+    /// Stop playback, cancel any pending load, and let go of the lock screen. Idempotent — safe to call
+    /// on disappear.
     func stop() {
+        silence()
+        nowPlaying.teardown()
+        clock.reset()
+    }
+
+    /// Everything `stop()` does to the audio, without letting go of the lock screen.
+    private func silence() {
         startTask?.cancel()
         startTask = nil
         sliceTask?.cancel()
         sliceTask = nil
         isSlicePlaying = false
         model.stop()
+    }
+
+    // MARK: - Lock screen (ADR 0303)
+
+    /// Take the lock screen once the loop is actually sounding. Claiming again on every start keeps this
+    /// player on top of anything that claimed while it was stopped.
+    private func claimLockScreen() {
+        guard isPlaying else { return }
+        clock.run(at: PlayClock.now)
+        nowPlaying.activate(onPlay: { [weak self] in self?.startFromLockScreen() },
+                            onPause: { [weak self] in self?.stopFromLockScreen() },
+                            onToggle: { [weak self] in
+                                guard let self else { return }
+                                if isPlaying { stopFromLockScreen() } else { startFromLockScreen() }
+                            })
+        pushNowPlaying()
+    }
+
+    /// The lock screen's pause: finish the host's take, then silence the loop, keeping the claim so play
+    /// is still there to press.
+    private func stopFromLockScreen() {
+        guard isPlaying else { return }
+        onRemoteStop?()
+        silence()
+        clock.hold(at: PlayClock.now)
+        pushNowPlaying()
+    }
+
+    /// The lock screen's play: the loop starts again, as the on-screen ▶ starts it, without arming a take.
+    private func startFromLockScreen() {
+        guard !isPlaying else { return }
+        toggle()
+    }
+
+    private func pushNowPlaying() {
+        let label = model.lockScreenLabel
+        nowPlaying.update(NowPlayingState(title: label.title, artist: label.subtitle, duration: 0,
+                                          elapsedTime: clock.elapsed(at: PlayClock.now),
+                                          isPlaying: isPlaying, speed: 1))
     }
 
     // MARK: - Count the notes (ADR 0225)

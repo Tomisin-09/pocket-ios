@@ -280,7 +280,7 @@ final class RecordingController {
     /// take that is capturing nothing. An `.ended`, or a notification without a readable type, is no
     /// reason to end anything.
     ///
-    /// The pure half of `endsTakeOnLeavingApp`, split out so it can be tested without a microphone.
+    /// The pure half of `endsTakeOnInterruption`, split out so it can be tested without a microphone.
     nonisolated static func endsTake(onInterruption userInfo: [AnyHashable: Any]?) -> Bool {
         guard let raw = userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
               let type = AVAudioSession.InterruptionType(rawValue: raw) else { return false }

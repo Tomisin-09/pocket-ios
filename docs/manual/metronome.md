@@ -38,9 +38,10 @@ The screen stays awake while the click runs, unless you have turned that off in 
 
 The **record** button beside **Start** records a take of you playing to the click. Tap it while the
 click is stopped and it turns red; the take then starts when the click does, from **Start** or from
-**Start ramp**, carries on through **Pause**, and ends at **■** or when you leave the screen. Leaving
-Red Moon ends it too, and saves what you played; the click itself keeps going on the lock screen. The
-button is only there while the click is stopped: a take starts with the click, not part way through.
+**Start ramp**, carries on through **Pause**, and ends at **■** or when you leave the screen. Like the
+click, it keeps going when the phone locks or you switch apps; a call coming in ends it and saves what
+you played. The button is only there while the click is stopped: a take starts with the click, not part
+way through.
 
 The take is the microphone only. Through the phone's speaker the click is in the take, which is what
 you want for hearing your timing against it. Through headphones the take is just your playing.

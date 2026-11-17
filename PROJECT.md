@@ -196,13 +196,20 @@ pitch-preserving speed, and **seamless, click-free region looping** (a crossfade
 `.loops` buffer, ADRs 0006 & 0008) — fed by an imported file's real audio. (The
 generated arpeggio `SampleToneGenerator` survives only as a preview/dev sample;
 the bundled demo song was dropped with ADR 0148 §7.) Playback surfaces on the **lock screen /
-Control Center** (title, artist, play/pause only — plus a default **Red Moon
-crescent artwork**, since imported songs carry no cover art) via a
-`NowPlayingController` bridge over `MPNowPlayingInfoCenter` +
-`MPRemoteCommandCenter`, driven by a pure
-unit-tested `NowPlayingState`; leaving the screen **stops** audio and removes the
-global command targets (`onDisappear` → `endPlaybackSession`), while locking the
-phone mid-practice keeps it playing (ADR 0025). Interaction: **tap = seek, drag = scrub, hold-drag = select a loop, pinch = zoom**
+Control Center / Dynamic Island** (title, artist, play/pause only — plus the **Red Moon mark** as
+artwork, `DefaultArtwork`, which is the App Icon's own render cut by `derive-brand-svgs.py
+--app-icon`, since imported songs carry no cover art) via a
+`NowPlayingController` per producer, driven by a pure
+unit-tested `NowPlayingState`; leaving the screen **stops** audio and lets go of the lock screen
+(`onDisappear` → `endPlaybackSession`), while locking the
+phone mid-practice keeps it playing (ADR 0025). **Every producer that can sound for more than a few
+seconds** holds the lock screen the same way (ADR 0303): the song screen, the metronome, a loop run,
+a continuous loop (`ContinuousLoopPlayer`, where the lock screen's pause **stops** and its play starts
+again, finishing a host's take first through `onRemoteStop`), a song block and a take. They hold
+**claims** in the one `NowPlayingHub` that writes `MPNowPlayingInfoCenter` + `MPRemoteCommandCenter`;
+the pure `NowPlayingClaims` decides who is shown (the newest claim; letting go hands back to the one
+beneath), so a routine's outgoing block can't blank the incoming one. A loop's lock-screen clock is
+sounding time (`PlayClock`). Interaction: **tap = seek, drag = scrub, hold-drag = select a loop, pinch = zoom**
 (a **page-mode** viewport — the window holds still and the playhead sweeps/pages across it,
 with a Fit / 1× reset; ADR 0010 — and a deep zoom **re-downsamples the visible window from
 the source file** for crisp detail, debounced + cached, ADR 0020);

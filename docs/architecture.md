@@ -216,18 +216,25 @@ engine pre-renders the loop region into a buffer whose seam is equal-power
 both gapless and free of the splice click; the visual playhead wraps via pure
 `AudioMath.loopedPlayhead`, decoupled from the audio (region math in
 `AudioMath.loopSegment`; ADRs 0006 & 0008). Playback is surfaced to the system
-**lock screen / Control Center** (play/pause only) by `NowPlayingController` — a
-`@MainActor` bridge that owns the `MPRemoteCommandCenter` targets and pushes
-`MPNowPlayingInfoCenter` updates from a pure, unit-tested `NowPlayingState`
-(`reportedRate` = speed while playing, 0 when paused); it also attaches a default **Red Moon
-crescent artwork** (the `DefaultArtwork` asset), since imported songs carry no embedded cover art.
-Because the command center
-is a process-global singleton, its targets are removed on screen exit:
-`WaveformPracticeView.onDisappear` → `model.endPlaybackSession()` clears the info,
-removes the targets, and calls `engine.stop()` (halt → deactivate the session), so
-audio stops on leaving the screen and nothing keeps the engine alive — while
+**lock screen / Control Center / Dynamic Island** (play/pause only) by a `NowPlayingController` —
+one producer's handle, which pushes a pure, unit-tested `NowPlayingState` (`reportedRate` = speed
+while playing, 0 when paused). The two process-global centers have **one writer**, `NowPlayingHub`
+(ADR 0303): every producer that can sound for more than a few seconds — the song screen, the
+metronome, a loop run, a continuous loop, a song block, a take — *claims* the lock screen while it
+plays and *lets go* when it stops, and the pure, unit-tested `NowPlayingClaims` decides what shows:
+the newest claim owns it, an update from beneath is kept but not drawn, and letting go hands back to
+the claim beneath (or clears). That is what keeps a routine's incoming block on the lock screen while
+the outgoing one tears down (they overlap, ADR 0129). The hub registers the remote-command targets
+while any claim is held and looks the owner up per command, so no closure keeps an engine alive. The
+artwork is **`DefaultArtwork`, the App Icon's own render** (`derive-brand-svgs.py --app-icon` copies
+it), since imported songs carry no embedded cover art. On the song screen,
+`WaveformPracticeView.onDisappear` → `model.endPlaybackSession()` lets go of the lock screen and
+calls `engine.stop()` (halt → deactivate the session), so
+audio stops on leaving the screen — while
 backgrounding mid-practice keeps playing under the existing `audio`
-`UIBackgroundMode` (ADR 0025). A **metronome** can click over the song
+`UIBackgroundMode` (ADR 0025). A continuous loop's lock-screen pause **stops** it and play starts it
+again (it has no paused state its screens understand), finishing a host's take first via
+`onRemoteStop`; a loop's lock-screen clock is sounding time (`PlayClock`). A **metronome** can click over the song
 (transport **Click** toggle): pure `MetronomeSchedule` takes the `BeatGrid`
 (in source seconds), the playhead, and the playback rate and returns the beats
 due in the next ~1 s with **how far ahead each sounds** — `delay = (beat − now) /

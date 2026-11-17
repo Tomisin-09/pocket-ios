@@ -6,6 +6,9 @@
 - **Amends:** ADR 0069, which lists the places a take is recorded against: a loop, an exercise or a
   song. The free-play metronome is now one more. Its §1 (the microphone only, never the app's own
   playback) and §2 (isolation by route) stand unchanged.
+- **Amended by:** ADR 0304 (2026-11-17) — **D3**: leaving the app no longer ends the take. The click
+  and the take both carry on, because the screen sleeping counted as leaving and cut long takes off.
+  An interruption beginning still ends and saves it, through `endsTakeOnInterruption`.
 - **Relates to:** 0160 (the metronome note, whose snapshot columns and caption this copies), 0224 (the
   standalone take, whose flag this partitions with), 0132 (the withdrawal tier in force), 0112 and 0263
   (takes are free), 0286 (the Journal thread, which a metronome take never counts towards)
@@ -39,7 +42,8 @@ the glitch ADR 0069's arm grammar exists to avoid. `.onChange(of: transport)` fi
 
 **D3. Leaving the app ends and saves the take; the click plays on.** On `.background` and on an
 interruption beginning, through the same `endsTakeOnLeavingApp` every take screen uses. Not on
-`.inactive` (Control Center, a banner).
+`.inactive` (Control Center, a banner). *Amended by 0304: leaving no longer ends the take; only an
+interruption does, through `endsTakeOnInterruption`.*
 
 **D4. A take knows it was recorded at the metronome, and what the click was.**
 `RecordingOwner.metronome(MetronomeJournalContext)` sets `Recording.isMetronome` and snapshots tempo,

@@ -82,7 +82,7 @@ generated, not hand-cropped — after a new logo revision:
 
 ```sh
 scripts/derive-brand-svgs.py                     # the blood moon art → the asset catalog
-scripts/derive-brand-svgs.py --app-icon          # …and re-render the 1024² App Icon
+scripts/derive-brand-svgs.py --app-icon          # …and re-render the 1024² App Icon + Now Playing art
 scripts/derive-brand-svgs.py --out /tmp/preview  # preview crops, catalog untouched
 ```
 

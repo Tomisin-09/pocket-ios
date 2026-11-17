@@ -58,9 +58,9 @@ struct StandaloneTakeSheet: View {
             // permission prompt — without it, dismissing mid-prompt starts a mic on a dead sheet.
             recorder.releaseRecordSession()
         }
-        // Leaving the app saves the take too. That is still the save, not a gesture that meant
-        // something else, so it doesn't break the rule above.
-        .endsTakeOnLeavingApp {
+        // An interruption saves the take too. That is still the save, not a gesture that meant
+        // something else, so it doesn't break the rule above. Leaving the app does not (ADR 0304).
+        .endsTakeOnInterruption {
             recorder.finishIfRecording(owner: .standalone, context: modelContext)
         }
     }

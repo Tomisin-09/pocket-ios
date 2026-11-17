@@ -254,7 +254,7 @@ extension JournalTabView {
                            ownerLabel: caption,
                            onOpenOwner: openAction(for: item),
                            isPlaying: player.isPlaying(take.fileName),
-                           onToggle: { player.toggle(take.fileName) },
+                           onToggle: { player.toggle(take.fileName, label: take.lockScreenLabel) },
                            onOpen: { openedTake = StableRef(value: take) },
                            thread: link)
             // Naming is a take-only verb: every other row already says what it is in its own words.

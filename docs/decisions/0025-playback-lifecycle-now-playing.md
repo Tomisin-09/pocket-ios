@@ -2,6 +2,12 @@
 
 - **Status:** Accepted
 - **Date:** 2026-06-20
+- **Amended by:** ADR 0303 (2026-11-17) — **"Stop on exit, tear down explicitly"**: a producer no longer
+  clears the global Now Playing info or removes the command targets itself. It lets go of a claim held
+  in `NowPlayingHub`, and the lock screen goes back to the claim beneath, because a routine's incoming
+  block claims before the outgoing one tears down. The lock screen now reaches loop runs, continuous
+  loops, song blocks and takes too, and its art is the App Icon's render. *Play/pause only* and stopping
+  the song screen's audio on leaving it still stand.
 
 ## Context
 

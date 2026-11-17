@@ -86,8 +86,9 @@ run does and ends when it does. The [metronome](metronome.md#recording-yourself)
 beside **Start**. Takes land in this same timeline alongside your notes, and a take recorded at the
 metronome says the click it was played to, like *96 BPM · 4/4*.
 
-Leaving Red Moon also ends a take: going to another app, locking the phone, or a call coming in. What
-you played up to then is saved, and the microphone is let go.
+A take carries on if the screen goes to sleep, you lock the phone or you switch to another app, with
+the phone's recording indicator lit, until you stop it in Red Moon. A call coming in ends it: what you
+played up to then is saved, and the microphone is let go.
 
 <!-- shot: journal/take-row | role: detail
      | alt: A take in the timeline with its play button, name, duration, time and the owner caption beneath

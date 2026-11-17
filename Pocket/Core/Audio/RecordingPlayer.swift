@@ -52,6 +52,12 @@ final class RecordingPlayer {
     /// the span you are about to keep. `nil` plays to the end.
     private var playUntil: TimeInterval?
 
+    /// The lock screen (ADR 0303): claimed when a take starts, held while it is loaded (paused or run
+    /// out), let go on `stop()`. Its pause and play are `pause` and `resume`.
+    private let nowPlaying = NowPlayingController()
+    /// What the lock screen calls the loaded take.
+    private var label = NowPlayingLabel(title: "Take", subtitle: "")
+
     /// Whether `fileName` is the loaded take *and* it is advancing. What a row's play/pause glyph
     /// binds to.
     func isPlaying(_ fileName: String) -> Bool { currentFileName == fileName && isRunning }
@@ -62,13 +68,13 @@ final class RecordingPlayer {
     /// Toggle a take from a list row: start it at the beginning (stopping any other), or stop it if
     /// it is the one already playing. Unchanged from the original single-control grammar — a paused
     /// or finished take is *not* playing, so it restarts, which is what a row with one button should
-    /// do.
-    func toggle(_ fileName: String) {
+    /// do. `label` is what the lock screen calls it (`Recording.lockScreenLabel`).
+    func toggle(_ fileName: String, label: NowPlayingLabel) {
         if isPlaying(fileName) {
             stop()
             return
         }
-        play(fileName)
+        play(fileName, label: label)
     }
 
     /// Load `fileName` and start it at `from`, optionally stopping early at `until` (the trim
@@ -77,7 +83,8 @@ final class RecordingPlayer {
     /// Returns `false` if the take could not be opened or refused to play, having logged why;
     /// failures are surfaced, not swallowed, like the rest of `Core/Audio`.
     @discardableResult
-    func play(_ fileName: String, from start: TimeInterval = 0, until end: TimeInterval? = nil) -> Bool {
+    func play(_ fileName: String, from start: TimeInterval = 0, until end: TimeInterval? = nil,
+              label: NowPlayingLabel) -> Bool {
         stop()
         // Ensure the shared session is playback-capable — a take may be auditioned from a screen that
         // never armed an engine. Guarded: the Takes sheet opens from screens that hold a record
@@ -104,6 +111,14 @@ final class RecordingPlayer {
         playUntil = end.map { Self.clamped($0, to: newPlayer.duration) }
         isRunning = true
         startTicker()
+        self.label = label
+        nowPlaying.activate(onPlay: { [weak self] in self?.resume() },
+                            onPause: { [weak self] in self?.pause() },
+                            onToggle: { [weak self] in
+                                guard let self else { return }
+                                if isRunning { pause() } else { resume() }
+                            })
+        pushNowPlaying()
         return true
     }
 
@@ -114,6 +129,7 @@ final class RecordingPlayer {
         position = player.currentTime
         isRunning = false
         stopTicker()
+        pushNowPlaying()
     }
 
     /// Resume the loaded take from where `pause` (or a seek) left it. A take parked at its very end
@@ -131,6 +147,7 @@ final class RecordingPlayer {
         position = player.currentTime
         isRunning = true
         startTicker()
+        pushNowPlaying()
         return true
     }
 
@@ -142,6 +159,7 @@ final class RecordingPlayer {
         let target = Self.clamped(time, to: player.duration)
         player.currentTime = target
         position = target
+        pushNowPlaying()
     }
 
     /// The span the trim preview should stop at, or `nil` to play to the end. Set while a trim is
@@ -162,6 +180,7 @@ final class RecordingPlayer {
         position = 0
         duration = 0
         playUntil = nil
+        nowPlaying.teardown()
     }
 
     /// Clamp `time` into `0...limit`, tolerating the degenerate zero-length file.
@@ -179,6 +198,14 @@ final class RecordingPlayer {
         position = playUntil ?? player.duration
         isRunning = false
         stopTicker()
+        pushNowPlaying()
+    }
+
+    /// Tell the lock screen where the loaded take is.
+    private func pushNowPlaying() {
+        guard currentFileName != nil else { return }
+        nowPlaying.update(NowPlayingState(title: label.title, artist: label.subtitle, duration: duration,
+                                          elapsedTime: position, isPlaying: isRunning, speed: 1))
     }
 
     private func startTicker() {
@@ -215,5 +242,12 @@ final class RecordingPlayer {
             let onFinish = self.onFinish   // capture the handler, not self, across the isolation hop
             MainActor.assumeIsolated { onFinish() }
         }
+    }
+}
+
+extension Recording {
+    /// What the lock screen calls this take (ADR 0303): its name, over the caption the Journal gives it.
+    var lockScreenLabel: NowPlayingLabel {
+        NowPlayingLabel(title: displayTitle, subtitle: JournalTimeline.ownerLabel(for: .take(self)) ?? "")
     }
 }

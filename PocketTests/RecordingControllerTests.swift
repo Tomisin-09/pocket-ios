@@ -143,7 +143,7 @@ final class RecordingControllerTests: XCTestCase {
         controller.releaseRecordSession()
     }
 
-    // MARK: - Leaving the app (endsTakeOnLeavingApp)
+    // MARK: - An interruption (endsTakeOnInterruption; leaving the app is not one, ADR 0304)
 
     /// A call, Siri or an alarm **beginning** ends the take. The system posts the type as an
     /// `NSNumber`, so that is the shape asserted first; a bare `UInt` reads the same.

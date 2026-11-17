@@ -96,6 +96,8 @@ struct EarTrainingView: View {
             }
         }
         .onAppear {
+            // The lock screen's stop finishes the take before the bed stops, as ■ does (ADR 0304).
+            player.onRemoteStop = finishTake
             if let namingAt, !openedNaming {
                 openedNaming = true
                 counting.nameSaved(at: namingAt)
@@ -103,9 +105,10 @@ struct EarTrainingView: View {
         }
         .onDisappear {
             finishTake()     // before the bed stops — see `ContinuousLoopControls`' stop branch
+            player.onRemoteStop = nil       // the hook holds this screen; the player mustn't
             player.stop()
         }
-        .endsTakeOnLeavingApp(finishTake)
+        .endsTakeOnInterruption(finishTake)
         .sheet(isPresented: $showingTakes) {
             TakesSheet(owner: .loop(loop, .ear), onDelete: deleteTake)
         }

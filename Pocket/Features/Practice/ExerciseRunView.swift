@@ -170,7 +170,7 @@ struct ExerciseRunView: View {
             if !running { finishTakeIfNeeded() }   // run stopped ⇒ never leave a take recording
         }
         .onDisappear { finishTakeIfNeeded(); engine.stop() }
-        .endsTakeOnLeavingApp(finishTakeIfNeeded)
+        .endsTakeOnInterruption(finishTakeIfNeeded)
         .sheet(isPresented: $showingJournal) {
             JournalSheet(owner: .exercise(exercise),
                          onAdd: addJournalEntry,
