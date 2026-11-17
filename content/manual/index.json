@@ -1,0 +1,115 @@
+{
+  "generated_by": "pocket-ios scripts/export-manual.py — do not edit; re-export instead",
+  "source": {
+    "commit": "af296478f55208d8fcf3822daa7eecc410a2d617",
+    "uncommitted_changes": false
+  },
+  "groups": [
+    {
+      "title": "Start here",
+      "pages": [
+        {
+          "key": "getting-started",
+          "goal": "What this is, what you need, and a first session in three moves"
+        }
+      ]
+    },
+    {
+      "title": "The audio half — your own music, slowed right down",
+      "pages": [
+        {
+          "key": "songs",
+          "goal": "Get your own music in, and find it again"
+        },
+        {
+          "key": "looping",
+          "goal": "The loop workflow, end to end — the largest page"
+        }
+      ]
+    },
+    {
+      "title": "The session half — what you practise, and in what order",
+      "pages": [
+        {
+          "key": "exercises",
+          "goal": "Run what shipped, then build your own"
+        },
+        {
+          "key": "routines",
+          "goal": "Put exercises in an order and play them"
+        },
+        {
+          "key": "sessions",
+          "goal": "Let the app plan a session around a goal"
+        }
+      ]
+    },
+    {
+      "title": "Around both halves",
+      "pages": [
+        {
+          "key": "references",
+          "goal": "Keep the thread back to whoever taught you the thing"
+        },
+        {
+          "key": "journal-and-practice-log",
+          "goal": "Write down what happened, and look back at it"
+        },
+        {
+          "key": "metronome",
+          "goal": "The click on its own"
+        },
+        {
+          "key": "toolkit",
+          "goal": "Tuner, saved chords, glossary, help"
+        }
+      ]
+    },
+    {
+      "title": "The rest",
+      "pages": [
+        {
+          "key": "privacy",
+          "goal": "Where your data lives and what leaves the device"
+        },
+        {
+          "key": "gestures",
+          "goal": "Every hold, drag, pinch and swipe in one place"
+        },
+        {
+          "key": "terms",
+          "goal": "The app's own words for the things it measures"
+        }
+      ]
+    },
+    {
+      "title": "The reference wing — what a screen is",
+      "pages": [
+        {
+          "key": "reference",
+          "goal": "How to read the wing, and its own conventions"
+        },
+        {
+          "key": "reference/home-and-library",
+          "goal": "Home, first-run, Song library and its sheets"
+        },
+        {
+          "key": "reference/song-player",
+          "goal": "The waveform screen band by band, its sheets, landscape"
+        },
+        {
+          "key": "reference/practice",
+          "goal": "Practice hub, Planner, Routines, Exercises, Loops"
+        },
+        {
+          "key": "reference/tools-and-journal",
+          "goal": "Metronome, Journal, Practice log, Toolkit"
+        },
+        {
+          "key": "reference/settings",
+          "goal": "Reaching Settings, and each of its eight destinations"
+        }
+      ]
+    }
+  ]
+}
