@@ -259,6 +259,11 @@ own custom-EULA field instead of the description — and then all three surfaces
 > • Swapping a chord in a drill starts from the chord you have, with a Root row to change it
 > • The Warm-up, Picking and Legato editors are easier to set
 > • Help & FAQs explains how to name bends, slides and hammer-ons, and the Glossary has nine new terms
+> • Pause anything Red Moon is playing from the lock screen, and a take keeps recording when the
+>   screen sleeps
+
+*The last line was added on 2026-11-17, before 1.4.1 (11) was submitted, for ADRs 0303 and 0304
+(`pocket-437`, #428), which went into build 11 after the rest was pasted.*
 
 *Live in App Store Connect from 2026-11-16 (pasted by Tomisin). Each line is a `[1.4.1]` CHANGELOG
 entry: the red brand (ADR 0292), Prepare a set (ADR 0299), By song and By goal (ADRs 0295, 0298),
@@ -462,6 +467,10 @@ shipping code, not aspiration.
 > optional practice recordings the player starts themselves. Audio is analysed and
 > stored on the device and is never uploaded — the app has no audio upload path.
 >
+> **Background audio:** practice playback, and a recording the player started, keep going when the
+> screen locks. Both can be paused from the lock screen, and iOS shows its recording indicator while
+> the microphone is on.
+>
 > **Notifications:** asked for only when the player switches on a practice reminder for
 > one of their routines.
 >
@@ -469,6 +478,11 @@ shipping code, not aspiration.
 > cross-device sync and no user account. The app collects no usage data and contains
 > no analytics. No advertising identifier is collected and no third-party SDK of any
 > kind is present.
+
+*Live in App Store Connect from 2026-11-17 for 1.4.1 (11). Tomisin added the Background audio paragraph
+there, for ADR 0304: a take now keeps recording with the screen locked. The live copy spells it the US way,
+"Practicing" and "practicing", in the plan paragraph. This file keeps "practising". Otherwise the export
+matches the live text exactly.*
 
 **Before pasting, re-check each claim still holds** — a stale one is worse than no
 note at all. For 1.4, confirm the plan sentence on the TestFlight build during the sandbox pass:
