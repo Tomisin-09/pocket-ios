@@ -48,6 +48,11 @@
   be are dimmed and still take a tap. **D10**: the player saying which way a note went is added past it;
   the arrows are never saved. The rest of D3 and D10 stands, *never detected, never suggested* and *no
   scale shape behind the neck* included.
+- **Amendment proposed:** ADR 0305 (Another key, **Proposed** 2026-11-17) would change **D9**: a piece
+  named while its song is raised or lowered would keep its frets and record its open strings as the
+  player's tuning moved the other way (*Standard* at +1 saves as *Half step down*), so the piece always
+  describes the recording. Names made at an Active listening shift would not be saved. Until 0305 is
+  accepted, D9 stands as written.
 - **Relates to:** 0094 T2b (the call-and-response this takes out of Name the notes) · 0097 (Hear, the
   synth withdrawn here, and D4.3, the route back) · 0093 (the chord namer that names a shape) · 0095
   (My chords, whose one-note-per-string rule the Chords switch follows) · 0065 (exercise templates, whose scales editor

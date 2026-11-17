@@ -209,6 +209,19 @@ click through the speaker and through headphones.
 
 ### After the freeze
 
+- **Another key: pitch in Active listening, and a song raised to meet your tuning.** Logged
+  2026-11-17 as **ADR 0305 (Proposed)**. Tomisin's idea: play a stolen lick in other keys so it
+  becomes your own. In another key the fingering stops matching the sound, so the lick gets rebuilt
+  from its intervals. Agreed in the conversation: **±6 semitones in whole steps** (all twelve keys),
+  because **sound quality comes first**. 0305 adds a second use: a saved shift on a song, so a record
+  tuned a half step down plays along in standard without a retune. The engine already has the control
+  (`TimeStretcher`, pitch held at 0 by ADR 0140), so slice 1 is small and needs no schema. Slice 2
+  adds one `Song` attribute. The hard part is **saved names** (0305 D5). A piece always describes the
+  recording: named at a song's shift, it keeps its frets and records the open strings moved the other
+  way (*Standard* at +1 saves as *Half step down*). Named at an Active listening shift, it isn't saved.
+  **Before building:** Tomisin accepts 0305 and answers its five open questions, then D7's phone
+  listening check at ±6 and 25% speed gates slice 1. Its own branch, after day 1.
+
 - ~~**"Prepare a set": a long-term goal that holds several songs.**~~ **DONE 2026-11-15**
   (`pocket-429`, ADR 0299, all three of its open questions decided as recommended). The entry below
   is the case as it was made. Raised by the 2026-11-13 store check, where October and November went on
