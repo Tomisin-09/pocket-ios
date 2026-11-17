@@ -42,17 +42,17 @@ export function RedMoonNav({ current, onLanding = false }: { current?: Place; on
   return (
     <header className="rm-nav">
       <div className="rm-nav-inner">
-        <Link href="/redmoon" className="rm-nav-brand" aria-label="Red Moon Practice Studio, home">
+        <Link href="/" className="rm-nav-brand" aria-label="Red Moon Practice Studio, home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/redmoon/mark.svg" alt="" width={17} height={25} className="rm-nav-mark" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/redmoon/wordmark.svg" alt="" width={77} height={15} className="rm-nav-word" />
         </Link>
         <nav className="rm-nav-links" aria-label="Red Moon">
-          {item('/redmoon/story', 'Story', 'story')}
-          {item('/redmoon/manual', 'Manual', 'manual')}
-          {item('/redmoon/support', 'Support', 'support')}
-          <a href={onLanding ? '#get' : '/redmoon#get'} className="rm-nav-cta">
+          {item('/story', 'Story', 'story')}
+          {item('/manual', 'Manual', 'manual')}
+          {item('/support', 'Support', 'support')}
+          <a href={onLanding ? '#get' : '/#get'} className="rm-nav-cta">
             Get the app
           </a>
         </nav>
@@ -66,10 +66,10 @@ export function RedMoonFooter() {
     <footer className="rm-footer">
       <div className="rm-footer-inner">
         <nav aria-label="More from Red Moon">
-          <Link href="/redmoon/story">Story</Link>
-          <Link href="/redmoon/manual">Manual</Link>
-          <Link href="/redmoon/support">Support</Link>
-          <Link href="/redmoon/privacy">Privacy</Link>
+          <Link href="/story">Story</Link>
+          <Link href="/manual">Manual</Link>
+          <Link href="/support">Support</Link>
+          <Link href="/privacy">Privacy</Link>
           <a
             href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
             target="_blank"

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import ManualShell from '../ManualShell'
 import { getManual } from '../manual'
 
-/* One route for every manual page: `/redmoon/manual/<slug>` and `/redmoon/manual/reference/<slug>`,
+/* One route for every manual page: `/manual/<slug>` and `/manual/reference/<slug>`,
  * one per markdown file (ADR 0165 D2). Only the pages the export copied in exist; anything else is a
  * 404 rather than a render attempt. */
 export const dynamicParams = false

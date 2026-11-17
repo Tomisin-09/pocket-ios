@@ -168,7 +168,7 @@ export default function RedMoonPage() {
             <h3>Your playing never reaches&nbsp;us.</h3>
             <p>
               Your songs, loops, recordings and journal stay on your device unless you send a file of
-              them yourself. <Link href="/redmoon/privacy">Read the privacy policy</Link>
+              them yourself. <Link href="/privacy">Read the privacy policy</Link>
             </p>
           </div>
           <div className="rm-promise reveal">
@@ -185,7 +185,7 @@ export default function RedMoonPage() {
             </blockquote>
             <figcaption>John Mayer</figcaption>
           </figure>
-          <Link href="/redmoon/story" className="rm-textlink reveal">
+          <Link href="/story" className="rm-textlink reveal">
             Read the story behind the app
           </Link>
         </section>

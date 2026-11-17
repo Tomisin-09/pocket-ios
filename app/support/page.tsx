@@ -165,7 +165,7 @@ export default function RedMoonSupportPage() {
           <section className="privacy-section">
             <h2>More</h2>
             <p>
-              <Link href="/redmoon">About Red Moon</Link> &nbsp;·&nbsp;{' '}
+              <Link href="/">About Red Moon</Link> &nbsp;·&nbsp;{' '}
               <Link href="/privacy#red-moon-practice">Privacy</Link> &nbsp;·&nbsp;{' '}
               <a href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/" target="_blank" rel="noopener noreferrer">
                 Terms of Use

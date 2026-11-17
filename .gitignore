@@ -2,3 +2,7 @@
 .env*
 node_modules
 .next/
+out/
+tsconfig.tsbuildinfo
+# The graphify post-commit hook writes here from any worktree of this repo.
+graphify-out/

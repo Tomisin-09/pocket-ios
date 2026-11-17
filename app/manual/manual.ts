@@ -18,7 +18,10 @@ import { Marked } from 'marked'
  * All of this runs at build time. Every page is static HTML, and `marked` never reaches a browser.
  */
 
-export const BASE = '/redmoon/manual'
+export const BASE = '/manual'
+/* Figures keep the address they had when this site shared a deployment with Deco Operations', so
+ * the app repo's export writes them where it always has, and an old figure URL still resolves. */
+const FIGURE_BASE = '/redmoon/manual'
 const CONTENT = path.join(process.cwd(), 'content', 'manual')
 const FIGURES = path.join(process.cwd(), 'public', 'redmoon', 'manual')
 
@@ -134,7 +137,7 @@ function figureFor(comment: string): string | null {
   const role = field('role') || 'screen'
   return (
     `<figure class="rm-manual-figure rm-manual-figure-${escapeAttribute(role)}">` +
-    `<div class="rm-manual-shot"><img src="${BASE}/${file}" alt="${escapeAttribute(field('alt'))}" loading="lazy"></div>` +
+    `<div class="rm-manual-shot"><img src="${FIGURE_BASE}/${file}" alt="${escapeAttribute(field('alt'))}" loading="lazy"></div>` +
     `</figure>`
   )
 }

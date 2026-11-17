@@ -163,8 +163,8 @@ export default function RedMoonStoryPage() {
             here to give you the tools to get you on your way.
           </p>
           <div className="rm-story-cta">
-            <Link href="/redmoon" className="rm-link">&larr; Back to Red Moon</Link>
-            <Link href="/redmoon/support" className="rm-link">Support</Link>
+            <Link href="/" className="rm-link">&larr; Back to Red Moon</Link>
+            <Link href="/support" className="rm-link">Support</Link>
           </div>
         </section>
 

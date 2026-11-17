@@ -31,7 +31,7 @@ export default function ManualShell({
           <section className="privacy-section">
             <p>
               {!isIndex && <><Link href={BASE}>All manual pages</Link>. </>}
-              Something not covered here? <Link href="/redmoon/support">Get in touch</Link> — we
+              Something not covered here? <Link href="/support">Get in touch</Link> — we
               read every message.
             </p>
           </section>

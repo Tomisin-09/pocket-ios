@@ -1,0 +1,32 @@
+name: Site
+
+# The site's only check, on this branch only. A pull request into `site` runs the workflows that are
+# on `site`, so the app's CI (main's .github/workflows/ci.yml) never sees this branch, and this file
+# never sees the app.
+on:
+  pull_request:
+    branches: [site]
+  push:
+    branches: [site]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # The name branch protection on `site` requires. Rename it there in the same change.
+    name: Build · Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: scripts/check.sh
