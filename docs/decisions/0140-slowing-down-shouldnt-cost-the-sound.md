@@ -13,6 +13,11 @@
   ceiling 1.5×).
 - **Reopens:** ADR 0124's 1.5× ceiling, which was set *because* the stretch smears transients. Not
   changed here — but this is the work that would earn the right to revisit it.
+- **Amendment proposed:** ADR 0305 (Another key, **Proposed** 2026-11-17) would lift *No pitch
+  shifting* under *What this closes off*, for two shifts only: a session-only key in Active listening,
+  and a saved shift on a song to meet the player's tuning. Both would be whole semitones, at most 6
+  either way. Speed would stay pitch-preserving, with no varispeed. Until 0305 is accepted, the line
+  here stands.
 
 ## Context
 
