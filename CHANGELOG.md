@@ -80,6 +80,22 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **Segmented controls are in Futura**, like the rest of the app's text. Every switch of this kind,
   such as *By kind · By song · By goal* and *Build from*, had been drawn in the system font.
 
+- **A take keeps recording when the screen goes to sleep** (ADR 0304). Since 1.4, leaving Red Moon
+  ended a take, and the screen locking itself counted as leaving, so a long take was cut off part way.
+  Now a take carries on when the phone locks or you switch apps, with the phone's recording indicator
+  lit, until you stop it. A call, Siri or an alarm still ends it and saves what you played.
+
+### Fixed
+
+- **Everything Red Moon plays can be paused from the lock screen** (ADR 0303). A loop run, a routine's
+  loop and song blocks, Active listening, Improvise, *Watch it on the neck* and a take all kept playing
+  when you left the app, with no control on the lock screen, in Control Center or in the Dynamic Island.
+  Now each one shows there with a play/pause, as the song player and the metronome already did. On a
+  loop that plays until you stop it, pause stops it and play starts it again. A routine moving from one
+  block to the next keeps the new block on the lock screen.
+- **The lock screen shows the red moon.** The square beside what's playing, in Control Center and the
+  Dynamic Island too, was still the old blue crescent. It is now the app icon's own art.
+
 ### Changed — build and CI
 
 - **A pull request runs a UI smoke, and `main` runs the whole UI suite once** (ADR 0294). The UI

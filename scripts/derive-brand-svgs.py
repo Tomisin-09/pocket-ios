@@ -17,8 +17,15 @@ tight rather than merely close).
 composited on an opaque near-black square. That one can't be vector: App Store icons must be a flat
 1024² PNG with no alpha channel, so it is rasterised here rather than left to the asset catalog.
 
+…and the **Now Playing artwork** (`DefaultArtwork`), the square the lock screen, Control Center and
+the Dynamic Island show beside whatever Red Moon is playing (ADR 0303). Imported songs carry no cover
+art, so it is the app's mark, and it is the App Icon's own render: the same pixels, written twice.
+It used to be a hand-made PNG, which is how it stayed the July crescent through the vector art
+(ADR 0126) and then stayed blue through the blood moon (ADR 0292). Cut here, it can't fall behind
+the icon again.
+
     ./scripts/derive-brand-svgs.py                     # the blood moon art, into the asset catalog
-    ./scripts/derive-brand-svgs.py --app-icon          # …and re-render AppIcon/icon-1024.png
+    ./scripts/derive-brand-svgs.py --app-icon          # …and re-render the App Icon + Now Playing art
     ./scripts/derive-brand-svgs.py --variants light dark --out /tmp/blue  # the retired blue pair
     ./scripts/derive-brand-svgs.py --out /tmp/preview  # loose files, catalog untouched
 
@@ -38,6 +45,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import struct
 import subprocess
 import sys
@@ -329,7 +337,8 @@ def main():
     parser.add_argument("--out", default=None,
                         help="write loose SVGs here instead of updating the asset catalog")
     parser.add_argument("--app-icon", action="store_true",
-                        help="also re-render AppIcon/icon-1024.png from the brand mark")
+                        help="also re-render AppIcon/icon-1024.png and the Now Playing artwork "
+                             "(DefaultArtwork/artwork-1024.png) from the brand mark")
     args = parser.parse_args()
     if args.app_icon and APP_ICON_VARIANT not in args.variants:
         args.variants = list(args.variants) + [APP_ICON_VARIANT]
@@ -371,6 +380,12 @@ def main():
                             "icon-1024.png")
         os.makedirs(os.path.dirname(icon), exist_ok=True)
         build_app_icon(sources[APP_ICON_VARIANT], icon)
+        # The Now Playing artwork is the icon's render, copied rather than drawn again, so the two
+        # can't differ by so much as a renderer's rounding.
+        artwork = os.path.join(args.out or os.path.join(catalog, "DefaultArtwork.imageset"),
+                               "artwork-1024.png")
+        shutil.copyfile(icon, artwork)
+        print(f"  {os.path.relpath(artwork)}  (the App Icon's render)")
 
     return 0
 

@@ -48,6 +48,13 @@ final class LoopRunModel {
     private var fileAccess: SecurityScopedAccess?
     private var loaded = false
 
+    /// The lock screen, for a **ramp run** (ADR 0303): claimed on Start, held through pause, let go on
+    /// stop. An audition never claims it here: what the lock screen's pause means for one is its
+    /// wrapper's call (`ContinuousLoopPlayer`), and a ten-second preview ends before it matters.
+    private let nowPlaying = NowPlayingController()
+    /// The lock screen's clock: a loop has no timeline of its own, so it reads time spent sounding.
+    @ObservationIgnored private var clock = PlayClock()
+
     /// Fired once when the ramp reaches its natural end (the last plateau's final pass), and only
     /// then — a *manual* `stop()` never invokes it. The routine player (ADR 0066, slice 3) hangs
     /// its auto-advance off this. `nil` for a standalone `LoopRunView`. Not persisted.
@@ -69,6 +76,17 @@ final class LoopRunModel {
     }
 
     var isRunning: Bool { transport != .stopped }
+
+    /// What the lock screen calls this run: the loop over its song, or for a stretch of a song with no
+    /// loop of its own, the song over its artist.
+    var lockScreenLabel: NowPlayingLabel {
+        switch region {
+        case .loop(let loop):
+            .loop(named: loop.name, songTitle: loop.song?.title, artist: loop.song?.artist)
+        case .span(let song, _, _):
+            NowPlayingLabel(title: song.title, subtitle: song.artist)
+        }
+    }
 
     /// The live playback speed as a fraction of original (× of original tempo).
     var currentSpeed: Double { Self.rate(forPercent: currentPercent) }
@@ -158,6 +176,13 @@ final class LoopRunModel {
         engine.play()
         transport = .playing
         startTimer()
+        clock.reset()
+        clock.run(at: PlayClock.now)
+        // The lock screen's pause is the on-screen one: the run holds its place and resumes from it.
+        nowPlaying.activate(onPlay: { [weak self] in if self?.transport == .paused { self?.toggle() } },
+                            onPause: { [weak self] in if self?.transport == .playing { self?.toggle() } },
+                            onToggle: { [weak self] in self?.toggle() })
+        pushNowPlaying()
     }
 
     /// Audition the looping region at a **fixed** rate for a pre-start preview (ADR 0071 R4b) — no
@@ -236,13 +261,16 @@ final class LoopRunModel {
             engine.pause()
             transport = .paused
             stopTimer()
+            clock.hold(at: PlayClock.now)
         case .paused:
             engine.play()
             transport = .playing
             startTimer()
+            clock.run(at: PlayClock.now)
         case .stopped:
             break
         }
+        pushNowPlaying()
     }
 
     /// End the run: stop the audio, release the session, and reset to setup.
@@ -252,6 +280,17 @@ final class LoopRunModel {
         elapsedReps = 0
         ramp = nil
         stopTimer()
+        nowPlaying.teardown()           // a no-op for an audition, which never claimed it
+        clock.reset()
+    }
+
+    /// Tell the lock screen where a ramp run is. Only a run that claimed it is shown (`NowPlayingHub`).
+    private func pushNowPlaying() {
+        guard ramp != nil else { return }
+        let label = lockScreenLabel
+        nowPlaying.update(NowPlayingState(title: label.title, artist: label.subtitle, duration: 0,
+                                          elapsedTime: clock.elapsed(at: PlayClock.now),
+                                          isPlaying: transport == .playing, speed: 1))
     }
 
     // MARK: - Tick

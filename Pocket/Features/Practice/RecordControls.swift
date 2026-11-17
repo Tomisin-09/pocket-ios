@@ -99,29 +99,27 @@ struct RecordArmToggle: View {
     }
 }
 
-/// **A take ends when you leave the app.** Sending Red Moon to the background, or an audio
-/// interruption beginning (a call, Siri, an alarm), runs the screen's own finish, so the take is saved
-/// up to that moment and the mic is let go. Before this, a take carried on in the background with the
-/// mic indicator lit, which made the manual's privacy page untrue (device check, 2026-10-30).
+/// **A take is saved when another app's audio takes over.** An audio interruption beginning (a call,
+/// Siri, an alarm) runs the screen's own finish, so the take is saved up to that moment. By then the
+/// system has already stopped the recorder; finishing is what keeps the take instead of leaving a
+/// "recording" take that captures nothing.
 ///
-/// - **`.background` only, not `.inactive`.** Pulling down Control Center or a banner sliding in makes
-///   the scene inactive without leaving the app, and a take shouldn't end for that.
-/// - **Only the take ends.** Whatever it was played over keeps going: the backing track, the click,
-///   the run plays on through the lock screen as it always has.
+/// **Leaving the app is not an interruption (ADR 0304).** A take carries on when the screen sleeps or
+/// Red Moon goes to the background, with iOS's own recording indicator lit, until it is stopped in the
+/// app or the screen it was started on closes. From 2026-11-02 (#389) to ADR 0304 this modifier also
+/// ended the take on `.background`, which cut long takes off whenever the phone locked itself.
+///
+/// - **Only the take ends.** Whatever it was played over keeps going.
 /// - **`finish` is the screen's existing one**, the same call its `.onDisappear` makes.
 ///   `finishIfRecording` is idempotent, so firing with nothing rolling does nothing.
 ///
-/// The tuner keeps the same promise its own way (`TunerView`, on `scenePhase`).
-struct TakeEndsOnLeavingApp: ViewModifier {
+/// The tuner keeps a different promise (`TunerView`, on `scenePhase`): it stops listening when you
+/// leave it, because nobody tunes with the phone locked.
+struct TakeEndsOnInterruption: ViewModifier {
     let finish: () -> Void
-
-    @Environment(\.scenePhase) private var scenePhase
 
     func body(content: Content) -> some View {
         content
-            .onChange(of: scenePhase) { _, phase in
-                if phase == .background { finish() }
-            }
             // Hopped to main: this closure is main-actor code, and nothing promises the session posts
             // there. An audio callback on the wrong thread has trapped on device before.
             .onReceive(NotificationCenter.default
@@ -133,10 +131,10 @@ struct TakeEndsOnLeavingApp: ViewModifier {
 }
 
 extension View {
-    /// End and save a rolling take when the player leaves the app or another app's audio takes over.
-    /// Goes on every screen that records a take, beside the `.onDisappear` that finishes it.
-    func endsTakeOnLeavingApp(_ finish: @escaping () -> Void) -> some View {
-        modifier(TakeEndsOnLeavingApp(finish: finish))
+    /// End and save a rolling take when another app's audio takes over. Goes on every screen that
+    /// records a take, beside the `.onDisappear` that finishes it.
+    func endsTakeOnInterruption(_ finish: @escaping () -> Void) -> some View {
+        modifier(TakeEndsOnInterruption(finish: finish))
     }
 }
 

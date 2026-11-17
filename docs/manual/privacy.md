@@ -65,9 +65,11 @@ two places:
 - **The [tuner](toolkit.md)**, which listens to a played string while you are on that screen.
 - **A [take](journal-and-practice-log.md)** you start yourself, which is saved to the device as a file.
 
-iOS shows its own recording indicator whenever the mic is live, and Red Moon releases it as soon as
-you leave the screen or send the app to the background. Nothing the microphone hears is uploaded —
-there is no upload path in the app for it to take.
+iOS shows its own recording indicator whenever the mic is live. The tuner lets go of it as soon as
+you leave its screen or send the app to the background. A take holds it until you stop the take or
+leave the screen you started it on, and that includes while the phone is locked or you are in another
+app, so a long take isn't cut off when the screen goes to sleep. Nothing the microphone hears is
+uploaded — there is no upload path in the app for it to take.
 
 Red Moon does **not** ask for access to your music library, and cannot play Apple Music or Spotify
 streaming audio at all.

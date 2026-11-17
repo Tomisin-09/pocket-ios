@@ -79,7 +79,7 @@ struct TakesSheet: View {
             ForEach(takes, id: \.uid) { take in
                 TakeRow(take: take,
                         isPlaying: player.isPlaying(take.fileName),
-                        onToggle: { player.toggle(take.fileName) },
+                        onToggle: { player.toggle(take.fileName, label: take.lockScreenLabel) },
                         onOpen: { opened = StableRef(value: take) })
                 .listRowBackground(PocketColor.background)
                 // Rename leads, because a list of identical "Take" rows is the problem this sheet

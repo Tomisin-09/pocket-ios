@@ -229,7 +229,7 @@ struct TakeDetailView: View {
         } else if player.isLoaded(take.fileName) {
             player.resume()
         } else {
-            player.play(take.fileName)
+            player.play(take.fileName, label: take.lockScreenLabel)
         }
     }
 
@@ -247,7 +247,7 @@ struct TakeDetailView: View {
     func seek(toTime target: TimeInterval) {
         if player.isLoaded(take.fileName) {
             player.seek(to: target)
-        } else if player.play(take.fileName, from: target) {
+        } else if player.play(take.fileName, from: target, label: take.lockScreenLabel) {
             player.pause()
         }
     }

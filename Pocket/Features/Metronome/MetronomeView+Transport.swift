@@ -73,9 +73,9 @@ extension MetronomeView {
     /// The click stops **before** the take ends, so the session's flip back to playback happens with
     /// nothing sounding.
     ///
-    /// **Not on going to the background.** The click plays on through the lock screen by design, so
-    /// backgrounding ends nothing but a take (`endsTakeOnLeavingApp`). A sitting ended by closing the
-    /// app from the app switcher is the one that goes unlogged: no seam runs.
+    /// **Not on going to the background.** The click plays on through the lock screen by design, and
+    /// so does a take (ADR 0304), so backgrounding ends nothing. A sitting ended by closing the app from
+    /// the app switcher is the one that goes unlogged: no seam runs.
     func endSession() {
         let sounded = engine.elapsed
         engine.stop()

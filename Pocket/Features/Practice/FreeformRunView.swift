@@ -88,9 +88,9 @@ struct FreeformRunView: View {
             metronome.stop()
             recorder.releaseRecordSession()
         }
-        // The take only: the held session stays, because the click plays on in the background and
+        // On an interruption, the take only: the held session stays, because the click plays on and
         // releasing would flip the category under it.
-        .endsTakeOnLeavingApp {
+        .endsTakeOnInterruption {
             recorder.finishIfRecording(owner: .exercise(exercise), context: modelContext)
         }
         // ADR 0050 — and this screen needs it more than most: a freeform block is *prose you read

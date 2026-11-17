@@ -47,6 +47,10 @@ final class SongPlayAlongModel {
     private var fileAccess: SecurityScopedAccess?
     private var loaded = false
 
+    /// The lock screen (ADR 0303): claimed on Start, held through pause, let go on stop or at the end of
+    /// a song that doesn't loop. Its pause and play are the on-screen ones.
+    private let nowPlaying = NowPlayingController()
+
     init(song: Song) { self.song = song }
 
     var isRunning: Bool { transport != .stopped }
@@ -123,6 +127,10 @@ final class SongPlayAlongModel {
         engine.onReachedEnd = { [weak self] in self?.handleReachedEnd() }
         engine.play()
         transport = .playing
+        nowPlaying.activate(onPlay: { [weak self] in if self?.transport == .paused { self?.toggle() } },
+                            onPause: { [weak self] in if self?.transport == .playing { self?.toggle() } },
+                            onToggle: { [weak self] in self?.toggle() })
+        pushNowPlaying()
     }
 
     /// Pause / resume playback.
@@ -137,6 +145,7 @@ final class SongPlayAlongModel {
         case .stopped:
             break
         }
+        pushNowPlaying()
     }
 
     /// End the run: stop the audio and release the session, back to setup.
@@ -144,17 +153,20 @@ final class SongPlayAlongModel {
         engine.onReachedEnd = nil
         engine.stop()
         transport = .stopped
+        nowPlaying.teardown()
     }
 
     /// Jump the playhead by `seconds` (± ), clamped to the song bounds.
     func skip(by seconds: TimeInterval) {
         engine.seek(toSeconds: (currentTime + seconds).clamped(to: 0...max(0, duration)))
+        pushNowPlaying()
     }
 
     /// Change the live play-along speed (no ramp) — applies to the engine immediately.
     func setPercent(_ value: Int) {
         percent = clampPercent(value)
         engine.setRate(Self.rate(forPercent: percent))
+        pushNowPlaying()
     }
 
     /// The song reached its natural end. Loop mode replays from the top (a jam); otherwise advance
@@ -162,10 +174,21 @@ final class SongPlayAlongModel {
     private func handleReachedEnd() {
         if looping {
             engine.play()
+            pushNowPlaying()            // the clock goes back to 0:00 with the song
         } else {
             transport = .stopped
+            nowPlaying.teardown()       // the song is over; the next block claims the lock screen itself
             onFinished?()
         }
+    }
+
+    /// Tell the lock screen where the song is. The clock runs at the play-along speed, as the song
+    /// player's does (ADR 0025), so it keeps step with the audio between pushes.
+    private func pushNowPlaying() {
+        guard transport != .stopped else { return }
+        nowPlaying.update(NowPlayingState(title: song.title, artist: song.artist, duration: duration,
+                                          elapsedTime: currentTime, isPlaying: transport == .playing,
+                                          speed: Self.rate(forPercent: percent)))
     }
 
     private func clampPercent(_ value: Int) -> Int {

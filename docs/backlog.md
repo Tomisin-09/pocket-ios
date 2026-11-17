@@ -440,6 +440,11 @@ review on 2026-11-02.)
 
 ## A take keeps the mic on after you leave the app (logged 2026-10-30) — in 1.4, item 3 of the final push, confirmed on device — **FIXED 2026-11-02** (`pocket-396`)
 
+**Reversed in part, 2026-11-17 (ADR 0304, `pocket-437`):** the screen sleeping counts as `.background`,
+so long takes were cut off when the phone locked itself. Leaving the app no longer ends a take; an
+interruption still does. The modifier is now `endsTakeOnInterruption`, and the manual's privacy page
+says the mic stays live while a take you started records. What follows is the entry as fixed.
+
 **Fixed by** `endsTakeOnLeavingApp` (`RecordControls.swift`), on all six recording screens. On
 `.background` (not `.inactive`), and when an audio interruption *begins*, it runs the screen's own
 finish, so the take is saved up to that moment. Only the take ends. A freeform block's held
