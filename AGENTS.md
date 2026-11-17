@@ -133,6 +133,12 @@ Run these before every commit that touches app code. Do not push until all pass.
   by build configuration (Debug → local/dev proxy, Release → prod).
 - **Pure logic stays pure:** keep tempo/identity/planner logic free of SwiftUI
   and AVFoundation imports so it stays unit-testable.
+- **The website is on the `site` branch, not here** (ADR 0306). It shares no
+  history with `main` and has its own `AGENTS.md`, check and CI. Work on it in a
+  checkout of `site` (`git worktree add ~/Documents/pocket-site site`), branch
+  from `site`, PR into `site`; merging there publishes. When an app change alters
+  what the site claims (privacy, permissions, prices, names), the site PR is owed
+  separately.
 
 # Commit / PR
 

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Copy the user manual into the site checkout that renders it (ADR 0217).
+"""Copy the user manual into the site checkout that renders it (ADR 0217, ADR 0306).
 
-    ./scripts/export-manual.py ~/Documents/laundry-pickup-project
+    ./scripts/export-manual.py ~/Documents/pocket-site
     ./scripts/export-manual.py SITE --figures reviewed.txt    # and publish these figures
 
-The markdown here is the source; the site renders a copy of it at `/redmoon/manual/<slug>`
+SITE is a checkout of this repo's `site` branch (a worktree: `git worktree add ~/Documents/pocket-site
+site`). The markdown here is the source; the site renders a copy of it at `/manual/<slug>`
 (ADR 0165 D1). This script is the one thing that writes that copy:
 
 - `content/manual/` is replaced wholesale with the published pages: every page under
@@ -19,8 +20,9 @@ The markdown here is the source; the site renders a copy of it at `/redmoon/manu
   the current app. Without `--figures` the directory is left exactly as it is.
 
 It runs `check-manual.py` first and will not export a manual that fails it. It commits nothing and
-pushes nothing, in either repo: `uk-site` deploys to production on every push, so going live stays a
-deliberate step.
+pushes nothing, on either branch: `site` deploys to production on every merge, and `main` describes
+the next release while the live site describes the App Store's, so going live stays a deliberate step
+(a branch from `site`, then a pull request into it).
 """
 
 import argparse
@@ -135,13 +137,14 @@ def git(*args: str) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("site", type=Path, help="the site checkout (laundry-pickup-project)")
+    parser.add_argument("site", type=Path, help="a checkout of the `site` branch")
     parser.add_argument("--figures", type=Path, help="file listing the reviewed figure slugs")
     args = parser.parse_args()
 
     site = args.site.expanduser().resolve()
-    if not (site / "package.json").is_file() or not (site / "app" / "redmoon").is_dir():
-        sys.exit(f"export-manual: {site} is not the site checkout (no package.json + app/redmoon/)")
+    # The renderer, not just any Next.js app: a checkout of `main` has neither file.
+    if not (site / "package.json").is_file() or not (site / "app" / "manual" / "manual.ts").is_file():
+        sys.exit(f"export-manual: {site} is not a checkout of `site` (no package.json + app/manual/manual.ts)")
 
     check = subprocess.run([sys.executable, str(REPO / "scripts" / "check-manual.py")],
                            cwd=REPO, capture_output=True, text=True)

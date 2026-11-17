@@ -6,6 +6,10 @@
 - **Amends:** ADR 0165 — D1's *port* becomes a build-time render of an exported copy rather than a
   hand-written route per page (D1, D2 here), and D7's figures publish only once reviewed (D4 here).
   D2–D6, the marker grammar and every check stand.
+- **Amended by:** ADR 0306 (2026-11-17) — the site moved into this repo, on its own `site` branch.
+  The copy D1 writes and D2 protects is that branch's `content/manual/`, the routes are `/manual/…`
+  (not `/redmoon/manual/…`), and where D5 says `uk-site`, read `site`, which takes changes by pull
+  request. The export, the checks and D4's figure rule stand.
 - **Relates to:** ADR 0133 (why the site's publish step is a person, not a CI job — the same
   no-staging reasoning, from the other side)
 

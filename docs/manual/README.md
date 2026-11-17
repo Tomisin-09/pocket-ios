@@ -1,8 +1,9 @@
 # The Red Moon Practice manual
 
 This is the canonical copy of the public user manual. It is written here, reviewed alongside the
-code it describes, and rendered by the `.co.uk` site at `/redmoon/manual/<slug>` — **one markdown
-file, one route, no exceptions.** The site is a rendering target, not an author.
+code it describes, and rendered by the website (this repo's `site` branch, ADR 0306) at
+`/manual/<slug>` — **one markdown file, one route, no exceptions.** The site is a rendering target,
+not an author.
 
 **Publishing is an export, not a port** ([ADR 0217](../decisions/0217-the-manual-is-rendered-not-ported.md)).
 The site keeps a copy of these pages in its `content/manual/` and renders every one of them from a
@@ -10,11 +11,12 @@ single route at build time; nothing in the site is written by hand per page, and
 be edited, because the next export replaces it. To publish a change:
 
 ```sh
-./scripts/export-manual.py ~/Documents/laundry-pickup-project                  # the text
-./scripts/export-manual.py ~/Documents/laundry-pickup-project --figures FILE   # and figures
+./scripts/export-manual.py ~/Documents/pocket-site                  # the text
+./scripts/export-manual.py ~/Documents/pocket-site --figures FILE   # and figures
 ```
 
-then commit and push a site branch — `uk-site` auto-deploys, so merging is publishing. The export
+where `~/Documents/pocket-site` is a checkout of `site` on a `pocket-0XX` branch cut from it; then
+commit there and open a PR into `site`, which deploys on merge, so merging is publishing. The export
 runs `check-manual.py` first, and the site build fails on a link or `#anchor` that names nothing.
 **A figure is published by being on the `--figures` list**, which holds only figures somebody has
 compared against the current app; a marker with no image renders as nothing, so a page ships text

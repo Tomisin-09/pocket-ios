@@ -124,9 +124,12 @@ in-app link.
 - **In-app link:** ships in **Settings → About** (`SettingsView.privacyPolicy`),
   currently pointed at the live `decooperations.co.uk/privacy#red-moon-practice`
   anchor.
-- **To deploy standalone:** [docs/site/redmoon-privacy.html](site/redmoon-privacy.html)
-  is deploy-ready. When it's live on the company site, repoint both the Settings
-  link and the App Store Connect privacy URL at its dedicated URL.
+- **Standalone:** done. Red Moon's own policy is live at
+  `https://www.redmoonpracticestudio.co.uk/privacy`, from `app/privacy/RedMoonPrivacyBody.tsx`
+  on the `site` branch (ADR 0306); App Store Connect's URLs moved to that domain on
+  2026-11-16. The Settings
+  link moves to it in the update after 1.4.1; the old anchor on Deco Operations'
+  page stays for the builds already shipped.
 - **Keep it true:** since ADR 0239 the policy says the app collects **no usage
   data** — no analytics, nothing about how it is used — and that the only thing it
   sends is a support message the player writes and taps Send on. Usage figures come

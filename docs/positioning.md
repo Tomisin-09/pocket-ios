@@ -212,8 +212,8 @@ of it has since been fixed, which is why this is now a status table.*
 | App Store description | **Fixed** 2026-10-24 | Opens on the studio and on *tomorrow starts where today stopped*. Its pricing lines were also stale (they said free; ADR 0256 reversed that); the file's banner says what is history. |
 | Beta guide (`docs/beta/user-guide.md`) | **Fixed** 2026-10-24 | It said *"Everything else in the app exists to support that"* of the loop. |
 | Onboarding (ADR 0149) | **Open, not re-checked** | *"We are choosing not to teach exercises, routines, or the planner this way."* Proposal stands: a deferred fourth beat at the second session, where the saved loop becomes a block. Not in the first ninety seconds. |
-| Landing page | **Open — separate repo** | Auto-deploys on every push; not touched from here. Needs: *studio*, *adds up*, and a routines/memory card (it has six feature cards and none for either). `docs/site/index.html` here is a stale local copy, re-worded only so the vocabulary doesn't drift. |
-| Story page | **Open — separate repo** | Closest to the position already. |
+| Landing page | **Open — the `site` branch** (ADR 0306) | Deploys on every merge into `site`. Needs: *studio*, *adds up*, and a routines/memory card (it has six feature cards and none for either). |
+| Story page | **Open — the `site` branch** | Closest to the position already. |
 | Price | **Fixed in the listing copy; verify elsewhere** | ADR 0256 (one plan) superseded ADR 0237 (free). Anywhere still saying *free* or *nothing to buy* is wrong. |
 
 ## 8. Who this is for
