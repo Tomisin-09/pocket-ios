@@ -259,6 +259,11 @@ own custom-EULA field instead of the description — and then all three surfaces
 > • Swapping a chord in a drill starts from the chord you have, with a Root row to change it
 > • The Warm-up, Picking and Legato editors are easier to set
 > • Help & FAQs explains how to name bends, slides and hammer-ons, and the Glossary has nine new terms
+> • Pause anything Red Moon is playing from the lock screen, and a take keeps recording when the
+>   screen sleeps
+
+*The last line was added on 2026-11-17, before 1.4.1 (11) was submitted, for ADRs 0303 and 0304
+(`pocket-437`, #428), which went into build 11 after the rest was pasted.*
 
 *Live in App Store Connect from 2026-11-16 (pasted by Tomisin). Each line is a `[1.4.1]` CHANGELOG
 entry: the red brand (ADR 0292), Prepare a set (ADR 0299), By song and By goal (ADRs 0295, 0298),
