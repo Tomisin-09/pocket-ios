@@ -30,6 +30,13 @@ struct NeckCursor: Equatable, Sendable {
     func marked(count: Int) -> Int {
         placedNote.flatMap { (0..<count).contains($0) ? $0 : nil } ?? active
     }
+
+    /// Whether the note the marks go on carries its number: it does once the editor has moved past it,
+    /// since it's then a neighbour, numbered top right (0234 D3). The marks lift clear of that corner
+    /// (1.5, item 2c).
+    func marksNoteIsNumbered(count: Int) -> Bool {
+        marked(count: count) != active
+    }
 }
 
 /// **What a touch on the neck does** (ADR 0227 D3–D5, 0230, 0234 D3), lifted out of Name the notes so the

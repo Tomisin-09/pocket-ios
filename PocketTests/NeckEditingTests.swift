@@ -80,6 +80,15 @@ final class NeckEditingTests: XCTestCase {
         XCTAssertEqual(NeckCursor(active: 1, placedNote: nil).marked(count: 3), 1)
     }
 
+    /// The marks lift clear of a note's number only when it has one: once the editor has moved past it
+    /// (1.5, item 2c). The note being named carries no number, so its marks stay where they were drawn.
+    func testTheMarkedNoteIsNumberedOnlyOnceTheEditorHasMovedPastIt() {
+        XCTAssertTrue(NeckCursor(active: 2, placedNote: 1).marksNoteIsNumbered(count: 3))
+        XCTAssertFalse(NeckCursor(active: 1, placedNote: nil).marksNoteIsNumbered(count: 3))
+        XCTAssertFalse(NeckCursor(active: 1, placedNote: 9).marksNoteIsNumbered(count: 3),
+                       "a placed note out of range falls back to the active one, which has no number")
+    }
+
     func testNoMarkOnANoteNotOnTheNeck() {
         let labels: [PieceLabel?] = [.pitchClass(4), nil]
         XCTAssertEqual(NeckEditing.mark({ $0.bend = 2 }, labels: labels, cursor: NeckCursor(active: 0)), labels)
