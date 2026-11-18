@@ -42,7 +42,9 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
    with `SongMapView.opensSectionWatch` flipped locally, since 0291 puts that day's lag on the Journal
    (#406) and what's left is the design; Tomisin says what *better thought out* means; a mockup; then
    an ADR amending 0289 and 0291 before any code.
-4. **Review the unfinished slices** (a decision, not a build). For each one: build it in 1.5, keep it
+4. **Review the unfinished slices** (a decision, not a build). **✅ Decided 2026-11-18: all three stay
+   parked.** Tomisin took the recommendation for 4a and 4b and has no list yet for 4c. None is in 1.5,
+   and none is closed. For each one: build it in 1.5, keep it
    parked, or close it. Checked against the ADRs on 2026-11-17, two of the five this file listed as
    unfinished were done in August: 0140 slice 3 (Apple's high-quality stretcher, adopted 2026-08-04)
    and 0139 slice 2 (a freeform block can be away from your instrument, #211). Their entries are
@@ -2145,6 +2147,8 @@ slice 2 only adds a second source of off-guitar-eligible units to a pool that al
 
 ## Improvise — a fine-tuning pass (parked 2026-08-02, after ADR 0140) — in 1.5's review, item 4c
 
+**Reviewed for 1.5 on 2026-11-18: stays parked.** There's no list of refinements yet; gather it from use.
+
 The improvise surfaces shipped across ADR 0135 slices 1–3 (`ImproviseSheet`, `ImproviseLoopRunView`,
 the Improvise bucket, the `improv.vocabulary` resolution and the trailing `play` block) are **a good
 first version, not the finished thing** — flagged at PR #208 and deliberately left for its own change
@@ -2232,6 +2236,8 @@ Still open, in the ADR and deliberately unbuilt:
 
 ## The click withdrawal (ADR 0132 — **slice 1 SHIPPED**, slice 2 out of v2) — in 1.5's review, item 4a
 
+**Reviewed for 1.5 on 2026-11-18: stays parked.** Still waiting on what users say, as below; not closed.
+
 Silent bars: the click thins to the downbeat and then out on a fixed eight-bar cycle, so the player
 carries the pulse and hears their own drift when it returns.
 
@@ -2262,6 +2268,9 @@ construction (§7a). Whether that is worth a further answer is a device-testing 
 comes back into scope if the guard above is relaxed.
 
 ## Command moves both ways (ADR 0134 — **slice 1 SHIPPED**, slice 2 parked) — in 1.5's review, item 4b
+
+**Reviewed for 1.5 on 2026-11-18: stays parked.** Settling after the run (slice 1) covers a run that fell
+apart; mid-run settling still needs its own ADR before any build.
 
 The post-run offer can only ever raise `command`, so a run that fell apart still lands on a Done
 screen reading "you summited it — bump the drill up". The ramp completes on a timer (the app never
