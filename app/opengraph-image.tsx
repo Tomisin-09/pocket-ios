@@ -5,7 +5,7 @@ import { join } from 'node:path'
 // Social share card for all Red Moon pages: the blood-moon lockup on a warm night sky.
 // Text-free by design, so no font loading is needed. The lockup is the app's own vector
 // (pocket-ios scripts/derive-brand-svgs.py), 512 × 450.
-export const alt = 'Red Moon — give practice a home'
+export const alt = 'Red Moon — give your practice a home'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 

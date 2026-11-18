@@ -49,7 +49,7 @@ export function RedMoonNav({ current, onLanding = false }: { current?: Place; on
           <img src="/redmoon/wordmark.svg" alt="" width={77} height={15} className="rm-nav-word" />
         </Link>
         <nav className="rm-nav-links" aria-label="Red Moon">
-          {item('/story', 'Story', 'story')}
+          {item('/story', 'Liner notes', 'story')}
           {item('/manual', 'Manual', 'manual')}
           {item('/support', 'Support', 'support')}
           <a href={onLanding ? '#get' : '/#get'} className="rm-nav-cta">
@@ -66,7 +66,7 @@ export function RedMoonFooter() {
     <footer className="rm-footer">
       <div className="rm-footer-inner">
         <nav aria-label="More from Red Moon">
-          <Link href="/story">Story</Link>
+          <Link href="/story">Liner notes</Link>
           <Link href="/manual">Manual</Link>
           <Link href="/support">Support</Link>
           <Link href="/privacy">Privacy</Link>
