@@ -9,6 +9,8 @@
   screen goes back to the claim beneath (D2). The lock screen's reach widens from the song screen to
   every producer that can sound for more than a few seconds (D1). *Play/pause only* stands, and so does
   stopping the song screen's audio when you leave the screen.
+- **Amended by:** ADR 0307 (2026-11-18) — **D4**'s take row: a take the player hasn't named is titled
+  by its number, *Take 3*, where it said *Take*. The line beneath is still the Journal's caption.
 - **Relates to:** 0129 (the block hand-over that overlaps two producers) · 0292 (Blood Moon, whose art
   the Now Playing square kept missing) · 0126 (the vector brand art, the first time it was missed) ·
   0104, 0135 and 0289 (the continuous-loop modes) · 0066 and 0071 (song blocks) · 0069 and 0174 (takes)
