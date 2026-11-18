@@ -5,6 +5,9 @@
   *Red Moon Export*)
 - **Amended by:** ADR 0258 (2026-10-18) — **D3** and **D4**: both rows now sit on *Song details ›
   Audio file* rather than in a section of the sheet. The rest stands.
+- **Amended by:** ADR 0307 (2026-11-18) — **D2**: a take with no name of the player's exports as its
+  caption and its number, then the date: `Slow Bend · Chorus · Take 3 · 1 Oct 2026.m4a`. A take the
+  player named exports as before. The rest of D2 stands.
 - **Supersedes:** ADR 0150 — its parked proposal is decided. Export is accepted on the tool-not-host frame
   (D1), without the legal review it waited on. Its proposed points 1 (export only, hosting closed),
   2 (a share action on the take rows), 4 (one take at a time) and 5 (mic-only) are taken as written.

@@ -54,9 +54,16 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
      its backoff and keeps playing. It needs its own ADR, and it's audio-engine work.
    - **4c. Improvise, a fine-tuning pass.** Its entry asks for Tomisin's list of refinements before
      anything starts.
+5. **A take is numbered where it was recorded** (M, ADR 0307, added 2026-11-18). The ADR holds the
+   detail. An unnamed take reads *Take 3*, counted on its loop or exercise, with the unit on the line
+   beside it as now. Renaming stays, and clearing a name brings the number back. One additive
+   `Recording` attribute, so the store upgrade check on the simulator and the device, proved by
+   timestamps, and a backfill that numbers the takes already on the phone in recorded order. The
+   wording was settled against a mockup on 2026-11-18: *Take 3*, the recommended row of
+   https://claude.ai/artifact/9sDFnr8fVXdNrjk2hamAPu (D3).
 
 **Order: proposed, not decided.** 2a, 2b and 2c first (small, a branch each), then 4, which is a
-conversation and may add items. Then 1a and 1b, then 2d, and 3 last because it's the most open.
+conversation and may add items. Then 1a and 1b, then 5, then 2d, and 3 last because it's the most open.
 
 ## The last feature push before 1.4, then a freeze (decided 2026-11-02)
 

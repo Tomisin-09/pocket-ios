@@ -5,6 +5,10 @@
 - **Amended by:** ADR 0287 (2026-11-03), which adds the free-play metronome to the places a take is
   recorded against. §1 (the microphone only) and §2 (isolation by route) stand: through the speaker,
   the click reaches the take as sound in the room, and is never mixed into the file.
+- **Amended by:** ADR 0307 (2026-11-18), which numbers every take where it was recorded: one the
+  player hasn't named shows *Take 3* rather than *Take*, and the hold menu reads *Rename* on every take.
+  Point 4 of the 2026-08-05 amendment otherwise stands: naming is offered on takes and on no other
+  entry kind.
 
 ## Build (accepted 2026-07-16)
 
