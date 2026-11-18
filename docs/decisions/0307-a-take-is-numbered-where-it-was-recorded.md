@@ -1,8 +1,9 @@
 # ADR 0307 — A take is numbered where it was recorded
 
 - **Status:** Accepted (2026-11-18), not built. Tomisin agreed the decisions in conversation on
-  2026-11-18 (*"I'm happy with your recommendations"*). D3's wording is checked against a mockup
-  before the build starts.
+  2026-11-18 (*"I'm happy with your recommendations"*), and chose D3's wording the same day against
+  the canvas mockup *Takes, numbered* (https://claude.ai/artifact/9sDFnr8fVXdNrjk2hamAPu): *"let's go
+  with the recommended"*.
 - **Date:** 2026-11-18 (`pocket-444-take-naming`)
 - **Amends:** ADR 0069 — the 2026-08-05 amendment's point 4, *A take can be named*: a take the player
   hasn't named shows its number, *Take 3*, rather than *Take* (D3), and the hold menu reads *Rename*
@@ -98,10 +99,11 @@ its number, with the date in the line beneath.
 
 Where nothing beside the name says the unit, the unit is joined in (D6).
 
-**Checked against a mockup before the build:** the Journal feed with takes from two loops, an exercise
-and the metronome, a loop's Takes sheet, and the lock screen. The question for it is whether *Take 3*
-above *Slow Bend · Chorus* reads as named after the loop. If it doesn't, the fallback is the unit in
-the title, *Chorus · Take 3*, which says the unit twice on every row.
+**Settled against a mockup on 2026-11-18.** The canvas *Takes, numbered*
+(https://claude.ai/artifact/9sDFnr8fVXdNrjk2hamAPu) put today's screens, this wording and the unit in
+the title (*Chorus · Take 3*) side by side: the Journal feed with takes from two loops, an exercise,
+the metronome and the Journal's ＋, a loop's Takes sheet, the take's screen and the lock screen.
+Tomisin chose this wording: *"let's go with the recommended"*.
 
 ### D4 — Your name wins, and clearing it brings the number back
 
@@ -161,8 +163,9 @@ numbers it after the restore.
 ## Alternatives not taken
 
 - **Write the name into `title` at capture.** No schema change, but D2's three costs.
-- **The unit in the title**, *Chorus · Take 3*. It says the unit twice beside every caption. It's the
-  fallback if the mockup says *Take 3* alone doesn't read (D3).
+- **The unit in the title**, *Chorus · Take 3*. It says the unit twice beside every caption, and on a
+  loop's Takes sheet it repeats *Chorus ·* on every row. Shown on the mockup beside D3's wording, and
+  not chosen (2026-11-18).
 - **The unit and a bare number**, *Chorus 3* or *Spider walk 3*. It reads like a third exercise, or a
   loop called *Chorus 3*.
 - **A counter stored on each loop and exercise**, so a number is never used twice. It would add a field

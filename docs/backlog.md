@@ -58,9 +58,9 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
    detail. An unnamed take reads *Take 3*, counted on its loop or exercise, with the unit on the line
    beside it as now. Renaming stays, and clearing a name brings the number back. One additive
    `Recording` attribute, so the store upgrade check on the simulator and the device, proved by
-   timestamps, and a backfill that numbers the takes already on the phone in recorded order. **Before
-   the build:** a mockup of the Journal, a Takes sheet and the lock screen, to check that *Take 3* above
-   its caption reads as named after the loop (D3).
+   timestamps, and a backfill that numbers the takes already on the phone in recorded order. The
+   wording was settled against a mockup on 2026-11-18: *Take 3*, the recommended row of
+   https://claude.ai/artifact/9sDFnr8fVXdNrjk2hamAPu (D3).
 
 **Order: proposed, not decided.** 2a, 2b and 2c first (small, a branch each), then 4, which is a
 conversation and may add items. Then 1a and 1b, then 5, then 2d, and 3 last because it's the most open.
