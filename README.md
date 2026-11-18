@@ -36,7 +36,7 @@ here it runs this site's check, and from the app's checkout it would run the iOS
 | Path | Source |
 |---|---|
 | `/` | `app/page.tsx`: dark landing page, App Store captures from `app/_media/` |
-| `/story` | `app/story/page.tsx` |
+| `/story` | `app/story/page.tsx`: called *Liner notes* everywhere a reader sees it; the address stays |
 | `/support` | `app/support/page.tsx`: App Review opens this |
 | `/privacy` | `app/privacy/page.tsx` + `RedMoonPrivacyBody.tsx`: App Review opens this too |
 | `/manual`, `/manual/…` | `app/manual/`, rendered from `content/manual/` (below) |

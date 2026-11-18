@@ -5,13 +5,13 @@ import { RedMoonFooter, RedMoonNav } from '../_components/brand'
 
 export const metadata: Metadata = {
   alternates: { canonical: '/story' },
-  title: 'The story behind Red Moon',
+  title: 'Liner notes — why Red Moon exists',
   description:
     'Why Red Moon exists: learning a song you love, John Mayer on breaking music down to its smallest particle, and a practice studio built to take away the obstacle of showing up.',
   openGraph: {
-    title: 'The story behind Red Moon',
+    title: 'Liner notes — why Red Moon exists',
     description:
-      'Break the song down to its smallest particle, then rebuild it as your own. The story behind the Red Moon practice app.',
+      'Break the song down to its smallest particle, then rebuild it as your own. Why the Red Moon practice app exists.',
     type: 'article',
   },
 }

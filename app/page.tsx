@@ -8,23 +8,26 @@ import home from './_media/home.png'
 import songPlayer from './_media/song-player.png'
 import drill from './_media/drill.png'
 import routine from './_media/routine.png'
+import journal from './_media/journal.png'
 import take from './_media/take.png'
 import today from './_media/today.png'
-import loopRamp from './_media/loop-ramp.png'
 import byEar from './_media/by-ear.png'
 import sources from './_media/sources.png'
 import log from './_media/log.png'
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
-  title: 'Red Moon Practice Studio — Give practice a home',
+  title: 'Red Moon Practice Studio — Give your practice a home',
   description:
     'Red Moon is a practice studio for guitar and bass players who learn from everywhere. Loop and slow down songs you own, drill against a click, run routines, and keep everything you do, so your practice adds up instead of starting over. For iPhone.',
 }
 
 // Show, don't tell: each idea is one screen and one line. The kickers and headlines are the App Store
 // frames' own (appstore-2026-11-16/frames.json), so the site and the listing say the same thing; the
-// detail they used to carry lives in the manual now.
+// detail they used to carry lives in the manual now. One exception, and the site leads on it: the Journal
+// is the fourth chapter, and the take it replaced took the loop ramp's place in the rail. The listing's
+// screenshots can't change until 1.5 is submitted, so frame 04 becomes the Journal and frame 07 the take
+// then. The Journal is the manual's `journal/timeline`, shot on the Pro Max with the other frames (11-16).
 type Shot = { kicker: string; title: string; image: StaticImageData; alt: string }
 
 const CHAPTERS: Array<Shot & { line: string }> = [
@@ -51,10 +54,10 @@ const CHAPTERS: Array<Shot & { line: string }> = [
   },
   {
     kicker: 'Keep it',
-    title: 'Record a take. Note what you heard.',
-    line: 'Pin a note to a moment in a take, so your practice adds up instead of starting over.',
-    image: take,
-    alt: 'A recorded take of a verse riff with a note, and two comments pinned to moments in it.',
+    title: 'Pick up where you left off.',
+    line: 'Your notes and takes go in the Journal, so your practice adds up instead of starting over.',
+    image: journal,
+    alt: 'The Journal, newest first: a struggle and a breakthrough noted against the loops they’re about, a take of a verse riff, and a goal for a chord exercise.',
   },
 ]
 
@@ -66,10 +69,10 @@ const MORE: Shot[] = [
     alt: 'The Practice tab: Today’s session shaped by two goals, then routines, exercises and loops.',
   },
   {
-    kicker: 'Build it up',
-    title: 'Ramp a loop up to full speed.',
-    image: loopRamp,
-    alt: 'The loop automator set to climb from 75% to 100% speed in six steps.',
+    kicker: 'Keep it',
+    title: 'Record a take. Note what you heard.',
+    image: take,
+    alt: 'A recorded take of a verse riff with a note, and two comments pinned to moments in it.',
   },
   {
     kicker: 'Work it out',
@@ -105,7 +108,7 @@ export default function RedMoonPage() {
       <main>
         <section className="rm-hero">
           <p className="rm-kicker rm-hero-kicker">Red Moon Practice Studio</p>
-          <h1>Give practice a home.</h1>
+          <h1>Give your practice a home.</h1>
           <p className="rm-hero-sub">
             A practice studio for guitar and bass players who learn from everywhere.
           </p>
@@ -186,7 +189,7 @@ export default function RedMoonPage() {
             <figcaption>John Mayer</figcaption>
           </figure>
           <Link href="/story" className="rm-textlink reveal">
-            Read the story behind the app
+            Read the liner notes
           </Link>
         </section>
 
