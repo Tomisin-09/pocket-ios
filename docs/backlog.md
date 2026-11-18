@@ -25,12 +25,14 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
      are the hard part. It takes D8, the key picker wrapping *D♯* and *G♯*, unless that's fixed sooner
      as a bug.
 2. **The four that are ready to build.**
-   - **2a. Home's *This week* strip reads only the week** (S). `HomeStatsStrip` queries every
+   - **2a. Home's *This week* strip reads only the week** (S). **✅ Built 2026-11-18 on `pocket-445`:** 60 →
+     32 ms on the phone's store, 135 → about 35 ms at four times its history, same numbers. `HomeStatsStrip` queries every
      `PracticeRun` and every `JournalEntry` to count one week: about 100 ms now, 350 ms at four times
      the history (*What else grows with use*, under *After the freeze*). Both dates (`startedAt`,
      `createdAt`) are non-optional, so a date predicate isn't the optional-predicate freeze. Measure
      before and after on the copied phone store, as the audit did.
-   - **2b. A bass 10th draws its 10th** (S). The entry *A bass 10th draws without its 10th* below.
+   - **2b. A bass 10th draws its 10th** (S). **✅ Fixed 2026-11-18 on `pocket-446`;** the shell
+     *root · ♭7 · 10* had the same fault, and is fixed with it. The entry *A bass 10th draws without its 10th* below.
      Check that the guitar diagrams don't move.
    - **2c. A bent note's number clears its arc** (S). The *After the freeze* bullet *A bent note's
      number covers its arc*. Wants a look on the device.
@@ -364,7 +366,8 @@ click through the speaker and through headphones.
   (main-thread CPU, Debug, simulator).
   - **No second Journal.** Opening the Journal stayed flat (622 → 580 ms). The Practice log, Songs, Loops,
     Exercises and Routines didn't grow. Their per-render work is a filter or a single map over each query.
-  - **Home's *This week* strip grows in step with practice.** **In 1.5, item 2a.** It queries every run and every note to show
+  - **Home's *This week* strip grows in step with practice.** **In 1.5, item 2a; built 2026-11-18 (`pocket-445`), it
+    now fetches from the week's start only.** It queries every run and every note to show
     one week: about 100 ms at today's history and about 350 ms at four times it. It's linear, so it isn't
     urgent, but Home is the most-opened screen. Fetch only this week's runs (a plain `Date` predicate on
     `PracticeRun.startedAt`, which isn't the optional-predicate freeze in `docs/swiftdata-gotchas.md`).
@@ -407,6 +410,20 @@ click through the speaker and through headphones.
   Needs its own ADR, amending 0004's rung 2 and 0011's import if it goes ahead. **Not decided.**
 
 ## A bass 10th draws without its 10th (logged 2026-11-14, found building ADR 0297) — in 1.5, item 2b
+
+**✅ Fixed 2026-11-18 on `pocket-446`.** The window now stretches to the shape's reach, at least four
+frets and at most seven (`ChordVoicing.displayFretWindow`). Under the old window 50 bass voicings lost a
+dot: 16 major 10ths, 18 minor 10ths and **16 shells *root · ♭7 · 10*.** The shell was affected too: its
+10th is on the D string, six frets up, the same as the dyad's (the note below said otherwise). Every
+guitar shape, the library plus every grip and triad at all twelve roots, still gets four frets
+(`ChordDiagramWindowTests`).
+
+**Seen while checking it, not fixed (pre-existing):** at the live size (up to 190 pt wide), a high
+shape whose lowest fret is on the leftmost string covers the end of its *n fr.* caption with that
+dot. It did with the four-fret window too, and the guitar A barre at 5 fr. does it as well. Moving the
+caption would move every high guitar diagram, so it wants its own look.
+
+**As logged:**
 
 `BassChordShape.majorTenth` and `.minorTenth` put the 10th six frets above the root: C on the low E at
 fret 8, its E on the D string at fret 14. `ChordDiagramView` draws a four-fret window from the lowest

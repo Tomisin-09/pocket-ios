@@ -115,6 +115,23 @@ extension ChordVoicing {
         return low
     }
 
+    /// The most frets a diagram's window will stretch to. A bass tenth reaches seven (root at fret *f*
+    /// on the E string, its tenth at *f* + 6 on the D), the longest shape the app offers. A custom
+    /// shape that reaches further still draws seven, rather than squeezing a whole neck into a chip.
+    static let maxDisplayFretWindow = 7
+
+    /// How many frets the diagram's window shows: `minimum` (four, the standard chord box), or the
+    /// shape's own reach from `displayBaseFret` when that's longer, up to `maxDisplayFretWindow`.
+    ///
+    /// Until 1.5 the window was always four, so a bass tenth drew only its root: C on the low E at
+    /// fret 8 put its E at fret 14, off the bottom of the box (1.5, item 2b). Every guitar shape spans
+    /// four frets or fewer, so guitar diagrams keep their four (`ChordDiagramWindowTests`).
+    func displayFretWindow(minimum: Int = 4) -> Int {
+        guard let high = highestFret else { return minimum }
+        let reach = high - displayBaseFret + 1
+        return min(max(minimum, reach), max(minimum, Self.maxDisplayFretWindow))
+    }
+
     /// Playable as encoded: right string count, no negative frets, and at least one string sounds.
     /// Playable as encoded: a **known** string count (six or four — the neck it's written for is the
     /// shape's own length), no negative frets, and at least one string sounds.

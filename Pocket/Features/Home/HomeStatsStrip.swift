@@ -29,19 +29,57 @@ import SwiftUI
 /// ADR 0196 D2. No goal, no denominator, no streak, no week-over-week delta — all four travel with
 /// the deferred streak work (ADR 0117), and none of them are here.
 struct HomeStatsStrip: View {
-    /// Unfiltered and mapped in memory, like `PracticeLogView` — an optional `#Predicate` starves the
-    /// main thread (`docs/swiftdata-gotchas.md`), and the windowing is pure by design anyway.
-    @Query(sort: \PracticeRun.startedAt) private var runs: [PracticeRun]
+    /// **Only this week's rows** (1.5, item 2a). Until 1.5 the strip fetched every run and every note
+    /// to count one week, which grew with history: about 60 ms on the phone's 437 runs and 135 ms at
+    /// four times that. The window itself is still worked out in memory by `PracticeProgress.week`,
+    /// as before; the fetch only stops reading what that window would throw away.
+    ///
+    /// The bound is a **lower one only**, from the start of the week the strip was built in. The
+    /// predicate is fixed when the view is made, so if Home stays open across the start of a new week,
+    /// the fetch still holds the new week's runs (a superset) and `body`'s `.now` picks the right seven
+    /// days. An upper bound would have cut the new week off.
+    ///
+    /// Both dates are non-optional, so this is not the optional-`#Predicate` freeze in
+    /// `docs/swiftdata-gotchas.md`.
+    @Query private var runs: [PracticeRun]
     @Query private var journalEntries: [JournalEntry]
+    /// Whether anything was **ever** logged: one row, not the history. The strip's guard is lifetime
+    /// emptiness, which this week's fetch can't answer: a quiet week after months of practice still
+    /// shows the strip, with its zeroes.
+    @Query private var anyRun: [PracticeRun]
+
+    init(now: Date = .now, calendar: Calendar = .current) {
+        _runs = Query(Self.weekRuns(now: now, calendar: calendar))
+        _journalEntries = Query(Self.weekNotes(now: now, calendar: calendar))
+        _anyRun = Query(Self.anyRunDescriptor)
+    }
+
+    /// Runs that started on or after the start of the week holding `now`.
+    static func weekRuns(now: Date, calendar: Calendar) -> FetchDescriptor<PracticeRun> {
+        let since = PracticeLog.weekInterval(containing: now, calendar: calendar).start
+        return FetchDescriptor(predicate: #Predicate { $0.startedAt >= since })
+    }
+
+    /// Notes written on or after the start of the week holding `now`.
+    static func weekNotes(now: Date, calendar: Calendar) -> FetchDescriptor<JournalEntry> {
+        let since = PracticeLog.weekInterval(containing: now, calendar: calendar).start
+        return FetchDescriptor(predicate: #Predicate { $0.createdAt >= since })
+    }
+
+    static var anyRunDescriptor: FetchDescriptor<PracticeRun> {
+        var descriptor = FetchDescriptor<PracticeRun>()
+        descriptor.fetchLimit = 1
+        return descriptor
+    }
 
     var body: some View {
         // Nothing logged ⇒ no strip at all, rather than three zeroes. That is the objection recorded
         // against a home summary at `JournalTabView+PracticeLog.swift`: a fresh install would read a
-        // row of nothing before it had read anything else. `runs.isEmpty` *is*
+        // row of nothing before it had read anything else. An empty `anyRun` *is*
         // `PracticeProgress.Summary.hasNoHistory` — lifetime emptiness is run count — so this asks
         // the question without building the two horizons and the inventory it would need to ask it
         // through `summarize`.
-        if !runs.isEmpty {
+        if !anyRun.isEmpty {
             let week = PracticeProgress.week(records: runs.map(\.record),
                                              now: .now, calendar: .current)
             // A `NavigationLink`, not a flag plus a `navigationDestination` on `HomeView`.
