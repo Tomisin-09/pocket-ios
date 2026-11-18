@@ -20,6 +20,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Fixed
+
+- **A bass tenth shows its tenth** (1.5, item 2b). Chord diagrams drew a four-fret box, and a bass
+  tenth reaches seven frets, so the major 10th, the minor 10th and the *root · ♭7 · 10* shell showed
+  only their root wherever a diagram draws: the picker's chip, the editor's row and the live run. The
+  box now stretches to fit the shape, up to seven frets. Guitar diagrams don't change.
+
 ## [1.4.1] — build 11, cut 2026-11-16
 
 ### Added
