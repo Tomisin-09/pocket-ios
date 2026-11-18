@@ -25,7 +25,8 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
      are the hard part. It takes D8, the key picker wrapping *D♯* and *G♯*, unless that's fixed sooner
      as a bug.
 2. **The four that are ready to build.**
-   - **2a. Home's *This week* strip reads only the week** (S). `HomeStatsStrip` queries every
+   - **2a. Home's *This week* strip reads only the week** (S). **✅ Built 2026-11-18 on `pocket-445`:** 60 →
+     32 ms on the phone's store, 135 → about 35 ms at four times its history, same numbers. `HomeStatsStrip` queries every
      `PracticeRun` and every `JournalEntry` to count one week: about 100 ms now, 350 ms at four times
      the history (*What else grows with use*, under *After the freeze*). Both dates (`startedAt`,
      `createdAt`) are non-optional, so a date predicate isn't the optional-predicate freeze. Measure
@@ -362,7 +363,8 @@ click through the speaker and through headphones.
   (main-thread CPU, Debug, simulator).
   - **No second Journal.** Opening the Journal stayed flat (622 → 580 ms). The Practice log, Songs, Loops,
     Exercises and Routines didn't grow. Their per-render work is a filter or a single map over each query.
-  - **Home's *This week* strip grows in step with practice.** **In 1.5, item 2a.** It queries every run and every note to show
+  - **Home's *This week* strip grows in step with practice.** **In 1.5, item 2a; built 2026-11-18 (`pocket-445`), it
+    now fetches from the week's start only.** It queries every run and every note to show
     one week: about 100 ms at today's history and about 350 ms at four times it. It's linear, so it isn't
     urgent, but Home is the most-opened screen. Fetch only this week's runs (a plain `Date` predicate on
     `PracticeRun.startedAt`, which isn't the optional-predicate freeze in `docs/swiftdata-gotchas.md`).
