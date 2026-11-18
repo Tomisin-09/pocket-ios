@@ -104,6 +104,9 @@
    its latency in one place (ADR 0140): the rate is stored rather than read back off the unit, so which
    AU is inside stays swappable, and the unit's smoothness follows the rate from the pure
    `StretchQuality` curve — more smoothing the further the audio is stretched, none at all at 1×.
+   Since ADR 0305 it also owns **pitch**, for Another key only: whole semitones, held within six of the
+   recording (`KeyShift`), written in cents on both backends and re-asserted with the rate after
+   `engine.start()`. Pitch and rate never move together; there is still no varispeed.
 4. Generate the waveform from an offline read / audio tap (mirrored bars).
 5. Playhead, loops, and markers are all positions in seconds, independent of
    speed. The published `currentTime` is **heard** time, not rendered time: the stretcher's

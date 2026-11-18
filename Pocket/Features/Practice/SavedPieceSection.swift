@@ -20,40 +20,86 @@ struct SavedPieceSection: View {
     /// Open *Watch it on the neck* (ADR 0254), or `nil` to leave it out: the host passes one only when
     /// there's something to watch (its D2).
     var onWatch: (() -> Void)?
+    /// The key Active listening is playing in (ADR 0305). Shifted, the names are hidden: they're the answer.
+    var heard = HeardKey(recording: .unknown, shift: 0)
 
     var body: some View {
         if let piece = loop.transcription {
-            Section {
-                PieceDrawing(piece: piece, spelling: spelling)
-                let snags = loop.snagsOnPiece
-                if !snags.isEmpty { snagRows(snags) }
-                // One row for the ways to work on the piece, naming it and watching it back: as two rows, the
-                // Form drew a divider between them at an inset of its own.
-                VStack(alignment: .leading, spacing: 10) {
-                    Button("Name the notes") { onEdit(0) }
-                        .accessibilityIdentifier("count.saved.name")
-                    if let onWatch {
-                        Button(action: onWatch) {
-                            Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
-                        }
-                        .accessibilityIdentifier("count.saved.watch")
-                    }
+            if heard.isShifted {
+                hiddenNames(piece)
+            } else {
+                saved(piece)
+            }
+        }
+    }
+
+    /// **In another key** (ADR 0305 D5): the piece's names are what you'd be working out, so they're hidden
+    /// while you're shifted, along with everything drawn from them (the tab, the neck, the versions). What's
+    /// left is the way to name it again here, and the plain word that those names aren't kept.
+    private func hiddenNames(_ piece: PieceTranscription) -> some View {
+        Section {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: "eye.slash")
+                    .font(.title3)
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: 4) {
+                    let count = piece.taps.count
+                    let noun = loop.loopType == .chords ? "chord" : "note"
+                    Text("\(Text("\(count) \(noun)\(count == 1 ? "" : "s")").bold()) · names hidden")
+                        .font(.futura(.body))
+                    Text(heard.hiddenNames)
+                        .font(.futura(.subheadline))
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("count.saved.hidden")
+            Button(heard.nameButton) { onEdit(0) }
                 .font(.futura(.subheadline))
                 .buttonStyle(.bordered)
                 .tint(PocketColor.practice)
-                let kept = loop.keptTranscriptions.count
-                if kept > 0 {
-                    PieceVersionsRow(count: kept + 1, action: onVersions)
-                        .font(.futura(.subheadline))
+                .accessibilityIdentifier("count.saved.name")
+        } header: {
+            Text("Saved on this loop")
+        } footer: {
+            Text(heard.notKept)
+                .font(.futura(.caption))
+        }
+    }
+
+    private func saved(_ piece: PieceTranscription) -> some View {
+        Section {
+            PieceDrawing(piece: piece, spelling: spelling)
+            let snags = loop.snagsOnPiece
+            if !snags.isEmpty { snagRows(snags) }
+            // One row for the ways to work on the piece, naming it and watching it back: as two rows, the
+            // Form drew a divider between them at an inset of its own.
+            VStack(alignment: .leading, spacing: 10) {
+                Button("Name the notes") { onEdit(0) }
+                    .accessibilityIdentifier("count.saved.name")
+                if let onWatch {
+                    Button(action: onWatch) {
+                        Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
+                    }
+                    .accessibilityIdentifier("count.saved.watch")
                 }
-            } header: {
-                Text("Saved on this loop")
-            } footer: {
-                Text("Saving another pass keeps this one as an earlier version. The Journal lists the one in "
-                     + "use under Pieces.")
-                    .font(.futura(.caption))
             }
+            .font(.futura(.subheadline))
+            .buttonStyle(.bordered)
+            .tint(PocketColor.practice)
+            let kept = loop.keptTranscriptions.count
+            if kept > 0 {
+                PieceVersionsRow(count: kept + 1, action: onVersions)
+                    .font(.futura(.subheadline))
+            }
+        } header: {
+            Text("Saved on this loop")
+        } footer: {
+            Text("Saving another pass keeps this one as an earlier version. The Journal lists the one in "
+                 + "use under Pieces.")
+                .font(.futura(.caption))
         }
     }
 

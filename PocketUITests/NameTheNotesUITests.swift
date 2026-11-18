@@ -130,6 +130,47 @@ final class NameTheNotesUITests: UITestCase {
         app.navigationBars["Name the notes"].buttons["Cancel"].tap()
     }
 
+    /// **Another key** (ADR 0305 D3, D5): the stepper moves the key and the line says where to; shifted, the
+    /// saved names hide and naming opens a pass that says it isn't kept; *Original key* puts it back.
+    @MainActor
+    func testAnotherKeyHidesTheNamesAndNamesAPassThatIsntKept() {
+        let app = openActiveListening()
+        let line = app.staticTexts["listening.key.line"]
+        XCTAssertTrue(reveal(line, in: app), "no key line under the steppers")
+        XCTAssertEqual(line.label, "G minor, as recorded")
+
+        let raise = app.buttons["Up a semitone"]
+        for _ in 0..<3 { raise.tap() }
+        XCTAssertTrue(waitForLabel("B♭ minor · 3 up", on: line), "the line didn't follow the key: \(line.label)")
+        attach(app, named: "another-key-shifted")
+
+        let hidden = app.descendants(matching: .any)["count.saved.hidden"]
+        XCTAssertTrue(reveal(hidden, in: app), "the saved names aren't hidden while shifted")
+        let name = app.buttons["count.saved.name"]
+        XCTAssertTrue(reveal(name, in: app))
+        XCTAssertEqual(name.label, "Name the notes in B♭ minor")
+        name.tap()
+        XCTAssertTrue(app.navigationBars["Name the notes"].waitForExistence(timeout: Self.uiTimeout))
+        XCTAssertTrue(app.staticTexts["naming.shifted.line"].waitForExistence(timeout: Self.uiTimeout),
+                      "naming at a shift should say its names aren't kept")
+        app.navigationBars["Name the notes"].buttons["Cancel"].tap()
+
+        // Back up the Form: the key's row is above the saved piece, and `reveal` only drags one way. The drag
+        // runs down the Form's left margin, outside every card: down the middle it starts on Count the notes'
+        // tap pad, which takes it as a tap, and the Form never moves.
+        let original = app.buttons["listening.key.original"]
+        for _ in 0..<8 where !inReach(original, in: app) {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.3))
+                .press(forDuration: 0.05,
+                       thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.8)),
+                       withVelocity: .default, thenHoldForDuration: 0.3)
+        }
+        XCTAssertTrue(inReach(original, in: app), "no Original key while shifted")
+        original.tap()
+        XCTAssertTrue(waitForLabel("G minor, as recorded", on: line), "Original key didn't go back: \(line.label)")
+        XCTAssertFalse(app.descendants(matching: .any)["count.saved.hidden"].exists, "the names should be back")
+    }
+
     // MARK: - The way in
 
     /// A spot on the neck by the start of its label: *"G string, fret 5,"*.
@@ -142,6 +183,17 @@ final class NameTheNotesUITests: UITestCase {
 
     @MainActor
     private func openNameTheNotes(file: StaticString = #filePath, line: UInt = #line) -> XCUIApplication {
+        let app = openActiveListening(file: file, line: line)
+        let name = app.buttons["count.saved.name"]
+        XCTAssertTrue(reveal(name, in: app), "no saved piece on the loop — did the seed run?", file: file, line: line)
+        name.tap()
+        XCTAssertTrue(app.navigationBars["Name the notes"].waitForExistence(timeout: Self.uiTimeout),
+                      "Name the notes didn't open", file: file, line: line)
+        return app
+    }
+
+    @MainActor
+    private func openActiveListening(file: StaticString = #filePath, line: UInt = #line) -> XCUIApplication {
         let app = launchApp(extraArguments: [UITestHooks.namingPieceArgument], file: file, line: line)
 
         let library = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Song library,")).firstMatch
@@ -169,12 +221,6 @@ final class NameTheNotesUITests: UITestCase {
         train.tap()
         XCTAssertTrue(app.navigationBars["Active listening"].waitForExistence(timeout: Self.uiTimeout),
                       "Active listening didn't open", file: file, line: line)
-
-        let name = app.buttons["count.saved.name"]
-        XCTAssertTrue(reveal(name, in: app), "no saved piece on the loop — did the seed run?", file: file, line: line)
-        name.tap()
-        XCTAssertTrue(app.navigationBars["Name the notes"].waitForExistence(timeout: Self.uiTimeout),
-                      "Name the notes didn't open", file: file, line: line)
         return app
     }
 

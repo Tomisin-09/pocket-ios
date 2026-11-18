@@ -15,8 +15,12 @@ struct NamingRequest: Identifiable, Equatable {
     var region: ClosedRange<TimeInterval>?
     /// The note it opens on, 0-based: the first, or the one a snag is on (ADR 0234 D7).
     var startAt = 0
+    /// **Naming in another key** (ADR 0305 D5): set when Active listening is shifted. The pass starts
+    /// from the saved piece's taps with no names, the sheet says the names aren't kept, and Done keeps
+    /// nothing. `nil` at the recording's own pitch.
+    var shifted: HeardKey?
 
-    var id: String { "saved" }
+    var id: String { shifted.map { "shifted\($0.shift)" } ?? "saved" }
 }
 
 /// What the sheet hands back on Done: the taps, named, with any taken out or added (ADR 0231), and the
@@ -106,6 +110,12 @@ final class CountTheNotesModel {
     /// Whether the song's spelling of accidentals comes from its key or the player's preference.
     var spelling: NoteSpelling { Self.spelling(for: loop) }
 
+    /// The spelling for what you're hearing (ADR 0305 D3): the heard key's, when Active listening has
+    /// moved it and the song has a key, else the song's own.
+    func spelling(hearing heard: HeardKey) -> NoteSpelling {
+        heard.isShifted ? heard.spelling ?? spelling : spelling
+    }
+
     /// The same, for a loop the Journal is showing a piece of (ADR 0229).
     static func spelling(for loop: Loop) -> NoteSpelling {
         loop.song.flatMap { NoteSpelling.forMusicalKey($0.musicalKey) } ?? AppSettings.accidentalPreference
@@ -152,10 +162,19 @@ final class CountTheNotesModel {
 
     /// Open Name the notes on the piece in use, at `note` if it's one of its taps. There's nothing to name
     /// until a pass is saved.
-    func nameSaved(at note: Int = 0) {
+    ///
+    /// **In another key** (ADR 0305 D5), it opens a fresh pass over the same taps instead: the saved names
+    /// are the answer, so none come with it, and the strings are the tuner's, not the piece's.
+    func nameSaved(at note: Int = 0, hearing heard: HeardKey? = nil) {
         guard let piece = loop.transcription else { return }
+        let startAt = piece.taps.indices.contains(note) ? note : 0
+        if let heard, heard.isShifted {
+            naming = NamingRequest(taps: piece.taps.map { PieceTranscription.Tap(seconds: $0.seconds) },
+                                   region: region, startAt: startAt, shifted: heard)
+            return
+        }
         naming = NamingRequest(taps: piece.taps, openMidi: piece.openMidi, tuningLabel: piece.tuningLabel,
-                               region: region, startAt: piece.taps.indices.contains(note) ? note : 0)
+                               region: region, startAt: startAt)
     }
 
     /// The loop's region, or `nil` for one with no length.
@@ -166,7 +185,11 @@ final class CountTheNotesModel {
     /// The sheet's Done. The piece in use is edited in place, which is the only way a saved piece ever
     /// changes short of saving another pass over it. An edit that changed something re-dates it, so the
     /// Journal moves it to the day it changed (ADR 0229).
+    ///
+    /// A pass named in another key keeps nothing (ADR 0305 D5, Q2): it's your version, not the recording's,
+    /// and saving it would replace the names made at the lick's own pitch.
     func finishNaming(_ request: NamingRequest, result: NamingResult, context: ModelContext) {
+        guard request.shifted == nil else { return }
         guard !result.taps.isEmpty, let before = loop.transcription else { return }
         var piece = before
         piece.taps = result.taps.sorted { $0.seconds < $1.seconds }

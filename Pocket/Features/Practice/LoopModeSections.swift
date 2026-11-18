@@ -87,6 +87,10 @@ struct ContinuousLoopControls: View {
     /// Open the owner's takes. The host presents the sheet, since it knows the owner; these controls
     /// only offer the way in. `nil` leaves the count as plain text.
     var onOpenTakes: (() -> Void)?
+    /// **Another key** (ADR 0305 D3): the recording's key, to offer the key stepper beside the tempo.
+    /// Active listening passes one (`.unknown` for a song with no key); improvise passes nothing, since a
+    /// key to practise a lick in is an Active listening setting.
+    var recordingKey: MusicalKey?
 
     var body: some View {
         VStack(spacing: 12) {
@@ -111,8 +115,14 @@ struct ContinuousLoopControls: View {
                 RecordingStatusView(recorder: recorder)
                 recordRestingLine(recorder)
             }
-            LoopTempoControl(player: player)
-                .padding(.top, 4)
+            Group {
+                if let recordingKey {
+                    LoopTempoAndKeyControls(player: player, recordingKey: recordingKey)
+                } else {
+                    LoopTempoControl(player: player)
+                }
+            }
+            .padding(.top, 4)
         }
         .animation(.easeInOut(duration: 0.2), value: recorder?.state)
         .frame(maxWidth: .infinity)

@@ -56,4 +56,61 @@ final class CountTheNotesNamingTests: XCTestCase {
         XCTAssertEqual(loop.transcription?.taps.first?.label, .pitchClass(9), "the names stay")
         XCTAssertNotNil(loop.transcription?.changedAt, "dated to the day it changed")
     }
+
+    // MARK: - Another key (ADR 0305 D5)
+
+    private func namedLoop() -> Loop {
+        let loop = makeLoop()
+        loop.song?.musicalKey = .gMinor
+        loop.transcription = PieceTranscription(taps: [.init(seconds: 10.5, label: .pitchClass(7)),
+                                                       .init(seconds: 11, label: .pitchClass(10))],
+                                                openMidi: [64, 59, 55, 50, 45, 40], tuningLabel: "Guitar · Standard")
+        return loop
+    }
+
+    /// Shifted, naming is a fresh pass over the same taps: the saved names are the answer, so none come with it.
+    func testInAnotherKeyNamingStartsFreshOverTheSameTaps() throws {
+        let loop = namedLoop()
+        let model = CountTheNotesModel(loop: loop)
+        model.nameSaved(at: 1, hearing: HeardKey(recording: .gMinor, shift: 3))
+        let request = try XCTUnwrap(model.naming)
+        XCTAssertEqual(request.taps.map(\.seconds), [10.5, 11], "the taps carry over")
+        XCTAssertTrue(request.taps.allSatisfy { $0.label == nil }, "no saved name comes with it")
+        XCTAssertNil(request.openMidi, "the tuner's strings, not the piece's")
+        XCTAssertEqual(request.startAt, 1)
+        XCTAssertEqual(request.shifted?.shift, 3)
+        XCTAssertNotEqual(request.id, "saved", "a different sheet from the saved piece's")
+    }
+
+    /// Done in another key keeps nothing (D5, Q2): the piece is exactly as it was, names, tuning and date.
+    func testInAnotherKeyDoneKeepsNothing() throws {
+        let loop = namedLoop()
+        let before = try XCTUnwrap(loop.transcription)
+        let model = CountTheNotesModel(loop: loop)
+        model.nameSaved(hearing: HeardKey(recording: .gMinor, shift: -2))
+        let request = try XCTUnwrap(model.naming)
+        let named = request.taps.map { PieceTranscription.Tap(seconds: $0.seconds, label: .pitchClass(5)) }
+        model.finishNaming(request, result: NamingResult(taps: named, openMidi: [64, 59, 55, 50, 45, 40],
+                                                         tuningLabel: "Guitar · Standard"),
+                           context: try makeContext())
+        XCTAssertEqual(loop.transcription, before)
+    }
+
+    /// At the recording's own pitch nothing changes: a shift of 0 is the saved piece, names and all.
+    func testAtZeroNamingIsTheSavedPieceAsBefore() throws {
+        let loop = namedLoop()
+        let model = CountTheNotesModel(loop: loop)
+        model.nameSaved(hearing: HeardKey(recording: .gMinor, shift: 0))
+        let request = try XCTUnwrap(model.naming)
+        XCTAssertEqual(request.taps, loop.transcription?.taps)
+        XCTAssertNil(request.shifted)
+        XCTAssertEqual(request.id, "saved")
+    }
+
+    /// Names on the sheet are spelled for the key you're hearing: G minor up 3 spells B♭, not A♯.
+    func testTheSheetSpellsForTheKeyYoureHearing() {
+        let model = CountTheNotesModel(loop: namedLoop())
+        XCTAssertEqual(model.spelling(hearing: HeardKey(recording: .gMinor, shift: 3)).name(pitchClass: 10), "B♭")
+        XCTAssertEqual(model.spelling(hearing: HeardKey(recording: .gMinor, shift: 0)), model.spelling)
+    }
 }

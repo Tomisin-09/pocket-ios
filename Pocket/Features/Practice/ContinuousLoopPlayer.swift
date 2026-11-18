@@ -76,6 +76,20 @@ final class ContinuousLoopPlayer {
     var canSlowDown: Bool { percent > Self.minPercent }
     var canSpeedUp: Bool { percent < Self.maxPercent }
 
+    /// **Another key** (ADR 0305 D3): Active listening's shift, in semitones. It starts at 0 and is never
+    /// saved: this player is made per visit, with its own engine, so the shift goes when the screen does.
+    /// A song's own shift (slice 2) isn't here yet, so the range is `KeyShift.sessionRange(song: 0)`.
+    private(set) var keyShift = 0
+
+    /// Set the shift, held inside the range, and move the audio live. Speed doesn't change.
+    func setKeyShift(_ semitones: Int) {
+        keyShift = KeyShift.session(semitones, song: 0)
+        model.setPitch(semitones: KeyShift.total(song: 0, session: keyShift))
+    }
+
+    var canShiftDown: Bool { keyShift > KeyShift.sessionRange(song: 0).lowerBound }
+    var canShiftUp: Bool { keyShift < KeyShift.sessionRange(song: 0).upperBound }
+
     /// Whether audio is cycling — drives the play/stop glyph.
     var isPlaying: Bool { model.isRunning }
     /// True once the loop's audio couldn't be resolved (moved/deleted file) — the sheet says so

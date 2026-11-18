@@ -17,9 +17,10 @@ week until that week's marketing piece is cut (before day 1) or posted (after).
 S is about a day, M a few days, L a week or more; the sizes are estimates.
 
 1. **Another key** (ADR 0305). The first bullet under *After the freeze* below.
-   - **1a. Slice 1, the engine and Active listening** (S–M). No schema. D7 is the gate before it
-     merges: on the phone, a guitar loop at 0, −6 and +6, each at 100% and at 25%, passes if Tomisin
-     would practise to it. 0305 D7 has the fallbacks if one end fails.
+   - **1a. Slice 1, the engine and Active listening** (S–M). **Built 2026-11-18 on `pocket-449`; D7
+     passed the same day** (Tomisin's phone listening check: it works as expected). No schema. D7 was
+     the gate before it merged: on the phone, a guitar loop at 0, −6 and +6, each at 100% and at 25%,
+     passes if Tomisin would practise to it.
    - **1b. Slice 2, the song's shift** (M–L). One `Song` attribute, so the store upgrade check on the
      simulator and the device, proved by timestamps (`docs/swiftdata-gotchas.md`). Saved names (D5)
      are the hard part. It takes D8, the key picker wrapping *D♯* and *G♯*, unless that's fixed sooner

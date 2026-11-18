@@ -208,6 +208,15 @@ struct NameTheNotesSheet: View {
                         .foregroundStyle(PocketColor.textSecondary)
                         .frame(maxWidth: .infinity)
                         .multilineTextAlignment(.center)
+                    // In another key (ADR 0305 D5), said plainly before anything is named: these aren't kept.
+                    if let shifted = request.shifted {
+                        Text(shifted.namingLine)
+                            .font(.futura(.footnote, weight: .semibold))
+                            .foregroundStyle(PocketColor.practice)
+                            .frame(maxWidth: .infinity)
+                            .multilineTextAlignment(.center)
+                            .accessibilityIdentifier("naming.shifted.line")
+                    }
                     Picker("How to name them", selection: $mode) {
                         ForEach(NamingMode.allCases) { Text($0.label).tag($0) }
                     }

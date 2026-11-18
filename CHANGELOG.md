@@ -20,6 +20,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Added
+
+- **Another key, in Active listening** (ADR 0305, slice 1; 1.5, item 1a). Beside the tempo, − and + under
+  *key* move the loop a semitone at a time, six either way, so a lick can be practised in all twelve keys
+  without changing its speed. The line under them says the key you're hearing (*B♭ minor · 3 up*), with
+  *Original key* to go back. It starts at the recording's key every visit and is never saved. While it's
+  moved, the saved piece's names are hidden, because they're the answer, and *Name the notes* names the
+  same taps in the key you're hearing without keeping the names.
+
 ## [1.4.1] — build 11, cut 2026-11-16
 
 ### Added

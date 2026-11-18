@@ -207,6 +207,12 @@ final class LoopRunModel {
         engine.setRate(Self.rate(forPercent: percent))
     }
 
+    /// Move the audio by whole semitones (ADR 0305): Active listening's key. Held by the engine, so it
+    /// stays across stops and slices and is gone with this model.
+    func setPitch(semitones: Int) {
+        engine.setPitch(semitones: semitones)
+    }
+
     // MARK: - Count the notes (ADR 0225)
 
     /// The loop's clock at this instant, for a tap. `nil` unless the region is looping. Read in actions,
