@@ -20,6 +20,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Changed
+
+- **Home's *This week* strip reads only the week** (1.5, item 2a). It used to fetch every practice run and
+  every note to count seven days, so it slowed as history grew. On a copy of the phone's store it now
+  costs about 32 ms at today's 437 runs (60 ms before) and stays flat at four times that history (135 ms
+  before). The numbers it shows are the same.
+
 ### Fixed
 
 - **A bass tenth shows its tenth** (1.5, item 2b). Chord diagrams drew a four-fret box, and a bass
