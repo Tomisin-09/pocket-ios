@@ -13,6 +13,9 @@ The waveform screen. Reached by tapping a song in the [library](home-and-library
 loop's speed under the mastery — *slowest 60%*, or *full speed*. **Hold the title** to open
 [Song details](home-and-library.md#song-details) — there is no button for it.
 
+A song raised or lowered in [Edit song](home-and-library.md#edit-song) says so under those, in teal:
+*+1 semitone*. Tap it to open Edit song. In landscape it sits beside the title.
+
 ## The speed bar
 
 - **`Playback speed`** — the slider that slows the song down without changing its pitch. Its

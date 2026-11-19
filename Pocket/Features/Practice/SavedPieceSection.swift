@@ -24,7 +24,8 @@ struct SavedPieceSection: View {
     var heard = HeardKey(recording: .unknown, shift: 0)
 
     var body: some View {
-        if let piece = loop.transcription {
+        // As you hear it (ADR 0305 D5): the names and the tab at the song's shift.
+        if let piece = loop.heardTranscription {
             if heard.isShifted {
                 hiddenNames(piece)
             } else {

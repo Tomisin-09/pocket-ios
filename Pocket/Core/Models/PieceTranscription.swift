@@ -93,3 +93,31 @@ extension Loop {
         set { transcriptionData = newValue.flatMap { $0.taps.isEmpty ? nil : $0.encoded() } }
     }
 }
+
+extension Loop {
+    /// The piece **as you hear it** (ADR 0305 D5): stored against the recording, moved up by the song's
+    /// shift. What the screens show and what Name the notes edits; `transcription` is what's kept.
+    ///
+    /// Its tuning line says the song is moved (*Guitar · Standard · song raised 1*), since that's why these
+    /// frets are the player's.
+    var heardTranscription: PieceTranscription? {
+        transcription.map(heard)
+    }
+
+    /// The earlier versions (ADR 0233), as you hear them.
+    var heardKeptTranscriptions: [PieceTranscription] {
+        keptTranscriptions.map(heard)
+    }
+
+    private func heard(_ piece: PieceTranscription) -> PieceTranscription {
+        let shift = song?.heardShift ?? 0
+        var moved = piece.moved(by: shift)
+        moved.tuningLabel = PieceTuning.heard(moved.tuningLabel, songShift: shift)
+        return moved
+    }
+
+    /// Save `piece`, named as you hear it, against the recording: moved down by the song's shift.
+    func setHeardTranscription(_ piece: PieceTranscription?) {
+        transcription = piece?.moved(by: -(song?.heardShift ?? 0))
+    }
+}

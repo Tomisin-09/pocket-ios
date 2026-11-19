@@ -17,7 +17,9 @@ extension SongMapInput {
                   loops: song.loops.map { loop in
                       LoopInput(uid: loop.uid, name: loop.name.isEmpty ? "Loop" : loop.name,
                                 start: loop.start * duration, end: loop.end * duration,
-                                type: loop.loopType, piece: loop.transcription,
+                                // As you hear it (ADR 0305 D5): every piece moved by the one song's
+                                // shift, so the board stays in one frame.
+                                type: loop.loopType, piece: loop.heardTranscription,
                                 // A snag's line is about a note that stopped the player, never a
                                 // declaration the loop is solved, whatever it's tagged (ADR 0234 D7).
                                 handTagged: loop.journal.contains { $0.kind == .transcribed && $0.snagUID == nil },

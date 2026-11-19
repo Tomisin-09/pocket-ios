@@ -83,6 +83,8 @@ final class SongPlayAlongModel {
         } else {
             await loadDemoSample()
         }
+        // The song's shift (ADR 0305 D4): a play-along plays the song as it's set to sound.
+        engine.setPitch(semitones: song.heardShift)
         loaded = true
     }
 

@@ -211,6 +211,9 @@ The line under them says the key you're hearing, *B♭ minor · 3 up* for a lick
 moved when the song has no key. `Original key` puts it back. It starts at the recording's key each time you
 open the screen, and nothing about it is saved.
 
+On a song raised or lowered in Edit song, the stepper's 0 is the song as it plays, and the line says so,
+*G♯ minor · song raised 1*. It still reaches all twelve keys: on a song raised 1 it runs from −7 to +5.
+
 Moved, your saved names are the answer, so `Saved on this loop` hides them while you listen. Its button
 names the notes in the key you're hearing, over the same taps. Names you make there aren't kept, and the
 ones you saved stay as they are. Counting works the same in any key.
@@ -258,7 +261,11 @@ before the one you're naming are filled and the three after it ringed, fading th
 with its number, so a lick reads in order even where it comes back to the same fret; the rest of the
 pass sits faintly behind them. The row over the neck, *Guitar · Standard* until you change it, sets
 guitar or bass and the tuning for this piece only; a new tuning keeps your frets, and a new instrument
-clears them after asking. Under the neck, `Into it` says how you got to the note: `Picked`,
+clears them after asking. On a song raised or lowered in Edit song, the row says so, *Guitar · Standard ·
+song raised 1*, and the piece is kept against the record. If you named its frets before the song was
+moved, a note over the strip says they no longer match what you hear and offers to move every fret on its
+own string, *Move them up 1*; a note that would fall off the neck is named there and left for you to name
+again. `Leave them` keeps them as they are. Under the neck, `Into it` says how you got to the note: `Picked`,
 `Hammer-on`, `Pull-off` or `Slide`, and after a bent note, `Release`. A quick hammer-on or slide can sound like one note or two, so it
 goes however you tapped it. If you heard two notes and tapped twice, the join comes from the note
 before when it's on the same string, and the line under the choices names it. If you heard one note

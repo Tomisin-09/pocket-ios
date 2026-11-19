@@ -52,7 +52,7 @@ struct WatchOnNeckSheet: View {
 
     init(loop: Loop) {
         self.init(subject: .loop(loop), player: ContinuousLoopPlayer(loop: loop),
-                  run: SectionWatch.run(of: loop.transcription, id: loop.uid, name: loop.name),
+                  run: SectionWatch.run(of: loop.heardTranscription, id: loop.uid, name: loop.name),
                   spelling: CountTheNotesModel.spelling(for: loop),
                   noun: loop.loopType == .chords ? "chord" : "note")
     }
@@ -64,7 +64,7 @@ struct WatchOnNeckSheet: View {
         let run = SectionWatch.merge(sources, from: start, to: end)
         self.init(subject: .span(song, name: name, isWholeSong: isWholeSong),
                   player: ContinuousLoopPlayer(song: song, from: start, to: end), run: run,
-                  spelling: NoteSpelling.forMusicalKey(song.musicalKey) ?? AppSettings.accidentalPreference,
+                  spelling: NoteSpelling.forMusicalKey(song.heardKey) ?? AppSettings.accidentalPreference,
                   noun: !run.sources.isEmpty && run.sources.allSatisfy(\.isChords) ? "chord" : "note")
     }
 

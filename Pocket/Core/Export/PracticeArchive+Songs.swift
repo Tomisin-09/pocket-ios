@@ -42,6 +42,11 @@ struct SongRecord: Codable, Equatable, Sendable {
     var beatsPerBar: Int
     var noteValue: Int
     var showsGridlines: Bool
+    /// The song raised or lowered to meet your tuning (ADR 0305 D4), in semitones. **`Optional`**, for
+    /// `beatTimes`' reason: a file from before it has no key, and a missing non-optional key fails the whole
+    /// decode (ADR 0212). Written `nil` at 0, so a song as recorded exports exactly as it did, and read
+    /// through `?? 0`.
+    var pitchShift: Int?
 
     var duration: TimeInterval
     var dateAdded: Date?

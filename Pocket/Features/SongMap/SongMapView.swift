@@ -198,9 +198,9 @@ struct SongMapView: View {
         }
     }
 
-    /// The song's key spells its names, as it does everywhere a piece is read (ADR 0123).
+    /// The key you hear spells its names, as it does everywhere a piece is read (ADR 0123, 0305 D5).
     private var spelling: NoteSpelling {
-        NoteSpelling.forMusicalKey(song.musicalKey) ?? AppSettings.accidentalPreference
+        NoteSpelling.forMusicalKey(song.heardKey) ?? AppSettings.accidentalPreference
     }
 
     // MARK: - Pieces | Tab

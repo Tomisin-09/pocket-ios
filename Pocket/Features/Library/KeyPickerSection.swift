@@ -17,21 +17,34 @@ import SwiftUI
 struct KeyPickerSection: View {
     @Binding var key: MusicalKey
     var tint: Color = PocketColor.library
+    /// The line under the grid. Edit song says the key is the recording's (ADR 0305 D4).
+    var footer: (MusicalKey) -> String = { $0 == .unknown ? "Not set." : "\($0.displayName)." }
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     /// The tonality the **roots are labelled for**, which is not the same as the key's own quality:
     /// while the key is Unknown there is no quality to read, and the twelve buttons still have to be
     /// spelled somehow. Seeded from the key when there is one, then held here.
     @State private var quality: MusicalKey.Quality
 
-    init(key: Binding<MusicalKey>, tint: Color = PocketColor.library) {
+    init(key: Binding<MusicalKey>, tint: Color = PocketColor.library,
+         footer: ((MusicalKey) -> String)? = nil) {
         _key = key
         self.tint = tint
+        if let footer { self.footer = footer }
         _quality = State(initialValue: key.wrappedValue.quality ?? .major)
     }
 
     /// Six per row → a stable 2×6 grid whatever the labels come out as. A wrapping layout would
     /// reflow when "C" became "D♭" on a tonality flip, which is movement with no meaning behind it.
-    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 6)
+    ///
+    /// **Every chip is one line** (ADR 0305 D8). In six columns a chip's text has about 30 pt once the
+    /// chip's own padding is taken, and in Futura *D♯* and *G♯* didn't fit it, so they wrapped onto two
+    /// lines and grew into circles while *C♯* and *F♯* fit. The chips now pad less, and the larger
+    /// accessibility sizes drop to four columns, then three, rather than wrap or shrink a name.
+    private var columns: [GridItem] {
+        let count = typeSize >= .accessibility3 ? 3 : typeSize >= .accessibility1 ? 4 : 6
+        return Array(repeating: GridItem(.flexible(), spacing: 8), count: count)
+    }
 
     var body: some View {
         Section {
@@ -62,20 +75,23 @@ struct KeyPickerSection: View {
         } header: {
             Text("Key")
         } footer: {
-            Text(key == .unknown ? "Not set." : "\(key.displayName).")
+            Text(footer(key))
                 .font(.futura(.caption))
         }
     }
 
     private func rootChip(_ pitchClass: Int) -> some View {
         let candidate = MusicalKey.make(pitchClass: pitchClass, quality: quality)
-        return ToggleChip(isOn: candidate == key, tint: tint) {
+        return ToggleChip(isOn: candidate == key, tint: tint, horizontalPadding: 4) {
             // Tapping the selected root again clears it — the same "tap the current value to unset"
             // grammar the mastery dots use, and the only other way out is the Clear button below.
             key = candidate == key ? .unknown : candidate
         } content: {
             Text(candidate.rootLabel)
                 .font(.futura(.subheadline))
+                .lineLimit(1)
+                // A net under the column counts, never the plan: a name is never cut to "D…".
+                .minimumScaleFactor(0.85)
                 .frame(maxWidth: .infinity)
         }
         .accessibilityLabel(candidate.displayName)

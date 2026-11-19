@@ -148,6 +148,7 @@ enum ArchiveBuilder {
             beatsPerBar: song.beatsPerBar,
             noteValue: song.noteValue,
             showsGridlines: song.showsGridlines,
+            pitchShift: song.pitchShift == 0 ? nil : song.pitchShift,
             duration: song.duration,
             dateAdded: song.dateAdded,
             lastPracticed: song.lastPracticed,

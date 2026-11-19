@@ -115,7 +115,7 @@ enum PieceNeck {
 extension PieceNeck {
     /// The gate read off a live loop: **the one place the five doors ask**, so none of them can come to show
     /// for a loop another hides. Its audio resolves as ear training's does (`LoopModeAccess.Facts`).
-    static func canWatch(_ loop: Loop) -> Bool { canWatch(loop.transcription, on: loop) }
+    static func canWatch(_ loop: Loop) -> Bool { canWatch(loop.heardTranscription, on: loop) }
 
     /// The gate for a stretch of a song (ADR 0289): something in it is placed on the neck, and the song's
     /// audio plays here. The song map's section headings and its toolbar ask this.

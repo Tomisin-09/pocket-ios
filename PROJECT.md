@@ -469,7 +469,10 @@ song's waveform straight away from either **+**; a batch lands in the library in
 for title/artist/album/**genre** (canonicalised on write through `Labels.canonicalSingle`
 and converged onto an existing library genre's spelling, ADR 0036)/year/**key** (a closed
 `MusicalKey` picker — 12 roots × major/minor + Unknown — parsed from any legacy free text,
-ADR 0036)/BPM/**downbeat**, lightweight **collections**,
+ADR 0036)/BPM/**downbeat**, a **Pitch** section under the key (ADR 0305 D4: the song raised or
+lowered up to six semitones to meet your tuning, `Song.pitchShift`, an additive declaration-default `Int`,
+heard wherever the song's audio plays and marked by a teal chip on the song player; a loop's piece stays
+stored against the recording and is shown at the shift, `Loop.heardTranscription`), lightweight **collections**,
 a free-form **note**, and read-only **practice stats** (loops · markers ·
 annotations) — the record we enrich to drive routines (ADR 0012). Collections are
 canonicalised on write and **suggested from the ones already in the library** (so they

@@ -22,6 +22,7 @@ struct SongEditSheet: View {
     @State private var genre: String
     @State private var year: String          // numeric text → Int? on save
     @State private var key: MusicalKey        // closed picker → Song.musicalKey on save (ADR 0036)
+    @State private var pitchShift: Int        // semitones → Song.pitchShift on save (ADR 0305 D4)
     @State private var bpm: String           // numeric text → Int? on save
     @State private var downbeat: String      // decimal seconds → TimeInterval? on save (ADR 0022)
     @State private var collections: [String]
@@ -36,6 +37,7 @@ struct SongEditSheet: View {
         _genre = State(initialValue: song.genre)
         _year = State(initialValue: song.year.map(String.init) ?? "")
         _key = State(initialValue: song.musicalKey)
+        _pitchShift = State(initialValue: song.heardShift)
         _bpm = State(initialValue: song.bpm.map(String.init) ?? "")
         _downbeat = State(initialValue: song.downbeatSeconds.map { String(format: "%g", $0) } ?? "")
         _collections = State(initialValue: song.collections)
@@ -48,7 +50,12 @@ struct SongEditSheet: View {
                 detailsSection
                 // Its own section rather than a row in Details: the root grid is two rows of
                 // controls, which a `LabeledContent`-shaped row can't carry (v2 close-out N10).
-                KeyPickerSection(key: $key)
+                // The key is the recording's, whatever the song's shift (ADR 0305 D4), so it says so.
+                KeyPickerSection(key: $key, footer: { key in
+                    key == .unknown ? "Not set." : "\(key.displayName), as the record plays it."
+                })
+                // Straight under the key: like the key, it describes the recording (ADR 0305 D4).
+                SongPitchSection(shift: $pitchShift, key: key)
                 collectionsSection
                 notesSection
                 statsSection
@@ -181,6 +188,7 @@ struct SongEditSheet: View {
             genre, against: LibraryPools.songGenres(in: modelContext, excluding: song))
         song.year = Int(year)
         song.musicalKey = key
+        song.pitchShift = KeyShift.clamped(pitchShift)
         song.bpm = Int(bpm)
         song.downbeatSeconds = Double(downbeat.trimmingCharacters(in: .whitespaces))
         song.collections = collections

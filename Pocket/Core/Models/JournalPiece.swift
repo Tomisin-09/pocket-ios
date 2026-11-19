@@ -16,7 +16,8 @@ struct JournalPiece {
     /// save wrote. One with neither is left out rather than dated to a day it wasn't made.
     static func all(in loops: [Loop]) -> [JournalPiece] {
         loops.compactMap { loop in
-            guard loop.transcriptionData != nil, let piece = loop.transcription,
+            // As you hear it (ADR 0305 D5): stored against the recording, shown at the song's shift.
+            guard loop.transcriptionData != nil, let piece = loop.heardTranscription,
                   let date = piece.changedAt ?? latestLine(on: loop) else { return nil }
             return JournalPiece(loop: loop, piece: piece, date: date)
         }
