@@ -71,7 +71,8 @@ struct NeckNoteEditor<Trailing: View>: View {
                                previous: marked > 0 ? labels[marked - 1]?.frettedNotes ?? [] : [],
                                join: NeckJoin.symbol(into: marked, of: labels),
                                stringCount: tuning.openMidi.count, maxFret: PieceLabel.maxFret,
-                               headroom: Self.marksHeadroom)
+                               headroom: Self.marksHeadroom,
+                               notesNumbered: cursor.marksNoteIsNumbered(count: labels.count))
             } beneath: {
                 // While the loop or a phrase plays, the note being heard glows, moving the way it was played.
                 HeardGlows(motions: hearing.map { HaloMotion.motions(into: $0, of: labels) } ?? [], token: hearing,

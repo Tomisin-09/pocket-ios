@@ -14,7 +14,14 @@ struct NeckMarksLayer: View {
     let stringCount: Int
     let maxFret: Int
     let headroom: CGFloat
+    /// Whether the notes these marks go on carry their number, top right: a note the editor has moved past
+    /// does (ADR 0234 D3), and that corner is where a bend's arc meets the note. Then every bend lifts its
+    /// start clear of the number, as a release always has (1.5, item 2c).
+    var notesNumbered = false
     @Environment(\.neckAccent) private var accent
+
+    /// How far a bend's start rises to clear a note's number: ADR 0296's release lift, used by every shape.
+    static let numberLift: CGFloat = 6
 
     var body: some View {
         Canvas { context, _ in
@@ -60,15 +67,15 @@ struct NeckMarksLayer: View {
         let from = center(note.string, note.fret)
         let shape = note.bentFret <= maxFret ? note.bendShape : nil
         if let shape {
-            drawBend(shape, from: from, to: center(note.string, note.bentFret), in: context)
+            drawBend(shape, from: from, to: center(note.string, note.bentFret),
+                     lift: notesNumbered ? Self.numberLift : 0, in: context)
         }
         if note.vibrato {
             // Over where the note ends up: the bent pitch, unless it's let back down to the fret.
             let held = shape != nil && !note.releases
             let over = held ? center(note.string, note.bentFret) : from
             var wave = Path()
-            // Clear of the arc: right of a held bend's arrowhead, left of a released one's.
-            let left = over.x + (held ? 3 : (shape == nil ? -9 : -21))
+            let left = over.x + vibratoOffset(held: held, bent: shape != nil)
             wave.move(to: CGPoint(x: left, y: over.y - 17))
             for step in 0..<4 {
                 let start = left + CGFloat(step) * 4.5
@@ -79,11 +86,22 @@ struct NeckMarksLayer: View {
         }
     }
 
+    /// Where vibrato's wave starts, from the centre of the note it's over. Clear of the arc: right of a held
+    /// bend's arrowhead, left of a released one's. Over an unbent note it's centred, unless the note carries
+    /// its number, top right, which the wave's end ran into until 1.5: then it sits left, ending short of it.
+    private func vibratoOffset(held: Bool, bent: Bool) -> CGFloat {
+        if held { return 3 }
+        if bent { return -21 }
+        return notesNumbered ? -15 : -9
+    }
+
     /// A bend: a dashed ghost where it lands, and an arc from the note to it with the arrow the way the pitch
     /// is heard to move (ADR 0288). Up for a bend, up and back for a release, down for a pre-bend let down. A
     /// pre-bend held has its arc dashed, since the string was pushed before anything sounded.
     /// `lift` raises the note's end of the arc, and leaves its height: a release from the tap before lands
     /// its arrowhead above the note's number, which a note the editor has moved past carries at its top right.
+    /// Every other shape takes the same lift when its note is numbered (`notesNumbered`), since the arc's start,
+    /// or a release's arrowhead, sat under that number until 1.5.
     private func drawBend(_ shape: FrettedNote.BendShape, from: CGPoint, to ghost: CGPoint, lift: CGFloat = 0,
                           in context: GraphicsContext) {
         let ink = GraphicsContext.Shading.color(accent)
@@ -123,7 +141,7 @@ struct NeckMarksLayer: View {
             guard let before = previous.first(where: { $0.string == note.string }) else { continue }
             let end = center(note.string, note.fret)
             let ghost = center(note.string, before.bentFret)
-            drawBend(.preBendAndRelease, from: end, to: ghost, lift: 6, in: context)
+            drawBend(.preBendAndRelease, from: end, to: ghost, lift: Self.numberLift, in: context)
             // Between the frets, under the string, where *h* and *p* sit: under the note itself it would cover
             // the next string's dot.
             if position == 0 {

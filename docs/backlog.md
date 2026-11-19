@@ -34,7 +34,8 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
    - **2b. A bass 10th draws its 10th** (S). **✅ Fixed 2026-11-18 on `pocket-446`;** the shell
      *root · ♭7 · 10* had the same fault, and is fixed with it. The entry *A bass 10th draws without its 10th* below.
      Check that the guitar diagrams don't move.
-   - **2c. A bent note's number clears its arc** (S). The *After the freeze* bullet *A bent note's
+   - **2c. A bent note's number clears its arc** (S). **✅ Fixed 2026-11-18 on `pocket-447`;** vibrato's wave,
+     which ran into the number too, is moved with it. Device look owed. The *After the freeze* bullet *A bent note's
      number covers its arc*. Wants a look on the device.
    - **2d. The Scales and Arpeggios editors as rows** (M). The entry *Split the Scales and Arpeggios
      editors into rows* below. It starts with a device check that they stutter; if they don't, the
@@ -341,7 +342,11 @@ click through the speaker and through headphones.
   2026-11-13**, the same day, pulled forward from after the freeze (Tomisin: *"let's build it then...
   we'll release it with 1.4.1"*). It goes on its own branch once `pocket-425` merges, and its ADR
   settles the questions above before any code.
-- **A bent note's number covers its arc.** **In 1.5, item 2c.** (Found 2026-11-13 on `pocket-426`, from Tomisin's screenshot of
+- **A bent note's number covers its arc.** **In 1.5, item 2c. ✅ Fixed 2026-11-18 on `pocket-447`:** when the
+  marked note carries its number (`NeckCursor.marksNoteIsNumbered`), every bend lifts its start by
+  `NeckMarksLayer.numberLift`, the 6 pt ADR 0296's release already used; vibrato over an unbent note
+  moves left to end short of the number, which it also ran into. The note being named, unnumbered,
+  draws as before. Checked in a hosted render; the device look is still owed. (Found 2026-11-13 on `pocket-426`, from Tomisin's screenshot of
   the tab writer). Once the editor moves past a note, the note carries its number at its top right
   (`NeighbourNumber`, ADR 0234 D3), which is where every bend arc meets the note (`NeckMarksLayer.drawBend`,
   ADR 0288 D4). For a bend, the arc's start is hidden; for a bend and release or a pre-bend let down, the
