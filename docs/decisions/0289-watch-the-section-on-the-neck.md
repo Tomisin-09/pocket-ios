@@ -6,7 +6,10 @@
 - **Date:** 2026-11-04 (`pocket-410-watch-the-section`)
 - **Amended by:** ADR 0291 — both doors (the section heading's hold menu and the map's toolbar eye) are
   closed for 1.4, by `SongMapView.opensSectionWatch`. Every decision below still holds, unreachable until
-  they reopen.
+  they reopen. ADR 0308 — what it becomes, decided 2026-11-19 and not yet built: **D2**'s riff no longer
+  hides the chords under it (they colour the notes and are never drawn under them), and only what's
+  picked lights. **D6**'s toolbar eye is dropped, and picking pieces on the map joins the section door.
+  **D8**'s top of the sheet says what was picked and where it starts. D1, D3, D4, D5 and D7 stand.
 - **Amends:** ADR 0254 — **D1**: the sheet also opens on a stretch of a song, a section or the whole
   song, under the same name and icon. **D2**: two more doors on the song map, the section heading's hold
   menu and an eye in the toolbar, each behind the same gate read over the stretch. **D4**: every piece in

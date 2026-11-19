@@ -14,7 +14,11 @@
   song's tab, and a tab written in My tabs, export as plain text or PDF (0236 D9). No hosting, no
   importing and never inside a routine file all stand; the last now because a song sent inside a
   routine carries no pieces (0236 D4). D12's "carries no song titles on purpose" cited the support-message
-  ADR by mistake, and no longer holds for a routine sent with its songs.
+  ADR by mistake, and no longer holds for a routine sent with its songs. ADR 0308 (2026-11-19, not yet
+  built) — **D11**: selecting starts from **Pick pieces…** (it was *Put it together…*), and while picking,
+  a section's name picks all its pieces. The bar offers **Watch** beside **Put it together**, and its line
+  shows only when the picks can't be put together. The two shapes, and everything Put it together makes,
+  stand.
 - **Amends:** ADR 0229 D2 — under the **Pieces** scope a piece sits under its song, not on the day it
   last changed (D20). *All* keeps the day, and D1's one row per loop stands.
 - **Schema:** four additive fields: `Marker.startsSection` (D6, slice 1), `Marker.sameAsUID` (D8,
