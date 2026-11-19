@@ -1,6 +1,8 @@
 # ADR 0305 — Another key: a lick moved to practise it, a song moved to meet your tuning
 
-- **Status:** Accepted on 2026-11-17, with every lean under *Decided* taken as recommended. Not built.
+- **Status:** Accepted on 2026-11-17, with every lean under *Decided* taken as recommended. **Slice 1
+  built on 2026-11-18** (`pocket-449`, 1.5 item 1a), and **D7's listening gate passed on the phone the
+  same day**: Tomisin played it and it works as expected. Slice 2 isn't built.
   It targets 1.5, after the November marketing month (the backlog carries it under *After the
   freeze*). Proposed on `pocket-438-another-key` (#429), accepted on `pocket-439-accept-another-key`.
   The same day, Tomisin approved the design against a canvas mockup of the three screens

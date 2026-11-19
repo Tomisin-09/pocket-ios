@@ -203,9 +203,21 @@ A loop can be run three ways, launched from its edit sheet in the song player or
 
 Each has its own run screen, and each writes into the journal with its own tag.
 
+### Another key
+
+In `Active listening`, beside the tempo under the play button, − and + under *key* move the loop up or
+down a semitone at a time, six either way, which reaches all twelve keys. The speed stays where it is.
+The line under them says the key you're hearing, *B♭ minor · 3 up* for a lick in G minor, or how far it
+moved when the song has no key. `Original key` puts it back. It starts at the recording's key each time you
+open the screen, and nothing about it is saved.
+
+Moved, your saved names are the answer, so `Saved on this loop` hides them while you listen. Its button
+names the notes in the key you're hearing, over the same taps. Names you make there aren't kept, and the
+ones you saved stay as they are. Counting works the same in any key.
+
 ### Count the notes
 
-`Active listening` carries a `Count the notes` section under its play and tempo controls and its
+`Active listening` carries a `Count the notes` section under its play, tempo and key controls and its
 `Note what you hear` box, for working a lick out by ear. The small play button beside `Show beats` starts
 and stops the same loop as the big one, so you don't have to scroll back up. While the loop plays, tap the
 pad once for every note you hear. Each pass through the loop gets its own row of dots, the one playing now on top, so you

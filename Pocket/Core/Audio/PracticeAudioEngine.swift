@@ -343,10 +343,10 @@ final class PracticeAudioEngine {
 
     func startEngineIfNeeded() {
         AudioPlumbing.startIfNeeded(engine, label: "practice")
-        // Starting the engine initialises the stretcher's audio unit, and `'tmpt'`'s rate is a raw
-        // parameter write rather than a retained Swift property (ADR 0140 §4). One write here and the
-        // question of whether it survived initialisation doesn't arise.
-        stretcher.reassertRate()
+        // Starting the engine initialises the stretcher's audio unit, and `'tmpt'`'s rate and pitch are
+        // raw parameter writes rather than retained Swift properties (ADR 0140 §4). One write each here
+        // and the question of whether they survived initialisation doesn't arise.
+        stretcher.reassertParameters()
     }
 
     private func configureSession() {

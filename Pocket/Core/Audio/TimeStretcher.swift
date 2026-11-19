@@ -18,8 +18,9 @@ import AVFoundation
 ///   click bypasses this node entirely. Compensating that flam (ADR 0140 §3) needs a live reading at
 ///   the moment rate changes, which is here.
 ///
-/// `pitch` stays 0, always: slowing down is pitch-preserving, and a varispeed "tape" mode is a
-/// different product decision (ADR 0140, *What this closes off*).
+/// **Pitch is moved only by Another key** (ADR 0305, amending ADR 0140's *No pitch shifting*): whole
+/// semitones, never more than six from the recording (`KeyShift.clamped`). Pitch is never tied to rate.
+/// Slowing down stays pitch-preserving, and there is still no varispeed "tape" mode.
 @MainActor
 final class TimeStretcher {
 
@@ -81,6 +82,10 @@ final class TimeStretcher {
     /// The current playback rate. Stored rather than read off the unit so the AU stays swappable.
     private(set) var rate: Double = 1.0
 
+    /// How far the audio is moved from the recording, in semitones (ADR 0305). Stored for the same reason
+    /// as `rate`, and 0 until something asks.
+    private(set) var pitchSemitones = 0
+
     /// The node to wire into the engine's graph. Callers connect *through* it and never touch it
     /// otherwise — which AU is inside is this type's business.
     var node: AVAudioNode { backend.unit }
@@ -105,7 +110,7 @@ final class TimeStretcher {
             backend = .newTimePitch(AVAudioUnitTimePitch())
             kind = .newTimePitch
         }
-        writePitchZero()
+        writePitch()
         apply(rate: rate)
     }
 
@@ -117,14 +122,24 @@ final class TimeStretcher {
         return rate
     }
 
-    /// Re-write the current rate onto the unit without treating it as a change. `'tmpt'`'s parameters
-    /// are written with raw `AudioUnitSetParameter` calls, which for an audio unit that has not been
-    /// initialised yet are not guaranteed to survive initialisation; the engine only initialises the
-    /// AU when it starts. Calling this after `engine.start()` costs one parameter write and removes
-    /// the whole question. A no-op in substance for `'nutp'`, whose Swift properties are retained by
-    /// the object.
-    func reassertRate() {
+    /// Move the audio by whole semitones (ADR 0305), held within six of the recording whatever asks
+    /// (D2). Returns the shift actually applied. Rate is untouched: pitch and speed never move together.
+    @discardableResult
+    func setPitch(semitones: Int) -> Int {
+        pitchSemitones = KeyShift.clamped(semitones)
+        writePitch()
+        return pitchSemitones
+    }
+
+    /// Re-write the current rate and pitch onto the unit without treating either as a change. `'tmpt'`'s
+    /// parameters are written with raw `AudioUnitSetParameter` calls, which for an audio unit that has
+    /// not been initialised yet are not guaranteed to survive initialisation; the engine only
+    /// initialises the AU when it starts. Calling this after `engine.start()` costs two parameter writes
+    /// and removes the whole question. A no-op in substance for `'nutp'`, whose Swift properties are
+    /// retained by the object.
+    func reassertParameters() {
         apply(rate: rate)
+        writePitch()
     }
 
     // MARK: - Private
@@ -161,14 +176,15 @@ final class TimeStretcher {
         }
     }
 
-    /// Pitch is never touched again after this — slowing down is pitch-preserving, full stop.
-    private func writePitchZero() {
+    /// Write `pitchSemitones` onto the unit. Both of Apple's stretchers take pitch in **cents**.
+    private func writePitch() {
+        let cents = Float(pitchSemitones * 100)
         switch backend {
         case .newTimePitch(let unit):
-            unit.pitch = 0
+            unit.pitch = cents
         case .highQuality(let unit):
             AudioUnitSetParameter(unit.audioUnit, kTimePitchParam_Pitch,
-                                  kAudioUnitScope_Global, 0, 0, 0)
+                                  kAudioUnitScope_Global, 0, cents, 0)
         }
     }
 }

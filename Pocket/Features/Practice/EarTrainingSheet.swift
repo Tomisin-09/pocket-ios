@@ -62,6 +62,11 @@ struct EarTrainingView: View {
         _counting = State(initialValue: CountTheNotesModel(loop: loop))
     }
 
+    /// The key you're hearing (ADR 0305 D3): the recording's, moved by the player's shift.
+    private var heard: HeardKey {
+        HeardKey(recording: loop.song?.musicalKey ?? .unknown, shift: player.keyShift)
+    }
+
     var body: some View {
         KeyboardFollowingScroll {
             Form {
@@ -74,7 +79,8 @@ struct EarTrainingView: View {
                                            onStopped: finishTake,
                                            takeCount: loop.recordings.count,
                                            bedNoun: "loop",
-                                           onOpenTakes: openTakes)
+                                           onOpenTakes: openTakes,
+                                           recordingKey: loop.song?.musicalKey ?? .unknown)
                 }
                 // Straight under the loop, above Count the notes: a thought about what you heard is the
                 // quick thing, and it shouldn't sit below a long tapping and naming section.
@@ -87,12 +93,12 @@ struct EarTrainingView: View {
                 }
                 SavedPieceSection(loop: loop, spelling: counting.spelling, onEdit: { note in
                     stopForNaming()
-                    counting.nameSaved(at: note)
+                    counting.nameSaved(at: note, hearing: heard)
                 }, onVersions: { showingVersions = true }, onWatch: PieceNeck.canWatch(loop) ? {
                     // Quiet first, as for naming: the sheet plays the loop itself.
                     stopForNaming()
                     showingWatch = true
-                } : nil)
+                } : nil, heard: heard)
             }
         }
         .onAppear {
@@ -119,7 +125,9 @@ struct EarTrainingView: View {
             WatchOnNeckSheet(loop: loop)
         }
         .sheet(item: Bindable(counting).naming, onDismiss: player.stop) { request in
-            NameTheNotesSheet(request: request, loop: loop, player: player, spelling: counting.spelling) { result in
+            // Spelled for the key the sheet's request was made in (ADR 0305 D3), which the player still plays.
+            let spelling = request.shifted.map(counting.spelling(hearing:)) ?? counting.spelling
+            NameTheNotesSheet(request: request, loop: loop, player: player, spelling: spelling) { result in
                 counting.finishNaming(request, result: result, context: modelContext)
             }
         }
