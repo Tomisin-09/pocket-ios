@@ -145,7 +145,10 @@ The rest is behind a row each, and each row says what is behind it:
 `Cancel` discards, `Done` keeps. It carries:
 
 - **`Details`** — `Title`, `Artist`, `Album`, `Genre`, `Year`, `BPM` and `Downbeat (s)`.
-- **`Key`** — a `Major` / `Minor` switch and the twelve roots, with `Clear` to unset it.
+- **`Key`** — a `Major` / `Minor` switch and the twelve roots, with `Clear` to unset it. Its footer says
+  the key is the one the record plays in.
+- **`Pitch`** — `Raise or lower`, six semitones either way, with the key it lands in under it, then
+  `Back to the recording`. Free.
 - **`Collections`** — `Add a collection`.
 - **`Notes`**.
 - **`Practice stats`**, read-only, as above.

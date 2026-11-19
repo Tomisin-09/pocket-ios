@@ -59,6 +59,10 @@ struct FretNeckBoard<Cell: View, Marks: View, Beneath: View, Pinned: View>: View
                 ForEach(stringNames.indices, id: \.self) { row in
                     Text(stringNames[row])
                         .font(.futura(.caption2, weight: .semibold))
+                        // A sharp or flat string (*d♯* in Half step down) broke onto two lines in the 16 pt
+                        // gutter; it shrinks to fit instead, so the gutter and the board don't move.
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
                         .foregroundStyle(PocketColor.textSecondary)
                         .frame(height: 30)
                 }

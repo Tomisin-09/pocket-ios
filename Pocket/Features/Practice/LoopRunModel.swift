@@ -121,6 +121,7 @@ final class LoopRunModel {
             await loadDemoSample()
         }
         armRegion()
+        applyPitch()
         loaded = true
     }
 
@@ -207,10 +208,24 @@ final class LoopRunModel {
         engine.setRate(Self.rate(forPercent: percent))
     }
 
-    /// Move the audio by whole semitones (ADR 0305): Active listening's key. Held by the engine, so it
-    /// stays across stops and slices and is gone with this model.
-    func setPitch(semitones: Int) {
-        engine.setPitch(semitones: semitones)
+    /// The song's own shift (ADR 0305 D4), which every run of its audio plays at. Read through the region
+    /// each time, so an edit to the song is heard from the next `applyPitch`.
+    var songShift: Int { song?.heardShift ?? 0 }
+
+    /// Active listening's key (D3), on top of the song's. 0 everywhere else.
+    private var sessionShift = 0
+
+    /// Move the audio by `semitones` from the song as it plays (ADR 0305 D1): Active listening's key. The
+    /// engine plays the two added, never more than six from the recording. Held by the engine, so it stays
+    /// across stops and slices and is gone with this model.
+    func setSessionShift(_ semitones: Int) {
+        sessionShift = semitones
+        applyPitch()
+    }
+
+    /// Write the song's shift and the session's onto the engine: on load, and when either changes.
+    private func applyPitch() {
+        engine.setPitch(semitones: KeyShift.total(song: songShift, session: sessionShift))
     }
 
     // MARK: - Count the notes (ADR 0225)

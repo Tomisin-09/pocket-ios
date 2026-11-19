@@ -149,6 +149,9 @@ final class WaveformPracticeModel {
     var settingBPM = false
     /// Drives the read-first `SongDetailsSheet` (Edit → `SongEditSheet`), opened by holding the title.
     var showingSongDetails = false
+    /// Edit song, straight from the song's shift chip (ADR 0305 D4). A `Bool`, as `SongDetailsSheet`'s
+    /// nested edit is: `Song` has no stable `uid` to present by (docs/swiftdata-gotchas.md).
+    var showingSongEdit = false
     /// Drives `SongPlayerSettingsSheet`, opened by holding *Loop controls* (ADR 0163). A plain
     /// `Bool` because what it presents is global `@AppStorage` — there's no model whose identity could
     /// change underneath it, so ADR 0090's stable-`uid` rule has nothing to apply to.

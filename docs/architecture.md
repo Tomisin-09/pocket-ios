@@ -107,6 +107,17 @@
    Since ADR 0305 it also owns **pitch**, for Another key only: whole semitones, held within six of the
    recording (`KeyShift`), written in cents on both backends and re-asserted with the rate after
    `engine.start()`. Pitch and rate never move together; there is still no varispeed.
+   Two shifts add up (0305 D1). The **song's** (`Song.pitchShift`, slice 2) is applied by each of the three
+   engine owners after its audio loads: `LoopRunModel.applyPitch` (loop runs, routine blocks and previews,
+   and through `ContinuousLoopPlayer` Active listening, improvising and Watch it on the neck),
+   `SongPlayAlongModel`, and `WaveformPracticeModel.applySongShift`, which the song player calls again when
+   Edit song changes the shift over it. **Active listening's** session shift sits on top, in
+   `LoopRunModel.setSessionShift`; the engine plays `KeyShift.total(song:session:)`.
+   A loop's piece is **stored against the recording** (D5) and moved through `PieceTranscription.moved(by:)`:
+   up by the song's shift to show and edit it (`Loop.heardTranscription`), down again to save it
+   (`setHeardTranscription`). Frets never move; the open strings and names said by ear do, and
+   `PieceTuning` names the strings again (*Standard* at +1 saves as *Half step down*). `PieceRefret` offers
+   to move frets placed before the shift changed (Q5).
 4. Generate the waveform from an offline read / audio tap (mirrored bars).
 5. Playhead, loops, and markers are all positions in seconds, independent of
    speed. The published `currentTime` is **heard** time, not rendered time: the stretcher's

@@ -13,7 +13,7 @@ struct LoopTempoAndKeyControls: View {
     let recordingKey: MusicalKey
 
     var body: some View {
-        let heard = HeardKey(recording: recordingKey, shift: player.keyShift)
+        let heard = HeardKey(recording: recordingKey, shift: player.keyShift, song: player.songShift)
         VStack(spacing: 10) {
             HStack(spacing: 16) {
                 LoopTempoControl(player: player, spacing: 10, valueWidth: 58)
@@ -79,7 +79,7 @@ struct LoopKeyControl: View {
 
     private var accessibilityValue: String {
         let shift = player.keyShift
-        guard shift != 0 else { return "Key, as recorded" }
+        guard shift != 0 else { return player.songShift == 0 ? "Key, as recorded" : "Key, as the song plays" }
         return "Key, \(abs(shift)) semitone\(abs(shift) == 1 ? "" : "s") \(shift > 0 ? "up" : "down")"
     }
 

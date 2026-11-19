@@ -20,6 +20,8 @@ struct SongStrip: View {
     /// Hold the title/artist block to open the song details sheet (workstream 5).
     /// Defaulted to a no-op for previews and standalone use.
     var onHoldTitle: () -> Void = {}
+    /// Tap the song's shift (ADR 0305 D4) to open Edit song, where it's set.
+    var onTapShift: () -> Void = {}
 
     /// The slowest-loop reading, read once per body.
     private var speed: SongSpeed? { song.speedReading }
@@ -46,7 +48,7 @@ struct SongStrip: View {
             // Derived song mastery (ADR 0036) and, under it, the speed the song can be played at
             // (ADR 0250 D8) — each shown only when there is something to show, so an unrated,
             // unmeasured song simply omits both. Two lines, like the title stack beside them.
-            if song.mastery != nil || speed != nil {
+            if song.mastery != nil || speed != nil || song.heardShift != 0 {
                 VStack(alignment: .trailing, spacing: 4) {
                     if let mastery = song.mastery {
                         MasteryDots(filled: mastery, size: 8)
@@ -57,6 +59,10 @@ struct SongStrip: View {
                             .foregroundStyle(PocketColor.textSecondary)
                             .lineLimit(1)
                             .accessibilityLabel(speed.accessibilityLabel)
+                    }
+                    // Raised or lowered (ADR 0305 D4): never hidden, with the song's other facts.
+                    if song.heardShift != 0 {
+                        SongShiftChip(shift: song.heardShift, onTap: onTapShift)
                     }
                 }
                 .padding(.trailing, 4)   // nudge off the screen edge
@@ -73,6 +79,10 @@ struct SongStrip: View {
         .accessibilityHint("Hold to view song details")
         // VoiceOver can't long-press, so surface the same action explicitly.
         .accessibilityAction(named: "Song details", onHoldTitle)
+        // The combined element swallows the chip's own tap, so it gets an action too.
+        .accessibilityActions {
+            if song.heardShift != 0 { Button("Edit song", action: onTapShift) }
+        }
     }
 }
 

@@ -19,6 +19,9 @@ struct NamingRequest: Identifiable, Equatable {
     /// from the saved piece's taps with no names, the sheet says the names aren't kept, and Done keeps
     /// nothing. `nil` at the recording's own pitch.
     var shifted: HeardKey?
+    /// **Frets placed before the song's shift changed** (ADR 0305 Q5): the sheet offers to move them on
+    /// their strings. `nil` when they already match what you hear.
+    var refret: PieceRefret?
 
     var id: String { shifted.map { "shifted\($0.shift)" } ?? "saved" }
 }
@@ -117,8 +120,9 @@ final class CountTheNotesModel {
     }
 
     /// The same, for a loop the Journal is showing a piece of (ADR 0229).
+    /// Spelled for the key you hear, the song's shift included (ADR 0305 D5).
     static func spelling(for loop: Loop) -> NoteSpelling {
-        loop.song.flatMap { NoteSpelling.forMusicalKey($0.musicalKey) } ?? AppSettings.accidentalPreference
+        loop.song.flatMap { NoteSpelling.forMusicalKey($0.heardKey) } ?? AppSettings.accidentalPreference
     }
 
     // MARK: - Tapping
@@ -165,16 +169,21 @@ final class CountTheNotesModel {
     ///
     /// **In another key** (ADR 0305 D5), it opens a fresh pass over the same taps instead: the saved names
     /// are the answer, so none come with it, and the strings are the tuner's, not the piece's.
+    ///
+    /// **At the song's own shift** it opens the piece as you hear it (`heardTranscription`), and offers to
+    /// move frets placed before the shift changed (Q5).
     func nameSaved(at note: Int = 0, hearing heard: HeardKey? = nil) {
-        guard let piece = loop.transcription else { return }
+        guard let piece = loop.heardTranscription else { return }
         let startAt = piece.taps.indices.contains(note) ? note : 0
         if let heard, heard.isShifted {
             naming = NamingRequest(taps: piece.taps.map { PieceTranscription.Tap(seconds: $0.seconds) },
                                    region: region, startAt: startAt, shifted: heard)
             return
         }
+        let refret = PieceRefret.offer(for: piece, playerStrings: Self.tunerTuning().openMidi,
+                                       songShift: loop.song?.heardShift ?? 0)
         naming = NamingRequest(taps: piece.taps, openMidi: piece.openMidi, tuningLabel: piece.tuningLabel,
-                               region: region, startAt: startAt)
+                               region: region, startAt: startAt, refret: refret)
     }
 
     /// The loop's region, or `nil` for one with no length.
@@ -188,15 +197,19 @@ final class CountTheNotesModel {
     ///
     /// A pass named in another key keeps nothing (ADR 0305 D5, Q2): it's your version, not the recording's,
     /// and saving it would replace the names made at the lick's own pitch.
+    ///
+    /// Named at the song's own shift, it's saved against the recording (D5): the frets as placed, the
+    /// strings and every name said by ear moved down by the shift, so *Standard* at +1 saves as *Half step
+    /// down*.
     func finishNaming(_ request: NamingRequest, result: NamingResult, context: ModelContext) {
         guard request.shifted == nil else { return }
-        guard !result.taps.isEmpty, let before = loop.transcription else { return }
+        guard !result.taps.isEmpty, let before = loop.heardTranscription else { return }
         var piece = before
         piece.taps = result.taps.sorted { $0.seconds < $1.seconds }
         stampTuning(on: &piece, openMidi: result.openMidi, label: result.tuningLabel)
         guard piece != before else { return }
         piece.changedAt = .now
-        loop.transcription = piece
+        loop.setHeardTranscription(piece)
         try? context.save()
     }
 

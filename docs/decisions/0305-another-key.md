@@ -2,7 +2,10 @@
 
 - **Status:** Accepted on 2026-11-17, with every lean under *Decided* taken as recommended. **Slice 1
   built on 2026-11-18** (`pocket-449`, 1.5 item 1a), and **D7's listening gate passed on the phone the
-  same day**: Tomisin played it and it works as expected. Slice 2 isn't built.
+  same day**: Tomisin played it and it works as expected. **Slice 2 built on 2026-11-19**
+  (`pocket-451-song-shift`, 1.5 item 1b); what the build settled is under *Build notes, slice 2*. Its
+  store upgrade was checked on the simulator and on the phone's real store, both proved by timestamps,
+  and Tomisin looked at it on the phone the same day and is happy with it.
   It targets 1.5, after the November marketing month (the backlog carries it under *After the
   freeze*). Proposed on `pocket-438-another-key` (#429), accepted on `pocket-439-accept-another-key`.
   The same day, Tomisin approved the design against a canvas mockup of the three screens
@@ -241,6 +244,56 @@ The five open questions, decided by Tomisin on 2026-11-17. Every lean was taken 
    shift; a player who retuned and one who raised the song save equal pieces; the archive decodes a
    missing key as 0; and Q5's fret move, including the open-string case that has to ask. Then the
    store upgrade check on the simulator.
+
+## Build notes, slice 2 (2026-11-19)
+
+Where the decisions above left the wording or the mechanism to the build, this is what it chose.
+
+- **The attribute** is `Song.pitchShift: Int = 0`, read through `heardShift`, which clamps it to ±6.
+  `heardKey` is the recording's key moved by it. The archive's `SongRecord.pitchShift` is `Optional`,
+  written `nil` at 0, so a song as recorded exports exactly as before. **A shared song carries it**: it's a
+  fact about the recording, and the chip says so on arrival.
+- **Where it's applied.** The three engine owners apply it after their audio loads: `LoopRunModel`
+  (loop runs, routine blocks and previews, and through `ContinuousLoopPlayer` Active listening, improvising
+  and *Watch it on the neck*), `SongPlayAlongModel` and `WaveformPracticeModel`. The song player applies it
+  again when Edit song changes it over that screen.
+- **D5's two moves are one function.** `PieceTranscription.moved(by:)` moves the open strings and every
+  name said by ear, and never a fret. `Loop.heardTranscription` is the stored piece moved up by the shift,
+  and every screen that shows or edits a piece reads it: *Saved on this loop*, the versions sheet, the
+  Journal's pieces, the song map, its tab and *Watch it on the neck*. `setHeardTranscription` moves it down
+  to save. Copying a piece between loops of one song, the archive and the stored versions stay in the
+  recording's frame. Names are spelled for the key you hear.
+- **The strings are named again on every move** (`PieceTuning`): a curated tuning by its name, and any
+  other set as a curated tuning moved evenly, *Guitar · Drop D, 1 semitone down*. When two tunings are the
+  same distance away, the one the label already names is kept, so a move and its reverse give the same
+  label.
+- **The tuning line, when the shift isn't 0**, reads *Guitar · Standard · song raised 1*. It's added on the
+  way to the screen and never saved; a save names the strings again from `openMidi`.
+- **Active listening on a moved song.** The stepper's 0 is the song as it plays, and the line says so: *G♯
+  minor · song raised 1*. *Same key as …* now shows from six out, with the distance the other way, because
+  a song's shift moves the stepper's range (−7 reads *same key as 5 up*). The hidden-names lines name the
+  key the saved names are shown in, which is the song's.
+- **Q5, when it's offered.** The piece doesn't record the shift it was named at (D5 turned that field
+  down), so the offer reads the strings. It appears when the song is shifted and the piece's strings as
+  heard are the player's tuning moved evenly. A piece named at the song's shift is heard on exactly the
+  player's strings, so it never is. With the song at 0 it never appears, because then a mismatch means the
+  tuner's tuning changed, and *a new tuning keeps the frets* (0227).
+- **Q5, the asking.** The offer sits over the strip: *These frets were placed before the song's pitch
+  changed. In Standard they sound 1 semitone under what you hear*, with *Move them up 1* and *Leave them*. A
+  note that would fall off the neck (an open string lowered, or past the 22nd fret, a lead-in's fret
+  included) is named in the offer before anything moves, and moving leaves it unnamed for the player to
+  place. The move is one step of the sheet's history, so ↶ puts it back, and the offer with it.
+- **D4's layout** is the mockup's, with one change found in the screenshots: the line under *Raise or
+  lower* runs the row's full width under it, because beside the stepper it broke into three lines at the
+  default size. At the accessibility sizes the stepper goes under the name too. The Key section's footer
+  says *F♯ minor, as the record plays it.* The chip is a plain shape with a tap, not a `Button`, because it
+  sits inside the song strip's hold. It also shows in landscape, beside the title, so it's never hidden.
+- **Found on the way:** the neck's string names broke onto two lines for a tuning with sharps (*d* over
+  *♯* in *Half step down*), which this slice makes more common. They're one line now, shrinking to fit the
+  16 pt gutter.
+- **D8.** The root chips pad 4 pt a side instead of 12 and are one line. From the first accessibility size
+  the grid drops to four columns, and from the third to three. A scale floor of 0.85 is a net under that,
+  so a name is never cut short. The screenshots are the check.
 
 ## Consequences
 

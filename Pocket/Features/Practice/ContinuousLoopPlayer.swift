@@ -78,17 +78,21 @@ final class ContinuousLoopPlayer {
 
     /// **Another key** (ADR 0305 D3): Active listening's shift, in semitones. It starts at 0 and is never
     /// saved: this player is made per visit, with its own engine, so the shift goes when the screen does.
-    /// A song's own shift (slice 2) isn't here yet, so the range is `KeyShift.sessionRange(song: 0)`.
+    /// It sits on top of the song's own shift (D1), so its range is whatever keeps the total within six:
+    /// −7…+5 on a song raised by 1, still all twelve keys.
     private(set) var keyShift = 0
+
+    /// The song's own shift (D4), which the stepper's 0 already plays at.
+    var songShift: Int { model.songShift }
 
     /// Set the shift, held inside the range, and move the audio live. Speed doesn't change.
     func setKeyShift(_ semitones: Int) {
-        keyShift = KeyShift.session(semitones, song: 0)
-        model.setPitch(semitones: KeyShift.total(song: 0, session: keyShift))
+        keyShift = KeyShift.session(semitones, song: songShift)
+        model.setSessionShift(keyShift)
     }
 
-    var canShiftDown: Bool { keyShift > KeyShift.sessionRange(song: 0).lowerBound }
-    var canShiftUp: Bool { keyShift < KeyShift.sessionRange(song: 0).upperBound }
+    var canShiftDown: Bool { keyShift > KeyShift.sessionRange(song: songShift).lowerBound }
+    var canShiftUp: Bool { keyShift < KeyShift.sessionRange(song: songShift).upperBound }
 
     /// Whether audio is cycling — drives the play/stop glyph.
     var isPlaying: Bool { model.isRunning }

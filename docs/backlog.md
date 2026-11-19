@@ -21,10 +21,14 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
      passed the same day** (Tomisin's phone listening check: it works as expected). No schema. D7 was
      the gate before it merged: on the phone, a guitar loop at 0, −6 and +6, each at 100% and at 25%,
      passes if Tomisin would practise to it.
-   - **1b. Slice 2, the song's shift** (M–L). One `Song` attribute, so the store upgrade check on the
-     simulator and the device, proved by timestamps (`docs/swiftdata-gotchas.md`). Saved names (D5)
-     are the hard part. It takes D8, the key picker wrapping *D♯* and *G♯*, unless that's fixed sooner
-     as a bug.
+   - **1b. Slice 2, the song's shift** (M–L). **Built 2026-11-19 on `pocket-451-song-shift`**, D8
+     included; the ADR's *Build notes, slice 2* hold what the build settled. **The store upgrade passed on
+     the simulator** the same day: main's app (6412967) made a store with two songs, and the branch app
+     installed over it opened the same file (born 16:40:00, first transaction 16:40:07, both before the
+     install at 16:40:43), added `ZPITCHSHIFT`, and read both songs as 0. **And on the phone's real store**
+     (`run-device.sh`, launched 16:53:34): 24 songs and 99 loops before and after, the same first history
+     transaction (2026-07-15 17:15:52), one new one at launch, and every song read 0. **Tomisin looked on
+     the phone the same day and is happy with it.** Saved names (D5) were the hard part.
 2. **The four that are ready to build.**
    - **2a. Home's *This week* strip reads only the week** (S). **✅ Built 2026-11-18 on `pocket-445`:** 60 →
      32 ms on the phone's store, 135 → about 35 ms at four times its history, same numbers. `HomeStatsStrip` queries every

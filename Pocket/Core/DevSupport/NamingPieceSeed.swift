@@ -81,6 +81,8 @@ enum NamingPieceSeed {
             let song = seeded.first ?? insertSong(into: context)
             song.snags.forEach(context.delete)
             song.snags = []
+            // As recorded (ADR 0305 D4): a test that raised it mustn't move the next one's notes.
+            song.pitchShift = 0
             if let loop = song.loops.first(where: { $0.name == loopName }) {
                 loop.transcription = piece(duration: song.duration, start: loop.start, end: loop.end,
                                            placed: action == .seedFretted)

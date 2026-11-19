@@ -174,6 +174,8 @@ struct NameTheNotesSheet: View {
     /// *Higher*, *Same* or *Lower* the player gave a note, by its tap's time (ADR 0301). Kept while the sheet
     /// is open and never saved (D6); `PitchDirection.kept` says which survive a change to the pass.
     @State var arrows: [TimeInterval: PitchDirection] = [:]
+    /// *Leave them* on the offer to move frets placed before the song's shift changed (ADR 0305 Q5).
+    @State var refretDeclined = false
 
     init(request: NamingRequest, loop: Loop, player: ContinuousLoopPlayer, spelling: NoteSpelling,
          onDone: @escaping (NamingResult) -> Void) {
@@ -217,6 +219,7 @@ struct NameTheNotesSheet: View {
                             .multilineTextAlignment(.center)
                             .accessibilityIdentifier("naming.shifted.line")
                     }
+                    refretPrompt
                     Picker("How to name them", selection: $mode) {
                         ForEach(NamingMode.allCases) { Text($0.label).tag($0) }
                     }

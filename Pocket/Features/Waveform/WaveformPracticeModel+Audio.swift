@@ -26,9 +26,16 @@ extension WaveformPracticeModel {
             await loadDemoSample()
         }
         engine.setRate(speed)
+        applySongShift()
         // Whole-song repeat (ADR 0124) rides the engine's natural-end callback: it fires only on a
         // straight-through finish, never on a manual stop/seek and never while a loop is armed.
         engine.onReachedEnd = { [weak self] in self?.handleReachedEnd() }
+    }
+
+    /// Play the song at its shift (ADR 0305 D4): on load, and again when Edit song changes it while this
+    /// screen is open, so the change is heard at once. The song player has no shift of its own.
+    func applySongShift() {
+        engine.setPitch(semitones: song.heardShift)
     }
 
     /// Point the song at a file again and load it, without leaving the practice screen (ADR 0148

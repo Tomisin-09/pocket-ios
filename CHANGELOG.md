@@ -28,6 +28,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   *Original key* to go back. It starts at the recording's key every visit and is never saved. While it's
   moved, the saved piece's names are hidden, because they're the answer, and *Name the notes* names the
   same taps in the key you're hearing without keeping the names.
+- **A song raised or lowered to meet your tuning** (ADR 0305, slice 2; 1.5, item 1b). Edit song has a
+  **Pitch** section under the key: raise a record tuned a half step down by 1 and play along in Standard
+  without retuning. It goes six semitones either way, says the key it lands in (*Up 1 semitone · F♯ minor →
+  G minor*), and is heard everywhere the song plays, routines and Active listening included. The song
+  player shows it with the song's facts, *+1 semitone*, which opens Edit song. It's free. A piece named on
+  a raised song is shown as you hear it and kept against the record, so *Standard* at +1 is kept as *Half
+  step down*. Frets named before the song was moved are offered a move on their own strings, and a note
+  that would fall off the neck is left for you to name.
 
 ### Changed
 
@@ -38,6 +46,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **Edit song's key picker no longer wraps *D♯* and *G♯*** (ADR 0305 D8). Their chips broke onto two lines
+  and grew into circles while *C♯* and *F♯* fit. Every root is one line now, and at the largest text sizes
+  the grid drops to four columns, then three, rather than wrap.
+- **A tuning with sharps no longer breaks the neck's string names.** In *Name the notes*, *Half step
+  down*'s strings read *d* over *♯* in the narrow column beside the neck. They're one line now.
 - **A bent note's number no longer covers its bend** (1.5, item 2c). In *Name the notes* and the tab
   writer, once you move past a note it shows its number at its top right, which is where a bend's arc
   starts. The number hid the start of a bend, and on a bend let back down it hid the arrowhead saying the

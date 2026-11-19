@@ -98,6 +98,15 @@ final class Song {
     /// first practised → `resumeSpeed` falls back to 1×. Optional with no declaration default,
     /// so pre-0044 songs migrate to `nil` without a store wipe (CoreData 134110 exempt).
     var lastPracticedSpeed: Double?
+    /// **Raised or lowered** (ADR 0305 D4): how far this song plays from its recording, in whole
+    /// semitones, so a record tuned a half step down can be played along to in Standard without
+    /// retuning. A fact about the recording against your tuning, set in Edit song and heard everywhere the
+    /// song's audio plays; never a practice setting. 0 for a song as recorded, which is nearly all of them.
+    ///
+    /// A plain `Int` with a **declaration default**, like `beatsPerBar`, so SwiftData lightweight
+    /// migration fills older songs with 0 (the CoreData 134110 mandatory-attribute rule). Read it through
+    /// `heardShift`, which holds it within six whatever was stored.
+    var pitchShift: Int = 0
 
     // Import identity (`SongRef`), flattened for storage.
     //
@@ -261,6 +270,13 @@ final class Song {
         get { MusicalKey.parse(key) }
         set { key = newValue.rawValue }
     }
+
+    /// The song's shift (ADR 0305 D4), held within six of the recording (D2).
+    var heardShift: Int { KeyShift.clamped(pitchShift) }
+
+    /// The key you hear: the recording's (`musicalKey`, which stays the recording's), moved by the song's
+    /// shift. Names on this song are spelled for it (D5). `.unknown` when the song has no key.
+    var heardKey: MusicalKey { musicalKey.moved(by: heardShift) }
 
     var loopsByStart: [Loop] { loops.sorted { $0.start < $1.start } }
     var markersByTime: [Marker] { markers.sorted { $0.seconds < $1.seconds } }

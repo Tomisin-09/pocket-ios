@@ -21,7 +21,8 @@ struct PieceVersionsSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                if let piece = loop.transcription {
+                // As you hear them (ADR 0305 D5), like every other place a piece is shown.
+                if let piece = loop.heardTranscription {
                     Section {
                         PieceDrawing(piece: piece, spelling: spelling)
                     } header: {
@@ -30,7 +31,7 @@ struct PieceVersionsSheet: View {
                         Text("The song map, its tab and the Journal's Pieces show this one.")
                     }
                 }
-                ForEach(Array(loop.keptTranscriptions.enumerated()), id: \.offset) { index, piece in
+                ForEach(Array(loop.heardKeptTranscriptions.enumerated()), id: \.offset) { index, piece in
                     Section {
                         PieceDrawing(piece: piece, spelling: spelling)
                         Button("Use this version") { use(index) }

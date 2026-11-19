@@ -20,6 +20,9 @@ import SwiftUI
 struct ToggleChip<Content: View>: View {
     let isOn: Bool
     var tint: Color = PocketColor.practice
+    /// Room each side of the content. A grid of narrow chips (the key picker's roots, ADR 0305 D8)
+    /// passes less, so a name fits on one line.
+    var horizontalPadding: CGFloat = 12
     /// Fires *before* the chip's own haptic, so callers never add their own.
     let action: () -> Void
     @ViewBuilder var content: () -> Content
@@ -31,7 +34,7 @@ struct ToggleChip<Content: View>: View {
         } label: {
             content()
                 .foregroundStyle(isOn ? tint : PocketColor.textSecondary)
-                .padding(.horizontal, 12)
+                .padding(.horizontal, horizontalPadding)
                 .padding(.vertical, 6)
                 .background(Capsule().fill(isOn ? tint.opacity(0.18) : PocketColor.surfaceStandard))
                 .overlay(Capsule().stroke(isOn ? tint : PocketColor.surfaceBorder, lineWidth: 1))

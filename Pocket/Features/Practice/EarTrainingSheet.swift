@@ -62,9 +62,9 @@ struct EarTrainingView: View {
         _counting = State(initialValue: CountTheNotesModel(loop: loop))
     }
 
-    /// The key you're hearing (ADR 0305 D3): the recording's, moved by the player's shift.
+    /// The key you're hearing (ADR 0305 D3): the recording's, moved by the song's shift and the player's.
     private var heard: HeardKey {
-        HeardKey(recording: loop.song?.musicalKey ?? .unknown, shift: player.keyShift)
+        HeardKey(recording: loop.song?.musicalKey ?? .unknown, shift: player.keyShift, song: player.songShift)
     }
 
     var body: some View {

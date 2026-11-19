@@ -76,6 +76,9 @@ enum ReceivedSongBuilder {
         song.beatsPerBar = record.beatsPerBar
         song.noteValue = record.noteValue
         song.showsGridlines = record.showsGridlines
+        // A fact about the recording against a tuning (ADR 0305 D4), so it travels with the song and its
+        // chip says so on arrival. Absent in a file from before it.
+        song.pitchShift = record.pitchShift ?? 0
 
         // Markers first, so a loop that repeats through a section and a section that's the same as
         // another can be pointed at the new uids.

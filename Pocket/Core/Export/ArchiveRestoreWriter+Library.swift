@@ -57,6 +57,7 @@ extension ArchiveRestoreWriter {
             // decoded one.
             song.sourceRaw = record.sourceRaw
             restoreGrid(record, to: song)
+            song.pitchShift = record.pitchShift ?? 0   // ADR 0305 D4; absent in a file from before it
             song.lastPracticedSpeed = record.lastPracticedSpeed
             song.loops = record.loops.map { saved in
                 let made = loop(from: saved)

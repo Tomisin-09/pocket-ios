@@ -106,6 +106,18 @@ you worked from. See [Where you learned it](references.md).
 where you add your own labels, a key picker, and a **Notes** field for anything you want to tell
 yourself later — a tuning, a capo position, what to listen for.
 
+**Pitch**, under the key, is for a record that isn't in your tuning. A lot of guitar is recorded a half
+step down: raise the song 1 semitone and you can play along in Standard without retuning, which matters
+in a routine that moves between songs. **Raise or lower** goes six semitones either way, and the line under
+it says where it lands, *Up 1 semitone · F♯ minor → G minor*. The key stays the one the record plays in.
+The song then sounds that way everywhere it plays: the song player, loops, play-along, Active listening,
+improvising and routines. The song player shows it beside the song's facts, *+1 semitone*, and tapping that
+opens Edit song. **Back to the recording** puts it back. It's free.
+
+Names you give a loop's notes on a raised song are shown as you hear them, and the tab is the frets you
+played. They're kept against the record, so a piece named in Standard on a song raised 1 is kept as *Half
+step down*, and reads that way if you put the song back.
+
 <!-- shot: songs/song-edit | role: screen
      | alt: The Edit song sheet scrolled to its key picker, the Collections section and the Notes field, with Practice stats beginning below
      | state: seeded library, song "Slow Bend", edit sheet open, scrolled to Collections -->

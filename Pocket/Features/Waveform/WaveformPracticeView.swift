@@ -183,6 +183,7 @@ struct WaveformPracticeView: View {
                              // The waveform is underneath: closing the sheet is the whole trip (ADR 0232 D7).
                              onShowWaveform: { model.showingSongDetails = false })
         }
+        .sheet(isPresented: $model.showingSongEdit) { SongEditSheet(song: model.song) }
         // The player's own settings, from holding *Loop controls* on the status line (ADR 0163) — the
         // same screen Settings ▸ Song player opens, so the two can't drift.
         .sheet(isPresented: $model.showingPlayerSettings) {
@@ -220,6 +221,8 @@ struct WaveformPracticeView: View {
             model.engine.setRate(newValue)
             model.refreshNowPlaying(force: true)   // rate change re-anchors the lock-screen clock
         }
+        // Raised or lowered in Edit song over this screen (ADR 0305 D4): heard at once.
+        .onChange(of: model.song.pitchShift) { _, _ in model.applySongShift() }
         // Per-loop automator: step the speed as the active loop wraps, and snap to the
         // ramp's current step when playback (re)starts (ADR 0013).
         .onChange(of: model.engine.loopIteration) { _, iteration in
@@ -243,7 +246,8 @@ struct WaveformPracticeView: View {
                 // lets the title sit just under the status bar.
                 HStack(alignment: .top, spacing: 12) {
                     backButton
-                    SongStrip(song: model.song, onHoldTitle: model.holdTitle)
+                    SongStrip(song: model.song, onHoldTitle: model.holdTitle,
+                              onTapShift: { model.showingSongEdit = true })
                 }
             }
             .padding(.horizontal, 16)
@@ -328,6 +332,10 @@ struct WaveformPracticeView: View {
             .accessibilityAction(named: "Song details") { model.holdTitle() }
 
             Spacer(minLength: 8)
+
+            if model.song.heardShift != 0 {
+                SongShiftChip(shift: model.song.heardShift) { model.showingSongEdit = true }
+            }
 
             Button { drawerOpen.toggle() } label: {
                 Image(systemName: "line.3.horizontal")
