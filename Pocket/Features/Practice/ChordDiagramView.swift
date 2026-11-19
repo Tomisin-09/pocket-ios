@@ -3,7 +3,8 @@ import SwiftUI
 /// The **presentational chord diagram** (ADR 0065) — a standard vertical chord box for one
 /// `ChordVoicing`: one column per string (lowest left → highest right), a four-fret window, dots for
 /// fretted notes (finger number inside when known), and ×/○ over the nut for muted/open strings. A
-/// high shape drops the nut for a "n fr." caption and windows at its lowest fret.
+/// high shape drops the nut for a "n fr." caption and windows at its lowest fret. A shape that reaches
+/// further than four frets, a bass tenth, stretches the window to fit (1.5, item 2b).
 ///
 /// **The neck is the voicing's own** (ADR 0164): six columns for a guitar shape, four for a bass one,
 /// read from `frets.count`. No instrument is passed in — a shape carries its neck with it, which is
@@ -18,7 +19,8 @@ struct ChordDiagramView: View {
     /// The active chord shows solid `tint` dots; a dimmed "up next" preview passes `false`.
     var isActive: Bool = true
     var tint: Color = PocketColor.practice
-    /// How many frets the window shows.
+    /// The fewest frets the window shows. A longer shape (a bass tenth) stretches it to its own
+    /// reach; see `ChordVoicing.displayFretWindow`.
     var fretWindow: Int = 4
     /// Whether to draw the chord's name above the box. On by default (the labelled chart); the My Chords
     /// detail passes `false` because its navigation title already names the chord (ADR 0096).
@@ -33,6 +35,8 @@ struct ChordDiagramView: View {
     private var displayStrings: [Int] { Array((0..<stringCount).reversed()) }
     private var baseFret: Int { voicing.displayBaseFret }
     private var showsNut: Bool { baseFret == 1 }
+    /// The frets this diagram actually draws: `fretWindow`, or more for a shape that reaches further.
+    private var window: Int { voicing.displayFretWindow(minimum: fretWindow) }
 
     var body: some View {
         VStack(spacing: 4) {
@@ -80,7 +84,7 @@ struct ChordDiagramView: View {
     /// Vertical centre of the fret *space* holding an absolute `fret` (space 0 = the top window fret).
     private func spaceY(forFret fret: Int, origin: CGPoint, height: CGFloat) -> CGFloat {
         let space = CGFloat(fret - baseFret)
-        return origin.y + (space + 0.5) / CGFloat(fretWindow) * height
+        return origin.y + (space + 0.5) / CGFloat(window) * height
     }
 
     // MARK: - Pieces
@@ -95,9 +99,9 @@ struct ChordDiagramView: View {
                 }
                 .stroke(PocketColor.gridLine, lineWidth: 1)
             }
-            ForEach(0...fretWindow, id: \.self) { row in
+            ForEach(0...window, id: \.self) { row in
                 Path { path in
-                    let posY = origin.y + CGFloat(row) / CGFloat(fretWindow) * height
+                    let posY = origin.y + CGFloat(row) / CGFloat(window) * height
                     path.move(to: CGPoint(x: origin.x, y: posY))
                     path.addLine(to: CGPoint(x: origin.x + width, y: posY))
                 }
@@ -125,7 +129,7 @@ struct ChordDiagramView: View {
             Text("\(baseFret) fr.")
                 .font(.futura(.caption2))
                 .foregroundStyle(PocketColor.textSecondary)
-                .position(x: origin.x - 14, y: origin.y + 0.5 / CGFloat(fretWindow) * height)
+                .position(x: origin.x - 14, y: origin.y + 0.5 / CGFloat(window) * height)
         }
     }
 
@@ -155,11 +159,11 @@ struct ChordDiagramView: View {
     /// diagram scale they read as noise; the shape alone is what the player follows.
     private func dots(origin: CGPoint, width: CGFloat, height: CGFloat) -> some View {
         let diameter = min(width / CGFloat(max(1, stringCount - 1)),
-                           height / CGFloat(fretWindow)) * 0.62
+                           height / CGFloat(window)) * 0.62
         return ForEach(displayStrings.indices, id: \.self) { column in
             let stringIndex = displayStrings[column]
             if let fret = voicing.frets[stringIndex], fret > 0, fret >= baseFret,
-               fret < baseFret + fretWindow {
+               fret < baseFret + window {
                 Circle()
                     .fill(isActive ? tint : PocketColor.textSecondary)
                     .frame(width: diameter, height: diameter)

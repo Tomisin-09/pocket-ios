@@ -32,9 +32,11 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
      the history (*What else grows with use*, under *After the freeze*). Both dates (`startedAt`,
      `createdAt`) are non-optional, so a date predicate isn't the optional-predicate freeze. Measure
      before and after on the copied phone store, as the audit did.
-   - **2b. A bass 10th draws its 10th** (S). The entry *A bass 10th draws without its 10th* below.
+   - **2b. A bass 10th draws its 10th** (S). **✅ Fixed 2026-11-18 on `pocket-446`;** the shell
+     *root · ♭7 · 10* had the same fault, and is fixed with it. The entry *A bass 10th draws without its 10th* below.
      Check that the guitar diagrams don't move.
-   - **2c. A bent note's number clears its arc** (S). The *After the freeze* bullet *A bent note's
+   - **2c. A bent note's number clears its arc** (S). **✅ Fixed 2026-11-18 on `pocket-447`;** vibrato's wave,
+     which ran into the number too, is moved with it. Device look owed. The *After the freeze* bullet *A bent note's
      number covers its arc*. Wants a look on the device.
    - **2d. The Scales and Arpeggios editors as rows** (M). The entry *Split the Scales and Arpeggios
      editors into rows* below. It starts with a device check that they stutter; if they don't, the
@@ -44,7 +46,9 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
    with `SongMapView.opensSectionWatch` flipped locally, since 0291 puts that day's lag on the Journal
    (#406) and what's left is the design; Tomisin says what *better thought out* means; a mockup; then
    an ADR amending 0289 and 0291 before any code.
-4. **Review the unfinished slices** (a decision, not a build). For each one: build it in 1.5, keep it
+4. **Review the unfinished slices** (a decision, not a build). **✅ Decided 2026-11-18: all three stay
+   parked.** Tomisin took the recommendation for 4a and 4b and has no list yet for 4c. None is in 1.5,
+   and none is closed. For each one: build it in 1.5, keep it
    parked, or close it. Checked against the ADRs on 2026-11-17, two of the five this file listed as
    unfinished were done in August: 0140 slice 3 (Apple's high-quality stretcher, adopted 2026-08-04)
    and 0139 slice 2 (a freeform block can be away from your instrument, #211). Their entries are
@@ -339,7 +343,11 @@ click through the speaker and through headphones.
   2026-11-13**, the same day, pulled forward from after the freeze (Tomisin: *"let's build it then...
   we'll release it with 1.4.1"*). It goes on its own branch once `pocket-425` merges, and its ADR
   settles the questions above before any code.
-- **A bent note's number covers its arc.** **In 1.5, item 2c.** (Found 2026-11-13 on `pocket-426`, from Tomisin's screenshot of
+- **A bent note's number covers its arc.** **In 1.5, item 2c. ✅ Fixed 2026-11-18 on `pocket-447`:** when the
+  marked note carries its number (`NeckCursor.marksNoteIsNumbered`), every bend lifts its start by
+  `NeckMarksLayer.numberLift`, the 6 pt ADR 0296's release already used; vibrato over an unbent note
+  moves left to end short of the number, which it also ran into. The note being named, unnumbered,
+  draws as before. Checked in a hosted render; the device look is still owed. (Found 2026-11-13 on `pocket-426`, from Tomisin's screenshot of
   the tab writer). Once the editor moves past a note, the note carries its number at its top right
   (`NeighbourNumber`, ADR 0234 D3), which is where every bend arc meets the note (`NeckMarksLayer.drawBend`,
   ADR 0288 D4). For a bend, the arc's start is hidden; for a bend and release or a pre-bend let down, the
@@ -408,6 +416,20 @@ click through the speaker and through headphones.
   Needs its own ADR, amending 0004's rung 2 and 0011's import if it goes ahead. **Not decided.**
 
 ## A bass 10th draws without its 10th (logged 2026-11-14, found building ADR 0297) — in 1.5, item 2b
+
+**✅ Fixed 2026-11-18 on `pocket-446`.** The window now stretches to the shape's reach, at least four
+frets and at most seven (`ChordVoicing.displayFretWindow`). Under the old window 50 bass voicings lost a
+dot: 16 major 10ths, 18 minor 10ths and **16 shells *root · ♭7 · 10*.** The shell was affected too: its
+10th is on the D string, six frets up, the same as the dyad's (the note below said otherwise). Every
+guitar shape, the library plus every grip and triad at all twelve roots, still gets four frets
+(`ChordDiagramWindowTests`).
+
+**Seen while checking it, not fixed (pre-existing):** at the live size (up to 190 pt wide), a high
+shape whose lowest fret is on the leftmost string covers the end of its *n fr.* caption with that
+dot. It did with the four-fret window too, and the guitar A barre at 5 fr. does it as well. Moving the
+caption would move every high guitar diagram, so it wants its own look.
+
+**As logged:**
 
 `BassChordShape.majorTenth` and `.minorTenth` put the 10th six frets above the root: C on the low E at
 fret 8, its E on the D string at fret 14. `ChordDiagramView` draws a four-fret window from the lowest
@@ -2148,6 +2170,8 @@ slice 2 only adds a second source of off-guitar-eligible units to a pool that al
 
 ## Improvise — a fine-tuning pass (parked 2026-08-02, after ADR 0140) — in 1.5's review, item 4c
 
+**Reviewed for 1.5 on 2026-11-18: stays parked.** There's no list of refinements yet; gather it from use.
+
 The improvise surfaces shipped across ADR 0135 slices 1–3 (`ImproviseSheet`, `ImproviseLoopRunView`,
 the Improvise bucket, the `improv.vocabulary` resolution and the trailing `play` block) are **a good
 first version, not the finished thing** — flagged at PR #208 and deliberately left for its own change
@@ -2235,6 +2259,8 @@ Still open, in the ADR and deliberately unbuilt:
 
 ## The click withdrawal (ADR 0132 — **slice 1 SHIPPED**, slice 2 out of v2) — in 1.5's review, item 4a
 
+**Reviewed for 1.5 on 2026-11-18: stays parked.** Still waiting on what users say, as below; not closed.
+
 Silent bars: the click thins to the downbeat and then out on a fixed eight-bar cycle, so the player
 carries the pulse and hears their own drift when it returns.
 
@@ -2265,6 +2291,9 @@ construction (§7a). Whether that is worth a further answer is a device-testing 
 comes back into scope if the guard above is relaxed.
 
 ## Command moves both ways (ADR 0134 — **slice 1 SHIPPED**, slice 2 parked) — in 1.5's review, item 4b
+
+**Reviewed for 1.5 on 2026-11-18: stays parked.** Settling after the run (slice 1) covers a run that fell
+apart; mid-run settling still needs its own ADR before any build.
 
 The post-run offer can only ever raise `command`, so a run that fell apart still lands on a Done
 screen reading "you summited it — bump the drill up". The ramp completes on a timer (the app never

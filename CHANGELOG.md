@@ -36,6 +36,19 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   costs about 32 ms at today's 437 runs (60 ms before) and stays flat at four times that history (135 ms
   before). The numbers it shows are the same.
 
+### Fixed
+
+- **A bent note's number no longer covers its bend** (1.5, item 2c). In *Name the notes* and the tab
+  writer, once you move past a note it shows its number at its top right, which is where a bend's arc
+  starts. The number hid the start of a bend, and on a bend let back down it hid the arrowhead saying the
+  pitch came back. The arc now starts just clear of the number, as a release already did. Vibrato over
+  an unbent note ran into the number too, and now sits to its left.
+
+- **A bass tenth shows its tenth** (1.5, item 2b). Chord diagrams drew a four-fret box, and a bass
+  tenth reaches seven frets, so the major 10th, the minor 10th and the *root · ♭7 · 10* shell showed
+  only their root wherever a diagram draws: the picker's chip, the editor's row and the live run. The
+  box now stretches to fit the shape, up to seven frets. Guitar diagrams don't change.
+
 ## [1.4.1] — build 11, cut 2026-11-16
 
 ### Added
