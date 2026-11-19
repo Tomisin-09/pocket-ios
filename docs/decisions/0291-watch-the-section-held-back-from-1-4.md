@@ -7,6 +7,9 @@
   records still holds, unreachable until the doors reopen.
 - **Relates to:** 0211 (the same move for the Oracle: its door closed, its code kept) · 0254 (watching one
   loop, which this leaves exactly as it is)
+- **Amended by:** ADR 0308 (2026-11-19, not yet built) — **D1**'s closed doors reopen as 0308's picking:
+  the section heading's hold menu comes back, the toolbar eye doesn't. **D4**'s open question is answered
+  there. Until it's built, D1 to D3 hold as written.
 
 ## Context
 

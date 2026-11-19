@@ -41,11 +41,15 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
    - **2d. The Scales and Arpeggios editors as rows** (M). The entry *Split the Scales and Arpeggios
      editors into rows* below. It starts with a device check that they stutter; if they don't, the
      item closes without a build. Whether their contents regroup is not decided.
-3. **Watch the section, rethought** (sized after the rethink). The *After the freeze* bullet, and ADR
-   0291 D4: what it becomes is open, so this is not a flag flip. In order: try it again on the device
-   with `SongMapView.opensSectionWatch` flipped locally, since 0291 puts that day's lag on the Journal
-   (#406) and what's left is the design; Tomisin says what *better thought out* means; a mockup; then
-   an ADR amending 0289 and 0291 before any code.
+3. **Watch what you pick** (L, ADR 0308; it was *Watch the section, rethought*). **Decided 2026-11-19**
+   against a canvas mockup (https://claude.ai/artifact/FnmVT9uSJF4o5jwYiQV9Jx, private), and the ADR holds
+   the detail. Picking on the map has two ends, **Watch** and **Put it together**; a section's name picks
+   all of it; only what's picked lights; and the notes take the colour of the chord the song is on, by its
+   Roman numeral in the song's key. The retry on the device with the flag flipped didn't happen. The code
+   shows the section door starting at the section, and the door anyone would see, the toolbar eye, starts
+   at 0:00, which fits what Tomisin saw. Open in the ADR: whether a loop's own sheet takes the colours too.
+   Two ideas from the same mockup are parked below as entries of their own, not in 1.5: *Watch it on the
+   neck as a guitar neck* and *A shape for a chord named by ear*.
 4. **Review the unfinished slices** (a decision, not a build). **✅ Decided 2026-11-18: all three stay
    parked.** Tomisin took the recommendation for 4a and 4b and has no list yet for 4c. None is in 1.5,
    and none is closed. For each one: build it in 1.5, keep it
@@ -390,8 +394,8 @@ click through the speaker and through headphones.
   then held back after Tomisin's device check of 2026-11-04: *"I feel like it could be better thought
   out. let's drop it then put it in the post 1.4 backlog"*. The lag felt that day was most likely the
   Journal's (#406). `SongMapView.opensSectionWatch` closes both doors; the code, `SectionWatchTests` and
-  the skipped whole-song UI test stay. What it should be is **open**: think it through again before
-  reopening, rather than flipping the flag.
+  the skipped whole-song UI test stay. What it becomes was **decided on 2026-11-19 in ADR 0308**, *Watch
+  what you pick*. It isn't a flag flip: see 1.5's item 3.
 - **Make a song from this take** (item 16, M, short ADR), in the take's hold menu. Needs 9 and 14.
   Planned for 1.4, deprioritised on 2026-11-03 (Tomisin: *"lets deprioritise turn a take into a
   song"*), before any of it was built.
@@ -414,6 +418,40 @@ click through the speaker and through headphones.
   - **Older songs** keep needing *Find the tempo* in the sheet, which stays either way.
 
   Needs its own ADR, amending 0004's rung 2 and 0011's import if it goes ahead. **Not decided.**
+
+## Watch it on the neck as a guitar neck, with strings that move (logged 2026-11-19, from ADR 0308's mockup)
+
+Not in 1.5; when is not decided here. It needs its own ADR, amending 0254's look and extending 0234 D5.
+
+- **The look.** Watch draws a real neck: the board, fret wires, strings that thicken towards the low E,
+  and the inlays on the wood rather than in a row under it. Empty spots have no faint names, and the
+  lick's notes sit on the strings. Tomisin, 2026-11-19: *"the as-is looks better for naming but the to-be
+  looks better for showing"*. So Name the notes keeps its dot grid, as do the tab writer (0235) and the
+  exercise editor, which are also for writing notes in. All four share `FretNeckBoard` today, so Watch
+  needs its own look on the same `NeckGeometry`, which keeps the marks and the glow lined up.
+- **Strings that move.** A bend bows the string at the fret and the note rides it: thin strings pushed
+  towards the thick ones, the low strings pulled the other way, a whole step most of the way to the next
+  string. Vibrato shakes the string while the note sounds. Both run on the clock the glow already keeps
+  (`HaloMotion`, 0234 D5). With Reduce Motion the string stays still, as the glow does. Releases and
+  pre-bends (0288) weren't mocked.
+- **The mockup:** the first row's sheet, and *Name the notes on a guitar neck · not taken*, in
+  https://claude.ai/artifact/FnmVT9uSJF4o5jwYiQV9Jx (private).
+
+## A shape for a chord named by ear (logged 2026-11-19, from ADR 0308's mockup)
+
+Not in 1.5; when is not decided here. It needs its own ADR, because it touches Name the notes and the
+chords lane, and 0225's rule that a label is always the player's word.
+
+- **Why.** A chord named by ear (`PieceLabel.chord(root:suffix:)`) has no shape. Under notes it still
+  colours them (0308 D4), but watched on its own it shows only its name and colour (0308 D5).
+- **The idea, Tomisin's (2026-11-19).** Show a common shape for it, labelled as one (*"A common shape for
+  Am, not necessarily the one played"*) and never saved. **Pick a shape** opens the chord exercises'
+  picker (`ChordPickerSheet`, 0103 and 0297) on the chord's root, because *"it's easier to select the
+  shape than it is to draw it out"*. The pick is saved as the tap's shape, so it's the player's word.
+  `ChordVoicing` is highest string first, as `FrettedNote` is, so it converts directly. It could offer the
+  same shape for every tap of that chord in the piece.
+- **Not decided:** which shape counts as the common one. The starting suggestion is the open shape where
+  there is one, else a barre at the root.
 
 ## A bass 10th draws without its 10th (logged 2026-11-14, found building ADR 0297) — in 1.5, item 2b
 
