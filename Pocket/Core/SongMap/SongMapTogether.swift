@@ -162,15 +162,12 @@ enum SongMapTogether {
 
     // MARK: - Words
 
-    /// What the selection bar says: what the selection makes, or why it can't be put together.
-    static func line(for reading: Reading, in map: SongMap) -> String {
+    /// What the picking bar says for Put it together: why the picks can't be put together, or `nil` when they
+    /// can. Then the routine review that opens next shows what they make (ADR 0308 D8).
+    static func line(for reading: Reading) -> String? {
         switch reading {
-        case .shape(.inARow(let uids)):
-            return "In a row: \(uids.count) pieces, each on its own, then joined. \(uids.count * 2 - 1) blocks."
-        case .shape(.lineOverChords(let line, let chords)):
-            return "\(map.pieces[line]?.name ?? "The line") on its own, then over "
-                + "\(map.pieces[chords]?.name ?? "its chords") as a backing."
-        case .tooFew: return "Tap the next piece in the row, or the chords under a line."
+        case .shape: return nil
+        case .tooFew: return "To put them together, pick the next piece in the row, or the chords under a line."
         case .overlapping: return "Pieces in a row can't overlap."
         case .notUnder: return "The chords have to play under the whole line."
         case .mixed: return "Pick chords or notes to put in a row, or one line and the chords under it."

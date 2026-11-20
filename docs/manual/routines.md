@@ -87,8 +87,8 @@ a routine that already has it says *already in it*. A loop asks whether it goes 
 **Listen** or **Improv** when it can be more than one. **New routine…** makes one with it as the first
 block. To put it anywhere but the end, open the routine and drag it.
 
-**Or from a song's map.** On **Map the song**, hold a piece and choose **Put it together…** to make a
-routine of it and its neighbours, or of a line and the chords under it. See
+**Or from a song's map.** On **Map the song**, hold a piece and choose **Pick pieces…**, pick its
+neighbours, or a line and the chords under it, and tap **Put it together** to make a routine of them. See
 [Mapping the song](songs.md#mapping-the-song).
 
 ### Rests

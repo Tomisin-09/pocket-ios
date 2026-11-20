@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// One section of the song map (ADR 0232 D6): its heading, which opens the marker that starts it, and
-/// its rows.
+/// One section of the song map (ADR 0232 D6): its heading, which opens the marker that starts it, or picks the
+/// section while picking (ADR 0308 D1), and its rows.
 struct SongMapSectionView: View {
     let section: SongMap.Section
     let map: SongMap
@@ -9,17 +9,20 @@ struct SongMapSectionView: View {
     let actions: SongMapActions
     /// Pieces just reached from a row of the Tab view (D10), drawn heavier for a moment.
     let highlighted: Set<UUID>
-    /// The pieces picked to put together (D11), while picking. `nil` otherwise.
+    /// The pieces picked (ADR 0308 D1), while picking. `nil` otherwise.
     var selected: Set<UUID>?
     /// *Watch it on the neck* for this section (ADR 0289), on the heading's hold menu, or `nil` behind the gate.
     var onWatch: (() -> Void)?
 
     var body: some View {
+        // A section with no pieces has nothing to pick.
+        let holds = !SongMapPicking.pieces(in: section, of: map).isEmpty
         VStack(alignment: .leading, spacing: 14) {
             SongMapSectionHeading(heading: section.heading, bars: section.bars, start: section.start,
                                   end: section.end, sameAs: section.sameAs, openMarker: actions.openMarker,
-                                  showSection: actions.showSection, onWatch: onWatch)
-                .disabled(selected != nil)
+                                  showSection: actions.showSection, onWatch: selected == nil ? onWatch : nil,
+                                  mark: selected.map { SongMapPicking.mark(of: section, picked: $0, in: map) },
+                                  onPick: holds ? { actions.pickSection(section) } : nil)
             ForEach(section.rows) { row in
                 SongMapRowView(row: row, map: map, loops: loops, actions: actions, highlighted: highlighted,
                                selected: selected)
@@ -50,19 +53,67 @@ struct SongMapSectionHeading: View {
     let showSection: (TimeInterval) -> Void
     /// *Watch it on the neck* for the section (ADR 0289), held from the heading. The Tab view passes none.
     var onWatch: (() -> Void)?
+    /// While picking (ADR 0308 D1), how much of the section is picked; `nil` otherwise, and in the Tab view.
+    var mark: SongMapPicking.Mark?
+    /// Pick every piece in the section (ADR 0308 D1): a tap on the name while picking, *Pick this section*
+    /// from its hold menu before. `nil` for a section with no pieces, and in the Tab view.
+    var onPick: (() -> Void)?
 
     var body: some View {
         switch heading {
         case .none:
             EmptyView()
         case .start:
-            headingRow(Text("Start").foregroundStyle(PocketColor.textSecondary))
-        case .marker(let uid, let label):
-            headingRow(Button { openMarker(uid) } label: {
-                Text(label.isEmpty ? "Section" : label).foregroundStyle(PocketColor.textPrimary)
+            if let mark, let onPick {
+                headingRow(pickButton("Start", mark: mark, action: onPick))
+            } else {
+                headingRow(Text("Start").foregroundStyle(PocketColor.textSecondary))
             }
-            .buttonStyle(.plain)
-            .accessibilityHint("Opens the marker that starts this section"))
+        case .marker(let uid, let label):
+            let name = label.isEmpty ? "Section" : label
+            if let mark, let onPick {
+                headingRow(pickButton(name, mark: mark, action: onPick))
+            } else {
+                headingRow(Button { openMarker(uid) } label: {
+                    Text(name).foregroundStyle(PocketColor.textPrimary)
+                }
+                .buttonStyle(.plain)
+                .disabled(mark != nil)
+                .accessibilityHint("Opens the marker that starts this section"))
+            }
+        }
+    }
+
+    /// The name while picking (ADR 0308 D1): a filled check when all of the section is picked, a dash when
+    /// some is, an empty circle when none is. A tap picks it all, or lets it all go.
+    private func pickButton(_ name: String, mark: SongMapPicking.Mark, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: Self.symbol(mark))
+                    .foregroundStyle(mark == .empty ? PocketColor.textSecondary : PocketColor.practice)
+                Text(name).foregroundStyle(PocketColor.textPrimary)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(name)
+        .accessibilityValue(Self.spoken(mark))
+        .accessibilityHint(mark == .all ? "Lets every piece in it go" : "Picks every piece in it")
+        .accessibilityAddTraits(mark == .all ? .isSelected : [])
+    }
+
+    nonisolated static func symbol(_ mark: SongMapPicking.Mark) -> String {
+        switch mark {
+        case .all: "checkmark.circle.fill"
+        case .part: "minus.circle.fill"
+        case .empty: "circle"
+        }
+    }
+
+    private static func spoken(_ mark: SongMapPicking.Mark) -> String {
+        switch mark {
+        case .all: "All picked"
+        case .part: "Some picked"
+        case .empty: "None picked"
         }
     }
 
@@ -75,10 +126,17 @@ struct SongMapSectionHeading: View {
                 .font(.pocketMono(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
         }
-        if let onWatch {
+        // The name's hold menu (ADR 0308 D1): straight to the sheet for the section, or start picking with it
+        // picked. None while picking, when a tap on the name picks.
+        if mark == nil, onWatch != nil || onPick != nil {
             row.contextMenu {
-                Button(action: onWatch) {
-                    Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
+                if let onWatch {
+                    Button(action: onWatch) {
+                        Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
+                    }
+                }
+                if let onPick {
+                    Button(action: onPick) { Label("Pick this section", systemImage: "checkmark.circle") }
                 }
             }
         } else {
@@ -242,7 +300,7 @@ struct SongMapRowView: View {
         return SongMapPieceMenu(modes: loops[uid].map(SongMapPieceSheet.modes(for:)) ?? [],
                                 repeats: SongMapRepeatOptions(piece: piece, in: map, set: actions.setRepeats),
                                 onCopy: piece.canCopy ? { actions.copy(uid) } : nil,
-                                onPutTogether: { actions.putTogether(uid) },
+                                onPick: { actions.pick(uid) },
                                 onView: { actions.view(uid) }, onOpen: { actions.open(uid, $0) })
     }
 

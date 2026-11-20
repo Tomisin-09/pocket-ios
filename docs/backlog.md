@@ -54,6 +54,10 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
    at 0:00, which fits what Tomisin saw. Open in the ADR: whether a loop's own sheet takes the colours too.
    Two ideas from the same mockup are parked below as entries of their own, not in 1.5: *Watch it on the
    neck as a guitar neck* and *A shape for a chord named by ear*.
+   **Built in two slices.** **3a, picking and the bar (D1–D3, D8): built 2026-11-20** on
+   `pocket-453-pick-and-watch`. **3b, chords colour the notes (D4–D7)**: next; D4's first point (under
+   notes, a chord never lights) went in with 3a, since it decides what's dark. Owed on the device for 3a: the
+   bar's height while picking, and a section watched from its name.
 4. **Review the unfinished slices** (a decision, not a build). **✅ Decided 2026-11-18: all three stay
    parked.** Tomisin took the recommendation for 4a and 4b and has no list yet for 4c. None is in 1.5,
    and none is closed. For each one: build it in 1.5, keep it

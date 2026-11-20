@@ -16,8 +16,11 @@ struct SongMapActions {
     let makePiece: (SongMap.Gap) -> Void
     /// *Copy to…*, from a piece's hold menu (D16).
     let copy: (UUID) -> Void
-    /// *Put it together…*, from a piece's hold menu (D11): start picking pieces, with this one picked.
-    let putTogether: (UUID) -> Void
+    /// *Pick pieces…*, from a piece's hold menu (ADR 0308 D1): start picking, with this one picked.
+    let pick: (UUID) -> Void
+    /// A section's name (ADR 0308 D1): while picking, pick every piece in it or let them go; before,
+    /// *Pick this section* from its hold menu.
+    let pickSection: (SongMap.Section) -> Void
     /// While picking: pick a piece, or let it go.
     let toggle: (UUID) -> Void
 }

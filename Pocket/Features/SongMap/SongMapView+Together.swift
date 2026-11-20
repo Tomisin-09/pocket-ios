@@ -1,8 +1,9 @@
 import SwiftData
 import SwiftUI
 
-/// *Put it together* (ADR 0232 D11): pick pieces on the board, and they make a routine, opened for review.
-/// Apart from `SongMapView` only to keep each file within its length budget.
+/// Picking (ADR 0308 D1, D8), and *Put it together* (ADR 0232 D11): pick pieces on the board, then watch them
+/// on the neck or make a routine of them, opened for review. Apart from `SongMapView` only to keep each file
+/// within its length budget.
 extension SongMapView {
 
     /// A plan, and the command tempos asked for it, begun once the sheet asking has gone.
@@ -27,10 +28,21 @@ extension SongMapView {
 
     // MARK: - Picking
 
-    /// *Put it together…* from a piece's hold menu: picking starts, with that piece picked.
-    func startTogether(_ uid: UUID) {
+    /// *Pick pieces…* from a piece's hold menu (0308 D1): picking starts, with that piece picked.
+    func startPicking(_ uid: UUID) {
         made = nil
         withAnimation(.easeOut(duration: 0.2)) { selection = [uid] }
+    }
+
+    /// A section's name (0308 D1): while picking, a tap picks every piece in it or lets them all go; before,
+    /// *Pick this section* starts picking with them picked.
+    func pickSection(_ section: SongMap.Section, in map: SongMap) {
+        guard let picked = selection else {
+            made = nil
+            withAnimation(.easeOut(duration: 0.2)) { selection = SongMapPicking.pieces(in: section, of: map) }
+            return
+        }
+        selection = SongMapPicking.toggle(section, picked: picked, in: map)
     }
 
     func toggleSelected(_ uid: UUID) {
@@ -40,16 +52,36 @@ extension SongMapView {
     }
 
     /// The bar along the bottom while picking, held clear of the board so the last row can scroll above it.
-    @ViewBuilder func pickingBar(_ map: SongMap) -> some View {
+    @ViewBuilder func pickingBar(_ map: SongMap, sources: [SectionWatch.Source]) -> some View {
         if let selection {
             let reading = SongMapTogether.read(selection, in: map)
-            SongMapTogetherBar(count: selection.count, line: SongMapTogether.line(for: reading, in: map),
-                               canPut: reading.shape != nil, onPut: { putTogether(reading, in: map) },
+            let watch = SongMapPicking.watch(selection, in: map)
+            let onWatch = watchDoor(watch, sources: sources)
+            SongMapTogetherBar(count: selection.count,
+                               lines: pickingLines(watch, canWatch: onWatch != nil, reading: reading, in: map),
+                               onWatch: onWatch, onPut: reading.shape == nil ? nil : { putTogether(reading, in: map) },
                                onCancel: { withAnimation(.easeOut(duration: 0.2)) { self.selection = nil } })
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
                 .transition(.move(edge: .bottom).combined(with: .opacity))
         }
+    }
+
+    /// What the bar says (0308 D8): what's picked and where, then only what needs saying. What stays dark
+    /// (D3), why Watch can't open, and why Put it together can't, each when it's so.
+    private func pickingLines(_ watch: SongMapPicking.Watch?, canWatch: Bool, reading: SongMapTogether.Reading,
+                              in map: SongMap) -> [String] {
+        guard let watch else {
+            return [map.hasSections ? "Tap pieces, or a section's name, to pick them." : "Tap pieces to pick them."]
+        }
+        var lines = [watch.barLine]
+        if let dark = watch.darkLine { lines.append(dark) }
+        if !canWatch {
+            lines.append(LoopModeAccess.Facts.audioResolves(song) ? "Nothing picked is placed on the neck yet."
+                         : "The song's audio can't play here, so there's nothing to watch.")
+        }
+        if let cant = SongMapTogether.line(for: reading) { lines.append(cant) }
+        return lines
     }
 
     // MARK: - Putting it together

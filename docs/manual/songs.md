@@ -263,9 +263,28 @@ After you make a loop or copy a piece, **Undo** at the bottom of the map takes b
 and only that. It goes after a few seconds, or as soon as you do something else. The map never deletes a
 loop: to delete one, use the waveform.
 
-To practise pieces together, hold one and choose **Put it together…**, then tap the others you want. A
-bar along the bottom says what they make, or why they can't be put together. Chords that follow one
-another, or notes that do, are practised in a row: each on its own, then joined to the ones before it.
+To watch pieces on the neck or practise them together, pick them: hold one and choose **Pick pieces…**,
+then tap the others you want. Tap a section's name to pick everything in it, and tap it again to let it all
+go. Beside the name, a filled check says all of it is picked, a dash some of it, an empty circle none. A bar
+along the bottom says what you've picked and the bars it covers, and offers **Watch** and **Put it
+together**.
+
+**Watch** opens **Watch it on the neck** for what you picked. The song plays from the start of the first
+piece to the end of the last, its repeats included, and goes round until you stop it. **Play from bar…**
+says where it starts, and the bar being played is counted beside it. Only what you picked lights, each
+loop's notes in turn, with the loop's name under the neck where its notes begin. A piece in that stretch
+that you didn't pick still plays, but stays dark: the bar and the top of the sheet say so, and the neck says
+**Not picked** while it plays. Where two picked pieces overlap, the one that starts later shows. With notes
+picked, only notes light, never a chord's shape. Every loop in it should be named in the same tuning: the
+first one's is used, and the top of the sheet says if one in another tuning is left out. It starts at the
+record's own tempo.
+
+To watch a section straight away, hold its name and choose **Watch it on the neck**. **Pick this section**
+starts picking with all of it picked. The whole song is every section picked.
+
+**Put it together** makes a routine of what you picked. If the picks can't be put together, the bar says
+why. Chords that follow one another, or notes that do, are practised in a row: each on its own, then joined
+to the ones before it.
 Two halves of a riff become the first half, the second half, then both. A line with chords under the
 whole of it is practised on its own, then played over the chords, which go round as a backing. That
 switches the chords' loop to a backing track.
