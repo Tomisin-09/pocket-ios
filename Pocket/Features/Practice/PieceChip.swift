@@ -16,6 +16,8 @@ struct PieceChip: View {
     /// The symbol of the arrow the player gave it, *Higher*, *Same* or *Lower* (ADR 0301 D7), shown beside
     /// its number. Only Name the notes' strip sets one.
     var arrow: String?
+    /// The colour of the chord it's played over, which its border wears (ADR 0308 D4).
+    var tint: Color?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -40,7 +42,7 @@ struct PieceChip: View {
         .background(RoundedRectangle(cornerRadius: 10, style: .continuous)
             .fill(isCurrent ? PocketColor.practice : .clear))
         .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-            .strokeBorder(isCurrent ? .clear : PocketColor.surfaceBorder))
+            .strokeBorder(isCurrent ? .clear : tint ?? PocketColor.surfaceBorder, lineWidth: tint == nil ? 1 : 1.5))
     }
 
     /// A row of chips fades out at both ends, so a chip cut off by the edge reads as "more this way".

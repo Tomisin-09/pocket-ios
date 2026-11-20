@@ -16,10 +16,13 @@ struct NeckSpotDot: View {
     /// Faded, while *Into it* waits for a start this spot can't be, or a lit *Higher*, *Same* or *Lower*
     /// says the note can't be here (ADR 0301). Only drawn: a dimmed spot takes a tap like any other.
     var isDimmed = false
+    /// A spot of the lick played over the same chord as the note being heard, tinted with the chord's colour
+    /// (ADR 0308 D4). Only an `.other` spot takes it.
+    var isTinted = false
     @Environment(\.neckAccent) private var accent
 
     var body: some View {
-        let style = SpotStyle(tier, accent: accent)
+        let style = SpotStyle(tier, accent: accent, tinted: isTinted)
         Text(name)
             .font(.futura(size: tier == .current ? 10 : 9, weight: tier == nil ? .regular : .bold))
             .lineLimit(1)
@@ -52,7 +55,7 @@ private struct SpotStyle {
     private static let fades: [Double] = [0.64, 0.38, 0.2]
     private static let rings: [Double] = [0.95, 0.6, 0.32]
 
-    init(_ tier: NeckNeighbours.Tier?, accent: Color) {
+    init(_ tier: NeckNeighbours.Tier?, accent: Color, tinted: Bool = false) {
         switch tier {
         case .current?:
             self.init(fill: accent, ink: PocketColor.background, ring: .clear, ringWidth: 1,
@@ -67,8 +70,8 @@ private struct SpotStyle {
                       ring: accent.opacity(Self.rings[min(max(steps, 1), 3) - 1]), ringWidth: 2,
                       numbered: true)
         case .other?:
-            self.init(fill: PocketColor.textPrimary.opacity(0.18), ink: PocketColor.textPrimary, ring: .clear,
-                      ringWidth: 1, numbered: false)
+            self.init(fill: tinted ? accent.opacity(0.4) : PocketColor.textPrimary.opacity(0.18),
+                      ink: PocketColor.textPrimary, ring: .clear, ringWidth: 1, numbered: false)
         case nil:
             self.init(fill: PocketColor.surfaceSubtle.opacity(0.5), ink: PocketColor.textSecondary.opacity(0.55),
                       ring: PocketColor.surfaceBorder, ringWidth: 1, numbered: false)

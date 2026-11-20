@@ -18,6 +18,9 @@ struct PieceNeckView: View {
     let heard: Int?
     /// The fret the board centres on (D5): the lick's middle, then wherever following takes it.
     let centre: Int?
+    /// The lick's spots played over the same chord as the note being heard, tinted with its colour (ADR 0308
+    /// D4). The colour is the `neckAccent` the sheet sets.
+    var tinted: Set<NeckSpot> = []
 
     var body: some View {
         let lit = PieceNeck.heardSpots(heard, of: labels)
@@ -26,7 +29,8 @@ struct PieceNeckView: View {
         let heardMutes = PieceNeck.heardMutes(heard, of: labels)
         FretNeckBoard(stringNames: stringNames, maxFret: PieceLabel.maxFret, scrollTarget: centre,
                       headroom: Self.headroom, showsPinned: !muted.isEmpty) { string, fret in
-            NeckSpotDot(name: name(string: string, fret: fret), tier: tier(string: string, fret: fret, lit: lit))
+            NeckSpotDot(name: name(string: string, fret: fret), tier: tier(string: string, fret: fret, lit: lit),
+                        isTinted: tinted.contains(NeckSpot(string: string, fret: fret)))
         } marks: {
             // The marks of the tap being heard only, as Name the notes draws the note being named's.
             if let heard, labels.indices.contains(heard) {

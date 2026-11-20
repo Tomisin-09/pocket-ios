@@ -46,6 +46,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   for that section and **Pick this section**. Built in 1.4 as *Watch the section* and held back by ADR
   0291; the map's eye that played the whole song from 0:00 is gone, since the whole song is every section
   picked.
+- **Notes in their chord's colour** (ADR 0308, slice 2; 1.5, item 3b). In *Watch it on the neck* from the
+  song map, each note takes the colour of the chord the song is on when it's played, read from the song's
+  chords lane: blue where the song rests (I, VI, III), amber moving away (IV, II), rose wanting to go home
+  (V, VII), silver outside the key. Over the neck, the chord's name and Roman numeral from the song's key,
+  and what comes next (*Am · i*, *then G · VII*). A numeral outlined is a chord on a note of the key that
+  isn't the key's own, with the key's own beside it. A chord named by ear colours notes as a placed one
+  does. With no key set, chords show their names alone, and **Set the key** opens Edit song. A song raised
+  or lowered keeps its numerals and colours.
 
 ### Changed
 

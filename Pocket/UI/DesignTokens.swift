@@ -35,6 +35,7 @@ import SwiftUI
 /// - pin               — waveform markers (purple inverted triangles)
 /// - confirm / danger  — save ✓ (green) / discard·delete ✗ (red)
 /// - loopPalette       — per-loop *identity* hues (see ADR 0023)
+/// - chord(degree:)    — a chord's colour by its root's degree in the song's key (ADR 0308 D7)
 enum PocketColor {
     // MARK: Surfaces
     /// App surface — cream in light appearance, near-black in dark (ADR 0061/0062).
@@ -231,6 +232,31 @@ enum PocketColor {
         Color("LoopViolet"),
         Color("LoopBlue")
     ]
+
+    /// **A chord's colour** (ADR 0308 D7), by its root's degree in the song's key, `nil` for a root outside
+    /// it. Three families, one hue each, the strongest chord in the strongest shade: **home**, where the
+    /// song rests (I, VI, III, blue); **moving away** (IV, II, amber); **tension**, wanting to go home (V,
+    /// VII, rose); and silver outside the key. Clear of green (live), red (delete), purple (pins) and the
+    /// terracotta of the practice accent. Dark values read at 6.1:1 or more on the sheet and carry the dark
+    /// ink at 7.4:1; light values read at 4.7:1 on the cream and carry white at 5.9:1, so in light the
+    /// shades of a family differ by saturation rather than lightness. The numeral beside every colour does
+    /// the work for a player who can't tell the hues apart: colour is never the only sign.
+    static func chord(degree: Int?) -> Color {
+        switch degree {
+        case 1: Color("ChordOne")
+        case 2: Color("ChordTwo")
+        case 3: Color("ChordThree")
+        case 4: Color("ChordFour")
+        case 5: Color("ChordFive")
+        case 6: Color("ChordSix")
+        case 7: Color("ChordSeven")
+        default: Color("ChordOutside")
+        }
+    }
+
+    /// What sits on a chord's colour when it fills a numeral or the heard note (ADR 0308 D7): white on the
+    /// light values, the dark ink (`#040404`) on the dark ones.
+    static let chordInk = Color("ChordInk")
 }
 
 /// Typography (ADR 0061): **Futura** for all prose/UI text (it echoes the "Red Moon"
