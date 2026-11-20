@@ -83,7 +83,11 @@ in the tint, like the Across reverse and the stepper chevrons, and dim when disa
   per-frame redraw itself.
 - **The Scales and Arpeggios editors are still one row each,** with their Advanced as a
   `DisclosureGroup`, so they likely stutter the same way. Splitting them is the same move as D1 and isn't
-  done here.
+  done here. **Later (2026-11-20, 1.5 item 2d, `pocket-455-scale-arpeggio-rows`):** Tomisin confirmed on
+  the phone that they stuttered, and both are now rows by D1, with Advanced under an
+  `EditorDisclosureHeader` and its contents as sibling rows. `EditorDisclosure`, the `DisclosureGroup`
+  shell, had no callers left and is deleted. What Advanced holds and how it reads didn't change: a
+  regroup like D2/D3 for these two editors is still not decided.
 - **`exercises/configure` is stale** (the finger pattern's buttons are terracotta now), as is any figure
   showing a stepper or a Rhythm value. It goes on the reshoot list rather than being shot per branch.
 - The manual's prose stands: it says you set *"whether it moves"*, which Movement still covers, and it

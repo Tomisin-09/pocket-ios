@@ -74,6 +74,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **The Scales and Arpeggios editors no longer stutter when Advanced opens** (1.5, item 2d). Each was
+  one tall row holding the board, which redraws every frame, so opening or closing Advanced resized
+  the whole thing while it moved. Advanced now adds its settings beneath it as rows of their own, as
+  Movement does on the Warm-up, Picking and Legato editors (ADR 0293). What's in Advanced and how it
+  reads don't change.
 - **Edit song's key picker no longer wraps *D♯* and *G♯*** (ADR 0305 D8). Their chips broke onto two lines
   and grew into circles while *C♯* and *F♯* fit. Every root is one line now, and at the largest text sizes
   the grid drops to four columns, then three, rather than wrap.
