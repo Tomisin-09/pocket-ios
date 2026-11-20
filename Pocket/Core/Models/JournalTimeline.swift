@@ -199,9 +199,10 @@ enum JournalTimeline {
         var parts: [String] = []
         if let owner = ownerLabel(for: item) { parts.append(owner) }
         if let template = templateLabel(for: item) { parts.append(template) }
-        // A named take must be findable by its name — otherwise naming one makes it identifiable
-        // everywhere except the search field that exists to find it.
-        if case .take(let take) = item, let title = take.title { parts.append(title) }
+        // A take is found by the name it's shown by: the player's, or its number (ADR 0307 D5), so
+        // *chorus take 3* finds the one. Otherwise a name would identify a take everywhere except the
+        // search field that exists to find it.
+        if case .take(let take) = item { parts.append(take.displayTitle) }
         // A piece is found by what it is, and by what it holds: its tuning and its names.
         if case .piece(let piece) = item {
             parts.append("piece transcribed")

@@ -18,7 +18,7 @@ final class RecordingTests: XCTestCase {
     /// take labelled with some unit's name is the exact corruption 0155 exists to prevent.
     func testAStandaloneTakeIsFlaggedAndCaptionless() {
         let take = Recording(fileName: "x.m4a", duration: 12)
-        RecordingOwner.standalone.attach(to: take)
+        RecordingOwner.standalone.attach(to: take, in: nil)
 
         XCTAssertEqual(take.isStandalone, true)
         XCTAssertEqual(take.ownerKind, .standalone)
@@ -91,8 +91,8 @@ final class RecordingTests: XCTestCase {
         let exerciseTake = Recording(fileName: "e.m4a", duration: 5)
         context.insert(loopTake)
         context.insert(exerciseTake)
-        RecordingOwner.loop(loop, .ear).attach(to: loopTake)
-        RecordingOwner.exercise(exercise).attach(to: exerciseTake)
+        RecordingOwner.loop(loop, .ear).attach(to: loopTake, in: nil)
+        RecordingOwner.exercise(exercise).attach(to: exerciseTake, in: nil)
         try context.save()
 
         XCTAssertEqual(loopTake.ownerKind, .loop)
@@ -110,14 +110,14 @@ final class RecordingTests: XCTestCase {
         for mode in LoopRunMode.allCases {
             let take = Recording(fileName: "l.m4a", duration: 5)
             RecordingOwner.loop(Loop(name: "Verse", start: 0, end: 0.2, speed: 1, repeats: 1), mode)
-                .attach(to: take)
+                .attach(to: take, in: nil)
             XCTAssertEqual(take.loopRunMode, mode)
         }
         let song = Song(title: "Etude", duration: 60, ref: SongRef(id: "x", source: .localFile, bookmark: nil))
         let owners: [RecordingOwner] = [.exercise(Exercise(name: "Spider")), .song(song), .standalone]
         for owner in owners {
             let take = Recording(fileName: "x.m4a", duration: 5)
-            owner.attach(to: take)
+            owner.attach(to: take, in: nil)
             XCTAssertNil(take.loopRunModeRaw, "\(owner) took a mode")
         }
     }
@@ -140,8 +140,8 @@ final class RecordingTests: XCTestCase {
         context.insert(loop)
         context.insert(earTake)
         context.insert(rampTake)
-        RecordingOwner.loop(loop, .ear).attach(to: earTake)
-        RecordingOwner.loop(loop, .trainer).attach(to: rampTake)
+        RecordingOwner.loop(loop, .ear).attach(to: earTake, in: nil)
+        RecordingOwner.loop(loop, .trainer).attach(to: rampTake, in: nil)
         try context.save()
         XCTAssertEqual(RecordingOwner.loop(loop, .improvise).recordingsByRecent.map(\.uid),
                        [rampTake.uid, earTake.uid])
@@ -157,7 +157,7 @@ final class RecordingTests: XCTestCase {
         let take = Recording(fileName: "keep-me.m4a", duration: 8)
         context.insert(loop)
         context.insert(take)
-        RecordingOwner.loop(loop, .trainer).attach(to: take)
+        RecordingOwner.loop(loop, .trainer).attach(to: take, in: nil)
         try context.save()
 
         context.delete(loop)
@@ -184,7 +184,7 @@ final class RecordingTests: XCTestCase {
         context.insert(loop)
         context.insert(take)
         loop.song = song
-        RecordingOwner.loop(loop, .trainer).attach(to: take)
+        RecordingOwner.loop(loop, .trainer).attach(to: take, in: nil)
         try context.save()
         XCTAssertEqual(take.ownerLabelAtTake, "Don't Know Why · Chords")
 
@@ -201,9 +201,8 @@ final class RecordingTests: XCTestCase {
     // Uninserted models throughout — inserting a graph SIGTRAPs in the XCTest host, and none of this
     // needs a store.
 
-    /// An unnamed take renders exactly as it always did, so no existing row changes until the player
-    /// names something.
-    func testAnUnnamedTakeStillReadsAsATake() {
+    /// A take with neither a name nor a number (the backfill should leave none) reads as it always did.
+    func testAnUnnamedUnnumberedTakeStillReadsAsATake() {
         XCTAssertNil(Recording(fileName: "x.m4a", duration: 12).title)
         XCTAssertEqual(Recording(fileName: "x.m4a", duration: 12).displayTitle, "Take")
     }
@@ -215,13 +214,12 @@ final class RecordingTests: XCTestCase {
         XCTAssertEqual(take.displayTitle, "Bridge, third attempt")
     }
 
-    /// A cleared field must leave the take as it was rather than storing whitespace that would render
-    /// as a blank row with nothing to tap.
-    func testRenamingToNothingIsRefused() {
+    /// A cleared field clears the name (ADR 0307 D4), and never stores whitespace.
+    func testRenamingToNothingClearsTheName() {
         let take = Recording(fileName: "x.m4a", duration: 12)
         take.rename(to: "Solo take")
         take.rename(to: "   \n ")
-        XCTAssertEqual(take.title, "Solo take")
+        XCTAssertNil(take.title)
 
         let untouched = Recording(fileName: "y.m4a", duration: 12)
         untouched.rename(to: "")

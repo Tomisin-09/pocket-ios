@@ -104,6 +104,11 @@ struct RecordingRecord: Codable, Equatable, Sendable {
     var metronomeNoteValueAtTake: Int?
     var metronomeSubdivisionRaw: String?
     var metronomeWithdrawalRaw: String?
+
+    /// The take's number in the count it was recorded in (ADR 0307). **Optional**, like
+    /// `isStandalone`: an archive written before it decodes as `nil`, and `TakeNumberBackfill`
+    /// numbers the take after the restore.
+    var takeNumber: Int?
 }
 
 /// A note pinned to a point in a take (ADR 0175).

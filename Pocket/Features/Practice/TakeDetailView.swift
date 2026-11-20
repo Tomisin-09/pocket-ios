@@ -192,7 +192,7 @@ struct TakeDetailView: View {
             Button {
                 renaming = StableRef(value: take)
             } label: {
-                Label(take.title == nil ? "Name this take" : "Rename", systemImage: "pencil")
+                Label("Rename", systemImage: "pencil")
             }
             Button {
                 editingNote = StableRef(value: take)

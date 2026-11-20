@@ -39,6 +39,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Changed
 
+- **A take is numbered where it was recorded** (ADR 0307; 1.5, item 5). A take you haven't named reads
+  *Take 3*, counted on its loop (every mode together) or exercise, at the metronome, or on the Journal's
+  ＋, with what it was recorded on still on the line beside it. A loop's Takes sheet shows the number
+  where it showed the date, and the date moves to the line beneath. The hold menu reads *Rename* on every
+  take; saving the name empty brings the number back. The takes already on the phone are numbered once,
+  in the order they were recorded. An exported take is named *Slow Bend · Chorus · Take 3 · 1 Oct
+  2026*, and Journal search finds *take 3*.
 - **Home's *This week* strip reads only the week** (1.5, item 2a). It used to fetch every practice run and
   every note to count seven days, so it slowed as history grew. On a copy of the phone's store it now
   costs about 32 ms at today's 437 runs (60 ms before) and stays flat at four times that history (135 ms

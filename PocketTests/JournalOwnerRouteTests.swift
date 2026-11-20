@@ -148,7 +148,7 @@ final class JournalOwnerRouteTests: XCTestCase {
     private func loopTake(on loop: Loop, recordedIn mode: LoopRunMode?) -> JournalTimeline.Item {
         let take = Recording(fileName: "take.m4a", duration: 30)
         if let mode {
-            RecordingOwner.loop(loop, mode).attach(to: take)
+            RecordingOwner.loop(loop, mode).attach(to: take, in: nil)
         } else {
             take.loop = loop   // a take from before 0265: a loop, and no mode
         }

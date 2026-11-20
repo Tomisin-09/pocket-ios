@@ -95,6 +95,7 @@ extension ArchiveRestoreWriter {
             take.metronomeNoteValueAtTake = record.metronomeNoteValueAtTake
             take.metronomeSubdivisionRaw = record.metronomeSubdivisionRaw
             take.metronomeWithdrawalRaw = record.metronomeWithdrawalRaw
+            take.takeNumber = record.takeNumber
             let moments = record.moments.map { moment in
                 TakeNote(time: moment.time, text: moment.text, uid: moment.uid, createdAt: moment.createdAt)
             }

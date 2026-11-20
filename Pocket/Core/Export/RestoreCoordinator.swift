@@ -153,6 +153,9 @@ enum RestoreCoordinator {
         landing.insert(into: context)
         // Saved before a single byte is written, which is D7's rule stated as code.
         try? context.save()
+        // A take from an archive written before ADR 0307 arrives without a number. Numbered now
+        // rather than at the next launch, so it doesn't read *Take* until then (0307 D8).
+        TakeNumberBackfill.run(into: context)
 
         // Everything below is plain values — `ZipArchiveReader`, `ZipEntry` and `URL` are all
         // `Sendable` — so inflating and writing a library's worth of take audio happens off the main

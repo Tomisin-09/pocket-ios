@@ -12,7 +12,8 @@ extension Recording {
         guard let source = try? RecordingStore.url(for: fileName, fileManager),
               fileManager.fileExists(atPath: source.path(percentEncoded: false)) else { return nil }
         let owner = JournalTimeline.ownerLabel(loop: loop, exercise: exercise, song: song) ?? ownerLabelAtTake
-        let stem = TakeExportName.stem(title: title, ownerLabel: owner, createdAt: createdAt)
+        let stem = TakeExportName.stem(title: title, ownerLabel: owner, takeNumber: takeNumber,
+                                       createdAt: createdAt)
         return ExportedAudioFile(source: source,
                                  fileName: ExportStaging.fileName(stem: stem, fileExtension: source.pathExtension))
     }

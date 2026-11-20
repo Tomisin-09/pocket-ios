@@ -86,8 +86,9 @@ and `Record a take`. Underneath, a search field prompting
   that screen is saved; Back returns to the feed where you left it.
 
 **Delete** is a left swipe on a note or a take (the swipe shows the button; it never deletes on its
-own) and the last item in the hold menu. A take's hold menu leads with `Name this take`, or `Rename`
-once it has one, then `Export take…`; renaming is also a right swipe.
+own) and the last item in the hold menu. A take's hold menu leads with `Rename`, then `Export take…`;
+renaming is also a right swipe. A take you haven't named reads `Take 3`, numbered where it was recorded.
+<!-- not-in-source: "Take 3" — built at runtime from the take's number (ADR 0307, TakeNumbering.name) -->
 
 Empty, the wording follows the scope you are in — `Nothing here yet`, `No notes yet` or
 `No takes yet` — and a search with no hits says `No matches`.

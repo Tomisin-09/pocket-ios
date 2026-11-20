@@ -39,6 +39,16 @@ final class Recording {
     /// default**, so lightweight migration is exempt from the mandatory-attribute rule.
     var title: String?
 
+    /// This take's number in the count it was recorded in (ADR 0307): a loop's takes in every mode,
+    /// an exercise's, the metronome's, or the Journal ＋'s. Given once, at capture through
+    /// `RecordingOwner.attach(to:in:)` or by `TakeNumberBackfill` for a take recorded before it, and
+    /// never changed. A take the player hasn't named is shown by it, *Take 3*.
+    ///
+    /// Stored, and the name built when it's shown, rather than *Take 3* written into `title`: the
+    /// player's name and the number have to stay told apart (D2, D4). Additive optional with **no
+    /// declaration default**, the shape `title` has (CoreData 134110).
+    var takeNumber: Int?
+
     /// What the player wrote about this take, or `nil` for one never annotated (ADR 0174).
     ///
     /// A take's own field, deliberately **not** a `JournalEntry` owned by the recording. A note here
@@ -204,16 +214,20 @@ final class Recording {
         return String(format: "%d:%02d", total / 60, total % 60)
     }
 
-    /// What a row calls this take: its name, or the generic word every take used to be stuck with.
-    /// Every existing row keeps rendering unchanged and no call site has to unwrap.
-    var displayTitle: String { title ?? "Take" }
+    /// What a take the player hasn't named is called, *Take 3*, or `nil` for one with no number
+    /// (ADR 0307). The rename field's placeholder, and what clearing a name brings back.
+    var numberedName: String? { takeNumber.map(TakeNumbering.name) }
 
-    /// Name (or rename) this take, following `SavedChord.rename(to:)`: trim, and refuse an empty
-    /// result rather than storing whitespace that would render as a blank row.
+    /// What a row calls this take: the player's name, then its number, *Take 3* (ADR 0307 D3), then
+    /// the generic word for a take with neither, which the backfill should leave none of.
+    var displayTitle: String { title ?? numberedName ?? "Take" }
+
+    /// Name (or rename) this take: trim, and store an empty result as **no name**, which brings the
+    /// number back (ADR 0307 D4). Before 0307 an empty name was refused, because a take with no
+    /// title rendered as a blank row; now it renders as *Take 3*.
     func rename(to newTitle: String) {
         let trimmed = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        title = trimmed
+        title = trimmed.isEmpty ? nil : trimmed
     }
 
     /// Whether this take carries a whole-take note. Drives the note editor's own title
@@ -245,10 +259,8 @@ final class Recording {
         return note
     }
 
-    /// Write (or clear) this take's note. Unlike `rename(to:)`, an empty result **is** meaningful
-    /// here and clears the note rather than being refused: naming a take is how you tell it apart, so
-    /// a blank name is a mistake, but a note you no longer want is a note you should be able to
-    /// delete. Whitespace still stores as `nil`, never as a note that renders as an empty block.
+    /// Write (or clear) this take's note. An empty result clears the note, as an empty name clears the
+    /// name. Whitespace stores as `nil`, never as a note that renders as an empty block.
     func setNote(_ newNote: String) {
         let trimmed = newNote.trimmingCharacters(in: .whitespacesAndNewlines)
         note = trimmed.isEmpty ? nil : trimmed

@@ -34,6 +34,9 @@ extension HomeView {
         // Give each loop take from before ADR 0265 the mode it was recorded in, from the practice
         // log, so its caption stops opening the ramp. Once: a take the log can't place stays put.
         TakeModeBackfill.runIfNeeded(into: context)
+        // Number every take that has none, in the order each count recorded them (ADR 0307 D8). Every
+        // launch, for restored archives; a re-run writes nothing.
+        TakeNumberBackfill.run(into: context)
         // Set aside every rating a command has already moved off (ADR 0250), so a store from before
         // it reads the way a command move reads now. Every launch, for restored archives; a re-run
         // writes nothing.
