@@ -43,8 +43,9 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
      which ran into the number too, is moved with it. Device look owed. The *After the freeze* bullet *A bent note's
      number covers its arc*. Wants a look on the device.
    - **2d. The Scales and Arpeggios editors as rows** (M). The entry *Split the Scales and Arpeggios
-     editors into rows* below. It starts with a device check that they stutter; if they don't, the
-     item closes without a build. Whether their contents regroup is not decided.
+     editors into rows* below. Tomisin confirmed the stutter on the phone (2026-11-20); **built
+     2026-11-20** on `pocket-455-scale-arpeggio-rows`, rows only. Whether their contents regroup is not
+     decided.
 3. **Watch what you pick** (L, ADR 0308; it was *Watch the section, rethought*). **Decided 2026-11-19**
    against a canvas mockup (https://claude.ai/artifact/FnmVT9uSJF4o5jwYiQV9Jx, private), and the ADR holds
    the detail. Picking on the map has two ends, **Watch** and **Put it together**; a section's name picks
@@ -490,7 +491,11 @@ shift when it lands, since none of them span more than four frets today.
 
 ## Split the Scales and Arpeggios editors into rows (logged 2026-11-11, follows ADR 0293) — in 1.5, item 2d
 
-**Ready to pick up.** ADR 0293 (#412) fixed the lag in the Warm-up / Picking / Legato editor by making
+**Built 2026-11-20** on `pocket-455-scale-arpeggio-rows`, after Tomisin confirmed on the phone that both
+stuttered. It is the rows-only version: Advanced reads as before, and the regroup below stays not
+decided. ADR 0293's open item carries the note. What follows is the plan as it was logged.
+
+**Was: ready to pick up.** ADR 0293 (#412) fixed the lag in the Warm-up / Picking / Legato editor by making
 it Form rows. The Scales and Arpeggios editors have the same structure that caused that lag, so they
 very likely stutter the same way when Advanced opens.
 

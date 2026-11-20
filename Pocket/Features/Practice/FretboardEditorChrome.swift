@@ -238,60 +238,23 @@ struct MostCommonBadge: View {
 
 // MARK: - Disclosure (Advanced / Movement)
 
-/// A named, collapsed-by-default disclosure carrying a terse summary of what's inside, so a run's
-/// settings are legible without opening it. Its title is an `EditorFieldLabel` — the same component
-/// every other setting row uses — because the hand-rolled title it replaced rendered a shade lighter
-/// and read as secondary chrome next to the controls it governs (device feedback 2026-07-28).
-///
-/// **"Advanced" means one thing** (triage decision, 2026-07-28): each editor has at most one
-/// disclosure by that name. The scale and arpeggio editors use this shell for theirs. The picking-run
-/// editor has no Advanced any more and lays its **Movement** out as rows under an
-/// `EditorDisclosureHeader` instead (ADR 0293).
-struct EditorDisclosure<Content: View>: View {
-    let title: String
-    @Binding var isExpanded: Bool
-    /// What's on inside, one item per setting that deviates from its default — spelled out for the
-    /// first couple and counted after that (see `EditorSummary.line`).
-    let summaryParts: [String]
-    /// What the row reads when nothing deviates (blank for Advanced, whose Rhythm item is always
-    /// present).
-    var emptyLabel: String = ""
-    var tint: Color = PocketColor.practice
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        DisclosureGroup(isExpanded: $isExpanded) {
-            VStack(alignment: .leading, spacing: 16) { content }
-                .padding(.top, 10)
-        } label: {
-            HStack {
-                EditorFieldLabel(title)
-                Spacer()
-                // The label's size, not caption (ADR 0293): the summary is the row's value, and at
-                // caption it was the smallest text on the editor.
-                Text(summaryParts.isEmpty ? emptyLabel : EditorSummary.line(summaryParts))
-                    .font(.futura(.subheadline))
-                    .foregroundStyle(PocketColor.textSecondary)
-                    .lineLimit(1)
-                    // VoiceOver gets the whole list — the "+N" is a *visual* budget, not a decision to
-                    // withhold the settings from someone who can't open the row to look.
-                    .accessibilityLabel(summaryParts.isEmpty
-                                        ? emptyLabel : summaryParts.joined(separator: ", "))
-            }
-        }
-        .tint(tint)
-    }
-}
-
 /// The header row of a disclosure whose contents are **sibling Form rows** (ADR 0293), not the inside of
-/// a `DisclosureGroup`. It reads like `EditorDisclosure` (title, summary, chevron), but opening it
-/// inserts rows into the `Section` instead of growing the row it sits in, so an editor whose preview
-/// redraws every frame doesn't re-measure that preview each time. The caller lays the rows out under it
-/// behind its own `if isExpanded`.
+/// a `DisclosureGroup`: a title, a terse summary of what's inside, and a chevron. Opening it inserts rows
+/// into the `Section` instead of growing the row it sits in, so an editor whose preview redraws every
+/// frame doesn't re-measure that preview each time. The caller lays the rows out under it behind its own
+/// `if isExpanded`. Every run editor's disclosure is one of these: the picking-run editor's **Movement**,
+/// and the scale and arpeggio editors' **Advanced** (1.5, item 2d). The `DisclosureGroup` shell they used
+/// before is gone.
+///
+/// Its title is an `EditorFieldLabel`, the same component every other setting row uses, because a
+/// hand-rolled title once rendered a shade lighter and read as secondary chrome next to the controls it
+/// governs (device feedback 2026-07-28). **"Advanced" means one thing** (triage decision, 2026-07-28):
+/// each editor has at most one disclosure by that name.
 struct EditorDisclosureHeader: View {
     let title: String
     @Binding var isExpanded: Bool
-    /// What the collapsed row says, as for `EditorDisclosure`: spelled out for two, `+N` after.
+    /// What's on inside, one item per setting that deviates from its default: spelled out for the first
+    /// two, `+N` after (`EditorSummary.line`).
     let summaryParts: [String]
     var tint: Color = PocketColor.practice
 
@@ -348,8 +311,8 @@ enum EditorSummary {
 
 /// The note-density control, **renamed from "Subdivision" to "Rhythm"** and demoted from a segmented
 /// control to a dropdown (2026-07-28): "subdivision" is engine vocabulary, and four segments ate a
-/// full row inside a disclosure that now holds several settings. Lives inside the scale and arpeggio
-/// editors' `EditorDisclosure`, and is a row of its own in the picking-run editor (ADR 0293); the
+/// full row inside a disclosure that now holds several settings. A row under the scale and arpeggio
+/// editors' Advanced, and a row of its own in the picking-run editor (ADR 0293); the
 /// custom-drill editor keeps its own inline picker, because changing it there re-grids the drill.
 ///
 /// A `Menu` around the `Picker` rather than a `.menu` picker, so the value is drawn in Futura at the

@@ -5,6 +5,11 @@ import SwiftUI
 /// notes-per-string generator lays the box out and walks it. A live preview shows the run before it's
 /// saved; "up and back" and the rhythm (Advanced, default quarters) round it out.
 ///
+/// **It is several Form rows, not one** (ADR 0293 D1, the same move as `FretboardRunEditor`). The body is
+/// a `Group`, so the `Section` it sits in gets a row per control, and opening **Advanced** inserts rows
+/// rather than resizing one tall row that also holds the preview, whose `TimelineView` redraws every
+/// frame. As one row it stuttered on device when Advanced opened (1.5, item 2d).
+///
 /// A thin skin over `ScaleRun` — each control rebuilds the bound recipe (whose init clamps the
 /// position/octaves), and the preview reads `run.expanded()`; no timing logic here (T5). **T10** —
 /// every colour is a semantic `PocketColor` role. Shared chrome (Watch/Display bar, field labels,
@@ -36,10 +41,8 @@ struct ScaleRunEditor: View {
     @State private var playOnceToken: Date?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint)
-            FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
-                                  labelMode: labelMode, playOnceToken: playOnceToken)
+        Group {
+            previewRow
             titleField
             LabeledMenuRow(label: "Scale") { scalePicker }
             LabeledMenuRow(label: "Root") {
@@ -49,7 +52,21 @@ struct ScaleRunEditor: View {
             // Bass is box-only (the diagonal / 3-notes-per-string layouts are guitar techniques, ADR 0116).
             if instrument == .guitar, run.scale.supportedLayouts.count > 1 { layoutRow }
             if run.positionCount(for: instrument) > 1 { positionRow }
-            advanced
+            EditorDisclosureHeader(title: "Advanced", isExpanded: $showsAdvanced,
+                                   summaryParts: advancedSummary, tint: tint)
+            if showsAdvanced { advancedRows }
+        }
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+    }
+
+    /// Watch · Display over the walking board: one row, so the rows under it coming and going never
+    /// re-measure the board that redraws every frame.
+    private var previewRow: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint)
+            FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
+                                  labelMode: labelMode, playOnceToken: playOnceToken)
         }
     }
 
@@ -58,20 +75,18 @@ struct ScaleRunEditor: View {
     /// **Scale · Root · Layout · Position stay above the fold**; everything that shapes how the box is
     /// *played* rather than which box it is drops into one Advanced disclosure (2026-07-28) — Rhythm,
     /// Octaves, Sequence, Up-and-back and the starting note. The collapsed summary carries whatever
-    /// deviates from the defaults, so a run stays legible without opening it.
-    private var advanced: some View {
-        EditorDisclosure(title: "Advanced", isExpanded: $showsAdvanced,
-                         summaryParts: advancedSummary, tint: tint) {
-            RhythmRow(notesPerBeat: subdivisionBinding, accessibilityLabel: "Scale rhythm", tint: tint)
-            if run.layout.usesOctaves { octavesRow }
-            sequenceRow
-            Toggle("Up and back", isOn: roundTripBinding)
-                .font(.futura(.subheadline, weight: .semibold))
-                .tint(tint)
-            // Box-only: the diagonal and 3-notes-per-string patterns are defined by their string-by-string
-            // fingering, so starting one part-way through would break the pattern being taught.
-            if run.layout == .box { lowestRootToggle }
-        }
+    /// deviates from the defaults, so a run stays legible without opening it. Each is a row of the
+    /// editor's `Section`, under the header in `body`.
+    @ViewBuilder private var advancedRows: some View {
+        RhythmRow(notesPerBeat: subdivisionBinding, accessibilityLabel: "Scale rhythm", tint: tint)
+        if run.layout.usesOctaves { octavesRow }
+        sequenceRow
+        Toggle("Up and back", isOn: roundTripBinding)
+            .font(.futura(.subheadline, weight: .semibold))
+            .tint(tint)
+        // Box-only: the diagonal and 3-notes-per-string patterns are defined by their string-by-string
+        // fingering, so starting one part-way through would break the pattern being taught.
+        if run.layout == .box { lowestRootToggle }
     }
 
     private var lowestRootToggle: some View {
@@ -88,7 +103,7 @@ struct ScaleRunEditor: View {
 
     /// A terse read of what's inside the closed disclosure: the rhythm always, then only what *differs*
     /// from the defaults — showing "Up and back" when it's on (the default) would be pure noise.
-    /// `EditorDisclosure` spells out the first couple and counts the rest, so this can grow safely.
+    /// `EditorDisclosureHeader` spells out the first couple and counts the rest, so this can grow safely.
     private var advancedSummary: [String] {
         var parts = [FretboardSubdivisions.label(forPerBeat: run.notesPerBeat)]
         if run.layout.usesOctaves, run.octaves == 1 { parts.append("1 octave") }
@@ -260,9 +275,11 @@ struct ScaleRunEditor: View {
     struct Harness: View {
         @State private var run = ScaleRun.aMinorPentatonic
         var body: some View {
-            ScaleRunEditor(run: $run)
-                .padding()
-                .background(PocketColor.background)
+            // A Form, as in the app: the editor is a run of rows (ADR 0293), and outside a List its
+            // `Group` would just stack them with each row's modifiers doing nothing.
+            Form {
+                Section { ScaleRunEditor(run: $run) }
+            }
         }
     }
     return Harness().preferredColorScheme(.dark)
@@ -272,9 +289,11 @@ struct ScaleRunEditor: View {
     struct Harness: View {
         @State private var run = ScaleRun.aMinorPentatonicExtended
         var body: some View {
-            ScaleRunEditor(run: $run)
-                .padding()
-                .background(PocketColor.background)
+            // A Form, as in the app: the editor is a run of rows (ADR 0293), and outside a List its
+            // `Group` would just stack them with each row's modifiers doing nothing.
+            Form {
+                Section { ScaleRunEditor(run: $run) }
+            }
         }
     }
     return Harness().preferredColorScheme(.dark)
@@ -284,9 +303,11 @@ struct ScaleRunEditor: View {
     struct Harness: View {
         @State private var run = ScaleRun.gMajorThreePerString
         var body: some View {
-            ScaleRunEditor(run: $run)
-                .padding()
-                .background(PocketColor.background)
+            // A Form, as in the app: the editor is a run of rows (ADR 0293), and outside a List its
+            // `Group` would just stack them with each row's modifiers doing nothing.
+            Form {
+                Section { ScaleRunEditor(run: $run) }
+            }
         }
     }
     return Harness().preferredColorScheme(.dark)

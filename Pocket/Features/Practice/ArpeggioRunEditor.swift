@@ -6,6 +6,9 @@ import SwiftUI
 /// the generator lays the chord-tone box out and walks it. A live preview shows the run before it's
 /// saved; "up and back" and the rhythm (Advanced, default quarters) round it out.
 ///
+/// **Several Form rows, not one** (ADR 0293 D1), for the reason given on `ScaleRunEditor`: opening
+/// **Advanced** inserts rows instead of resizing the one that holds the every-frame preview.
+///
 /// A thin skin over `ArpeggioRun` — each control rebuilds the bound recipe (whose init clamps the
 /// position/octaves), and the preview reads `run.expanded()`; no timing logic here (T5). **T10** —
 /// every colour is a semantic `PocketColor` role. Shared chrome lives in `FretboardEditorChrome`.
@@ -36,10 +39,8 @@ struct ArpeggioRunEditor: View {
     @State private var playOnceToken: Date?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint)
-            FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
-                                  labelMode: labelMode, playOnceToken: playOnceToken)
+        Group {
+            previewRow
             titleField
             LabeledMenuRow(label: "Arpeggio") { qualityPicker }
             LabeledMenuRow(label: "Root") {
@@ -47,7 +48,20 @@ struct ArpeggioRunEditor: View {
                                name: { rootName(pitchClass: $0) })
             }
             if run.positionCount(for: instrument) > 1 { positionRow }
-            advanced
+            EditorDisclosureHeader(title: "Advanced", isExpanded: $showsAdvanced,
+                                   summaryParts: advancedSummary, tint: tint)
+            if showsAdvanced { advancedRows }
+        }
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+    }
+
+    /// Watch · Display over the walking board, as one row (see `ScaleRunEditor.previewRow`).
+    private var previewRow: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint)
+            FretboardDrillPreview(drill: run.expanded(instrument: instrument), tint: tint,
+                                  labelMode: labelMode, playOnceToken: playOnceToken)
         }
     }
 
@@ -55,17 +69,15 @@ struct ArpeggioRunEditor: View {
 
     /// **Arpeggio · Root · Position stay above the fold**; everything that shapes how the box is *played*
     /// drops into one Advanced disclosure (2026-07-28) — Rhythm, Octaves, Up-and-back and the starting
-    /// note. There is no Sequence axis on arpeggios. The collapsed summary carries the deviations.
-    private var advanced: some View {
-        EditorDisclosure(title: "Advanced", isExpanded: $showsAdvanced,
-                         summaryParts: advancedSummary, tint: tint) {
-            RhythmRow(notesPerBeat: subdivisionBinding, accessibilityLabel: "Arpeggio rhythm", tint: tint)
-            octavesRow
-            Toggle("Up and back", isOn: roundTripBinding)
-                .font(.futura(.subheadline, weight: .semibold))
-                .tint(tint)
-            lowestRootToggle
-        }
+    /// note. There is no Sequence axis on arpeggios. The collapsed summary carries the deviations. Each
+    /// is a row of the editor's `Section`, under the header in `body`.
+    @ViewBuilder private var advancedRows: some View {
+        RhythmRow(notesPerBeat: subdivisionBinding, accessibilityLabel: "Arpeggio rhythm", tint: tint)
+        octavesRow
+        Toggle("Up and back", isOn: roundTripBinding)
+            .font(.futura(.subheadline, weight: .semibold))
+            .tint(tint)
+        lowestRootToggle
     }
 
     private var lowestRootToggle: some View {
@@ -194,9 +206,10 @@ struct ArpeggioRunEditor: View {
     struct Harness: View {
         @State private var run = ArpeggioRun.aMinorSeventh
         var body: some View {
-            ArpeggioRunEditor(run: $run)
-                .padding()
-                .background(PocketColor.background)
+            // A Form, as in the app: the editor is a run of rows (ADR 0293).
+            Form {
+                Section { ArpeggioRunEditor(run: $run) }
+            }
         }
     }
     return Harness().preferredColorScheme(.dark)
