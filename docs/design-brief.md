@@ -132,6 +132,7 @@ near-invisible on near-black (ADR 0063).
 | `marker` | orange | orange | Reserved (ADR 0023) — not currently drawn anywhere; kept as the next free functional hue |
 | `pin` | purple | purple | Waveform markers, single-point (system dynamic colour) |
 | `loopPalette` | red/orange/gold/magenta/violet/blue | deepened twins, same hues | Per-loop **identity** colour (ADR 0023); plain non-brand hues since ADR 0063 — a loop's job is to be distinguishable, not brand-consistent |
+| `chord(degree:)` | I `#4C9DFF` · VI `#7FB8FF` · III `#A9D2FF` · IV `#F5B841` · II `#F7DC86` · V `#FF6F91` · VII `#FFA8BD` · outside `#C7C7CC` | I `#0048A7` · VI `#265BA1` · III `#416698` · IV `#7D4F00` · II `#786228` · V `#A60D4B` · VII `#A63F73` · outside `#606069` | A chord's colour in *Watch it on the neck*, by its root's degree in the song's key (ADR 0308 D7): **home** blue (I, VI, III), **moving away** amber (IV, II), **tension** rose (V, VII), silver outside the key. One asset per entry (`ChordOne`…`ChordSeven`, `ChordOutside`) with both appearances; `chordInk` (white / `#040404`) sits on them as a fill. Clear of green, red, purple and terracotta; the numeral beside every colour does the work for a player who can't tell the hues apart. The light values are worked out from contrast and owe a look on the phone |
 | `barDefault` | `#5C5C5C` | `#88817A` | Neutral "off" fill — empty mastery dots, minimap base track |
 | `barPlayed` | `#313131` | `#C1B6AD` | Neutral track (minimap) |
 

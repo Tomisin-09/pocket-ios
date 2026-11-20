@@ -9,9 +9,11 @@ import Foundation
 /// key; non-diatonic steps get an accidental. Deliberately simple — it labels the common diatonic and
 /// borrowed chords players actually drill, not every enharmonic edge case.
 enum RomanNumeral {
-    private static let majorKey =
+    /// Each semitone above the tonic, as its numeral. `ChordNumeral` reads the same tables (ADR 0308 D6), so
+    /// a chord diagram's badge and Watch it on the neck never number one root two ways.
+    static let majorKey =
         ["I", "♭II", "II", "♭III", "III", "IV", "♭V", "V", "♭VI", "VI", "♭VII", "VII"]
-    private static let minorKey =
+    static let minorKey =
         ["I", "♭II", "II", "III", "♯III", "IV", "♭V", "V", "VI", "♯VI", "VII", "♯VII"]
 
     /// The numeral for a chord rooted at `rootPitchClass` in the given key. Case follows the chord's

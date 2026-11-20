@@ -354,6 +354,17 @@ or choose `Pick pieces…` on a piece, pick what you want, and tap `Watch` on th
 start of the first piece picked to the end of the last, and only the picks light. A piece between them that
 isn't picked plays and stays dark, and the neck says `Not picked` while it does. The top of the sheet names
 what was picked and the bars it covers, and the play button says where it starts.
+
+When the song has chords on its map, the notes take the colour of the chord the song is on as they're
+played, picked or not: blue for the chords where the song rests (I, VI, III), amber for the ones that
+move away (IV, II), rose for the ones that want to go home (V, VII), and silver for a chord outside the
+key. Over the neck sit the chord's name and its Roman numeral, counted from the song's key, and what
+comes next: *Am · i*, *then G · VII*. The heard note is filled with the chord's colour, the other notes
+over the same chord are tinted with it, and the first note of each chord carries its name. A numeral
+drawn as an outline is a chord on a note of the key but not the key's own, and the line under it says
+what the key's own would be. Only the colour and the name show: under notes, a chord's shape is never
+drawn. With only chords picked, each shape lights in its colour. If the song has no key, the chords show
+their names alone, and `Set the key` opens `Edit song`.
 <!-- not-in-source: "Not picked" — built at runtime with the piece's name, "Not picked: Solo 5" (ADR 0308 D3, SongMapPicking.Watch.notPicked) -->
 
 <!-- shot: reference/watch-on-neck | role: screen

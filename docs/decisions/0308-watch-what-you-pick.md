@@ -1,7 +1,7 @@
 # ADR 0308 — Watch what you pick: picking on the map, and notes in their chord's colour
 
-- **Status:** Accepted on 2026-11-19. **Slice 1 (D1–D3, D8) built 2026-11-20**; slice 2 (D4's colours, D5–D7)
-  not yet. See *Build notes*. Decided with Tomisin the same day against a canvas
+- **Status:** Accepted on 2026-11-19. **Built 2026-11-20** in two slices: picking and the bar (D1–D3, D8),
+  then the chords' colour (D4–D7). See *Build notes*. Device checks owed (Consequences). Decided with Tomisin the same day against a canvas
   mockup (`https://claude.ai/artifact/FnmVT9uSJF4o5jwYiQV9Jx`, private), over eight rounds: what 0291's
   *better thought out* meant, then picking, only what's picked lighting, the chords' colour, Roman
   numerals and their palette, and the bar. It is 1.5's item 3 (`docs/backlog.md`). Two more ideas came out
@@ -201,4 +201,26 @@ accent and of a heard note with no chord under it.
   would move every other test that uses it. `testAPieceWatchedFromThePickingBarLightsItsNotes` drives
   *Pick pieces…* ▸ **Watch** ▸ play; what a section's name picks and what two sections are called are unit
   tests.
+
+**Slice 2, 2026-11-20 (`pocket-454-chord-colours`): chords colour the notes, D4–D7.**
+
+- `ChordNumeral` (pure, `ChordNumeralTests`) reads a chord against the key: the root's degree (the
+  colour), the numeral, and whether it's the key's own. It shares `RomanNumeral`'s accidental tables
+  (ADR 0065), so a diagram's badge and the sheet never number one root two ways. **Half-diminished reads
+  `ø`** (*viiø7*): D6 names only ° and +, and *vii°7* is the diminished seventh. A chord with no third
+  (*sus4*, *5*) is never outlined. Sevenths don't change what counts as the key's own: *V7* and *Vmaj7*
+  are both a V.
+- `SectionWatch.chords` reads the chord the song is on from **every** chords piece in the stretch, picked
+  or not, sharing `merge`'s tap placing (the later-starting piece is the chord where two overlap). A tap
+  that names no chord leaves the song on no chord until the next. `WatchChords` holds the same chord
+  played again in a row as one, names each for the key, and **spells a root outside the key as its
+  numeral says** (*B♭ · ♭II*, never *A♯*).
+- Numerals and colours are read live from `song.heardKey`, so **Set the key** colours the sheet as soon
+  as Edit song saves. The map's pieces are already as you hear them, so a raised song keeps its numerals.
+- The heard note takes the chord's colour through the neck's own `neckAccent`, so its glow and marks
+  follow. The lick's other spots over the same chord are tinted, and each chip's border wears its chord's
+  colour, with *Am · i* over the first chip of each chord.
+- **A loop's own sheet isn't coloured**: that's still open (*Open, not decided here*).
+- The palette is eight colour assets plus `chordInk` (white in light, `#040404` in dark), and a row in §3.1
+  of the design brief. A hosted snapshot in both appearances was looked at. The phone hasn't seen them.
 

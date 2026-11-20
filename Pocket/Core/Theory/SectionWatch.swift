@@ -90,9 +90,16 @@ enum SectionWatch {
             .sorted(by: startsFirst)
         let tuning = onTheNeck.first?.piece.openMidi
         let kept = onTheNeck.filter { $0.piece.openMidi == tuning }
+        return Run(taps: taps(of: kept, from: from, to: to), sources: kept, openMidi: tuning,
+                   tuningLabel: kept.first?.piece.tuningLabel, otherTuning: onTheNeck.count - kept.count)
+    }
+
+    /// `kept`'s taps between `from` and `to`, each held until the next, the later-starting source showing
+    /// where two overlap. `kept` is in `startsFirst` order.
+    private static func taps(of kept: [Source], from: TimeInterval, to: TimeInterval) -> [Tap] {
         let entries = kept.indices.flatMap { Self.entries(of: kept, at: $0, from: from, to: to) }
             .sorted { ($0.seconds, $0.source, $0.pass, $0.index) < ($1.seconds, $1.source, $1.pass, $1.index) }
-        let taps = entries.indices.map { position -> Tap in
+        return entries.indices.map { position -> Tap in
             let entry = entries[position]
             var until = min(kept[entry.source].reach, to)
             if position + 1 < entries.count { until = min(until, entries[position + 1].seconds) }
@@ -105,12 +112,32 @@ enum SectionWatch {
             return Tap(seconds: entry.seconds, until: until, label: named ? entry.label : withoutJoin(entry.label),
                        source: entry.source)
         }
-        return Run(taps: taps, sources: kept, openMidi: tuning, tuningLabel: kept.first?.piece.tuningLabel,
-                   otherTuning: onTheNeck.count - kept.count)
     }
 
-    /// The order loops start in. On the same moment, chords before notes, so a riff counts as the later
-    /// one and shows over the chords it's played across.
+    // MARK: - The chords the song is on (ADR 0308 D4)
+
+    /// A chord the song is on, from `seconds` until `until`.
+    struct Chord: Equatable, Sendable {
+        let seconds: TimeInterval
+        let until: TimeInterval
+        let root: Int
+        let suffix: String
+    }
+
+    /// The chords the song is on between `from` and `to`, read from **every** chords piece in `sources`,
+    /// picked or not: the song is on those chords either way (ADR 0308 D4). A chord named by ear counts as a
+    /// placed one does, since it only needs its name; a placed shape is read as Name the notes reads it
+    /// (ADR 0227 D7). Where two chords pieces overlap the later-starting one is the chord, as in `merge`;
+    /// a tap that names no chord leaves the song on no chord until the next.
+    static func chords(_ sources: [Source], from: TimeInterval, to: TimeInterval) -> [Chord] {
+        let kept = sources.filter { $0.isChords && $0.start < to && $0.reach > from }.sorted(by: startsFirst)
+        return taps(of: kept, from: from, to: to).compactMap { tap in
+            guard let reading = tap.label?.earReading(openMidi: kept[tap.source].piece.openMidi ?? []),
+                  case .chord(let suffix) = reading.kind else { return nil }
+            return Chord(seconds: tap.seconds, until: tap.until, root: reading.root, suffix: suffix)
+        }
+    }
+
     private static func startsFirst(_ lhs: Source, _ rhs: Source) -> Bool {
         if lhs.start != rhs.start { return lhs.start < rhs.start }
         if lhs.isChords != rhs.isChords { return lhs.isChords }

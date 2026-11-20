@@ -52,6 +52,11 @@ struct WatchOnNeckSheet: View {
     private let lick: Set<NeckSpot>
     /// How many taps are placed on the neck, which the stopped sheet says.
     private let onTheNeck: Int
+    /// The chords the song is on under the picks, from the whole chords lane (ADR 0308 D4). None for a
+    /// loop's own sheet: whether that colours its notes is open in the ADR.
+    private let sectionChords: [SectionWatch.Chord]
+    /// Edit song, open from **Set the key** (ADR 0308 D6).
+    @State private var settingKey = false
 
     init(loop: Loop) {
         self.init(subject: .loop(loop), player: ContinuousLoopPlayer(loop: loop),
@@ -67,11 +72,12 @@ struct WatchOnNeckSheet: View {
         self.init(subject: .span(song, watch),
                   player: ContinuousLoopPlayer(song: song, from: watch.start, to: watch.end), run: run,
                   spelling: NoteSpelling.forMusicalKey(song.heardKey) ?? AppSettings.accidentalPreference,
-                  noun: !run.sources.isEmpty && run.sources.allSatisfy(\.isChords) ? "chord" : "note")
+                  noun: !run.sources.isEmpty && run.sources.allSatisfy(\.isChords) ? "chord" : "note",
+                  chords: SectionWatch.chords(sources, from: watch.start, to: watch.end))
     }
 
     private init(subject: Subject, player: ContinuousLoopPlayer, run: SectionWatch.Run, spelling: NoteSpelling,
-                 noun: String) {
+                 noun: String, chords: [SectionWatch.Chord] = []) {
         self.subject = subject
         _player = State(initialValue: player)
         self.run = run
@@ -82,6 +88,7 @@ struct WatchOnNeckSheet: View {
         tuningLabel = run.tuningLabel ?? tuner.label
         self.spelling = spelling
         self.noun = noun
+        sectionChords = chords
         lick = PieceNeck.spots(of: labels)
         onTheNeck = labels.filter { $0?.isOnTheNeck ?? false }.count
         _centre = State(initialValue: PieceNeck.span(of: labels).map { PieceNeck.centre(of: $0) })
@@ -101,6 +108,12 @@ struct WatchOnNeckSheet: View {
                     Text(tuningLabel)
                         .font(.futura(.footnote))
                         .foregroundStyle(PocketColor.textSecondary)
+                    if let chords, case .span(let song, let watch) = subject {
+                        WatchChordRow(chords: chords,
+                                      current: player.isPlaying ? moment.chord
+                                        : chords.index(at: watch.start) ?? (chords.chords.isEmpty ? nil : 0),
+                                      keyName: song.heardKey.displayName, onSetKey: { settingKey = true })
+                    }
                     neck
                     order
                     controls
@@ -125,6 +138,9 @@ struct WatchOnNeckSheet: View {
             }
         }
         .onChange(of: heard) { _, now in follow(now) }
+        .sheet(isPresented: $settingKey) {
+            if case .span(let song, _) = subject { SongEditSheet(song: song) }
+        }
         .onDisappear { player.stop() }
         // Playing along hands-free is the point of it (D7).
         .keepAwakeDuringPractice()
@@ -144,8 +160,16 @@ struct WatchOnNeckSheet: View {
     /// One element for VoiceOver: the tap being heard in words, or how many are on the neck while stopped.
     /// It's read when the neck is reached, never announced on every note.
     private var neck: some View {
-        PieceNeckView(labels: labels, openMidi: openMidi, spelling: spelling, lick: lick, heard: heard,
-                      centre: centre)
+        // The heard note filled with its chord's colour, and the lick's other notes over that chord tinted with
+        // it (ADR 0308 D4). Where no chord plays, the neck is drawn as it always was.
+        let byTap = tapChords
+        let heardChord = heard.flatMap { byTap.indices.contains($0) ? byTap[$0] : nil }
+        let chordColour = colour(ofChord: heardChord)
+        let overIt = chordColour == nil ? [] : PieceNeck.spots(of: byTap.indices.filter { byTap[$0] == heardChord }
+            .map { labels[$0] })
+        return PieceNeckView(labels: labels, openMidi: openMidi, spelling: spelling, lick: lick, heard: heard,
+                             centre: centre, tinted: overIt)
+            .environment(\.neckAccent, chordColour ?? PocketColor.practice)
             .onGeometryChange(for: Double.self) { Double($0.size.width) } action: {
                 // A piece that mutes a string has the ✕ column beside the names too (ADR 0262 D4).
                 let pinned = PieceNeck.mutedStrings(of: labels).isEmpty ? 0 : NeckGeometry.pinnedWidth
@@ -187,7 +211,10 @@ struct WatchOnNeckSheet: View {
             HeardTapTracker { songTimeNow().flatMap(run.heard(at:)) } report: { heard = $0 }
             if case .span(_, let watch) = subject {
                 HeardTapTracker {
-                    songTimeNow().map { SpanMoment(bar: watch.bar(at: $0), notPicked: watch.notPicked(at: $0)) }
+                    songTimeNow().map {
+                        SpanMoment(bar: watch.bar(at: $0), notPicked: watch.notPicked(at: $0),
+                                   chord: chords?.index(at: $0))
+                    }
                         ?? SpanMoment()
                 } report: { moment = $0 }
             }
@@ -206,7 +233,10 @@ struct WatchOnNeckSheet: View {
     /// The taps as Name the notes' chips read them on the neck, with the joins between them, read only: the
     /// one being heard is ringed and kept in the middle. Over them, where the loop is and what's heard.
     private var order: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        // Read once a draw, not once a chip.
+        let chordsNow = chords
+        let byTap = chordsNow?.chordIndices(of: run.taps.map(\.seconds)) ?? []
+        return VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text(heard.map { "\(noun.capitalized) \($0 + 1) of \(labels.count)" } ?? tapCount)
                     .font(.futura(.footnote, weight: .bold))
@@ -242,7 +272,7 @@ struct WatchOnNeckSheet: View {
                                     .padding(.horizontal, -3)
                                     .accessibilityHidden(true)
                             }
-                            chip(index)
+                            chip(index, chords: chordsNow, byTap: byTap)
                         }
                     }
                     .padding(.horizontal, 18)
@@ -260,15 +290,6 @@ struct WatchOnNeckSheet: View {
 
     /// *"11 notes"*, while nothing is heard.
     private var tapCount: String { "\(labels.count) \(noun)\(labels.count == 1 ? "" : "s")" }
-
-    private func chip(_ index: Int) -> some View {
-        let shown = NamingStrip.chipText(labels[index], onTheNeck: true, openMidi: openMidi, spelling: spelling)
-        return PieceChip(number: index + 1, text: shown.text, dim: shown.dim)
-            .heardRing(index == heard)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(noun.capitalized) \(index + 1), \(shown.text ?? "not named")")
-            .accessibilityAddTraits(index == heard ? .isSelected : [])
-    }
 
     // MARK: - Play and tempo
 
@@ -316,9 +337,59 @@ struct WatchOnNeckSheet: View {
     }
 }
 
+// MARK: - The chords (ADR 0308 D4–D6)
+
+/// Apart from the struct's body only for its length budget; `private` still reaches across in this file.
+extension WatchOnNeckSheet {
+
+    /// The chords under the picks, read against the key you hear (ADR 0308 D4–D6). Read live, so a key set
+    /// in Edit song colours them at once.
+    private var chords: WatchChords? {
+        guard case .span(let song, _) = subject, !sectionChords.isEmpty else { return nil }
+        return WatchChords(sectionChords, key: song.heardKey,
+                           spelling: NoteSpelling.forMusicalKey(song.heardKey) ?? AppSettings.accidentalPreference)
+    }
+
+    /// Each tap's chord, by when it's played.
+    private var tapChords: [Int?] { chords?.chordIndices(of: run.taps.map(\.seconds)) ?? [] }
+
+    /// A chord's colour, or `nil` with no key: then nothing is coloured (D6).
+    private func colour(ofChord index: Int?) -> Color? {
+        guard let index, let chords, chords.chords.indices.contains(index) else { return nil }
+        return chords.chords[index].numeral.map { PocketColor.chord(degree: $0.degree) }
+    }
+
+    /// A chip, wearing its chord's colour, with the chord's name and numeral over the first chip of each
+    /// chord (ADR 0308 D4). Every chip keeps the line's room when there are chords, so they stay in a row.
+    @ViewBuilder private func chip(_ index: Int, chords: WatchChords?, byTap: [Int?]) -> some View {
+        let shown = NamingStrip.chipText(labels[index], onTheNeck: true, openMidi: openMidi, spelling: spelling)
+        let chord = byTap.indices.contains(index) ? byTap[index] : nil
+        let tint = chord.flatMap { chords?.chords[$0].numeral }.map { PocketColor.chord(degree: $0.degree) }
+        let chipView = PieceChip(number: index + 1, text: shown.text, dim: shown.dim, tint: tint)
+            .heardRing(index == heard)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(noun.capitalized) \(index + 1), \(shown.text ?? "not named")")
+            .accessibilityAddTraits(index == heard ? .isSelected : [])
+        if let chords {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(WatchChords.startsAChord(byTap, at: index) ? chord.map { chords.chords[$0].title } ?? " " : " ")
+                    .font(.futura(.caption2, weight: .bold))
+                    .foregroundStyle(tint ?? PocketColor.textSecondary)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .accessibilityHidden(true)
+                chipView
+            }
+        } else {
+            chipView
+        }
+    }
+}
+
 /// What the picks' clock reports while they play (ADR 0308 D2, D3): one value, so the sheet redraws only
 /// when the bar or the dark piece changes.
 private struct SpanMoment: Equatable {
     var bar: Int?
     var notPicked: String?
+    var chord: Int?
 }
