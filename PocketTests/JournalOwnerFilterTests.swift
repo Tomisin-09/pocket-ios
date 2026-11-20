@@ -144,7 +144,7 @@ final class JournalOwnerFilterTests: XCTestCase {
     /// player meant to keep unattached.
     func testAStandaloneTakeIsUnderJustMeAndAnOrphanedOneIsNot() {
         let standalone = take(at: noon)
-        RecordingOwner.standalone.attach(to: standalone)
+        RecordingOwner.standalone.attach(to: standalone, in: nil)
         let orphan = take(at: noon - hour)
         orphan.ownerLabelAtTake = "Slow Bend · Verse riff"
         let standaloneNote = JournalEntry.forStandalone(text: "n", kind: .note,

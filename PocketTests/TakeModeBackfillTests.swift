@@ -90,7 +90,7 @@ final class TakeModeBackfillTests: XCTestCase {
         context.insert(legacy)
         context.insert(recorded)
         legacy.loop = loop
-        RecordingOwner.loop(loop, .improvise).attach(to: recorded)
+        RecordingOwner.loop(loop, .improvise).attach(to: recorded, in: nil)
         context.insert(PracticeRun(startedAt: start, durationSeconds: 120, kind: .earLoop, unitUID: loop.uid))
         try context.save()
 

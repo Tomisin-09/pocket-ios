@@ -56,7 +56,7 @@ extension JournalTabView {
             Button {
                 renaming = StableRef(value: take)
             } label: {
-                Label(take.title == nil ? "Name this take" : "Rename", systemImage: "pencil")
+                Label("Rename", systemImage: "pencil")
             }
             ExportTakeMenuItem(take: take)
         }

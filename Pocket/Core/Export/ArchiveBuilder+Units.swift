@@ -218,7 +218,8 @@ extension ArchiveBuilder {
             metronomeBeatsAtTake: recording.metronomeBeatsAtTake,
             metronomeNoteValueAtTake: recording.metronomeNoteValueAtTake,
             metronomeSubdivisionRaw: recording.metronomeSubdivisionRaw,
-            metronomeWithdrawalRaw: recording.metronomeWithdrawalRaw
+            metronomeWithdrawalRaw: recording.metronomeWithdrawalRaw,
+            takeNumber: recording.takeNumber
         )
     }
 }

@@ -19,12 +19,13 @@ struct RenameTakeAlert: ViewModifier {
     func body(content: Content) -> some View {
         content
             .alert("Name this take", isPresented: isPresented, presenting: take) { ref in
-                TextField("Take name", text: $draft)
+                // Empty on a numbered take, with its number as the placeholder, so typing names it and
+                // saving it empty leaves it as it was (ADR 0307 D4).
+                TextField(ref.value.numberedName ?? "Take name", text: $draft)
                     .textInputAutocapitalization(.sentences)
                 Button("Cancel", role: .cancel) { take = nil }
                 Button("Save") {
-                    // `rename(to:)` refuses an empty result, so a cleared field leaves the take as it
-                    // was rather than storing whitespace that renders as a blank row.
+                    // An empty field clears the name and brings the number back (ADR 0307 D4).
                     ref.value.rename(to: draft)
                     try? context.save()
                     haptic(.light)

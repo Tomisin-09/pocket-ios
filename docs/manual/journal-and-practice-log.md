@@ -97,12 +97,14 @@ played up to then is saved, and the microphone is let go.
 
 - **▶** plays it. One plays at a time, and it stops when you leave the screen.
 - Its row shows the take's name, how long it runs, and when it was made.
-- Swipe right to name it. An unnamed take is just called *Take*, and a list of those is the problem
-  naming solves — which is why the hold menu offers **Name this take** on one that has never been
-  named, and **Rename** after.
+- A take is numbered where it was recorded: *Take 1*, *Take 2*, counted on its loop or exercise
+  (every mode of a loop together), at the metronome, or on the Journal's **＋**. What it was recorded
+  on is the line beside it, so the name doesn't say it twice.
+- Swipe right, or hold it and choose **Rename**, to give it a name of your own. Your name shows in
+  place of the number; save the field empty and the number comes back.
 - Hold it and choose **Export take…** to take the recording somewhere else: into a DAW, to your
-  teacher, or into Files. It goes as the file it is, named for what it was recorded against and the
-  day, like *Slow Bend · Chorus · 1 Oct 2026.m4a*. Nothing in Red Moon changes.
+  teacher, or into Files. It goes as the file it is, named for what it was recorded against, its
+  number and the day, like *Slow Bend · Chorus · Take 3 · 1 Oct 2026.m4a*, or for the name you gave it. Nothing in Red Moon changes.
 
 Takes are also reachable from the run screen they were made on, through its **Takes** bar.
 

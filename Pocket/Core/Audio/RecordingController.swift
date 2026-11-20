@@ -18,11 +18,19 @@ enum RecordingOwner {
     /// take is about is the one it began in, as ADR 0160 §5 said of the metronome's note.
     case metronome(MetronomeJournalContext)
 
-    /// Set the matching owner relationship on `recording` (exactly one, per ADR 0058), and snapshot
-    /// the owner's caption beside it (ADR 0151) so the take stays identifiable if the owner is later
-    /// deleted — the relationship nullifies, the label doesn't. One choke point for both, so a take
-    /// can never acquire an owner without acquiring the caption that outlives it.
-    func attach(to recording: Recording) {
+    /// Set the matching owner relationship on `recording` (exactly one, per ADR 0058), snapshot the
+    /// owner's caption beside it (ADR 0151) so the take stays identifiable if the owner is later
+    /// deleted — the relationship nullifies, the label doesn't — and give it its number in this
+    /// owner's count (ADR 0307 D7). One choke point for all three, so a take can never acquire an
+    /// owner without the caption that outlives it and the number it's shown by.
+    ///
+    /// `context` is the one the take is about to be inserted into; only a metronome or Journal ＋
+    /// take reads it, since nothing owns those to count off. Required, so no capture site can forget
+    /// it; `nil` (a test's uninserted take) counts those two from nothing.
+    func attach(to recording: Recording, in context: ModelContext?) {
+        // Counted before the relationship is set, so the new take is never among the numbers it is
+        // counted against.
+        recording.takeNumber = TakeNumbering.next(after: givenNumbers(in: context))
         switch self {
         case .loop(let loop, let mode):
             recording.loop = loop
@@ -42,6 +50,27 @@ enum RecordingOwner {
         recording.ownerLabelAtTake = JournalTimeline.ownerLabel(
             loop: recording.loop, exercise: recording.exercise, song: recording.song)
             ?? (isMetronome ? JournalTimeline.metronomeLabel : nil)
+    }
+
+    /// The numbers this owner's count has already given (ADR 0307 D1). A loop counts every take on
+    /// it whatever mode recorded it, as its Takes sheet lists them. A metronome or Journal ＋ take has
+    /// no relationship to read, so those count over a fetch of every take, filtered in memory, never
+    /// by an optional comparison in a `#Predicate` (`docs/swiftdata-gotchas.md`).
+    func givenNumbers(in context: ModelContext?) -> [Int] {
+        let takes: [Recording] = switch self {
+        case .loop(let loop, _): loop.recordings
+        case .exercise(let exercise): exercise.recordings
+        case .song(let song): song.recordings
+        case .standalone:
+            allTakes(in: context).filter { $0.isStandalone == true }
+        case .metronome:
+            allTakes(in: context).filter { $0.isMetronome == true }
+        }
+        return takes.compactMap(\.takeNumber)
+    }
+
+    private func allTakes(in context: ModelContext?) -> [Recording] {
+        (try? context?.fetch(FetchDescriptor<Recording>())) ?? []
     }
 
     /// Whether this is the metronome's owner, whose takes are found by a query rather than read off a
@@ -249,7 +278,7 @@ final class RecordingController {
         if let finished {
             if Self.keepsTake(duration: duration) {
                 let take = Recording(fileName: finished.fileName, duration: duration, uid: finished.uid)
-                owner.attach(to: take)
+                owner.attach(to: take, in: context)
                 context.insert(take)
                 try? context.save()
                 lastSaved = SavedTake(uid: finished.uid, duration: duration)

@@ -22,7 +22,7 @@ final class MetronomeTakeTests: XCTestCase {
 
     private func metronomeTake(_ context: MetronomeJournalContext) -> Recording {
         let take = Recording(fileName: "t.m4a", duration: 30)
-        RecordingOwner.metronome(context).attach(to: take)
+        RecordingOwner.metronome(context).attach(to: take, in: nil)
         return take
     }
 
@@ -61,7 +61,7 @@ final class MetronomeTakeTests: XCTestCase {
         XCTAssertNil(orphan.metronomeContext)
 
         let standalone = Recording(fileName: "t.m4a", duration: 30)
-        RecordingOwner.standalone.attach(to: standalone)
+        RecordingOwner.standalone.attach(to: standalone, in: nil)
         XCTAssertEqual(standalone.ownerKind, .standalone)
         XCTAssertNil(standalone.isMetronome)
         XCTAssertNil(standalone.ownerLabelAtTake, "a standalone take still has no caption")
@@ -120,7 +120,7 @@ final class MetronomeTakeTests: XCTestCase {
     func testOnlyMetronomeTakesAreListedAtTheMetronome() {
         let click = metronomeTake(sitting())
         let other = Recording(fileName: "o.m4a", duration: 30)
-        RecordingOwner.standalone.attach(to: other)
+        RecordingOwner.standalone.attach(to: other, in: nil)
         XCTAssertEqual(Recording.metronomeTakes(in: [click, other]).map(\.uid), [click.uid])
     }
 }

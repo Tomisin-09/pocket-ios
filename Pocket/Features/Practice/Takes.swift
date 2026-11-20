@@ -96,7 +96,7 @@ struct TakesSheet: View {
                     Button {
                         renaming = StableRef(value: take)
                     } label: {
-                        Label(take.title == nil ? "Name this take" : "Rename", systemImage: "pencil")
+                        Label("Rename", systemImage: "pencil")
                     }
                     ExportTakeMenuItem(take: take)
                     Button(role: .destructive) { delete(take) } label: {
@@ -140,7 +140,7 @@ struct TakesSheet: View {
     }
 }
 
-/// One take row — a play/pause toggle, the date, and the duration.
+/// One take row — a play/pause toggle, the take's name or number, its duration and its date.
 ///
 /// **Two tap targets, not one.** The glyph plays; everything to the right of it opens the take's own
 /// screen (ADR 0174). They are separate buttons rather than a `NavigationLink` wrapping the row,
@@ -165,16 +165,15 @@ private struct TakeRow: View {
             Button(action: onOpen) {
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 2) {
-                        // A named take leads with its name; an unnamed one keeps the date it always
-                        // had, so nothing about an old list changes until the player names something.
-                        Text(take.title ?? take.createdAt.formatted(date: .abbreviated, time: .shortened))
+                        // Its name, or its number, *Take 3* (ADR 0307 D3); the date moves to the line
+                        // beneath, where a named take already had it. A list of six used to be six
+                        // timestamps.
+                        Text(take.displayTitle)
                             .font(.futura(.subheadline))
                             .foregroundStyle(PocketColor.textPrimary)
                         HStack(spacing: 8) {
                             Text(take.durationLabel)
-                            if take.title != nil {
-                                Text(take.createdAt.formatted(date: .abbreviated, time: .shortened))
-                            }
+                            Text(take.createdAt.formatted(date: .abbreviated, time: .shortened))
                         }
                         .font(.pocketMono(.caption2))
                         .foregroundStyle(PocketColor.textSecondary)

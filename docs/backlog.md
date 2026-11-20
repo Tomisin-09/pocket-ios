@@ -68,7 +68,8 @@ S is about a day, M a few days, L a week or more; the sizes are estimates.
      its backoff and keeps playing. It needs its own ADR, and it's audio-engine work.
    - **4c. Improvise, a fine-tuning pass.** Its entry asks for Tomisin's list of refinements before
      anything starts.
-5. **A take is numbered where it was recorded** (M, ADR 0307, added 2026-11-18). The ADR holds the
+5. **A take is numbered where it was recorded** (M, ADR 0307, added 2026-11-18). **Built 2026-11-20 on
+   `pocket-452-take-numbers`;** the ADR's *Build notes* say what's checked and what's owed. The ADR holds the
    detail. An unnamed take reads *Take 3*, counted on its loop or exercise, with the unit on the line
    beside it as now. Renaming stays, and clearing a name brings the number back. One additive
    `Recording` attribute, so the store upgrade check on the simulator and the device, proved by

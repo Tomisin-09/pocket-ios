@@ -1,6 +1,6 @@
 # ADR 0307 — A take is numbered where it was recorded
 
-- **Status:** Accepted (2026-11-18), not built. Tomisin agreed the decisions in conversation on
+- **Status:** Accepted (2026-11-18). **Built 2026-11-20** on `pocket-452-take-numbers`; see *Build notes*. Tomisin agreed the decisions in conversation on
   2026-11-18 (*"I'm happy with your recommendations"*), and chose D3's wording the same day against
   the canvas mockup *Takes, numbered* (https://claude.ai/artifact/9sDFnr8fVXdNrjk2hamAPu): *"let's go
   with the recommended"*.
@@ -204,6 +204,28 @@ One branch, one PR, about M. In order:
 - On the device: two takes on one loop in two modes, one on an exercise, one at the metronome, and one
   from the Journal's ＋. Read the Journal, a Takes sheet and the lock screen; export one; rename one,
   then clear the name.
+
+## Build notes (2026-11-20)
+
+What the build settled that the decisions above didn't say:
+
+- **`attach(to:in:)` takes the context as a required `ModelContext?`.** Only a metronome or Journal ＋
+  take reads it; a loop, exercise or song counts off its relationship. Required so the one capture site
+  can't forget it; `nil` is for tests that build uninserted takes.
+- **A take whose owner was deleted counts by the caption it kept** (ADR 0151) when the backfill numbers
+  it. It has no relationship left, and its caption is what it still says it was recorded on. A take
+  with no caption at all (from before 0151) counts with the others like it.
+- **The backfill also runs right after a restore**, not only at the next launch, so a restored take
+  from an older archive doesn't read *Take* in between.
+- **Search matches the shown name**, so *take* alone finds every take now, and the matcher's
+  substring rule means *take 3* also finds *Take 13*. That is how search already treats every word.
+- **Checks done on the branch:** unit tests for the rule, the name, the export stem, capture (a loop
+  in two modes, an exercise, the metronome, the Journal ＋), the backfill and the archive key, each
+  watched failing against a deliberate mutant (count instead of highest; newest first; the number
+  dropped from the stem). A hosted-window render of a Takes sheet and Journal rows on iOS 26.5, light
+  and dark. The store upgrade check on the simulator, proved by timestamps (see the PR).
+- **Owed on the device:** the store upgrade on the phone's real store, and the device pass under
+  *Checks*. Figures that show take rows go on the reshoot list.
 
 ## Consequences
 

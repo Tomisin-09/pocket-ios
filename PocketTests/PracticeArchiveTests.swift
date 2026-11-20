@@ -136,7 +136,7 @@ final class PracticeArchiveTests: XCTestCase {
                                   duration: 12,
                                   createdAt: Date(timeIntervalSince1970: 1_700_000_000.5))
         recording.note = "Cleaner, but rushing the turnaround"
-        RecordingOwner.loop(loop, .ear).attach(to: recording)   // the take's mode rides too (ADR 0265)
+        RecordingOwner.loop(loop, .ear).attach(to: recording, in: nil)   // the take's mode rides too (ADR 0265)
 
         let original = archive(ArchiveSource(songs: [song], recordings: [recording]))
         XCTAssertEqual(original.takes.first?.loopRunMode, "ear", "positive control: the field was written")
@@ -218,7 +218,7 @@ final class PracticeArchiveTests: XCTestCase {
     /// archive written before the flag existed carries.
     func testTheStandaloneFlagCrossesIntoTheArchive() {
         let standalone = Recording(fileName: "take-4.m4a", duration: 8)
-        RecordingOwner.standalone.attach(to: standalone)
+        RecordingOwner.standalone.attach(to: standalone, in: nil)
         let owned = Recording(fileName: "take-5.m4a", duration: 8)
         owned.exercise = Exercise(name: "Spider")
 
@@ -233,9 +233,9 @@ final class PracticeArchiveTests: XCTestCase {
     func testATakesModeCrossesIntoTheArchive() {
         let earTake = Recording(fileName: "take-6.m4a", duration: 8)
         RecordingOwner.loop(Loop(name: "Chords", start: 0.1, end: 0.4, speed: 1, repeats: 1), .ear)
-            .attach(to: earTake)
+            .attach(to: earTake, in: nil)
         let drillTake = Recording(fileName: "take-7.m4a", duration: 8)
-        RecordingOwner.exercise(Exercise(name: "Spider")).attach(to: drillTake)
+        RecordingOwner.exercise(Exercise(name: "Spider")).attach(to: drillTake, in: nil)
 
         let result = archive(ArchiveSource(recordings: [earTake, drillTake]))
 
@@ -364,7 +364,7 @@ final class PracticeArchiveTests: XCTestCase {
     func testAnArchiveWrittenBeforeTakeModesStillDecodes() throws {
         let take = Recording(fileName: "take-8.m4a", duration: 8)
         RecordingOwner.loop(Loop(name: "Chords", start: 0.1, end: 0.4, speed: 1, repeats: 1), .improvise)
-            .attach(to: take)
+            .attach(to: take, in: nil)
 
         let full = try encodedJSON(archive(ArchiveSource(recordings: [take])))
         XCTAssertTrue(full.contains(#""loopRunMode" : "improvise""#), "positive control")
