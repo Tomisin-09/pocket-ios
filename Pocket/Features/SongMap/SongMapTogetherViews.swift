@@ -1,17 +1,20 @@
 import SwiftUI
 
-/// The bar along the bottom of the map while pieces are being picked to put together (ADR 0232 D11): how
-/// many are picked, what they make or why they can't be put together, and **Put it together**.
+/// The bar along the bottom of the map while picking (ADR 0308 D8, ADR 0232 D11): how many are picked, what
+/// and where, only what needs saying besides, then **Watch** and **Put it together** side by side in the same
+/// style. Neither is the default: why you picked is yours to say.
 struct SongMapTogetherBar: View {
     let count: Int
-    /// What the picked pieces make, or why they make nothing: `SongMapTogether.line(for:in:)`.
-    let line: String
-    let canPut: Bool
-    let onPut: () -> Void
+    /// What's picked and where, then what stays dark and why a button can't act, each only when so.
+    let lines: [String]
+    /// *Watch it on the neck* for the picks, or `nil` when there's nothing to watch.
+    let onWatch: (() -> Void)?
+    /// *Put it together*, or `nil` when the picks make nothing (its line says why).
+    let onPut: (() -> Void)?
     let onCancel: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
                 Text("\(count) picked")
                     .font(.futura(.subheadline, weight: .semibold))
@@ -22,20 +25,33 @@ struct SongMapTogetherBar: View {
                     .foregroundStyle(PocketColor.textSecondary)
                     .buttonStyle(.plain)
             }
-            Text(line)
-                .font(.futura(.footnote))
-                .foregroundStyle(PocketColor.textSecondary)
-                .fixedSize(horizontal: false, vertical: true)
-            Button(action: onPut) {
-                Text("Put it together")
-                    .font(.futura(.body, weight: .semibold))
-                    .frame(maxWidth: .infinity)
+            ForEach(lines, id: \.self) { line in
+                Text(line)
+                    .font(.futura(.footnote))
+                    .foregroundStyle(PocketColor.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .buttonStyle(.borderedProminent)
+            HStack(spacing: 10) {
+                Button { onWatch?() } label: {
+                    Label("Watch", systemImage: WatchOnNeckSheet.symbol)
+                        .frame(maxWidth: .infinity)
+                }
+                .disabled(onWatch == nil)
+                .accessibilityLabel(WatchOnNeckSheet.title)
+                .accessibilityIdentifier("map.pick.watch")
+                Button { onPut?() } label: {
+                    Text("Put it together")
+                        .frame(maxWidth: .infinity)
+                }
+                .disabled(onPut == nil)
+                .accessibilityIdentifier("map.pick.together")
+            }
+            .font(.futura(.body, weight: .semibold))
+            .buttonStyle(.bordered)
             .tint(PocketColor.practice)
-            .disabled(!canPut)
+            .padding(.top, 2)
         }
-        .padding(16)
+        .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(PocketColor.background)

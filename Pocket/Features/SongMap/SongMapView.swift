@@ -50,11 +50,11 @@ struct SongMapView: View {
     /// loop it's open on.
     @State var watchAfterSheet: UUID?
     @State var watching: StableRef<Loop>?
-    /// A section, or the whole song, open in *Watch it on the neck* (ADR 0289).
+    /// What was picked, open in *Watch it on the neck* (ADR 0289, ADR 0308).
     @State var watchingSpan: WatchSpan?
     /// What the map just made, which Undo takes back (D17), until the player does something else.
     @State var made: Made?
-    /// Picking pieces to put together (D11): the ones picked, or `nil` when not picking.
+    /// Picking (ADR 0308 D1), to watch or put together (D11): the pieces picked, or `nil` when not picking.
     @State var selection: Set<UUID>?
     /// The command tempos Put it together is asking for (D11).
     @State var askingCommands: TogetherAsk?
@@ -93,10 +93,11 @@ struct SongMapView: View {
                                                                            setRepeats: setRepeats,
                                                                            makePiece: offerPiece,
                                                                            copy: startCopy,
-                                                                           putTogether: startTogether,
+                                                                           pick: startPicking,
+                                                                           pickSection: { pickSection($0, in: map) },
                                                                            toggle: toggleSelected),
                                                    highlighted: highlighted, selected: selection,
-                                                   onWatch: watchDoor(section, sources: sources))
+                                                   onWatch: watchDoor(section, in: map, sources: sources))
                             }
                         }
                     }
@@ -115,11 +116,11 @@ struct SongMapView: View {
             }
             .background(PocketColor.background)
             .overlay(alignment: .bottom) { undoBar }
-            .safeAreaInset(edge: .bottom, spacing: 0) { pickingBar(map) }
+            .safeAreaInset(edge: .bottom, spacing: 0) { pickingBar(map, sources: sources) }
             .safeAreaInset(edge: .top, spacing: 0) { modePicker }
             .navigationTitle(song.title)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { toolbar(tab, watchSong: watchSongDoor(map, sources: sources)) }
+            .toolbar { toolbar(tab) }
             .navigationDestination(isPresented: Binding(get: { opening != nil },
                                                         set: { if !$0 { opening = nil } })) {
                 if let opening, let loop = loops[opening.uid] {
@@ -171,8 +172,7 @@ struct SongMapView: View {
         }
         .sheet(item: $watching) { WatchOnNeckSheet(loop: $0.value) }
         .sheet(item: $watchingSpan) { span in
-            WatchOnNeckSheet(song: song, name: span.name, from: span.start, to: span.end,
-                             sources: SectionWatch.sources(of: map), isWholeSong: span.isWholeSong)
+            WatchOnNeckSheet(song: song, watch: span.watch, sources: SectionWatch.sources(of: map))
         }
         .sheet(item: $askingCommands, onDismiss: beginAfterAsking) { ask in
             SongMapCommandSheet(answers: ask.answers) { commands in
@@ -295,19 +295,11 @@ struct SongMapView: View {
 
     // MARK: - Toolbar
 
-    /// *Done*; *Watch it on the neck* for the whole song, when something in it is placed on the neck (ADR
-    /// 0289); and on the Tab view with something drawn, *Export* (ADR 0236 D9).
-    @ToolbarContentBuilder private func toolbar(_ tab: SongTab?, watchSong: (() -> Void)?) -> some ToolbarContent {
+    /// *Done*, and on the Tab view with something drawn, *Export* (ADR 0236 D9). The whole song's eye is gone
+    /// (ADR 0308 D1): the whole song is every section picked.
+    @ToolbarContentBuilder private func toolbar(_ tab: SongTab?) -> some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
             Button("Done") { dismiss() }
-        }
-        if let watchSong {
-            ToolbarItem(placement: .primaryAction) {
-                Button(action: watchSong) {
-                    Label(WatchOnNeckSheet.title, systemImage: WatchOnNeckSheet.symbol)
-                }
-                .accessibilityIdentifier("map.watchSong")
-            }
         }
         if let tab, !tab.isEmpty {
             ToolbarItem(placement: .primaryAction) {

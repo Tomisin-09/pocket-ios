@@ -178,14 +178,12 @@ final class SongMapTogetherTests: SongMapSlice3Case {
 
     // MARK: - What the bar says
 
-    func testTheBarSaysWhatTheSelectionMakesOrWhyItCant() {
+    /// Only why it can't (ADR 0308 D8): when it can, the routine review that opens next shows what it makes.
+    func testTheBarSaysOnlyWhyTheSelectionCantBePutTogether() {
         let (chords, line) = (UUID(), UUID())
-        let map = build(loops: [loop(8, 16, name: "Intro chords", uid: chords), notes(10, 12, "Intro lick", uid: line)])
-        func said(_ reading: SongMapTogether.Reading) -> String { SongMapTogether.line(for: reading, in: map) }
-        XCTAssertEqual(said(.shape(.inARow([UUID(), UUID(), UUID()]))),
-                       "In a row: 3 pieces, each on its own, then joined. 5 blocks.")
-        XCTAssertEqual(said(.shape(.lineOverChords(line: line, chords: chords))),
-                       "Intro lick on its own, then over Intro chords as a backing.")
+        func said(_ reading: SongMapTogether.Reading) -> String? { SongMapTogether.line(for: reading) }
+        XCTAssertNil(said(.shape(.inARow([UUID(), UUID(), UUID()]))))
+        XCTAssertNil(said(.shape(.lineOverChords(line: line, chords: chords))))
         XCTAssertEqual(said(.overlapping), "Pieces in a row can't overlap.")
         XCTAssertEqual(said(.notUnder), "The chords have to play under the whole line.")
     }

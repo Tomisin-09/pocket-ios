@@ -36,9 +36,22 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   a raised song is shown as you hear it and kept against the record, so *Standard* at +1 is kept as *Half
   step down*. Frets named before the song was moved are offered a move on their own strings, and a note
   that would fall off the neck is left for you to name.
+- **Watch what you pick, on the neck** (ADRs 0289 and 0308, slice 1; 1.5, item 3a). On the song map, hold a
+  piece and choose **Pick pieces…**, or tap a section's name to pick all of it, then **Watch** on the bar.
+  The song plays from the start of the first piece picked to the end of the last, repeats included, and goes
+  round until you stop it. Only what's picked lights: a piece in between that isn't picked plays and stays
+  dark, and the bar, the sheet and the neck say so. The sheet is headed by what you picked (*Verse 2 and
+  Solo*, *Solo 4 and Solo 5*), says the bars and when they start (*Bars 39–42 · starts at 1:54*), plays
+  **from bar 39**, and counts the bars as it goes. Holding a section's name offers **Watch it on the neck**
+  for that section and **Pick this section**. Built in 1.4 as *Watch the section* and held back by ADR
+  0291; the map's eye that played the whole song from 0:00 is gone, since the whole song is every section
+  picked.
 
 ### Changed
 
+- **Picking on the song map starts from *Pick pieces…*** (ADR 0308 D1, D8). It was *Put it together…*. The
+  bar along the bottom now offers **Watch** and **Put it together** side by side, says what's picked and the
+  bars it covers, and says why only when the picks can't be put together.
 - **A take is numbered where it was recorded** (ADR 0307; 1.5, item 5). A take you haven't named reads
   *Take 3*, counted on its loop (every mode together) or exercise, at the metronome, or on the Journal's
   ＋, with what it was recorded on still on the line beside it. A loop's Takes sheet shows the number
@@ -191,17 +204,6 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   supplies for themselves.
 
   The reading is still written on your device, still weekly, and still never grades you.
-
-> **Watch a whole section on the neck** is held back from 1.4 by **ADR 0291**: it's built, and its two
-> doors on the song map are closed, because it needs thinking through again. The entry stays here until
-> it reopens; `docs/backlog.md` holds it under *After the freeze*.
-
-- **Watch a whole section on the neck.** On the song map, hold a section's name and choose **Watch it on
-  the neck**: the song plays from the top of the section to its end, and every loop in it with notes on
-  the neck lights in turn, each one's name under the neck where its notes begin. Where two loops overlap, the one
-  that starts later shows; where there's no piece, the neck goes quiet until the next. The eye at the top
-  of the map does the same for the whole song. A riff that repeats to the end of its section lights on
-  every pass. It plays at the record's tempo, and − and + change it (ADR 0289).
 
 ### Changed
 

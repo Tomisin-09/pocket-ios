@@ -73,45 +73,52 @@ final class WatchOnNeckUITests: UITestCase {
                        "Name the notes opened once the sheet closed: the tap fired both buttons")
     }
 
-    /// **The whole song** from the song map's toolbar (ADR 0289): the sheet plays the song from its top, not
-    /// one loop, and the riff's notes still light when the song reaches them. The seed's song has no
-    /// sections, so this is the map's one door here; a section's merge is unit-tested (`SectionWatchTests`).
-    /// **Skipped while the map's doors are closed** (ADR 0291 holds the section watch back from 1.4); it runs
-    /// again as it is once `SongMapView.opensSectionWatch` is `true`.
+    /// **What's picked** on the song map (ADR 0308): hold a piece, *Pick pieces…*, then the bar's **Watch**. The
+    /// sheet is headed by what was picked, plays from where it starts, and the riff's notes light as it plays.
+    /// The seed's song has no sections, so it picks the riff's piece; what a section's name picks, and what
+    /// the sheet is called for two, are unit-tested (`SongMapPickingTests`), as is the merge
+    /// (`SectionWatchTests`).
     @MainActor
-    func testTheWholeSongPlaysFromTheMapAndLightsTheRiff() throws {
-        try XCTSkipIf(true, "Watch the section is held back from 1.4 (ADR 0291): the map has no eye to open")
+    func testAPieceWatchedFromThePickingBarLightsItsNotes() {
         let app = launchApp(extraArguments: [UITestHooks.watchPieceArgument])
         openSongDetails(in: app)
         let map = app.buttons["Map the song"]
         XCTAssertTrue(reveal(map, in: app), "Song details has no Map the song")
         // Tapped until the map is up: on the iOS 18 simulator the first tap, just after Song details had
         // risen, was lost and the test waited on a map that never opened.
-        let eye = app.buttons["map.watchSong"]
-        XCTAssertTrue(tap(map, until: eye, in: app), "no \(title) in the map's toolbar")
-        eye.tap()
+        let riff = app.buttons["Verse riff, notes"]
+        XCTAssertTrue(tap(map, until: riff, in: app), "the riff's piece isn't on the map")
+        riff.press(forDuration: 1.0)
+        let pick = app.buttons["Pick pieces…"]
+        XCTAssertTrue(pick.waitForExistence(timeout: Self.uiTimeout), "the piece's hold menu has no Pick pieces…")
+        pick.tap()
+
+        let watch = app.buttons["map.pick.watch"]
+        XCTAssertTrue(watch.waitForExistence(timeout: Self.uiTimeout), "no Watch on the picking bar")
+        XCTAssertEqual(watch.label, title, "VoiceOver reads Watch by the sheet's full name")
+        XCTAssertTrue(watch.isEnabled, "Watch is off with the riff picked")
+        attach(app, named: "watch-picking-bar")
+        watch.tap()
         XCTAssertTrue(app.navigationBars[title].waitForExistence(timeout: Self.uiTimeout),
-                      "\(title) didn't open from the map")
-        XCTAssertTrue(app.staticTexts["The whole song"].exists, "the sheet isn't headed for the whole song")
+                      "\(title) didn't open from the picking bar")
+        XCTAssertTrue(app.staticTexts["Verse riff"].exists, "the sheet isn't headed by what was picked")
         let neck = app.descendants(matching: .any)["watch.neck"]
         XCTAssertEqual(neck.value as? String, "6 on the neck", "the riff's six aren't all on the neck")
 
-        // At the slowest tempo. At 100% the riff is lit for 4.6 s of the song's 30, and on CI's simulator
-        // one read of the neck took 5–10 s, so the lit stretch fell between two reads and the test failed
-        // with the app showing the note (PR #403's recording). At 25% it's lit for 18 s, from 38 s in.
+        // At the slowest tempo, so the lit stretch outlasts CI's 5–10 s between reads of the neck (PR #403).
         let slower = app.buttons["Slow down"]
         for _ in 0..<20 where slower.isEnabled { slower.tap() }
         XCTAssertFalse(slower.isEnabled, "the tempo didn't reach its slowest")
         let play = app.buttons["watch.play"]
-        XCTAssertEqual(play.label, "Play the song")
+        XCTAssertTrue(play.label.hasPrefix("Play from "), "the button doesn't say where it plays from: \(play.label)")
+        let playFrom = play.label
         play.tap()
-        XCTAssertTrue(waitForLabel("Stop the song", on: play, timeout: audioTimeout),
-                      "the song never started: \(play.label)")
+        XCTAssertTrue(waitForLabel("Stop", on: play, timeout: audioTimeout), "it never started: \(play.label)")
         XCTAssertTrue(waitForValue(of: neck, matching: "value CONTAINS %@", "string, fret", timeout: 90),
-                      "the neck never lit the riff as the song played: \(String(describing: neck.value))")
-        attach(app, named: "watch-song-playing")
+                      "the neck never lit the riff as it played: \(String(describing: neck.value))")
+        attach(app, named: "watch-picks-playing")
         play.tap()
-        XCTAssertTrue(waitForLabel("Play the song", on: play), "the song didn't stop: \(play.label)")
+        XCTAssertTrue(waitForLabel(playFrom, on: play), "it didn't stop: \(play.label)")
 
         app.navigationBars[title].buttons["Done"].tap()
     }

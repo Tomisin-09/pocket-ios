@@ -1,6 +1,7 @@
 # ADR 0308 — Watch what you pick: picking on the map, and notes in their chord's colour
 
-- **Status:** Accepted on 2026-11-19. Not built. Decided with Tomisin the same day against a canvas
+- **Status:** Accepted on 2026-11-19. **Slice 1 (D1–D3, D8) built 2026-11-20**; slice 2 (D4's colours, D5–D7)
+  not yet. See *Build notes*. Decided with Tomisin the same day against a canvas
   mockup (`https://claude.ai/artifact/FnmVT9uSJF4o5jwYiQV9Jx`, private), over eight rounds: what 0291's
   *better thought out* meant, then picking, only what's picked lighting, the chords' colour, Roman
   numerals and their palette, and the bar. It is 1.5's item 3 (`docs/backlog.md`). Two more ideas came out
@@ -173,3 +174,31 @@ accent and of a heard note with no chord under it.
   CHANGELOG: the *Held back* entry moves to the release. PROJECT.md, and §3.1 of the design brief for D7.
 - **Device checks owed.** The bar's height on the phone while picking, and the palette in both
   appearances.
+
+## Build notes
+
+**Slice 1, 2026-11-20 (`pocket-453-pick-and-watch`): picking and the bar, D1–D3 and D8.**
+
+- `SongMapPicking` (pure, `SongMapPickingTests`) holds what a section's name shows and picks, and reads the
+  picks as a `Watch`: the stretch, its bars, the title, what lights and what stays dark. A section holds
+  each piece whose middle it holds, as a loop's repeats already count the section it sits in.
+- **D4's first point is in slice 1**: with a notes piece picked, the chords don't light, and an unpicked
+  chord isn't called dark, since under notes it wouldn't have lit. With only chords picked, an unpicked
+  piece of either kind is dark. That rule decides what D3's line says, so it couldn't wait for the colours.
+- **A section with no pieces between two picked ones keeps the row** (*Verse to Chorus* over an empty
+  Solo), since it plays in the stretch either way. Two sections apart with a picked-out one between are
+  named by their pieces.
+- **Never *the whole song*.** Every piece of a song with no sections still plays only from the first to the
+  last, so its title is the pieces.
+- In seconds, the place reads *1:54–2:10*, the sheet *Starts at 1:54*, and the button *Play from 1:54*.
+  There's no bar to count.
+- **Watch's line, when it can't open**: *Nothing picked is placed on the neck yet*, or that the song's audio
+  can't play here. D8 doesn't say; a disabled button with no reason would be worse.
+- Put it together's line for picks that *can* be put together is gone (D8): `SongMapTogether.line(for:)`
+  returns `nil` for a shape. For one pick it now reads *To put them together, pick the next piece in the
+  row…*, since Watch works with one.
+- **The UI test picks a piece, not two sections.** The seed's song has no sections, and giving it some
+  would move every other test that uses it. `testAPieceWatchedFromThePickingBarLightsItsNotes` drives
+  *Pick pieces…* ▸ **Watch** ▸ play; what a section's name picks and what two sections are called are unit
+  tests.
+

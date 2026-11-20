@@ -1,49 +1,36 @@
 import SwiftUI
 
-/// *Watch it on the neck* from the song map for a stretch of the song (ADR 0289): a section, from its
-/// heading's hold menu, or the whole song, from the toolbar. Each door is behind the same gate as a loop's
-/// (ADR 0254 D2): something in the stretch is placed on the neck, and the song's audio plays here.
+/// *Watch it on the neck* from the song map for what's picked (ADR 0289, ADR 0308): a section, straight from
+/// its name's hold menu, or the pieces and sections picked, from the picking bar's **Watch**. Each door is
+/// behind the same gate as a loop's (ADR 0254 D2): something picked is placed on the neck, and the song's
+/// audio plays here. The toolbar's eye is gone (0308 D1): the whole song is every section picked.
 extension SongMapView {
 
-    /// A stretch of the song to watch on the neck (ADR 0289).
+    /// The picks being watched, for `.sheet(item:)`: a fresh id each time, so watching the same picks again
+    /// opens the sheet again.
     struct WatchSpan: Identifiable {
-        let name: String
-        let start: TimeInterval
-        let end: TimeInterval
-        let isWholeSong: Bool
-        var id: String { "\(start)-\(end)-\(isWholeSong)" }
+        let id = UUID()
+        let watch: SongMapPicking.Watch
     }
 
-    /// *Watch it on the neck* for a section, or the whole song (ADR 0289), behind the same gate and with the
-    /// song player paused first.
-    func watch(_ span: WatchSpan) {
+    /// Open the sheet for `watch`, with the song player paused first.
+    func watch(_ watch: SongMapPicking.Watch) {
         made = nil
         onOpenNestedAudio()
-        watchingSpan = span
+        watchingSpan = WatchSpan(watch: watch)
     }
 
-    /// Whether the map opens a stretch of the song on the neck at all. **Held back from 1.4** (ADR 0291): both
-    /// doors are closed and everything behind them stays, so reopening them is this one line.
-    static let opensSectionWatch = false
-
-    /// A section's door, or `nil` when it has nothing to light or its audio can't play here (0254 D2).
-    func watchDoor(_ section: SongMap.Section, sources: [SectionWatch.Source]) -> (() -> Void)? {
-        guard Self.opensSectionWatch else { return nil }
-        let name: String
-        switch section.heading {
-        case .none: return nil
-        case .start: name = "Start"
-        case .marker(_, let label): name = label.isEmpty ? "Section" : label
-        }
-        guard PieceNeck.canWatch(sources, from: section.start, to: section.end, on: song) else { return nil }
-        return { watch(WatchSpan(name: name, start: section.start, end: section.end, isWholeSong: false)) }
+    /// Watch for these picks, or `nil` with nothing picked, nothing picked placed on the neck, or the song's
+    /// audio not playing here (0254 D2).
+    func watchDoor(_ watch: SongMapPicking.Watch?, sources: [SectionWatch.Source]) -> (() -> Void)? {
+        guard let watch,
+              PieceNeck.canWatch(sources.filter { watch.lit.contains($0.id) }, from: watch.start, to: watch.end,
+                                 on: song) else { return nil }
+        return { self.watch(watch) }
     }
 
-    /// The whole song's door (ADR 0289), or `nil` behind the gate.
-    func watchSongDoor(_ map: SongMap, sources: [SectionWatch.Source]) -> (() -> Void)? {
-        guard Self.opensSectionWatch else { return nil }
-        let end = map.sections.last?.end ?? song.duration
-        guard PieceNeck.canWatch(sources, from: 0, to: end, on: song) else { return nil }
-        return { watch(WatchSpan(name: "The whole song", start: 0, end: end, isWholeSong: true)) }
+    /// A section name's *Watch it on the neck* (D1): every piece in it, straight to the sheet.
+    func watchDoor(_ section: SongMap.Section, in map: SongMap, sources: [SectionWatch.Source]) -> (() -> Void)? {
+        watchDoor(SongMapPicking.watch(SongMapPicking.pieces(in: section, of: map), in: map), sources: sources)
     }
 }

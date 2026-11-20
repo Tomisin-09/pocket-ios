@@ -46,7 +46,7 @@ struct SongMapPieceView: View {
         .contextMenu { if selected == nil { menu } }
         .accessibilityLabel("\(piece.name), \(SongMapStyle.name(piece.layer).lowercased())")
         .accessibilityValue(spokenContent)
-        .accessibilityHint(selected == nil ? "Opens its tab" : "Picks it to put together, or lets it go")
+        .accessibilityHint(selected == nil ? "Opens its tab" : "Picks it, or lets it go")
         .accessibilityAddTraits(selected == true ? .isSelected : [])
     }
 
@@ -137,15 +137,15 @@ struct SongMapPieceView: View {
 }
 
 /// A piece's hold menu (ADR 0232 D2), on the piece and on its repeats alike: *View tab*, the modes it can
-/// open in, how far it repeats (D14, D15), *Copy to…* once it holds a counted piece (D16), and *Put it
-/// together…* (D11).
+/// open in, how far it repeats (D14, D15), *Copy to…* once it holds a counted piece (D16), and *Pick
+/// pieces…* (ADR 0308 D1), which starts picking to watch or put together (D11).
 struct SongMapPieceMenu: View {
     let modes: [LoopRunMode]
     let repeats: SongMapRepeatOptions?
     /// *Copy to…*, or `nil` for a loop with nothing counted to copy.
     let onCopy: (() -> Void)?
-    /// *Put it together…* (D11): pick this piece and others to make a routine of.
-    let onPutTogether: () -> Void
+    /// *Pick pieces…* (ADR 0308 D1): pick this piece and others, to watch on the neck or put together.
+    let onPick: () -> Void
     let onView: () -> Void
     let onOpen: (LoopRunMode) -> Void
 
@@ -159,7 +159,7 @@ struct SongMapPieceMenu: View {
         if let onCopy {
             Button(action: onCopy) { Label("Copy to…", systemImage: "square.on.square") }
         }
-        Button(action: onPutTogether) { Label("Put it together…", systemImage: "square.stack.3d.up") }
+        Button(action: onPick) { Label("Pick pieces…", systemImage: "checkmark.circle") }
     }
 
     /// One item when there's one way to repeat, else a menu of them. Buttons, not a `Toggle` or a `Picker`:

@@ -1,16 +1,20 @@
 import SwiftUI
 
-/// The top of *Watch it on the neck* for a section or the whole song (ADR 0289), drawn as a loop's header is
-/// (`LoopModeIdentityHeader`): the section's name, the song it's from, and the loops whose pieces it plays.
+/// The top of *Watch it on the neck* for what was picked on the song map (ADR 0289, ADR 0308 D2, D3), drawn
+/// as a loop's header is (`LoopModeIdentityHeader`): what was picked, its bars and when they start, the song
+/// it's from, the loops whose pieces light, and what in the stretch isn't picked and stays dark.
 struct WatchSpanHeader: View {
     let song: Song
-    let name: String
+    let watch: SongMapPicking.Watch
     let run: SectionWatch.Run
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(name)
+            Text(watch.title)
                 .font(.futura(.title2)).bold()
+                .foregroundStyle(PocketColor.textPrimary)
+            Text(watch.sheetLine)
+                .font(.futura(.subheadline, weight: .medium))
                 .foregroundStyle(PocketColor.textPrimary)
             Text("from \(song.title)\(song.artist.isEmpty ? "" : " · \(song.artist)")")
                 .font(.futura(.subheadline))
@@ -19,16 +23,20 @@ struct WatchSpanHeader: View {
                 .font(.futura(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
                 .padding(.top, 2)
+            if let dark = watch.darkLine {
+                Text(dark)
+                    .font(.futura(.caption))
+                    .foregroundStyle(PocketColor.textSecondary)
+            }
         }
         .padding(.vertical, 4)
     }
 
-    /// *Pieces from Verse riff, Fill and Outro lick*, and how many were left out for being placed in another
-    /// tuning, so a piece that doesn't light isn't a mystery.
+    /// The loops whose pieces light, and how many in another tuning don't.
     nonisolated static func sources(_ run: SectionWatch.Run) -> String {
         let names = run.sources.map { $0.name.isEmpty ? "Untitled loop" : $0.name }
         var line = switch names.count {
-        case 0: "No piece placed on the neck here"
+        case 0: "Nothing picked is placed on the neck"
         case 1: "The piece from \(names[0])"
         default: "Pieces from " + names.dropLast().joined(separator: ", ") + " and " + names[names.count - 1]
         }

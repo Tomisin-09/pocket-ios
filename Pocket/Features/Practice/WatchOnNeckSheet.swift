@@ -4,9 +4,10 @@ import SwiftUI
 /// while the loop's own recording plays. A sheet for watching, not a practice mode (D1): no routine block, no
 /// practice log row, no takes and no Journal note. Done closes it.
 ///
-/// It also plays **a section, or the whole song** (ADR 0289), from the song map: every loop's piece in that
-/// stretch, merged by `SectionWatch`, played straight through. Where two loops overlap, the later one shows,
-/// and where no piece is placed, nothing lights.
+/// It also plays **what was picked on the song map** (ADR 0289, ADR 0308): a section from its name's hold
+/// menu, or any pieces and sections picked, from the start of the first to the end of the last. Only the
+/// picks light (0308 D3), merged by `SectionWatch`: where two overlap, the later one shows, a piece in the
+/// stretch that isn't picked plays and stays dark, and where nothing picked is placed, nothing lights.
 ///
 /// From the top: the loop, its tuning, the neck (the whole lick in ink and the tap being heard lit, D4,
 /// `PieceNeckView`), the taps in order as read-only chips with the one being heard ringed, then a play button
@@ -23,8 +24,8 @@ struct WatchOnNeckSheet: View {
     /// What's watched: one loop, or a stretch of a song (ADR 0289).
     enum Subject {
         case loop(Loop)
-        /// A section, or all of the song when `isWholeSong`. `name` heads the sheet.
-        case span(Song, name: String, isWholeSong: Bool)
+        /// What was picked on the song map (ADR 0308): its title heads the sheet.
+        case span(Song, SongMapPicking.Watch)
     }
 
     private let subject: Subject
@@ -37,6 +38,8 @@ struct WatchOnNeckSheet: View {
     @State private var centre: Int?
     /// The board's width beside the string names, which following judges the frets in view by.
     @State private var boardWidth: Double = 0
+    /// While picks play (ADR 0308): the bar being played, and the piece that isn't picked when one is.
+    @State private var moment = SpanMoment()
 
     /// The taps to play, each with when it stops being heard.
     private let run: SectionWatch.Run
@@ -57,13 +60,12 @@ struct WatchOnNeckSheet: View {
                   noun: loop.loopType == .chords ? "chord" : "note")
     }
 
-    /// A section, or the whole song (ADR 0289): every piece in `start`…`end` (song seconds), merged. It opens
-    /// at the record's tempo, since each loop in it can have its own command.
-    init(song: Song, name: String, from start: TimeInterval, to end: TimeInterval,
-         sources: [SectionWatch.Source], isWholeSong: Bool = false) {
-        let run = SectionWatch.merge(sources, from: start, to: end)
-        self.init(subject: .span(song, name: name, isWholeSong: isWholeSong),
-                  player: ContinuousLoopPlayer(song: song, from: start, to: end), run: run,
+    /// What was picked on the song map (ADR 0308): the pieces `watch.lit` names, merged over its stretch. It
+    /// opens at the record's tempo (0289 D7), since each loop in it can have its own command.
+    init(song: Song, watch: SongMapPicking.Watch, sources: [SectionWatch.Source]) {
+        let run = SectionWatch.merge(sources.filter { watch.lit.contains($0.id) }, from: watch.start, to: watch.end)
+        self.init(subject: .span(song, watch),
+                  player: ContinuousLoopPlayer(song: song, from: watch.start, to: watch.end), run: run,
                   spelling: NoteSpelling.forMusicalKey(song.heardKey) ?? AppSettings.accidentalPreference,
                   noun: !run.sources.isEmpty && run.sources.allSatisfy(\.isChords) ? "chord" : "note")
     }
@@ -117,7 +119,10 @@ struct WatchOnNeckSheet: View {
         }
         .presentationDetents([.large])
         .onChange(of: player.isPlaying) { _, playing in
-            if !playing { heard = nil }
+            if !playing {
+                heard = nil
+                moment = SpanMoment()
+            }
         }
         .onChange(of: heard) { _, now in follow(now) }
         .onDisappear { player.stop() }
@@ -125,20 +130,12 @@ struct WatchOnNeckSheet: View {
         .keepAwakeDuringPractice()
     }
 
-    /// What plays, as the controls say it.
-    private var playing: String {
-        switch subject {
-        case .loop: "loop"
-        case .span(_, _, let isWholeSong): isWholeSong ? "song" : "section"
-        }
-    }
-
     @ViewBuilder private var header: some View {
         switch subject {
         case .loop(let loop):
             LoopModeIdentityHeader(loop: loop)
-        case .span(let song, let name, _):
-            WatchSpanHeader(song: song, name: name, run: run)
+        case .span(let song, let watch):
+            WatchSpanHeader(song: song, watch: watch, run: run)
         }
     }
 
@@ -154,9 +151,20 @@ struct WatchOnNeckSheet: View {
                 let pinned = PieceNeck.mutedStrings(of: labels).isEmpty ? 0 : NeckGeometry.pinnedWidth
                 boardWidth = $0 - Double(NeckGeometry.namesWidth + NeckGeometry.namesSpacing + pinned)
             }
+            .overlay {
+                // A piece in the stretch that isn't picked plays, and stays dark (ADR 0308 D3).
+                if heard == nil, let notPicked = moment.notPicked {
+                    Text(notPicked)
+                        .font(.futura(.footnote, weight: .semibold))
+                        .foregroundStyle(PocketColor.textSecondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(PocketColor.background.opacity(0.9)))
+                }
+            }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("The neck")
-            .accessibilityValue(heardWords ?? "\(onTheNeck) on the neck")
+            .accessibilityValue(heardWords ?? moment.notPicked ?? "\(onTheNeck) on the neck")
             .accessibilityIdentifier("watch.neck")
     }
 
@@ -176,14 +184,21 @@ struct WatchOnNeckSheet: View {
     /// The one leaf that reads a clock (ADR 0153), there only while the loop plays.
     @ViewBuilder private var tracker: some View {
         if player.isPlaying {
-            HeardTapTracker { heardNow() } report: { heard = $0 }
+            HeardTapTracker { songTimeNow().flatMap(run.heard(at:)) } report: { heard = $0 }
+            if case .span(_, let watch) = subject {
+                HeardTapTracker {
+                    songTimeNow().map { SpanMoment(bar: watch.bar(at: $0), notPicked: watch.notPicked(at: $0)) }
+                        ?? SpanMoment()
+                } report: { moment = $0 }
+            }
         }
     }
 
-    /// The tap heard at this instant of the loop's clock, or `nil` in a gap (ADR 0289).
-    private func heardNow() -> Int? {
+    /// This instant of the loop's clock, in song seconds, as the taps are counted (ADR 0289). The tap heard
+    /// then is `run.heard(at:)`, or `nil` in a gap.
+    private func songTimeNow() -> TimeInterval? {
         guard let reading = player.loopClock(), let now = TapTally.heardPosition(reading) else { return nil }
-        return run.heard(at: reading.regionStart + now.within)
+        return reading.regionStart + now.within
     }
 
     // MARK: - The taps in order
@@ -262,7 +277,7 @@ struct WatchOnNeckSheet: View {
     private var controls: some View {
         HStack(spacing: 12) {
             LoopPlayButton(isOn: player.isPlaying, isLoading: player.isLoading, isDisabled: player.isUnavailable,
-                           label: player.isPlaying ? "Stop the \(playing)" : "Play the \(playing)", diameter: 52) {
+                           label: playLabel, diameter: 52) {
                 LoopTransport.toggle(player, recorder: nil, onStopped: {})
             }
             .accessibilityIdentifier("watch.play")
@@ -276,10 +291,34 @@ struct WatchOnNeckSheet: View {
     }
 
     /// What the audio is doing, never a score.
+    /// *Play the loop*, or for picks *Play from bar 39* (ADR 0308 D2).
+    private var playLabel: String {
+        switch subject {
+        case .loop: player.isPlaying ? "Stop the loop" : "Play the loop"
+        case .span(_, let watch): player.isPlaying ? "Stop" : watch.playLabel
+        }
+    }
+
     private var statusLine: String {
         if player.isUnavailable { return "Audio unavailable — the song file moved or was deleted." }
         if player.isLoading { return "Loading…" }
-        if player.isPlaying { return "Playing at \(player.percent)%. Play along with it." }
-        return "Tap to play the \(playing). It goes round until you stop it."
+        if player.isPlaying {
+            // The bar counter, while picks play (ADR 0308 D2).
+            let bar = moment.bar.map { "Bar \($0) · playing" } ?? "Playing"
+            return "\(bar) at \(player.percent)%. Play along with it."
+        }
+        switch subject {
+        case .loop: return "Tap to play the loop. It goes round until you stop it."
+        case .span(_, let watch):
+            return "Tap to \(watch.playLabel.prefix(1).lowercased() + watch.playLabel.dropFirst()). "
+                + "It goes round until you stop it."
+        }
     }
+}
+
+/// What the picks' clock reports while they play (ADR 0308 D2, D3): one value, so the sheet redraws only
+/// when the bar or the dark piece changes.
+private struct SpanMoment: Equatable {
+    var bar: Int?
+    var notPicked: String?
 }
