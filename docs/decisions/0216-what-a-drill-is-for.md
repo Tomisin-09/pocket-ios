@@ -24,6 +24,10 @@
 - **Schema:** slice 1 — none. Slice 2 — `Exercise.skillIDs` and `Loop.skillIDs` (`[String]`,
   declaration-defaulted) and one new entity, `CustomSkill`; additive, so ADR 0189's D1–D3 do not
   engage.
+- **Amended by:** ADR 0309 (2026-11-21) — **D6**'s Works on can also be set while a drill is made, on
+  Basic and Your own practice, the two types with no skills of their own; the create form names the
+  goals it serves. **D4**'s read-only Works on for a goal skill's fix becomes that section there. The
+  rule (D1), the planner (D3) and the ⓘ's editing stand.
 
 ---
 

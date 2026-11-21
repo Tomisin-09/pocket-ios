@@ -114,9 +114,10 @@ A read-only summary, with `Edit` in its toolbar.
   speed.
 - `About` — free text about the song, with `Edit notes`.
 - **`Practise`** — `Map the song`, *your loops laid out where they play* (see
-  [mapping the song](../songs.md#mapping-the-song)), then the drills linked to the song, each
-  opening its run screen when tapped and unlinking on a swipe, with `Link exercises` and
-  `Build a routine for this song`. With none linked it reads *No drills linked yet.*
+  [mapping the song](../songs.md#mapping-the-song)), then **`Exercises`**, which says how many drills
+  are linked to the song (*4 linked*, or *None*), then `Build a routine for this song`. Inside
+  `Exercises`: the linked drills, each opening its run screen when tapped and unlinking on a swipe,
+  and `Link exercises`. With none linked it reads *No drills linked yet.*
 
 The rest is behind a row each, and each row says what is behind it:
 

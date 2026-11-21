@@ -40,9 +40,9 @@ enum FretboardSubdivisions {
 // MARK: - Display options bar (Watch · Display)
 
 /// The header row every fretboard-family editor carries: **Watch** (a one-shot walk-through when the
-/// board isn't already animating) and a **Display** menu for the note-caption mode. Owns the caption
-/// preference through `@AppStorage` so the menu label stays correct; each editor reads the same key for
-/// its own preview, and SwiftUI keeps the two in step.
+/// board isn't already animating) and a **Display** menu for the note-caption mode and the arrows between
+/// notes. Owns both preferences through `@AppStorage` so the menu stays correct; each editor reads the same
+/// keys for its own preview, and SwiftUI keeps them in step.
 ///
 /// There was a **Hear** button first, sounding the run through the built-in tone; it came out until the
 /// app has real guitar audio (ADR 0253).
@@ -59,6 +59,9 @@ struct FretboardDisplayOptionsBar: View {
     private var labelMode: FretLabelMode {
         (FretLabelMode(rawValue: storedLabelMode) ?? .none).resolved(hasRoot: hasRoot)
     }
+    /// The arrow on each jump between notes (`MoveArrow`). Global, like the captions, so the editors' boards
+    /// and the run screen's read the same.
+    @AppStorage(AppSettings.Key.fretboardShowsMoves) private var showsMoves = AppSettings.fretboardShowsMovesDefault
 
     /// Reads the *resolved* mode so the picker never selects a hidden row (an inherited `.interval` on a
     /// rootless board shows as Off), but writes the raw choice straight to the global preference.
@@ -76,6 +79,8 @@ struct FretboardDisplayOptionsBar: View {
                         Text(mode.pickerLabel).tag(mode.rawValue)
                     }
                 }
+                Divider()
+                Toggle("Arrows between notes", isOn: $showsMoves)
             } label: {
                 HStack(spacing: 4) {
                     Image(systemName: "slider.horizontal.3")
@@ -84,7 +89,8 @@ struct FretboardDisplayOptionsBar: View {
                 .font(.futura(.caption, weight: .semibold))
                 .foregroundStyle(tint)
             }
-            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel)")
+            .accessibilityLabel("Display options: labels \(labelMode.pickerLabel), "
+                                + "arrows \(showsMoves ? "on" : "off")")
         }
     }
 }
@@ -292,6 +298,38 @@ extension View {
             .overlay(alignment: .leading) {
                 Capsule().fill(tint.opacity(0.3)).frame(width: 2)
             }
+    }
+
+    /// An editor's control rows sit close together, as they did in one stack before they were rows (ADR
+    /// 0293). Each row gets the list's own padding above and below, and on iOS 26 that put about 64pt
+    /// between one menu and the next, where the stack had about 50 (measured in a hosted window on
+    /// 2026-11-21, after the Scales and Arpeggios editors became rows). With this it's about 52, which is
+    /// iOS 26's own minimum row height: a 34pt menu with 5pt either side would be 44, but only the whole
+    /// list's `defaultMinListRowHeight` lowers that floor (set on a row, it does nothing), and that would
+    /// reshape every row on the form. A two-line row (Position) gets the full 20pt back. Only the top and
+    /// bottom change; the sides keep the list's own margins, so the rows still line up with the form.
+    ///
+    /// The modifier that sets only some edges is iOS-26-SDK-only, so `#if compiler` keeps it out of CI's
+    /// Xcode 16 build, as `KeyboardButtonSurface` does. Before iOS 26 the rows keep the list's padding.
+    func editorRowInsets() -> some View {
+        modifier(EditorRowInsets())
+    }
+}
+
+private struct EditorRowInsets: ViewModifier {
+    /// The padding above and below each control row. The list's 52pt minimum still holds a one-line row.
+    static let vertical: CGFloat = 5
+
+    func body(content: Content) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            content.listRowInsets(.vertical, Self.vertical)
+        } else {
+            content
+        }
+        #else
+        content
+        #endif
     }
 }
 

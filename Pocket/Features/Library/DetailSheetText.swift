@@ -24,6 +24,12 @@ enum DetailSheetText {
         }
     }
 
+    /// The **Exercises** row's value (ADR 0309 D3): how many drills are linked to the song. A count, as
+    /// the rows beside it count, because the list behind it is the one that grows.
+    static func linkedExercises(_ count: Int) -> String {
+        count == 0 ? "None" : "\(count) linked"
+    }
+
     /// The **References** row's value. Links and files are counted apart because both live there
     /// (ADR 0167 phase 2), and *2 links* for a link and a PDF would be wrong.
     static func references(links: Int, files: Int) -> String {

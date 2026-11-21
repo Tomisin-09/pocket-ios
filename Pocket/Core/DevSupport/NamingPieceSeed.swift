@@ -10,7 +10,8 @@ import SwiftData
 /// simulator's store is shared by the whole suite, so the seed is **its own song**, found by its own id:
 ///
 /// - under `-uiTesting -seedNamingPiece` it is put in, or put back as it was: six unnamed notes on
-///   *Verse riff*, no snags, and no notes in its loops' Journals (the snag line test writes one, ADR 0238);
+///   *Verse riff*, no snags, no notes in its loops' Journals (the snag line test writes one, ADR 0238),
+///   and no drills linked (the Exercises row test links one, ADR 0309);
 /// - under `-uiTesting -seedWatchPiece` the same, with the six placed on the neck, since *Watch it on the
 ///   neck* has no door for a piece with nothing on it;
 /// - under `-uiTesting` alone it is **taken out**. The *Start here* card shows only in an empty library,
@@ -83,6 +84,9 @@ enum NamingPieceSeed {
             song.snags = []
             // As recorded (ADR 0305 D4): a test that raised it mustn't move the next one's notes.
             song.pitchShift = 0
+            // No drills linked (ADR 0309 D3): a test that linked one and then failed mustn't change the
+            // next one's count. Unlinking never deletes a drill.
+            song.linkedExercises = []
             if let loop = song.loops.first(where: { $0.name == loopName }) {
                 loop.transcription = piece(duration: song.duration, start: loop.start, end: loop.end,
                                            placed: action == .seedFretted)

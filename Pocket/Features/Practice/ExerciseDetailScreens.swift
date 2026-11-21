@@ -115,6 +115,10 @@ struct ExerciseSongsScreen: View {
                     .accessibilityHidden(true)
             }
         }
+        // The whole row is the target when it opens the song. A plain-style button in a list row answers
+        // only where it draws, so the gap before the chevron did nothing — found on the song's side of the
+        // same link (`SongExercisesScreen`, ADR 0309 D3), whose UI test tapped the middle.
+        .contentShape(Rectangle())
     }
 
     private var linkedSongsByTitle: [Song] {

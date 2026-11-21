@@ -239,3 +239,87 @@ extension ConfigureExerciseForm {
         }
     }
 }
+
+// MARK: - Works on (ADR 0309 D4)
+
+extension ConfigureExerciseForm {
+
+    /// Whether this form offers **Works on** to set: a type with no skills of its own, Basic and Your own
+    /// practice (ADR 0216 D1). A typed drill takes its type's, changed from its ⓘ, and a warm-up works on
+    /// none (ADR 0072).
+    var offersWorksOn: Bool {
+        template != .warmup && SkillAssociation.defaultSkills(for: template).isEmpty
+    }
+
+    /// What the drill will work on, by name: set here on Basic and Your own practice, or arriving with a goal
+    /// skill's fix (ADR 0216 D4), which on a typed drill is shown and changed later from its ⓘ. Rows are
+    /// built in a function, not inline in the `Section` — the shape that once segfaulted the routine editor.
+    @ViewBuilder var worksOnSection: some View {
+        if offersWorksOn {
+            Section {
+                ForEach(shownSkillIDs, id: \.self) { worksOnRow($0) }
+                    .onDelete(perform: dropSkills)
+                Button(action: beginPickingSkills) {
+                    Label(pickedSkillIDs.isEmpty ? "Add skills" : "Change skills", systemImage: "plus.circle")
+                        .foregroundStyle(PocketColor.practice)
+                }
+            } header: {
+                Text("Works on")
+            } footer: {
+                Text(worksOnFooter)
+            }
+        } else if !shownSkillIDs.isEmpty {
+            Section {
+                ForEach(shownSkillIDs, id: \.self) { worksOnRow($0) }
+            } header: {
+                Text("Works on")
+            } footer: {
+                Text("Change it later from the exercise\u{2019}s \u{24D8}.")
+            }
+        }
+    }
+
+    private var vocabulary: SkillVocabulary { SkillVocabulary(customSkills) }
+
+    /// The picked skills less any that name nothing (a skill deleted while the form was open).
+    private var shownSkillIDs: [String] { vocabulary.resolvable(pickedSkillIDs) }
+
+    private func worksOnRow(_ skillID: String) -> some View {
+        let name = vocabulary.name(skillID)
+        return HStack(spacing: 8) {
+            Text(name).foregroundStyle(PocketColor.textPrimary)
+            Spacer(minLength: 8)
+            InfoPopoverButton(subject: name, info: vocabulary.explanation(skillID))
+        }
+    }
+
+    /// What a skill does for the drill, then the goals it serves now, read from both goal tiers: long-term
+    /// goals in their rank, then the planner's.
+    private var worksOnFooter: String {
+        let what = "Optional — what this drill is for. A goal on any of these skills can bring it into a "
+            + "session. You can change them later."
+        let pool = longTermGoals.sorted { $0.order < $1.order }
+            .map { DrillServes.Goal(title: $0.displayTitle, skillIDs: $0.skillIDs, isMet: $0.isMet) }
+            + plannerGoals.map { DrillServes.Goal(title: $0.displayTitle, skillIDs: $0.skillIDs, isMet: $0.isMet) }
+        guard let serves = DrillServes.line(DrillServes.goals(for: pickedSkillIDs, among: pool)) else {
+            return what
+        }
+        return what + "\n\n" + serves
+    }
+
+    private func beginPickingSkills() {
+        skillOffered = shownSkillIDs
+        skillKept = Set(shownSkillIDs)
+        showingSkillPicker = true
+    }
+
+    /// The picker's choice, in catalogue order, as the ⓘ stores it.
+    func commitPickedSkills() {
+        pickedSkillIDs = SkillAssociation.storedSkills(kept: skillKept, template: template)
+    }
+
+    private func dropSkills(at offsets: IndexSet) {
+        let dropped = Set(offsets.map { shownSkillIDs[$0] })
+        pickedSkillIDs.removeAll { dropped.contains($0) }
+    }
+}

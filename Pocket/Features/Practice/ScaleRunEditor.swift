@@ -43,18 +43,21 @@ struct ScaleRunEditor: View {
     var body: some View {
         Group {
             previewRow
-            titleField
-            LabeledMenuRow(label: "Scale") { scalePicker }
-            LabeledMenuRow(label: "Root") {
-                RootNotePicker(pitchClass: rootBinding, tint: tint, accessibilityValue: run.rootName,
-                               name: { rootName(pitchClass: $0) })
+            Group {
+                titleField
+                LabeledMenuRow(label: "Scale") { scalePicker }
+                LabeledMenuRow(label: "Root") {
+                    RootNotePicker(pitchClass: rootBinding, tint: tint, accessibilityValue: run.rootName,
+                                   name: { rootName(pitchClass: $0) })
+                }
+                // Bass is box-only (the diagonal / 3-notes-per-string layouts are guitar techniques, ADR 0116).
+                if instrument == .guitar, run.scale.supportedLayouts.count > 1 { layoutRow }
+                if run.positionCount(for: instrument) > 1 { positionRow }
+                EditorDisclosureHeader(title: "Advanced", isExpanded: $showsAdvanced,
+                                       summaryParts: advancedSummary, tint: tint)
+                if showsAdvanced { advancedRows }
             }
-            // Bass is box-only (the diagonal / 3-notes-per-string layouts are guitar techniques, ADR 0116).
-            if instrument == .guitar, run.scale.supportedLayouts.count > 1 { layoutRow }
-            if run.positionCount(for: instrument) > 1 { positionRow }
-            EditorDisclosureHeader(title: "Advanced", isExpanded: $showsAdvanced,
-                                   summaryParts: advancedSummary, tint: tint)
-            if showsAdvanced { advancedRows }
+            .editorRowInsets()
         }
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)

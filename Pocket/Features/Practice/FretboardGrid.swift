@@ -22,6 +22,8 @@ struct FretboardGrid: View {
     /// follows the accidental preference read here, so a flats player never sees "A♯" on the board.
     @AppStorage(AppSettings.Key.accidentalPreference)
     private var accidentalRaw = NoteSpelling.default.rawValue
+    /// Whether a jump between notes draws its arrow (`walkTrail`): the **Display** menu's switch.
+    @AppStorage(AppSettings.Key.fretboardShowsMoves) private var showsMoves = AppSettings.fretboardShowsMovesDefault
 
     private var spelling: NoteSpelling {
         drill.spelling(preference: NoteSpelling(rawValue: accidentalRaw) ?? .default)
@@ -126,10 +128,12 @@ struct FretboardGrid: View {
         }
     }
 
-    /// A faint **connector trail** from the note just played to the one lit now, drawn only while the
-    /// board is walking (2026-07-28). Sequenced runs — thirds, fourths, rolling groups — jump around a
-    /// box, and with every dot the same size the *direction* of the jump was the part that didn't read.
-    /// One segment, not a full path: the trail says "you came from there", it doesn't re-draw the run.
+    /// The **move** from the note just played to the one lit now, drawn only while the board is walking.
+    /// Sequenced runs — thirds, fourths, rolling groups — jump around a box, and with every dot the same
+    /// size the *direction* of the jump was the part that didn't read. It was a faint line from dot to dot
+    /// (2026-07-28), which said the two were joined but not which way; it's a small arrowhead in the gap
+    /// now (`MoveArrow`, 2026-11-21), and the **Display** menu turns it off. One step, not the run: it says
+    /// "you came from there", it doesn't re-draw the path.
     ///
     /// **Slide seams travel this path too** (2026-07-28, amending ADR 0083 S8). The seams used to carry
     /// a permanently-drawn arrow, which on an extended pentatonic meant a static board full of arrows
@@ -159,12 +163,11 @@ struct FretboardGrid: View {
                     // A hammer-on or pull-off (ADR 0251) is a move along one string too: its curve and letter.
                     LegatoCue(technique: technique, fromX: fromPoint.x, toX: toPoint.x, stringY: toPoint.y,
                               tint: tint)
-                } else {
-                    Path { path in
-                        path.move(to: fromPoint)
-                        path.addLine(to: toPoint)
-                    }
-                    .stroke(tint.opacity(0.4), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+                } else if showsMoves {
+                    MoveArrow(from: fromPoint, fromRadius: dotDiameter(isActive: false, isRoot: isRoot(from)) / 2,
+                              to: toPoint, toRadius: dotDiameter(isActive: true, isRoot: isRoot(to)) / 2)
+                        .stroke(tint.opacity(0.9),
+                                style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
                 }
             }
             .allowsHitTesting(false)

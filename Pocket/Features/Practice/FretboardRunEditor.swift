@@ -47,16 +47,19 @@ struct FretboardRunEditor: View {
     var body: some View {
         Group {
             previewRow
-            patternField
-            baseFretField
-            StringSpanStrip(from: $run.fromString, to: $run.toString,
-                            instrument: instrument, tint: tint)
-            movementHeader
-            if showsMovement { movementRows }
-            // Rhythm is a plain row now (ADR 0293): with Up and back moved into Movement it was the only
-            // thing left under "Advanced", and a disclosure that opens onto one dropdown is two taps for
-            // one value that it also printed twice.
-            RhythmRow(notesPerBeat: $run.notesPerBeat, accessibilityLabel: "Fretboard rhythm", tint: tint)
+            Group {
+                patternField
+                baseFretField
+                StringSpanStrip(from: $run.fromString, to: $run.toString,
+                                instrument: instrument, tint: tint)
+                movementHeader
+                if showsMovement { movementRows }
+                // Rhythm is a plain row now (ADR 0293): with Up and back moved into Movement it was the only
+                // thing left under "Advanced", and a disclosure that opens onto one dropdown is two taps for
+                // one value that it also printed twice.
+                RhythmRow(notesPerBeat: $run.notesPerBeat, accessibilityLabel: "Fretboard rhythm", tint: tint)
+            }
+            .editorRowInsets()
         }
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)

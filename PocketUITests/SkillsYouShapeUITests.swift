@@ -104,6 +104,49 @@ final class SkillsYouShapeUITests: UITestCase {
         app.buttons["Done"].tap()
     }
 
+    /// ADR 0309 D4: making a *Your own practice* drill, **Works on** can be set before Create, and the pick
+    /// lands back in the form. The picker is a sheet over the form, and a sheet's write is the part that has
+    /// broken before on iOS 18. Nothing is created: the sheet is cancelled, so the library is untouched.
+    @MainActor
+    func testWorksOnCanBeSetWhileMakingYourOwnPractice() {
+        let app = launchApp()
+        openNewExerciseSheet(in: app)
+        // Last in the template list, so it isn't in the tree until the list is scrolled to it; the shared
+        // `chooseTemplate` asks for the row before it scrolls, which only works for rows near the top.
+        let freeform = app.buttons["template.freeform"]
+        XCTAssertTrue(reveal(freeform, in: app), "Your own practice isn't in the template list")
+        freeform.tap()
+
+        let addSkills = app.buttons["Add skills"]
+        XCTAssertTrue(reveal(addSkills, in: app), "making Your own practice offers no Works on")
+        addSkills.tap()
+        let picker = app.navigationBars["Works on"]
+        XCTAssertTrue(picker.waitForExistence(timeout: Self.uiTimeout), "Add skills opened no picker")
+        let skill = app.buttons["Alternate picking"]
+        XCTAssertTrue(reveal(skill, in: app), "Alternate picking isn't in the picker")
+        skill.tap()
+        XCTAssertTrue(skill.isSelected, "the tap didn't pick the skill")
+        picker.buttons["Done"].tap()
+        XCTAssertTrue(waitForDisappearance(of: picker), "the picker didn't close on Done")
+
+        let row = app.staticTexts["Alternate picking"]
+        XCTAssertTrue(reveal(row, in: app), "the picked skill didn't land in Works on")
+        XCTAssertTrue(app.buttons["Change skills"].exists, "Works on still offers Add rather than Change")
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "create-form-works-on"
+        shot.lifetime = .keepAlways
+        add(shot)
+
+        // Back to the template picker, whose Cancel closes the sheet without making anything. Both by the
+        // sheet's own bars: the library's bar is still in the tree behind the sheet, and on iOS 18 its
+        // covered *Practice* back button is the first button of any bar.
+        app.navigationBars["New your own practice"].buttons.firstMatch.tap()
+        let cancel = app.navigationBars["New exercise"].buttons["Cancel"]
+        XCTAssertTrue(cancel.waitForExistence(timeout: Self.uiTimeout), "no way out of the create sheet")
+        cancel.tap()
+        XCTAssertTrue(waitForDisappearance(of: app.navigationBars["New exercise"]), "the create sheet didn't close")
+    }
+
     // MARK: - Steps
 
     /// Home → Practice → Today's session → Add a goal → the template whose row label starts with

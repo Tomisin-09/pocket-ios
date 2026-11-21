@@ -47,6 +47,7 @@ enum AppSettings {
         static let keepScreenAwake = "keepScreenAwake"
         static let appearance = "appearance"
         static let exerciseAnimates = "exerciseAnimates"
+        static let fretboardShowsMoves = "fretboardShowsMoves"
         static let strumClickFollowsPattern = "strumClickFollowsPattern"
         static let routineAutoStart = "routineAutoStart"
         static let routineAutoAdvance = "routineAutoAdvance"
@@ -129,6 +130,12 @@ enum AppSettings {
     /// whole implementation risk of that decision; every site now reads this one value, so it can't
     /// happen. Do not inline it back to a literal.
     static let exerciseAnimatesDefault = true
+
+    /// Whether the walking board draws a small arrow for each jump between notes (2026-11-21), when the
+    /// player has never touched the **Display** menu's switch. On, since the arrow is the cue a sequenced
+    /// run needs. Named for the reason `exerciseAnimatesDefault` is: it lives at two `@AppStorage` sites
+    /// (the menu and the board) that SwiftUI does not reconcile. Do not inline it back to a literal.
+    static let fretboardShowsMovesDefault = true
 
     /// The song player's four display defaults (ADR 0163), named for the same reason
     /// `exerciseAnimatesDefault` is: each lives at three sites SwiftUI does **not** reconcile — the
