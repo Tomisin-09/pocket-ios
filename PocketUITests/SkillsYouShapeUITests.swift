@@ -137,11 +137,14 @@ final class SkillsYouShapeUITests: UITestCase {
         shot.lifetime = .keepAlways
         add(shot)
 
-        // Back to the template picker, whose Cancel closes the sheet without making anything.
-        app.navigationBars.buttons.firstMatch.tap()
-        let cancel = app.buttons["Cancel"]
+        // Back to the template picker, whose Cancel closes the sheet without making anything. Both by the
+        // sheet's own bars: the library's bar is still in the tree behind the sheet, and on iOS 18 its
+        // covered *Practice* back button is the first button of any bar.
+        app.navigationBars["New your own practice"].buttons.firstMatch.tap()
+        let cancel = app.navigationBars["New exercise"].buttons["Cancel"]
         XCTAssertTrue(cancel.waitForExistence(timeout: Self.uiTimeout), "no way out of the create sheet")
         cancel.tap()
+        XCTAssertTrue(waitForDisappearance(of: app.navigationBars["New exercise"]), "the create sheet didn't close")
     }
 
     // MARK: - Steps
