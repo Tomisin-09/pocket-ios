@@ -4,8 +4,9 @@ import SwiftData
 /// Everything the song map writes (ADR 0232): a piece made in a gap (D9), copies of a piece (D16), how far
 /// a loop repeats (D14, D15), what *Put it together* needs (D11), and taking back what it just made (D17).
 ///
-/// **The map removes only loops it has just made.** A loop made on the waveform is never deleted from
-/// here: deleting stays on the waveform, where the loop is drawn and its delete has an Undo of its own.
+/// **The map removes only loops it made**: what it has just made, by Undo (D17), and a copy still just as it
+/// made it (ADR 0310 D5). A loop made on the waveform, or a copy the player has changed, is never deleted
+/// from here: deleting stays on the waveform, where the loop is drawn and its delete has an Undo of its own.
 @MainActor
 enum SongMapWriter {
 
@@ -54,6 +55,52 @@ enum SongMapWriter {
         // that's already deleted.
         song.loops.removeAll { uids.contains($0.uid) }
         for loop in made { context.delete(loop) }
+    }
+
+    // MARK: - A copy the map made (ADR 0310 D4, D5)
+
+    /// Where a copy stands (0310 D5), read off the loop: its piece's stamp and dates, its kept versions, and
+    /// whether anything hangs off it. Read from the loop's own relationships, so it's cheap enough for every
+    /// piece the map draws; `removeCopy` fetches before it removes.
+    static func standing(of loop: Loop) -> SongMapCopy.Standing {
+        let piece = loop.transcription
+        let history = !loop.journal.isEmpty || !loop.recordings.isEmpty || !loop.routineItems.isEmpty
+            || !loop.references.isEmpty || !loop.spanChanges.isEmpty
+            || loop.lastPracticedSpeed != nil || loop.mastery != nil
+        return SongMapCopy.Standing(copiedAt: piece?.copiedAt, changedAt: piece?.changedAt,
+                                    keepsVersions: loop.keptTranscriptionsData != nil, hasHistory: history)
+    }
+
+    /// Shift a copy the map made a beat earlier or later (D4), restamped so it's still the map's. The piece
+    /// it had, for Undo, or `nil` when nothing moved: it isn't the map's, or no tap would stay in the loop.
+    static func shift(_ uid: UUID, by beats: Int, grid: SongMapInput.Grid, in song: Song) -> PieceTranscription? {
+        guard let loop = song.loops.first(where: { $0.uid == uid }), let before = loop.transcription,
+              SongMapCopy.isTheMaps(standing(of: loop)) else { return nil }
+        var moved = SongMapCopy.shifted(before, by: beats, within: (loop.startSeconds, loop.endSeconds), grid: grid)
+        guard !moved.taps.isEmpty, moved.taps != before.taps else { return nil }
+        let now = Date.now
+        moved.changedAt = now
+        moved.copiedAt = now
+        loop.transcription = moved
+        return before
+    }
+
+    /// Undo for a shift: the piece as it was, stamp and all.
+    static func restore(_ piece: PieceTranscription, to uid: UUID, in song: Song) {
+        song.loops.first { $0.uid == uid }?.transcription = piece
+    }
+
+    /// Remove a copy the map made (D5), while it's still the map's and isn't the loop the waveform is
+    /// playing. A routine saved in the review's own context, and a practice run, can be missing from the
+    /// loop's relationships, so both are fetched first. Whether it was removed.
+    static func removeCopy(_ uid: UUID, held: UUID?, from song: Song, context: ModelContext) -> Bool {
+        guard uid != held, let loop = song.loops.first(where: { $0.uid == uid }),
+              SongMapCopy.isTheMaps(standing(of: loop)), !routineUses([uid], context: context) else { return false }
+        // Every run, filtered here: an optional compared in a `#Predicate` can freeze the main thread.
+        let runs = (try? context.fetch(FetchDescriptor<PracticeRun>())) ?? []
+        guard !runs.contains(where: { $0.unitUID == uid }) else { return false }
+        takeBack([uid], from: song, context: context)
+        return true
     }
 
     // MARK: - Put it together (D11)

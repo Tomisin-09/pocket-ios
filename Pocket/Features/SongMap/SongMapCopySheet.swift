@@ -91,10 +91,12 @@ struct SongMapCopySheet: View {
         .onChange(of: firstBar) { _, first in lastBar = max(lastBar, first) }
     }
 
+    /// With bars, each note keeps its place in the bar (ADR 0310 D3), and the footer says so.
     private var footer: Text {
         Text("Each place ticked gets a loop of its own, with \(piece.name) written across it "
-             + "\(SongMapCopy.every(from: piece.start, to: piece.end, grid: map.grid)). Change one later and "
-             + "the others stay as they are.")
+             + "\(SongMapCopy.every(from: piece.start, to: piece.end, grid: map.grid))"
+             + (map.grid == nil ? "" : ", each note at its place in the bar")
+             + ". Change one later and the others stay as they are.")
     }
 
     private func row(_ target: SongMapCopy.Target, title: String? = nil, place: String? = nil, isTicked: Bool,
@@ -125,6 +127,7 @@ struct SongMapCopySheet: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("copy.target")
         .accessibilityValue(isTicked ? "Ticked" : "Not ticked")
         .accessibilityAddTraits(isTicked ? .isSelected : [])
     }

@@ -181,7 +181,8 @@ struct WaveformPracticeView: View {
             SongDetailsSheet(song: model.song, replaceAudio: { try await model.relinkAudio(to: $0) },
                              onOpenNestedAudio: model.pauseForNestedAudio,
                              // The waveform is underneath: closing the sheet is the whole trip (ADR 0232 D7).
-                             onShowWaveform: { model.showingSongDetails = false })
+                             onShowWaveform: { model.showingSongDetails = false },
+                             heldLoop: model.activeLoopID)
         }
         .sheet(isPresented: $model.showingSongEdit) { SongEditSheet(song: model.song) }
         // The player's own settings, from holding *Loop controls* on the status line (ADR 0163) — the

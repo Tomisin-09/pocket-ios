@@ -23,6 +23,12 @@ struct SongMapActions {
     let pickSection: (SongMap.Section) -> Void
     /// While picking: pick a piece, or let it go.
     let toggle: (UUID) -> Void
+    /// *Shift a beat earlier* (-1) or *later* (+1), on a copy the map made (ADR 0310 D4).
+    let shift: (UUID, Int) -> Void
+    /// *Remove copy*, asked first, on a copy the map made (ADR 0310 D5).
+    let removeCopy: (UUID) -> Void
+    /// The loop the practice screen's waveform is playing, never offered for removal (0310 D5).
+    let heldLoop: UUID?
 }
 
 /// The colours of the two layers (ADR 0232 D2): Indigo for chords, Practice's terracotta for notes. Lane colours only,

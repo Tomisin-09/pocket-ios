@@ -256,16 +256,22 @@ Verse changes here** makes the loop with those notes or chords already written a
 
 To put a piece you've counted somewhere else, hold it and choose **Copy to…**, also on its tab. Tick the
 sections it goes in (the rows, when the song has no sections), or **Choose bars** for a run of bars. Each
-gets a loop of its own with the piece written across it again and again, keeping to the bar. A copy is
+gets a loop of its own with the piece written across it again and again, keeping to the bar. When the song
+has bars, each note keeps its place in the bar: a chord on beat 2 is copied to beat 2, starting at the first
+bar the piece fits in, so a section that starts on a pickup doesn't push every chord off its beat. A copy is
 yours to change: changing it, or the piece it came from, leaves the other as it is. If you want them to
 stay the same, use **Repeats** or **Same as** instead.
 
 After you make a loop or copy a piece, **Undo** at the bottom of the map takes back what was just made,
-and only that. It goes after a few seconds, or as soon as you do something else. The map never deletes a
-loop: to delete one, use the waveform.
+and only that. It goes after a few seconds, or as soon as you do something else.
 
-To watch pieces on the neck or practise them together, pick them: hold one and choose **Pick pieces…**,
-then tap the others you want. Tap a section's name to pick everything in it, and tap it again to let it all
+For as long as a copy is just as the map made it, its hold menu has more. **Shift a beat earlier** and
+**Shift a beat later** move every note in it by a beat, when the song has bars, with an **Undo**. **Remove
+copy** takes it off the map, and asks first. Once you count it, name it, practise it or put it in a routine,
+it's yours, and these go: the map never deletes any other loop. To delete one, use the waveform.
+
+To watch pieces on the neck or practise them together, pick them: tap **Pick** at the top of the map and
+tap the pieces you want, or hold one and choose **Pick pieces…** to start with it picked. Tap a section's name to pick everything in it, and tap it again to let it all
 go. Beside the name, a filled check says all of it is picked, a dash some of it, an empty circle none. A bar
 along the bottom says what you've picked and the bars it covers, and offers **Watch** and **Put it
 together**.
@@ -280,8 +286,9 @@ picked, only notes light, never a chord's shape. Every loop in it should be name
 first one's is used, and the top of the sheet says if one in another tuning is left out. It starts at the
 record's own tempo.
 
-To watch a section straight away, hold its name and choose **Watch it on the neck**. **Pick this section**
-starts picking with all of it picked. The whole song is every section picked.
+To watch a section straight away, tap the eye beside its bars. It shows once something in the section is
+placed on the neck. Holding the section's name offers **Watch it on the neck** too, and **Pick this section**,
+which starts picking with all of it picked. The whole song is every section picked.
 
 **Put it together** makes a routine of what you picked. If the picks can't be put together, the bar says
 why. Chords that follow one another, or notes that do, are practised in a row: each on its own, then joined

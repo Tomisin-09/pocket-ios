@@ -73,7 +73,8 @@ final class WatchOnNeckUITests: UITestCase {
                        "Name the notes opened once the sheet closed: the tap fired both buttons")
     }
 
-    /// **What's picked** on the song map (ADR 0308): hold a piece, *Pick pieces…*, then the bar's **Watch**. The
+    /// **What's picked** on the song map (ADR 0308): the toolbar's **Pick** (ADR 0310 D2), a tap on a piece, then
+    /// the bar's **Watch**. (*Pick pieces…* on a piece's hold menu starts the same picking.) The
     /// sheet is headed by what was picked, plays from where it starts, and the riff's notes light as it plays.
     /// The seed's song has no sections, so it picks the riff's piece; what a section's name picks, and what
     /// the sheet is called for two, are unit-tested (`SongMapPickingTests`), as is the merge
@@ -88,10 +89,14 @@ final class WatchOnNeckUITests: UITestCase {
         // risen, was lost and the test waited on a map that never opened.
         let riff = app.buttons["Verse riff, notes"]
         XCTAssertTrue(tap(map, until: riff, in: app), "the riff's piece isn't on the map")
-        riff.press(forDuration: 1.0)
-        let pick = app.buttons["Pick pieces…"]
-        XCTAssertTrue(pick.waitForExistence(timeout: Self.uiTimeout), "the piece's hold menu has no Pick pieces…")
+        // Picking from the toolbar (ADR 0310 D2): nothing picked, and a tap on the piece picks it.
+        let pick = app.navigationBars["Naming test"].buttons["Pick"]
+        XCTAssertTrue(pick.waitForExistence(timeout: Self.uiTimeout), "the map's toolbar has no Pick")
         pick.tap()
+        let nothing = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Tap pieces")).firstMatch
+        XCTAssertTrue(nothing.waitForExistence(timeout: Self.uiTimeout), "picking didn't start with nothing picked")
+        XCTAssertFalse(pick.exists, "Pick stays in the toolbar while picking")
+        riff.tap()
 
         let watch = app.buttons["map.pick.watch"]
         XCTAssertTrue(watch.waitForExistence(timeout: Self.uiTimeout), "no Watch on the picking bar")

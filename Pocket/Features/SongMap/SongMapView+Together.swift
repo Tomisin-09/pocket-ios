@@ -34,6 +34,12 @@ extension SongMapView {
         withAnimation(.easeOut(duration: 0.2)) { selection = [uid] }
     }
 
+    /// *Pick* in the toolbar (ADR 0310 D2): picking starts with nothing picked.
+    func startPicking() {
+        made = nil
+        withAnimation(.easeOut(duration: 0.2)) { selection = [] }
+    }
+
     /// A section's name (0308 D1): while picking, a tap picks every piece in it or lets them all go; before,
     /// *Pick this section* starts picking with them picked.
     func pickSection(_ section: SongMap.Section, in map: SongMap) {

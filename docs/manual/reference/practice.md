@@ -349,8 +349,9 @@ after `Active listening`, in the loop's hold menu in `Loops`, on the song map's 
 piece in the journal. It doesn't show for a piece named only by ear, which has nothing to light, or for a
 song whose audio can't play on this phone.
 
-On the song map it also plays **what you pick**: hold a section's name and choose `Watch it on the neck`,
-or choose `Pick pieces…` on a piece, pick what you want, and tap `Watch` on the bar. The song plays from the
+On the song map it also plays **what you pick**: tap the eye beside a section's bars, or hold its name and
+choose `Watch it on the neck`; or tap `Pick` at the top of the map, or `Pick pieces…` on a piece, pick what you
+want, and tap `Watch` on the bar. The song plays from the
 start of the first piece picked to the end of the last, and only the picks light. A piece between them that
 isn't picked plays and stays dark, and the neck says `Not picked` while it does. The top of the sheet names
 what was picked and the bars it covers, and the play button says where it starts.

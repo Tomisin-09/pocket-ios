@@ -22,6 +22,14 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Added
 
+- **Watch a section in one tap, and Pick in the map's toolbar** (ADR 0310 D1, D2). A section's name on the
+  song map has an eye beside its bars once something in it is placed on the neck: one tap opens **Watch it on
+  the neck** for that section. **Pick** at the top of the map starts picking with nothing picked, so a run like
+  *Chunk 4 and Chunk 5* is two taps away. Both were only in hold menus before.
+- **Shift a copy by a beat, or remove it** (ADR 0310 D4, D5). A copy the map made has **Shift a beat earlier**,
+  **Shift a beat later** (when the song has bars, with an Undo) and **Remove copy** (asked first) in its hold
+  menu, for as long as it's just as the map made it. Once you count, name or practise it, or put it in a
+  routine, it's yours, and deleting it stays on the waveform.
 - **Another key, in Active listening** (ADR 0305, slice 1; 1.5, item 1a). Beside the tempo, − and + under
   *key* move the loop a semitone at a time, six either way, so a lick can be practised in all twelve keys
   without changing its speed. The line under them says the key you're hearing (*B♭ minor · 3 up*), with
@@ -88,6 +96,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **A copied piece lands on the same beats** (ADR 0310 D3). Copying chords to a section that started
+  somewhere else in its bar than the loop they came from moved every chord by the same amount: on *Solo start*,
+  half a bar. With bars, a copy now keeps each tap's place in the bar, starting at the first bar the piece fits
+  in. Copies made before this keep their taps where they are.
 - **The Scales and Arpeggios editors no longer stutter when Advanced opens** (1.5, item 2d). Each was
   one tall row holding the board, which redraws every frame, so opening or closing Advanced resized
   the whole thing while it moved. Advanced now adds its settings beneath it as rows of their own, as

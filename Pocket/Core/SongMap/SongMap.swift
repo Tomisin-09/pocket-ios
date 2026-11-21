@@ -273,6 +273,8 @@ struct SongMapInput: Equatable, Sendable {
         var downbeats: [TimeInterval]
         /// How long a bar lasts at the song's tempo: a full row is eight of them.
         var barSeconds: TimeInterval
+        /// The beats in a bar, for shifting a copy by one (ADR 0310 D4).
+        var beatsPerBar: Int = 4
     }
 
     struct MarkerInput: Equatable, Sendable {

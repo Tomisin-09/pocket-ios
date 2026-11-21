@@ -92,12 +92,17 @@ extension SongMapView {
         withAnimation(.easeOut(duration: 0.2)) { made = Made(message: message, uids: Set(loops.map(\.uid))) }
     }
 
-    /// Undo for what the map just made (D17): those loops, and nothing else. The map never deletes a
-    /// loop made on the waveform.
+    /// Undo for what the map just made (D17): those loops, and nothing else, or a shifted copy's piece as it
+    /// was (ADR 0310 D4). The map never deletes a loop made on the waveform.
     @ViewBuilder var undoBar: some View {
         if let made {
-            UndoToastView(message: made.message, hint: "Removes what was just made") {
-                SongMapWriter.takeBack(made.uids, from: song, context: modelContext)
+            UndoToastView(message: made.message,
+                          hint: made.restore == nil ? "Removes what was just made" : "Puts the piece back as it was") {
+                if let restore = made.restore {
+                    SongMapWriter.restore(restore.piece, to: restore.uid, in: song)
+                } else {
+                    SongMapWriter.takeBack(made.uids, from: song, context: modelContext)
+                }
                 highlighted = []
                 withAnimation(.easeOut(duration: 0.2)) { self.made = nil }
             }

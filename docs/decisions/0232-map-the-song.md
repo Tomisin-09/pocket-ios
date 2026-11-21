@@ -18,7 +18,10 @@
   built) — **D11**: selecting starts from **Pick pieces…** (it was *Put it together…*), and while picking,
   a section's name picks all its pieces. The bar offers **Watch** beside **Put it together**, and its line
   shows only when the picks can't be put together. The two shapes, and everything Put it together makes,
-  stand.
+  stand. ADR 0310 (2026-11-21) — **D16**: with bars, a copy keeps each tap's place in the bar, starting at
+  the first bar the piece fits in; without bars nothing changes. **D17**: the map can remove a copy it made
+  while the copy is just as it made it, and shift one by a beat. Undo, and no delete for a loop made on the
+  waveform, stand.
 - **Amends:** ADR 0229 D2 — under the **Pieces** scope a piece sits under its song, not on the day it
   last changed (D20). *All* keeps the day, and D1's one row per loop stands.
 - **Schema:** four additive fields: `Marker.startsSection` (D6, slice 1), `Marker.sameAsUID` (D8,

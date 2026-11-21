@@ -17,6 +17,9 @@
   pieces…** (it was *Put it together…*), its bar offers **Watch** beside **Put it together**, and the
   bar's line shows only when the picks can't be put together (D8). The two shapes, and everything Put it
   together makes, stand.
+- **Amended by:** ADR 0310 (2026-11-21) — **D1**: a section's name carries a visible eye that watches
+  that section, and the map's toolbar a **Pick** button that starts picking with nothing picked. Picking,
+  the section's hold menu, and the whole-song eye staying gone all stand.
 - **Relates to:** 0254 (watching one loop, which this leaves as it is) · 0225 (the piece, and a chord
   named by ear) · 0227 D7 (what makes a label a chord) · 0123 (key-first spelling) · 0305 (a song's key
   describes the recording) · 0234 D5 (motion that stands for playing) · 0111 (a routine is reviewed before
