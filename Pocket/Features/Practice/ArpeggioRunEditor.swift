@@ -41,16 +41,19 @@ struct ArpeggioRunEditor: View {
     var body: some View {
         Group {
             previewRow
-            titleField
-            LabeledMenuRow(label: "Arpeggio") { qualityPicker }
-            LabeledMenuRow(label: "Root") {
-                RootNotePicker(pitchClass: rootBinding, tint: tint, accessibilityValue: run.rootName,
-                               name: { rootName(pitchClass: $0) })
+            Group {
+                titleField
+                LabeledMenuRow(label: "Arpeggio") { qualityPicker }
+                LabeledMenuRow(label: "Root") {
+                    RootNotePicker(pitchClass: rootBinding, tint: tint, accessibilityValue: run.rootName,
+                                   name: { rootName(pitchClass: $0) })
+                }
+                if run.positionCount(for: instrument) > 1 { positionRow }
+                EditorDisclosureHeader(title: "Advanced", isExpanded: $showsAdvanced,
+                                       summaryParts: advancedSummary, tint: tint)
+                if showsAdvanced { advancedRows }
             }
-            if run.positionCount(for: instrument) > 1 { positionRow }
-            EditorDisclosureHeader(title: "Advanced", isExpanded: $showsAdvanced,
-                                   summaryParts: advancedSummary, tint: tint)
-            if showsAdvanced { advancedRows }
+            .editorRowInsets()
         }
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)

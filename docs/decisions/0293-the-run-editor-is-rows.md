@@ -8,6 +8,9 @@
   up-and-back on the primary face. Up and back now opens Movement, with Coming back directly under it
   (D2), and Movement's contents are rows of the form rather than the inside of a `DisclosureGroup` (D1).
   The shift and stagger controls, their ranges and the neck-fit cap stand.
+- **Amended by:** ADR 0309 (2026-11-21) — **D1**'s rows sat about 64pt apart on iOS 26, once the Scales
+  and Arpeggios editors were rows too. On iOS 26 their control rows take 5pt above and below now, which
+  brings a one-line row to the list's 52pt minimum. The rows, and what each holds, stand.
 - **Relates to:** 0258 (rows that say their value, which Movement's summary now does, D4) · 0061 (Futura
   for UI text, which the stepper values now use, D5)
 

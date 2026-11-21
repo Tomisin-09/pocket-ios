@@ -5,6 +5,9 @@
   from 2026-10-17). Built on `pocket-369-detail-sheets`, one commit per sheet: song details
   (`eb773bd`), Edit loop (`f0c2174`), routine headers, then the exercise ⓘ sheet.
 - **Date:** 2026-10-18
+- **Amended by:** ADR 0309 (2026-11-21) — **D4**, Song details: the linked drills and *Link exercises*
+  leave the sheet for an **Exercises** row (*4 linked*), since that list grows. Map the song and Build a
+  routine for this song stay in Practise. The other sheets, and D1–D3, stand.
 - **Amends:** ADR 0152 §1–§2 — the **Audio** section leaves the sheet for *Song details › Audio
   file*, a screen one tap down. It is still the per-song inspector's door, now a hold and a tap from
   where a wrong track is heard, and its rows and words are unchanged. ADR 0236 D3 and D4 — *Export
