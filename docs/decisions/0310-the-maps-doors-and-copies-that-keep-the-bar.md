@@ -2,7 +2,9 @@
 
 - **Status:** Accepted on 2026-11-21. Tomisin decided all five the same day, after the 11-21 phone round
   (ADR 0309 left them open): *"for 1, I meant both. I'm happy with your recommendations, including the
-  shift option"*. Built on `pocket-457-song-map-pick-and-copy`; see *Build notes*.
+  shift option"*. Built on `pocket-457-song-map-pick-and-copy`; see *Build notes*. Seen on the phone the
+  same day, with a new copy into *Sunday Morning*'s Solo: *"Much better result, the chord changes actually
+  match with the song"*.
 - **Date:** 2026-11-21 (`pocket-457-song-map-pick-and-copy`)
 - **Amends:** ADR 0308 — **D1**: a section's name carries a visible eye, and the map's toolbar a
   **Pick** button (D1, D2 here). Picking, the section's hold menu, and the toolbar eye's removal stand:
@@ -99,6 +101,12 @@ On the phone on 2026-11-21, Tomisin found two things on the song map.
 
 - **Moving Pick pieces… up a piece's hold menu**, beside View tab and the modes. Raised with the doors,
   not decided.
+- **Repeats that drift.** Tomisin had tried *Repeats to the end of the song* on the same chords the day
+  before, and they didn't keep time either. A repeat steps by the loop's length as drawn (`SongTabLayout`
+  and `SectionWatch` both use `end - start`), not by whole bars as a copy's pass does: *Chords* is 10.837 s
+  where four bars are 10.878 s, so each pass came 41 ms early, about a beat by the Solo and a beat and a half
+  by the end. Stepping repeats by whole bars when there are bars would amend 0232 D14 and D18; raised with
+  Tomisin, not decided.
 - **The song's grid looking a beat early** on Tomisin's song (every marker on beat 2, the chords changing
   on 2 and 4). That's the song's own 1, set on the waveform.
 
@@ -106,8 +114,9 @@ On the phone on 2026-11-21, Tomisin found two things on the song map.
 
 - **Docs.** The manual's map paragraphs in `songs.md` (copies keep their place in the bar; shift and
   remove a copy; the eye and Pick), and `reference/practice.md`'s paragraph on watching what you pick.
-- **Device check owed.** The eye on a section's name and the toolbar's Pick on the phone; a copy into
-  *Sunday Morning*'s Solo again; shift and remove.
+- **On the phone, 2026-11-21.** Built on Tomisin's iPhone with these to try: the old copy deleted on the
+  waveform, a new copy into the Solo, shift and Undo, Remove copy, the Solo's eye, and Pick with two chunks.
+  Tomisin: *"happy with this … the chords changes actually match with the song"*.
 
 ## Build notes
 
