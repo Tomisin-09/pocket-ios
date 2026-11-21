@@ -36,18 +36,10 @@ struct SongDetailsSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) var modelContext
-    /// Every exercise, to offer in the link picker (ADR 0111). Sorted by name, like the library.
-    /// Candidates for the "Link exercises" picker. Loaded when *that* picker opens, not when
-    /// this sheet does — it was a `@Query` for every `Exercise`, run on the main thread during
-    /// presentation, and this sheet is opened by holding the title on the practice screen while
-    /// audio plays. Most openings never touch the picker at all.
-    @State var exerciseCandidates: [Exercise] = []
-    @State var showingExercisePicker = false
+    // The linked drills and their picker live on `SongExercisesScreen`, one tap down (ADR 0309 D3). Its
+    // candidates still load on the tap that opens the picker, not with this sheet, which is opened by a
+    // hold on the practice screen while audio plays.
     @State var buildingRoutine = false
-    /// The linked drill being opened for a run. The link is a route, not just a label (ADR 0172):
-    /// the app already knows this exercise is *for* this song, so reading it here and then making
-    /// you go and find it in the exercise library is a fact it declines to act on.
-    @State var openingExercise: Exercise?
     /// **Map the song** (ADR 0232 D1), open full screen over this sheet.
     @State var mappingSong = false
     /// The map asked for the waveform: once it has closed, this sheet goes too.
@@ -88,18 +80,6 @@ struct SongDetailsSheet: View {
                                 mappingSong = false
                             })
             })
-            .sheet(isPresented: $showingExercisePicker) {
-                LinkPickerSheet(
-                    title: "Link exercises",
-                    prompt: "Search exercises",
-                    emptyCatalog: "No exercises in your library yet.",
-                    candidates: exerciseCandidates,
-                    label: { $0.name.isEmpty ? "Untitled exercise" : $0.name },
-                    subtitle: { $0.template.displayName },
-                    isLinked: { isLinked($0) },
-                    toggle: { toggleLink($0) },
-                    accent: PocketColor.practice)
-            }
             // Push (not a modal cover) so RoutineDetailView's provisional state — Save-only, no
             // Cancel button — still has the nav back button to abandon it, matching the planner flow.
             .navigationDestination(isPresented: $buildingRoutine) {
@@ -108,19 +88,6 @@ struct SongDetailsSheet: View {
                                   defaultName: SongRoutineBuilder.defaultName(for: song),
                                   // A song's routine is a recipe: Start keeps it (ADR 0243 D1).
                                   startsAs: .saved)
-            }
-            // A linked drill opens its run screen, pushed inside this sheet the same way "Build a
-            // routine" is — so the back chevron returns to the song you came from. Bool-bound, not
-            // `.navigationDestination(item:)`: a model's `persistentModelID` can flip on a save and
-            // item-based presentation reads that as an identity change and pops (ADR 0090).
-            // Attached here at the `NavigationStack`, never inside the `Form` — a presentation
-            // raised from a row inside this sheet's form dismisses *this* sheet (see
-            // `ReferenceLinkEditing`).
-            .navigationDestination(isPresented: Binding(get: { openingExercise != nil },
-                                                        set: { if !$0 { openingExercise = nil } })) {
-                // Through `ExerciseRunScreen`, never `ExerciseRunView` — it is the one place that
-                // decides which run screen a drill gets, so a freeform block gets its own (ADR 0136).
-                if let exercise = openingExercise { ExerciseRunScreen(exercise: exercise) }
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

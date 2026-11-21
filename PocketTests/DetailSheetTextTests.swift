@@ -25,6 +25,14 @@ final class DetailSheetTextTests: XCTestCase {
         XCTAssertEqual(DetailSheetText.loops(4), "4 loops")
     }
 
+    /// ADR 0309 D3: the song's Exercises row counts what's behind it, and says *None* rather than
+    /// *0 linked*, as References does.
+    func testLinkedExercisesCountsAndSaysNone() {
+        XCTAssertEqual(DetailSheetText.linkedExercises(0), "None")
+        XCTAssertEqual(DetailSheetText.linkedExercises(1), "1 linked")
+        XCTAssertEqual(DetailSheetText.linkedExercises(15), "15 linked")
+    }
+
     func testReferencesCountsLinksAndFilesApart() {
         XCTAssertEqual(DetailSheetText.references(links: 0, files: 0), "None")
         XCTAssertEqual(DetailSheetText.references(links: 1, files: 0), "1 link")
