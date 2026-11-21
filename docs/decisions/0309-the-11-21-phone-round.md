@@ -6,7 +6,7 @@
   row padding for the rows"*; D3 *"I'm happy with this"*; D4 *"you can link songs in the create your own
   setup template, you should be able to link skills as well … I'm with you on goals and would like to
   include the updated text"*. Built the same day on `pocket-456-phone-round-polish`, one commit per
-  decision; see *Build notes*. Device check owed (Consequences).
+  decision; see *Build notes*. Seen on the phone the same day: *"I'm happy with this"* (Consequences).
 - **Date:** 2026-11-21 (`pocket-456-phone-round-polish`)
 - **Amends:** ADR 0293 — **D1**: on iOS 26 the editor's control rows take 5pt above and below (D2
   here). The rows, and what each holds, stand. ADR 0258 — **D4**, Song details: the linked drills and
@@ -111,8 +111,9 @@ the end). Three are:
 - **Docs.** The manual's Song details lines (`reference/home-and-library.md`) and the songs page follow
   D3, and the Your own practice paragraph (`exercises.md`) follows D4. The reshoot list gains Song
   details and the create form.
-- **Device check owed.** The arrows on the phone, light and dark, with captions on and off; the editors'
-  rows; Song details' Exercises row; the create form's Works on.
+- **On the phone.** The branch was built on Tomisin's iPhone 16 Pro (iOS 26.6) on 2026-11-21 with these
+  to look at: the arrows, light and dark, with captions on and off; the editors' rows; Song details'
+  Exercises row; the create form's Works on. Tomisin: *"I'm happy with this"*.
 
 ## Build notes
 
