@@ -87,22 +87,32 @@ struct ConfigureExerciseForm: View {
 
     private let range = StandaloneMetronomeEngine.bpmRange
 
-    /// What the drill will work on, by name, when a goal skill's fix made it (ADR 0216 D4). Shown so
-    /// the player can see it — the plan carries the ids, and nothing else on this step would say so.
-    let statedSkillNames: [String]
+    /// What the drill works on (ADR 0216 D1), held locally and carried on the plan like the songs. It starts
+    /// with a goal skill's fix's skill (D4), and on Basic and Your own practice **Works on** sets it (ADR 0309
+    /// D4); elsewhere the drill follows its type.
+    @State var pickedSkillIDs: [String]
+    @State var showingSkillPicker = false
+    /// The picker's working copies, bound to `SkillPickerSheet` and read back when it closes.
+    @State var skillOffered: [String] = []
+    @State var skillKept: Set<String> = []
+    /// The player's own skills, so a custom id reads as its name.
+    @Query var customSkills: [CustomSkill]
+    /// Both goal tiers, for the line naming the goals the skills serve.
+    @Query var longTermGoals: [LongTermGoal]
+    @Query var plannerGoals: [Goal]
 
     init(template: ExerciseTemplate, initialCommand: Int, initialSignature: TimeSignature,
          initialInstrument: Instrument = .guitar, initialSongs: [Song] = [],
-         statedSkillNames: [String] = [],
+         initialSkillIDs: [String] = [],
          create: @escaping (NewExercisePlan) -> Void) {
         self.template = template
         self.initialCommand = initialCommand
         self.initialSignature = initialSignature
         self.initialInstrument = initialInstrument
         self.initialSongs = initialSongs
-        self.statedSkillNames = statedSkillNames
         self.create = create
         _pickedSongs = State(initialValue: initialSongs)
+        _pickedSkillIDs = State(initialValue: initialSkillIDs)
         _command = State(initialValue: initialCommand)
         _signature = State(initialValue: initialSignature)
         let bars = initialSignature.beats
@@ -139,22 +149,6 @@ struct ConfigureExerciseForm: View {
             chordProgression: sheetSeed.chordProgression))
     }
 
-    /// **Works on**, for a drill made from a goal skill's fix (ADR 0216 D4). Rows are built in a
-    /// function, not inline in the `Section` — the shape that once segfaulted the routine editor.
-    private var statedSkillsSection: some View {
-        Section {
-            ForEach(statedSkillNames, id: \.self) { statedSkillRow($0) }
-        } header: {
-            Text("Works on")
-        } footer: {
-            Text("Change it later from the exercise\u{2019}s \u{24D8}.")
-        }
-    }
-
-    private func statedSkillRow(_ name: String) -> some View {
-        Text(name).foregroundStyle(PocketColor.textPrimary)
-    }
-
     var body: some View {
         Form {
             Section("Name") {
@@ -176,7 +170,7 @@ struct ConfigureExerciseForm: View {
             // whose value the run screen never reads is a question with no honest answer.
             if template != .freeform { tempoAndMeterSections }
             songsSection
-            if !statedSkillNames.isEmpty { statedSkillsSection }
+            worksOnSection
             templateSection
         }
         .scrollDismissesKeyboard(.interactively)
@@ -200,6 +194,10 @@ struct ConfigureExerciseForm: View {
                 isLinked: { isPicked($0) },
                 toggle: { togglePick($0) },
                 accent: PocketColor.practice)
+        }
+        // At the form, never on the section's row: a sheet raised from a row loses its write on iOS 18.
+        .sheet(isPresented: $showingSkillPicker, onDismiss: commitPickedSkills) {
+            SkillPickerSheet(offeredSkillIDs: $skillOffered, keptSkillIDs: $skillKept, title: "Works on")
         }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
@@ -249,10 +247,11 @@ private extension ConfigureExerciseForm {
         } header: {
             Text("Instructions")
         } footer: {
-            Text("Sight-reading, transcribing, a piece you're working by hand, something your teacher "
-                 + "set — whatever Red Moon doesn't cover. You'll see this while you practise. Nothing "
-                 + "reads it but you.\n\nTick the box and this can turn up in an "
-                 + "\u{201C}Away from your instrument\u{201D} session — a commute, a quiet room. "
+            Text("Sight-reading, transcribing, a piece you're working by hand, dialling in your pedals, "
+                 + "building loops on a looper, something your teacher set — whatever Red Moon doesn't "
+                 + "cover. You'll see this while you practise. Nothing reads it but you.\n\nTick the box and "
+                 + "this can turn up in an \u{201C}Away from your instrument\u{201D} session — a commute, a "
+                 + "quiet room. "
                  + "We can't tell from what you wrote, so it's your call.")
         }
     }
@@ -301,7 +300,8 @@ private extension ConfigureExerciseForm {
                         strumChords: template.bespokeEditor == .strumChords ? strumChords : nil,
                         notes: template == .freeform ? trimmedInstructions : "",
                         awayFromInstrument: template == .freeform && awayFromInstrument,
-                        songs: pickedSongs)
+                        songs: pickedSongs,
+                        skillIDs: pickedSkillIDs)
     }
 
     /// The generated seed for a fresh run/scale/arpeggio at a given instrument — the template's guitar

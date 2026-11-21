@@ -67,6 +67,20 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   take; saving the name empty brings the number back. The takes already on the phone are numbered once,
   in the order they were recorded. An exported take is named *Slow Bend · Chorus · Take 3 · 1 Oct
   2026*, and Journal search finds *take 3*.
+- **A song's exercises sit behind a row** (ADR 0309 D3). Song details listed every drill linked to the
+  song, a list that only grows. **Practise** now reads *Map the song*, **Exercises** with how many are
+  linked (*4 linked*), and *Build a routine for this song*. **Exercises** opens the list, where a drill
+  still opens its run screen, a swipe still unlinks it, and **Link exercises** adds more.
+- **Works on, when you make a drill** (ADR 0309 D4). Making a Basic or *Your own practice* drill, the two
+  kinds with no skills of their own, you can say what it works on under the songs, as you could only from
+  its ⓘ once it was made, your own skills included. The section names the goals those skills serve, since
+  a goal on a skill is what brings a drill into a session. *Your own practice* also names dialling in your
+  pedals and building loops on a looper among the practice it's for.
+- **A jump between notes is a small arrow** (ADR 0309 D1). On a walking board, in the exercise editors and
+  the run screen, the move from one note to the next was a faint line from dot to dot. It didn't say which
+  way the hand went, so a run coming back down looked the same as one going up. It's a small arrowhead in
+  the gap now, pointing the way you moved, and it's left off where two notes are too close for it. Slides
+  and hammer-ons keep their own marks. **Display** has a new switch, **Arrows between notes**, on to start.
 - **Home's *This week* strip reads only the week** (1.5, item 2a). It used to fetch every practice run and
   every note to count seven days, so it slowed as history grew. On a copy of the phone's store it now
   costs about 32 ms at today's 437 runs (60 ms before) and stays flat at four times that history (135 ms
@@ -79,6 +93,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   the whole thing while it moved. Advanced now adds its settings beneath it as rows of their own, as
   Movement does on the Warm-up, Picking and Legato editors (ADR 0293). What's in Advanced and how it
   reads don't change.
+- **A linked drill or song opens from anywhere on its row.** On a song's list of exercises and an
+  exercise's list of songs, a tap in the gap between the name and the chevron did nothing; only the words
+  answered. The whole row does now. Found when the new Exercises screen's UI test tapped a row's middle.
+- **The exercise editors' settings sit closer together** (ADR 0309 D2). Once each setting became a row of
+  its own, the Scales and Arpeggios editors put about 64 points between one setting and the next, and the
+  Warm-up, Picking and Legato editors were as loose. It's about 52 now, the closest iOS 26 lists allow a
+  row, which is about where Scales sat before. Earlier iOS versions are unchanged.
 - **Edit song's key picker no longer wraps *D♯* and *G♯*** (ADR 0305 D8). Their chips broke onto two lines
   and grew into circles while *C♯* and *F♯* fit. Every root is one line now, and at the largest text sizes
   the grid drops to four columns, then three, rather than wrap.

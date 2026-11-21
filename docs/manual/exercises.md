@@ -158,7 +158,9 @@ really for, or adds skills its template doesn't name — any skill in the catalo
 own — and the section then says *Set by you*. **Use its type’s skills** puts it back. A drill whose
 template has skills always keeps at least one, since that button is the way back to none of your
 own. A Basic or **Your own practice** exercise starts with nothing here, and **Add skills** is how
-it says what it's for. A Warm-up works on no skill, and has no **Works on**.
+it says what it's for — on this sheet, or on the form where you make it, which has its own **Works
+on** under the songs and names the goals those skills serve. A Warm-up works on no skill, and has no
+**Works on**.
 
 You can also arm a **recording** before you start, which captures your playing through the mic as a
 take. That is covered with the rest of the journal.
@@ -219,7 +221,9 @@ The second step is titled for what you picked — **New warm-up**, **New scales*
   to run. Scales, Arpeggios and the warm-up family offer **Generate** or **Draw your own**: generate
   and you set a finger pattern, where on the neck it starts, how far across it travels and whether
   it moves; draw and you place the notes yourself. Either way the board above walks it through, or,
-  with **Animate exercises** off, **Watch** walks it once.
+  with **Animate exercises** off, **Watch** walks it once. Each jump from one note to the next shows
+  as a small arrow pointing the way your hand goes, left off where two notes are too close for one;
+  **Arrows between notes** in **Display** turns them off, here and on the run screen.
   A **Legato** drill works out its own hammer-ons and pull-offs: the first note on each string is
   picked, and every note after it on that string is hammered on going up or pulled off coming down.
   As the board walks, each one is drawn as a curve under the string marked *h* or *p*.
@@ -227,6 +231,9 @@ The second step is titled for what you picked — **New warm-up**, **New scales*
   staircase derives from it, which is why it is the number the form asks for.
 - **Time signature** — sets the run's accents and count-in length. Defaults to 4/4.
 - **Songs** — link the songs this drill is for. The link shows on the song too.
+- **Works on** — on a Basic or **Your own practice** drill, which have no skills of their own, **Add
+  skills** says what it's for, and the section names the goals those skills serve. Other templates
+  start from their own skills, which you can change from the drill's **ⓘ**.
 
 A chord progression is built a chord at a time, and each chord carries its own controls: the name
 opens the picker to swap it, the stepper sets how many beats it is held for, and the up and down
@@ -337,8 +344,9 @@ still lands in your exercises, and Red Moon says where it went.
 ## Your own practice
 
 The last template is the one for practice the app does not model — sight-reading, transcribing,
-singing while you play, something a teacher set. Instead of a shape and a tempo it takes your own
-written instructions, and it runs as a timer with those instructions on screen.
+singing while you play, dialling in your pedals, building loops on a looper, something a teacher
+set. Instead of a shape and a tempo it takes your own written instructions, and it runs as a timer
+with those instructions on screen.
 
 It has no tempo and no meter on purpose: most of what belongs in one has no BPM at all, and a
 setting the run screen never reads is a question with no honest answer.

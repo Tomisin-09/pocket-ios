@@ -129,3 +129,30 @@ the end). Three are:
   them on.
 - `editorRowInsets()` in `FretboardEditorChrome.swift`, on every control row of the three editors. A
   per-row `defaultMinListRowHeight` was tried and does nothing; a form-wide one took the rows to 44.7pt.
+
+**D3, 2026-11-21.**
+
+- `SongExercisesScreen` sits beside the sheet's Practise section in `SongDetailsSheet+Links.swift`, and
+  owns its picker and the push to the run screen. With the push declared at the sheet's root instead,
+  back from the run screen skipped the list and landed on Song details.
+- `SongExercisesUITests` (the full suite, not the smoke) links a drill, opens its run screen, comes
+  back, reads *1 linked* on the row and unlinks with a swipe. On its first runs a tap on the middle of a
+  linked row did nothing: a plain-style button in a list row answers only where it draws, and the middle
+  is the gap before the chevron. The old rows on the sheet had the same gap, and so did the exercise's
+  Songs rows. Both get `contentShape(Rectangle())`.
+- `NamingPieceSeed` clears its song's linked drills, as it clears snags and pitch, so a run that fails
+  after linking can't change the next run's count. That's how it was found: the second run started at
+  *1 linked*.
+
+**D4, 2026-11-21.**
+
+- `ConfigureExerciseForm` takes `initialSkillIDs` (was `statedSkillNames`) and holds the picks in
+  `pickedSkillIDs`, carried on `NewExercisePlan.skillIDs` as the songs are. `NewExerciseSheet` no longer
+  stamps the fix's skill over the plan; it seeds the form with it.
+- **Works on** shows where `SkillAssociation.defaultSkills` is empty and the type isn't Warm-up. Its
+  picker is `SkillPickerSheet`, raised from the form, never from the row. A typed drill with a fix's
+  skill still shows it read-only.
+- `DrillServes` (pure, `DrillServesTests`) names the unmet goals on any of the skills, long-term goals
+  in their rank and then the planner's, each once, and writes the line, or nothing.
+- `SkillsYouShapeUITests.testWorksOnCanBeSetWhileMakingYourOwnPractice` picks a skill on the form and
+  sees it land in Works on, then cancels. The footer with two goals was seen in a hosted window.
