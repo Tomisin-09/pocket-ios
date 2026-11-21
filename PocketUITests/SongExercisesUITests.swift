@@ -76,6 +76,7 @@ final class SongExercisesUITests: UITestCase {
 
     // MARK: - Helpers
 
+    @MainActor
     private func exercisesRow(in app: XCUIApplication) -> XCUIElement {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Exercises")).firstMatch
     }
@@ -99,6 +100,7 @@ final class SongExercisesUITests: UITestCase {
                       "holding the title didn't open Song details")
     }
 
+    @MainActor
     private func attach(_ app: XCUIApplication, named name: String) {
         let shot = XCTAttachment(screenshot: app.screenshot())
         shot.name = name
