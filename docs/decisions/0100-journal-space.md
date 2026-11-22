@@ -11,6 +11,9 @@
   amendment's *press-and-hold only* gives way on this feed: a trailing swipe offers Delete too, without
   a full swipe. The hold menu, the Undo toast and the deferred delete stand, and a unit's Takes list
   stays hold-only.
+- **Amended by:** ADR 0311 (2026-11-22, for 1.6) — the Journal's gold stands in every theme but two:
+  Corn Moon (an olive 9.3 from the gold) moves it to terracotta, and Harvest Moon (an amber 7.6 from it)
+  to crimson. The Journal keeps a hue of its own in every theme.
 
 ## Context
 

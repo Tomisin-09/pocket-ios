@@ -9,6 +9,9 @@
 - **IA / design pass:** [`docs/plans/chords-theory-hub-ia.md`](../plans/chords-theory-hub-ia.md) — resolves
   the deferred questions (attach point, screen inventory, the build/hear/explore/keep flows, empty states,
   phasing) that this ADR's ratified decisions summarise.
+- **Amended by:** ADR 0311 (2026-11-22, for 1.6) — D3's indigo stays the Toolkit's colour in every
+  theme but one: under Cold Moon, a blue 8.0 from the indigo, the Toolkit wears jade. D3's purpose, a
+  reference hue clear of the other spaces, is what the move keeps.
 
 ## Ratified decisions (2026-07-17)
 

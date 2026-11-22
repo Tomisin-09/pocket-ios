@@ -11,6 +11,10 @@
 - **Relates to:** 0062 (the contrast rule D2 meets) · 0187 D16 (the Oracle's crimson, chosen to stay
   clear of this terracotta) · 0279 (the App Store frames D6 recolours) · 0023 (the loop palette, whose
   red and orange now sit either side of the bars)
+- **Amended by:** ADR 0311 (2026-11-22, for 1.6) — D1's *no picker* gives way: Settings ▸ Appearance
+  offers eight themes, and the teal look returns as Blue Moon. Blood Moon stays the default for anyone
+  who doesn't choose, and D3's art, D6's printed colour and D7's outside-the-app look stand: the brand
+  stays red.
 
 ## Context
 
