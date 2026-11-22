@@ -12,6 +12,10 @@
   song-surface **blue**), [ADR 0062](0062-light-dark-appearance.md) /
   [ADR 0063](0063-appearance-vibrancy-and-loop-editing-lock.md) (the teal was the *metronome* hue; it
   now leads via Practice)
+- **Amended by:** ADR 0311 (2026-11-22, for 1.6) — Slice 2's picker comes back with eight themes, Blood
+  Moon the default. A theme now maps every space, not only Practice and the Library, onto shared colour
+  families, so the catalog grows by family, never by theme. The Metronome's plum still never moves, and
+  teal returns as Blue Moon's Practice, with its button set restored.
 
 ## Context
 

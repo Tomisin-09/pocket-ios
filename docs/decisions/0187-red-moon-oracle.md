@@ -55,6 +55,9 @@
 - **Schema:** none. No `@Model`, no field, no migration. The Oracle reads the store and writes
   through paths that already exist (`PracticePlanner.materialise`, `NewExercisePlan.finalise`);
   its own state — last reading date, opt-in, quota — is `UserDefaults`. The schema freeze holds.
+- **Amended by:** ADR 0311 (2026-11-22, for 1.6) — D16's crimson becomes Blood Moon's choice rather
+  than the only one. With the Home door closed it shows only as the song player's snag ticks, which read
+  the Oracle's colour; under Pink Moon, 6.8 from the crimson, it is teal.
 
 ---
 

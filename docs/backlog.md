@@ -4,6 +4,15 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## Moon themes, for 1.6 (decided 2026-11-22, ADR 0311)
+
+Eight themes picked in Settings → Appearance: Blood Moon (still the default and the brand), Blue,
+Jade, Corn, Silver, Pink, Harvest and Cold. A theme sets the colour Practice and the song player wear,
+and moves a space's colour only where it would sit near the theme's. ADR 0311 holds the values, the
+space palettes, the Theme screen and the build notes. Still open there (D11): free or Pro, whether the
+wordmark and App Icon follow, the Metronome and Toolkit near-pair, and whether Silver ships after a
+look on the phone.
+
 ## 1.5: what it holds (decided 2026-11-17)
 
 Tomisin chose these for 1.5 on 2026-11-17, the day 1.4.1 (11) was submitted. Each item points at the
