@@ -140,11 +140,12 @@ struct AboutSection: View {
     static let appleStandardEULA =
         URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
 
-    /// Red Moon Practice's privacy policy. Points at the live section on the Deco Operations
-    /// site. When the standalone page ships (docs/site/redmoon-privacy.html), repoint this at
-    /// its dedicated URL. A valid compile-time literal.
+    /// Red Moon Practice's own privacy policy, on its own site (the `site` branch, ADR 0306), which is
+    /// also the URL App Store Connect gives. Since 1.5; 1.4 and 1.4.1 link to the stub section left on
+    /// Deco Operations' page (`decooperations.co.uk/privacy#red-moon-practice`), which stays for the
+    /// phones still running them. The paywall links here too. A valid compile-time literal.
     static let privacyPolicy =
-        URL(string: "https://decooperations.co.uk/privacy#red-moon-practice")!
+        URL(string: "https://www.redmoonpracticestudio.co.uk/privacy")!
 
     /// The App Store's **write a review** sheet for Red Moon (ADR 0214).
     ///
