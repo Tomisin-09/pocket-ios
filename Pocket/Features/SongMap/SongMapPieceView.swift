@@ -148,6 +148,11 @@ struct SongMapPieceMenu: View {
     let onPick: () -> Void
     let onView: () -> Void
     let onOpen: (LoopRunMode) -> Void
+    /// *Shift a beat earlier* (-1) or *later* (+1), on a copy still as the map made it, with bars (ADR 0310
+    /// D4). `nil` otherwise.
+    var onShift: ((Int) -> Void)?
+    /// *Remove copy* (ADR 0310 D5), on a copy still as the map made it. `nil` otherwise.
+    var onRemove: (() -> Void)?
 
     var body: some View {
         Button(action: onView) { Label("View tab", systemImage: "music.note.list") }
@@ -160,6 +165,14 @@ struct SongMapPieceMenu: View {
             Button(action: onCopy) { Label("Copy to…", systemImage: "square.on.square") }
         }
         Button(action: onPick) { Label("Pick pieces…", systemImage: "checkmark.circle") }
+        if onShift != nil || onRemove != nil { Divider() }
+        if let onShift {
+            Button { onShift(-1) } label: { Label("Shift a beat earlier", systemImage: "arrow.left") }
+            Button { onShift(1) } label: { Label("Shift a beat later", systemImage: "arrow.right") }
+        }
+        if let onRemove {
+            Button(role: .destructive, action: onRemove) { Label("Remove copy", systemImage: "trash") }
+        }
     }
 
     /// One item when there's one way to repeat, else a menu of them. Buttons, not a `Toggle` or a `Picker`:

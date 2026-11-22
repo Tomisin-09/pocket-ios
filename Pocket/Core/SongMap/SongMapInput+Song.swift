@@ -37,7 +37,8 @@ extension SongMapInput {
             .filter(\.isDownbeat)
             .map { $0.fraction * song.duration }
         guard !downbeats.isEmpty else { return nil }
-        return Grid(downbeats: downbeats, barSeconds: 60 / bpm * Double(max(1, song.beatsPerBar)))
+        return Grid(downbeats: downbeats, barSeconds: 60 / bpm * Double(max(1, song.beatsPerBar)),
+                    beatsPerBar: max(1, song.beatsPerBar))
     }
 
     /// Whether the song has a grid to draw bars from, shown or not: what decides if the **Bars** chip is

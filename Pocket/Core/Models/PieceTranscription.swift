@@ -30,6 +30,10 @@ struct PieceTranscription: Codable, Equatable, Sendable {
     /// When the piece last changed: saved from a pass, or its names edited. Where it sits in the
     /// Journal (ADR 0229). `nil` on a piece saved before that, until `PieceDateBackfill` stamps it.
     var changedAt: Date?
+    /// When the song map wrote this piece as a copy (ADR 0232 D16), or `nil` for a piece the player counted
+    /// and a copy made before ADR 0310. The copy is still the map's, to shift or remove (0310 D4, D5), while
+    /// `changedAt` is this same time: saving or naming the piece stamps `changedAt` and leaves this.
+    var copiedAt: Date?
 
     struct Tap: Codable, Equatable, Sendable {
         /// Where the note is, in seconds from the top of the song.

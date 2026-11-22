@@ -11,7 +11,8 @@ import SwiftData
 ///
 /// - under `-uiTesting -seedNamingPiece` it is put in, or put back as it was: six unnamed notes on
 ///   *Verse riff*, no snags, no notes in its loops' Journals (the snag line test writes one, ADR 0238),
-///   and no drills linked (the Exercises row test links one, ADR 0309);
+///   no drills linked (the Exercises row test links one, ADR 0309), and no copy the map made (the copy test
+///   makes one, ADR 0310);
 /// - under `-uiTesting -seedWatchPiece` the same, with the six placed on the neck, since *Watch it on the
 ///   neck* has no door for a piece with nothing on it;
 /// - under `-uiTesting` alone it is **taken out**. The *Start here* card shows only in an empty library,
@@ -87,6 +88,11 @@ enum NamingPieceSeed {
             // No drills linked (ADR 0309 D3): a test that linked one and then failed mustn't change the
             // next one's count. Unlinking never deletes a drill.
             song.linkedExercises = []
+            // No copy the map made (ADR 0310 D5): a test that copied the riff and then failed before removing
+            // the copy mustn't leave it for the next. Only a copy carries the stamp; the song's own loops stay.
+            let copies = song.loops.filter { $0.transcription?.copiedAt != nil }
+            song.loops.removeAll { $0.transcription?.copiedAt != nil }
+            copies.forEach(context.delete)
             if let loop = song.loops.first(where: { $0.name == loopName }) {
                 loop.transcription = piece(duration: song.duration, start: loop.start, end: loop.end,
                                            placed: action == .seedFretted)

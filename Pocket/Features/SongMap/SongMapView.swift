@@ -11,8 +11,9 @@ import SwiftUI
 /// song's chart from the same pieces, and tapping one of its rows comes back here, to the pieces that
 /// drew it.
 ///
-/// **It adds, and never deletes** (D17). A piece made in a gap, or copied (D16), can be taken back with
-/// Undo while it's new; a loop made on the waveform can't be removed from here. **Put it together** (D11)
+/// **It adds, and deletes only what it made** (D17). A piece made in a gap, or copied (D16), can be taken back
+/// with Undo while it's new, and a copy still as it made it can be shifted or removed (ADR 0310 D4, D5); a
+/// loop made on the waveform can't be removed from here. **Put it together** (D11)
 /// picks pieces to make a routine of, opened for review (`SongMapView+Together`).
 struct SongMapView: View {
     let song: Song
@@ -22,6 +23,9 @@ struct SongMapView: View {
     /// Close the map and go to the song's waveform, where the tempo and the 1 are set (D7). `nil` where
     /// there's no way there, and the Tab view just says what's missing.
     var onShowWaveform: (() -> Void)?
+    /// The loop the practice screen's waveform is playing, when the map was opened from there: never offered
+    /// for removal (ADR 0310 D5), since the waveform is holding it.
+    var heldLoop: UUID?
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) var modelContext
@@ -62,6 +66,10 @@ struct SongMapView: View {
     @State var beginAfterSheet: TogetherBegin?
     /// The routine Put it together made, open for review (D11).
     @State var reviewing: TogetherReview?
+    /// The copy *Remove copy* is asking about (ADR 0310 D5). By uid, never the model (ADR 0090).
+    @State var removing: CopySource?
+    /// Remove copy found, on asking the store, that the copy is the player's now.
+    @State var removalRefused = false
 
     enum Mode: Hashable { case pieces, tab }
 
@@ -95,7 +103,10 @@ struct SongMapView: View {
                                                                            copy: startCopy,
                                                                            pick: startPicking,
                                                                            pickSection: { pickSection($0, in: map) },
-                                                                           toggle: toggleSelected),
+                                                                           toggle: toggleSelected,
+                                                                           shift: { shift($0, by: $1, grid: map.grid) },
+                                                                           removeCopy: askToRemove,
+                                                                           heldLoop: heldLoop),
                                                    highlighted: highlighted, selected: selection,
                                                    onWatch: watchDoor(section, in: map, sources: sources))
                             }
@@ -120,7 +131,7 @@ struct SongMapView: View {
             .safeAreaInset(edge: .top, spacing: 0) { modePicker }
             .navigationTitle(song.title)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { toolbar(tab) }
+            .toolbar { toolbar(tab, map: map) }
             .navigationDestination(isPresented: Binding(get: { opening != nil },
                                                         set: { if !$0 { opening = nil } })) {
                 if let opening, let loop = loops[opening.uid] {
@@ -181,6 +192,8 @@ struct SongMapView: View {
             }
         }
         .onChange(of: mode) { selection = nil }
+        .modifier(SongMapCopyPrompts(removing: $removing, refused: $removalRefused, name: removingName,
+                                     onRemove: confirmRemove))
         .sheet(item: $copying) { source in
             if let piece = map.pieces[source.uid] {
                 SongMapCopySheet(piece: piece, map: map) { copy(source.uid, into: $0, grid: map.grid) }
@@ -295,11 +308,18 @@ struct SongMapView: View {
 
     // MARK: - Toolbar
 
-    /// *Done*, and on the Tab view with something drawn, *Export* (ADR 0236 D9). The whole song's eye is gone
-    /// (ADR 0308 D1): the whole song is every section picked.
-    @ToolbarContentBuilder private func toolbar(_ tab: SongTab?) -> some ToolbarContent {
+    /// *Done*; on the Pieces view with pieces on it, *Pick* until picking starts (ADR 0310 D2); and on the
+    /// Tab view with something drawn, *Export* (ADR 0236 D9). The whole song's eye is gone (ADR 0308 D1): the
+    /// whole song is every section picked.
+    @ToolbarContentBuilder private func toolbar(_ tab: SongTab?, map: SongMap) -> some ToolbarContent {
         ToolbarItem(placement: .cancellationAction) {
             Button("Done") { dismiss() }
+        }
+        if tab == nil, selection == nil, !map.pieces.isEmpty {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Pick", action: startPicking)
+                    .accessibilityHint("Pick pieces to watch on the neck or put together")
+            }
         }
         if let tab, !tab.isEmpty {
             ToolbarItem(placement: .primaryAction) {
@@ -323,7 +343,15 @@ extension SongMapView {
     struct Made: Equatable {
         let id = UUID()
         let message: String
+        /// The loops Undo takes back.
         let uids: Set<UUID>
+        /// Or, after a shift (ADR 0310 D4), the piece Undo puts back.
+        var restore: Restore?
+    }
+
+    struct Restore: Equatable {
+        let uid: UUID
+        let piece: PieceTranscription
     }
 }
 

@@ -25,13 +25,17 @@ struct SongDetailsSheet: View {
     /// Close this sheet and show the song's waveform, for the song map's *Set the tempo and the 1* (ADR
     /// 0232 D7). The practice screen just closes the sheet; the library closes it and opens the song.
     let onShowWaveform: (() -> Void)?
+    /// The loop the practice screen's waveform is playing, which the song map never removes (ADR 0310 D5).
+    /// `nil` from the library, where no waveform is open.
+    let heldLoop: UUID?
 
     init(song: Song, replaceAudio: ((URL) async throws -> SongRelinker.Outcome)? = nil,
-         onOpenNestedAudio: @escaping () -> Void = {}, onShowWaveform: (() -> Void)? = nil) {
+         onOpenNestedAudio: @escaping () -> Void = {}, onShowWaveform: (() -> Void)? = nil, heldLoop: UUID? = nil) {
         self.song = song
         self.replaceAudio = replaceAudio
         self.onOpenNestedAudio = onOpenNestedAudio
         self.onShowWaveform = onShowWaveform
+        self.heldLoop = heldLoop
     }
 
     @Environment(\.dismiss) private var dismiss
@@ -78,7 +82,7 @@ struct SongDetailsSheet: View {
                             onShowWaveform: onShowWaveform == nil ? nil : {
                                 showWaveformAfterMap = true
                                 mappingSong = false
-                            })
+                            }, heldLoop: heldLoop)
             })
             // Push (not a modal cover) so RoutineDetailView's provisional state — Save-only, no
             // Cancel button — still has the nav back button to abandon it, matching the planner flow.

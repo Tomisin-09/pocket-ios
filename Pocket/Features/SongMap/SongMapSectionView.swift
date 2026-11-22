@@ -11,7 +11,8 @@ struct SongMapSectionView: View {
     let highlighted: Set<UUID>
     /// The pieces picked (ADR 0308 D1), while picking. `nil` otherwise.
     var selected: Set<UUID>?
-    /// *Watch it on the neck* for this section (ADR 0289), on the heading's hold menu, or `nil` behind the gate.
+    /// *Watch it on the neck* for this section (ADR 0289): the heading's eye and its hold menu, or `nil` behind
+    /// the gate.
     var onWatch: (() -> Void)?
 
     var body: some View {
@@ -51,7 +52,8 @@ struct SongMapSectionHeading: View {
     let openMarker: (UUID) -> Void
     /// Go to the section this one repeats.
     let showSection: (TimeInterval) -> Void
-    /// *Watch it on the neck* for the section (ADR 0289), held from the heading. The Tab view passes none.
+    /// *Watch it on the neck* for the section (ADR 0289): the eye beside its bars (ADR 0310 D1), and its hold
+    /// menu. The Tab view passes none.
     var onWatch: (() -> Void)?
     /// While picking (ADR 0308 D1), how much of the section is picked; `nil` otherwise, and in the Tab view.
     var mark: SongMapPicking.Mark?
@@ -65,21 +67,21 @@ struct SongMapSectionHeading: View {
             EmptyView()
         case .start:
             if let mark, let onPick {
-                headingRow(pickButton("Start", mark: mark, action: onPick))
+                headingRow(pickButton("Start", mark: mark, action: onPick), name: "Start")
             } else {
-                headingRow(Text("Start").foregroundStyle(PocketColor.textSecondary))
+                headingRow(Text("Start").foregroundStyle(PocketColor.textSecondary), name: "Start")
             }
         case .marker(let uid, let label):
             let name = label.isEmpty ? "Section" : label
             if let mark, let onPick {
-                headingRow(pickButton(name, mark: mark, action: onPick))
+                headingRow(pickButton(name, mark: mark, action: onPick), name: name)
             } else {
                 headingRow(Button { openMarker(uid) } label: {
                     Text(name).foregroundStyle(PocketColor.textPrimary)
                 }
                 .buttonStyle(.plain)
                 .disabled(mark != nil)
-                .accessibilityHint("Opens the marker that starts this section"))
+                .accessibilityHint("Opens the marker that starts this section"), name: name)
             }
         }
     }
@@ -117,11 +119,14 @@ struct SongMapSectionHeading: View {
         }
     }
 
-    @ViewBuilder private func headingRow(_ title: some View) -> some View {
+    @ViewBuilder private func headingRow(_ title: some View, name: String) -> some View {
         let row = HStack(alignment: .firstTextBaseline, spacing: 10) {
             title.font(.futura(.headline))
             if let sameAs { repeatLink(sameAs) }
             Spacer(minLength: 8)
+            // The section's own door (ADR 0310 D1), in sight rather than behind a hold, and before the bars so
+            // every section's bars keep one right edge. Not while picking, when a tap on the name picks.
+            if mark == nil, let onWatch { watchButton(name, action: onWatch) }
             Text(range)
                 .font(.pocketMono(.caption))
                 .foregroundStyle(PocketColor.textSecondary)
@@ -142,6 +147,23 @@ struct SongMapSectionHeading: View {
         } else {
             row
         }
+    }
+
+    /// The eye before the bars: *Watch it on the neck* for this section, one tap (ADR 0310 D1). Its tap area
+    /// runs wider than the glyph, mostly to the left, so it reaches 44pt without pushing the bars along.
+    private func watchButton(_ name: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: WatchOnNeckSheet.symbol)
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(PocketColor.practice)
+                .frame(width: 44, height: 32, alignment: .trailing)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.trailing, -4)
+        .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 5 }
+        .accessibilityLabel("Watch \(name) on the neck")
+        .accessibilityIdentifier("map.section.watch")
     }
 
     /// *as Verse 1*: a chart's way of writing a repeat, drawn as a label rather than copied pieces (D8).
@@ -295,13 +317,18 @@ struct SongMapRowView: View {
     }
 
     /// A piece's hold menu, the same on the piece and on its repeats.
+    /// A copy still as the map made it (ADR 0310 D5) also offers a shift by a beat, with bars, and Remove copy,
+    /// unless the waveform is playing it.
     private func menu(_ piece: SongMap.Piece) -> SongMapPieceMenu {
         let uid = piece.uid
+        let theMaps = loops[uid].map { SongMapCopy.isTheMaps(SongMapWriter.standing(of: $0)) } ?? false
         return SongMapPieceMenu(modes: loops[uid].map(SongMapPieceSheet.modes(for:)) ?? [],
                                 repeats: SongMapRepeatOptions(piece: piece, in: map, set: actions.setRepeats),
                                 onCopy: piece.canCopy ? { actions.copy(uid) } : nil,
                                 onPick: { actions.pick(uid) },
-                                onView: { actions.view(uid) }, onOpen: { actions.open(uid, $0) })
+                                onView: { actions.view(uid) }, onOpen: { actions.open(uid, $0) },
+                                onShift: theMaps && map.grid != nil ? { actions.shift(uid, $0) } : nil,
+                                onRemove: theMaps && actions.heldLoop != uid ? { actions.removeCopy(uid) } : nil)
     }
 
     /// A stretch of the lane with nothing on it (D9): tapping it offers *Make a piece here*, or a copy of one

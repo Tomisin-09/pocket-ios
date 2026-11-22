@@ -430,6 +430,24 @@ click through the speaker and through headphones.
 
   Needs its own ADR, amending 0004's rung 2 and 0011's import if it goes ahead. **Not decided.**
 
+## A loop's repeats keep to the bar (logged 2026-11-21, found building ADR 0310)
+
+When is not decided here (Tomisin, 2026-11-21: *"we'll put it in the backlog"*). It needs its own ADR,
+amending 0232 D14 and D18, which draw and write a repeat out.
+
+- **What happened.** In *Sunday Morning guitar cover*, Tomisin set the intro's *Chords* to repeat to the end
+  of the song, and the chord changes slid off the record as the song went on. A repeat steps by the loop's
+  length as drawn: `SongTabLayout.sounds` and `SectionWatch.entries` both use `end - start`, and
+  `SongMapLayout.repeats` counts passes the same way. *Chords* is 10.837 s where four bars at 88.25 BPM are
+  10.878 s, so each pass came 41 ms early: about a beat out by the Solo, and a beat and a half by the end.
+  It wasn't the song's tempo. A copy into the Solo (0310 D3) kept time to the last bar.
+- **The idea.** With bars, a repeat steps by the loop's length to the nearest whole bar, as a copy's pass
+  already does (`SongMapCopy.period`), and each tap keeps its place in the bar, read through
+  `SongMapBars` as 0310 D3 does. Without bars, it stays as drawn.
+- **Where it shows.** The board's band and its *×N*, the Tab view's written-out passes, and what Watch
+  lights for a repeat. The loop's own audio is unchanged: it still plays the region drawn on the waveform.
+- **Until then:** a loop drawn to exactly a whole number of bars repeats in time.
+
 ## Watch it on the neck as a guitar neck, with strings that move (logged 2026-11-19, from ADR 0308's mockup)
 
 Not in 1.5; when is not decided here. It needs its own ADR, amending 0254's look and extending 0234 D5.

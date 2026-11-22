@@ -140,14 +140,20 @@ enum SongMapCopy {
         return seconds == 1 ? "every second" : "every \(seconds) seconds"
     }
 
-    /// The source's taps written across `target`: the first pass starting where the target starts, each
-    /// tap as far into it as it was into the loop, then again every `period`. Only one period's taps are
-    /// written each pass, so passes never write a tap twice, and a tap that would land past the target's
-    /// end is left off. Nothing is snapped: a tap keeps its place in the bar.
+    /// The source's taps written across `target`, pass after pass, and only one pass's taps each time, so
+    /// passes never write a tap twice. A tap that would land past the target's end is left off.
+    ///
+    /// **With bars, each tap keeps its place in the bar** (ADR 0310 D3): read as so many bars into the
+    /// source loop and so far into its bar, and written at the same place from a bar line in the target. The
+    /// first pass starts at the first bar the piece fits in. **Without bars**, each tap is as far into its
+    /// pass as it was into the loop, the first pass starting where the target starts.
     static func taps(of source: Source, across target: (start: TimeInterval, end: TimeInterval),
                      grid: SongMapInput.Grid?) -> [PieceTranscription.Tap] {
         let period = period(from: source.start, to: source.end, grid: grid)
         guard period > tolerance else { return [] }
+        if let grid, grid.barSeconds > 0, !grid.downbeats.isEmpty {
+            return barred(source, bars: Int((period / grid.barSeconds).rounded()), across: target, grid: grid)
+        }
         let upTo = min(source.end, source.start + period) - tolerance
         let pattern = source.piece.taps.filter { $0.seconds >= source.start - tolerance && $0.seconds < upTo }
         return stride(from: target.start, to: target.end - tolerance, by: period).flatMap { pass in
@@ -159,9 +165,83 @@ enum SongMapCopy {
         }
     }
 
+    /// How far before the place's start a first tap can land and still fit (D3), in bars: a sixteenth, so a
+    /// marker a hair after the 1 doesn't push every chord a bar on. It's written at the start.
+    static let fitSlack = 1.0 / 16
+
+    /// D3's writing: every tap at its place in the bar, a pass every `bars` bars, from the first bar the
+    /// piece fits in.
+    private static func barred(_ source: Source, bars: Int, across target: (start: TimeInterval, end: TimeInterval),
+                               grid: SongMapInput.Grid) -> [PieceTranscription.Tap] {
+        let from = SongMapBars.place(of: source.start, in: grid)
+        let home = SongMapBars.bar(of: source.start, in: grid)
+        let toleranceBars = tolerance / grid.barSeconds
+        // One pass's worth: from the loop's start, `bars` bars on, and never past its end.
+        let pattern = source.piece.taps.compactMap { tap -> (offset: Double, label: PieceLabel?)? in
+            let place = SongMapBars.place(of: tap.seconds, in: grid)
+            guard tap.seconds >= source.start - tolerance, tap.seconds < source.end - tolerance,
+                  place < from + Double(bars) - toleranceBars else { return nil }
+            return (place - home, tap.label)
+        }
+        guard let first = pattern.first else { return [] }
+        let start = SongMapBars.place(of: target.start, in: grid)
+        var anchor = SongMapBars.bar(of: target.start, in: grid)
+        if anchor + first.offset < start - fitSlack { anchor += 1 }
+        var taps: [PieceTranscription.Tap] = []
+        var pass = anchor
+        while SongMapBars.seconds(at: pass, in: grid) < target.end - tolerance {
+            for tap in pattern {
+                let seconds = SongMapBars.seconds(at: pass + tap.offset, in: grid)
+                guard seconds < target.end - tolerance else { continue }
+                taps.append(PieceTranscription.Tap(seconds: max(seconds, target.start), label: tap.label))
+            }
+            pass += Double(bars)
+        }
+        return taps
+    }
+
+    // MARK: - A copy the map made (ADR 0310 D4, D5)
+
+    /// Every tap a beat earlier (`beats` -1) or later (+1), measured in the bar it's in and through the bar
+    /// line if it has to (D4). A tap that would leave the loop is left off.
+    static func shifted(_ piece: PieceTranscription, by beats: Int,
+                        within loop: (start: TimeInterval, end: TimeInterval),
+                        grid: SongMapInput.Grid) -> PieceTranscription {
+        let beat = 1 / Double(max(1, grid.beatsPerBar))
+        var moved = piece
+        moved.taps = piece.taps.compactMap { tap in
+            let place = SongMapBars.place(of: tap.seconds, in: grid) + Double(beats) * beat
+            let seconds = SongMapBars.seconds(at: place, in: grid)
+            guard seconds >= loop.start - tolerance, seconds < loop.end - tolerance else { return nil }
+            return PieceTranscription.Tap(seconds: max(seconds, loop.start), label: tap.label)
+        }
+        return moved
+    }
+
+    /// What decides whether a copy is still the map's to shift or remove (D5), read off the loop.
+    struct Standing: Equatable, Sendable {
+        /// When the map wrote the piece, or `nil` for a piece the player counted (or a copy made before D5).
+        var copiedAt: Date?
+        /// When the piece last changed.
+        var changedAt: Date?
+        /// Whether the loop keeps an earlier version of its piece (ADR 0233).
+        var keepsVersions: Bool
+        /// A Journal line, a take, a reference, a routine block, a changed span, or a practised speed or
+        /// mastery: anything hanging off the loop that removing it would lose.
+        var hasHistory: Bool
+    }
+
+    /// Whether the copy is just as the map made it, or as it shifted it (D5): declared by the stamp, never
+    /// guessed from the taps.
+    static func isTheMaps(_ standing: Standing) -> Bool {
+        guard let copiedAt = standing.copiedAt else { return false }
+        return standing.changedAt == copiedAt && !standing.keepsVersions && !standing.hasHistory
+    }
+
     /// The loops copying a piece makes, one for each target in song order. Each is named as *Make a piece
     /// here* would name it, with a number when the song, or an earlier copy made with it, has that name
-    /// already. Its tuning is the piece's, and it's dated `now`. A target no tap lands in makes nothing.
+    /// already. Its tuning is the piece's, and it's dated `now` and stamped as copied then (ADR 0310 D5). A
+    /// target no tap lands in makes nothing.
     static func copies(of source: Source, into targets: [Target], grid: SongMapInput.Grid?,
                        existingNames: [String], now: Date) -> [Copy] {
         var names = existingNames
@@ -173,6 +253,7 @@ enum SongMapCopy {
             var copied = PieceTranscription(taps: written, openMidi: source.piece.openMidi,
                                             tuningLabel: source.piece.tuningLabel)
             copied.changedAt = now
+            copied.copiedAt = now
             return Copy(name: name, start: target.start, end: target.end, piece: copied)
         }
     }
