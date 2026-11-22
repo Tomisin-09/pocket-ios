@@ -7,7 +7,7 @@
 > Journal and Practice log, and the Toolkit are free (ADR 0263). Practising is the plan.
 >
 > **Current, so paste from these:** Name, Subtitle, Promotional text, Keywords, Description (with
-> its *One plan* block and the EULA line), *What's New — 1.4*, Price / availability, App Review
+> its *One plan* block and the EULA line), *What's New — 1.5*, Price / availability, App Review
 > notes, and the **1.4 pre-submission checklist**. Every other *What's New* draft and checklist
 > below is history. Don't paste from it.
 >
@@ -113,12 +113,15 @@ routines; the claim is holding both ends.*
 
 ## Keywords — 100 char max, comma-separated, NO spaces after commas
 Don't spend keyword space on words already in the name ("practice") or subtitle.
-> `guitar,looper,slow downer,metronome,tempo,scales,chords,arpeggio,riff,solo,transcribe,woodshed,bass`
+> `guitar,looper,slow downer,metronome,tempo,scales,chords,arpeggio,riff,solo,transcribe,transpose,bass`
 
 *"guitar" must stay here: neither the name nor the subtitle carries it, so this field is the only
 place search can find it.*
 
-*(99 chars — verify in the field; ASC counts live.)*
+*(100 chars, the limit — verify in the field; ASC counts live.)*
+
+*1.5 (2026-11-22, Tomisin): `transpose` replaced `woodshed`. Another key and a song's Pitch (ADR 0305)
+made transposing a real feature, and it's a common search for apps like this one.*
 
 ## Description
 > **Red Moon is a practice studio for guitar players who learn from everywhere.**
@@ -135,6 +138,7 @@ place search can find it.*
 > • Bring in songs you own from Files or iCloud Drive, or share audio in from another app
 > • Loop the bar you can't play yet, as short as half a second, and let it go round
 > • Slow it down while the pitch stays true
+> • Move a loop into another key, or raise a whole song to meet your tuning
 > • Count the notes, name them on the neck, and keep what you find as tab
 > • A song is waiting the first time you open the app, with a three-step guide
 >
@@ -185,6 +189,10 @@ place search can find it.*
 >
 > The monthly plan is an auto-renewable subscription. Terms of Use (EULA):
 > https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
+*1.5 (2026-11-22, Tomisin): *Work it out* gained "Move a loop into another key, or raise a whole song
+to meet your tuning", for Another key and a song's Pitch (ADR 0305). Recorded after "Slow it down",
+where it reads as the next step; App Store Connect holds the order actually pasted.*
 
 *Restructured 2026-10-27 and approved by Tomisin the same day (ADR 0279), around four verbs, *work it out · build it up · run it · keep it*, under one roof, *your sources, your method*. The opening names the audience: the self-taught player who learns from everywhere. The 2026-10-24 version (seven feature groups, opening *"a practice studio, not a jukebox"*) is in git history. Before that: rewritten for the free release, 2026-10-02; re-voiced 2026-10-24 as a practice studio that adds up (ADR 0256):*
 
@@ -244,7 +252,38 @@ Apple's standard terms. Only if that ever changes does the link move into ASC's
 own custom-EULA field instead of the description — and then all three surfaces
 (description, paywall, Settings) must point at the custom one, not Apple's.
 
-## What's New in This Version — 1.4.1 (paste this)
+## What's New in This Version — 1.5 (paste this)
+
+> Play it in any key. In Active listening, move a loop up or down a semitone at a time and take a lick
+> through all twelve keys at the same speed. In Edit song, raise or lower a whole song to meet your
+> tuning, so a record tuned a half step down plays along with you in Standard.
+>
+> Also new:
+> • Watch what you pick on the neck: pick pieces on the song map and every note lights in the colour of
+>   the chord under it, with the chord and its numeral over the neck
+> • Watch a section in one tap from the song map, and start picking from Pick in its toolbar
+> • Copies on the song map keep their place in the bar, and can be shifted a beat or removed
+> • Takes you haven't named are numbered where you recorded them: Take 1, Take 2, Take 3
+> • A small arrow between notes shows which way your hand moves, in the drill editors and on the run
+>   screen
+> • Say what a Basic or Your own practice drill works on as you make it
+> • A song's exercises sit behind one row in Song details
+> • Home stays quick however much you've practised
+> • Bass tenths show their whole shape, and a bend's start is no longer hidden under its fret number
+> • The exercise editors sit closer together, and Scales and Arpeggios no longer stutter when Advanced
+>   opens
+
+*Live in App Store Connect from 2026-11-22 (pasted by Tomisin), and submitted for review with 1.5 (13).
+Each line is a `[1.5]` CHANGELOG entry. Another key and a song's Pitch lead (ADR 0305, both slices). Then
+Watch what you pick, with notes in their chord's colour (ADRs 0289 and 0308); the map's eye and Pick (ADR
+0310 D1, D2); copies that keep their place in the bar, and Shift a beat and Remove copy (0310 D3 to D5);
+take numbers (ADR 0307); arrows between notes, the Exercises row and Works on at create (ADR 0309); Home's
+This week strip (1.5 item 2a); and the fixes to bass tenths, bend numbers and the editors (items 2b to 2d,
+0309 D2). Left out as too small: the privacy link, the key picker's D♯ and G♯ chips, the string names of
+tunings with sharps, and a linked row's dead middle. Like 1.4.1's, it names no price and nothing held
+back.*
+
+## What's New in This Version — 1.4.1 — history, do not paste
 
 > Red Moon is red now: a new icon, and Practice and the song player wear the blood moon's terracotta.
 >
