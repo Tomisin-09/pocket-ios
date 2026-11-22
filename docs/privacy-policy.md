@@ -9,9 +9,10 @@ ICO registration **ZC112793**). This policy explains what the app does and does
 not do with your information. It is written to match what the app actually does —
 which is very little.
 
-This is the standalone policy for Red Moon Practice. A summary also appears in the
-Deco Operations company privacy policy at
-<https://decooperations.co.uk/privacy#red-moon-practice>.
+This is the standalone policy for Red Moon Practice, published at
+<https://www.redmoonpracticestudio.co.uk/privacy>. The Deco Operations company
+privacy policy does not repeat it: its Red Moon section,
+<https://decooperations.co.uk/privacy#red-moon-practice>, links here.
 
 ## The short version
 

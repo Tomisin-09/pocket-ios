@@ -380,9 +380,12 @@ submitting.
 Leave blank for v1, or point at the same host's landing page.
 
 ## Privacy Policy URL — REQUIRED
-`https://decooperations.co.uk/privacy`, the live policy (`uk-site` `app/privacy/page.tsx`). It's
-already set in App Information. Settings ▸ About links to its Red Moon section,
-`#red-moon-practice`, so keep that anchor's id if the heading changes (ADR 0278).
+`https://www.redmoonpracticestudio.co.uk/privacy`, Red Moon's own policy, set in App Information
+since 2026-11-16. Its text lives on the `site` branch, in `app/privacy/page.tsx` and
+`RedMoonPrivacyBody.tsx` (ADR 0306). From 1.5, Settings ▸ Help & About and the paywall link to it.
+1.4 and 1.4.1 link to the Red Moon section of Deco Operations' page,
+`decooperations.co.uk/privacy#red-moon-practice`, which now only points on to Red Moon's policy. Keep
+that section, and its anchor id, while those builds are in use (ADR 0278).
 `docs/privacy-policy.md` is a draft, not the live text.
 
 ## App Privacy (nutrition label) — set by ADRs 0161 and 0183; analytics removed by ADR 0239
@@ -511,7 +514,9 @@ Connect. The region-split usage counts of ADRs 0120 and 0147, and Aptabase as a
 processor, must come out of the live section. Give
 Apple the anchored URL so the reviewer lands on the relevant section:
 - **Privacy Policy URL** → `https://decooperations.co.uk/privacy#red-moon-practice`
-  (verify the heading slugifies to that anchor).
+  (verify the heading slugifies to that anchor). **Superseded 2026-11-16:** the URL is
+  `https://www.redmoonpracticestudio.co.uk/privacy`, Red Moon's own policy; see *Privacy Policy URL*
+  above.
 
 ### ⚠ Live-site check, 2026-08-07 — one correction still owed
 
