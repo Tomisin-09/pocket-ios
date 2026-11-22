@@ -30,6 +30,7 @@ struct HomeView: View {
     /// Red Moon's plan (ADR 0256), read for the locks on the gated doors. The doors themselves don't
     /// read it: each screen behind one carries its own gate.
     @Environment(PlanStore.self) var plan: PlanStore?
+    @Environment(\.moonTheme) var theme
     /// The mailbox `AppDelegate` posts a tapped reminder's routine into (ADR 0186 D6). A shared
     /// instance rather than an environment value because the delegate that fills it lives outside
     /// the SwiftUI environment entirely; `@Observable` still tracks it from here.
@@ -172,7 +173,8 @@ struct HomeView: View {
                     .accessibilityLabel("Settings")
                 }
                 ToolbarItem(placement: .principal) {
-                    Image("RedMoonWordmark")
+                    // The wordmark follows the moon theme (ADR 0312 D2).
+                    Image(theme.wordmarkImage)
                         .resizable()
                         .scaledToFit()
                         .frame(height: 22)

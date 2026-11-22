@@ -1,6 +1,6 @@
 # ADR 0311 — Moon themes: Blood Moon stays the brand, and the colour Practice wears becomes a choice
 
-- **Status:** Accepted on 2026-11-22, not built: for 1.6. Tomisin chose it after a workshop that drew eight
+- **Status:** Accepted on 2026-11-22, for 1.6, and built on `pocket-462-moon-themes-build` with ADR 0312. Tomisin chose it after a workshop that drew eight
   themes on four real screens and measured each against the colours the app already uses: *"Awesome, I'm
   happy with this! Let's write up the ADR"*. D11 lists what is not decided here.
 - **Date:** 2026-11-22 (`pocket-461-moon-themes`)
@@ -15,6 +15,10 @@
   contrast bar every new family meets) · 0162 (Settings grouped by what you are trying to change) · 0258
   (a row says its value) · 0211 (why the Oracle has no Home tile) · 0308 D7 (the chord colours, fixed) ·
   0061 (the brand art, unchanged)
+- **Amended by:** ADR 0312 (2026-11-22) — **D1**: the logo and the App Icon follow the theme on the
+  player's own phone; the App Store, the site, social posts and the manual's figures stay Blood Moon.
+  **D11**: the themes are part of the plan, Blood Moon free; Silver ships once seen on a phone; the
+  Metronome and Toolkit near-pair stays open, with options. Everything else stands.
 
 ## Context
 

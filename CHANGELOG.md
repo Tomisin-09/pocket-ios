@@ -22,6 +22,17 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Added
+- **Moon themes** (ADR 0311, 0312). Settings ▸ Appearance has a **Theme** row, and it opens eight
+  themes: Blood Moon, Blue, Jade, Corn, Silver, Pink, Harvest and Cold. Each one is a card that draws its
+  own *Start* button, waveform and mastery dots in light and in dark, and tapping a card applies it at
+  once. A theme sets the colour Practice, the mastery dots and the song player wear. It moves a space's
+  colour only where that space would sit beside the theme's colour, and the colours that mean something
+  (live green, delete red, the loops, the chords) stay put. The Red Moon wordmark and logo and the Home
+  Screen icon follow the theme too. Blood Moon is free and stays the default; the other seven come with
+  the plan, and a lapsed plan draws Blood Moon again while keeping the choice. *Save to Red Moon* draws in
+  the app's theme.
+
 ## [1.5] — build 13, cut 2026-11-22
 
 ### Added

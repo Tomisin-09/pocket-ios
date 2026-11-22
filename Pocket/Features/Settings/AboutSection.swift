@@ -12,6 +12,7 @@ import SwiftUI
 /// same `FAQView` the Toolkit shows pushes on top of it and backs out to Settings — one help screen,
 /// two doors (ADR 0145 D1). Still true one level deeper.
 struct AboutSection: View {
+    @Environment(\.moonTheme) private var theme
     /// Injected so previews drive a `RecordingSupportSender` rather than the live endpoint. The
     /// default is the real one, so `SettingsView` stays a plain `AboutSection()`.
     var sender: SupportSending = FormspreeSender()
@@ -116,8 +117,9 @@ struct AboutSection: View {
             // (ADR 0292), one universal image whose two reds read on cream and near-black alike
             // — two-tone, so it can't be a single template image tinted in code. Genuinely
             // transparent, so it sits directly on `PocketColor.background` with no seam in
-            // either appearance, and needs no colour-scheme pin.
-            Image("RedMoonLogo")
+            // either appearance, and needs no colour-scheme pin. In the player's moon theme (ADR 0312
+            // D2): each theme has the lockup recoloured, cut by `derive-brand-svgs.py --themes`.
+            Image(theme.logoImage)
                 .resizable()
                 .scaledToFit()
                 .frame(maxWidth: 160)

@@ -25,6 +25,8 @@ struct ArtistNamePromptSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The mark is drawn in the player's moon theme (ADR 0312 D2).
+    @Environment(\.moonTheme) private var theme
     @FocusState private var fieldFocused: Bool
     @State private var name = ""
     /// The **fated** seed for the *first* spin — computed from the intake on appear, used once so the
@@ -52,7 +54,7 @@ struct ArtistNamePromptSheet: View {
                 // The blood-moon artwork (ADR 0292), one image for either appearance.
                 // Sized by **height**: the vector mark is a tall crescent (roughly 2:3), where the
                 // raster it replaced was wider than tall, so a width cap would grow it vertically.
-                Image("RedMoonMark")
+                Image(theme.markImage)
                     .resizable()
                     .scaledToFit()
                     .frame(maxHeight: 140)

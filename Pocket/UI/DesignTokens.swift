@@ -4,12 +4,14 @@ import SwiftUI
 /// it is never decorative. Keep these definitions as the single source of truth;
 /// do not hard-code hex values or `Color.white`/`.black` opacity fills in views.
 ///
-/// Organised by **semantic role** below, not by hue — this is the seam a future
-/// swappable `Theme` would slot into (each role becomes a `Theme` property; the
-/// current values become the "Blood Moon" theme, which ADR 0292 made the only one, after
-/// the teal that ADR 0062's follow-up retuned from blue). Until then `PocketColor` *is* the
-/// one theme. Identity
-/// (the song's bars) and live state (green) are kept in different hue families so
+/// Organised by **semantic role** below, not by hue, which is what lets a theme swap them (ADR 0081's
+/// seam, which ADR 0311 brings into use). **The space and Practice tokens are themed**: each is a
+/// `Color(themed:)` that asks the current `MoonTheme` for its colour set when drawn, so Practice, the
+/// mastery dots, the song player's bars and each space's family follow the theme the player picked,
+/// and no call site reads the theme itself (see `ThemeColor.swift`). The values written in the comments
+/// below are **Blood Moon's**, the default and the brand (ADR 0292, 0311 D1). Everything else is fixed
+/// in every theme, because it means something (0311 D3): the live green, the delete red, Fine, the
+/// marker colours, the chord colours, the canvas and text, and the loop palette. Identity
 /// they never read as the same thing (ADR 0023).
 ///
 /// **Light + dark appearance (ADR 0062):** every token below except the four system
@@ -61,14 +63,14 @@ enum PocketColor {
     /// the brand **terracotta**: the song player wears the blood moon like Practice does. Read
     /// from the `Terracotta` hue rather than a copy of its values, so the two cannot drift.
     /// Upcoming (ahead of the playhead) brighter; played recedes.
-    static let waveformBar = Color("Terracotta").opacity(0.85)
-    static let waveformBarPlayed = Color("Terracotta").opacity(0.4)
+    static let waveformBar = Color(themed: .practice).opacity(0.85)
+    static let waveformBarPlayed = Color(themed: .practice).opacity(0.4)
     /// Full-opacity song accent — the bars' terracotta at full strength, for the song-tempo
     /// chrome that must match them: the practice screen's speed slider and its "Set BPM"
     /// affordance, the speed bar's repeat and metronome buttons, the tempo sheet. A hue, not a
     /// role: deliberately *not* `metronome` (the metronome tool, plum) nor `practice`, even
     /// though it is Practice's colour since ADR 0292 — the song's tempo reads as the song (ADR 0081).
-    static let waveformAccent = Color("Terracotta")
+    static let waveformAccent = Color(themed: .practice)
     /// Beat-grid downbeat lines (ADR 0022). Baked per appearance rather than
     /// `ink.opacity(_)`, because a shared low opacity reads faintly on dark but nearly
     /// vanishes on cream (ADR 0062 follow-up) — light is boosted so the grid stays
@@ -94,14 +96,14 @@ enum PocketColor {
     /// through ADR 0081's re-hue and ADR 0292's Blood Moon swap. Sits clear of every other
     /// functional hue — green (live), terracotta (Practice/brand), teal (songs), orange
     /// (markers), purple (pins), red (danger).
-    static let metronome = Color("Plum")
+    static let metronome = Color(themed: .metronome)
     /// **Practice** — the identity hue of the top-level Practice space (ADR 0046), and the
     /// app's **brand hero**: it wears the blood-moon **terracotta** (ADR 0292, which made ADR
     /// 0081's Blood Moon the only theme), so the most-used space and its "Start today's session"
     /// CTA lead in the colour of the logo and the name. Every one of its ~120 call sites reads
     /// this token, so the whole Practice surface reskins from here. Kept clear of the metronome
     /// plum and every other functional hue.
-    static let practice = Color("Terracotta")
+    static let practice = Color(themed: .practice)
     /// Mastery indicator accent — the dots showing how well a loop or song is owned (Home's
     /// "Mastered" stat, `MasteryDots` everywhere mastery is drawn, and the loop mastery picker). **Tracks the brand hero** (`practice`) rather than
     /// its own hue — "mastered" reads as an on-brand positive state — so it is terracotta,
@@ -115,10 +117,10 @@ enum PocketColor {
     /// ADR 0062 follow-up bug). Each hue therefore has an independently baked flat
     /// card/circle wash per appearance, dim enough that the icon glyph on top still clears
     /// ~3:1. Practice draws the **terracotta** washes (brand hero); Metronome the **plum**.
-    static let metronomeCardWash = Color("PlumCardWash")
-    static let metronomeCircleWash = Color("PlumCircleWash")
-    static let practiceCardWash = Color("TerracottaCardWash")
-    static let practiceCircleWash = Color("TerracottaCircleWash")
+    static let metronomeCardWash = Color(themed: .metronomeCardWash)
+    static let metronomeCircleWash = Color(themed: .metronomeCircleWash)
+    static let practiceCardWash = Color(themed: .practiceCardWash)
+    static let practiceCircleWash = Color(themed: .practiceCircleWash)
 
     /// **Library** — the identity hue of the songs place (the home hub's "Song library" nav strip).
     /// The **teal** since ADR 0292, which swapped it with Practice so the brand red could lead;
@@ -126,9 +128,9 @@ enum PocketColor {
     /// appearance like the washes above — *not* a shared opacity on `library` (ADR 0062 lesson: a
     /// low-opacity blend reads washed-grey on cream and near-invisible on near-black). No
     /// `libraryCTA`: the library strip is never a filled CTA.
-    static let library = Color("Teal")
-    static let libraryCardWash = Color("TealCardWash")
-    static let libraryCircleWash = Color("TealCircleWash")
+    static let library = Color(themed: .library)
+    static let libraryCardWash = Color(themed: .libraryCardWash)
+    static let libraryCircleWash = Color(themed: .libraryCircleWash)
 
     /// **Toolkit** — the identity hue of the chords/theory/resources hub (ADR 0096, the fourth home
     /// card). An **indigo/violet** "study / reference" hue, deliberately distinct from the
@@ -136,9 +138,9 @@ enum PocketColor {
     /// 0096 D3). Baked flat per appearance like the other card hues — *not* a shared opacity on
     /// `toolkit` (ADR 0062 lesson: a low-opacity blend reads washed-grey on cream and near-invisible on
     /// near-black). No `toolkitCTA`: the hub is reference, never a filled transport CTA.
-    static let toolkit = Color("Indigo")
-    static let toolkitCardWash = Color("IndigoCardWash")
-    static let toolkitCircleWash = Color("IndigoCircleWash")
+    static let toolkit = Color(themed: .toolkit)
+    static let toolkitCardWash = Color(themed: .toolkitCardWash)
+    static let toolkitCircleWash = Color(themed: .toolkitCircleWash)
 
     /// **Journal** — the identity hue of the read-only practice-history space (the fifth home card,
     /// slotted 4th, between Practice and Toolkit). A warm **gold** "notebook/ink" hue: personal and
@@ -147,9 +149,9 @@ enum PocketColor {
     /// the other card hues (ADR 0062 lesson — not a shared opacity on `journal`). The gold also tints
     /// the owner-attribution captions inside the space. No `journalCTA`: the journal is history,
     /// never a filled transport CTA.
-    static let journal = Color("Gold")
-    static let journalCardWash = Color("GoldCardWash")
-    static let journalCircleWash = Color("GoldCircleWash")
+    static let journal = Color(themed: .journal)
+    static let journalCardWash = Color(themed: .journalCardWash)
+    static let journalCircleWash = Color(themed: .journalCircleWash)
 
     /// **Oracle** — the identity hue of the Red Moon Oracle (ADR 0187 D16, the **sixth** home card
     /// and the first in the new *Learn* section). A deep **crimson/wine**.
@@ -170,9 +172,9 @@ enum PocketColor {
     /// Baked flat per appearance like every other card hue — *not* a shared opacity on `oracle`
     /// (ADR 0062 lesson: a low-opacity blend reads washed-grey on cream and near-invisible on
     /// near-black). No `oracleCTA`: a reading is opened, never transported.
-    static let oracle = Color("Crimson")
-    static let oracleCardWash = Color("CrimsonCardWash")
-    static let oracleCircleWash = Color("CrimsonCircleWash")
+    static let oracle = Color(themed: .oracle)
+    static let oracleCardWash = Color(themed: .oracleCardWash)
+    static let oracleCircleWash = Color(themed: .oracleCircleWash)
 
     /// Full-opacity **CTA fill** for the Metronome/Practice primary transport buttons
     /// (Start/Pause/Resume; the run screens' big pill) and Home's "Start today's session".
@@ -180,8 +182,8 @@ enum PocketColor {
     /// `PocketColor.background` text on top stays ≥4.5:1 (ADR 0062 follow-up;
     /// `BrandColorContrastTests` holds Practice's to it). Practice's CTA is **terracotta**
     /// (brand hero, ADR 0292), Metronome's is **plum**.
-    static let metronomeCTA = Color("PlumCTA")
-    static let practiceCTA = Color("TerracottaCTA")
+    static let metronomeCTA = Color(themed: .metronomeButton)
+    static let practiceCTA = Color(themed: .practiceButton)
 
     /// "Add a song" wash (Home) — same fix as the card washes above, applied to the
     /// system `active` green: `Color.green.opacity(0.14)` reads as a washed, near-

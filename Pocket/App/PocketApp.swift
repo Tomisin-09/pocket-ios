@@ -50,6 +50,8 @@ struct PocketApp: App {
             // And the References library's grouping (ADR 0275): a test that groups it by site would
             // leave every later test, and the library's figure, reading other sections.
             AppSettings.resetReferencesLayout()
+            // And the moon theme (ADR 0311): the manual's figures are Blood Moon's, and so is the suite.
+            AppSettings.resetMoonTheme()
             // The Oracle's cadence is the same trap with a longer fuse (ADR 0187 D15). Its gate is
             // driven by a stored date, so the *second* run of a suite finds the week already spent
             // and the screen showing a persisted reading instead of the button. A test written
@@ -74,6 +76,10 @@ struct PocketApp: App {
                 // What *Save to Red Moon* kept while the app was away, and the snapshot it picks from
                 // (ADR 0264 D9). Inside `.environment(plan)`, which it reads.
                 .shareInboxHost()
+                // The moon theme (ADR 0311, 0312): the player's choice while the plan is on, Blood
+                // Moon while it's off, and the App Icon to match. Outside the hosts above, which
+                // draw and snapshot in it; inside `.environment(plan)`, which it reads.
+                .moonThemeHost()
                 .environment(diagnostics)
                 .environment(practiceReminder)
                 .environment(plan)

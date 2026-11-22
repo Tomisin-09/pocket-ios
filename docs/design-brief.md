@@ -80,7 +80,7 @@ identity hues are kept out of these families. The table is grouped by **semantic
 role** — the seam a swappable theme would use: a theme is a role → hue *mapping*, which is how
 ADR 0292 made the **Blood Moon** colouring the only one, swapping Practice↔Library to
 terracotta-led without a second baked palette (ADR 0081), with `mastery` tracking whichever hue
-Practice wears. **ADR 0311 (accepted for 1.6, not built) brings that seam into use:** eight moon
+Practice wears. **ADR 0311 (built for 1.6, with ADR 0312 making the themes part of the plan and the logo and App Icon follow them) brings that seam into use:** eight moon
 themes, picked in Settings → Appearance, each mapping Practice, the song player and every space onto
 shared colour families, while the colours that carry a meaning (green, red, the loops, the chords)
 stay put. Blood Moon stays the default, so the values in the table below are Blood Moon's.

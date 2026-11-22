@@ -5,8 +5,8 @@ import Foundation
 /// which can't open the store, only reads it.
 ///
 /// It holds only what its reader renders (0183 D1, 0186 D9): a place's key, kind, name, parent and
-/// when it was last practised, which places hold as many files as they may, the plan standing and the
-/// appearance. No notes, no history, no tempos.
+/// when it was last practised, which places hold as many files as they may, the plan standing, the
+/// appearance and the theme. No notes, no history, no tempos.
 ///
 /// **A stale snapshot is safe.** The drain decides again against the store when it files a save
 /// (`ShareInboxPlan`), so a place deleted since, a place that has filled up, or a plan that has changed
@@ -18,6 +18,9 @@ struct ShareOwnerSnapshot: Codable, Equatable, Sendable {
     var standing: PlanStanding
     /// The player's choice in Settings ▸ Appearance, so the extension draws as the app does.
     var appearance: AppearancePreference
+    /// The moon theme the app draws in (ADR 0311, 0312), so the extension draws in it too. Optional so
+    /// a snapshot written before themes still decodes; `nil` draws Blood Moon.
+    var theme: MoonTheme?
     /// Every place, unsorted: `ReferenceDestinationPicker` orders them.
     var places: [ReferenceDestination]
     /// The places that hold `ReferenceAttachmentStore.maxPerOwner` files already, by
@@ -41,3 +44,4 @@ extension ShareOwnerSnapshot {
 }
 
 extension AppearancePreference: Codable {}
+extension MoonTheme: Codable {}

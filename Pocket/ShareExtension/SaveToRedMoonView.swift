@@ -39,6 +39,7 @@ struct SaveToRedMoonView: View {
         .tint(PocketColor.toolkit)
         .font(.futura(.body))
         .preferredColorScheme(model.snapshot?.appearance.colorScheme)
+        .environment(\.moonTheme, model.snapshot?.theme ?? .standard)
     }
 
     @ViewBuilder

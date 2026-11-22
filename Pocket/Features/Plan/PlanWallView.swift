@@ -22,11 +22,11 @@ struct PlanWallView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text(PlanWallCopy.headline(returning: returning))
+                    Text(PlanWallCopy.headline(returning: returning, door: door))
                         .font(.futura(.title, weight: .semibold))
                         .foregroundStyle(PocketColor.textPrimary)
                         .accessibilityIdentifier(UITestHooks.planWallHeadline)
-                    Text(PlanWallCopy.explanation(returning: returning))
+                    Text(PlanWallCopy.explanation(returning: returning, door: door))
                         .font(.futura(.body))
                         .foregroundStyle(PocketColor.textSecondary)
                 }

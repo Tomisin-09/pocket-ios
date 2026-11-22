@@ -5,7 +5,8 @@
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ SwiftUI Features (Home · Library · Waveform · Metronome · Practice · Journal · PracticeLog · Toolkit · Repertoire)
-│   UI       — shared components + design tokens (PocketColor) · AdaptiveLayout (ADR 0105 iPad groundwork:
+│   UI       — shared components + design tokens (PocketColor; the Practice and space tokens follow the
+│              moon theme through a trait-bridged \.moonTheme, ADR 0311/0312) · AdaptiveLayout (ADR 0105 iPad groundwork:
 │              PocketLayout readable-width cap + readableWidth() modifier — dormant while TARGETED_DEVICE_FAMILY=1)
 │              · PocketRowActions — the one row-affordance modifier every list adopts (long-press menu →
 │                Favourite → Delete, plus leading/trailing swipes); RowDeletionCoordinator + the

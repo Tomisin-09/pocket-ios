@@ -9,8 +9,8 @@ import SwiftUI
 /// - **Going to the background**, it writes the snapshot again. That is the moment that matters: on an
 ///   iPhone, another app's share sheet is only reachable with Red Moon in the background, so a snapshot
 ///   written as the app leaves holds every place added, renamed or deleted while it was open.
-/// - **When the plan standing or the appearance changes**, it writes the snapshot, since both are drawn
-///   by the extension.
+/// - **When the plan standing, the appearance or the theme changes**, it writes the snapshot, since all
+///   three are drawn by the extension.
 ///
 /// Until StoreKit has answered, nothing is written: the standing isn't known, and the last snapshot is
 /// right more often than a guess would be (D6's standings only move forward).
@@ -19,6 +19,8 @@ private struct ShareInboxHost: ViewModifier {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(PlanStore.self) private var plan: PlanStore?
     @AppStorage(AppSettings.Key.appearance) private var appearance = AppearancePreference.system
+    /// The theme the app draws in, as `MoonThemeHost` above it sets it.
+    @Environment(\.moonTheme) private var theme
 
     func body(content: Content) -> some View {
         content
@@ -35,6 +37,7 @@ private struct ShareInboxHost: ViewModifier {
             }
             .onChange(of: standing) { writeSnapshot() }
             .onChange(of: appearance) { writeSnapshot() }
+            .onChange(of: theme) { writeSnapshot() }
     }
 
     /// Where the player stands, once StoreKit has said.
@@ -52,7 +55,8 @@ private struct ShareInboxHost: ViewModifier {
 
     private func writeSnapshot() {
         guard let standing, let directory = ShareContainer.directory() else { return }
-        try? ShareOwnerSnapshot(context: context, standing: standing, appearance: appearance).write(to: directory)
+        try? ShareOwnerSnapshot(context: context, standing: standing, appearance: appearance, theme: theme)
+            .write(to: directory)
     }
 }
 
