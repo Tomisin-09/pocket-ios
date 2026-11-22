@@ -93,6 +93,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   every note to count seven days, so it slowed as history grew. On a copy of the phone's store it now
   costs about 32 ms at today's 437 runs (60 ms before) and stays flat at four times that history (135 ms
   before). The numbers it shows are the same.
+- **Privacy Policy opens Red Moon's own policy.** In Settings ▸ Help & About and on the paywall, it opened
+  Red Moon's section of Deco Operations' privacy page. It opens Red Moon's own policy now, at
+  *redmoonpracticestudio.co.uk/privacy*, the page the App Store links to. 1.4 and 1.4.1 keep the old link,
+  which still leads to it.
 
 ### Fixed
 

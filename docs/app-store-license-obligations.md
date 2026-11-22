@@ -121,15 +121,15 @@ in-app link.
 - **Source of record:** [docs/privacy-policy.md](privacy-policy.md) — standalone
   Red Moon Practice policy with the real controller details (Deco Operations Ltd,
   company 17032490, ICO ZC112793).
-- **In-app link:** ships in **Settings → About** (`SettingsView.privacyPolicy`),
-  currently pointed at the live `decooperations.co.uk/privacy#red-moon-practice`
-  anchor.
+- **In-app link:** ships in **Settings → About** (`AboutSection.privacyPolicy`, which the
+  paywall's link uses too). Since 1.5 it points at Red Moon's own policy,
+  `https://www.redmoonpracticestudio.co.uk/privacy`; 1.4 and 1.4.1 point at the
+  `decooperations.co.uk/privacy#red-moon-practice` anchor.
 - **Standalone:** done. Red Moon's own policy is live at
   `https://www.redmoonpracticestudio.co.uk/privacy`, from `app/privacy/RedMoonPrivacyBody.tsx`
   on the `site` branch (ADR 0306); App Store Connect's URLs moved to that domain on
-  2026-11-16. The Settings
-  link moves to it in the update after 1.4.1; the old anchor on Deco Operations'
-  page stays for the builds already shipped.
+  2026-11-16. The Settings link moved to it in 1.5, the update after 1.4.1; the old
+  anchor on Deco Operations' page stays for the builds already shipped.
 - **Keep it true:** since ADR 0239 the policy says the app collects **no usage
   data** — no analytics, nothing about how it is used — and that the only thing it
   sends is a support message the player writes and taps Send on. Usage figures come
