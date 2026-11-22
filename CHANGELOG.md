@@ -5,12 +5,13 @@ Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
 Sections are cut at the commit that bumped `CURRENT_PROJECT_VERSION` in `project.yml`,
 which was the only durable record of where a build was taken until 1.4, the first version tagged
-(`v1.4` and `v1.4-build10`, both on `7d1a250`):
+(`v1.4` and `v1.4-build10`, both on `7d1a250`; 1.4.1's `v1.4.1` and `v1.4.1-build11` are on `6c9e00d`,
+the lock-screen change merged after its cut, which is where build 11 was archived):
 build 2 at `8062382` (2026-07-22), build 3 at `de4614b` (2026-08-07), build 4 at the 1.2
 cut (2026-08-12 — squash hash added on merge, as the others were), build 5 at the beta-grant
 fix (2026-08-18 — the closed beta's second build, cut because build 4 walled every tester
 out of the app), build 7 at the 1.3 cut (2026-09-10 — squash hash added on merge), build 10 at
-the 1.4 cut (2026-11-04), build 11 at the 1.4.1 cut (2026-11-16). **There is no build 6 here**: it was uploaded to TestFlight from
+the 1.4 cut (2026-11-04), build 11 at the 1.4.1 cut (2026-11-16), build 12 at the 1.5 cut (2026-11-22). **There is no build 6 here**: it was uploaded to TestFlight from
 `pocket-273-beta-grant-unconditional` and never merged, so no commit on `main` records it.
 **Nor are builds 8 and 9**: 8 went to review on 2026-10-27 without a section of its own and was
 pulled on 2026-11-02, and 9 was a second upload of the same code. Both are inside 1.4's section,
@@ -19,6 +20,8 @@ group straddled that line — collection sessions landed after the 1.0 build was
 ear training before it — so 1.0 and 1.1 each carry their own copy of that heading.
 
 ## [Unreleased]
+
+## [1.5] — build 12, cut 2026-11-22
 
 ### Added
 
@@ -126,7 +129,6 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   starts. The number hid the start of a bend, and on a bend let back down it hid the arrowhead saying the
   pitch came back. The arc now starts just clear of the number, as a release already did. Vibrato over
   an unbent note ran into the number too, and now sits to its left.
-
 - **A bass tenth shows its tenth** (1.5, item 2b). Chord diagrams drew a four-fret box, and a bass
   tenth reaches seven frets, so the major 10th, the minor 10th and the *root · ♭7 · 10* shell showed
   only their root wherever a diagram draws: the picker's chip, the editor's row and the live run. The
