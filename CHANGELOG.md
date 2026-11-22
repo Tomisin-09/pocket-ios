@@ -11,17 +11,18 @@ build 2 at `8062382` (2026-07-22), build 3 at `de4614b` (2026-08-07), build 4 at
 cut (2026-08-12 — squash hash added on merge, as the others were), build 5 at the beta-grant
 fix (2026-08-18 — the closed beta's second build, cut because build 4 walled every tester
 out of the app), build 7 at the 1.3 cut (2026-09-10 — squash hash added on merge), build 10 at
-the 1.4 cut (2026-11-04), build 11 at the 1.4.1 cut (2026-11-16), build 12 at the 1.5 cut (2026-11-22). **There is no build 6 here**: it was uploaded to TestFlight from
+the 1.4 cut (2026-11-04), build 11 at the 1.4.1 cut (2026-11-16), build 13 at the 1.5 cut (2026-11-22). **There is no build 6 here**: it was uploaded to TestFlight from
 `pocket-273-beta-grant-unconditional` and never merged, so no commit on `main` records it.
 **Nor are builds 8 and 9**: 8 went to review on 2026-10-27 without a section of its own and was
 pulled on 2026-11-02, and 9 was a second upload of the same code. Both are inside 1.4's section,
-because neither was released. One `### Added`
+because neither was released. **Nor is build 12**: it was uploaded from `55c1d9f` on 2026-11-22
+and replaced by 13 before review, to take the *Remove copy* fix. One `### Added`
 group straddled that line — collection sessions landed after the 1.0 build was cut,
 ear training before it — so 1.0 and 1.1 each carry their own copy of that heading.
 
 ## [Unreleased]
 
-## [1.5] — build 12, cut 2026-11-22
+## [1.5] — build 13, cut 2026-11-22
 
 ### Added
 
@@ -103,6 +104,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ### Fixed
 
+- **Remove copy keeps a copy it can't check.** On the song map, *Remove copy* first looks for a routine or
+  a practice run that uses the copy. If that look failed, it found nothing and removed the copy anyway. It
+  keeps the copy now. A failed look also stops Undo being offered after *Put it together*, which would
+  otherwise take back loops a routine may use.
 - **A copied piece lands on the same beats** (ADR 0310 D3). Copying chords to a section that started
   somewhere else in its bar than the loop they came from moved every chord by the same amount: on *Solo start*,
   half a bar. With bars, a copy now keeps each tap's place in the bar, starting at the first bar the piece fits

@@ -16,7 +16,7 @@ settings:
     # named "1.1". 1.0 is released ("Ready for Distribution") and therefore locked.
     #
     # 1.5 follows 1.4.1, which cleared review on 2026-11-18. It is a new version, so ASC needs a "1.5"
-    # version record of its own before build 12 can be attached to it.
+    # version record of its own before a build can be attached to it.
     #
     # 1.4.1 follows 1.4, which cleared review on 2026-11-16 after an expedited review; it is a point
     # release, so the open ASC version is "1.4.1" and a new build number goes with it.
@@ -52,7 +52,11 @@ settings:
     #
     # **12** is 1.5's first build (2026-11-22): everything merged after 1.4.1 (11) was archived at
     # `6c9e00d`, through the song map's doors and copies (ADR 0310).
-    CURRENT_PROJECT_VERSION: "12"
+    #
+    # **13** replaces it before review (2026-11-22). 12 was archived from `55c1d9f`, uploaded and
+    # attached to the 1.5 record; then *Remove copy*'s checks were made to fail closed, and ASC holds
+    # 12, so the replacement takes the next number.
+    CURRENT_PROJECT_VERSION: "13"
     DEVELOPMENT_TEAM: "" # set via CI / local xcconfig; do not hard-code
 
 # Per-configuration backend base URL (Debug → dev, Release → prod).

@@ -92,13 +92,14 @@ enum SongMapWriter {
 
     /// Remove a copy the map made (D5), while it's still the map's and isn't the loop the waveform is
     /// playing. A routine saved in the review's own context, and a practice run, can be missing from the
-    /// loop's relationships, so both are fetched first. Whether it was removed.
+    /// loop's relationships, so both are fetched first, and a fetch that fails keeps the copy: it can't show
+    /// that nothing points at the loop. Whether it was removed.
     static func removeCopy(_ uid: UUID, held: UUID?, from song: Song, context: ModelContext) -> Bool {
         guard uid != held, let loop = song.loops.first(where: { $0.uid == uid }),
               SongMapCopy.isTheMaps(standing(of: loop)), !routineUses([uid], context: context) else { return false }
         // Every run, filtered here: an optional compared in a `#Predicate` can freeze the main thread.
-        let runs = (try? context.fetch(FetchDescriptor<PracticeRun>())) ?? []
-        guard !runs.contains(where: { $0.unitUID == uid }) else { return false }
+        guard let runs = try? context.fetch(FetchDescriptor<PracticeRun>()),
+              !runs.contains(where: { $0.unitUID == uid }) else { return false }
         takeBack([uid], from: song, context: context)
         return true
     }
@@ -160,9 +161,10 @@ enum SongMapWriter {
 
     /// Whether a saved routine has a block on any of these loops: once one does, they're its blocks, and
     /// Undo no longer takes them back. Fetched, not read off the loops, whose relationships don't hear of a
-    /// save made in another context.
+    /// save made in another context. A fetch that fails answers yes, since both callers then take nothing
+    /// back: Remove copy keeps the copy, and Undo isn't offered.
     static func routineUses(_ uids: Set<UUID>, context: ModelContext) -> Bool {
-        let items = (try? context.fetch(FetchDescriptor<RoutineItem>())) ?? []
+        guard let items = try? context.fetch(FetchDescriptor<RoutineItem>()) else { return true }
         return items.contains { item in item.loop.map { uids.contains($0.uid) } ?? false }
     }
 
