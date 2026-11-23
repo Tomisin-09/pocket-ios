@@ -167,10 +167,12 @@ final class MoonThemeTests: XCTestCase {
 
     /// Spaces move, meanings don't (D3): everything outside the themed roles is the same in every theme.
     func testFixedColoursDontMove() {
-        let fixed = [PocketColor.background, PocketColor.ink, PocketColor.textSecondary, PocketColor.gridLine,
-                     PocketColor.active, PocketColor.confirm, PocketColor.danger, PocketColor.fine,
-                     PocketColor.marker, PocketColor.pin, PocketColor.confirmWash, PocketColor.chordInk]
-            + PocketColor.loopPalette + (0...7).map { PocketColor.chord(degree: $0) }
+        var fixed: [Color] = [PocketColor.background, PocketColor.ink, PocketColor.textSecondary,
+                              PocketColor.gridLine, PocketColor.active, PocketColor.confirm, PocketColor.danger,
+                              PocketColor.fine, PocketColor.marker, PocketColor.pin, PocketColor.confirmWash,
+                              PocketColor.chordInk]
+        fixed += PocketColor.loopPalette
+        for degree in 0...7 { fixed.append(PocketColor.chord(degree: degree)) }
         for theme in MoonTheme.allCases {
             for scheme in [ColorScheme.light, .dark] {
                 for (index, colour) in fixed.enumerated() {
@@ -241,26 +243,48 @@ final class MoonThemeTests: XCTestCase {
     }
 
     private static func hex(_ name: String, _ scheme: UIUserInterfaceStyle) -> String {
-        srgb(name, scheme).map { String(format: "%02X", Int(($0 * 255).rounded())) }.joined()
+        var text = ""
+        for channel in srgb(name, scheme) {
+            let byte: Int = Int((channel * 255).rounded())
+            text += String(format: "%02X", byte)
+        }
+        return text
     }
 
     /// OKLab ΔE × 100 between two colour sets, the nearer of light and dark (ADR 0311's measure).
+    ///
+    /// Written as plain typed steps on purpose: CI's older compiler (Xcode 16) gave up type-checking
+    /// the chained `map`/`zip`/`reduce` version of this in reasonable time.
     private static func distance(_ first: String, _ second: String) -> Double {
-        return [UIUserInterfaceStyle.light, .dark].map { scheme in
-            let one = oklab(srgb(first, scheme)), two = oklab(srgb(second, scheme))
-            let delta = sqrt(zip(one, two).map { ($0 - $1) * ($0 - $1) }.reduce(0, +)) * 100
-            return (delta * 10).rounded() / 10
-        }.min() ?? 0
+        var nearest = Double.infinity
+        for scheme in [UIUserInterfaceStyle.light, UIUserInterfaceStyle.dark] {
+            let one: [Double] = oklab(srgb(first, scheme))
+            let two: [Double] = oklab(srgb(second, scheme))
+            var sum: Double = 0
+            for index in 0..<3 {
+                let gap: Double = one[index] - two[index]
+                sum += gap * gap
+            }
+            let delta: Double = sqrt(sum) * 100
+            nearest = min(nearest, (delta * 10).rounded() / 10)
+        }
+        return nearest
+    }
+
+    private static func linear(_ channel: Double) -> Double {
+        channel <= 0.04045 ? channel / 12.92 : pow((channel + 0.055) / 1.055, 2.4)
     }
 
     private static func oklab(_ rgb: [Double]) -> [Double] {
-        let linear = rgb.map { $0 <= 0.04045 ? $0 / 12.92 : pow(($0 + 0.055) / 1.055, 2.4) }
-        let (red, green, blue) = (linear[0], linear[1], linear[2])
-        let lms = [0.4122214708 * red + 0.5363325363 * green + 0.0514459929 * blue,
-                   0.2119034982 * red + 0.6806995451 * green + 0.1073969566 * blue,
-                   0.0883024619 * red + 0.2817188376 * green + 0.6299787005 * blue].map { cbrt($0) }
-        return [0.2104542553 * lms[0] + 0.7936177850 * lms[1] - 0.0040720468 * lms[2],
-                1.9779984951 * lms[0] - 2.4285922050 * lms[1] + 0.4505937099 * lms[2],
-                0.0259040371 * lms[0] + 0.7827717662 * lms[1] - 0.8086757660 * lms[2]]
+        let red: Double = linear(rgb[0])
+        let green: Double = linear(rgb[1])
+        let blue: Double = linear(rgb[2])
+        let long: Double = cbrt(0.4122214708 * red + 0.5363325363 * green + 0.0514459929 * blue)
+        let medium: Double = cbrt(0.2119034982 * red + 0.6806995451 * green + 0.1073969566 * blue)
+        let short: Double = cbrt(0.0883024619 * red + 0.2817188376 * green + 0.6299787005 * blue)
+        let lightness: Double = 0.2104542553 * long + 0.7936177850 * medium - 0.0040720468 * short
+        let greenRed: Double = 1.9779984951 * long - 2.4285922050 * medium + 0.4505937099 * short
+        let blueYellow: Double = 0.0259040371 * long + 0.7827717662 * medium - 0.8086757660 * short
+        return [lightness, greenRed, blueYellow]
     }
 }
