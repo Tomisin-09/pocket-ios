@@ -182,6 +182,8 @@ struct TriadRunEditor: View {
         }
         .accessibilityLabel("Progression")
         .accessibilityValue(run.playedProgression?.name ?? "")
+        // The Chords row has a *Progression* segment too, so a label alone finds two.
+        .accessibilityIdentifier("triads.progression")
     }
 
     private func progressionButton(name: String, detail: String, steps: [ProgressionStep]) -> some View {

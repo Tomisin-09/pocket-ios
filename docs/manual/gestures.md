@@ -110,6 +110,7 @@ Not every list offers all of it, because not every item has all of it:
 | Your routines | Its own actions, **Favourite**, **Delete** |
 | Your saved loops | Its own actions and **Favourite** — no delete, because a loop belongs to its song and is removed on the waveform |
 | **Where you learned it** links | **Edit link** and **Delete** — a link has no favourite, and this delete is immediate rather than undoable |
+| **My progressions** | **Practice as triads** — a new exercise playing it as triads (see [Toolkit](toolkit.md#my-progressions)) |
 
 The transport's skip buttons use the same kind of menu for a different job: hold either one and pick
 how far it jumps — **5s**, **10s**, **15s**, **30s** or **1 min**. Holding Home's **Jump back in**

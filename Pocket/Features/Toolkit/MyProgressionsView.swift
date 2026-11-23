@@ -5,12 +5,18 @@ import SwiftUI
 /// management home for them: tap one to edit it, swipe to delete, **+** to write a new one. The *Use a
 /// progression* sheet lists the same rows under *Your progressions* but only inserts from them — the
 /// split ADR 0103 D5 made for saved chords, for the same reason: one place to manage, less on the way in.
+///
+/// A row's context menu offers *Practice as triads* (ADR 0313 D9), as the progression's own screen does.
 struct MyProgressionsView: View {
     @Environment(\.modelContext) private var modelContext
 
     @Query(sort: \SavedProgression.createdAt, order: .reverse) private var progressions: [SavedProgression]
 
     @AppStorage(AppSettings.Key.accidentalPreference) private var accidentalRaw = NoteSpelling.default.rawValue
+
+    /// What a row's *Practice as triads* opens the form on, set with `practisingAsTriads`.
+    @State private var triadsSeed: NewExerciseSeed?
+    @State private var practisingAsTriads = false
 
     /// Free for good (ADR 0263 D1), so the screen carries no `PlanGated`.
     var body: some View {
@@ -32,6 +38,8 @@ struct MyProgressionsView: View {
             }
         }
         .tint(PocketColor.toolkit)
+        // One flow for every row, at the screen: a sheet raised from a List row loses its write on iOS 18.
+        .newExerciseFlow(isPresented: $practisingAsTriads, seed: triadsSeed)
     }
 
     private var list: some View {
@@ -41,6 +49,14 @@ struct MyProgressionsView: View {
                     ProgressionBuilderView(progression: progression, tint: PocketColor.toolkit)
                 } label: {
                     row(progression)
+                }
+                .contextMenu {
+                    if let seed = progression.practiceAsTriadsSeed {
+                        PracticeAsTriadsMenuItem {
+                            triadsSeed = seed
+                            practisingAsTriads = true
+                        }
+                    }
                 }
             }
             .onDelete { offsets in

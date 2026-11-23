@@ -37,8 +37,9 @@ builder, vii° in the in-key row, and the overwrite guard. **Slice 2 built 2026-
 (`pocket-465-triad-finder`): the finder, the recipe, and the Triads rows, played Broken, with the range
 shaded on the board, and the chord being played named, coloured and followed over it (0313's *What the
 phone showed*). **Slice 3 built 2026-11-23** (`pocket-466-triads-together`): *Play as* Together, the
-dashed rings where the fingers just were, and the chips under the editor's board. Slice 4 (*Practice as
-triads*) is still to build.
+dashed rings where the fingers just were, and the chips under the editor's board. **Slice 4 built
+2026-11-23** (`pocket-467-practice-as-triads`): *Practice as triads* on a progression's screen and in its
+row's hold menu, opening the New exercise form filled in. All four are built; the 0313 reshoot is owed.
 
 ## 1.5: what it holds (decided 2026-11-17)
 
