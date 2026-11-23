@@ -20,7 +20,16 @@ enum ChordPicker {
     /// root-agnostically, because the root is chosen on tap. A **power chord is not a barre** (root + 5th,
     /// two/three fingers), so its subtitle drops "barre" and reads just the family ("E-shape").
     static func movableSubtitle(_ grip: ChordGrip) -> String {
-        grip.quality == .fifth ? grip.name : "\(grip.name) barre"
+        isBarre(grip) ? "\(grip.name) barre" : grip.name
+    }
+
+    /// Whether a movable grip is held as a barre. A power chord is two or three fingers, and the
+    /// diminished and augmented grips (ADR 0313) are four-string shapes with no finger laid across.
+    private static func isBarre(_ grip: ChordGrip) -> Bool {
+        switch grip.quality {
+        case .fifth, .diminished, .augmented: false
+        case .major, .minor, .dom7, .min7, .maj7, .sus2, .sus4, .sixth, .dom9, .maj9, .min9: true
+        }
     }
 
     /// The text a movable chip matches search against — its quality **and** family ("Major E-shape
@@ -30,11 +39,12 @@ enum ChordPicker {
     /// With a root chosen the chip shows a real chord ("Cm7", ADR 0297), so that name leads: a chip you
     /// can read must be one you can type.
     static func movableSearchText(_ grip: ChordGrip, placedName: String? = nil) -> String {
-        let barre = grip.quality == .fifth ? "" : " barre"
+        let barre = isBarre(grip) ? " barre" : ""
         return leading(placedName) + "\(grip.quality.displayName) \(grip.name)\(barre)"
     }
 
-    /// **Tier 2** as Insert chips (ADR 0122) — the suspensions, 6ths and 9ths. These were the whole
+    /// **Tier 2** as Insert chips (ADR 0122) — the suspensions, 6ths and 9ths, and since ADR 0313 the
+    /// diminished and augmented grips. These were the whole
     /// reason `MovableChordSheet` existed; with them here, browsing a chip and picking a root reaches the
     /// same voicing in two taps instead of four (family → quality → root → confirm), so the sheet was
     /// retired rather than left as a second, slower door to the same shapes. Placed **last** and starting
@@ -42,19 +52,24 @@ enum ChordPicker {
     /// a live search force-expands it anyway, so nothing hides behind the chevron.
     static let insertTier2Grips: [ChordGrip] = ChordGrip.tier2
 
-    /// The **triad** grips offered as Insert chips (ADR 0109) — major / minor on the three upper string
-    /// sets (G-B-e, D-G-B, A-D-G), root position. Small three-note shapes, slid to any root like the
-    /// movable barres; browsed in their own collapsible Insert section.
+    /// The **triad** grips offered as Insert chips (ADR 0109, ADR 0313) — major, minor, diminished and
+    /// augmented on the three upper string sets (G-B-e, D-G-B, A-D-G), in their inversions. Small
+    /// three-note shapes, slid to any root like the movable barres; browsed in their own collapsible
+    /// Insert section.
     static let insertTriadGrips: [ChordGrip] = ChordGrip.triads
 
-    /// A triad chip's subtitle — the **string set** and **inversion** it voices ("G-B-e · 1st inv"). The
-    /// chip title is the quality; together they read root-agnostically since the root is chosen on tap.
-    static func triadSubtitle(_ grip: ChordGrip) -> String { "\(grip.name) · \(grip.inversionName)" }
+    /// A triad chip's subtitle — the **string set** and **inversion** it voices ("G-B-e · 1st inv"), or
+    /// the string set alone for an augmented triad, which has one shape (`namesInversion`). The chip
+    /// title is the quality; together they read root-agnostically since the root is chosen on tap.
+    static func triadSubtitle(_ grip: ChordGrip) -> String {
+        grip.namesInversion ? "\(grip.name) · \(grip.inversionName)" : grip.name
+    }
 
     /// The text a triad chip matches search against — quality, "triad", the string set, and the inversion,
     /// so "triad", "major", "g-b-e", "inversion", and "1st" all filter it.
     static func triadSearchText(_ grip: ChordGrip, placedName: String? = nil) -> String {
-        leading(placedName) + "\(grip.quality.displayName) triad \(grip.name) \(grip.inversionName) inversion"
+        let inversion = grip.namesInversion ? " \(grip.inversionName) inversion" : ""
+        return leading(placedName) + "\(grip.quality.displayName) triad \(grip.name)\(inversion)"
     }
 
     /// A placed chip's chord name, ahead of the words that describe its shape.

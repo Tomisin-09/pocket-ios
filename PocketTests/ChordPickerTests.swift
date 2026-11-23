@@ -41,7 +41,7 @@ final class ChordPickerTests: XCTestCase {
         let families = Set(ChordPicker.insertMovableGrips.map(\.name))
         XCTAssertEqual(families, ["E-shape", "A-shape"], "both shape families are present")
         // Tier 2 stays in Build → Movable shape, so the Insert grid doesn't become the whole catalog.
-        XCTAssertTrue(qualities.isDisjoint(with: [.sus2, .sus4, .sixth, .dom9, .maj9, .min9]))
+        XCTAssertTrue(qualities.isDisjoint(with: [.sus2, .sus4, .sixth, .dom9, .maj9, .min9, .diminished, .augmented]))
     }
 
     func testInsertCarriesTierTwoAsItsOwnSet() {
@@ -50,7 +50,8 @@ final class ChordPickerTests: XCTestCase {
         // what makes retiring it lossless rather than a removal.
         XCTAssertEqual(ChordPicker.insertTier2Grips, ChordGrip.tier2)
         let qualities = Set(ChordPicker.insertTier2Grips.map(\.quality))
-        XCTAssertEqual(qualities, [.sus2, .sus4, .sixth, .dom9, .maj9, .min9])
+        XCTAssertEqual(qualities, [.sus2, .sus4, .sixth, .dom9, .maj9, .min9, .diminished, .augmented],
+                       "ADR 0313 adds the four-string diminished and augmented grips")
     }
 
     func testInsertNowOffersTheWholeCuratedMovableVocabulary() {

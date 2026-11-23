@@ -32,6 +32,15 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   Screen icon follow the theme too. Blood Moon is free and stays the default; the other seven come with
   the plan, and a lapsed plan draws Blood Moon again while keeping the choice. *Save to Red Moon* draws in
   the app's theme.
+- **Diminished and augmented chords** (ADR 0313 D1). The chord picker's **Triads** have them on all three
+  string sets: diminished in its three inversions, and augmented once per set, since every inversion of
+  an augmented triad is the same shape. Four-string diminished and augmented grips that slide to any
+  root join the last section, now **Sus, 6ths, 9ths, dim & aug**. A progression can hold them too:
+  **Chords in the key** ends on **vii°** (F♯dim in G), and **Any chord** offers both, written vii° and
+  III+. On a bass drill they play their tenth.
+- **An exercise made in a newer version of Red Moon is left alone** (ADR 0313 D4). This version plays it
+  with the click, as before, and **Edit shape** now says it was made in a newer version instead of
+  opening an editor on a default shape that **Done** would have saved over it.
 
 ### Changed
 - **The Toolkit is pink** (ADR 0312 D5), and so is the tile beside it on Home and everything the Toolkit

@@ -10,6 +10,24 @@ extension Exercise {
     /// The run screen switches its content surface on this; the strum payload accessor gates on it.
     var kind: ExerciseKind { template.renderer }
 
+    /// A payload **is there but this build can't read it** — written by a newer version of Red Moon, which
+    /// an archive restored into this one or a shared routine opened on it can bring (ADR 0313 D4). The run
+    /// still plays, as a click (T5). What must not happen is an editor seeding its default, A minor 7 say,
+    /// and Done writing that over the payload it couldn't read. So every setter below leaves such a payload
+    /// alone, and the shape sheet says why instead of showing an editor.
+    ///
+    /// `false` with no payload (nothing to lose) and for a renderer that carries none.
+    var hasUnreadableContent: Bool {
+        guard templatePayload != nil else { return false }
+        switch kind {
+        case .strumming: return strumPattern == nil
+        case .fretboard: return fretboardContent == nil
+        case .chords: return chordProgression == nil
+        case .strumChords: return strumChordSheet == nil
+        case .metronome: return false
+        }
+    }
+
     /// The decoded **strumming** pattern, or `nil` when this isn't a strumming-template exercise
     /// (its renderer isn't `.strumming`), the payload is absent, or it can't be decoded (a newer
     /// build's blob an older build can't read). A `nil` here sends the run screen to the metronome
@@ -23,8 +41,10 @@ extension Exercise {
     /// is immutable and set at creation (ADR 0068, revised), so this only ever runs for an exercise
     /// that already *is* a strumming drill; it just updates the pattern the lane renders. Encode
     /// failure leaves no payload rather than a stale one (the run then falls back to the metronome
-    /// underlay, the safe default, T5).
+    /// underlay, the safe default, T5). A payload this build can't read is left as it is
+    /// (`hasUnreadableContent`).
     func setStrumPattern(_ pattern: StrumPattern) {
+        guard !hasUnreadableContent else { return }
         templatePayload = try? JSONEncoder().encode(pattern)
     }
 
@@ -51,6 +71,7 @@ extension Exercise {
     /// template alone (ADR 0068, revised) and only updates what the board renders; an encode failure
     /// leaves no payload rather than a stale one (run falls back to the metronome underlay).
     func setFretboardContent(_ content: FretboardContent) {
+        guard !hasUnreadableContent else { return }
         templatePayload = try? JSONEncoder().encode(content)
     }
 
@@ -64,6 +85,7 @@ extension Exercise {
     /// Encode a chord progression onto the payload — leaves the immutable template alone (ADR 0068,
     /// revised); an encode failure leaves no payload rather than a stale one.
     func setChordProgression(_ progression: ChordProgression) {
+        guard !hasUnreadableContent else { return }
         templatePayload = try? JSONEncoder().encode(progression)
     }
 
@@ -78,6 +100,7 @@ extension Exercise {
     /// Encode a strum-chord sheet onto the payload — leaves the immutable template alone (ADR 0068,
     /// revised); an encode failure leaves no payload rather than a stale one.
     func setStrumChordSheet(_ sheet: StrumChordSheet) {
+        guard !hasUnreadableContent else { return }
         templatePayload = try? JSONEncoder().encode(sheet)
     }
 }

@@ -53,8 +53,8 @@ final class SavedProgressionTests: XCTestCase {
         XCTAssertEqual(draft.steps[1].bars, 1)
     }
 
-    func testTheInKeyRowIsTheSixChordsEveryKeyCanFret() {
-        XCTAssertEqual(ProgressionDraft.inKey.numerals, "I – ii – iii – IV – V – vi")
+    func testTheInKeyRowIsTheSevenChordsEveryKeyCanFret() {
+        XCTAssertEqual(ProgressionDraft.inKey.numerals, "I – ii – iii – IV – V – vi – vii°")
         for tonic in 0..<12 {
             let key = ProgressionKey(tonic: tonic)
             for step in ProgressionDraft.inKey {

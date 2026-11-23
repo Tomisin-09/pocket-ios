@@ -3,7 +3,7 @@ import SwiftUI
 
 /// The **chord picker** (ADR 0103) — a search-first sheet that replaced the flat insert `Menu` in
 /// `ChordProgressionEditor`. A live search field filters an **Insert** grid of mini chord diagrams,
-/// grouped **My chords → Movable shapes → Triads → Open shapes → Sus, 6ths & 9ths**; the **Build**
+/// grouped **My chords → Movable shapes → Triads → Open shapes → Sus, 6ths, 9ths, dim & aug**; the **Build**
 /// segment is a single action that opens `CustomChordSheet` directly (ADR 0122 — every movable shape is
 /// now browsable under Insert, so the old two-card Build pane had one card left). Additive over the shipped substrates —
 /// it reads `ChordVoicing.library`, the `SavedChord` `@Query`, and generated `ChordGrip`s (browse
@@ -71,7 +71,7 @@ struct ChordPickerSheet: View {
     }
 
     /// The Tier-2 section's title — needed as a constant because it seeds `collapsedSections`.
-    private static let tier2Title = "Sus, 6ths & 9ths"
+    private static let tier2Title = "Sus, 6ths, 9ths, dim & aug"
     /// The one chip the sheet scrolls to — the swapped chord's (see `currentChip`).
     nonisolated static let currentChipID = "chordPicker.current"
 

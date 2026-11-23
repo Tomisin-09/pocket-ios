@@ -130,11 +130,11 @@ struct ProgressionDraft: Equatable, Sendable {
 
     var key: ProgressionKey { ProgressionKey(tonic: tonic, isMinor: steps.readsAsMinor) }
 
-    /// The chords a key's scale offers without accidentals — I ii iii IV V vi. The diminished vii° is
-    /// left out: no movable grip plays it, and every chord the builder offers must fret in every key (D5).
+    /// The chords a key's scale offers without accidentals — I ii iii IV V vi vii°. Every chord the builder
+    /// offers must fret in every key (D5); vii° joined when diminished gained its curated grips (ADR 0313 D1).
     static let inKey: [ProgressionStep] = [
         ProgressionStep(0), ProgressionStep(2, .minor), ProgressionStep(4, .minor),
-        ProgressionStep(5), ProgressionStep(7), ProgressionStep(9, .minor)
+        ProgressionStep(5), ProgressionStep(7), ProgressionStep(9, .minor), ProgressionStep(11, .diminished)
     ]
 
     /// Add a chord at the end.

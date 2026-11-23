@@ -55,6 +55,9 @@ final class ChordGripTests: XCTestCase {
     private static let qualitySpecs: [ChordGrip.Quality: QualitySpec] = [
         .major: .init(triad: true, required: [4, 7]),
         .minor: .init(triad: true, required: [3, 7], forbidden: [4]),
+        // ADR 0313: the altered fifth is the chord, so the perfect fifth must not sound.
+        .diminished: .init(triad: true, required: [3, 6], forbidden: [4, 7]),
+        .augmented: .init(triad: true, required: [4, 8], forbidden: [3, 7]),
         // Power chord: root + 5th (+ octave root) only — two pitch classes, so not a triad, and it must
         // sound neither 3rd (that's the whole point of a "5").
         .fifth: .init(triad: false, required: [7], forbidden: [3, 4]),
