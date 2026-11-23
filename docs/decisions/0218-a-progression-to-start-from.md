@@ -6,6 +6,12 @@
   numerals come back in **one place only** — inside the *Use a progression* sheet and its builder,
   where they explain what the player is choosing (D1, D10). The editor, the run screen and the
   template previews still name chords by name alone, and C3's model is untouched.
+- **Amended by:** ADR 0313 (2026-11-23, accepted, not built) — **D5**: the in-key row gains vii°, and
+  *Any chord* gains diminished and augmented. D5's rule, every offered quality frets at every root on
+  both necks, still holds: the two qualities get curated grips, and on bass they play their tenths.
+  *Alternatives considered*'s "Offer vii°" is answered by that. **D2**: a step's quality gains the two
+  values, and a build from before reads either as major by the tolerant decode here. **D10**: a saved
+  progression gains *Practice as triads* in My progressions. The rest stands.
 - **Builds on:** ADR 0065 (`ChordProgression` / `ChordChange`), ADR 0084 (`ChordGrip`, the movable
   vocabulary every step resolves through), ADR 0095 (`SavedChord`, the pattern `SavedProgression`
   copies), ADR 0164 (`BassChordShape`)

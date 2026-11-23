@@ -21,6 +21,17 @@ the wordmark, logo and App Icon follow the theme; Silver ships once seen on a ph
   `site` PR).
 - Not decided: whether the Now Playing artwork follows the theme (0312 D3).
 
+## Triads on three strings, a mode of Arpeggios (accepted 2026-11-23, ADR 0313)
+
+From Tomisin's guitar lesson on 2026-11-23. Arpeggios gains a Triads mode beside the CAGED box: pick a
+key, three strings and a range of frets, then the chords (one chord, the key's seven, or a progression
+from the built-ins or My progressions), and the app finds each chord's shape that fits, taking the
+nearest move from the one before. Played Broken or Together. My progressions gains *Practice as
+triads*. **Not scheduled.** Four slices, and the first (diminished and augmented, vii° in the builder,
+and a guard so an older editor can't overwrite a recipe it can't read) is worth shipping alone. Every
+call is decided (0313's *Decided*). Mockup: `https://claude.ai/artifact/NFrDaPL1oE5XAT3hyk8PkB`
+(private).
+
 ## 1.5: what it holds (decided 2026-11-17)
 
 Tomisin chose these for 1.5 on 2026-11-17, the day 1.4.1 (11) was submitted. Each item points at the
