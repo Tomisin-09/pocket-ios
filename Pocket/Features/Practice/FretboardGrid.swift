@@ -29,19 +29,17 @@ struct FretboardGrid: View {
         drill.spelling(preference: NoteSpelling(rawValue: accidentalRaw) ?? .default)
     }
 
-    private var stringCount: Int { max(1, drill.stringCount) }
+    var stringCount: Int { max(1, drill.stringCount) }
     /// The visible neck window (ADR 0083 S5). At rest it is the drill's full static span; while a long
     /// climb walks it follows the active note, so `span`/`lowestFret` here are window-relative.
     private var window: FretWindow { drill.displayWindow(activeIndex: activeIndex) }
     private var span: Int { max(1, window.span) }
     private var lowestFret: Int { window.lowestFret }
 
-    /// Whether a note falls inside the visible window — open notes (fret 0) always show on the nut; a
-    /// fretted note shows only within `[lowestFret, lowestFret + span)`. In the static full-window case
-    /// this is true for every plotted note, so the at-rest board is unchanged.
-    private func isVisible(_ note: FretNote) -> Bool {
-        note.fret == 0 || (note.fret >= lowestFret && note.fret < lowestFret + span)
-    }
+    /// Whether a note falls inside the visible window (`FretWindow.shows`): an open note only while the
+    /// nut is in view, a fretted note within `[lowestFret, lowestFret + span)`. In the static full-window
+    /// case this is true for every plotted note, so the at-rest board is unchanged.
+    private func isVisible(_ note: FretNote) -> Bool { window.shows(note) }
 
     /// Width of the string-label gutter, and the spacing to the board — shared by the fret-number row so
     /// its numbers line up under the board columns.
@@ -99,6 +97,8 @@ struct FretboardGrid: View {
         GeometryReader { geo in
             let width = geo.size.width, height = geo.size.height
             ZStack {
+                // A Triads run's range of frets (ADR 0313 D6), behind everything else. Draws nothing without one.
+                FretRangeShade(range: drill.shadedFrets, lowestFret: lowestFret, span: span, tint: tint)
                 stringLines(width: width, height: height)
                 fretSeparators(width: width, height: height)
                 nut(height: height)
@@ -210,22 +210,31 @@ struct FretboardGrid: View {
     /// Every note the drill uses, plotted faintly; the active one lit and enlarged. Root notes (a
     /// scale/arpeggio's tonic, when the drill names one) carry the amber `marker` accent so the tonic
     /// is identifiable at rest, in the preview, and as the run walks over it.
+    ///
+    /// A board that plays chords (a Triads run, ADR 0313) reads against **the chord under the hand**: its
+    /// notes wear its colour (ADR 0308 D7), the note being played filled with it, and only its own root is
+    /// ringed, with interval labels counted from it.
     private func notes(width: CGFloat, height: CGFloat) -> some View {
         let active = activeIndex.flatMap { drill.note(at: $0) }
+        let chord = drill.chordIndex(at: activeIndex)
+        let chordColour = chord.flatMap { drill.chords?[$0].numeral }.map { PocketColor.chord(degree: $0.degree) }
+        let readingRoot = drill.readingRoot(chord: chord)
         // One dot per distinct **position**, not per played slot: a sequenced run sounds the same fret
         // several times, and a dot per slot stacked its own translucency into a solid white blob while
         // the least-repeated notes stayed grey (see `FretboardDrill.plottedPositions`).
         return ForEach(drill.plottedPositions, id: \.note) { entry in
             if isVisible(entry.note) {
                 let isActive = activeIndex.map { entry.indices.contains($0) } ?? false
-                let isRoot = isRoot(entry.note)
+                let isRoot = drill.ringsRoot(entry.note, slots: entry.indices, chord: chord)
+                let shade = drill.isPlayed(byChord: chord, slots: entry.indices) ? chordColour ?? tint : nil
                 let diameter = dotDiameter(isActive: isActive, isRoot: isRoot)
                 let focus = passFocusOpacity(noteIndices: entry.indices)
                 Circle()
-                    .fill(fill(isActive: isActive, isRoot: isRoot))
+                    .fill(fill(isActive: isActive, isRoot: isRoot, chord: shade))
                     .frame(width: diameter, height: diameter)
-                    .overlay(rootRing(isRoot: isRoot, isActive: isActive))
-                    .overlay(noteLabel(entry.note, isActive: isActive, isRoot: isRoot))
+                    .overlay(rootRing(isRoot: isRoot, isActive: isActive, chord: shade))
+                    .overlay(noteLabel(entry.note, isActive: isActive, isRoot: isRoot, chord: shade,
+                                       root: readingRoot))
                     .opacity(focus)
                     .position(x: noteX(entry.note.fret, in: width),
                               y: rowY(entry.note.string, in: height))
@@ -275,8 +284,9 @@ struct FretboardGrid: View {
     /// The dot fill. A root reads as a **hollow amber ring** at rest (board-coloured centre so the
     /// amber `rootRing` stroke shows) and a **solid amber** dot when it lights; a non-root lights in
     /// the tint and rests as a faint ink dot. Captioned idle dots fill a touch stronger so the text
-    /// sits on a legible chip.
-    private func fill(isActive: Bool, isRoot: Bool) -> Color {
+    /// sits on a legible chip. A note of the chord under the hand wears the chord's colour instead.
+    private func fill(isActive: Bool, isRoot: Bool, chord: Color?) -> Color {
+        if let chord { return isActive ? chord : chord.opacity(0.55) }
         if isRoot { return isActive ? PocketColor.marker : PocketColor.background }
         if isActive { return tint }
         return PocketColor.textPrimary.opacity(labelMode == .none ? 0.22 : 0.32)
@@ -285,32 +295,34 @@ struct FretboardGrid: View {
     /// The note's caption (note name or interval), coloured to read on its dot. Absent in `.none`
     /// mode and for interval mode on a rootless drill.
     @ViewBuilder
-    private func noteLabel(_ note: FretNote, isActive: Bool, isRoot: Bool) -> some View {
-        if let text = label(for: note) {
+    private func noteLabel(_ note: FretNote, isActive: Bool, isRoot: Bool, chord: Color?, root: Int?) -> some View {
+        if let text = label(for: note, root: root) {
             Text(text)
                 .font(.system(size: 9, weight: .bold))
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
-                .foregroundStyle(labelColor(isActive: isActive, isRoot: isRoot))
+                .foregroundStyle(labelColor(isActive: isActive, isRoot: isRoot, chord: chord))
         }
     }
 
     /// Text colour: dark ink on a lit (bright-filled) dot, amber on an idle root ring, faint-dot ink
-    /// otherwise.
-    private func labelColor(isActive: Bool, isRoot: Bool) -> Color {
+    /// otherwise. On a chord's colour, its own ink when filled (ADR 0308 D7), the board's ink when tinted.
+    private func labelColor(isActive: Bool, isRoot: Bool, chord: Color?) -> Color {
+        if chord != nil { return isActive ? PocketColor.chordInk : PocketColor.textPrimary }
         if isActive { return PocketColor.background }
         if isRoot { return PocketColor.marker }
         return PocketColor.textPrimary
     }
 
-    /// The caption string for a note in the current mode, or `nil` when nothing should show.
-    private func label(for note: FretNote) -> String? {
+    /// The caption string for a note in the current mode, or `nil` when nothing should show. Intervals
+    /// count from `root`: the drill's, or the root of the chord under the hand.
+    private func label(for note: FretNote, root: Int?) -> String? {
         let pitchClass = drill.pitchClass(of: note)
         switch labelMode {
         case .none: return nil
         case .note: return spelling.name(pitchClass: pitchClass)
         case .interval:
-            guard let root = drill.rootPitchClass else { return nil }
+            guard let root else { return nil }
             return Self.intervalNames[(((pitchClass - root) % 12) + 12) % 12]
         }
     }
@@ -320,17 +332,20 @@ struct FretboardGrid: View {
     private static let intervalNames =
         ["R", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"]
 
-    /// A thin halo around a root so it separates from neighbours even where notes share a cell.
+    /// A thin halo around a root so it separates from neighbours even where notes share a cell. The other
+    /// notes of the chord under the hand take a halo in its colour, so the three read as one shape.
     @ViewBuilder
-    private func rootRing(isRoot: Bool, isActive: Bool) -> some View {
+    private func rootRing(isRoot: Bool, isActive: Bool, chord: Color?) -> some View {
         if isRoot {
             Circle().strokeBorder(PocketColor.marker, lineWidth: isActive ? 2 : 1.5)
+        } else if let chord, !isActive {
+            Circle().strokeBorder(chord, lineWidth: 1.5)
         }
     }
 
     /// Whether a note sounds the drill's root pitch class (only when the drill names one) — resolved in
     /// the drill's own tuning so a bass root ring lands correctly (ADR 0116 S5).
-    private func isRoot(_ note: FretNote) -> Bool {
+    func isRoot(_ note: FretNote) -> Bool {
         guard let root = drill.rootPitchClass else { return false }
         return drill.pitchClass(of: note) == root
     }
@@ -362,27 +377,4 @@ struct FretboardGrid: View {
         return (CGFloat(column) + 0.5) / CGFloat(span) * width
     }
 
-    /// Standard 6-string names top-to-bottom (high e … low E); other counts read as "String N".
-    /// The accessibility identifier a board carries for a given string count — the one spelling,
-    /// shared with the UI tests so neither side hardcodes the literal.
-    static func stringCountIdentifier(_ count: Int) -> String { "fretboard.strings.\(count)" }
-
-    static func stringName(_ index: Int, of count: Int) -> String {
-        let guitar = ["e", "B", "G", "D", "A", "E"]
-        let bass = ["G", "D", "A", "E"]   // standard 4-string bass, highest-first (ADR 0116)
-        if count == guitar.count, guitar.indices.contains(index) { return guitar[index] }
-        if count == bass.count, bass.indices.contains(index) { return bass[index] }
-        return "\(index + 1)"
-    }
-
-    private var accessibilitySummary: String {
-        drill.notes.compactMap { note -> String? in
-            guard let note else { return nil }
-            let name = Self.stringName(note.string, of: stringCount)
-            let position = note.fret == 0 ? "open" : "fret \(note.fret)"
-            let how = note.technique.map { ", \($0.label)" } ?? ""
-            let root = isRoot(note) ? ", root" : ""
-            return "\(name) \(position)\(root)\(how)"
-        }.joined(separator: "; ")
-    }
 }

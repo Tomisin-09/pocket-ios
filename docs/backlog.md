@@ -33,8 +33,11 @@ call is decided (0313's *Decided*). Mockup: `https://claude.ai/artifact/NFrDaPL1
 (private).
 
 **Slice 1 built 2026-11-23** (`pocket-464-dim-aug-vii`): diminished and augmented in the picker and the
-builder, vii° in the in-key row, and the overwrite guard. Slices 2–4 (the finder and the recipe, the
-board showing a chord, *Practice as triads*) are still to build, in that order.
+builder, vii° in the in-key row, and the overwrite guard. **Slice 2 built 2026-11-23**
+(`pocket-465-triad-finder`): the finder, the recipe, and the Triads rows, played Broken, with the range
+shaded on the board, and the chord being played named, coloured and followed over it (0313's *What the
+phone showed*). Slices 3 and 4 (the board showing a chord with Together, the chips and per-chord
+labels; *Practice as triads*) are still to build, in that order.
 
 ## 1.5: what it holds (decided 2026-11-17)
 

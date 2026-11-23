@@ -64,7 +64,9 @@ extension Exercise {
     /// gains its hammer-ons and pull-offs, ADR 0251). `nil` sends the run to the metronome renderer,
     /// which is exactly what a fretboard-family exercise carrying no payload should do.
     var fretboardDrill: FretboardDrill? {
-        fretboardContent.map { template.articulating($0.drill(instrument: instrument)) }
+        fretboardContent.map {
+            template.articulating($0.drill(instrument: instrument, beatsPerBar: beatsPerBar))
+        }
     }
 
     /// Encode fretboard content onto the payload. Like `setStrumPattern`, it leaves the immutable

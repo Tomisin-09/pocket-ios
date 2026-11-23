@@ -52,6 +52,10 @@ struct ConfigureExerciseForm: View {
     /// How an Arpeggios drill authors its content at creation: the generative chord-tone box picker or
     /// the hand-drawn canvas (ADR 0107) — the same generate-or-draw split the Scales drill offers.
     @State var arpeggioMode: AuthoringMode = .generate
+    /// Which shape an Arpeggios drill generates (ADR 0313 D2): the box it opens on, or triads.
+    @State var arpeggioShape: ArpeggioShape = .box
+    /// The Triads run, opening on the run D10 describes.
+    @State var triads: TriadRun = .starter
     /// The authored **custom drill** for the tap-to-place grid — seeded from the template default and
     /// re-gridded on a meter change so its slots fill the bar.
     @State var customDrill: FretboardDrill
@@ -84,6 +88,10 @@ struct ConfigureExerciseForm: View {
     /// The instrument this drill draws and generates for — fixed at the create sheet (S6), so it's just
     /// the seed value the editors and the plan read. Not `@State`: nothing on this step changes it.
     var instrument: Instrument { initialInstrument }
+
+    /// Whether switching to Triads carries the box's key (ADR 0313 D2): only once the player has changed
+    /// the box. A new drill's box is the template's seed, so untouched, Triads opens on D10's run.
+    var carriesBoxKey: Bool { arpeggio != Self.seededArpeggio(template: template, instrument: instrument) }
 
     private let range = StandaloneMetronomeEngine.bpmRange
 
@@ -329,8 +337,11 @@ private extension ConfigureExerciseForm {
         case .run: return runMode == .draw ? .custom(customDrill) : .run(run)
         // A Scales drill carries its generated box or, in draw mode, the hand-placed custom drill (ADR 0107).
         case .scale: return scaleMode == .draw ? .custom(customDrill) : .scale(scale)
-        // An Arpeggios drill carries its generated chord-tone box or, in draw mode, the custom drill.
-        case .arpeggio: return arpeggioMode == .draw ? .custom(customDrill) : .arpeggio(arpeggio)
+        // An Arpeggios drill carries its generated box or triads (ADR 0313, guitar only) or, in draw
+        // mode, the custom drill.
+        case .arpeggio:
+            if arpeggioMode == .draw { return .custom(customDrill) }
+            return arpeggioShape == .triads && instrument == .guitar ? .triads(triads) : .arpeggio(arpeggio)
         case .fretboardGrid: return .custom(customDrill)
         case .strumming, .chords, .strumChords, .freeform, .none: return nil
         }

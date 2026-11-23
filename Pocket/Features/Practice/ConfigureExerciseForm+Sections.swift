@@ -174,7 +174,9 @@ extension ConfigureExerciseForm {
 
             switch arpeggioMode {
             case .generate:
-                ArpeggioRunEditor(run: $arpeggio, instrument: instrument)
+                ArpeggioGenerateRows(shape: $arpeggioShape, box: $arpeggio, triads: $triads,
+                                     instrument: instrument, beatsPerBar: signature.beats,
+                                     carriesBoxKey: carriesBoxKey)
                     .listRowBackground(Color.clear)
             case .draw:
                 FretboardDrillEditor(beatsPerBar: signature.beats, drill: $customDrill,
@@ -184,11 +186,21 @@ extension ConfigureExerciseForm {
         } header: {
             Text("Arpeggio run")
         } footer: {
-            Text(arpeggioMode == .generate
-                 ? "Pick a quality and its root — the chord-tone box walks the neck over the click. "
-                    + "You can change it later too."
-                 : "Draw the arpeggio yourself — tap the chord tones onto the board. Turn on a Guide "
-                    + "to ghost an arpeggio's chord tones to trace. You can edit it later too.")
+            Text(arpeggioFooter)
+        }
+    }
+
+    private var arpeggioFooter: String {
+        switch (arpeggioMode, arpeggioShape == .triads && instrument == .guitar) {
+        case (.draw, _):
+            return "Draw the arpeggio yourself — tap the chord tones onto the board. Turn on a Guide "
+                + "to ghost an arpeggio's chord tones to trace. You can edit it later too."
+        case (.generate, true):
+            return "Pick a key, three strings and the chords — each chord's shape walks the board over the "
+                + "click. You can change it later too."
+        case (.generate, false):
+            return "Pick a quality and its root — the chord-tone box walks the neck over the click. "
+                + "You can change it later too."
         }
     }
 
