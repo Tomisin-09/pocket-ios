@@ -9,6 +9,11 @@
   Advanced beside Movement any more (Rhythm is a plain row). Movement's settings are rows of the form
   under a header row rather than the inside of a `DisclosureGroup`. The shift and stagger controls,
   their ranges and the neck-fit cap stand.
+- **Amended by:** ADR 0313 (2026-11-23, *What the phone showed*) — **S5**: a board with a shaded range
+  (a Triads run kept in frets) never follows; it shows the whole range and a fret either side. An open
+  string is drawn only while the window starts at the nut, on every board. A Triads run up the neck
+  follows the chord rather than the note, by this rule applied to all of the chord's frets, so its window
+  moves only when the chord changes. How any other wider run follows stands.
 
 ## Context
 

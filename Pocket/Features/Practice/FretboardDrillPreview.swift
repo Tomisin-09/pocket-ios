@@ -28,6 +28,10 @@ struct FretboardDrillPreview: View {
     @State private var playOnceOrigin: Date?
     /// The moment this preview appeared — the origin the free-running walk measures from (below).
     @State private var appearedAt: Date?
+    /// For a board that plays chords (ADR 0313): where the chord under the hand goes. `nil` puts
+    /// `DrillChordLine` over the board; a binding reports the chord instead, for an editor that names it in
+    /// a row of its own, beside Display.
+    var playingChord: Binding<Int?>?
 
     private var isAnimating: Bool { (animates && !reduceMotion) || isPlayingOnce }
 
@@ -35,11 +39,10 @@ struct FretboardDrillPreview: View {
         Group {
             if isAnimating {
                 TimelineView(.animation) { context in
-                    FretboardGrid(drill: drill, activeIndex: activeIndex(at: context.date),
-                                  tint: tint, labelMode: labelMode)
+                    board(activeIndex: activeIndex(at: context.date))
                 }
             } else {
-                FretboardGrid(drill: drill, activeIndex: nil, tint: tint, labelMode: labelMode)
+                board(activeIndex: nil)
             }
         }
         .onAppear { if appearedAt == nil { appearedAt = .now } }
@@ -50,6 +53,23 @@ struct FretboardDrillPreview: View {
             let seconds = drill.lengthInBeats * 60.0 / Double(max(1, bpm))
             try? await Task.sleep(for: .seconds(max(0.1, seconds)))
             isPlayingOnce = false
+        }
+    }
+
+    /// The grid, with the chord under the hand named over it or reported, when the drill plays chords.
+    @ViewBuilder private func board(activeIndex: Int?) -> some View {
+        let grid = FretboardGrid(drill: drill, activeIndex: activeIndex, tint: tint, labelMode: labelMode)
+        if drill.chords == nil {
+            grid
+        } else if let playingChord {
+            grid.onChange(of: drill.chordIndex(at: activeIndex), initial: true) { _, now in
+                playingChord.wrappedValue = now
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                DrillChordLine(drill: drill, chord: drill.chordIndex(at: activeIndex))
+                grid
+            }
         }
     }
 

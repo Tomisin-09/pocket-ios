@@ -13,6 +13,14 @@ import Foundation
 struct FretWindow: Equatable {
     var lowestFret: Int
     var span: Int
+
+    /// Whether the board draws a note in this window. A fretted note shows inside its columns. An open
+    /// string sits on the nut, so it shows only while the window starts there: a window that has followed
+    /// the hand up the neck has no nut in view, and an open note drawn on its left edge read as a note at
+    /// that fret (ADR 0313, *What the phone showed*).
+    func shows(_ note: FretNote) -> Bool {
+        note.fret == 0 ? lowestFret <= 1 : (note.fret >= lowestFret && note.fret < lowestFret + span)
+    }
 }
 
 extension FretboardDrill {
@@ -43,15 +51,21 @@ extension FretboardDrill {
     /// also uses **open strings**, the window is framed from the nut (fret 1) so the open root reads
     /// contiguously with the low frets instead of stranded on the nut with a gap (ADR 0116 S5) — a bass
     /// box rooted on the open E is the motivating case, and open-position guitar boxes read better too.
+    ///
+    /// A **shaded range** (a Triads run kept in frets, ADR 0313 D6) is always in view, with a fret of neck
+    /// either side so it reads as a place on the neck rather than the whole board. It never follows: the
+    /// range is where the hand stays, so all of it shows at once, up to ten frets and the two either side.
     var displayLowestFret: Int {
-        guard let low = frettedNumbers.min() else { return 1 }
-        return hasOpenNotes ? 1 : max(1, low)
+        let shadeLow = shadedFrets.map { max(1, $0.lowerBound - 1) }
+        guard let low = frettedNumbers.min() else { return shadeLow ?? 1 }
+        return hasOpenNotes ? 1 : min(max(1, low), shadeLow ?? .max)
     }
 
-    /// How many fret **columns** the board shows — enough to reach the highest fretted note, but at
-    /// least a comfortable four so a two-fret drill isn't a cramped sliver.
+    /// How many fret **columns** the board shows — enough to reach the highest fretted note (and the fret
+    /// past a shaded range), but at least a comfortable four so a two-fret drill isn't a cramped sliver.
     var displayFretSpan: Int {
-        guard let high = frettedNumbers.max() else { return 4 }
+        let shadeHigh = shadedFrets.map { $0.upperBound + 1 }
+        guard let high = [frettedNumbers.max(), shadeHigh].compactMap({ $0 }).max() else { return 4 }
         return max(4, high - displayLowestFret + 1)
     }
 
@@ -71,10 +85,16 @@ extension FretboardDrill {
     /// rule over the notes from the start of the cycle up to the active one — no view state, still
     /// exhaustively unit-tested (S6), and the loop wrap (top of the climb → back to the bottom) falls
     /// out for free because the fold restarts at note 0.
+    ///
+    /// **A drill that names its chords follows the chord, not the note** (ADR 0313, *What the phone
+    /// showed*). A triad's notes go back down the neck inside one chord (an F on G-B-e plays frets 10, 10,
+    /// then 8), so following each note scrolled the window up for the F and straight back down for the C,
+    /// twice for one chord. The fold steps chord by chord instead, over the frets of the whole chord: the
+    /// window moves only when the chord changes, and the chord under the hand is always all in view.
     func displayWindow(activeIndex: Int?) -> FretWindow {
         let staticLow = displayLowestFret
         let staticSpan = displayFretSpan
-        guard let activeIndex, noteCount > 0, staticSpan > Self.comfortableFretSpan else {
+        guard let activeIndex, noteCount > 0, staticSpan > Self.comfortableFretSpan, shadedFrets == nil else {
             return FretWindow(lowestFret: staticLow, span: staticSpan)
         }
         let width = Self.comfortableFretSpan
@@ -82,26 +102,43 @@ extension FretboardDrill {
         let maxLow = max(staticLow, staticHigh - width + 1)   // never scroll past the run's own content
         let target = ((activeIndex % noteCount) + noteCount) % noteCount
         var low = staticLow                                   // the window starts anchored at the bottom
+        if let chords, let current = chordIndex(at: target) {
+            for chord in chords[...current] {
+                guard let reach = frets(of: chord) else { continue }   // a chord that rests holds the window
+                low = scrolled(low: low, toShow: reach, width: width, minLow: staticLow, maxLow: maxLow)
+            }
+            return FretWindow(lowestFret: low, span: width)
+        }
         for index in 0...target {
             let fret = followedFret(activeIndex: index) ?? low
-            low = scrolled(low: low, toShow: fret, width: width, minLow: staticLow, maxLow: maxLow)
+            low = scrolled(low: low, toShow: fret...fret, width: width, minLow: staticLow, maxLow: maxLow)
         }
         return FretWindow(lowestFret: low, span: width)
     }
 
-    /// The scroll rule (ADR 0083 S5): keep the window put unless `fret` is within `followEdgeMargin` of
-    /// an edge, in which case scroll so the note lands `followTrailing` frets in from the edge it is
-    /// *leaving* — a little history behind, the rest of the window the runway it is heading into (so it
-    /// travels far before scrolling again). Pure and total, clamped to `[minLow, maxLow]`.
-    private func scrolled(low: Int, toShow fret: Int, width: Int, minLow: Int, maxLow: Int) -> Int {
+    /// The scroll rule (ADR 0083 S5): keep the window put unless `frets` comes within `followEdgeMargin`
+    /// of an edge, in which case scroll so they land `followTrailing` frets in from the edge they are
+    /// *leaving* — a little history behind, the rest of the window the runway they are heading into (so
+    /// the hand travels far before the next scroll). One note is a range of one fret; a chord is all of
+    /// its frets, so the whole chord lands in view. Pure and total, clamped to `[minLow, maxLow]`.
+    private func scrolled(low: Int, toShow frets: ClosedRange<Int>, width: Int, minLow: Int, maxLow: Int) -> Int {
         let high = low + width - 1
-        if fret > high - Self.followEdgeMargin {           // climbing → reached the right edge; scroll up
-            return min(maxLow, fret - Self.followTrailing)
+        if frets.upperBound > high - Self.followEdgeMargin {   // climbing → reached the right edge; scroll up
+            return min(maxLow, frets.lowerBound - Self.followTrailing)
         }
-        if fret < low + Self.followEdgeMargin {            // descending → reached the left edge; scroll down
-            return max(minLow, fret - (width - 1 - Self.followTrailing))
+        if frets.lowerBound < low + Self.followEdgeMargin {    // descending → reached the left edge; scroll down
+            return max(minLow, frets.upperBound - (width - 1 - Self.followTrailing))
         }
-        return low                                         // comfortably in view → hold
+        return low                                             // comfortably in view → hold
+    }
+
+    /// The frets a chord's notes sit on, lowest to highest. An open string counts as the nut's column, so
+    /// a chord that rings one brings the nut back into view. `nil` for a chord with no notes (one that
+    /// rests).
+    private func frets(of chord: DrillChord) -> ClosedRange<Int>? {
+        let played = chord.slots.compactMap { notes.indices.contains($0) ? notes[$0]?.fret : nil }.map { max(1, $0) }
+        guard let lowest = played.min(), let highest = played.max() else { return nil }
+        return lowest...highest
     }
 
     /// The fret the following window tracks: the active note's own fret when it is fretted, else the

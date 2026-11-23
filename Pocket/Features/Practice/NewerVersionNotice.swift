@@ -43,8 +43,9 @@ struct NewerVersionNotice: View {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(for: Exercise.self,
                                         configurations: .init(isStoredInMemoryOnly: true))
-    let exercise = Exercise(name: "Triads in C", currentTempo: 70, commandTempo: 96, template: .arpeggios,
-                            templatePayload: Data(#"{"kind":"triads","triads":{"version":1}}"#.utf8))
+    // A kind no build has yet. A Triads run was this preview's example until this build learned to read one.
+    let exercise = Exercise(name: "Sevenths in C", currentTempo: 70, commandTempo: 96, template: .arpeggios,
+                            templatePayload: Data(#"{"kind":"fourNoteShapes","fourNoteShapes":{"version":1}}"#.utf8))
     container.mainContext.insert(exercise)
     return ExerciseShapeSheet(exercise: exercise)
         .modelContainer(container)

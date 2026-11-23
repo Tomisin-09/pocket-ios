@@ -235,6 +235,18 @@ The second step is titled for what you picked — **New warm-up**, **New scales*
   skills** says what it's for, and the section names the goals those skills serve. Other templates
   start from their own skills, which you can change from the drill's **ⓘ**.
 
+**Arpeggios** on a guitar drill asks for a shape under **Generate**: **Box**, the arpeggio laid out in
+one position, or **Triads**, each chord as three notes on three neighbouring strings. Choose a **Key**,
+the **Strings**, and the **Chords**: the key's own chord, the **Key’s seven**, or a **Progression** from
+the built-ins and *My progressions*. A progression is copied in, so changing it later leaves the drill
+as it was, and its chords hold for their bars. A seventh or ninth plays its triad, and a power chord,
+which has no third, rests. **Where** is **Up the neck** or **Stay in frets**. Staying in frets shades
+the two frets you set on the board, and each chord takes the shape nearest the one before. A chord
+with no shape in that range rests, and the editor names it and offers nearby ranges that hold every
+chord. As it plays, the chord is named over the board with its numeral and the chord after it, and its
+three notes take its colour, with its root ringed. **Advanced** holds the rhythm, **Up and back**, and, when the key's seven climbs the neck,
+**Climb in**: the inversion it climbs in.
+
 A chord progression is built a chord at a time, and each chord carries its own controls: the name
 opens the picker to swap it, the stepper sets how many beats it is held for, and the up and down
 arrows move it along the progression. So an order you got wrong is a couple of taps to fix rather

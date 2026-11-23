@@ -38,11 +38,10 @@ struct FretboardView: View {
         Group {
             if animates && !reduceMotion {
                 TimelineView(.animation) { context in
-                    FretboardGrid(drill: drill, activeIndex: activeNote(at: context.date),
-                                  tint: tint, labelMode: labelMode)
+                    board(activeIndex: activeNote(at: context.date))
                 }
             } else {
-                FretboardGrid(drill: drill, activeIndex: nil, tint: tint, labelMode: labelMode)
+                board(activeIndex: nil)
             }
         }
         .onChange(of: engine.currentBeat) { _, newValue in
@@ -57,6 +56,20 @@ struct FretboardView: View {
             // Mounted with no count-in pending (count-in disabled, or resuming an already-counted-in
             // run) → anchor now. Otherwise wait for the count-in to clear, above.
             if engine.automatorCountdown == nil { anchorToDownbeat() }
+        }
+    }
+
+    /// The grid, under the chord being played when the drill plays chords (ADR 0313): the run screen names
+    /// the chord under the hand, and before the walk starts, the one it starts on.
+    @ViewBuilder private func board(activeIndex: Int?) -> some View {
+        let grid = FretboardGrid(drill: drill, activeIndex: activeIndex, tint: tint, labelMode: labelMode)
+        if drill.chords == nil {
+            grid
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                DrillChordLine(drill: drill, chord: drill.chordIndex(at: activeIndex))
+                grid
+            }
         }
     }
 

@@ -38,6 +38,22 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   root join the last section, now **Sus, 6ths, 9ths, dim & aug**. A progression can hold them too:
   **Chords in the key** ends on **vii°** (F♯dim in G), and **Any chord** offers both, written vii° and
   III+. On a bass drill they play their tenth.
+- **Triads on three strings** (ADR 0313 D2 to D6, D10). The Arpeggios exercise has a second shape on a
+  guitar drill: under **Generate**, **Box** is the arpeggio it has always played, and **Triads** plays each
+  chord as a three-note shape on G-B-e, D-G-B or A-D-G. The chords are the key's own chord (**Just C**),
+  the **Key’s seven** with vii° and back to the key's chord, or a **Progression**, built in or one of
+  yours, copied in so that changing it later leaves the exercise as it was. A progression's chords hold
+  for their bars, a seventh or ninth plays its triad, and a power chord rests. **Stay in frets** keeps
+  every chord between two frets you set, shaded on the board, each taking the shape nearest the one
+  before; a range that can't hold a chord names it and offers the nearest ranges that hold them all.
+  **Up the neck** plays one chord's every shape, climbs the key's seven in one inversion (**Climb in**),
+  or plays a progression three times, a position higher each time. A new Triads run opens on C major
+  between frets 3 and 7. Over the board, the chord being played is named with its numeral and what comes
+  next (*Am · vi, then F · IV*), and its three notes wear its colour, the colour Watch it on the neck gives
+  that chord. Only its own root is ringed, and interval labels count from it. A run of one chord names the
+  inversion instead. A range you stay in shows whole, up to ten frets, and an open string shows only
+  while the nut is on the board. Up the neck, the board moves with the chord rather than each note, so it
+  shifts only when the chord changes and always shows the whole chord.
 - **An exercise made in a newer version of Red Moon is left alone** (ADR 0313 D4). This version plays it
   with the click, as before, and **Edit shape** now says it was made in a newer version instead of
   opening an editor on a default shape that **Done** would have saved over it.

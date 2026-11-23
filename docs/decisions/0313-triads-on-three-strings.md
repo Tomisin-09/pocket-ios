@@ -1,8 +1,9 @@
 # ADR 0313 — Triads on three strings: a mode of the Arpeggios exercise, and a progression kept inside a range of frets
 
-- **Status:** Accepted on 2026-11-23. **Slice 1 built** the same day (`pocket-464-dim-aug-vii`): see
-  *What building slice 1 settled*. Slices 2 to 4 are not built and not scheduled; which release any of it
-  goes in is not decided here. Its shape was settled with Tomisin the same day over a mockup
+- **Status:** Accepted on 2026-11-23. **Slices 1 and 2 built** the same day (`pocket-464-dim-aug-vii`,
+  `pocket-465-triad-finder`): see *What building slice 1 settled*, *What building slice 2 settled* and
+  *What the phone showed*, which brings part of D8 into slice 2.
+  Slices 3 and 4 are not built and not scheduled; which release any of it goes in is not decided here. Its shape was settled with Tomisin the same day over a mockup
   (`https://claude.ai/artifact/NFrDaPL1oE5XAT3hyk8PkB`, private), and the calls they made are marked
   *Decided by Tomisin*. The calls this ADR added while turning the mockup into code are marked
   *proposed here*. Tomisin took all ten as written the same day (*Decided*, below).
@@ -14,7 +15,11 @@
   same slice (D1), so *Alternatives considered*'s "No grip plays it" stops being true. **D2**: a step's
   quality gains two values, and a build from before this reads either as major, by D2's own tolerant
   decode. **D10**: a saved progression gets a second use, *Practice as triads* (D9). D1, D3, D4 and D6
-  to D11 stand.
+  to D11 stand. ADR 0083 — **S5**, from slice 2 (*What the phone showed*): a board with a shaded range never
+  follows the hand; it shows the whole range and a fret either side. An open string is drawn only while
+  the window starts at the nut, on every board. And a run that names its chords follows the chord, not
+  the note, so its window moves only when the chord changes. The rest of S5, and how any other wider run
+  follows, stand.
 - **Relates to:** 0065 (the fretboard payload, and Arpeggios as a template) · 0083 S5 (the board holds
   still inside eight frets and follows a wider run) · 0084 (the movable grip) · 0107 (generate or
   draw) · 0123 (key-first spelling) · 0164 (the bass shapes that stand in for guitar grips) · 0188 (an
@@ -214,6 +219,11 @@ for one chord and the key's seven, not for a progression, whose order is the mus
 - **A strip of chips under the editor's board**: each chord's name, its numeral and inversion, its
   frets, and *plays Dm* or *no shape* where those apply. The run screen names the chord being played.
 
+*Brought into slice 2 (What the phone showed):* naming the chord being played, on the run screen and over
+the editor's board, and interval labels read against its root. The second transient field is a list of
+chords with their slots rather than each slot's root. The companions, the dashed rings and the strip stay
+in slice 3.
+
 ### D9 — Practice as triads
 
 *Decided by Tomisin:* a **Practice as triads** button on a progression in *My progressions*, spelled like
@@ -326,6 +336,80 @@ still goes in.
 - **A progression that opens on i° reads as minor**, since diminished is minor-family (D1) and that is
   what `readsAsMinor` asks. No built-in does, and it only changes how the key is labelled and spelled.
 
+## What building slice 2 settled
+
+- **The finder reproduces the 5-fret table exactly** (`TriadShapesTests`): 168 of 432, and 5 and 6 frets
+  on G‑B‑e and D‑G‑B, 6 and 7 on A‑D‑G. Those numbers came from the mockup's own script, so the Swift
+  finder and the mockup agree on what fits. Frets run 0 to 22, the mockup's neck.
+- **The key's seven ends back on the key's chord**, eight chords, as the mockup plays them: up the neck it
+  is the octave a climb closes on, and in frets it is the tonic again, nearest from vii°.
+- **D2's carry is for a box the player has.** Switching to Triads takes the box's key when the box was
+  saved with the exercise or has been changed in the editor. A new exercise's untouched A minor 7 isn't
+  one, so its first switch opens on D10's C major between frets 3 and 7, the teacher's step 3. Neither is
+  the A minor 7 seeded beside a saved Triads run.
+- **A range is 3 to 10 frets**, set one end at a time. *The nearest ranges* are the same width lower and
+  higher, the nearest of each way; only when neither exists, the narrowest range up to four frets wider
+  that keeps the low fret where it can. A power chord has no shape anywhere, so it never counts against a
+  range and the help never names it.
+- **Up the neck's limits**: one chord's shapes, and the shapes a progression's passes start from, reach
+  fret 15; a pass's later chords may reach 17. A progression that opens on a power chord starts its
+  passes from its first chord with a triad. The key's seven climbs until the neck runs out.
+- **Up and back drops the shared turn**, as the box arpeggio does, so a looping run never plays a chord
+  twice in a row. The mockup repeated the first chord at the seam.
+- **The range reaches the board as a transient field**, `FretboardDrill.shadedFrets`, like `noteGroups`:
+  never encoded. The board keeps it in view with a fret either side, so frets 3 to 7 draws 2 to 8. As
+  first built, a 10-fret range followed the hand like any run wider than the board's eight (0083 S5);
+  *What the phone showed* changed that.
+- **Labels read the key, as first built**: interval labels and root rings were against the key's tonic.
+  *What the phone showed* changed that too. A progression up the neck fades the passes not being played,
+  through 0083 S2b's pass focus.
+- **A payload from a newer build still plays.** An unknown string set, source or placement reads as D10's,
+  and a progression source with no steps plays the key's seven. A Triads run on a bass exercise, which
+  no editor can make, draws on the six-string board.
+- **Two files moved for the 400-line cap**: `FretboardContent` out of `FretboardRun.swift` into its own
+  file, and *Edit shape*'s sections into `ExerciseShapeSheet+Sections.swift`.
+
+## What the phone showed
+
+*Decided by Tomisin on 2026-11-23, after playing slice 2 on the phone: "it's hard to identify what triad
+you're playing ... it's just a bunch of notes lighting up in a seemingly random order if you're not
+familiar with the triad shapes." How, proposed here and agreed the same day.*
+
+- **The chord being played is named over the board**: its name in its colour, its numeral, and what comes
+  next, *Am · vi, then F · IV*. This is Watch it on the neck's chord row (0308 D4), with the same badge.
+  In the editor it sits at the head of the board's row, beside Display, where Watch otherwise goes. On
+  the run screen it sits over the board. While nothing is lit (the count-in, or a board that doesn't walk)
+  it names the chord the run starts on: *Starts on C · I*.
+- **A run of one chord names the inversion instead**, since the chord never changes: *C · I · 1st
+  inversion, then 2nd inversion*. A chord with no shape says it *rests*.
+- **The chord's three notes wear its colour**, 0308 D7's colour for its degree, so V is the same colour
+  here as in Watch it on the neck. The note being played is filled with it and the other two are tinted.
+  Every other note stays grey. Only the chord being played is coloured, because neighbouring triads share
+  notes: the C at the G string's 5th fret is in C, Am and F, so no note can keep one colour.
+- **Only its own root is ringed, and interval labels count from it** (D8's rule, brought forward). The
+  ring used to stay on the key's tonic, so every C was ringed while Am played. Where the root sits in each
+  inversion is most of what the drill teaches. While nothing plays, the board reads the key, as before.
+- **The board names what it plays**: a G7 in a progression plays its G triad (D5), so the line says G and
+  V, not G7 and V7. The progression row still says what's written.
+- **A range you stay in is shown whole and never follows the hand.** The range is where the hand stays,
+  so the board shows all of it and a fret either side, up to twelve columns for a 10-fret range. On the
+  phone, frets 0 to 9 scrolled to 3 to 10 and drew the open strings on the window's left edge.
+- **An open string is drawn only while the window starts at the nut**, on every board. A window that has
+  followed the hand up the neck has no nut in view, and an open note on its left edge read as a note at
+  that fret. The following rule keeps the nut in view near an open note, so a lit one stays visible.
+- **Up the neck, the board follows the chord, not the note.** A triad's notes can step back down the neck
+  inside one chord: the F on G‑B‑e plays frets 10, 10 and 8, so the window scrolled to 9 to 16 for its F
+  and straight back to 3 to 10 for its C, twice for one chord. It now takes 0083 S5's rule over all of
+  the chord's frets at once, so it moves only when the chord changes, and the chord being played is
+  always whole on the board. C major's seven up G‑B‑e now moves twice per climb (at F, then Am), and once
+  more to go back to the start.
+- **How it reaches the board**: `FretboardDrill.chords`, a transient list of `DrillChord`s (root, the
+  triad's suffix, its numeral, a detail, its slots), never encoded, like `shadedFrets`. Nothing saved
+  changes. `DrillChordTests` pins it.
+- **Chords and Strum & chords get the same numeral and colour on a branch of their own.** Their diagrams
+  already name the chord; what's open there is a progression whose key isn't set, which Watch it on the
+  neck answers by colouring nothing. Not decided here.
+
 ## Consequences
 
 - Diminished and augmented reach the chord picker and the progression builder in slice 1, before any of
@@ -333,7 +417,8 @@ still goes in.
 - `docs/manual/` will owe: the Arpeggios rows (the Shape row, the Triads rows, *Play as*), *My
   progressions* (the button), the picker's Triads section (diminished and augmented) and the builder's
   in-key row (vii°). Their figures go in the reshoot notes and are shot once every slice is in.
-- `FretboardDrill` gains two transient fields. Nothing that's encoded changes.
+- `FretboardDrill` gains transient fields: the shaded range and the chords in slice 2, D8's companions
+  in slice 3. Nothing that's encoded changes.
 - The 5-fret table is pinned by a test, so if the finder's rules change, the numbers here get checked
   again.
 - An older build that meets a Triads exercise plays a click (D4).

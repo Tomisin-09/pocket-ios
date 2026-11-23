@@ -105,6 +105,13 @@ struct FretboardDrill: Codable, Equatable {
     /// (omitted from `CodingKeys`, like `noteGroups` and `openMidi`): a pure render concern re-derived on
     /// each `expanded()`, so there is no persisted-shape change and no store migration.
     var keySpelling: NoteSpelling?
+    /// The frets a Triads run is kept between (ADR 0313 D6), both ends included, which the board shades and
+    /// keeps in view. `nil` for every other drill. **Transient — never encoded**, like the three above: the
+    /// run re-derives it on each expansion.
+    var shadedFrets: ClosedRange<Int>?
+    /// The chords a Triads run plays, each with its slots (ADR 0313): the board names the one under the hand,
+    /// colours its notes and rings its root. `nil` for every other drill. **Transient — never encoded**.
+    var chords: [DrillChord]?
 
     init(notesPerBeat: Int,
          notes: [FretNote?],
@@ -113,6 +120,8 @@ struct FretboardDrill: Codable, Equatable {
          noteGroups: [Int]? = nil,
          openMidi: [Int]? = nil,
          keySpelling: NoteSpelling? = nil,
+         shadedFrets: ClosedRange<Int>? = nil,
+         chords: [DrillChord]? = nil,
          version: Int = FretboardDrill.currentVersion) {
         self.version = version
         self.notesPerBeat = max(1, notesPerBeat)
@@ -122,12 +131,14 @@ struct FretboardDrill: Codable, Equatable {
         self.noteGroups = noteGroups
         self.openMidi = openMidi
         self.keySpelling = keySpelling
+        self.shadedFrets = shadedFrets
+        self.chords = chords
     }
 
-    /// Explicit keys so `noteGroups`, `openMidi` and `keySpelling` (transient render artifacts) are
-    /// **excluded** from the encoded shape — no persisted-blob change, no migration. Every other field
-    /// codes and decodes exactly as the synthesized conformance did before; the three transients decode
-    /// to their `nil` default.
+    /// Explicit keys so `noteGroups`, `openMidi`, `keySpelling`, `shadedFrets` and `chords` (transient render
+    /// artifacts) are **excluded** from the encoded shape — no persisted-blob change, no migration. Every other field
+    /// codes and decodes exactly as the synthesized conformance did before; the transients decode to
+    /// their `nil` default.
     private enum CodingKeys: String, CodingKey {
         case version, notesPerBeat, notes, stringCount, rootPitchClass
     }

@@ -1,14 +1,15 @@
 import XCTest
 @testable import Pocket
 
-/// **An editor doesn't write over what it can't read** (ADR 0313 D4). A newer build's content — a Triads
-/// run, say — reads as nothing here, and the run falls back to the click. The shape sheet would then seed
+/// **An editor doesn't write over what it can't read** (ADR 0313 D4). A newer build's content — a kind of
+/// fretboard run this build has no case for — reads as nothing here, and the run falls back to the click. The shape sheet would then seed
 /// its own default and Done would write it over the payload. These hold the guard at the setters, which
 /// is where every editor's write goes through. Uninserted models: no context is needed for a payload.
 final class ExerciseUnreadableContentTests: XCTestCase {
 
-    /// What a later build writes for a Triads run: a `FretboardContent` kind this build has no case for.
-    private let newerFretboardBlob = Data(#"{"kind":"triads","triads":{"version":1,"tonic":0}}"#.utf8)
+    /// What a later build might write: a `FretboardContent` kind this build has no case for. It was a Triads
+    /// run until this build learned that kind (ADR 0313 slice 2); four-note shapes are deferred there.
+    private let newerFretboardBlob = Data(#"{"kind":"fourNoteShapes","fourNoteShapes":{"version":1}}"#.utf8)
 
     func testANewerBuildsFretboardContentReadsAsNothingAndIsUnreadable() {
         let exercise = Exercise(name: "Triads", template: .arpeggios, templatePayload: newerFretboardBlob)
