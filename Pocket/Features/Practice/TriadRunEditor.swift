@@ -21,10 +21,6 @@ struct TriadRunEditor: View {
     /// The progressions the player wrote, for the Progression menu (D5). Copied in when chosen.
     @Query(sort: \SavedProgression.createdAt, order: .reverse) private var savedProgressions: [SavedProgression]
     @State private var showsAdvanced = false
-    /// A one-shot "watch it" request, set by the options bar's Watch (ADR 0065).
-    @State private var playOnceToken: Date?
-    /// The chord under the hand, which the board reports so the row above it can name it.
-    @State private var playingChord: Int?
     /// Note captions are the global viewing preference the other fretboard editors share.
     @AppStorage("fretboardLabelMode") private var storedLabelMode = FretLabelMode.none.rawValue
     /// The key spells chords and notes first; this decides only where it's silent (ADR 0123).
@@ -58,18 +54,11 @@ struct TriadRunEditor: View {
         .listRowSeparator(.hidden)
     }
 
-    /// Watch · Display over the walking board, as one row (see `ScaleRunEditor.previewRow`), with the chord
-    /// under the hand named at its head.
+    /// The board row, worked out once per change to the run: the shape finder runs here, not each time the
+    /// chord being played changes (`TriadPreviewRow`).
     private var previewRow: some View {
-        let drill = run.expanded(beatsPerBar: beatsPerBar)
-        return VStack(alignment: .leading, spacing: 18) {
-            HStack(spacing: 12) {
-                DrillChordLine(drill: drill, chord: playingChord).layoutPriority(1)
-                FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint)
-            }
-            FretboardDrillPreview(drill: drill, tint: tint, labelMode: labelMode, playOnceToken: playOnceToken,
-                                  playingChord: $playingChord)
-        }
+        TriadPreviewRow(drill: run.expanded(beatsPerBar: beatsPerBar), chips: run.chips(preference: preference),
+                        tint: tint, labelMode: labelMode)
     }
 
     private var titleField: some View {
@@ -219,7 +208,39 @@ struct TriadRunEditor: View {
     }
 }
 
-// MARK: - Frets, the range help, Advanced (one file, so they read the private state)
+// MARK: - The board row
+
+/// Watch · Display over the walking board, as one row (see `ScaleRunEditor.previewRow`), with the chord
+/// under the hand named at its head and the run's chords in order under it (D8).
+///
+/// **It owns the chord being played**, so a chord change redraws this row alone. While the editor held it,
+/// every change re-ran the editor's whole body, and with it the shape finder three times (the board, the
+/// chips and the caption), which is at its slowest for a progression up the neck.
+private struct TriadPreviewRow: View {
+    let drill: FretboardDrill
+    let chips: [TriadChip]
+    let tint: Color
+    let labelMode: FretLabelMode
+
+    /// A one-shot "watch it" request, set by the options bar's Watch (ADR 0065).
+    @State private var playOnceToken: Date?
+    /// The chord under the hand, which the board reports so the line above it and the chips can name it.
+    @State private var playingChord: Int?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 12) {
+                DrillChordLine(drill: drill, chord: playingChord).layoutPriority(1)
+                FretboardDisplayOptionsBar(playToken: $playOnceToken, tint: tint)
+            }
+            FretboardDrillPreview(drill: drill, tint: tint, labelMode: labelMode, playOnceToken: playOnceToken,
+                                  playingChord: $playingChord)
+            TriadChipStrip(chips: chips, playing: playingChord)
+        }
+    }
+}
+
+// MARK: - Frets and the range help (Advanced and the bindings are in TriadRunEditor+Advanced.swift)
 
 private extension TriadRunEditor {
     // MARK: - Frets (D6)
@@ -301,76 +322,6 @@ private extension TriadRunEditor {
     var holdsLabel: String {
         if run.playedProgression != nil { return "These hold every chord:" }
         return run.source == .oneChord ? "These hold it:" : "These hold all seven:"
-    }
-
-    // MARK: - Advanced
-
-    /// *Climb in* only where it means something: the key's seven, up the neck. *Up and back* is for one
-    /// chord and the key's seven, since a progression's order is the music (D7).
-    var climbsInOneInversion: Bool {
-        run.playedProgression == nil && run.source != .oneChord && run.placement == .upTheNeck
-    }
-
-    @ViewBuilder var advancedRows: some View {
-        if climbsInOneInversion { climbRow }
-        RhythmRow(notesPerBeat: binding(\.notesPerBeat), accessibilityLabel: "Triads rhythm", tint: tint)
-        if run.playedProgression == nil {
-            Toggle("Up and back", isOn: binding(\.roundTrip))
-                .font(.futura(.subheadline, weight: .semibold))
-                .tint(tint)
-        }
-    }
-
-    /// A menu around a picker, so the value reads in Futura like `RhythmRow`'s.
-    var climbRow: some View {
-        LabeledMenuRow(label: "Climb in") {
-            Menu {
-                Picker("Climb in", selection: binding(\.climbInversion)) {
-                    ForEach(0..<3) { Text(TriadRun.inversionName($0)).tag($0) }
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Text(TriadRun.inversionName(run.climbInversion))
-                    Image(systemName: "chevron.up.chevron.down").imageScale(.small)
-                }
-                .font(.futura(.subheadline))
-                .foregroundStyle(tint)
-            }
-            .accessibilityLabel("Climb in")
-            .accessibilityValue(TriadRun.inversionName(run.climbInversion))
-        }
-    }
-
-    /// The rhythm, then only what differs from the defaults.
-    var advancedSummary: [String] {
-        var parts = [FretboardSubdivisions.label(forPerBeat: run.notesPerBeat)]
-        if climbsInOneInversion, run.climbInversion != 0 { parts.append(TriadRun.inversionName(run.climbInversion)) }
-        if run.playedProgression == nil, run.roundTrip { parts.append("Up and back") }
-        return parts
-    }
-
-    // MARK: - Bindings
-
-    func binding<Value>(_ keyPath: WritableKeyPath<TriadRun, Value>) -> Binding<Value> {
-        Binding(get: { run[keyPath: keyPath] }, set: { run[keyPath: keyPath] = $0; haptic(.light) })
-    }
-
-    /// Major or minor: shows the progression's reading when there is one.
-    var minorBinding: Binding<Bool> {
-        Binding(get: { run.readsAsMinor }, set: { run.isMinor = $0; haptic(.light) })
-    }
-
-    /// Choosing *Progression* with none held copies in the four-chord loop, so the rows have a progression
-    /// to show before the menu is opened.
-    var sourceBinding: Binding<TriadRun.Source> {
-        Binding(get: { run.playedProgression == nil && run.source == .progression ? .keysSeven : run.source },
-                set: { source in
-                    if source == .progression, run.progression?.steps.isEmpty ?? true {
-                        run.progression = TriadRun.defaultProgression
-                    }
-                    run.source = source
-                    haptic(.light)
-                })
     }
 }
 

@@ -12,10 +12,28 @@ import SwiftUI
 struct FretboardGrid: View {
     let drill: FretboardDrill
     /// The note lit now, or `nil` for a static (nothing-lit) read.
-    var activeIndex: Int?
-    var tint: Color = PocketColor.practice
+    let activeIndex: Int?
+    let tint: Color
     /// How to caption each note (note name / interval / nothing).
-    var labelMode: FretLabelMode = .none
+    let labelMode: FretLabelMode
+    /// The visible neck window (ADR 0083 S5). At rest it is the drill's full static span; while a long
+    /// climb walks it follows the active note, so `span`/`lowestFret` here are window-relative.
+    ///
+    /// **Worked out once, here**, not on each read. It was a computed property, and every fret line, fret
+    /// number, inlay and dot read it, so a walking board ran `displayWindow` about a hundred and ten times
+    /// a frame, each walking every note of the run. A Triads progression up the neck, played Together, is
+    /// 96 slots of three notes, and that took 106 ms a frame in a Debug build against a 120 Hz budget of
+    /// 8: the sheet around the board stuttered as it scrolled.
+    private let window: FretWindow
+
+    init(drill: FretboardDrill, activeIndex: Int? = nil, tint: Color = PocketColor.practice,
+         labelMode: FretLabelMode = .none) {
+        self.drill = drill
+        self.activeIndex = activeIndex
+        self.tint = tint
+        self.labelMode = labelMode
+        self.window = drill.displayWindow(activeIndex: activeIndex)
+    }
 
     /// The **rootless** fallback spelling (ADR 0123). A drill that carries a key spells by that key;
     /// one that doesn't — a spider walk, a picking pattern, or a key the circle of fifths leaves open —
@@ -25,14 +43,11 @@ struct FretboardGrid: View {
     /// Whether a jump between notes draws its arrow (`walkTrail`): the **Display** menu's switch.
     @AppStorage(AppSettings.Key.fretboardShowsMoves) private var showsMoves = AppSettings.fretboardShowsMovesDefault
 
-    private var spelling: NoteSpelling {
+    var spelling: NoteSpelling {
         drill.spelling(preference: NoteSpelling(rawValue: accidentalRaw) ?? .default)
     }
 
     var stringCount: Int { max(1, drill.stringCount) }
-    /// The visible neck window (ADR 0083 S5). At rest it is the drill's full static span; while a long
-    /// climb walks it follows the active note, so `span`/`lowestFret` here are window-relative.
-    private var window: FretWindow { drill.displayWindow(activeIndex: activeIndex) }
     private var span: Int { max(1, window.span) }
     private var lowestFret: Int { window.lowestFret }
 
@@ -141,10 +156,11 @@ struct FretboardGrid: View {
     /// arrowhead, but *as* the trail: only while it's the step being played, when the instruction
     /// "slide into this one" is actually actionable. The technique survives outside the walk in the
     /// accessibility summary, which reads it per note. A Legato drill's hammer-ons and pull-offs follow
-    /// the same rule (ADR 0251, `LegatoCue`).
+    /// the same rule (ADR 0251, `LegatoCue`). A chord played Together is three fingers landing at once, not
+    /// one finger's jump, so it draws no arrow: the dashed rings show where they came from (ADR 0313 D8).
     @ViewBuilder
     private func walkTrail(width: CGFloat, height: CGFloat) -> some View {
-        if let activeIndex, activeIndex > 0,
+        if let activeIndex, activeIndex > 0, !drill.playsTogether,
            drill.notes.indices.contains(activeIndex),
            let to = drill.notes[activeIndex], let from = drill.notes[activeIndex - 1],
            from != to, isVisible(from), isVisible(to) {
@@ -213,10 +229,12 @@ struct FretboardGrid: View {
     ///
     /// A board that plays chords (a Triads run, ADR 0313) reads against **the chord under the hand**: its
     /// notes wear its colour (ADR 0308 D7), the note being played filled with it, and only its own root is
-    /// ringed, with interval labels counted from it.
+    /// ringed, with interval labels counted from it. Played Together, all three are lit at once (D8), and
+    /// the notes of the shape before that moved are ringed dashed: where the fingers just were.
     private func notes(width: CGFloat, height: CGFloat) -> some View {
         let active = activeIndex.flatMap { drill.note(at: $0) }
         let chord = drill.chordIndex(at: activeIndex)
+        let justLeft = drill.notesJustLeft(chord: chord)
         let chordColour = chord.flatMap { drill.chords?[$0].numeral }.map { PocketColor.chord(degree: $0.degree) }
         let readingRoot = drill.readingRoot(chord: chord)
         // One dot per distinct **position**, not per played slot: a sequenced run sounds the same fret
@@ -235,6 +253,7 @@ struct FretboardGrid: View {
                     .overlay(rootRing(isRoot: isRoot, isActive: isActive, chord: shade))
                     .overlay(noteLabel(entry.note, isActive: isActive, isRoot: isRoot, chord: shade,
                                        root: readingRoot))
+                    .background(JustLeftRing(isShown: justLeft.contains(entry.note), dotDiameter: diameter))
                     .opacity(focus)
                     .position(x: noteX(entry.note.fret, in: width),
                               y: rowY(entry.note.string, in: height))
@@ -244,34 +263,6 @@ struct FretboardGrid: View {
         }
         // Keep the enlarged active dot on top even where notes share a cell.
         .zIndex(active == nil ? 0 : 1)
-    }
-
-    /// How faint an **off-pass** note fades to while a multi-pass run walks (ADR 0083 S2b — "pass
-    /// focus"): the current pass reads as the focus, the rest stays visible as context. Feel value.
-    private static let offPassGhostOpacity: Double = 0.2
-
-    /// Whether the drill is a genuine multi-pass run — the gate for pass focus. A single-pass run tags
-    /// one uniform group, and every non-run drill has no groups at all, so neither ever dims.
-    private var isMultiPass: Bool {
-        guard let groups = drill.noteGroups else { return false }
-        return Set(groups).count > 1
-    }
-
-    /// The opacity for a position under **pass focus** (ADR 0083 S2b): while a multi-pass run walks,
-    /// notes outside the active note's pass drop to a ghost so the eye locks onto the position being
-    /// played; the active pass, a single-pass run, and the static board (no `activeIndex`) render fully.
-    ///
-    /// Takes **every** slot that plays this position and keeps it lit if *any* of them belongs to the
-    /// active pass — a position the run revisits across passes is genuinely part of the pass being
-    /// played, so ghosting it because one of its other slots sits elsewhere would fade a note under the
-    /// hand right now.
-    private func passFocusOpacity(noteIndices: [Int]) -> Double {
-        guard isMultiPass, let activeIndex, let groups = drill.noteGroups,
-              groups.indices.contains(activeIndex)
-        else { return 1 }
-        let activeGroup = groups[activeIndex]
-        let sharesPass = noteIndices.contains { groups.indices.contains($0) && groups[$0] == activeGroup }
-        return sharesPass ? 1 : Self.offPassGhostOpacity
     }
 
     /// Dot size — enlarged when captions are on so a "♭7" fits, and enlarged again when lit.

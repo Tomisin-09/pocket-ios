@@ -54,6 +54,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   inversion instead. A range you stay in shows whole, up to ten frets, and an open string shows only
   while the nut is on the board. Up the neck, the board moves with the chord rather than each note, so it
   shifts only when the chord changes and always shows the whole chord.
+- **Triads, played together** (ADR 0313 D7, D8). **Advanced** has **Play as**: **Broken**, one note at a
+  time as before, or **Together**, all three notes lit at once and held for the same time, the way you'd
+  strum the changes. When the chord changes, dashed rings show where your fingers just were, on the notes
+  that moved. Under the editor's board, a strip lists every chord in order with its numeral, inversion and
+  frets (*Dm7 · ii7 · root · 7 6 5 · plays Dm*), says *no shape* or *no triad* for a chord that rests, and
+  lights the chord being played in its colour. VoiceOver reads the board a chord at a time.
 - **An exercise made in a newer version of Red Moon is left alone** (ADR 0313 D4). This version plays it
   with the click, as before, and **Edit shape** now says it was made in a newer version instead of
   opening an editor on a default shape that **Done** would have saved over it.
@@ -62,6 +68,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 - **The Toolkit is pink** (ADR 0312 D5), and so is the tile beside it on Home and everything the Toolkit
   tints: its screens, the tuner, the tab writer and the Song map's chord lane. Its indigo sat so close to
   the Metronome's purple that the two read as one colour. A printed tab keeps its colours.
+
+### Fixed
+- **A long run on the fretboard no longer makes its screen stutter.** The board worked out which frets to
+  show about a hundred times every frame it drew, once for each fret line, number and dot, and each time it
+  read every note of the run. A Triads progression up the neck, played together, took over ten times a
+  frame's budget, so the sheet around it lagged as it scrolled. It now works the frets out once a frame,
+  and the Triads editor works its shapes out only when you change the run, not each time the chord changes.
 
 ## [1.5] — build 13, cut 2026-11-22
 

@@ -42,6 +42,31 @@ struct TriadRun: Equatable, Sendable {
         }
     }
 
+    /// How each chord sounds on the board (D7). The raw values are stored.
+    enum PlayAs: String, CaseIterable, Identifiable, Sendable {
+        /// One note at a time, low string to high.
+        case broken
+        /// All three notes at once, held for the time Broken would take.
+        case together
+
+        var id: String { rawValue }
+
+        var label: String {
+            switch self {
+            case .broken: return "Broken"
+            case .together: return "Together"
+            }
+        }
+
+        /// The line under *Play as*, the mockup's.
+        var hint: String {
+            switch self {
+            case .broken: return "One note at a time, low to high."
+            case .together: return "All three at once, held."
+            }
+        }
+    }
+
     /// A progression copied in (D5): its steps with their bars, and the name it was chosen under.
     struct Progression: Codable, Equatable, Sendable {
         var name: String
@@ -70,6 +95,8 @@ struct TriadRun: Equatable, Sendable {
     /// The inversion the key's seven climbs in under *Up the neck* (*Climb in*): 0 root position, 1 first, 2
     /// second.
     var climbInversion: Int
+    /// Broken or Together (D7). Together takes Broken's time, so this never changes how long the run is.
+    var playAs: PlayAs
     /// Evenly spaced notes per beat. Clamped to at least 1.
     var notesPerBeat: Int
     /// Up and back, for one chord and the key's seven. A progression's order is the music, so it never
@@ -85,6 +112,7 @@ struct TriadRun: Equatable, Sendable {
          lowFret: Int = 3,
          highFret: Int = 7,
          climbInversion: Int = 0,
+         playAs: PlayAs = .broken,
          notesPerBeat: Int = 2,
          roundTrip: Bool = false,
          version: Int = TriadRun.currentVersion) {
@@ -97,6 +125,7 @@ struct TriadRun: Equatable, Sendable {
         self.placement = placement
         (self.lowFret, self.highFret) = Self.clampedRange(low: lowFret, high: highFret)
         self.climbInversion = min(2, max(0, climbInversion))
+        self.playAs = playAs
         self.notesPerBeat = max(1, notesPerBeat)
         self.roundTrip = roundTrip
     }
@@ -142,11 +171,12 @@ extension TriadRun {
 extension TriadRun: Codable {
     private enum CodingKeys: String, CodingKey {
         case version, tonic, isMinor, strings, source, progression, placement, lowFret, highFret
-        case climbInversion, notesPerBeat, roundTrip
+        case climbInversion, playAs, notesPerBeat, roundTrip
     }
 
-    /// Everything but the version has a fallback, and an unknown string set, source or placement reads as
-    /// D10's, so a run written by a newer build still plays here. A declared default doesn't survive a
+    /// Everything but the version has a fallback, and an unknown string set, source, placement or way of
+    /// playing reads as D10's, so a run written by a newer build still plays here. A run saved before *Play
+    /// as* existed has no key for it, and plays Broken, as it did. A declared default doesn't survive a
     /// missing key under synthesized `Codable`, so the tolerance is written out.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -157,6 +187,7 @@ extension TriadRun: Codable {
         let stringsRaw: String = value(.strings, starter.strings.rawValue)
         let sourceRaw: String = value(.source, starter.source.rawValue)
         let placementRaw: String = value(.placement, starter.placement.rawValue)
+        let playAsRaw: String = value(.playAs, starter.playAs.rawValue)
         self.init(tonic: value(.tonic, starter.tonic),
                   isMinor: value(.isMinor, starter.isMinor),
                   strings: TriadStrings(rawValue: stringsRaw) ?? starter.strings,
@@ -166,6 +197,7 @@ extension TriadRun: Codable {
                   lowFret: value(.lowFret, starter.lowFret),
                   highFret: value(.highFret, starter.highFret),
                   climbInversion: value(.climbInversion, starter.climbInversion),
+                  playAs: PlayAs(rawValue: playAsRaw) ?? starter.playAs,
                   notesPerBeat: value(.notesPerBeat, starter.notesPerBeat),
                   roundTrip: value(.roundTrip, starter.roundTrip),
                   version: try container.decode(Int.self, forKey: .version))
@@ -183,6 +215,7 @@ extension TriadRun: Codable {
         try container.encode(lowFret, forKey: .lowFret)
         try container.encode(highFret, forKey: .highFret)
         try container.encode(climbInversion, forKey: .climbInversion)
+        try container.encode(playAs.rawValue, forKey: .playAs)
         try container.encode(notesPerBeat, forKey: .notesPerBeat)
         try container.encode(roundTrip, forKey: .roundTrip)
     }
