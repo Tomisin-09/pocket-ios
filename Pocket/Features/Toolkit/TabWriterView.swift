@@ -2,7 +2,7 @@ import SwiftData
 import SwiftUI
 
 /// **Write a tab** (ADR 0235 D3, D4): a title, the strip with its one open slot, a **+**, then *Bar line* and
-/// *Section*, Name the notes' neck (`NeckNoteEditor`) in Toolkit's indigo, and *The tab so far*. A tap on the
+/// *Section*, Name the notes' neck (`NeckNoteEditor`) in the Toolkit's colour, and *The tab so far*. A tap on the
 /// neck fills the + with a new note and moves on, silently; pick a note to change it, put one in before it,
 /// or take it out. Every change is one step of ↶ ↷, bar lines and sections included, for the visit.
 ///

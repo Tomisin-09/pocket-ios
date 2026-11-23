@@ -23,7 +23,8 @@ struct SettingsView: View {
     @Query private var profiles: [Profile]
 
     // Read only to summarise the rows — each destination owns the binding that writes them.
-    @AppStorage(AppSettings.Key.appearance) private var appearance = AppearancePreference.system
+    /// The theme the app is drawn in: the Appearance row's value (ADR 0311 D7).
+    @Environment(\.moonTheme) private var theme
     @AppStorage(AppSettings.Key.clickTimbre) private var clickTimbre = ClickTimbre.default
     @AppStorage(AppSettings.Key.countInEnabled) private var countInEnabled = true
     @AppStorage(AppSettings.Key.routineAutoStart) private var routineAutoStart = true
@@ -60,7 +61,9 @@ struct SettingsView: View {
 
             Section("Preferences") {
                 NavigationLink { AppearanceSettingsView() } label: {
-                    HubRow(icon: "paintbrush", title: "Appearance", value: appearance.label)
+                    // The theme is the value (ADR 0311 D7): it's the bigger choice on the screen, and the
+                    // one a player is likeliest to come back to change.
+                    HubRow(icon: "paintbrush", title: "Appearance", value: theme.name)
                 }
                 NavigationLink { SoundFeelSettingsView() } label: {
                     HubRow(icon: "speaker.wave.2", title: "Sound & feel",

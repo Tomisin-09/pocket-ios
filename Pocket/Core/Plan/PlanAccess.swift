@@ -77,9 +77,10 @@ enum PlanAccess: String, Equatable, Sendable {
 /// A screen behind the plan (ADR 0256 D2, as amended by ADR 0263). The case names the wall's title, so
 /// a player who tapped *Active listening* reads that at the top, not a generic "Upgrade".
 ///
-/// **Only the gated side is listed**, and only practising is on it: a feature that plays or keeps is
+/// **Only the gated side is listed**: practising, and the moon themes. A feature that plays or keeps is
 /// free (0263 D2), so the Journal, the Practice log and the whole Toolkit have no door. A free screen
-/// has no gate. `PlanAccessTests` pins this list exactly, so adding or removing a door is a deliberate
+/// has no gate. The themes are the one door that isn't practising (ADR 0312 D1): they change how the
+/// app looks, not what it keeps, and Blood Moon, the brand, stays free. `PlanAccessTests` pins this list exactly, so adding or removing a door is a deliberate
 /// edit there too.
 enum PlanDoor: String, CaseIterable, Sendable {
     case practice
@@ -91,6 +92,9 @@ enum PlanDoor: String, CaseIterable, Sendable {
     case drill
     case newDrill
     case routine
+    /// A moon theme other than Blood Moon (ADR 0312 D1). The Theme screen itself is open to everyone:
+    /// its cards are what the plan would bring, so they are shown, and the wall waits behind a tap.
+    case theme
 
     /// The wall's navigation title: the name the player tapped, as the app spells it there.
     var title: String {
@@ -104,6 +108,7 @@ enum PlanDoor: String, CaseIterable, Sendable {
         case .drill: "Exercise"
         case .newDrill: "New exercise"
         case .routine: "Routine"
+        case .theme: "Theme"
         }
     }
 }
@@ -187,15 +192,23 @@ enum PlanCountdown {
 /// the products' `displayPrice`, never as literals, so the copy can't disagree with the price sheet in
 /// any storefront.
 enum PlanWallCopy {
-    static func headline(returning: Bool) -> String {
-        returning ? "Everything you made is still here." : "Practising is part of the plan."
+    /// The wall's headline. A returning player reads that nothing has gone (D4), whatever they
+    /// tapped. Otherwise it names what they tapped: practising, or a theme (ADR 0312 D1).
+    static func headline(returning: Bool, door: PlanDoor = .practice) -> String {
+        if returning { return "Everything you made is still here." }
+        return door == .theme ? "The moon themes are part of the plan." : "Practising is part of the plan."
     }
 
-    static func explanation(returning: Bool) -> String {
-        returning
-            ? "Your drills and routines are just as you left them. They open again with the plan."
-            : "Your songs, loops, Journal and Toolkit are free for good. The plan is for practising: drills, "
-                + "routines, Today's session and the loop trainer."
+    static func explanation(returning: Bool, door: PlanDoor = .practice) -> String {
+        if returning {
+            return "Your drills and routines are just as you left them. They open again with the plan."
+        }
+        if door == .theme {
+            return "Blood Moon is Red Moon's own colour, and it's free for good. The other seven moons come "
+                + "with the plan, along with drills, routines, Today's session and the loop trainer."
+        }
+        return "Your songs, loops, Journal and Toolkit are free for good. The plan is for practising: drills, "
+            + "routines, Today's session and the loop trainer. It brings the moon themes too."
     }
 
     /// The promise's first line (D8), in the player's own currency.

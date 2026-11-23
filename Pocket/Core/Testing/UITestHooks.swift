@@ -107,6 +107,11 @@ enum UITestHooks {
     /// finds the wall by this rather than by what it says.
     static let planWallHeadline = "plan.wallHeadline"
 
+    /// Settings ▸ Appearance's Theme row (ADR 0311 D7). Its value is the theme's name, which changes.
+    static let themeRow = "settings.appearance.theme"
+    /// A card on the Theme screen, by `MoonTheme.rawValue` (`blood`, `harvest`, …).
+    static func themeCard(_ rawValue: String) -> String { "settings.theme.\(rawValue)" }
+
     /// Marks Home as **finished seeding**, not merely rendered.
     ///
     /// First-launch seeding is a `.task` that paints Home before it completes, so "Home is on

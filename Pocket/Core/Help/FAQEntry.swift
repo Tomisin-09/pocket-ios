@@ -244,8 +244,9 @@ extension FAQEntry {
                 + "your loops and markers. So are the Metronome, your Journal and Practice log, and "
                 + "everything in the Toolkit: My chords, My progressions, My tabs, the Tuner, the "
                 + "Glossary and this help. The plan is for practising: drills, routines, Today's "
-                + "session, the loop trainer, Active listening, Improvise and Watch it on the neck. Pay "
-                + "monthly, or pay once. The monthly starts with a free trial if you haven't had one, "
+                + "session, the loop trainer, Active listening, Improvise and Watch it on the neck. It "
+                + "also brings the moon themes: Blood Moon is free, and the other seven come with the "
+                + "plan. Pay monthly, or pay once. The monthly starts with a free trial if you haven't had one, "
                 + "and the plan's screen says how long it lasts.",
               area: .plan),
         // ADR 0274: the founding price is a lock, not a freeze. Apple's grace after a lapse is Apple's

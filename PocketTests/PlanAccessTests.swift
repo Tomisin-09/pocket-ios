@@ -112,7 +112,21 @@ final class PlanAccessTests: XCTestCase {
     /// away, is a change to the free line, and 0256 D8 makes taking one away permanent.
     func testOnlyPractisingIsBehindThePlan() {
         XCTAssertEqual(PlanDoor.allCases, [.practice, .todaysSession, .loopTrainer, .earTraining,
-                                           .watchOnNeck, .improvise, .drill, .newDrill, .routine])
+                                           .watchOnNeck, .improvise, .drill, .newDrill, .routine, .theme])
+    }
+
+    /// The themes are the one door that isn't practising (ADR 0312 D1), so their wall says so, and
+    /// says Blood Moon stays free. A returning player still reads that nothing has gone (D4).
+    func testTheThemeWallNamesTheThemesAndKeepsBloodMoonFree() {
+        XCTAssertEqual(PlanDoor.theme.title, "Theme")
+        XCTAssertEqual(PlanWallCopy.headline(returning: false, door: .theme), "The moon themes are part of the plan.")
+        let explanation = PlanWallCopy.explanation(returning: false, door: .theme)
+        XCTAssertTrue(explanation.contains("Blood Moon"), explanation)
+        XCTAssertTrue(explanation.contains("free for good"), explanation)
+        XCTAssertEqual(PlanWallCopy.headline(returning: true, door: .theme), "Everything you made is still here.")
+        XCTAssertEqual(PlanWallCopy.headline(returning: false, door: .routine), "Practising is part of the plan.")
+        XCTAssertTrue(PlanWallCopy.explanation(returning: false).contains("moon themes"),
+                      "the general wall no longer says everything the plan brings")
     }
 
     /// The Journal and the Practice log are free (0263 D1), so no wall is titled with either.

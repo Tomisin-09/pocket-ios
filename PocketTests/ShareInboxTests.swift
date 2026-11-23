@@ -87,4 +87,23 @@ final class ShareInboxTests: XCTestCase {
     func testNoSnapshotReadsAsNone() throws {
         XCTAssertNil(ShareOwnerSnapshot.read(from: try makeFolder()))
     }
+
+    /// The extension draws in the app's moon theme (ADR 0311, 0312), so the snapshot carries it.
+    func testTheSnapshotCarriesTheTheme() throws {
+        let folder = try makeFolder()
+        let snapshot = ShareOwnerSnapshot(standing: .onPlan, appearance: .system, theme: .harvest, places: [])
+        try snapshot.write(to: folder)
+        XCTAssertEqual(ShareOwnerSnapshot.read(from: folder)?.theme, .harvest)
+    }
+
+    /// A snapshot written before the themes has no theme in it. It must still be read, or the extension
+    /// would lose every place until the app next wrote one; it draws Blood Moon meanwhile.
+    func testASnapshotFromBeforeTheThemesStillReads() throws {
+        let folder = try makeFolder()
+        let old = #"{"standing":"lapsed","appearance":"dark","places":[],"fullOfFiles":[]}"#
+        try Data(old.utf8).write(to: folder.appending(path: ShareOwnerSnapshot.fileName))
+        let read = try XCTUnwrap(ShareOwnerSnapshot.read(from: folder), "a pre-theme snapshot no longer decodes")
+        XCTAssertNil(read.theme)
+        XCTAssertEqual(read.appearance, .dark)
+    }
 }

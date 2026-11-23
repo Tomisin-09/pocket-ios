@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The **Tune Settings** sheet (ADR 0115 Slice 4) — a Pocket-native, indigo sheet (not a system form)
+/// The **Tune Settings** sheet (ADR 0115 Slice 4) — a Pocket-native sheet in the Toolkit's colour (not a system form)
 /// carrying every tuner preference: instrument (Guitar / Bass), mode (Guided / Chromatic), the tuning
 /// picker, reference-pitch calibration, and the success-chime toggle. Every control persists via
 /// `@AppStorage` on `AppSettings.Key`, so `TunerView` reads the same keys live — a change here takes
@@ -187,7 +187,7 @@ struct TuneSettingsSheet: View {
 
     // MARK: - Card chrome
 
-    /// One titled settings card — a section header above a rounded surface, in the toolkit's indigo
+    /// One titled settings card — a section header above a rounded surface, in the Toolkit's colour
     /// study accent (the sheet's shared visual grammar, one level down from the tuner screen itself).
     private func card<Content: View>(title: String,
                                      @ViewBuilder content: () -> Content) -> some View {
@@ -207,7 +207,7 @@ struct TuneSettingsSheet: View {
 }
 
 /// A Pocket-native segmented pill control over raw-string options, bound to an `@AppStorage` `String`.
-/// The selected pill fills with the toolkit indigo; the rest read as quiet secondary labels. Used for
+/// The selected pill fills with the Toolkit's colour; the rest read as quiet secondary labels. Used for
 /// the instrument and mode pickers so the sheet stays off the system segmented control (ADR 0115).
 private struct RawSegmented: View {
     let options: [(value: String, label: String)]

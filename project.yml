@@ -99,6 +99,11 @@ targets:
         CODE_SIGN_STYLE: Manual
         # App icon lives in Pocket/Resources/Assets.xcassets (AppIcon set).
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # The moon themes' icons (ADR 0312 D3), one per theme other than Blood Moon. Naming them here
+        # is what makes actool compile them and write `CFBundleAlternateIcons` into the built
+        # Info.plist; `MoonTheme.alternateIconName` names the same sets, and `MoonThemeTests` holds the
+        # two lists together. `scripts/derive-brand-svgs.py --themes --app-icon` cuts them.
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIconBlue AppIconJade AppIconCorn AppIconSilver AppIconPink AppIconHarvest AppIconCold"
       configs:
         Debug:
           # Warnings are errors for *our* code (AGENTS.md step 2 asks for a warning-free
@@ -174,6 +179,8 @@ targets:
       # targets include it (D10.4).
       - path: Pocket/UI/ReferencePlaceList.swift
       - path: Pocket/UI/DesignTokens.swift
+      - path: Pocket/UI/ThemeColor.swift
+      - path: Pocket/Core/Theme/MoonTheme.swift
       - path: Pocket/App/AppearancePreference.swift
       - path: Pocket/Resources/Colors.xcassets
     settings:

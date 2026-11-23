@@ -287,6 +287,10 @@ simulator (1206×2622)**. What that walk settled, so Phase 5 does not rediscover
   for 120s instead of 4, which is what makes `gestures/undo-toast` shootable by hand at all. Every
   driven figure was shot under it, so any hand-shot frame must be too. (It also used to unlock Red
   Moon Pro; there is nothing left to unlock, ADR 0237.)
+- **Every figure is in Blood Moon.** A `-uiTesting` launch resets the moon theme (ADR 0311), so a test
+  that picked one can't leave the next frame drawn in it, and Blood Moon is the default and the brand.
+  That is also why a page never names a space's colour on its own: a player on another theme sees
+  another one. Say *Practice's colour*, and give Blood Moon's in brackets if it helps.
 - **Debug-only UI has to be hidden, not cropped.** The Settings hub carries one destination more than it ships,
   `Developer`, under `#if DEBUG` — present in every build a shoot can drive, and shipped to nobody.
   The first shoot photographed it into `reference/settings-hub`, whose own alt text lists only the

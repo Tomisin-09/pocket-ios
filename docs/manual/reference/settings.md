@@ -17,7 +17,7 @@ right**, so most questions are answered without opening anything.
 | `You` | Your name, and what you play |
 | `Your plan` | Which way you pay, restoring a purchase, and managing the monthly |
 | `Cancel your monthly plan` | Appears only after paying once while the monthly still renews, and opens Apple's subscriptions |
-| `Appearance` | Theme, motion, and how notes are spelled |
+| `Appearance` | The moon theme, light or dark, motion, and how notes are spelled |
 | `Sound & feel` | Haptics, and which click the metronome plays |
 | `Practice` | Count-in, screen, the strumming click, reminders, and what Home offers you |
 | `Routines` | How a routine moves from block to block |
@@ -50,7 +50,14 @@ Every one of these is optional, and none of it leaves the device.
 
 ## `Appearance`
 
-- **Theme** — `System`, `Light` or `Dark`, footnoted *System follows your device*.
+- **`Theme`** — the moon theme the app is drawn in: the colour Practice wears, with the song player,
+  the mastery dots, the logo and the App Icon following it. The row shows the theme's moon and name,
+  and the hub's `Appearance` row shows its name too. It opens eight cards, `Blood Moon` first, each
+  drawing that theme's own `Start` button, a strip of waveform and its mastery dots on the light canvas
+  and the dark one side by side. **Tapping a card applies it at once**; there is no Save. A card with a
+  lock needs the plan, and tapping it says so. iOS confirms a change of App Icon with a message of its
+  own.
+- **`System`, `Light` or `Dark`**, directly under the theme, footnoted *System follows your device*.
 - **`Motion` ▸ `Animate exercises`** — *A moving highlight walks the exercise in time — the notes on the fretboard, the strokes on the strum lane. Always off when your device has Reduce Motion on.*
 - **`Note names`** — `Sharps (♯)` or `Flats (♭)`, used where the music does not settle it for itself.
   Where a key is known, the key wins.

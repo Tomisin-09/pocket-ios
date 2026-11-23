@@ -12,6 +12,9 @@
 - **Amended by:** ADR 0311 (2026-11-22, for 1.6) — D3's indigo stays the Toolkit's colour in every
   theme but one: under Cold Moon, a blue 8.0 from the indigo, the Toolkit wears jade. D3's purpose, a
   reference hue clear of the other spaces, is what the move keeps.
+  **ADR 0312** (2026-11-22/23, for 1.6) — D3's indigo goes: the Toolkit is **pink** in Blood Moon, 12.0
+  from the Metronome's plum where the indigo sat 3.9 away, terracotta under Pink Moon, corn under Harvest
+  Moon and jade under Cold Moon. D3's purpose stands, and is what the move serves.
 
 ## Ratified decisions (2026-07-17)
 

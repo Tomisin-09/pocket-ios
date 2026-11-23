@@ -9,9 +9,17 @@ closes off an alternative) when it's time to act.
 Eight themes picked in Settings → Appearance: Blood Moon (still the default and the brand), Blue,
 Jade, Corn, Silver, Pink, Harvest and Cold. A theme sets the colour Practice and the song player wear,
 and moves a space's colour only where it would sit near the theme's. ADR 0311 holds the values, the
-space palettes, the Theme screen and the build notes. Still open there (D11): free or Pro, whether the
-wordmark and App Icon follow, the Metronome and Toolkit near-pair, and whether Silver ships after a
-look on the phone.
+space palettes, the Theme screen and the build notes. **Built on `pocket-462-moon-themes-build`**, with
+ADR 0312 settling three of D11's questions (2026-11-22): the themes are part of the plan, Blood Moon free;
+the wordmark, logo and App Icon follow the theme; Silver ships once seen on a phone. Still owed:
+- **A phone pass**: sixteen looks (eight themes, light and dark), the eight icons on a real Home Screen,
+  Silver's grey art and Pause button.
+- **The Metronome and Toolkit near-pair**: settled 2026-11-23, the Toolkit goes pink (0312 D5, Harvest
+  Moon's corn Toolkit the one accepted near-pair). It changes Blood Moon's look, so **the manual's figures
+  and App Store screenshots showing the Toolkit or Home's Learn tiles are owed a reshoot** with 1.6.
+- **What the plan covers, outside the repo**: the App Store description, and the site and its FAQ (a
+  `site` PR).
+- Not decided: whether the Now Playing artwork follows the theme (0312 D3).
 
 ## 1.5: what it holds (decided 2026-11-17)
 

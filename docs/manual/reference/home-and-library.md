@@ -14,7 +14,7 @@ on the right is `Add a song` and opens the file picker.
 **The greeting** changes with the time of day and, once you have given one, carries your artist name.
 Under it, `Ready to practice?`.
 
-**`Start today's session`** is the filled red card, and the primary action. It builds a session from
+**`Start today's session`** is the filled card in Practice's colour (red, in Blood Moon), and the primary action. It builds a session from
 your goals.
 
 **`JUMP BACK IN`** appears once you have practised anything, and carries the last thing you
@@ -38,7 +38,7 @@ therefore, is the way in.
 
 **The destinations** are tiles, two to a row, under three headings. Each is a glyph and a name in its
 own colour, and the colour is how you find it again. The one exception is on purpose: the tile beside
-Toolkit wears the Toolkit's indigo, because whatever it opens is a Toolkit tool.
+Toolkit wears the Toolkit's colour, because whatever it opens is a Toolkit tool.
 
 - **`Practice`** opens the [Practice hub](practice.md); **`Metronome`** beside it opens over the
   whole screen.

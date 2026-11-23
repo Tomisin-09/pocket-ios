@@ -108,9 +108,10 @@ extension ReferencePlaceKind {
 extension ShareOwnerSnapshot {
     /// The snapshot of the library as it is now (D9).
     @MainActor
-    init(context: ModelContext, standing: PlanStanding, appearance: AppearancePreference) {
+    init(context: ModelContext, standing: PlanStanding, appearance: AppearancePreference,
+         theme: MoonTheme = .standard) {
         let all = ReferenceOwners.all(in: context)
-        self.init(standing: standing, appearance: appearance, places: all.map(\.destination),
+        self.init(standing: standing, appearance: appearance, theme: theme, places: all.map(\.destination),
                   fullOfFiles: Set(all.filter { !$0.owner.canAddAttachment }.map(\.destination.id)))
     }
 }

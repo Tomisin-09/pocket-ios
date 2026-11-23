@@ -294,7 +294,7 @@ private struct NeckAccentKey: EnvironmentKey {
 
 extension EnvironmentValues {
     /// The neck editor's colour: the current spot, the neighbours, the marks and the switches. Name the
-    /// notes' practice terracotta by default; the tab writer sets Toolkit's indigo, where it lives.
+    /// notes' Practice colour by default; the tab writer sets the Toolkit's, where it lives.
     var neckAccent: Color {
         get { self[NeckAccentKey.self] }
         set { self[NeckAccentKey.self] = newValue }
