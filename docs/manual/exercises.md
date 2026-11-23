@@ -284,7 +284,8 @@ one move.
 
 The shape is editable after the fact: open the drill, and **Edit shape** sits in the header of its
 preview card. The name, description and song links live on the **ⓘ** detail sheet. Only the template
-is fixed.
+is fixed. A drill made in a newer version of Red Moon (one that came in an archive or a shared
+routine) plays with the click alone, and **Edit shape** says so rather than changing it.
 
 That sheet also holds **Where you learned it** — links out to the lesson or tab page the drill came
 from, so a drill you built in February still says who taught it to you in June. See

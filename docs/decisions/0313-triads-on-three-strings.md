@@ -1,7 +1,8 @@
 # ADR 0313 — Triads on three strings: a mode of the Arpeggios exercise, and a progression kept inside a range of frets
 
-- **Status:** Accepted on 2026-11-23. Not built and not scheduled; which release it goes in is not
-  decided here. Its shape was settled with Tomisin the same day over a mockup
+- **Status:** Accepted on 2026-11-23. **Slice 1 built** the same day (`pocket-464-dim-aug-vii`): see
+  *What building slice 1 settled*. Slices 2 to 4 are not built and not scheduled; which release any of it
+  goes in is not decided here. Its shape was settled with Tomisin the same day over a mockup
   (`https://claude.ai/artifact/NFrDaPL1oE5XAT3hyk8PkB`, private), and the calls they made are marked
   *Decided by Tomisin*. The calls this ADR added while turning the mockup into code are marked
   *proposed here*. Tomisin took all ten as written the same day (*Decided*, below).
@@ -297,6 +298,33 @@ still goes in.
    dot in the wrong place.
 4. **Practice as triads (D9).** The button and its context-menu twin, the form opened with the
    progression chosen, and the wall for a free player. A UI test that it opens the form filled in.
+
+## What building slice 1 settled
+
+- **The four curated grips** (D1), as the chart prints them at C, low string first: E-shape dim
+  *8-9-10-8-x-x*, A-shape dim *x-3-4-5-4-x*, E-shape aug *8-x-10-9-9-x* (the E-shape major with its 5th
+  raised on the B string and the A muted, as the E-shape maj7 mutes it) and A-shape aug *x-3-2-1-1-x*.
+  The A-shape aug reaches below its root fret, so at A and B♭ it climbs an octave, as the 9ths do; the
+  resolver takes the E-shape there, which sits lower.
+- **They sit in Tier 2**, so the picker's last section is now *Sus, 6ths, 9ths, dim & aug*. The picker
+  already holds that every curated grip has a chip (`ChordPickerTests`), and Tier 1's two-rows-per-family
+  grid had no room. Their chips say *E-shape* or *A-shape* without *barre*, as the power chord's do: no
+  finger lies across.
+- **The root-position diminished triad on A-D-G spans five frets** (*x-7-5-3* for E dim): it climbs two
+  frets a string because A-D-G are all fourths apart. It is the shape the triad books print, so it
+  stays, and its chip's diagram stretches to five frets as a bass tenth's does (1.5). Every other guitar
+  diagram keeps four, and `ChordDiagramWindowTests` now holds both, and that every dot is drawn.
+- **A fit for diminished or augmented is strict** (`ProgressionResolver.fits`). The altered fifth must
+  sound, the perfect fifth must not, and no 6th or 9th may colour it: a 6th over a diminished triad is a
+  dim7, another chord. So a saved Bdim7 doesn't stand in for vii°.
+- **The guard covers every payload, not only fretboard content** (D4). `Exercise.hasUnreadableContent`
+  is true when a payload is there and this build's decoder for the template's renderer reads nothing;
+  the four setters return without writing then. The strum pattern, chord progression and strum-chord
+  sheet had the same overwrite (the sheet seeds a default for each), and guarding at the setters covers
+  every editor that writes through them. The shape sheet shows *Made in a newer version of Red Moon* in
+  place of the editor, and Done only closes it.
+- **A progression that opens on i° reads as minor**, since diminished is minor-family (D1) and that is
+  what `readsAsMinor` asks. No built-in does, and it only changes how the key is labelled and spelled.
 
 ## Consequences
 

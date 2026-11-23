@@ -121,7 +121,8 @@ extension ChordPickerSheet {
     /// string set it voices and its inversion.
     func triadChip(_ grip: ChordGrip) -> some View {
         gripChip(grip, subtitle: ChordPicker.triadSubtitle(grip),
-                 placedDescription: "triad on \(grip.name), \(grip.inversionName)",
+                 placedDescription: grip.namesInversion ? "triad on \(grip.name), \(grip.inversionName)"
+                    : "triad on \(grip.name)",
                  accessibility: "\(grip.quality.displayName) triad on \(grip.name), choose a root")
     }
 

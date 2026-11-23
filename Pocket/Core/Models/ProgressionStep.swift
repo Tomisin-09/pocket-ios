@@ -68,22 +68,31 @@ extension ProgressionStep {
     /// Letters above the tonic's letter this step's root is spelled on.
     var letterStep: Int { Self.letterSteps[semitones] }
 
-    /// A minor-family chord — its numeral is lowercase.
-    var isMinorFamily: Bool { quality == .minor || quality == .min7 || quality == .min9 }
+    /// A minor-family chord — its numeral is lowercase. Diminished is one: it has a minor third, and vii°
+    /// is written lower case (ADR 0313 D1).
+    var isMinorFamily: Bool {
+        switch quality {
+        case .minor, .min7, .min9, .diminished: true
+        case .major, .augmented, .dom7, .maj7, .fifth, .sus2, .sus4, .sixth, .dom9, .maj9: false
+        }
+    }
 
     /// The Roman numeral, relative to the tonic's **major** scale with accidentals for borrowed chords —
-    /// "vi", "♭VII", "V7", "ii7". One reading for major- and minor-sounding progressions alike, which is the
-    /// convention players use for borrowed chords, and it means a step's numeral never depends on a mode.
+    /// "vi", "♭VII", "V7", "ii7", "vii°", "III+". One reading for major- and minor-sounding progressions
+    /// alike, which is the convention players use for borrowed chords, and it means a step's numeral never
+    /// depends on a mode.
     var numeral: String {
         RomanNumeral.label(rootPitchClass: semitones, keyRoot: 0, keyIsMinor: false,
-                           isMinorChord: isMinorFamily, isDiminished: false) + numeralSuffix
+                           isMinorChord: isMinorFamily, isDiminished: quality == .diminished) + numeralSuffix
     }
 
     /// What follows the numeral. A minor chord's case already says "minor", so "m" is never repeated:
-    /// ii7, not iim7.
+    /// ii7, not iim7. A diminished chord's ° comes from `RomanNumeral`; an augmented one takes a +, as
+    /// `ChordNumeral` writes it.
     private var numeralSuffix: String {
         switch quality {
-        case .major, .minor: return ""
+        case .major, .minor, .diminished: return ""
+        case .augmented: return "+"
         case .dom7, .min7: return "7"
         case .maj7: return "maj7"
         case .fifth: return "5"

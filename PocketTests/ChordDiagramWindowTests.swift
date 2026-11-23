@@ -38,18 +38,24 @@ final class ChordDiagramWindowTests: XCTestCase {
         XCTAssertGreaterThan(checked, 100, "the sweep has to have swept something")
     }
 
-    /// No guitar diagram changes: every shape the app offers still spans four frets or fewer, so each
-    /// keeps the four-fret window it always had. The library's open shapes, and every movable grip and
-    /// triad slid to all twelve roots.
+    /// Guitar diagrams keep their four frets: every shape the app offers spans four or fewer, so each
+    /// keeps the four-fret window it always had — the library's open shapes, and every movable grip and
+    /// triad slid to all twelve roots. **One exception, and it's the shape itself:** the root-position
+    /// diminished triad on A-D-G (ADR 0313) climbs two frets per string, *x-7-5-3* for E dim, so it
+    /// reaches five and its window stretches to show every note, as a bass tenth's does. Every dot is
+    /// checked as drawn, so the stretch can't hide one.
     func testEveryGuitarDiagramKeepsItsFourFrets() {
         let grips = ChordGrip.curated + ChordGrip.triads
-        let slid = grips.flatMap { grip in (0..<12).map { grip.voicing(rootPitchClass: $0) } }
-        let all = ChordVoicing.library + slid
+        let slid = grips.flatMap { grip in (0..<12).map { (grip, grip.voicing(rootPitchClass: $0)) } }
+        let all = ChordVoicing.library.map { (ChordGrip?.none, $0) } + slid.map { (Optional($0.0), $0.1) }
         XCTAssertGreaterThan(all.count, 100, "the sweep has to have swept something")
-        for voicing in all {
+        for (grip, voicing) in all {
             XCTAssertEqual(voicing.frets.count, ChordVoicing.stringCount)
-            XCTAssertEqual(voicing.displayFretWindow(), 4,
-                           "\(voicing.name) \(voicing.frets) would stretch the guitar box")
+            XCTAssertTrue(everyDotIsDrawn(voicing), "\(voicing.name) \(voicing.frets) loses a dot")
+            // Five where all three notes are fretted; four where it lands on an open G (C♯ dim).
+            let expected = grip == .triadADGDim ? 4...5 : 4...4
+            XCTAssertTrue(expected.contains(voicing.displayFretWindow()),
+                          "\(voicing.name) \(voicing.frets) would change the guitar box")
         }
     }
 

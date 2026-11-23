@@ -50,9 +50,13 @@ struct ExerciseShapeSheet: View {
     /// A rhythm change awaiting the player's answer (ADR 0121) — set on Done, cleared by either
     /// answer. While it's non-`nil` nothing has been written.
     @State private var pendingRhythmChange: RhythmChangePrompt?
+    /// The stored content was written by a newer version and this one can't read it (ADR 0313 D4). The
+    /// sheet then says so in place of an editor, and Done writes nothing.
+    private let contentIsUnreadable: Bool
 
     init(exercise: Exercise) {
         self.exercise = exercise
+        contentIsUnreadable = exercise.hasUnreadableContent
         _strum = State(initialValue: exercise.strumPattern
                        ?? .downstrokes(beatsPerBar: exercise.beatsPerBar))
         let content = exercise.fretboardContent
@@ -78,20 +82,24 @@ struct ExerciseShapeSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                switch exercise.template.bespokeEditor {
-                case .strumming?: strummingSection
-                case .run?: runSection
-                case .scale?: scaleSection
-                case .arpeggio?: arpeggioSection
-                case .chords?: chordsSection
-                case .strumChords?: strumChordsSection
-                case .fretboardGrid?: fretboardSection
-                // A freeform block's payload is prose, and prose is edited where it's read — the
-                // detail sheet's Instructions field (ADR 0136 F2a). It has no *shape*, and it never
-                // reaches this sheet in practice: the only door is `ExerciseRunView`, which
-                // `ExerciseRunScreen` never routes a freeform block to. Handled anyway rather than
-                // left to `nil`, so the case is answered where the question is asked.
-                case .freeform?, nil: EmptyView()
+                if contentIsUnreadable {
+                    NewerVersionNotice()
+                } else {
+                    switch exercise.template.bespokeEditor {
+                    case .strumming?: strummingSection
+                    case .run?: runSection
+                    case .scale?: scaleSection
+                    case .arpeggio?: arpeggioSection
+                    case .chords?: chordsSection
+                    case .strumChords?: strumChordsSection
+                    case .fretboardGrid?: fretboardSection
+                    // A freeform block's payload is prose, and prose is edited where it's read — the
+                    // detail sheet's Instructions field (ADR 0136 F2a). It has no *shape*, and it never
+                    // reaches this sheet in practice: the only door is `ExerciseRunView`, which
+                    // `ExerciseRunScreen` never routes a freeform block to. Handled anyway rather than
+                    // left to `nil`, so the case is answered where the question is asked.
+                    case .freeform?, nil: EmptyView()
+                    }
                 }
             }
             .scrollDismissesKeyboard(.interactively)
@@ -124,6 +132,7 @@ struct ExerciseShapeSheet: View {
     /// Nothing is written before the answer: a half-applied change (new shape, unresolved command) is
     /// exactly the silent revaluation this exists to prevent.
     private func done() {
+        guard !contentIsUnreadable else { return dismiss() }
         if let prompt = RhythmChangePrompt(exercise: exercise, movingTo: editedNoteRate ?? 0,
                                            range: StandaloneMetronomeEngine.bpmRange) {
             pendingRhythmChange = prompt
@@ -384,17 +393,4 @@ private extension ExerciseShapeSheet {
                  + "\(exercise.beatsPerBar) beats.")
         }
     }
-}
-
-#Preview("Exercise shape — strumming") {
-    // swiftlint:disable:next force_try
-    let container = try! ModelContainer(for: Exercise.self,
-                                        configurations: .init(isStoredInMemoryOnly: true))
-    let exercise = Exercise(name: "Folk strum", currentTempo: 70, commandTempo: 96,
-                            template: .strumming, tags: ["rhythm", "strumming"])
-    exercise.setStrumPattern(.folk)
-    container.mainContext.insert(exercise)
-    return ExerciseShapeSheet(exercise: exercise)
-        .modelContainer(container)
-        .preferredColorScheme(.dark)
 }

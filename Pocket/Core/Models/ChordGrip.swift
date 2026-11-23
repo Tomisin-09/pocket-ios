@@ -15,8 +15,13 @@ struct ChordGrip: Equatable {
     /// The chord quality a grip sounds. Names the generated voicing (`root` + suffix) and is the
     /// property test's oracle (M7). Tier 1 (ADR 0084 M3) is the triads + 7ths; Tier 2 adds the
     /// suspensions and sixths.
+    ///
+    /// The raw values are what a saved progression stores (`ProgressionStep`), so they never change. A
+    /// build that doesn't know one reads it as major (ADR 0218 D2).
     enum Quality: String, CaseIterable {
-        case major, minor, dom7, min7, maj7   // Tier 1
+        case major, minor                     // Tier 1
+        case diminished, augmented            // Tier 2 — the other two triads (ADR 0313 D1)
+        case dom7, min7, maj7                 // Tier 1
         case fifth                            // Tier 1 — the power chord (root + 5th, ADR 0106)
         case sus2, sus4, sixth                // Tier 2
         case dom9, maj9, min9                 // Tier 2 — the 9ths (ADR 0101)
@@ -26,6 +31,8 @@ struct ChordGrip: Equatable {
             switch self {
             case .major: return ""
             case .minor: return "m"
+            case .diminished: return "dim"
+            case .augmented: return "aug"
             case .dom7: return "7"
             case .min7: return "m7"
             case .maj7: return "maj7"
@@ -44,6 +51,8 @@ struct ChordGrip: Equatable {
             switch self {
             case .major: return "Major"
             case .minor: return "Minor"
+            case .diminished: return "Diminished"
+            case .augmented: return "Augmented"
             case .dom7: return "Dominant 7"
             case .min7: return "Minor 7"
             case .maj7: return "Major 7"
@@ -84,6 +93,11 @@ struct ChordGrip: Equatable {
     /// second inversion (5th in the bass). `0` for every barre/open grip (default); the triad shapes
     /// (ADR 0109) set it so a chip can label "1st inv" / "2nd inv". Doesn't affect the generated voicing.
     var inversion: Int = 0
+
+    /// Whether the shape's inversion is worth naming. An **augmented** triad is the same shape in every
+    /// inversion, its notes each a major third apart, so it has one shape per string set and its chip
+    /// names no inversion (ADR 0313 D1).
+    var namesInversion: Bool { quality != .augmented }
 
     /// Player-facing inversion tag for a triad chip — "root" / "1st inv" / "2nd inv".
     var inversionName: String {
@@ -221,10 +235,28 @@ extension ChordGrip {
     static let eShapeMin9 = ChordGrip(name: "E-shape", rootString: .eRoot,
                                       offsets: [2, 0, 0, 0, 2, 0], quality: .min9)
 
-    /// Tier 2 (M3): suspensions + sixths + 9ths.
+    // Tier 2 — **diminished and augmented** (ADR 0313 D1), so vii° frets at every root on the neck and
+    // the progression builder can offer it (ADR 0218 D5: every quality it offers has a curated grip).
+    // Four-string shapes with the root doubled, each the standard chart grip at C (low→high):
+    //   E-shape dim  8-9-10-8-x-x   C · G♭ · C · E♭        A-shape dim  x-3-4-5-4-x   C · G♭ · C · E♭
+    //   E-shape aug  8-x-10-9-9-x   C · C · E · G♯         A-shape aug  x-3-2-1-1-x   C · E · G♯ · C
+    // The E-shape aug is the E-shape major with its 5th raised on the B string and the A muted, as the
+    // E-shape maj7 mutes it. The A-shape aug reaches below its root fret, so at A and B♭ it climbs an
+    // octave (the 9ths' bump); the E-shape sits lower there anyway, and the resolver takes the lower.
+    static let eShapeDiminished = ChordGrip(name: "E-shape", rootString: .eRoot,
+                                            offsets: [nil, nil, 0, 2, 1, 0], quality: .diminished)
+    static let aShapeDiminished = ChordGrip(name: "A-shape", rootString: .aRoot,
+                                            offsets: [nil, 1, 2, 1, 0, nil], quality: .diminished)
+    static let eShapeAugmented = ChordGrip(name: "E-shape", rootString: .eRoot,
+                                           offsets: [nil, 1, 1, 2, nil, 0], quality: .augmented)
+    static let aShapeAugmented = ChordGrip(name: "A-shape", rootString: .aRoot,
+                                           offsets: [nil, -2, -2, -1, 0, nil], quality: .augmented)
+
+    /// Tier 2 (M3): suspensions + sixths + 9ths, then diminished and augmented (ADR 0313).
     static let tier2: [ChordGrip] = [
         .aShapeSus2, .eShapeSus4, .aShapeSus4, .eShapeSixth,
-        .aShapeDom9, .eShapeDom9, .aShapeMaj9, .eShapeMaj9, .aShapeMin9, .eShapeMin9
+        .aShapeDom9, .eShapeDom9, .aShapeMaj9, .eShapeMaj9, .aShapeMin9, .eShapeMin9,
+        .eShapeDiminished, .aShapeDiminished, .eShapeAugmented, .aShapeAugmented
     ]
 
     /// The **curated** movable set the authoring sheet offers — Tier 1–2 (ADR 0084 M3). Tier 3
@@ -232,7 +264,8 @@ extension ChordGrip {
     static let curated: [ChordGrip] = tier1 + tier2
 }
 
-// MARK: - Triad shapes (ADR 0109 — major/minor on three string sets, all three inversions)
+// MARK: - Triad shapes (ADR 0109 — major/minor on three string sets, all three inversions; ADR 0313 adds
+// diminished in all three, and augmented once per set)
 
 extension ChordGrip {
     // Small three-string triads — root, 3rd, 5th on one adjacent string group, no doublings. `name` is
@@ -256,6 +289,13 @@ extension ChordGrip {
                                           offsets: [-1, 0, -1, nil, nil, nil], quality: .major, inversion: 2)
     static let triadGBEMinor2 = ChordGrip(name: "G-B-e", rootString: .bRoot,
                                           offsets: [-2, 0, -1, nil, nil, nil], quality: .minor, inversion: 2)
+    // Diminished (ADR 0313) lowers minor's 5th a fret, on whichever string holds it.
+    static let triadGBEDim = ChordGrip(name: "G-B-e", rootString: .gRoot,
+                                       offsets: [-3, -1, 0, nil, nil, nil], quality: .diminished)
+    static let triadGBEDim1 = ChordGrip(name: "G-B-e", rootString: .eHighRoot,
+                                        offsets: [0, -1, 0, nil, nil, nil], quality: .diminished, inversion: 1)
+    static let triadGBEDim2 = ChordGrip(name: "G-B-e", rootString: .bRoot,
+                                        offsets: [-2, 0, -2, nil, nil, nil], quality: .diminished, inversion: 2)
 
     // D-G-B set (strings D·G·B).
     static let triadDGBMajor = ChordGrip(name: "D-G-B", rootString: .dRoot,
@@ -270,6 +310,12 @@ extension ChordGrip {
                                           offsets: [nil, 0, 0, 0, nil, nil], quality: .major, inversion: 2)
     static let triadDGBMinor2 = ChordGrip(name: "D-G-B", rootString: .gRoot,
                                           offsets: [nil, -1, 0, 0, nil, nil], quality: .minor, inversion: 2)
+    static let triadDGBDim = ChordGrip(name: "D-G-B", rootString: .dRoot,
+                                       offsets: [nil, -3, -2, 0, nil, nil], quality: .diminished)
+    static let triadDGBDim1 = ChordGrip(name: "D-G-B", rootString: .bRoot,
+                                        offsets: [nil, 0, -2, 0, nil, nil], quality: .diminished, inversion: 1)
+    static let triadDGBDim2 = ChordGrip(name: "D-G-B", rootString: .gRoot,
+                                        offsets: [nil, -1, 0, -1, nil, nil], quality: .diminished, inversion: 2)
 
     // A-D-G set (strings A·D·G).
     static let triadADGMajor = ChordGrip(name: "A-D-G", rootString: .aRoot,
@@ -284,15 +330,35 @@ extension ChordGrip {
                                           offsets: [nil, nil, -1, 0, 0, nil], quality: .major, inversion: 2)
     static let triadADGMinor2 = ChordGrip(name: "A-D-G", rootString: .dRoot,
                                           offsets: [nil, nil, -2, 0, 0, nil], quality: .minor, inversion: 2)
+    static let triadADGDim = ChordGrip(name: "A-D-G", rootString: .aRoot,
+                                       offsets: [nil, nil, -4, -2, 0, nil], quality: .diminished)
+    static let triadADGDim1 = ChordGrip(name: "A-D-G", rootString: .gRoot,
+                                        offsets: [nil, nil, 0, -1, 1, nil], quality: .diminished, inversion: 1)
+    static let triadADGDim2 = ChordGrip(name: "A-D-G", rootString: .dRoot,
+                                        offsets: [nil, nil, -2, 0, -1, nil], quality: .diminished, inversion: 2)
 
-    /// The curated triad set (ADR 0109) — major + minor on the three upper string sets, in **all three
-    /// inversions** (root · 1st · 2nd) = 18 shapes. Generated, not tabled (M1). Ordered **set → quality →
-    /// inversion** so the 3-column Insert grid lays each quality's three inversions out on **one row**
-    /// (row 1 = G-B-e major root/1st/2nd, row 2 = G-B-e minor root/1st/2nd, …).
+    // Augmented (ADR 0313): root position only. Its notes are each a major third apart, so every
+    // inversion is this same shape four frets higher; the chip names no inversion (`namesInversion`).
+    static let triadGBEAug = ChordGrip(name: "G-B-e", rootString: .gRoot,
+                                       offsets: [-1, 0, 0, nil, nil, nil], quality: .augmented)
+    static let triadDGBAug = ChordGrip(name: "D-G-B", rootString: .dRoot,
+                                       offsets: [nil, -1, -1, 0, nil, nil], quality: .augmented)
+    static let triadADGAug = ChordGrip(name: "A-D-G", rootString: .aRoot,
+                                       offsets: [nil, nil, -2, -1, 0, nil], quality: .augmented)
+
+    /// The curated triad set (ADR 0109, ADR 0313) — major, minor and diminished on the three upper string
+    /// sets in **all three inversions** (root · 1st · 2nd), then augmented once per set = 30 shapes.
+    /// Generated, not tabled (M1). Ordered **set → quality → inversion** so the 3-column Insert grid lays
+    /// each quality's three inversions out on **one row** (row 1 = G-B-e major root/1st/2nd, row 2 = G-B-e
+    /// minor, row 3 = G-B-e diminished, …), and the three augmented shapes fill the last row, one per set.
     static let triads: [ChordGrip] = [
         triadGBEMajor, triadGBEMajor1, triadGBEMajor2, triadGBEMinor, triadGBEMinor1, triadGBEMinor2,
+        triadGBEDim, triadGBEDim1, triadGBEDim2,
         triadDGBMajor, triadDGBMajor1, triadDGBMajor2, triadDGBMinor, triadDGBMinor1, triadDGBMinor2,
-        triadADGMajor, triadADGMajor1, triadADGMajor2, triadADGMinor, triadADGMinor1, triadADGMinor2
+        triadDGBDim, triadDGBDim1, triadDGBDim2,
+        triadADGMajor, triadADGMajor1, triadADGMajor2, triadADGMinor, triadADGMinor1, triadADGMinor2,
+        triadADGDim, triadADGDim1, triadADGDim2,
+        triadGBEAug, triadDGBAug, triadADGAug
     ]
 }
 

@@ -125,7 +125,8 @@ extension ChordVoicing {
     ///
     /// Until 1.5 the window was always four, so a bass tenth drew only its root: C on the low E at
     /// fret 8 put its E at fret 14, off the bottom of the box (1.5, item 2b). Every guitar shape spans
-    /// four frets or fewer, so guitar diagrams keep their four (`ChordDiagramWindowTests`).
+    /// four frets or fewer, so guitar diagrams keep their four (`ChordDiagramWindowTests`), except the
+    /// root-position diminished triad on A-D-G (ADR 0313), which reaches five.
     func displayFretWindow(minimum: Int = 4) -> Int {
         guard let high = highestFret else { return minimum }
         let reach = high - displayBaseFret + 1
