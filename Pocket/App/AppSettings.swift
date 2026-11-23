@@ -48,6 +48,9 @@ enum AppSettings {
         static let appearance = "appearance"
         /// The moon theme the player picked (ADR 0311 D8). Absent means Blood Moon (`MoonTheme.standard`).
         static let moonTheme = "moonTheme"
+        /// The App Icon the player keeps (ADR 0314). Absent means it matches the theme
+        /// (`AppIconChoice.standard`).
+        static let appIcon = "appIcon"
         static let exerciseAnimates = "exerciseAnimates"
         static let fretboardShowsMoves = "fretboardShowsMoves"
         static let strumClickFollowsPattern = "strumClickFollowsPattern"
@@ -302,10 +305,12 @@ enum AppSettings {
         MoonTheme.resolved(storedValue: UserDefaults.standard.string(forKey: Key.moonTheme))
     }
 
-    /// Back to Blood Moon, for a UI-test launch: a test that picks a theme would otherwise leave every
-    /// later test, and every figure the shoot takes, drawn in it.
+    /// Back to Blood Moon, and the icon back to matching it, for a UI-test launch: a test that picks a
+    /// theme would otherwise leave every later test, and every figure the shoot takes, drawn in it, and
+    /// one that picks an icon would leave the Appearance row saying it (ADR 0314).
     static func resetMoonTheme(store: UserDefaults = .standard) {
         store.removeObject(forKey: Key.moonTheme)
+        store.removeObject(forKey: Key.appIcon)
     }
 
     /// The metronome click timbre (ADR 0114). Read by `ClickVoice` at playback start so both the

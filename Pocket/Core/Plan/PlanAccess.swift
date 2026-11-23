@@ -77,10 +77,11 @@ enum PlanAccess: String, Equatable, Sendable {
 /// A screen behind the plan (ADR 0256 D2, as amended by ADR 0263). The case names the wall's title, so
 /// a player who tapped *Active listening* reads that at the top, not a generic "Upgrade".
 ///
-/// **Only the gated side is listed**: practising, and the moon themes. A feature that plays or keeps is
-/// free (0263 D2), so the Journal, the Practice log and the whole Toolkit have no door. A free screen
-/// has no gate. The themes are the one door that isn't practising (ADR 0312 D1): they change how the
-/// app looks, not what it keeps, and Blood Moon, the brand, stays free. `PlanAccessTests` pins this list exactly, so adding or removing a door is a deliberate
+/// **Only the gated side is listed**: practising, and the moon themes and their icons. A feature that
+/// plays or keeps is free (0263 D2), so the Journal, the Practice log and the whole Toolkit have no door.
+/// A free screen has no gate. The themes and their icons are the two doors that aren't practising
+/// (ADR 0312 D1, ADR 0314 D3): they change how the app looks, not what it keeps, and Blood Moon, the
+/// brand, stays free. `PlanAccessTests` pins this list exactly, so adding or removing a door is a deliberate
 /// edit there too.
 enum PlanDoor: String, CaseIterable, Sendable {
     case practice
@@ -95,6 +96,9 @@ enum PlanDoor: String, CaseIterable, Sendable {
     /// A moon theme other than Blood Moon (ADR 0312 D1). The Theme screen itself is open to everyone:
     /// its cards are what the plan would bring, so they are shown, and the wall waits behind a tap.
     case theme
+    /// One moon's App Icon, other than Blood Moon's, kept whatever the theme (ADR 0314 D3). Like the
+    /// Theme screen, the App Icon screen is open to everyone and the wall waits behind a tap.
+    case appIcon
 
     /// The wall's navigation title: the name the player tapped, as the app spells it there.
     var title: String {
@@ -109,6 +113,7 @@ enum PlanDoor: String, CaseIterable, Sendable {
         case .newDrill: "New exercise"
         case .routine: "Routine"
         case .theme: "Theme"
+        case .appIcon: "App Icon"
         }
     }
 }
@@ -193,10 +198,15 @@ enum PlanCountdown {
 /// any storefront.
 enum PlanWallCopy {
     /// The wall's headline. A returning player reads that nothing has gone (D4), whatever they
-    /// tapped. Otherwise it names what they tapped: practising, or a theme (ADR 0312 D1).
+    /// tapped. Otherwise it names what they tapped: practising, a theme (ADR 0312 D1) or an icon
+    /// (ADR 0314 D3).
     static func headline(returning: Bool, door: PlanDoor = .practice) -> String {
         if returning { return "Everything you made is still here." }
-        return door == .theme ? "The moon themes are part of the plan." : "Practising is part of the plan."
+        switch door {
+        case .theme: return "The moon themes are part of the plan."
+        case .appIcon: return "The moon icons are part of the plan."
+        default: return "Practising is part of the plan."
+        }
     }
 
     static func explanation(returning: Bool, door: PlanDoor = .practice) -> String {
@@ -206,6 +216,10 @@ enum PlanWallCopy {
         if door == .theme {
             return "Blood Moon is Red Moon's own colour, and it's free for good. The other seven moons come "
                 + "with the plan, along with drills, routines, Today's session and the loop trainer."
+        }
+        if door == .appIcon {
+            return "Blood Moon's icon is Red Moon's own, and it's free for good. The other seven come with the "
+                + "plan, along with their themes, drills, routines, Today's session and the loop trainer."
         }
         return "Your songs, loops, Journal and Toolkit are free for good. The plan is for practising: drills, "
             + "routines, Today's session and the loop trainer. It brings the moon themes too."

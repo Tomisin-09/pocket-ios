@@ -30,6 +30,11 @@ the icon again.
     ./scripts/derive-brand-svgs.py --out /tmp/preview  # loose files, catalog untouched
     ./scripts/derive-brand-svgs.py --themes --app-icon # …and every moon theme's art and icon
 
+…and each icon's **tile** (`IconTile`, `IconTileHarvest`, …), the picture the App Icon screen and the
+Appearance row draw (ADR 0314 D4). An app icon set isn't reliably drawable by name, so the tile is
+the icon's own render scaled down to 256², by `sips`, which ships with macOS as `qlmanage` does: the
+same pixels, never drawn again, so a tile can't show a different icon from the one it sets.
+
 **The moon themes (ADR 0311, 0312).** The wordmark, the logo, the mark and the App Icon follow the
 theme the player picks, so `--themes` cuts each one again for the seven themes that aren't Blood
 Moon: `RedMoonWordmarkHarvest`, `AppIconHarvest` and so on. They are the blood art **recoloured,
@@ -91,6 +96,9 @@ APP_ICON_SIZE = 1024
 APP_ICON_BACKGROUND = "#0F0F0F"
 APP_ICON_MARK_HEIGHT_FRACTION = 0.668
 APP_ICON_VARIANT = "blood"
+# The App Icon screen's tile (ADR 0314 D4): drawn at 64 pt, so 256² covers @3x with room, and keeps
+# the screen from holding eight 1024² icons in memory to draw them small.
+ICON_TILE_SIZE = 256
 
 # The moon themes (ADR 0311 D1, D4) other than Blood Moon → the asset-name suffix their art takes and
 # the colour family their Practice wears. The suffix is `MoonTheme.assetSuffix` in Swift; the family
@@ -303,6 +311,38 @@ def write_png(path, width, height, rows, alpha=False):
                      + chunk(b'IEND', b''))
 
 
+def write_icon_tile(icon_png, destination):
+    """Scale a rendered App Icon down to its tile (ADR 0314 D4), and check that it landed.
+
+    `sips` reports a missing or unreadable input on stderr and still exits 0, so the tile is read
+    back rather than trusted: a run that printed success over no tile is the failure this guards."""
+    os.makedirs(os.path.dirname(destination), exist_ok=True)
+    if os.path.exists(destination):
+        os.remove(destination)
+    subprocess.run(["sips", "-z", str(ICON_TILE_SIZE), str(ICON_TILE_SIZE), icon_png, "--out", destination],
+                   check=True, capture_output=True)
+    if not os.path.exists(destination):
+        raise SystemExit(f"sips wrote no tile from {icon_png}")
+    width, height, _, _ = read_png(destination)
+    if (width, height) != (ICON_TILE_SIZE, ICON_TILE_SIZE):
+        raise SystemExit(f"the tile came out {width}×{height}, expected {ICON_TILE_SIZE}²")
+    print(f"  {os.path.relpath(destination)}  {ICON_TILE_SIZE}², the icon's tile")
+
+
+def write_icon_tile_imageset(icon_png, imageset, filename):
+    """The catalog's imageset for a tile, replaced whole so a renamed file leaves nothing behind.
+
+    Only ever a catalog imageset: with `--out` the tile is a loose file beside the others, and the
+    folder it's in is the caller's, never this function's to clear. The tile is raster, like the
+    icon it is cut from, so its Contents.json claims no vector."""
+    if os.path.isdir(imageset):
+        shutil.rmtree(imageset)
+    os.makedirs(imageset)
+    write_icon_tile(icon_png, os.path.join(imageset, filename))
+    with open(os.path.join(imageset, "Contents.json"), "w", encoding="utf-8") as handle:
+        handle.write(contents_json([(filename, None)], vector=False))
+
+
 def build_app_icon(source_svg, destination):
     """Rasterise the composed icon and write it as an opaque RGB PNG.
 
@@ -501,6 +541,10 @@ def main():
                                "artwork-1024.png")
         shutil.copyfile(icon, artwork)
         print(f"  {os.path.relpath(artwork)}  (the App Icon's render)")
+        if args.out:
+            write_icon_tile(icon, os.path.join(args.out, "icon-tile.png"))
+        else:
+            write_icon_tile_imageset(icon, os.path.join(catalog, "IconTile.imageset"), "icon-tile.png")
 
     if args.themes:
         # Blood Moon run through the same sum must come back as its own two reds, or the rule that
@@ -529,6 +573,9 @@ def main():
                 build_app_icon(themed, os.path.join(target, "icon-1024.png"))
                 shutil.copyfile(os.path.join(catalog, "AppIcon.appiconset", "Contents.json"),
                                 os.path.join(target, "Contents.json"))
+                write_icon_tile_imageset(os.path.join(target, "icon-1024.png"),
+                                         os.path.join(catalog, f"IconTile{suffix}.imageset"),
+                                         f"icon-tile-{suffix.lower()}.png")
 
     return 0
 

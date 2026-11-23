@@ -7,40 +7,50 @@ import UIKit
 /// the choice while the plan is on, Blood Moon while it's off (0312 D1). Every themed colour beneath
 /// follows (`ThemeColor.swift`), and so do the wordmark and logo, which read the same value.
 ///
-/// It also keeps the **App Icon** in step (0312 D3), whenever the theme the app draws in changes and
-/// whenever the app comes back to the foreground, which is the only time iOS lets an app change it.
+/// It also keeps the **App Icon** in step (0312 D3, ADR 0314): the theme's icon, or the one moon's the
+/// player keeps, whenever either changes and whenever the app comes back to the foreground, which is
+/// the only time iOS lets an app change it.
 private struct MoonThemeHost: ViewModifier {
     @Environment(PlanStore.self) private var plan: PlanStore?
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage(AppSettings.Key.moonTheme) private var chosen = MoonTheme.standard
+    @AppStorage(AppSettings.Key.appIcon) private var iconChoice = AppIconChoice.standard
+
+    private var planHasResolved: Bool { plan?.hasResolved ?? true }
 
     private var effective: MoonTheme {
-        MoonTheme.effective(chosen: chosen, planIsOn: plan.planIsOn, planHasResolved: plan?.hasResolved ?? true)
+        MoonTheme.effective(chosen: chosen, planIsOn: plan.planIsOn, planHasResolved: planHasResolved)
+    }
+
+    /// The moon whose icon belongs on the Home Screen (ADR 0314 D3).
+    private var icon: MoonTheme {
+        AppIconChoice.effective(chosen: iconChoice, planIsOn: plan.planIsOn, planHasResolved: planHasResolved)
+            .icon(drawnTheme: effective)
     }
 
     func body(content: Content) -> some View {
         content
             .environment(\.moonTheme, effective)
-            .onChange(of: effective, initial: true) { _, theme in AppIcon.follow(theme) }
+            .onChange(of: icon, initial: true) { _, icon in AppIcon.follow(icon) }
             .onChange(of: scenePhase) { _, phase in
-                if phase == .active { AppIcon.follow(effective) }
+                if phase == .active { AppIcon.follow(icon) }
             }
     }
 }
 
-/// The Home Screen icon, which follows the theme (ADR 0312 D3).
+/// The Home Screen icon: the theme's, or one moon's (ADR 0312 D3, ADR 0314).
 @MainActor
 enum AppIcon {
-    /// Set the icon `theme` wears, if it isn't already set. iOS confirms each change with an alert of
-    /// its own, so this only asks when the icon is actually wrong, and only while the app is in front.
+    /// Set `moon`'s icon, if it isn't already set. iOS confirms each change with an alert of its own,
+    /// so this only asks when the icon is actually wrong, and only while the app is in front.
     ///
     /// Not under the UI tests: the system's alert would sit over whatever the test taps next.
-    static func follow(_ theme: MoonTheme) {
+    static func follow(_ moon: MoonTheme) {
         guard !UITestRuntime.isActive else { return }
         let application = UIApplication.shared
         guard application.supportsAlternateIcons, application.applicationState == .active,
-              application.alternateIconName != theme.alternateIconName else { return }
-        application.setAlternateIconName(theme.alternateIconName)
+              application.alternateIconName != moon.alternateIconName else { return }
+        application.setAlternateIconName(moon.alternateIconName)
     }
 }
 

@@ -15,6 +15,8 @@
 - **Amended by:** ADR 0312 (2026-11-22) — **D2**: the moon themes are behind the plan, an exception to
   the rule recorded as one, like the Practice log's; Blood Moon is free. **D4**: the wall's sentence gains
   *"It brings the moon themes too."*, and the theme door has its own two lines. The rule stands.
+- **Amended by:** ADR 0314 (2026-11-23) — **D2**: the themes' exception covers their icons too: a moon's
+  App Icon other than Blood Moon's is behind the plan, under a door of its own. The rule stands.
 - **Relates to:** 0208 (Home's *This week* strip, the Practice log's only door) · 0142 (a Journal
   caption opens its unit) · 0224 (a take that belongs to no unit) · 0235 D6 (the tile beside Toolkit) ·
   0167 (references, which the next ADR gives a library) · 0070 (never grades, at every tier)

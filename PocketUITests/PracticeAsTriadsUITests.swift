@@ -34,8 +34,7 @@ final class PracticeAsTriadsUITests: UITestCase {
                       "the progression's screen did not open")
         // Below *Any chord*, so off screen at first, where a Form row doesn't exist to XCUI yet.
         let button = app.buttons["progression.practiceAsTriads"]
-        XCTAssertTrue(dragUntilItExists(button, in: app), "Practice as triads missing from its screen")
-        XCTAssertTrue(scrollIntoView(button, in: app), "Practice as triads not reachable by scrolling")
+        XCTAssertTrue(dragIntoReach(button, in: app), "Practice as triads not reachable on its screen")
         XCTAssertEqual(button.label, "Practice this progression as triads")
         attachScreenshot(of: app, named: "practice-as-triads-button")
         button.tap()
@@ -43,9 +42,9 @@ final class PracticeAsTriadsUITests: UITestCase {
         app.buttons["Cancel"].tap()
         XCTAssertTrue(waitForDisappearance(of: app.navigationBars["New arpeggios"]), "Cancel left the form up")
 
-        // Leave the store as it was found.
+        // Leave the store as it was found. The last row, so still below the fold on iOS 18.
         let delete = app.buttons["Delete progression"]
-        XCTAssertTrue(scrollIntoView(delete, in: app), "Delete progression not reachable by scrolling")
+        XCTAssertTrue(dragIntoReach(delete, in: app), "Delete progression not reachable by scrolling")
         delete.tap()
         let confirm = app.buttons["Delete"]
         XCTAssertTrue(confirm.waitForExistence(timeout: Self.uiTimeout), "Delete didn't ask")
@@ -124,6 +123,26 @@ final class PracticeAsTriadsUITests: UITestCase {
             low.press(forDuration: 0.05, thenDragTo: high)
         }
         return element.exists
+    }
+
+    /// Drag until `element` is drawn and wholly clear of the home indicator, to be tapped. `scrollIntoView`
+    /// can't do it here, for two reasons iOS 18 shows on CI: it gives up on a row the Form hasn't drawn yet,
+    /// and it stops once the row is `isHittable`, which iOS 18 says of a few points showing under the home
+    /// indicator, where a tap goes to the system. Dragged in the margin, as above, and held so the Form
+    /// doesn't coast.
+    @MainActor
+    private func dragIntoReach(_ element: XCUIElement, in app: XCUIApplication) -> Bool {
+        func inReach() -> Bool {
+            guard element.exists, element.isHittable else { return false }
+            let window = app.windows.firstMatch.frame
+            return element.frame.minY >= window.minY && element.frame.maxY <= window.maxY - 40
+        }
+        let low = app.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.8))
+        let high = app.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.35))
+        for _ in 0..<8 where !inReach() {
+            low.press(forDuration: 0.05, thenDragTo: high, withVelocity: .default, thenHoldForDuration: 0.3)
+        }
+        return inReach()
     }
 
     /// Kept always: a green run can't see a clipped row, and these are new screens.

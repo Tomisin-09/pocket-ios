@@ -51,13 +51,18 @@ Every one of these is optional, and none of it leaves the device.
 ## `Appearance`
 
 - **`Theme`** — the moon theme the app is drawn in: the colour Practice wears, with the song player,
-  the mastery dots, the logo and the App Icon following it. The row shows the theme's moon and name,
-  and the hub's `Appearance` row shows its name too. It opens eight cards, `Blood Moon` first, each
+  the mastery dots and the logo following it. The row shows the theme's moon and name, and the hub's
+  `Appearance` row shows its name too. It opens eight cards, `Blood Moon` first, each
   drawing that theme's own `Start` button, a strip of waveform and its mastery dots on the light canvas
   and the dark one side by side. **Tapping a card applies it at once**; there is no Save. A card with a
-  lock needs the plan, and tapping it says so. iOS confirms a change of App Icon with a message of its
-  own.
-- **`System`, `Light` or `Dark`**, directly under the theme, footnoted *System follows your device*.
+  lock needs the plan, and tapping it says so.
+- **`App Icon`** — the icon on your Home Screen, which the row shows with its name. **`Matches theme`**,
+  the default, changes the icon whenever you change the theme. Under it, *Or keep one icon, whatever the
+  theme*, are the eight moons' icons: tap one and it stays, whatever the theme, so you can keep Blood
+  Moon's icon under another theme, or wear another moon's icon with the app left in Blood Moon. A tap
+  applies at once. Blood Moon's icon and `Matches theme` are free; an icon with a lock needs the plan,
+  and tapping it says so. iOS confirms each change of icon with a message of its own.
+- **`System`, `Light` or `Dark`**, under the theme and the icon, footnoted *System follows your device*.
 - **`Motion` ▸ `Animate exercises`** — *A moving highlight walks the exercise in time — the notes on the fretboard, the strokes on the strum lane. Always off when your device has Reduce Motion on.*
 - **`Note names`** — `Sharps (♯)` or `Flats (♭)`, used where the music does not settle it for itself.
   Where a key is known, the key wins.

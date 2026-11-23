@@ -130,6 +130,11 @@ enum MoonTheme: String, CaseIterable, Sendable {
         self == .blood ? nil : "AppIcon" + assetSuffix
     }
 
+    /// The App Icon as a picture the app can draw (ADR 0314 D4): the App Icon screen's tiles and the
+    /// Appearance row's value. An app icon set isn't reliably drawable by name, so the script copies
+    /// each icon's own render, scaled down, into an imageset of its own (`IconTile`, `IconTileHarvest`).
+    var iconTileImage: String { "IconTile" + assetSuffix }
+
     /// The theme a stored value names. Anything unrecognised is Blood Moon, so a value written by a
     /// later version, or a bad one, draws the brand rather than crashing.
     static func resolved(storedValue: String?) -> MoonTheme {

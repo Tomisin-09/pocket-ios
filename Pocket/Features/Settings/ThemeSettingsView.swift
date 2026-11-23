@@ -60,9 +60,10 @@ extension MoonTheme: Identifiable {
     var id: Self { self }
 }
 
-/// What the wall's sheet becomes once the plan is on: nothing to look at. It applies the theme the
-/// player tapped and closes the sheet, so the Theme screen recolours behind it.
-private struct ThemeArrives: View {
+/// What the wall's sheet becomes once the plan is on: nothing to look at. It applies the theme (or, on
+/// the App Icon screen, the icon) the player tapped and closes the sheet, so the screen behind it shows
+/// the choice made.
+struct ThemeArrives: View {
     let apply: () -> Void
     @Environment(\.dismiss) private var dismiss
 
