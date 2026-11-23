@@ -175,8 +175,10 @@ extension TriadRun {
         return max(1, bars) * max(1, beatsPerBar) * notesPerBeat
     }
 
-    /// Expand into the evenly gridded drill the board plays, **Broken**: each chord's three notes one at a
-    /// time, low string to high (D7). A chord with no shape rests for its whole length, so the run keeps
+    /// Expand into the evenly gridded drill the board plays. **Broken** plays each chord's three notes one at
+    /// a time, low string to high (D7). **Together** holds all three for the same slots: each slot sounds
+    /// the shape's bass, with its other two notes as the slot's companions (D8), so switching *Play as*
+    /// never changes how long the run is. A chord with no shape rests for its whole length, so the run keeps
     /// time with the click and a progression doesn't get shorter (D5, D6). This is the one fretboard recipe
     /// whose length depends on the meter, so it takes the exercise's beats per bar (D4).
     ///
@@ -186,14 +188,22 @@ extension TriadRun {
     /// can name the triad under the hand, colour it and ring its root (*What the phone showed*).
     func expanded(beatsPerBar: Int) -> FretboardDrill {
         var notes: [FretNote?] = []
+        var companions: [[FretNote]] = []
         var passes: [Int] = []
         var chords: [DrillChord] = []
+        let together = playAs == .together
         let key = MusicalKey.make(pitchClass: tonic, quality: readsAsMinor ? .minor : .major)
         for item in placed() {
             let tones = item.shape?.notes
             let start = notes.count
             for slot in 0..<slotCount(for: item.chord, beatsPerBar: beatsPerBar) {
-                notes.append(tones.map { $0[slot % $0.count] })
+                if together, let tones {
+                    notes.append(tones.first)
+                    companions.append(Array(tones.dropFirst()))
+                } else {
+                    notes.append(tones.map { $0[slot % $0.count] })
+                    companions.append([])
+                }
                 passes.append(item.pass)
             }
             chords.append(drillChord(item, key: key, slots: start..<notes.count))
@@ -203,7 +213,8 @@ extension TriadRun {
                               noteGroups: Set(passes).count > 1 ? passes : nil,
                               keySpelling: keySpelling,
                               shadedFrets: placement == .stayInFrets ? fretRange : nil,
-                              chords: chords)
+                              chords: chords,
+                              companions: together ? companions : nil)
     }
 
     /// A placed chord as the board names it: the triad it plays (a Dm7 is its Dm, D5), read against the key

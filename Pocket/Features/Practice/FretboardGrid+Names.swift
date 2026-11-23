@@ -17,14 +17,28 @@ extension FretboardGrid {
     }
 
     /// Every note the board plays, in order, said the way a player would: "G fret 5, root; B fret 5".
+    /// A board that plays chords (ADR 0313) says each chord once, with its shape, since a chord held for
+    /// two bars would otherwise read its three notes over and over: "C, I, together: G fret 5, root, …".
     var accessibilitySummary: String {
-        drill.notes.compactMap { note -> String? in
-            guard let note else { return nil }
-            let name = Self.stringName(note.string, of: stringCount)
-            let position = note.fret == 0 ? "open" : "fret \(note.fret)"
-            let how = note.technique.map { ", \($0.label)" } ?? ""
-            let root = isRoot(note) ? ", root" : ""
-            return "\(name) \(position)\(root)\(how)"
+        guard let chords = drill.chords else {
+            return drill.notes.compactMap { $0.map { spoken($0, root: drill.rootPitchClass) } }.joined(separator: "; ")
+        }
+        let how = drill.playsTogether ? "together: " : ""
+        return chords.indices.map { index in
+            let chord = chords[index]
+            let name = chord.name(spelling: spelling) + (chord.numeral.map { ", \($0.numeral)" } ?? "")
+            let notes = drill.notes(ofChord: index)
+            guard !notes.isEmpty else { return "\(name), rests" }
+            return "\(name), \(how)" + notes.map { spoken($0, root: chord.root) }.joined(separator: ", ")
         }.joined(separator: "; ")
+    }
+
+    /// One note: its string, its fret, and whether it's the root it's read against.
+    private func spoken(_ note: FretNote, root: Int?) -> String {
+        let name = Self.stringName(note.string, of: stringCount)
+        let position = note.fret == 0 ? "open" : "fret \(note.fret)"
+        let how = note.technique.map { ", \($0.label)" } ?? ""
+        let isRoot = root.map { drill.pitchClass(of: note) == $0 } ?? false
+        return "\(name) \(position)\(isRoot ? ", root" : "")\(how)"
     }
 }

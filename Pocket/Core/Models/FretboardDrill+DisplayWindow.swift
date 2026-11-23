@@ -40,12 +40,17 @@ extension FretboardDrill {
     /// board reframes less often. Nonzero so a sliver of context survives the reframe.
     static let followTrailing = 1
 
-    /// The fretted (non-open) fret numbers the drill actually uses.
-    private var frettedNumbers: [Int] { notes.compactMap { $0?.fret }.filter { $0 > 0 } }
-
-    /// Whether any slot is an **open string** (fret 0) — common on bass, where the flagship box is rooted
-    /// on an open E/A/D/G (ADR 0116 S5).
-    private var hasOpenNotes: Bool { notes.contains { $0?.fret == 0 } }
+    /// How far up and down the neck the drill reaches, in **one pass** over every note it sounds, its
+    /// slots' companions included (ADR 0313 D8), so a chord played Together is all in view. The lowest and
+    /// highest fretted (non-open) frets, and whether any slot is an **open string** (fret 0) — common on
+    /// bass, where the flagship box is rooted on an open E/A/D/G (ADR 0116 S5). One pass with no arrays
+    /// built: the window is worked out every frame a board walks.
+    private var reach: NeckReach {
+        var reach = NeckReach()
+        for note in notes { if let note { reach.take(note.fret) } }
+        for group in companions ?? [] { for note in group { reach.take(note.fret) } }
+        return reach
+    }
 
     /// The lowest fret **column** the board shows — the lowest fretted note, at least 1. When the drill
     /// also uses **open strings**, the window is framed from the nut (fret 1) so the open root reads
@@ -55,18 +60,25 @@ extension FretboardDrill {
     /// A **shaded range** (a Triads run kept in frets, ADR 0313 D6) is always in view, with a fret of neck
     /// either side so it reads as a place on the neck rather than the whole board. It never follows: the
     /// range is where the hand stays, so all of it shows at once, up to ten frets and the two either side.
-    var displayLowestFret: Int {
+    var displayLowestFret: Int { displayLowestFret(reach) }
+
+    private func displayLowestFret(_ reach: NeckReach) -> Int {
         let shadeLow = shadedFrets.map { max(1, $0.lowerBound - 1) }
-        guard let low = frettedNumbers.min() else { return shadeLow ?? 1 }
-        return hasOpenNotes ? 1 : min(max(1, low), shadeLow ?? .max)
+        guard let low = reach.lowestFretted else { return shadeLow ?? 1 }
+        return reach.hasOpen ? 1 : min(max(1, low), shadeLow ?? .max)
     }
 
     /// How many fret **columns** the board shows — enough to reach the highest fretted note (and the fret
     /// past a shaded range), but at least a comfortable four so a two-fret drill isn't a cramped sliver.
     var displayFretSpan: Int {
+        let reach = reach
+        return displayFretSpan(reach, lowestFret: displayLowestFret(reach))
+    }
+
+    private func displayFretSpan(_ reach: NeckReach, lowestFret: Int) -> Int {
         let shadeHigh = shadedFrets.map { $0.upperBound + 1 }
-        guard let high = [frettedNumbers.max(), shadeHigh].compactMap({ $0 }).max() else { return 4 }
-        return max(4, high - displayLowestFret + 1)
+        guard let high = [reach.highestFretted, shadeHigh].compactMap({ $0 }).max() else { return 4 }
+        return max(4, high - lowestFret + 1)
     }
 
     /// The visible neck window given the currently-active note (ADR 0083 S5 — the following viewport).
@@ -92,8 +104,9 @@ extension FretboardDrill {
     /// twice for one chord. The fold steps chord by chord instead, over the frets of the whole chord: the
     /// window moves only when the chord changes, and the chord under the hand is always all in view.
     func displayWindow(activeIndex: Int?) -> FretWindow {
-        let staticLow = displayLowestFret
-        let staticSpan = displayFretSpan
+        let reach = reach
+        let staticLow = displayLowestFret(reach)
+        let staticSpan = displayFretSpan(reach, lowestFret: staticLow)
         guard let activeIndex, noteCount > 0, staticSpan > Self.comfortableFretSpan, shadedFrets == nil else {
             return FretWindow(lowestFret: staticLow, span: staticSpan)
         }
@@ -136,8 +149,19 @@ extension FretboardDrill {
     /// a chord that rings one brings the nut back into view. `nil` for a chord with no notes (one that
     /// rests).
     private func frets(of chord: DrillChord) -> ClosedRange<Int>? {
-        let played = chord.slots.compactMap { notes.indices.contains($0) ? notes[$0]?.fret : nil }.map { max(1, $0) }
-        guard let lowest = played.min(), let highest = played.max() else { return nil }
+        var lowest: Int?
+        var highest: Int?
+        func take(_ fret: Int) {
+            let column = max(1, fret)
+            lowest = min(lowest ?? column, column)
+            highest = max(highest ?? column, column)
+        }
+        for slot in chord.slots where notes.indices.contains(slot) {
+            guard let note = notes[slot] else { continue }   // a rest sounds nothing, companions or not
+            take(note.fret)
+            if let companions, companions.indices.contains(slot) { companions[slot].forEach { take($0.fret) } }
+        }
+        guard let lowest, let highest else { return nil }
         return lowest...highest
     }
 
@@ -152,5 +176,19 @@ extension FretboardDrill {
             if let forward = note(at: activeIndex + offset), forward.fret > 0 { return forward.fret }
         }
         return nil
+    }
+}
+
+/// How far a drill reaches along the neck (`FretboardDrill.reach`): its lowest and highest fretted frets,
+/// and whether it rings an open string.
+private struct NeckReach {
+    var lowestFretted: Int?
+    var highestFretted: Int?
+    var hasOpen = false
+
+    mutating func take(_ fret: Int) {
+        guard fret > 0 else { hasOpen = true; return }
+        lowestFretted = min(lowestFretted ?? fret, fret)
+        highestFretted = max(highestFretted ?? fret, fret)
     }
 }

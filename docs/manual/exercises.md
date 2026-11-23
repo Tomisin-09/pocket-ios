@@ -244,7 +244,11 @@ which has no third, rests. **Where** is **Up the neck** or **Stay in frets**. St
 the two frets you set on the board, and each chord takes the shape nearest the one before. A chord
 with no shape in that range rests, and the editor names it and offers nearby ranges that hold every
 chord. As it plays, the chord is named over the board with its numeral and the chord after it, and its
-three notes take its colour, with its root ringed. **Advanced** holds the rhythm, **Up and back**, and, when the key's seven climbs the neck,
+three notes take its colour, with its root ringed. When the chord changes, dashed rings mark the notes
+your fingers just left. Under the board, a strip lists the chords in order, each with its numeral, its
+inversion and its frets, and lights the one being played. **Advanced** holds **Play as**: **Broken**
+plays each chord a note at a time, and **Together** lights all three at once and holds them for the same
+time. It also holds the rhythm, **Up and back**, and, when the key's seven climbs the neck,
 **Climb in**: the inversion it climbs in.
 
 A chord progression is built a chord at a time, and each chord carries its own controls: the name

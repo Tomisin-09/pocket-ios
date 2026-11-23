@@ -1,9 +1,10 @@
 # ADR 0313 — Triads on three strings: a mode of the Arpeggios exercise, and a progression kept inside a range of frets
 
-- **Status:** Accepted on 2026-11-23. **Slices 1 and 2 built** the same day (`pocket-464-dim-aug-vii`,
-  `pocket-465-triad-finder`): see *What building slice 1 settled*, *What building slice 2 settled* and
-  *What the phone showed*, which brings part of D8 into slice 2.
-  Slices 3 and 4 are not built and not scheduled; which release any of it goes in is not decided here. Its shape was settled with Tomisin the same day over a mockup
+- **Status:** Accepted on 2026-11-23. **Slices 1, 2 and 3 built** the same day (`pocket-464-dim-aug-vii`,
+  `pocket-465-triad-finder`, `pocket-466-triads-together`): see *What building slice 1 settled*, *What
+  building slice 2 settled*, *What the phone showed*, which brings part of D8 into slice 2, and *What
+  building slice 3 settled*. Slice 4 is not built and not scheduled; which release any of it goes in is
+  not decided here. Its shape was settled with Tomisin the same day over a mockup
   (`https://claude.ai/artifact/NFrDaPL1oE5XAT3hyk8PkB`, private), and the calls they made are marked
   *Decided by Tomisin*. The calls this ADR added while turning the mockup into code are marked
   *proposed here*. Tomisin took all ten as written the same day (*Decided*, below).
@@ -409,6 +410,44 @@ familiar with the triad shapes." How, proposed here and agreed the same day.*
 - **Chords and Strum & chords get the same numeral and colour on a branch of their own.** Their diagrams
   already name the chord; what's open there is a progression whose key isn't set, which Watch it on the
   neck answers by colouring nothing. Not decided here.
+
+## What building slice 3 settled
+
+- **Together keeps the bass in the slot.** Each slot of a chord played Together sounds the shape's lowest
+  note, with its other two as the slot's companions (`FretboardDrill.companions`, transient like the
+  drill's other render fields). So `activeNoteIndex` and the slot count are Broken's, and switching *Play
+  as* moves nothing in time (D7). A companion counts as sounding in its slot wherever the board asks: it
+  is plotted, lit, coloured and pass-focused with the slot, and the window keeps it in view.
+  `TriadRun.playAs` is stored by its raw value. A run saved before it, or a value from a newer build,
+  plays Broken.
+- **Together draws no move arrow.** Three fingers land at once, so an arrow from bass to bass would single
+  one out; the dashed rings show where they came from. Broken keeps its arrow.
+- **The dashed rings are the mockup's.** While a chord plays, the notes of the last shape that played and
+  aren't in this one are ringed dashed, in grey, since the colour belongs to the chord under the hand. A
+  note the two shapes share is a finger that stayed, so C to G on G‑B‑e rings two notes, not three. A
+  chord that rests rings nothing and is passed over, so the chord after it rings the shape before the
+  rest. The run's first chord rings nothing, even when the run loops back to it: on the first pass there
+  is nowhere the fingers were, and a ring would point at a shape not yet played. So the seam of a looping
+  progression goes unringed; if the phone shows that missed, wrapping is the follow-up.
+- **A chip says the chord as written**, as the progression row does: *Dm7*, *ii7 · root*, *7 6 5*, *plays
+  Dm*. The line over the board names the triad (*Dm · ii*), so the two read together. Frets go low string
+  first, as a chord chart prints them. An augmented chip names no inversion (D1). A power chord's says *no
+  triad*, a chord with no shape in the range says *no shape*, and both are drawn dashed and dimmed. There
+  is a chip per chord played, so the key's seven has eight and a progression up the neck twelve, with a
+  dashed rule before each later pass. The chip being played fills with its chord's colour, and the strip
+  scrolls to keep it in view. A chip doesn't take a tap: the preview walks on its own clock.
+- **The board's spoken summary reads chord by chord** on a board that names its chords: *C, I, together:
+  G fret 5, root, B fret 5, e fret 3*. Read slot by slot, a chord held for two bars said its notes sixteen
+  times.
+- **The phone showed the sheet lagging**, with a progression up the neck played Together. The board worked
+  out its window (0083 S5) on every read, about 110 times a frame, and each time walked all 96 slots and
+  their companions: 106 ms a frame in a Debug build, against 8 at 120 Hz. `FretboardGrid` now works it out
+  once a frame, the window takes one pass with no arrays built (0.2 ms), and the editor's board row owns
+  the chord being played, so a chord change no longer re-runs the shape finder. Every board gains from it;
+  the key's seven in frets went from 6.9 ms a frame to under 0.1.
+- **Two moves for the 400-line cap**: pass focus from `FretboardGrid` into `FretboardGrid+Focus.swift`,
+  beside the dashed ring, and Advanced with the bindings from `TriadRunEditor` into
+  `TriadRunEditor+Advanced.swift`. The chip is its own `TriadChip`, since lint allows one level of nesting.
 
 ## Consequences
 

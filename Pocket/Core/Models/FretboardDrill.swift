@@ -112,6 +112,11 @@ struct FretboardDrill: Codable, Equatable {
     /// The chords a Triads run plays, each with its slots (ADR 0313): the board names the one under the hand,
     /// colours its notes and rings its root. `nil` for every other drill. **Transient — never encoded**.
     var chords: [DrillChord]?
+    /// The notes that sound **with** each slot's own (ADR 0313 D8), parallel to `notes`: a Triads run played
+    /// Together puts the shape's bass in the slot and its other two notes here, so the board lights all
+    /// three at once and holds them. `activeNoteIndex` is unchanged; a companion is lit with its slot.
+    /// `nil` for every drill that plays one note at a time. **Transient — never encoded**.
+    var companions: [[FretNote]]?
 
     init(notesPerBeat: Int,
          notes: [FretNote?],
@@ -122,6 +127,7 @@ struct FretboardDrill: Codable, Equatable {
          keySpelling: NoteSpelling? = nil,
          shadedFrets: ClosedRange<Int>? = nil,
          chords: [DrillChord]? = nil,
+         companions: [[FretNote]]? = nil,
          version: Int = FretboardDrill.currentVersion) {
         self.version = version
         self.notesPerBeat = max(1, notesPerBeat)
@@ -133,10 +139,11 @@ struct FretboardDrill: Codable, Equatable {
         self.keySpelling = keySpelling
         self.shadedFrets = shadedFrets
         self.chords = chords
+        self.companions = companions
     }
 
-    /// Explicit keys so `noteGroups`, `openMidi`, `keySpelling`, `shadedFrets` and `chords` (transient render
-    /// artifacts) are **excluded** from the encoded shape — no persisted-blob change, no migration. Every other field
+    /// Explicit keys so `noteGroups`, `openMidi`, `keySpelling`, `shadedFrets`, `chords` and `companions`
+    /// (transient render artifacts) are **excluded** from the encoded shape — no persisted-blob change, no migration. Every other field
     /// codes and decodes exactly as the synthesized conformance did before; the transients decode to
     /// their `nil` default.
     private enum CodingKeys: String, CodingKey {
@@ -202,6 +209,18 @@ extension FretboardDrill {
         return notes[wrapped]
     }
 
+    /// Every note sounding in a slot: its own, then its companions (ADR 0313 D8). Empty for a rest and for
+    /// an index outside the cycle.
+    func sounding(at index: Int) -> [FretNote] {
+        guard notes.indices.contains(index), let note = notes[index] else { return [] }
+        guard let companions, companions.indices.contains(index) else { return [note] }
+        return [note] + companions[index]
+    }
+
+    /// Whether the board lights a slot's notes together (a Triads run played Together), so a move between
+    /// slots isn't one finger's jump.
+    var playsTogether: Bool { companions?.contains { !$0.isEmpty } ?? false }
+
     /// Each **distinct board position** the run touches, in first-played order, paired with every slot
     /// index that plays it.
     ///
@@ -213,13 +232,17 @@ extension FretboardDrill {
     /// brightness was tracking *how often the rolling window happened to include a note*, which is not
     /// information anyone asked to see. Rests are skipped; the paired indices let the renderer keep the
     /// per-index concerns it still needs — which position is lit now, and ADR 0083 pass focus.
+    ///
+    /// A **companion** plays its slot as much as the slot's own note does (ADR 0313 D8), so its slots are
+    /// paired with it too: a chord played Together lights, colours and focuses all three notes at once.
     var plottedPositions: [(note: FretNote, indices: [Int])] {
         var order: [FretNote] = []
         var indicesByNote: [FretNote: [Int]] = [:]
-        for (index, note) in notes.enumerated() {
-            guard let note else { continue }
-            if indicesByNote[note] == nil { order.append(note) }
-            indicesByNote[note, default: []].append(index)
+        for index in notes.indices {
+            for note in sounding(at: index) where indicesByNote[note]?.last != index {
+                if indicesByNote[note] == nil { order.append(note) }
+                indicesByNote[note, default: []].append(index)
+            }
         }
         return order.map { ($0, indicesByNote[$0] ?? []) }
     }

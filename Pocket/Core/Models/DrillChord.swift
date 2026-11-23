@@ -60,6 +60,32 @@ extension FretboardDrill {
         return chords[index].root
     }
 
+    /// The positions a chord sounds, each once, in the order it first plays them. Empty for a chord that
+    /// rests.
+    func notes(ofChord index: Int) -> [FretNote] {
+        guard let chords, chords.indices.contains(index) else { return [] }
+        var seen: [FretNote] = []
+        for note in chords[index].slots.flatMap({ sounding(at: $0) }) where !seen.contains(note) { seen.append(note) }
+        return seen
+    }
+
+    /// **Where the fingers just were** (ADR 0313 D8): while a chord plays, the notes of the shape before it
+    /// that moved, which the board rings dashed so the nearest move can be seen. A note the two shapes
+    /// share is a finger that stayed, so it isn't one. The shape before is the nearest earlier chord that
+    /// played, so a chord that rests is passed over. The first chord has none, as the mockup draws it: on
+    /// the run's first pass there is nowhere the fingers were. Empty while nothing plays, and while the
+    /// chord playing rests.
+    func notesJustLeft(chord index: Int?) -> Set<FretNote> {
+        guard let index, chords?.indices.contains(index) == true else { return [] }
+        let current = Set(notes(ofChord: index))
+        guard !current.isEmpty else { return [] }
+        for earlier in stride(from: index - 1, through: 0, by: -1) {
+            let before = notes(ofChord: earlier)
+            if !before.isEmpty { return Set(before).subtracting(current) }
+        }
+        return []
+    }
+
     /// Whether the board rings a position as the root. While a chord plays, only its own root, among its
     /// own notes: a C elsewhere on the board isn't part of the shape under the hand. Otherwise every note
     /// on the drill's root, as it always has.
