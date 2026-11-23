@@ -14,6 +14,10 @@
   it. D3's purpose, a reference hue clear of the other spaces, is what the move serves. ADR 0263 — **D2**: the themes are behind
   the plan though they neither play, keep nor practise, an exception recorded as one, the way D2 records
   the Practice log's (D1 here). **D4**: the wall's sentence gains a line naming the themes.
+- **Amended by:** ADR 0314 (2026-11-23) — **D3**: the App Icon follows the theme only while the
+  player's icon choice is *Matches theme*, the default; on the plan they can keep one moon's icon
+  whatever the theme, behind a door of its own. The Alternatives line on keeping only the icon was about
+  a lapse, and the lapse rule stands: both go back to Blood Moon. Everything else in D3 stands.
 - **Relates to:** 0256 (the one plan, its doors and its wall, D2 and D3) · 0081 (the Metronome's plum
   never moves, which D5 keeps) · 0292 (the blood art the themes recolour) · 0258 (a row says its value)
 
@@ -76,7 +80,8 @@ Blood Moon comes back as its own two reds exactly, and the script fails if it ev
 Every tone clears 3 : 1, the bar for a graphic, on all three grounds, as the blood art does. One universal
 image per theme, as Blood Moon has, rather than a light/dark pair.
 
-**D3. The App Icon follows the theme.** Seven alternate icons (`AppIconBlue` … `AppIconCold`), cut by the
+**D3. The App Icon follows the theme.** *(Since ADR 0314, only while the icon choice is* Matches
+theme*, the default; a player on the plan can keep one moon's icon instead.)* Seven alternate icons (`AppIconBlue` … `AppIconCold`), cut by the
 same script on the same `#0F0F0F` square at the same size as the primary, listed in `project.yml`'s
 `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES` so the build writes them into the Info.plist. The primary
 icon is Blood Moon's, and so is the App Store's.

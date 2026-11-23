@@ -22,6 +22,8 @@
   Toolkit column is redrawn: pink in Blood, Blue, Jade, Corn and Silver, terracotta in Pink Moon, corn in
   Harvest Moon, jade in Cold Moon; the Library, Metronome, Journal and Oracle columns stand. Everything
   else stands.
+- **Amended by:** ADR 0314 (2026-11-23) — **D7**: an App Icon row sits directly under the Theme row, so
+  *System / Light / Dark* is one control in the same group under both rather than directly under Theme.
 
 ## Context
 
@@ -145,8 +147,8 @@ change for it.
 
 **D7. Choosing a theme: a Theme row on Appearance, opening a screen of previews.**
 - **Settings ▸ Appearance** gets a **Theme** row at the top, a `HubRow` whose value is the theme's moon and
-  name. *System / Light / Dark* stays one segmented control on Appearance, directly under it, and *Motion*
-  and *Note names* follow as now. The Settings hub's Appearance row shows the theme as its value.
+  name. *System / Light / Dark* stays one segmented control on Appearance, directly under it (under the
+  App Icon row since ADR 0314), and *Motion* and *Note names* follow as now. The Settings hub's Appearance row shows the theme as its value.
 - **The Theme screen** is a list of eight cards. Each card draws that theme's own *Start* button and a
   strip of waveform twice, on the cream canvas and on the near-black one side by side, with the theme's
   name and one line. It shows the theme rather than a swatch that names it, and someone on *System* sees

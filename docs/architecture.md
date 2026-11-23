@@ -6,7 +6,8 @@
 ┌─────────────────────────────────────────────────────────┐
 │ SwiftUI Features (Home · Library · Waveform · Metronome · Practice · Journal · PracticeLog · Toolkit · Repertoire)
 │   UI       — shared components + design tokens (PocketColor; the Practice and space tokens follow the
-│              moon theme through a trait-bridged \.moonTheme, ADR 0311/0312) · AdaptiveLayout (ADR 0105 iPad groundwork:
+│              moon theme through a trait-bridged \.moonTheme, ADR 0311/0312; the App Icon is the theme's
+│              or one kept moon's, AppIconChoice, ADR 0314) · AdaptiveLayout (ADR 0105 iPad groundwork:
 │              PocketLayout readable-width cap + readableWidth() modifier — dormant while TARGETED_DEVICE_FAMILY=1)
 │              · PocketRowActions — the one row-affordance modifier every list adopts (long-press menu →
 │                Favourite → Delete, plus leading/trailing swipes); RowDeletionCoordinator + the
@@ -242,7 +243,8 @@ the claim beneath (or clears). That is what keeps a routine's incoming block on 
 the outgoing one tears down (they overlap, ADR 0129). The hub registers the remote-command targets
 while any claim is held and looks the owner up per command, so no closure keeps an engine alive. The
 artwork is **`DefaultArtwork`, the App Icon's own render** (`derive-brand-svgs.py --app-icon` copies
-it), since imported songs carry no embedded cover art. On the song screen,
+it), since imported songs carry no embedded cover art. It stays Blood Moon's whatever the theme or the
+icon the player keeps (ADR 0312 D3, ADR 0314 D5). On the song screen,
 `WaveformPracticeView.onDisappear` → `model.endPlaybackSession()` lets go of the lock screen and
 calls `engine.stop()` (halt → deactivate the session), so
 audio stops on leaving the screen — while

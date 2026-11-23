@@ -111,6 +111,10 @@ enum UITestHooks {
     static let themeRow = "settings.appearance.theme"
     /// A card on the Theme screen, by `MoonTheme.rawValue` (`blood`, `harvest`, …).
     static func themeCard(_ rawValue: String) -> String { "settings.theme.\(rawValue)" }
+    /// Settings ▸ Appearance's App Icon row (ADR 0314). Its value is the icon's name, which changes.
+    static let appIconRow = "settings.appearance.appIcon"
+    /// A choice on the App Icon screen, by `AppIconChoice.rawValue` (`matchesTheme`, `blood`, …).
+    static func appIconOption(_ rawValue: String) -> String { "settings.appIcon.\(rawValue)" }
 
     /// Marks Home as **finished seeding**, not merely rendered.
     ///

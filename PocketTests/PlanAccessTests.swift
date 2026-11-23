@@ -112,7 +112,8 @@ final class PlanAccessTests: XCTestCase {
     /// away, is a change to the free line, and 0256 D8 makes taking one away permanent.
     func testOnlyPractisingIsBehindThePlan() {
         XCTAssertEqual(PlanDoor.allCases, [.practice, .todaysSession, .loopTrainer, .earTraining,
-                                           .watchOnNeck, .improvise, .drill, .newDrill, .routine, .theme])
+                                           .watchOnNeck, .improvise, .drill, .newDrill, .routine, .theme,
+                                           .appIcon])
     }
 
     /// The themes are the one door that isn't practising (ADR 0312 D1), so their wall says so, and

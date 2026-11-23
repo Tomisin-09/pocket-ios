@@ -32,6 +32,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   Screen icon follow the theme too. Blood Moon is free and stays the default; the other seven come with
   the plan, and a lapsed plan draws Blood Moon again while keeping the choice. *Save to Red Moon* draws in
   the app's theme.
+- **App Icon, chosen on its own** (ADR 0314). Under Theme, Settings ▸ Appearance has an **App Icon** row.
+  **Matches theme**, the default, changes the Home Screen icon with the theme, as above. Or keep one of
+  the eight moons' icons whatever the theme: Blood Moon's icon under Harvest Moon colours, or Pink Moon's
+  icon with the app left in Blood Moon. The screen shows the icons themselves, and a tap applies at once.
+  Blood Moon's icon is free; the other seven come with the plan, like their themes, and a lapsed plan
+  shows Blood Moon's icon again while keeping the choice.
 - **Diminished and augmented chords** (ADR 0313 D1). The chord picker's **Triads** have them on all three
   string sets: diminished in its three inversions, and augmented once per set, since every inversion of
   an augmented triad is the same shape. Four-string diminished and augmented grips that slide to any

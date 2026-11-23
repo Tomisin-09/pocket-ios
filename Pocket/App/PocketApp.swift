@@ -50,7 +50,8 @@ struct PocketApp: App {
             // And the References library's grouping (ADR 0275): a test that groups it by site would
             // leave every later test, and the library's figure, reading other sections.
             AppSettings.resetReferencesLayout()
-            // And the moon theme (ADR 0311): the manual's figures are Blood Moon's, and so is the suite.
+            // And the moon theme (ADR 0311) and the icon choice (ADR 0314): the manual's figures are
+            // Blood Moon's, and so is the suite.
             AppSettings.resetMoonTheme()
             // The Oracle's cadence is the same trap with a longer fuse (ADR 0187 D15). Its gate is
             // driven by a stored date, so the *second* run of a suite finds the week already spent
