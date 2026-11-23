@@ -1,10 +1,10 @@
 # ADR 0313 — Triads on three strings: a mode of the Arpeggios exercise, and a progression kept inside a range of frets
 
-- **Status:** Accepted on 2026-11-23. **Slices 1, 2 and 3 built** the same day (`pocket-464-dim-aug-vii`,
-  `pocket-465-triad-finder`, `pocket-466-triads-together`): see *What building slice 1 settled*, *What
-  building slice 2 settled*, *What the phone showed*, which brings part of D8 into slice 2, and *What
-  building slice 3 settled*. Slice 4 is not built and not scheduled; which release any of it goes in is
-  not decided here. Its shape was settled with Tomisin the same day over a mockup
+- **Status:** Accepted on 2026-11-23. **All four slices built** the same day (`pocket-464-dim-aug-vii`,
+  `pocket-465-triad-finder`, `pocket-466-triads-together`, `pocket-467-practice-as-triads`): see *What
+  building slice 1 settled*, *What building slice 2 settled*, *What the phone showed*, which brings part
+  of D8 into slice 2, *What building slice 3 settled* and *What building slice 4 settled*. Which release
+  any of it goes in is not decided here. Its shape was settled with Tomisin the same day over a mockup
   (`https://claude.ai/artifact/NFrDaPL1oE5XAT3hyk8PkB`, private), and the calls they made are marked
   *Decided by Tomisin*. The calls this ADR added while turning the mockup into code are marked
   *proposed here*. Tomisin took all ten as written the same day (*Decided*, below).
@@ -448,6 +448,46 @@ familiar with the triad shapes." How, proposed here and agreed the same day.*
 - **Two moves for the 400-line cap**: pass focus from `FretboardGrid` into `FretboardGrid+Focus.swift`,
   beside the dashed ring, and Advanced with the bindings from `TriadRunEditor` into
   `TriadRunEditor+Advanced.swift`. The chip is its own `TriadChip`, since lint allows one level of nesting.
+
+## What building slice 4 settled
+
+*Proposed here, the same day, while building it.* The first four are small calls D9 left open. Tomisin
+tried both doors on the phone the same day and was happy with it.
+
+- **Both doors make the form's seed in one place.** `NewExerciseSeed.practiceAsTriads` (pure, in `Core`)
+  takes a name, the steps and the key they were written in, and gives the template, the instrument, the
+  name and the Triads run. The button and the menu item both call it, and `newExerciseFlow` carries it
+  to `NewExerciseSheet`, which skips the template picker for it, and on to `ConfigureExerciseForm`,
+  which opens on Triads with that run. So the form, the gate (`PlanGated(.newDrill)`) and the push to the
+  new exercise after **Create** are the ones every other door uses. On the Toolkit's stack, as *Start an
+  exercise from this* does (0264 D5), so Back from the new exercise returns to the progression.
+- **It opens on guitar, whatever the profile's instrument.** Triads is guitar only (D2), and on a bass
+  exercise the Shape row doesn't show, so a bass player's form would open on a box arpeggio with no
+  progression in it. The form fixes the instrument as every create does (0116), so the exercise is a
+  guitar one.
+- **The button practises what's on the screen.** An edit not yet saved goes into the exercise as it
+  stands, and stays on the builder to save or leave, as every edit there does. The menu item reads the
+  progression as saved, since a row has no edits. A name cleared while editing falls back to the saved
+  name.
+- **A progression with nothing a triad plays opens nothing.** With no chords, or only power chords (D5:
+  no third, no triad), the run would rest for its whole length on a board that never lights. The
+  button stays, disabled, and with only power chords its footer says *Power chords have no third, so
+  there's no triad to play.* The menu item doesn't show. One power chord among others is fine: it rests
+  for its length, as D5 has it.
+- **The key follows the progression's reading.** The run's own major or minor is set from the
+  progression (`readsAsMinor`), so switching **Chords** to the key's seven stays in the progression's key:
+  A minor's, for Am · F · C · G written in A.
+- **The menu item's lock replaces its glyph.** A context menu draws one glyph, so without the plan the
+  lock stands in for the play glyph, as Home's rows swap their chevron for it. The button on the screen
+  draws `PlanLockBadge` beside its label, as *Start an exercise from this* does.
+- **The button's footer says what it makes**: *Makes an Arpeggios exercise that plays these chords as
+  triads on three strings.* It opens a form, not a run, and *Practice now* on a loop plays at once, so
+  the line is what tells the two apart.
+- **Tests**: `PracticeAsTriadsTests` (the seed: template, guitar, name, the copy with its bars, the key
+  and its reading, D10's defaults, no seed for no triad, and that the seeded run lights notes inside
+  frets 3 to 7) and `PracticeAsTriadsUITests`, which opens the form from both doors and reads its name,
+  Triads, Generate and the progression chosen, then deletes the progression it wrote. The progression
+  menu gained the identifier `triads.progression`, since the Chords row has a *Progression* segment too.
 
 ## Consequences
 

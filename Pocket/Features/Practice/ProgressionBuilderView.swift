@@ -7,7 +7,8 @@ import SwiftUI
 /// numeral first. A skin over `ProgressionDraft`, which does everything the controls ask.
 ///
 /// Pushed from Toolkit → *My progressions* to write or edit one, and presented from *Use a progression*
-/// to write one mid-drill (`showsCancel`, since a sheet has no back button).
+/// to write one mid-drill (`showsCancel`, since a sheet has no back button). A saved progression's screen
+/// also offers *Practice as triads* (ADR 0313 D9), above *Delete progression*.
 struct ProgressionBuilderView: View {
     /// The progression being edited, or `nil` to write a new one.
     let progression: SavedProgression?
@@ -25,6 +26,8 @@ struct ProgressionBuilderView: View {
     /// The quality the *Any chord* row adds.
     @State private var quality: ChordGrip.Quality = .major
     @State private var confirmingDelete = false
+    /// *Practice as triads* is opening the New exercise form.
+    @State private var practisingAsTriads = false
 
     init(progression: SavedProgression? = nil, tint: Color = PocketColor.practice, showsCancel: Bool = false,
          onSaved: @escaping (SavedProgression) -> Void = { _ in }) {
@@ -49,7 +52,12 @@ struct ProgressionBuilderView: View {
             chordsSection
             inKeySection
             anyChordSection
-            if progression != nil { deleteSection }
+            if progression != nil {
+                PracticeAsTriadsButton(seed: triadsSeed, hasChords: !draft.steps.isEmpty) {
+                    practisingAsTriads = true
+                }
+                deleteSection
+            }
         }
         .navigationTitle(progression == nil ? "New progression" : "Edit progression")
         .navigationBarTitleDisplayMode(.inline)
@@ -66,6 +74,15 @@ struct ProgressionBuilderView: View {
             }
         }
         .tint(tint)
+        // At the screen, never on the section's row: a sheet raised from a row loses its write on iOS 18.
+        .newExerciseFlow(isPresented: $practisingAsTriads, seed: triadsSeed)
+    }
+
+    /// What *Practice as triads* opens on: the chords on screen, in the key they're written in. An edit not
+    /// yet saved is practised as it stands, and stays here to save or leave.
+    private var triadsSeed: NewExerciseSeed? {
+        let name = draft.trimmedName.isEmpty ? (progression?.name ?? "") : draft.name
+        return NewExerciseSeed.practiceAsTriads(name: name, steps: draft.steps, tonic: draft.tonic)
     }
 
     // MARK: - Sections
@@ -220,45 +237,6 @@ struct ProgressionBuilderView: View {
         }
     }
 
-    // MARK: - Pieces
-
-    private func chip(_ label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button {
-            action()
-            haptic(.light)
-        } label: {
-            Text(label)
-                .font(.futura(.subheadline, weight: .semibold))
-                .foregroundStyle(isSelected ? PocketColor.background : PocketColor.textPrimary)
-                .padding(.horizontal, 13)
-                .padding(.vertical, 7)
-                .background(Capsule().fill(isSelected ? tint : PocketColor.surfaceStandard))
-        }
-        .buttonStyle(.borderless)
-        .accessibilityLabel("Written in \(label)")
-        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
-    }
-
-    /// A palette button — the chord's name big, its numeral small beneath.
-    private func paletteLabel(name: String, detail: String) -> some View {
-        VStack(spacing: 1) {
-            Text(name)
-                .font(.futura(.subheadline, weight: .semibold))
-                .foregroundStyle(PocketColor.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-            Text(detail)
-                .font(.futura(.caption2))
-                .foregroundStyle(PocketColor.textSecondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(RoundedRectangle(cornerRadius: 10).fill(PocketColor.surfaceSubtle))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(PocketColor.surfaceBorder, lineWidth: 1))
-    }
-
     // MARK: - Actions
 
     private func save() {
@@ -278,5 +256,46 @@ struct ProgressionBuilderView: View {
         guard let progression else { return }
         modelContext.delete(progression)
         dismiss()
+    }
+}
+
+// MARK: - Pieces
+
+private extension ProgressionBuilderView {
+    func chip(_ label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+            haptic(.light)
+        } label: {
+            Text(label)
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(isSelected ? PocketColor.background : PocketColor.textPrimary)
+                .padding(.horizontal, 13)
+                .padding(.vertical, 7)
+                .background(Capsule().fill(isSelected ? tint : PocketColor.surfaceStandard))
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel("Written in \(label)")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    /// A palette button — the chord's name big, its numeral small beneath.
+    func paletteLabel(name: String, detail: String) -> some View {
+        VStack(spacing: 1) {
+            Text(name)
+                .font(.futura(.subheadline, weight: .semibold))
+                .foregroundStyle(PocketColor.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            Text(detail)
+                .font(.futura(.caption2))
+                .foregroundStyle(PocketColor.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(RoundedRectangle(cornerRadius: 10).fill(PocketColor.surfaceSubtle))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(PocketColor.surfaceBorder, lineWidth: 1))
     }
 }

@@ -81,6 +81,9 @@ struct NewExerciseSheet: View {
     /// tapped under. The configure form shows them in **Works on**, where on Basic and Your own practice
     /// they can be changed before Create (ADR 0309 D4), and carries them on the plan.
     var statedSkillIDs: [String] = []
+    /// What a door that knows the exercise opens the form on (ADR 0313 D9): its name and content. It
+    /// skips the picker for its template, on its instrument.
+    var seed: NewExerciseSeed?
     /// Called with the assembled plan when the user confirms. The caller inserts the model.
     let onCreate: (NewExercisePlan) -> Void
 
@@ -115,15 +118,17 @@ struct NewExerciseSheet: View {
          defaultInstrument: Instrument = .guitar,
          initialSongs: [Song] = [],
          statedSkillIDs: [String] = [],
+         seed: NewExerciseSeed? = nil,
          onCreate: @escaping (NewExercisePlan) -> Void) {
         self.initialCommand = initialCommand
         self.initialSignature = initialSignature
-        self.fixedTemplate = fixedTemplate
-        self.defaultInstrument = defaultInstrument
+        self.fixedTemplate = seed?.template ?? fixedTemplate
+        self.defaultInstrument = seed?.instrument ?? defaultInstrument
         self.initialSongs = initialSongs
         self.statedSkillIDs = statedSkillIDs
+        self.seed = seed
         self.onCreate = onCreate
-        _instrument = State(initialValue: defaultInstrument)
+        _instrument = State(initialValue: seed?.instrument ?? defaultInstrument)
     }
 
     /// Behind the plan (ADR 0256 D3): every route here meets the same wall, and nothing below is built
@@ -139,7 +144,8 @@ struct NewExerciseSheet: View {
                     ConfigureExerciseForm(template: fixedTemplate, initialCommand: initialCommand,
                                           initialSignature: initialSignature,
                                           initialInstrument: instrument, initialSongs: initialSongs,
-                                          initialSkillIDs: statedSkillIDs, create: create)
+                                          initialSkillIDs: statedSkillIDs, initialName: seed?.name ?? "",
+                                          initialTriads: seed?.triads, create: create)
                 } else {
                     ExerciseTemplatePicker(instrument: $instrument) { template, instrument in
                         chosen = TemplateChoice(template: template, instrument: instrument)

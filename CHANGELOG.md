@@ -60,6 +60,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   that moved. Under the editor's board, a strip lists every chord in order with its numeral, inversion and
   frets (*Dm7 · ii7 · root · 7 6 5 · plays Dm*), says *no shape* or *no triad* for a chord that rests, and
   lights the chord being played in its colour. VoiceOver reads the board a chord at a time.
+- **Practice as triads** (ADR 0313 D9). A progression in **My progressions** has a **Practice as
+  triads** button on its screen, above **Delete progression**, and in the row's hold menu. It opens a new
+  Arpeggios exercise, already named (*Verse changes as triads*), playing the progression as triads on
+  G‑B‑e between frets 3 and 7, in the key it was written in. Change anything before **Create**; nothing
+  is saved until then. A progression of only power chords has no triad to play, so the button says so.
 - **An exercise made in a newer version of Red Moon is left alone** (ADR 0313 D4). This version plays it
   with the click, as before, and **Edit shape** now says it was made in a newer version instead of
   opening an editor on a default shape that **Done** would have saved over it.

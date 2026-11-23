@@ -109,11 +109,18 @@ struct ConfigureExerciseForm: View {
     @Query var longTermGoals: [LongTermGoal]
     @Query var plannerGoals: [Goal]
 
+    /// `initialName` and `initialTriads` come from a door that knows the exercise (`NewExerciseSeed`,
+    /// ADR 0313 D9): the form opens named, and an Arpeggios form on Triads with that run.
     init(template: ExerciseTemplate, initialCommand: Int, initialSignature: TimeSignature,
          initialInstrument: Instrument = .guitar, initialSongs: [Song] = [],
-         initialSkillIDs: [String] = [],
+         initialSkillIDs: [String] = [], initialName: String = "", initialTriads: TriadRun? = nil,
          create: @escaping (NewExercisePlan) -> Void) {
         self.template = template
+        _name = State(initialValue: initialName)
+        if let initialTriads {
+            _triads = State(initialValue: initialTriads)
+            _arpeggioShape = State(initialValue: .triads)
+        }
         self.initialCommand = initialCommand
         self.initialSignature = initialSignature
         self.initialInstrument = initialInstrument

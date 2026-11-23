@@ -1552,6 +1552,10 @@ sections; **Slice 1** carries the two zero-dependency tenants and is **audio-fre
 - **My Progressions** (`MyProgressionsView`, ADR 0218) is the same split for written progressions:
   a newest-first list of `SavedProgression`s, each row pushing `ProgressionBuilderView` to edit or
   delete, **+** to write one. The *Use a progression* sheet lists the same `@Query` to insert from.
+  *Practice as triads* (ADR 0313 D9), on the builder's screen (`PracticeAsTriadsButton`) and a row's
+  context menu, makes a `NewExerciseSeed` (pure) and opens `newExerciseFlow(seed:)`: the New exercise
+  sheet skips its picker and `ConfigureExerciseForm` opens on Arpeggios, Triads, with the progression
+  copied in. Gated by the sheet's own `PlanGated(.newDrill)`.
 - **My tabs** (`MyTabsView`, ADR 0235) lists `WrittenTab`s, last changed first; hold or swipe to rename
   or delete. A row opens `WrittenTabView` to read, with **Edit** into `TabWriterView`: a title, a strip
   of the notes with one **+** slot (`TabDraft`), *Bar line* and *Section* (`TabSectionNamer`), the shared

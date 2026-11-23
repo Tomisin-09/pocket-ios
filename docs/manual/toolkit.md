@@ -104,6 +104,11 @@ you wrote it in, and its numerals underneath.
   progression** opens from inside a chord exercise (see [Exercises](exercises.md)).
 - Tap a progression to change its name or its chords, or to **Delete progression**. Swipe a row to
   delete it from the list.
+- **Practice as triads**, on a progression's screen above **Delete progression** and in a row's hold
+  menu, opens a new Arpeggios exercise playing the progression as triads on three strings, in the key
+  you wrote it in and named after it. It is the **Triads** shape described in
+  [Exercises](exercises.md), with the progression already chosen. Nothing is saved until you tap
+  **Create**. My progressions is free; making the exercise needs the plan.
 - Empty, it says **No progressions yet** and offers **New progression**.
 
 A progression is saved as numerals — where each chord sits in its key — so it plays in any key you

@@ -22,6 +22,10 @@ struct NewExerciseFlow: ViewModifier {
     /// Set by a reference's screen (ADR 0264 D5): a row of the source the drill is started from,
     /// which the insert files onto it. `nil` from every other door.
     let startingFrom: UUID?
+    /// Set by a door that knows the exercise (ADR 0313 D9, *Practice as triads*): the form opens on its
+    /// template, instrument, name and content. Read when the sheet opens, so a host with one button per
+    /// row sets it with `isPresented`.
+    var seed: NewExerciseSeed?
 
     @Environment(\.modelContext) private var context
     /// The local profile (ADR 0113 S2): its self-rated experience seeds the command tempo, and its
@@ -36,7 +40,7 @@ struct NewExerciseFlow: ViewModifier {
         content
             .sheet(isPresented: $isPresented, onDismiss: openJustCreated) {
                 NewExerciseSheet(initialCommand: defaultCommand, fixedTemplate: fixedTemplate,
-                                 defaultInstrument: defaultInstrument, onCreate: create)
+                                 defaultInstrument: defaultInstrument, seed: seed, onCreate: create)
             }
             .navigationDestination(isPresented: Binding(get: { opening != nil },
                                                         set: { if !$0 { opening = nil } })) {
@@ -79,9 +83,11 @@ struct NewExerciseFlow: ViewModifier {
 
 extension View {
     /// Present the create sheet while `isPresented` is true, and open the drill it makes.
-    /// `startingFrom` is a reference row the new drill takes (ADR 0264 D5).
+    /// `startingFrom` is a reference row the new drill takes (ADR 0264 D5), and `seed` what the form opens
+    /// on (ADR 0313 D9).
     func newExerciseFlow(isPresented: Binding<Bool>, fixedTemplate: ExerciseTemplate? = nil,
-                         startingFrom reference: UUID? = nil) -> some View {
-        modifier(NewExerciseFlow(isPresented: isPresented, fixedTemplate: fixedTemplate, startingFrom: reference))
+                         startingFrom reference: UUID? = nil, seed: NewExerciseSeed? = nil) -> some View {
+        modifier(NewExerciseFlow(isPresented: isPresented, fixedTemplate: fixedTemplate, startingFrom: reference,
+                                 seed: seed))
     }
 }
