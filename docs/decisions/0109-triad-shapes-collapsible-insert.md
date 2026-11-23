@@ -1,6 +1,11 @@
 # 0109 — Triad shapes as an Insert category + collapsible picker sections
 
 - **Status:** Accepted
+- **Amended by:** ADR 0313 (2026-11-23, accepted, not built) — *Out of scope*'s diminished and augmented
+  triads come in, on the same three string sets: nine diminished shapes and three augmented ones (an
+  augmented triad is one shape in every inversion). Triads stay out of the curated movable set, as the
+  test here holds; the two qualities get curated four-string grips of their own instead. The other
+  out-of-scope items stand.
 - **Date:** 2026-07-23 (`pocket-178-triads`)
 - **Builds on:** ADR 0084 (movable `ChordGrip` — relative geometry placed at a root), ADR 0103 (the
   search-first chord picker and its Insert grid grouped My chords → Movable → Open), ADR 0106 (power
@@ -57,6 +62,7 @@ so a match can never hide inside a collapsed group. Collapse state is in-memory 
   carries all three inversions (18 shapes); with the sections collapsible the wider grid stays manageable.
 - **Diminished / augmented** triad qualities — the remaining triad colours, deferred to keep the set to the
   everyday major/minor; they'd slot in as more `ChordGrip.triads` entries behind the same UI.
+  **Accepted in ADR 0313 D1** (2026-11-23), as the first slice of a Triads mode for Arpeggios.
 - **Lower string sets** (D‑A‑E / E‑A‑D). The three upper sets cover the common rhythm/lead register; the
   lowest set is muddier and rarer.
 - **Persisting collapse state** across sheet presentations (AppStorage). In-memory is enough for now.
