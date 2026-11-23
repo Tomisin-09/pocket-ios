@@ -14,7 +14,9 @@ ADR 0312 settling three of D11's questions (2026-11-22): the themes are part of 
 the wordmark, logo and App Icon follow the theme; Silver ships once seen on a phone. Still owed:
 - **A phone pass**: sixteen looks (eight themes, light and dark), the eight icons on a real Home Screen,
   Silver's grey art and Pause button.
-- **The Metronome and Toolkit near-pair** (3.9 apart): options in 0312 D5, not decided.
+- **The Metronome and Toolkit near-pair**: settled 2026-11-23, the Toolkit goes pink (0312 D5, Harvest
+  Moon's corn Toolkit the one accepted near-pair). It changes Blood Moon's look, so **the manual's figures
+  and App Store screenshots showing the Toolkit or Home's Learn tiles are owed a reshoot** with 1.6.
 - **What the plan covers, outside the repo**: the App Store description, and the site and its FAQ (a
   `site` PR).
 - Not decided: whether the Now Playing artwork follows the theme (0312 D3).

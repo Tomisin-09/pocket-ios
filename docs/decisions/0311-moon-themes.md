@@ -18,7 +18,10 @@
 - **Amended by:** ADR 0312 (2026-11-22) — **D1**: the logo and the App Icon follow the theme on the
   player's own phone; the App Store, the site, social posts and the manual's figures stay Blood Moon.
   **D11**: the themes are part of the plan, Blood Moon free; Silver ships once seen on a phone; the
-  Metronome and Toolkit near-pair stays open, with options. Everything else stands.
+  Metronome and Toolkit near-pair is settled: the Toolkit goes pink (Tomisin, 2026-11-23). **D5**: the
+  Toolkit column is redrawn: pink in Blood, Blue, Jade, Corn and Silver, terracotta in Pink Moon, corn in
+  Harvest Moon, jade in Cold Moon; the Library, Metronome, Journal and Oracle columns stand. Everything
+  else stands.
 
 ## Context
 

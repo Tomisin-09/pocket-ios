@@ -73,8 +73,8 @@ enum MoonTheme: String, CaseIterable, Sendable {
         }
     }
 
-    /// The Metronome stays plum in every theme (D5). Not decided: whether it or the Toolkit moves to
-    /// end their near-pair (ADR 0311 D11, 0312 D5).
+    /// The Metronome stays plum in every theme (D5, and ADR 0081): it was the Toolkit that moved to end
+    /// their near-pair (ADR 0312 D5).
     var metronome: ColorFamily { .plum }
 
     /// The Journal (D5), and the journal-note button in a running routine's header, which reads it.
@@ -86,11 +86,16 @@ enum MoonTheme: String, CaseIterable, Sendable {
         }
     }
 
-    /// The Toolkit (D5). Cold Moon's blue sits 8.0 from the indigo, so the Toolkit goes jade there.
+    /// The Toolkit (0311 D5, as ADR 0312 D5 settled it). **Pink**, 12.0 from the Metronome's plum, where
+    /// the indigo it wore until 1.6 sat 3.9 away. Pink Moon wears pink itself, so its Toolkit is
+    /// terracotta; Cold Moon's is jade, as 0311 had it. Harvest Moon's orange leaves no family 10 clear,
+    /// so its Toolkit is corn at 8.6, the one near-pair on Home accepted (`MoonThemeTests` holds it).
     var toolkit: ColorFamily {
         switch self {
+        case .pink: .terracotta
+        case .harvest: .corn
         case .cold: .jade
-        default: .indigo
+        default: .pink
         }
     }
 
@@ -155,10 +160,10 @@ enum ColorFamily: String, CaseIterable, Sendable {
     case pink
     case harvest
     case cold
-    // The spaces' own, which no theme wears for Practice.
+    // The spaces' own, which no theme wears for Practice. (Indigo, the Toolkit's until 1.6, went when
+    // the Toolkit moved to pink, ADR 0312 D5.)
     case plum
     case gold
-    case indigo
     case crimson
 
     private var base: String { rawValue.prefix(1).uppercased() + rawValue.dropFirst() }
@@ -169,7 +174,7 @@ enum ColorFamily: String, CaseIterable, Sendable {
     /// Practice family, and the Metronome's plum.
     var button: String? {
         switch self {
-        case .gold, .indigo, .crimson: nil
+        case .gold, .crimson: nil
         default: base + "CTA"
         }
     }

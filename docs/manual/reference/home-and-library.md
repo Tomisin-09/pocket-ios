@@ -38,7 +38,7 @@ therefore, is the way in.
 
 **The destinations** are tiles, two to a row, under three headings. Each is a glyph and a name in its
 own colour, and the colour is how you find it again. The one exception is on purpose: the tile beside
-Toolkit wears the Toolkit's indigo, because whatever it opens is a Toolkit tool.
+Toolkit wears the Toolkit's colour, because whatever it opens is a Toolkit tool.
 
 - **`Practice`** opens the [Practice hub](practice.md); **`Metronome`** beside it opens over the
   whole screen.

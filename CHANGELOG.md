@@ -33,6 +33,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   the plan, and a lapsed plan draws Blood Moon again while keeping the choice. *Save to Red Moon* draws in
   the app's theme.
 
+### Changed
+- **The Toolkit is pink** (ADR 0312 D5), and so is the tile beside it on Home and everything the Toolkit
+  tints: its screens, the tuner, the tab writer and the Song map's chord lane. Its indigo sat so close to
+  the Metronome's purple that the two read as one colour. A printed tab keeps its colours.
+
 ## [1.5] — build 13, cut 2026-11-22
 
 ### Added

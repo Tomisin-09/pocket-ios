@@ -178,8 +178,8 @@ struct TunerView: View {
     private func stringButton(index: Int, name: String) -> some View {
         let isTarget = reading != nil && index == nearestStringIndex
         let isSounding = soundingString == index
-        // Highlight the target in green when it's in tune, else the toolkit indigo; a sounding string
-        // always takes the indigo accent.
+        // Highlight the target in green when it's in tune, else the Toolkit's colour; a sounding string
+        // always takes the Toolkit's accent.
         let accent = reading?.isInTune == true ? PocketColor.active : PocketColor.toolkit
         return Button {
             playReference(midi: tuning.midiNotes[index], stringIndex: index)

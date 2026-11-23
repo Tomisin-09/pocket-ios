@@ -12,7 +12,7 @@ import SwiftUI
 /// catalog rendered by a thin screen, and the app's first in-app support path. **My Progressions**
 /// (ADR 0218) sits beside My Chords as its counterpart for progressions the player writes. *Hear* sounds a saved
 /// chord from its detail (ADR 0097 Slice 1); the identifier/scales/ear-training sections remain later
-/// slices with their own ADRs. The landing is a simple list of sections in the indigo "study/reference"
+/// slices with their own ADRs. The landing is a simple list of sections in the Toolkit's "study/reference"
 /// accent (`PocketColor.toolkit`), one visual level down from the home cards.
 ///
 /// Help living inside it is deliberate: a player can read what the app does and reach us from the same
@@ -87,7 +87,7 @@ struct ToolkitView: View {
 }
 
 /// One section row on the Toolkit landing — icon + name + one-line purpose + a count/state, in the
-/// indigo accent. The hub's own presentational card, a level down from the home cards.
+/// Toolkit accent. The hub's own presentational card, a level down from the home cards.
 struct ToolkitSectionRow: View {
     let icon: String
     let title: String

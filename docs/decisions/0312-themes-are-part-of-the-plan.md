@@ -3,12 +3,15 @@
 - **Status:** Accepted on 2026-11-22, and built with ADR 0311 on `pocket-462-moon-themes-build`. Tomisin
   settled three of 0311's four open questions the same evening: *"Pro only, wordmark and App icon follow
   the theme, … and silver ships once it's seen on the phone."* The fourth, the Metronome and Toolkit
-  near-pair, they asked for options on; D5 lists them, not decided here.
+  near-pair, they asked for options on, and chose the next morning (2026-11-23) from D5's table: *"lets
+  go with b and test on device"*. The Toolkit goes pink.
 - **Date:** 2026-11-22
 - **Amends:** ADR 0311 — **D1**: the logo and the App Icon no longer stay Blood Moon whatever the theme;
   they follow it on the player's own phone (D2, D3 here). The App Store, the site, social posts and the
   manual's figures stay Blood Moon, as D1 says. **D11**: free or Pro, the wordmark and icon, and Silver
-  are decided (D1 to D4 here); the near-pair stays open (D5). ADR 0263 — **D2**: the themes are behind
+  are decided (D1 to D4 here), and so is the near-pair (D5). **D5**: the Toolkit column, which D5 here
+  redraws. ADR 0096 — **D3**: the Toolkit's indigo goes; it is pink in Blood Moon, and other themes move
+  it. D3's purpose, a reference hue clear of the other spaces, is what the move serves. ADR 0263 — **D2**: the themes are behind
   the plan though they neither play, keep nor practise, an exception recorded as one, the way D2 records
   the Practice log's (D1 here). **D4**: the wall's sentence gains a line naming the themes.
 - **Relates to:** 0256 (the one plan, its doors and its wall, D2 and D3) · 0081 (the Metronome's plum
@@ -91,22 +94,38 @@ icon is Blood Moon's, and so is the App Store's.
 Its art is grey by design (the table above), which is also the look to check: if the wordmark or the
 Pause button reads as disabled on the phone, Silver waits and seven ship.
 
-**D5. The Metronome and Toolkit near-pair: options, not decided.** They sit 3.9 apart in every theme but
-Cold Moon (OKLab ΔE × 100, the nearer of light and dark, as 0311 measures). On Home they are in different
-sections (Practice, and Learn), with different icons. The Metronome's plum never moves (0081), so every
-option moves the Toolkit:
+**D5. The Metronome and Toolkit near-pair: the Toolkit goes pink.** They sat 3.9 apart in every theme
+but Cold Moon (OKLab ΔE × 100, the nearer of light and dark, as 0311 measures): the Metronome's plum and
+the Toolkit's indigo, two violets. The Metronome's plum never moves (0081), so the Toolkit does:
+
+| Theme | Toolkit | Why | Nearest pair on Home |
+|---|---|---|---|
+| Blood, Blue, Jade, Corn, Silver | **pink** | 12.0 from the plum, the clearest family left | 10.9 (none involves the Toolkit) |
+| Pink Moon | **terracotta** | Practice wears pink | 10.9 |
+| Harvest Moon | **corn** | The orange leaves no family 10 clear: corn is the best, 8.6 from it | **8.6, Practice–Toolkit, accepted** |
+| Cold Moon | jade | As 0311 had it | 10.9 |
+
+**Blood Moon's look changes**: the Toolkit and the tile beside it (My tabs, by default) go from indigo to
+pink, and so does everything the Toolkit tints: its screens, the tuner, the tab writer's neck and the Song
+map's chord lane. The printed tab keeps its indigo, because its values are fixed and never read a token
+(0311 D2). Harvest Moon's 8.6 is a near-pair accepted the way 0311 D6 accepts a loop near the bars: the
+Toolkit sits in Learn, a section away from Practice, with its own icon.
+
+The three indigo colour sets went with it: no theme names them, and an asset nothing draws is a trap for
+the next person who reads the catalog (`TealCTA` went the same way in 0292, and came back from git here).
+
+What was weighed (Tomisin chose **B**):
 
 | Option | What changes | Nearest pair on Home |
 |---|---|---|
-| **A. Leave it** | Nothing. As built. | Metronome–Toolkit 3.9, in seven themes |
-| **B. The Toolkit goes pink** | Pink in Blood, Blue, Jade, Corn and Silver; terracotta in Pink Moon; jade in Cold Moon, as built. **Changes Blood Moon's shipping look**: the Toolkit and My tabs tiles go from indigo to pink | 12.0 (Toolkit–Metronome) in five themes, 10.9 in Pink Moon; **Harvest Moon can't clear 10**: its best is corn, 8.6 from the theme |
-| C. Retune the indigo bluer | A new indigo, 24° bluer | 9.1 from the plum but 8.5 from the Library's teal: it trades one near-pair for another |
+| A. Leave it | Nothing | Metronome–Toolkit 3.9, in seven themes |
+| **B. The Toolkit goes pink** | As above | 10.9 everywhere but Harvest Moon's 8.6 |
+| C. Retune the indigo bluer | A new indigo, 24° bluer | 9.1 from the plum but 8.5 from the Library's teal: one near-pair for another |
 | D. Move the Toolkit to jade | Jade everywhere but Jade Moon | 7.0 from the Library's teal in five themes: worse |
 
-My recommendation is **B**, with Harvest Moon's Toolkit on corn (8.6, a near-pair accepted the way 0311
-D6 accepts a loop near the bars). It is the only option that clears 10 in most themes. If Blood Moon's
-look shouldn't change in 1.6, **A** costs nothing and can be revisited. Either is one line per theme in
-`MoonTheme.toolkit`; `MoonThemeTests.testNoHomeSpaceSitsBesideTheTheme` would then hold the new pairs too.
+`MoonThemeTests.testNoTwoHomeColoursSitTogether` now holds **every pair** of Home colours to 10 in every
+theme, not only each space against the theme as 0311 D10 asked, with Harvest Moon's 8.6 written into it as
+the one exception.
 
 **D6. How a theme reaches every colour.** The themed tokens in `PocketColor` (Practice and its family,
 mastery, the song player's bars and accent, each space and its washes) are dynamic colours that ask the
@@ -128,6 +147,8 @@ Blood Moon.
 - **The art is part of the build now**: change a Practice colour in the catalog and the art should be cut
   again (`./scripts/derive-brand-svgs.py --themes --app-icon`). `MoonThemeTests` checks that every theme's
   art and icon exist, not that they match the catalog's current values.
+- **The manual's figures and the App Store screenshots that show the Toolkit go stale** (D5): Home's Learn
+  tiles, the Toolkit and its tools are pink now. They are reshot with 1.6's other figures.
 - **A UI-test launch resets the theme**, like the other stored choices that leak between tests, so the
   suite and the manual's figures are Blood Moon.
 

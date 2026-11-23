@@ -133,9 +133,10 @@ enum PocketColor {
     static let libraryCircleWash = Color(themed: .libraryCircleWash)
 
     /// **Toolkit** — the identity hue of the chords/theory/resources hub (ADR 0096, the fourth home
-    /// card). An **indigo/violet** "study / reference" hue, deliberately distinct from the
-    /// terracotta · plum · teal home triad so the reference destination reads as its own place (ADR
-    /// 0096 D3). Baked flat per appearance like the other card hues — *not* a shared opacity on
+    /// card), deliberately distinct from the terracotta · plum · teal home triad so the reference
+    /// destination reads as its own place (ADR 0096 D3). **Pink** in Blood Moon since ADR 0312 D5: the
+    /// indigo/violet it wore until 1.6 sat 3.9 from the Metronome's plum, and the pink sits 12.0 away.
+    /// Other themes move it (0311 D5, `MoonTheme.toolkit`). Baked flat per appearance like the other card hues — *not* a shared opacity on
     /// `toolkit` (ADR 0062 lesson: a low-opacity blend reads washed-grey on cream and near-invisible on
     /// near-black). No `toolkitCTA`: the hub is reference, never a filled transport CTA.
     static let toolkit = Color(themed: .toolkit)
@@ -145,7 +146,7 @@ enum PocketColor {
     /// **Journal** — the identity hue of the read-only practice-history space (the fifth home card,
     /// slotted 4th, between Practice and Toolkit). A warm **gold** "notebook/ink" hue: personal and
     /// reflective, deliberately set apart from the terracotta · plum · teal home triad and the
-    /// indigo reference hub, so the journal reads as its own place. Baked flat per appearance like
+    /// Toolkit's reference hub, so the journal reads as its own place. Baked flat per appearance like
     /// the other card hues (ADR 0062 lesson — not a shared opacity on `journal`). The gold also tints
     /// the owner-attribution captions inside the space. No `journalCTA`: the journal is history,
     /// never a filled transport CTA.

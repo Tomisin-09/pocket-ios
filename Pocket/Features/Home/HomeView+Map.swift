@@ -119,7 +119,7 @@ extension HomeView {
     /// The **Journal** space (ADR 0100) — the read-only practice-history destination that aggregates
     /// notes + takes across loops and exercises, in its own warm **gold** identity
     /// (`PocketColor.journal`), a fifth home hue kept clear of the terracotta · plum · teal triad and
-    /// the indigo reference hub. Free, so it draws no lock (ADR 0263 D1).
+    /// the Toolkit's reference hub. Free, so it draws no lock (ADR 0263 D1).
     private var journalTile: some View {
         NavigationLink { JournalTabView() } label: {
             HomeTile(icon: "book.closed.fill", title: "Journal",
@@ -163,7 +163,7 @@ extension HomeView {
 
     /// **The tile beside Toolkit is the player's** (ADR 0235 D6): it opens the Toolkit tool they pick,
     /// **My tabs** until they do, and takes that tool's name and glyph, so it always says where it goes.
-    /// It wears Toolkit's indigo, since whatever it opens is a Toolkit tool (ADR 0197 D1, as amended).
+    /// It wears the Toolkit's colour, since whatever it opens is a Toolkit tool (ADR 0197 D1, as amended).
     ///
     /// Two ways to change it, as Jump back in has (0193 D4): **hold it** and pick from the menu, or
     /// **Settings ▸ Practice ▸ Beside Toolkit**. Both write one key, bound to the named default.
@@ -202,7 +202,7 @@ extension HomeView {
 
     /// The **Red Moon Oracle** (ADR 0187) — the reflective reading over the practice you have
     /// already done. The **sixth** home hue: crimson (`PocketColor.oracle`), kept clear of the
-    /// terracotta · plum · teal triad, the indigo hub and the journal's gold. Not ADR 0081's Blood
+    /// terracotta · plum · teal triad, the Toolkit and the journal's gold. Not ADR 0081's Blood
     /// Moon, which D16 nominated and which turned out to *be* the terracotta family, now Practice's.
     ///
     /// A push, like the Toolkit beside it — it is a *place*, and one the player walks to. That is
@@ -235,7 +235,7 @@ extension HomeView {
     }
 
     /// The **Toolkit** hub (ADR 0096) — the free, deterministic reference destination (tuner, My
-    /// Chords, Glossary, Help & FAQs). A push, in the indigo/violet "study/reference" accent
+    /// Chords, Glossary, Help & FAQs). A push, in the Toolkit's "study/reference" accent
     /// (`PocketColor.toolkit`).
     ///
     /// The label still **names the tuner first**. It needs no song and no library, and is the thing
@@ -256,7 +256,7 @@ extension HomeView {
 }
 
 /// The map alone, at phone width, in both appearances — the check the build cannot make: that the hues
-/// read as places rather than a swatch card, and, since ADR 0235, that two indigo tiles side by side
+/// read as places rather than a swatch card, and, since ADR 0235, that two Toolkit tiles side by side
 /// read as one space with two doors.
 #Preview("Home map") {
     ScrollView {

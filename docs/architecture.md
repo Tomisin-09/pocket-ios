@@ -1533,8 +1533,8 @@ skip stages 2–4 (no raw audio) and be browse/metadata only. See
 
 The **Toolkit** (`Features/Toolkit/`, ADR 0096) is a top-level **reference** destination — *explore /
 keep* — distinct from the exercise editors' *author* job. It is the fourth home card (a `NavigationLink`
-onto the home stack, like Practice/Library) in the new indigo/violet `PocketColor.toolkit` accent (baked
-per-appearance `Indigo`/`IndigoCardWash`/`IndigoCircleWash` colour sets, ADR 0062/0081), and the free,
+onto the home stack, like Practice/Library) in the new `PocketColor.toolkit` accent (indigo/violet then, pink since ADR 0312 D5) (baked
+per-appearance `Indigo`/`IndigoCardWash`/`IndigoCircleWash` colour sets, ADR 0062/0081; deleted when ADR 0312 D5 moved the Toolkit to pink), and the free,
 deterministic floor the paid AI layer (ADR 0092) will later sit on. `ToolkitView` is a landing list of
 sections; **Slice 1** carries the two zero-dependency tenants and is **audio-free by construction** (ADR
 0096 D4/D5 — *Hear* has no pitched-tone source yet, ADR 0001):
@@ -1555,7 +1555,7 @@ sections; **Slice 1** carries the two zero-dependency tenants and is **audio-fre
 - **My tabs** (`MyTabsView`, ADR 0235) lists `WrittenTab`s, last changed first; hold or swipe to rename
   or delete. A row opens `WrittenTabView` to read, with **Edit** into `TabWriterView`: a title, a strip
   of the notes with one **+** slot (`TabDraft`), *Bar line* and *Section* (`TabSectionNamer`), the shared
-  `NeckNoteEditor` in the `.writing` voice with `neckAccent` set to Toolkit indigo, ↶ ↷ for the visit
+  `NeckNoteEditor` in the `.writing` voice with `neckAccent` set to the Toolkit's colour, ↶ ↷ for the visit
   (`EditHistory<TabStep>`), and the tab drawn a section at a time (`PieceDrawing(notes:)`). Silent, and
   never typed or imported. It saves as it goes: the tab is made on its first note or letter of title, and
   one the visit made and emptied is deleted on close.
@@ -1615,7 +1615,7 @@ sections; **Slice 1** carries the two zero-dependency tenants and is **audio-fre
   predicate naming exactly 0167's kinds, one item, at most one picture or PDF. `ShareActivationRuleTests`
   evaluates the rule read out of the built appex.
 
-The rows come from `ToolkitSection`, pushed through `ToolkitDestination`, which sets the indigo tint
+The rows come from `ToolkitSection`, pushed through `ToolkitDestination`, which sets the Toolkit's tint
 itself so a tool opened from **the Home tile beside Toolkit** (ADR 0235 D6) looks as it does from here.
 That tile opens the section the player picks (`AppSettings.Key.homeTool`, My tabs by default), by a hold
 or in Settings ▸ Practice.
@@ -2493,8 +2493,8 @@ true (ADR 0150 §118-121).
   lines, one block per row of tab, kept together on a PDF page: a written tab from
   `PieceStaff.systems`, a song's from `SongTab`, columns placed by `SongTabLayout.spread` (rounded down,
   which keeps its gaps) and one string-name gutter per song so bar numbers stay in their columns.
-  `TabPDF` (`Pocket/UI/`, UIKit) draws those lines on A4 or Letter by locale, chords in the chords lane's
-  indigo and names in the notes lane's teal. `ExportedTabFile` carries a `TabDocument.Source`, not the
+  `TabPDF` (`Pocket/UI/`, UIKit) draws those lines on A4 or Letter by locale, chords in indigo (`#4B3F94`) and
+  names in terracotta (`#B0391B`), fixed values, so a moon theme never reaches a printed page (0311 D2). `ExportedTabFile` carries a `TabDocument.Source`, not the
   laid-out document, and lays out and writes (`ExportStaging.write`) only in its `FileRepresentation`.
   `TabExportMenu` is the one menu both reading screens use.
   A song sent to another Red Moon (S4) is several files that have to arrive as one, so it travels as a

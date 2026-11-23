@@ -44,16 +44,17 @@ final class MoonThemeTests: XCTestCase {
         XCTAssertEqual(families, [.terracotta, .teal, .jade, .corn, .silver, .pink, .harvest, .cold])
     }
 
-    /// D5's table, row by row: Library, Metronome, Journal, Toolkit, Oracle.
+    /// 0311 D5's table, row by row, with the Toolkit as ADR 0312 D5 moved it: Library, Metronome, Journal,
+    /// Toolkit, Oracle.
     func testSpacePalettes() {
         let table: [MoonTheme: [ColorFamily]] = [
-            .blood: [.teal, .plum, .gold, .indigo, .crimson],
-            .blue: [.terracotta, .plum, .gold, .indigo, .crimson],
-            .jade: [.terracotta, .plum, .gold, .indigo, .crimson],
-            .corn: [.teal, .plum, .terracotta, .indigo, .crimson],
-            .silver: [.terracotta, .plum, .gold, .indigo, .crimson],
-            .pink: [.teal, .plum, .gold, .indigo, .teal],
-            .harvest: [.teal, .plum, .crimson, .indigo, .crimson],
+            .blood: [.teal, .plum, .gold, .pink, .crimson],
+            .blue: [.terracotta, .plum, .gold, .pink, .crimson],
+            .jade: [.terracotta, .plum, .gold, .pink, .crimson],
+            .corn: [.teal, .plum, .terracotta, .pink, .crimson],
+            .silver: [.terracotta, .plum, .gold, .pink, .crimson],
+            .pink: [.teal, .plum, .gold, .terracotta, .teal],
+            .harvest: [.teal, .plum, .crimson, .corn, .crimson],
             .cold: [.terracotta, .plum, .gold, .jade, .crimson]
         ]
         for theme in MoonTheme.allCases {
@@ -182,24 +183,43 @@ final class MoonThemeTests: XCTestCase {
 
     // MARK: D10's distance rule
 
-    /// Every space on Home stays at least 10 from the theme's colour (OKLab ΔE × 100, the nearer of
-    /// light and dark), so a later change to one family can't quietly bring two Home colours together.
-    /// The Oracle is left out: its Home tile is hidden (ADR 0211), and Blood Moon's own snag ticks sit
-    /// 7.9 from the bars, which shipped. The numbers are the ADR's table's: Blood Moon's nearest is the
-    /// Journal at 10.9.
-    func testNoHomeSpaceSitsBesideTheTheme() {
-        var nearest: [MoonTheme: Double] = [:]
+    /// No two colours on Home sit together: every pair of Practice, the Library, the Metronome, the Journal
+    /// and the Toolkit stays at least 10 apart (OKLab ΔE × 100, the nearer of light and dark), so a later
+    /// change to one family can't quietly bring two of them together. 0311 D10 asked this of each space
+    /// against the theme; since ADR 0312 D5 moved the Toolkit off the Metronome's plum, it holds for every
+    /// pair. **One pair is accepted below it**: Harvest Moon's Toolkit, corn, 8.6 from its orange, because
+    /// no family clears 10 there (0312 D5). The Oracle is left out: its Home tile is hidden (ADR 0211).
+    func testNoTwoHomeColoursSitTogether() {
+        let accepted = ["Harvest Moon: Practice–Toolkit": 8.6]
         for theme in MoonTheme.allCases {
-            let spaces: [(String, ColorFamily)] = [("Library", theme.library), ("Metronome", theme.metronome),
-                                                   ("Journal", theme.journal), ("Toolkit", theme.toolkit)]
-            for (space, family) in spaces {
-                let distance = Self.distance(theme.practice.text, family.text)
-                XCTAssertGreaterThanOrEqual(distance, 10, "\(theme.name): the \(space) is \(distance) from it")
-                nearest[theme] = min(nearest[theme] ?? .infinity, distance)
+            let places: [(String, ColorFamily)] = [("Practice", theme.practice), ("Library", theme.library),
+                                                   ("Metronome", theme.metronome), ("Journal", theme.journal),
+                                                   ("Toolkit", theme.toolkit)]
+            for first in places.indices {
+                for second in places.indices where second > first {
+                    let pair = "\(theme.name): \(places[first].0)–\(places[second].0)"
+                    let distance = Self.distance(places[first].1.text, places[second].1.text)
+                    if let figure = accepted[pair] {
+                        XCTAssertEqual(distance, figure, accuracy: 0.05, "the accepted near-pair moved: \(pair)")
+                    } else {
+                        XCTAssertGreaterThanOrEqual(distance, 10, "\(pair) is \(distance) apart")
+                    }
+                }
             }
         }
-        XCTAssertEqual(nearest[.blood] ?? 0, 10.9, accuracy: 0.05, "the measure isn't the ADR's")
-        XCTAssertEqual(nearest[.cold] ?? 0, 11.4, accuracy: 0.05)
+    }
+
+    /// The measure is the ADR's: each theme's nearest space reproduces 0311 D5's table (Blood Moon's is the
+    /// Journal at 10.9, Cold Moon's the Metronome at 11.4).
+    func testTheMeasureIsTheADRs() {
+        func nearest(_ theme: MoonTheme) -> Double {
+            [theme.library, theme.metronome, theme.journal, theme.toolkit]
+                .map { Self.distance(theme.practice.text, $0.text) }.min() ?? 0
+        }
+        XCTAssertEqual(nearest(.blood), 10.9, accuracy: 0.05)
+        XCTAssertEqual(nearest(.cold), 11.4, accuracy: 0.05)
+        XCTAssertEqual(Self.distance(ColorFamily.plum.text, ColorFamily.pink.text), 12.0, accuracy: 0.05,
+                       "the Metronome and the Toolkit, 0312 D5's figure")
     }
 
     // MARK: Helpers
