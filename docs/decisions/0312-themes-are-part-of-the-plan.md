@@ -146,7 +146,8 @@ Blood Moon.
   the window scene, not from the view that presented it, so every sheet drew Blood Moon whatever the
   theme. Tomisin saw it on Name the notes under Cold Moon. `MoonThemeHost` now also sets the trait on
   each window scene (`MoonThemeScenes`), and `MoonThemeSheetTests` presents a sheet, and a sheet inside
-  it, to hold that. The decision stands; only the mechanism had a gap.
+  it, to hold that. The decision stands; only the mechanism had a gap. Seen right on the phone the same
+  day.
 
 ## Consequences
 

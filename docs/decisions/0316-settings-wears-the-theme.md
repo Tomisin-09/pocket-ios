@@ -48,6 +48,8 @@ place that wants the theme colour for its look needs its own decision. The desig
 - The icons are drawn in Practice's *text* colour, which `BrandColorContrastTests` holds to 4.5 : 1 on
   the cream in every theme, so they read in light and dark.
 - A player on Blood Moon sees terracotta icons: the brand's own colour, now in Settings too.
+- **Seen on the phone, 2026-11-24**, with the sheets fix (ADR 0312 D6) in the same build: *"All good on
+  the phone."*
 
 ## Alternatives
 

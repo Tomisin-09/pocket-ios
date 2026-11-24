@@ -470,7 +470,7 @@ click through the speaker and through headphones.
 ## A loop's repeats keep to the bar — **BUILT as ADR 0315** (2026-11-24, `pocket-470`, for 1.6)
 
 Logged 2026-11-21 while building ADR 0310; Tomisin asked to revisit it before 1.6 shipped and chose to
-build it then. ADR 0315 amends 0232 D14 and D18, and 0308 D2. Owed: a phone pass on *Sunday Morning*.
+build it then. ADR 0315 amends 0232 D14 and D18, and 0308 D2. Seen right on the phone the same day.
 
 - **What happened.** In *Sunday Morning guitar cover*, Tomisin set the intro's *Chords* to repeat to the end
   of the song, and the chord changes slid off the record as the song went on. A repeat steps by the loop's

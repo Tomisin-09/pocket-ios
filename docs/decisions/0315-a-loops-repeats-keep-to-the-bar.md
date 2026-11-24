@@ -60,7 +60,8 @@ This changes where the map, the tab and Watch say the repeats fall in the song, 
   counted early. Only one pass's worth of taps repeats, and a pass after the first starts no earlier than
   the loop's end, so that 1 isn't written twice. The loop's own taps are always written as counted.
 - The backlog entry *A loop's repeats keep to the bar* is done.
-- Owed: a phone pass on *Sunday Morning*, intro chords repeated to the end, watched through the Solo.
+- **Seen on the phone, 2026-11-24:** Tomisin checked *Sunday Morning* on a build of this branch: *"All good
+on the phone."*
 
 ## Alternatives
 
