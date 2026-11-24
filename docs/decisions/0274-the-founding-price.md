@@ -8,7 +8,8 @@
   and £14.99 once, because App Store Connect offered no round point. 0277 also records that the
   founding price is the products' price, not an introductory offer. The lock and D1's wording stand.
   ADR 0280 (2026-11-02) — **D2**: the founding price now ends. It's £0.99 a month or £4.99 once for
-  the first 90 days on sale, then £2.99 or £9.99 for players who join after. *"No end date"* and
+  the first 90 days on sale (30 since 0319, 2026-11-24), then £2.99 or £9.99 for players who join
+  after. *"No end date"* and
   *"no 'limited time'"* no longer hold; the app still shows no countdown. The lock (D1's wording, D3)
   stands, so a founder keeps their price.
 - **Amends:** ADR 0256 — **D8**: the promise's second line. *"We'll never raise the price"* goes, and
@@ -78,7 +79,9 @@ and the site.
 
 ### D2 — A lock, not a promotion
 
-> **Amended by 0280 (2026-11-02):** the founding price now has an end: the first 90 days on sale, at
+> **Amended by 0280 (2026-11-02):** the founding price now has an end: the first 90 days on sale
+> (30 since 0319, 2026-11-24, which also has D1's line replaced in 1.6.1, the build that goes on
+> sale, by wording still to be chosen in an ADR of its own), at
 > £0.99 a month or £4.99 once, then £2.99 or £9.99 for players who join after. The site, the
 > description and posts say when it ends; the app still shows no countdown. The lock below stands, so
 > a founder keeps their price. What follows is D2 as it was decided.
