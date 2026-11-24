@@ -246,7 +246,8 @@ because a variation is worth seeing.
 When a section is one progression played over and over, work it out once, then hold its loop and choose
 **Repeats to the end of the section**. A lighter band runs on to the end of the section, marked with how
 many times the loop plays. It's never copied, so when you change the loop, the repeats change with it.
-When the song has more sections after it, the hold menu has **Repeats** instead, where the loop can also
+When the song has bars, each time round is a whole number of bars, so a loop drawn a little short or long
+still keeps time with the song to the last bar. When the song has more sections after it, the hold menu has **Repeats** instead, where the loop can also
 run on **Through** a later section or **To the end of the song**, and **Doesn't repeat** switches it off.
 
 Tap **+** in an empty stretch of a lane to make a loop that fills it exactly, from the loop before to the

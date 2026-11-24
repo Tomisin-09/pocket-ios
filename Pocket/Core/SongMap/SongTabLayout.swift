@@ -29,7 +29,7 @@ enum SongTabLayout {
                                               barsPerRow: barsPerRow, secondsPerRow: secondsPerRow)
                 .map { span -> SongTab.Row in
                     let own = row(from: span.start, to: span.end, grid: map.grid, pieces: pieces, spelling: spelling)
-                    return echo.map { writing($0, into: own, spelling: spelling) } ?? own
+                    return echo.map { writing($0, into: own, grid: map.grid, spelling: spelling) } ?? own
                 }
             return SongTab.Section(heading: section.heading, start: section.start, end: section.end,
                                    bars: section.bars, rows: rows, sameAs: section.sameAs)
@@ -40,7 +40,7 @@ enum SongTabLayout {
     static func row(from start: TimeInterval, to end: TimeInterval, grid: SongMapInput.Grid?,
                     pieces: [SongMap.Piece], spelling: NoteSpelling) -> SongTab.Row {
         let fullRow = grid.map { $0.barSeconds * Double(barsPerRow) } ?? secondsPerRow
-        let lines = lines(from: start, to: end, pieces: pieces, spelling: spelling)
+        let lines = lines(from: start, to: end, pieces: pieces, grid: grid, spelling: spelling)
         return SongTab.Row(start: start, end: end, widthFraction: min(1, max(0, (end - start) / fullRow)),
                            ticks: SongMapLayout.ticks(from: start, to: end, grid: grid, secondsPerTick: secondsPerTick),
                            lines: lines, pieces: drew(lines))
@@ -60,7 +60,7 @@ enum SongTabLayout {
     /// Chords above notes, then by lane, as on the board. A lane with nothing to draw in the row has no
     /// line: an empty loop and one tagged 🧩 by hand read as a gap (D4).
     static func lines(from start: TimeInterval, to end: TimeInterval, pieces: [SongMap.Piece],
-                      spelling: NoteSpelling) -> [SongTab.Line] {
+                      grid: SongMapInput.Grid?, spelling: NoteSpelling) -> [SongTab.Line] {
         SongMap.Layer.allCases.flatMap { layer -> [SongTab.Line] in
             // Within the board's tolerance, so the two views agree on which pieces a row holds.
             let tolerance = SongMapLayout.tolerance
@@ -69,21 +69,23 @@ enum SongTabLayout {
             }
             return Set(here.map(\.lane)).sorted().compactMap { lane in
                 line(layer: layer, lane: lane, pieces: here.filter { $0.lane == lane },
-                     during: start..<end, spelling: spelling)
+                     during: start..<end, grid: grid, spelling: spelling)
             }
         }
     }
 
     /// One lane's taps in a row's stretch of the song. It's tab when any of them was placed on the neck, on
     /// the strings of the piece with the most of them. A loop that repeats is written out on every pass
-    /// (D18), with *↻ ×8* where its repeats begin.
-    static func line(layer: SongMap.Layer, lane: Int, pieces: [SongMap.Piece],
-                     during row: Range<TimeInterval>, spelling: NoteSpelling) -> SongTab.Line? {
+    /// (D18), with *↻ ×8* where its repeats begin, its passes keeping to the song's bars (ADR 0315). The
+    /// grid is the sixth parameter for that: a pass needs the bars to keep to.
+    static func line(layer: SongMap.Layer, lane: Int, // swiftlint:disable:this function_parameter_count
+                     pieces: [SongMap.Piece], during row: Range<TimeInterval>,
+                     grid: SongMapInput.Grid?, spelling: NoteSpelling) -> SongTab.Line? {
         var columns: [SongTab.Column] = []
         var staff: [Int] = []
         for piece in pieces {
             guard case .piece(let transcription) = piece.content else { continue }
-            for sound in sounds(of: transcription, in: piece, during: row) {
+            for sound in sounds(of: transcription, in: piece, during: row, grid: grid) {
                 let column = column(sound.index, of: transcription, piece: piece.uid, layer: layer,
                                     spelling: spelling)
                 if column.mark.isFrets, let openMidi = transcription.openMidi, openMidi.count > staff.count {
@@ -110,19 +112,29 @@ enum SongTabLayout {
     /// repeats (D18), up to where the repeats end. Only a tap inside the loop plays, so only those repeat.
     /// The loop's start is read within the board's tolerance: its edges read back a hair off, and a copy's
     /// first tap sits exactly on it (D16).
+    ///
+    /// **With bars, a pass is whole bars and a tap keeps its place in the bar** (ADR 0315,
+    /// `SongMapRepeats`), so a loop drawn a hair short doesn't drift ahead of the record pass by pass. A
+    /// pass after the first is written from the loop's end on, never over the loop's own taps.
     static func sounds(of transcription: PieceTranscription, in piece: SongMap.Piece,
-                       during row: Range<TimeInterval>) -> [(index: Int, time: TimeInterval)] {
-        let length = piece.end - piece.start
+                       during row: Range<TimeInterval>,
+                       grid: SongMapInput.Grid?) -> [(index: Int, time: TimeInterval)] {
         let from = row.lowerBound - epsilon
         let upTo = min(row.upperBound, piece.repeats?.end ?? piece.end) - epsilon
+        let tolerance = SongMapLayout.tolerance
         return transcription.taps.indices.flatMap { index -> [(index: Int, time: TimeInterval)] in
             let seconds = transcription.taps[index].seconds
-            guard seconds > piece.start - SongMapLayout.tolerance, seconds < piece.end else { return [] }
+            guard seconds > piece.start - tolerance, seconds < piece.end else { return [] }
             // `repeats` is only there when a pass has length (`SongMapLayout.repeats`).
-            let passes = piece.repeats == nil ? 1 : Int(((upTo - seconds) / length).rounded(.up))
-            return (0..<max(passes, 1)).map { seconds + Double($0) * length }
-                .filter { $0 >= from && $0 < upTo }
-                .map { (index: index, time: $0) }
+            let repeating = piece.repeats != nil
+                && SongMapRepeats.repeats(seconds, from: piece.start, to: piece.end, grid: grid)
+            let passes = repeating
+                ? SongMapRepeats.passesToTry(from: piece.start, to: piece.end, upTo: upTo, grid: grid) : 1
+            return (0..<passes).compactMap { pass -> (index: Int, time: TimeInterval)? in
+                let time = SongMapRepeats.time(of: seconds, pass: pass, from: piece.start, to: piece.end, grid: grid)
+                guard time >= from, time < upTo, pass == 0 || time >= piece.end - tolerance else { return nil }
+                return (index: index, time: time)
+            }
         }
     }
 

@@ -43,11 +43,12 @@ extension SongTabLayout {
     /// A row of the later section, with the earlier section's matching bars written in on lines of their
     /// own, above its own lines in each layer. They're written only as far as the earlier section runs: a
     /// longer section has empty bars after them.
-    static func writing(_ echo: Echo, into row: SongTab.Row, spelling: NoteSpelling) -> SongTab.Row {
+    static func writing(_ echo: Echo, into row: SongTab.Row, grid: SongMapInput.Grid?,
+                        spelling: NoteSpelling) -> SongTab.Row {
         let from = max(row.start - echo.shift, echo.source.lowerBound)
         let upTo = min(row.end - echo.shift, echo.source.upperBound)
         guard upTo - from > SongMapLayout.tolerance else { return row }
-        let written = lines(from: from, to: upTo, pieces: echo.pieces, spelling: spelling).map { line in
+        let written = lines(from: from, to: upTo, pieces: echo.pieces, grid: grid, spelling: spelling).map { line in
             SongTab.Line(layer: line.layer, lane: line.lane, strings: line.strings,
                          columns: line.columns.map { $0.moved(to: $0.time + echo.shift) }, isSameAs: true)
         }
