@@ -6,10 +6,11 @@ out to where you were.
 ## The hub
 
 <!-- shot: reference/settings-hub | role: screen
-     | alt: The Settings hub with You and Your plan above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Your data and Help & About in a group below
+     | alt: The Settings hub under the Red Moon moon and wordmark, with You and Your plan above a Preferences group holding Appearance, Sound & feel, Practice, Routines and Song player, with Your data and Help & About in a group below
      | state: Settings open -->
 
-Nine destinations, and a tenth row while it is needed. **Each row states its current value on the
+Nine destinations, and a tenth row while it is needed, under Red Moon's moon and wordmark. The moon,
+the wordmark and the rows' icons wear your theme's colour. **Each row states its current value on the
 right**, so most questions are answered without opening anything.
 
 | Row | Holds |

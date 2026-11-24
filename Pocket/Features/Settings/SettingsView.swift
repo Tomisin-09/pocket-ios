@@ -57,6 +57,10 @@ struct SettingsView: View {
                         HubRow(icon: "xmark.circle", title: "Cancel your monthly plan")
                     }
                 }
+            } header: {
+                // Red Moon's lockup, in the theme, on one line (ADR 0316).
+                SettingsBrandHeader()
+                    .padding(.bottom, 12)
             }
 
             Section("Preferences") {
@@ -113,6 +117,8 @@ struct SettingsView: View {
             }
             #endif
         }
+        // Every row's icon in the theme's colour (ADR 0316): Settings wears the theme.
+        .environment(\.hubRowIconColor, PocketColor.practice)
         .settingsScreen(title: "Settings")
         .background {
             SubscriptionManagement(isPresented: $managingSubscriptions, groupID: plan?.subscriptionGroupID)

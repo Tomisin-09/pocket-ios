@@ -29,7 +29,8 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   once. A theme sets the colour Practice, the mastery dots and the song player wear. It moves a space's
   colour only where that space would sit beside the theme's colour, and the colours that mean something
   (live green, delete red, the loops, the chords) stay put. Every sheet wears it as well: Name the notes,
-  Watch it on the neck, Active listening and the rest. The Red Moon wordmark and logo and the Home
+  Watch it on the neck, Active listening and the rest. So does Settings (ADR 0316): Red Moon's moon and
+  wordmark head it on one line, and its icons take the theme's colour. The Red Moon wordmark and logo and the Home
   Screen icon follow the theme too. Blood Moon is free and stays the default; the other seven come with
   the plan, and a lapsed plan draws Blood Moon again while keeping the choice. *Save to Red Moon* draws in
   the app's theme.
