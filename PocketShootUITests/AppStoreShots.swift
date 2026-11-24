@@ -79,4 +79,91 @@ final class AppStoreShots: ManualShotCase {
         capture(app, slug: "appstore/keep-it-log", assertingOnScreen: "Practice log",
                 alsoRequiring: ["This week", "What you played"])
     }
+
+    /// **Build it up**, on a drill that draws the neck: an A minor 7 arpeggio running, past the count-in.
+    ///
+    /// The manual's `exercises/run-live` is *Alternate Picking*, a tempo drill with no board, so the
+    /// frame was the tempo and the staircase over half a phone of black. Running, an arpeggio draws its
+    /// walking board between the two, so the frame shows the neck *and* the click climbing.
+    ///
+    /// The drill is **made here, through New exercise**, the way a player makes one: a fresh install
+    /// seeds seven exercises and no arpeggio (`PracticePresets.firstRunSlugs`), so the catalog's
+    /// *A Minor 7 Arpeggio* is in no library a new player has. The form opens on A minor 7 for guitar
+    /// (`ConfigureExerciseForm.seededArpeggio`), so the name says what is drawn. Create opens the new
+    /// drill's run screen (`NewExerciseFlow`). Waiting for `Counting in` to go is the same gate
+    /// `ManualExerciseShots.testRunLive` uses, for its reason: a capture on arrival is a clean
+    /// photograph of a screen counting down.
+    @MainActor
+    func testBuildItUpArpeggio() {
+        let app = launchForShoot()
+        openExercises(in: app)
+
+        // Gated on the picker's own bar, not on its Arpeggios row: that row is eighth of ten, below the
+        // sheet's fold, where a List row isn't built and so doesn't exist to XCUI. Gating on it re-tapped
+        // the toolbar's +, which a sheet leaves in the tree, three times behind the open picker.
+        tap(app.buttons["New exercise"], labelled: "New exercise",
+            revealing: app.navigationBars["New exercise"], called: "the template picker")
+        let arpeggios = app.buttons["template.arpeggios"]
+        scrollIntoFrame(arpeggios, called: "the Arpeggios template", in: app)
+        tap(arpeggios, labelled: "the Arpeggios template",
+            revealing: app.navigationBars["New arpeggios"], called: "the New arpeggios form")
+        let name = app.textFields["e.g. A minor 7 arpeggio"]
+        XCTAssertTrue(name.waitForExistence(timeout: Self.shootTimeout),
+                      "the New arpeggios form has no name field.\n\(stepLog)")
+        name.tap()
+        name.typeText("A Minor 7 Arpeggio")
+        note("named the drill 'A Minor 7 Arpeggio'")
+        tap(app.navigationBars["New arpeggios"].buttons["Create"], labelled: "Create",
+            revealing: app.buttons["Exercise details"], called: "the new drill's run screen")
+
+        tap(app.buttons["Start training routine"], labelled: "Start training",
+            revealing: app.buttons["Stop and reset"], called: "the running transport")
+        let countingIn = app.staticTexts["Counting in"]
+        if countingIn.exists {
+            note("counting in — waiting for it to finish")
+            XCTAssertTrue(waitForDisappearance(of: countingIn, timeout: Self.shootTimeout), """
+                the count-in never finished, so this would have been shot mid-count.
+                \(stepLog)
+                """)
+        }
+
+        capture(app, slug: "appstore/build-it-up-arpeggio",
+                assertingOnScreen: "A Minor 7 Arpeggio",
+                alsoRequiring: ["Stop and reset", "Pause"],
+                orBeginningWith: ["BPM ·"])
+    }
+
+    /// Home in each of the eight moons (ADRs 0311, 0312), for the site's theme picker and the
+    /// listing's themes frame.
+    ///
+    /// The moon rides in on the **launch arguments** (`-moonTheme jade`), which `UserDefaults` reads
+    /// ahead of anything the app stored. A `-uiTesting` launch's `AppSettings.resetMoonTheme()` removes
+    /// only the stored value, so the argument still wins on this launch and nothing is left behind: the
+    /// next launch, this test's or any other, is Blood Moon again (a theme left on the simulator has
+    /// hung the unit-test host before). `moonTheme` is `AppSettings.Key.moonTheme`; the raw values are
+    /// `MoonTheme`'s cases, which this target can't see. A wrong key or name shoots Blood Moon under
+    /// that moon's name, which is why the eight are looked at before they're used.
+    @MainActor
+    func testHomeInEachMoon() {
+        for moon in ["blood", "blue", "jade", "corn", "silver", "pink", "harvest", "cold"] {
+            let app = launchForShoot(seeding: ["-moonTheme", moon])
+            capture(app, slug: "appstore/home-\(moon)",
+                    assertingOnScreen: "Red Moon",
+                    alsoRequiring: ["JUMP BACK IN", "Good morning"])
+            app.terminate()
+        }
+    }
+
+    /// Home ▸ Practice ▸ Exercises, gated the way `ManualExerciseShots` gates it: the hub's navigation
+    /// bar, then the library's.
+    @MainActor
+    private func openExercises(in app: XCUIApplication) {
+        let card = app.buttons
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "Practice,")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: Self.shootTimeout),
+                      "no Practice card on Home.\n\(stepLog)")
+        tapHomeCard(card.label, in: app, arrivingAt: app.navigationBars["Practice"])
+        tapRow(labelStartingWith: "Exercises,", in: app,
+               arrivingAt: app.navigationBars["Exercises"], called: "the exercise library")
+    }
 }

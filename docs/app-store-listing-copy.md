@@ -733,6 +733,20 @@ Frame 5's links read `example.com`. The practice log's
 lower half (`journal/month-heatmap`) is unusable as a frame: its header ghosts under the navigation bar,
 and it ends on *0 Mastered*.
 
+**Captures for 1.6, shot 2026-11-24, not yet framed or decided.** Two new `AppStoreShots` tests, run with
+`POCKET_SHOOT_ONLY="AppStoreShots/<test>"` and the Pro Max, one test per run so neither sees the other's
+writes:
+
+- `testBuildItUpArpeggio`: an A minor 7 arpeggio running, its neck drawn between the tempo and the
+  staircase (42 → 50 BPM, the form's default). Made through New exercise, because a fresh install seeds
+  no arpeggio. Proposed for frame 2, replacing *Alternate Picking*; the site uses it already.
+- `testHomeInEachMoon`: Home in each of the eight moons (`appstore-home-<moon>`), the theme passed as
+  `-moonTheme <raw>` at launch so nothing is left on the simulator. Proposed as frame 10's subject, a
+  themes frame in place of plain Home; that needs a composite layout `appstore-frames.swift` doesn't do
+  yet. Themes are on the plan, so the description owes a line saying so (Guideline 2.3.2).
+
+With the Journal and take swap owed since 11-18 (frames 4 and 7), that's four frames for 1.6.
+
 ## Screenshots — REVISED shoot guide (re-shoot, 2026-07-21) — history
 
 **Why re-shoot:** the `appstore-final/` set was shot **2026-07-16** and now predates
