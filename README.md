@@ -39,7 +39,7 @@ here it runs this site's check, and from the app's checkout it would run the iOS
 | `/story` | `app/story/page.tsx`: called *Liner notes* everywhere a reader sees it; the address stays |
 | `/support` | `app/support/page.tsx`: App Review opens this |
 | `/privacy` | `app/privacy/page.tsx` + `RedMoonPrivacyBody.tsx`: App Review opens this too |
-| `/manual`, `/manual/…` | `app/manual/`, rendered from `content/manual/` (below) |
+| `/manual`, `/manual/…` | `app/manual/`, rendered from `content/manual/` (below). **Off the site since 2026-11-24**: no link to it, and both addresses redirect to `/support` (`next.config.ts`, `HIDDEN`) |
 | `/beta/14675668e46224e5773801fc` | `app/beta/…/BetaGuide.tsx`: unlisted; section anchors are frozen |
 
 Old `/redmoon/…` page addresses redirect to these (`next.config.ts`). Images, the starter track and
@@ -82,10 +82,12 @@ Vercel deploys within a minute or two. Check the live site, not a preview (previ
 Vercel's login, and are a different deployment):
 
 ```sh
-for p in / /support /story /privacy /manual /beta/14675668e46224e5773801fc; do
+for p in / /support /story /privacy /beta/14675668e46224e5773801fc; do
   curl -s -o /dev/null -w "%{http_code} $p\n" "https://www.redmoonpracticestudio.co.uk$p"
 done
 ```
+
+While the manual is off the site, `/manual` should answer `307` to `/support`.
 
 A phrase grepped in the live HTML appears twice: once in the page, once in the RSC payload. That is
 normal.

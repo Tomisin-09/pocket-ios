@@ -50,7 +50,6 @@ export function RedMoonNav({ current, onLanding = false }: { current?: Place; on
         </Link>
         <nav className="rm-nav-links" aria-label="Red Moon">
           {item('/story', 'Liner notes', 'story')}
-          {item('/manual', 'Manual', 'manual')}
           {item('/support', 'Support', 'support')}
           <a href={onLanding ? '#get' : '/#get'} className="rm-nav-cta">
             Get the app
@@ -67,7 +66,6 @@ export function RedMoonFooter() {
       <div className="rm-footer-inner">
         <nav aria-label="More from Red Moon">
           <Link href="/story">Liner notes</Link>
-          <Link href="/manual">Manual</Link>
           <Link href="/support">Support</Link>
           <Link href="/privacy">Privacy</Link>
           <a

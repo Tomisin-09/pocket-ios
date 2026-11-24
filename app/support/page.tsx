@@ -78,7 +78,7 @@ export default function RedMoonSupportPage() {
               markers. So are the Metronome, your <strong>Journal</strong>{' '}and Practice log, and
               everything in the <strong>Toolkit</strong>: the tuner, your chords, progressions and tabs, and
               the glossary. The plan is for practising: drills, routines, Today&rsquo;s session, the loop
-              trainer, Train your ear, Improvise and Watch it on the neck.
+              trainer, Active listening, Improvise and Watch it on the neck.
             </p>
             <p>
               <strong>£0.99 a month, or £4.99 once.</strong>{' '}That&rsquo;s the founding price, and

@@ -28,9 +28,24 @@ const MOVED: Array<[string, string]> = [
   ['/redmoon/apple-icon.png', '/apple-icon.png'],
 ]
 
+// The manual is off the site while how it should work is rethought (Tomisin, 2026-11-24): its
+// figures are still the old blue, and it had drifted behind the app. Its pages still build from
+// `content/manual/`, so the export from `main` keeps working, and bringing it back is deleting
+// HIDDEN and putting the nav and footer links back (`app/_components/brand.tsx`). Nothing the app
+// ships links here; the old /redmoon/manual addresses above now end on Support through this.
+// Temporary (307) on purpose: the manual is coming back.
+const HIDDEN: Array<[string, string]> = [
+  ['/manual', '/support'],
+  ['/manual/:path*', '/support'],
+]
+
 const nextConfig: NextConfig = {
   async redirects() {
-    return MOVED.map(([source, destination]) => ({ source, destination, permanent: false }))
+    return [...MOVED, ...HIDDEN].map(([source, destination]) => ({
+      source,
+      destination,
+      permanent: false,
+    }))
   },
 }
 
