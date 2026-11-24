@@ -128,10 +128,11 @@ extension TakeDetailView {
             }.value
             take.duration = trimmed
             rebaseMoments(keep: keep, newDuration: trimmed)
-            try? modelContext.save()
+            // The file is already trimmed, so the screen moves on either way and a failed save says so.
+            let saved = modelContext.saveOrLog()
             trim = .idle
             player.limitPlayback(until: nil)
-            haptic(.light)
+            if saved { haptic(.light) } else { saveFailed = true }
             await loadWaveform()
         } catch {
             trimFailure = "The take was left as it was. \(error.localizedDescription)"

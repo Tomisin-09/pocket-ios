@@ -46,6 +46,6 @@ enum TakeNumberBackfill {
         let assigned = TakeNumbering.backfill(entries)
         guard !assigned.isEmpty else { return }
         for (index, number) in assigned { all[index].takeNumber = number }
-        try? context.save()
+        context.saveOrLog()
     }
 }

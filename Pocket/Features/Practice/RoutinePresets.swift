@@ -141,7 +141,7 @@ enum RoutinePresets {
                 routine.name = current
             }
         }
-        try? context.save()
+        context.saveOrLog()
         defaults.set(true, forKey: presetSlugBackfillKey)
     }
 
@@ -161,7 +161,7 @@ enum RoutinePresets {
             context.insert(routine)
             for item in routine.items { item.routine = routine; context.insert(item) }
         }
-        try? context.save()
+        context.saveOrLog()
         defaults.set(true, forKey: seededDefaultsKey)
     }
 }

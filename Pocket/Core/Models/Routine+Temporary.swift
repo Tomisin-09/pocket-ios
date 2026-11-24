@@ -52,13 +52,17 @@ extension Routine {
     /// It flips the flag and gives the session a name no saved routine has, and changes nothing else.
     /// The `uid` is the one every run and the session note were written with, so the saved routine
     /// arrives with its practised count, its last-practised date and the note's link already right.
-    func saveTemporary(in context: ModelContext, now: Date = .now) {
-        guard isTemporary else { return }
+    ///
+    /// Returns false only when its save failed (ADR 0318). The session is saved in memory either way, so a
+    /// retry saves the context rather than calling this again, which would find nothing to do.
+    @discardableResult
+    func saveTemporary(in context: ModelContext, now: Date = .now) -> Bool {
+        guard isTemporary else { return true }
         let others = Routine.saved((try? context.fetch(FetchDescriptor<Routine>())) ?? [])
             .filter { $0.uid != uid }
             .map(\.name)
         name = QuickSessionNaming.savedName(requested: name, existing: others, date: now)
         isTemporary = false
-        try? context.save()
+        return context.saveOrLog()
     }
 }

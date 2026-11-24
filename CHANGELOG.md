@@ -29,6 +29,19 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   instead of cutting the last one off. *Practice as triads* opens on triplets too. Exercises already
   saved keep the rhythm they were saved with, and Rhythm under Advanced still changes it.
 
+### Fixed
+- **A save that fails now says so** (ADR 0318). Every save in the app threw its error away, so a change
+  that failed to save looked kept and was gone after the next launch. Where you've just asked for
+  something to be kept (Save or Done on a note, a goal, a skill, Edit shape, the routine editor, a
+  reference; stopping a take; a trim; receiving or restoring), a failed save now says **Couldn’t save**
+  and keeps the screen as it was, and **Try again** saves it without writing it twice. Every other save
+  logs the failure on the device.
+- **A take only says *Take saved* once it is.** It said so even when the save failed.
+- **Starting a new session no longer silently doesn't open** when its save fails, and **receiving**
+  says *Added* only once it's saved.
+- **A restore that can't save adds nothing.** It no longer writes the takes' audio with no saved rows
+  to own them (which *Reclaim space* deletes), and says **Couldn’t restore**.
+
 ## [1.6] — build 14, cut 2026-11-24
 
 ### Added

@@ -52,7 +52,7 @@ enum TakeModeBackfill {
             wrote = true
         }
         if wrote {
-            do { try context.save() } catch { return }
+            guard context.saveOrLog() else { return }
         }
         defaults.set(true, forKey: backfillKey)
     }

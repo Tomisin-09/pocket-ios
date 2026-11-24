@@ -53,7 +53,7 @@ enum CustomSkillStore {
             loop.skillIDs.removeAll { $0 == skillID }
         }
         context.delete(skill)
-        try? context.save()
+        context.saveOrLog()
     }
 
     /// The whole table, filtered in memory — `skillIDs` is an array, and a `#Predicate` reaching into

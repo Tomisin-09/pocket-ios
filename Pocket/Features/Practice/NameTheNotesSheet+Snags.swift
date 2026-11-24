@@ -27,7 +27,7 @@ extension NameTheNotesSheet {
             for snag in here { modelContext.delete(snag) }
             haptic(.light)
         }
-        try? modelContext.save()
+        modelContext.saveOrLog()
         lineDraft = nil
         if index != active { moveTo(index) }
     }
@@ -114,8 +114,27 @@ extension NameTheNotesSheet {
             // opposite (ADR 0234 D7).
             JournalWriter.add(to: .loop(loop), text: trimmed, kind: .ear, snagUID: snag.uid, into: modelContext)
         }
-        try? modelContext.save()
+        // A new line is the snag's line from here, so Save again edits it rather than writing a second.
+        guard modelContext.saveOrLog() else { failed(.line); return }
         lineDraft = nil
+    }
+
+    /// Which save failed: a snag's line, which closes its editor once saved, or Done, which closes the sheet.
+    enum FailedSave { case line, done }
+
+    func failed(_ save: FailedSave) {
+        failedSave = save
+        saveFailed = true
+    }
+
+    /// *Try again* (ADR 0318): the save alone. The edit is already made, and making it again would write a
+    /// line twice, or find nothing changed and save nothing.
+    func retrySave() {
+        guard modelContext.saveOrLog() else { saveFailed = true; return }
+        switch failedSave {
+        case .line: lineDraft = nil
+        case .done: dismiss()
+        }
     }
 
     var snagGlyph: some View {

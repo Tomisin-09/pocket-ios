@@ -49,6 +49,11 @@ extension RoutinePlayerView {
             }
         }
         .keepAwakeDuringPractice()   // the summary lingers on screen after the last block (ADR 0050)
+        // On the screen, not the button: the button goes once the routine is saved, which in memory it
+        // is even when the save fails (ADR 0318).
+        .saveFailedAlert(isPresented: $saveFailed) {
+            if modelContext.saveOrLog() { haptic(.medium) } else { saveFailed = true }
+        }
     }
 
     /// A judgement-free recap — just *what* you worked through this session, no scores (ADR 0070).
@@ -102,8 +107,7 @@ extension RoutinePlayerView {
     @ViewBuilder private var saveAsRoutine: some View {
         if routine.isTemporary {
             Button {
-                routine.saveTemporary(in: modelContext)
-                haptic(.medium)
+                if routine.saveTemporary(in: modelContext) { haptic(.medium) } else { saveFailed = true }
             } label: {
                 Label("Save as a routine", systemImage: "list.bullet.rectangle.portrait")
                     .font(.futura(.headline))

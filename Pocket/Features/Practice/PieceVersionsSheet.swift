@@ -89,13 +89,13 @@ struct PieceVersionsSheet: View {
 
     private func use(_ index: Int) {
         loop.pieceVersions.use(index)
-        try? modelContext.save()
+        modelContext.saveOrLog()
         haptic(.success)
     }
 
     private func delete(_ index: Int) {
         loop.pieceVersions.delete(index)
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 }
 

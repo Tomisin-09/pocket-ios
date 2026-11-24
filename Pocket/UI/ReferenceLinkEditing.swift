@@ -39,15 +39,16 @@ struct ReferenceLinkEditing<Owner: ReferenceLinkOwner & AnyObject>: ViewModifier
 
     func body(content: Content) -> some View {
         content.sheet(item: $editing) { draft in
-            ReferenceLinkEditor(draft: draft, accent: accent) { title, url, note in
-                commit(draft, title: title, url: url, note: note)
-            }
+            ReferenceLinkEditor(draft: draft, accent: accent,
+                                save: { title, url, note in commit(draft, title: title, url: url, note: note) },
+                                retry: { !savesImmediately || writeContext.saveOrLog() })
         }
     }
 
     /// The write. Lives here rather than in the section because the section no longer knows when a
     /// save happened — the editor reports back to whoever presented it.
-    private func commit(_ draft: ReferenceLinkDraft, title: String, url: String, note: String) {
+    /// Returns false only when its save failed (ADR 0318).
+    private func commit(_ draft: ReferenceLinkDraft, title: String, url: String, note: String) -> Bool {
         switch draft {
         case .adding:
             ReferenceLinkStore.add(title: title, url: url, note: note, to: owner, in: writeContext)
@@ -65,8 +66,8 @@ struct ReferenceLinkEditing<Owner: ReferenceLinkOwner & AnyObject>: ViewModifier
         case .editing(let link):
             ReferenceLinkStore.update(link, title: title, url: url, note: note)
         }
-        guard savesImmediately else { return }
-        try? writeContext.save()
+        guard savesImmediately else { return true }
+        return writeContext.saveOrLog()
     }
 }
 

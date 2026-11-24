@@ -37,6 +37,7 @@ private struct PracticeReceiveHost: ViewModifier {
 
     @State private var pending: PendingReceive?
     @State private var failure: String?
+    @State private var saveFailed = false
     /// What just landed, and where it went, for the confirmation. Door A can land practice while the
     /// player is looking at the Toolkit, so "it worked" has to be said rather than shown.
     @State private var landed: String?
@@ -87,6 +88,9 @@ private struct PracticeReceiveHost: ViewModifier {
                     let title = arrival.songTitles.first ?? received.displayTitle
                     ReceivedSongPreviewSheet(received: received, title: title) { add(received, as: title) }
                 }
+            }
+            .saveFailedAlert(isPresented: $saveFailed) {
+                if context.saveOrLog() { haptic(.medium) } else { saveFailed = true }
             }
             .alert("Couldn’t open that file", isPresented: presenting($failure)) {
                 Button("OK", role: .cancel) {}
@@ -200,7 +204,7 @@ private struct PracticeReceiveHost: ViewModifier {
             do {
                 let prepared = try await Task.detached { try SongImporter.prepareReceived(from: copy) }.value
                 let song = SongImporter.persist(prepared, into: context)
-                save()
+                guard save() else { return }
                 if arrival.homeCanOpen {
                     arrival.open(song)
                 } else {
@@ -282,7 +286,7 @@ private struct PracticeReceiveHost: ViewModifier {
     private func land(_ received: ReceivedRoutine, songs: [LandedSong]) {
         let landing = ReceivedRoutineBuilder.materialize(received, songs: songs)
         landing.insert(into: context)
-        save()
+        guard save() else { return }
         landed = songs.isEmpty
             ? "“\(received.displayName)” is in your routines."
             : "“\(received.displayName)” is in your routines, and its "
@@ -299,7 +303,7 @@ private struct PracticeReceiveHost: ViewModifier {
     private func add(_ received: ReceivedExercise) {
         let landing = ReceivedPracticeBuilder.materialize(received)
         landing.insert(into: context)
-        save()
+        guard save() else { return }
         landed = "“\(received.displayName)” is in your exercises."
         haptic(.medium)
     }
@@ -315,7 +319,7 @@ private struct PracticeReceiveHost: ViewModifier {
             do {
                 let prepared = try await Task.detached { try SongImporter.prepareReceived(from: audio) }.value
                 context.insert(ReceivedSongBuilder.song(from: received, prepared: prepared, title: title))
-                save()
+                guard save() else { return }
                 landed = "“\(title)” is in your songs."
                 haptic(.medium)
             } catch {
@@ -327,8 +331,11 @@ private struct PracticeReceiveHost: ViewModifier {
     /// Saved rather than left to autosave: Door A can land practice seconds before the player
     /// switches back to the app that sent it, and a receive that has to survive being backgrounded is
     /// not a good candidate for "the context will get to it".
-    private func save() {
-        try? context.save()
+    ///
+    /// Nothing says *Added* until it's saved: a failed save says *Couldn’t save* instead (ADR 0318).
+    private func save() -> Bool {
+        guard context.saveOrLog() else { saveFailed = true; return false }
+        return true
     }
 
     /// A `Bool` binding over an optional message, the idiom `LibraryView.importErrorBinding` uses:

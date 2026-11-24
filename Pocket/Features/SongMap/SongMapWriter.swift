@@ -117,7 +117,7 @@ enum SongMapWriter {
         }
         if let backing = plan.backing { song.loops.first { $0.uid == backing }?.isBackingTrack = true }
         let joined = plan.joins.compactMap { join($0, in: song, context: context) }
-        try? context.save()
+        context.saveOrLog()
         return joined
     }
 

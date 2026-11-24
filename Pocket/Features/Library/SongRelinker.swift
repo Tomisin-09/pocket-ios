@@ -111,7 +111,7 @@ enum SongRelinker {
         song.bookmark = prepared.bookmark
         song.duration = prepared.duration
         song.amplitudes = prepared.amplitudes
-        try? context.save()
+        context.saveOrLog()
         return Outcome(newDuration: prepared.duration, previousDuration: previousDuration)
     }
 }

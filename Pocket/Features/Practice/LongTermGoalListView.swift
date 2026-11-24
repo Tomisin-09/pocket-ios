@@ -174,7 +174,7 @@ struct LongTermGoalListView: View {
     /// skipping steps and two adjacent goals stop pulling differently.
     private func move(from offsets: IndexSet, to destination: Int) {
         LongTermGoalStore.move(from: offsets, to: destination, in: activeGoals)
-        try? context.save()
+        context.saveOrLog()
         haptic(.light)
     }
 
@@ -184,7 +184,7 @@ struct LongTermGoalListView: View {
         for index in offsets where ordered.indices.contains(index) { context.delete(ordered[index]) }
         let survivors = ordered.enumerated().filter { !offsets.contains($0.offset) }.map(\.element)
         LongTermGoalStore.renumber(survivors)
-        try? context.save()
+        context.saveOrLog()
         haptic(.medium)
     }
 }

@@ -155,17 +155,9 @@ struct LoopRunView: View {
         }
         .onDisappear { finishTakeIfNeeded(); model.stop() }
         .endsTakeOnInterruption(finishTakeIfNeeded)
+        .reportsUnsavedTake(recorder)
         .sheet(isPresented: $showingJournal) {
-            JournalSheet(owner: .loop(loop),
-                         onAdd: addJournalEntry,
-                         onUpdate: { entry, text, kind in
-                             JournalWriter.update(entry, text: text, kind: kind)
-                             try? modelContext.save()
-                         },
-                         onDelete: { entry in
-                             JournalWriter.delete(entry, from: modelContext)
-                             try? modelContext.save(); haptic(.light)
-                         })
+            JournalSheet(owner: .loop(loop))
         }
         // Presented over a live run on purpose: nothing here pauses the audio (ADR 0142).
         .sheet(isPresented: $showingQuickNote) {

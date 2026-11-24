@@ -201,16 +201,19 @@ final class CountTheNotesModel {
     /// Named at the song's own shift, it's saved against the recording (D5): the frets as placed, the
     /// strings and every name said by ear moved down by the shift, so *Standard* at +1 saves as *Half step
     /// down*.
-    func finishNaming(_ request: NamingRequest, result: NamingResult, context: ModelContext) {
-        guard request.shifted == nil else { return }
-        guard !result.taps.isEmpty, let before = loop.heardTranscription else { return }
+    ///
+    /// Returns false only when there was something to keep and its save failed (ADR 0318).
+    @discardableResult
+    func finishNaming(_ request: NamingRequest, result: NamingResult, context: ModelContext) -> Bool {
+        guard request.shifted == nil else { return true }
+        guard !result.taps.isEmpty, let before = loop.heardTranscription else { return true }
         var piece = before
         piece.taps = result.taps.sorted { $0.seconds < $1.seconds }
         stampTuning(on: &piece, openMidi: result.openMidi, label: result.tuningLabel)
-        guard piece != before else { return }
+        guard piece != before else { return true }
         piece.changedAt = .now
         loop.setHeardTranscription(piece)
-        try? context.save()
+        return context.saveOrLog()
     }
 
     // MARK: - Saving
@@ -220,13 +223,18 @@ final class CountTheNotesModel {
     /// there is kept as an earlier version (ADR 0233 D3), so nothing is lost and nothing needs asking. **No
     /// Journal line** (ADR 0229): the Journal lists the piece in use under Pieces, so a line per save would
     /// only pile up copies.
-    func save(context: ModelContext) {
-        guard let pass = targetPass, !pass.taps.isEmpty else { return }
+    ///
+    /// Returns false only when its save failed (ADR 0318). The pass is on the loop either way, so a retry
+    /// saves the context rather than calling this again, which would keep a second copy.
+    @discardableResult
+    func save(context: ModelContext) -> Bool {
+        guard let pass = targetPass, !pass.taps.isEmpty else { return true }
         var piece = PieceTranscription(taps: pass.taps.map { PieceTranscription.Tap(seconds: $0.seconds) })
         piece.changedAt = .now
         loop.pieceVersions.save(piece)
-        try? context.save()
+        guard context.saveOrLog() else { return false }
         haptic(.success)
+        return true
     }
 
     /// Record which strings the frets were placed on, only when there are frets to read against them.

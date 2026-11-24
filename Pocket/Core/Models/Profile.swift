@@ -136,7 +136,7 @@ final class Profile {
         profile.genres = genres
         profile.dream = dream
         profile.minutesPerDay = minutesPerDay
-        try? context.save()
+        context.saveOrLog()
     }
 
     /// Set the preferred instrument, creating the singleton row on first use — a player can declare
@@ -145,7 +145,7 @@ final class Profile {
     static func setPreferredInstrument(_ instrument: Instrument, in context: ModelContext) {
         let profile = fetchOrCreate(in: context)
         profile.preferredInstrument = instrument
-        try? context.save()
+        context.saveOrLog()
     }
 
     /// Set what the player plays (ADR 0248). An answer with a neck also sets `preferredInstrument`, which
@@ -155,7 +155,7 @@ final class Profile {
         let profile = fetchOrCreate(in: context)
         profile.plays = plays
         if let neck = plays?.fretboard { profile.preferredInstrument = neck }
-        try? context.save()
+        context.saveOrLog()
     }
 
     /// Set (or clear) the artist name, creating the singleton row on first use. Trims whitespace;
@@ -172,6 +172,6 @@ final class Profile {
         } else if let value {
             context.insert(Profile(artistName: value))
         }
-        try? context.save()
+        context.saveOrLog()
     }
 }

@@ -44,8 +44,8 @@ extension RoutineDetailView {
     ///
     /// The name is the one on the review screen, or the dated default if it was blanked. It is not
     /// de-duplicated until the session is saved (D4).
-    func commitTemporary() {
-        guard !existsInStore else { return }
+    func commitTemporary(then next: AfterSave = .stored) -> Bool {
+        guard !existsInStore else { return true }
         trimDescription()
         let savedNames = Routine.saved((try? editContext.fetch(FetchDescriptor<Routine>())) ?? [])
             .filter { $0.persistentModelID != routine.persistentModelID }
@@ -54,15 +54,15 @@ extension RoutineDetailView {
                                                         date: .now)
         routine.isTemporary = true
         Routine.deleteTemporaries(replacedBy: routine.uid, in: editContext)
-        try? editContext.save()
-        existsInStore = true
-        isEditing = false
+        guard saveSandbox(then: next) else { return false }
+        markStored()
+        return true
     }
 
     /// **Save**, on a temporary session's own screen (D4, "any time later"). Written through the
     /// sandbox, which holds no other change: a temporary session can't enter edit mode.
     func saveTemporarySession() {
-        routine.saveTemporary(in: editContext)
+        guard routine.saveTemporary(in: editContext) else { afterSave = .stored; saveFailed = true; return }
         haptic(.medium)
     }
 

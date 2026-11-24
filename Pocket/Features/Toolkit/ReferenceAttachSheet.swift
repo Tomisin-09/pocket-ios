@@ -23,6 +23,7 @@ struct ReferenceAttachSheet: View {
     @Query private var loops: [Loop]
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @State private var saveFailed = false
     @Environment(PlanStore.self) private var plan: PlanStore?
 
     var body: some View {
@@ -46,6 +47,7 @@ struct ReferenceAttachSheet: View {
             }
         }
         .tint(PocketColor.toolkit)
+        .saveFailedAlert(isPresented: $saveFailed, retry: commit)
     }
 
     /// Where the player stands (D6). Before StoreKit has answered, as a paying player: their drills must
@@ -92,7 +94,13 @@ struct ReferenceAttachSheet: View {
     private func attach(_ source: ReferenceSource, to destination: ReferenceDestination) {
         guard let owner = candidates.first(where: { $0.destination.id == destination.id })?.owner else { return }
         guard ReferenceLinkStore.attach(source, to: owner, in: context) != nil else { return }
-        try? context.save()
+        commit()
+    }
+
+    /// The save and the close, which *Try again* repeats without attaching twice. A failed save keeps
+    /// the sheet open (ADR 0318).
+    private func commit() {
+        guard context.saveOrLog() else { saveFailed = true; return }
         haptic(.medium)
         dismiss()
     }

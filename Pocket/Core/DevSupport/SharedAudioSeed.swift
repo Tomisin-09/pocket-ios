@@ -55,7 +55,7 @@ enum SharedAudioSeed {
         let songs = ((try? context.fetch(FetchDescriptor<Song>())) ?? []).filter { $0.title.hasPrefix(title) }
         guard !songs.isEmpty else { return }
         songs.forEach(context.delete)
-        try? context.save()
+        context.saveOrLog()
     }
 }
 #endif

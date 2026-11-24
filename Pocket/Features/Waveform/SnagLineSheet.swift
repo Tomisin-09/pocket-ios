@@ -13,17 +13,23 @@ struct SnagLineSheet: View {
     /// Where a new line goes (`SnagLine.home`); `nil` when no loop has the snag. Unused when it has a line,
     /// which stays where it was written.
     let home: Loop?
-    let onSave: (String) -> Void
+    /// Writes the line and says whether its save worked (ADR 0318).
+    let onSave: (String) -> Bool
+    /// Saves again after a failure, without writing the line twice.
+    let onRetry: () -> Bool
 
     @Environment(\.dismiss) private var dismiss
     @State private var draft: String
+    @State private var saveFailed = false
     @FocusState private var focused: Bool
 
-    init(snag: Snag, line: JournalEntry?, home: Loop?, onSave: @escaping (String) -> Void) {
+    init(snag: Snag, line: JournalEntry?, home: Loop?, onSave: @escaping (String) -> Bool,
+         onRetry: @escaping () -> Bool) {
         self.snag = snag
         self.line = line
         self.home = home
         self.onSave = onSave
+        self.onRetry = onRetry
         _draft = State(initialValue: line?.text ?? "")
     }
 
@@ -62,13 +68,15 @@ struct SnagLineSheet: View {
                 if journalLoop != nil {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
-                            onSave(draft)
-                            dismiss()
+                            if onSave(draft) { dismiss() } else { saveFailed = true }
                         }
                     }
                 }
             }
             .onAppear { if line == nil { focused = true } }
+        }
+        .saveFailedAlert(isPresented: $saveFailed) {
+            if onRetry() { dismiss() } else { saveFailed = true }
         }
         .presentationDetents([.medium, .large])
     }
@@ -96,7 +104,8 @@ struct PanelRowSheets: ViewModifier {
             .sheet(item: $model.editingSnag) { ref in
                 let snag = ref.value
                 SnagLineSheet(snag: snag, line: model.snagLine(for: snag), home: model.snagLineHome(for: snag),
-                              onSave: { model.saveSnagLine($0, for: snag) })
+                              onSave: { model.saveSnagLine($0, for: snag) },
+                              onRetry: model.commitSnagLine)
             }
     }
 }

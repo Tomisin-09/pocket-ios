@@ -135,7 +135,7 @@ struct ExerciseSongsScreen: View {
         } else {
             exercise.linkedSongs.append(song)
         }
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 
     private func unlinkSongs(at offsets: IndexSet) {
@@ -143,7 +143,7 @@ struct ExerciseSongsScreen: View {
         for song in targets {
             exercise.linkedSongs.removeAll { $0.persistentModelID == song.persistentModelID }
         }
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 }
 
@@ -338,12 +338,12 @@ struct ExerciseFeelScreen: View {
         let stored = SkillAssociation.storedSkills(kept: skillKept, template: exercise.template)
         guard stored != exercise.skillIDs else { return }
         exercise.skillIDs = stored
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 
     private func resetSkillsToType() {
         exercise.skillIDs = []
-        try? modelContext.save()
+        modelContext.saveOrLog()
         haptic(.light)
     }
 

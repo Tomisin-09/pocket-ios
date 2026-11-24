@@ -171,17 +171,9 @@ struct ExerciseRunView: View {
         }
         .onDisappear { finishTakeIfNeeded(); engine.stop() }
         .endsTakeOnInterruption(finishTakeIfNeeded)
+        .reportsUnsavedTake(recorder)
         .sheet(isPresented: $showingJournal) {
-            JournalSheet(owner: .exercise(exercise),
-                         onAdd: addJournalEntry,
-                         onUpdate: { entry, text, kind in
-                             JournalWriter.update(entry, text: text, kind: kind)
-                             try? modelContext.save()
-                         },
-                         onDelete: { entry in
-                             JournalWriter.delete(entry, from: modelContext)
-                             try? modelContext.save(); haptic(.light)
-                         })
+            JournalSheet(owner: .exercise(exercise))
         }
         // Presented over a live run on purpose: nothing here pauses the engine (ADR 0142).
         .sheet(isPresented: $showingQuickNote) {

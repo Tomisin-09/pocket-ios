@@ -45,7 +45,7 @@ extension RoutineDetailView {
         Binding(get: { item.recordsTake },
                 set: { newValue in
                     item.recordsTake = newValue
-                    if existsInStore { try? editContext.save() }
+                    if existsInStore { editContext.saveOrLog() }
                     guard newValue else { return }
                     guard MicPermission.status == .undetermined else { return }
                     // Explicitly `@MainActor`: the sandboxed `RoutineItem` written on the far side
@@ -55,7 +55,7 @@ extension RoutineDetailView {
                         let granted = await MicPermission.request()
                         guard !granted else { return }
                         item.recordsTake = false
-                        if existsInStore { try? editContext.save() }
+                        if existsInStore { editContext.saveOrLog() }
                     }
                 })
     }

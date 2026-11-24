@@ -36,13 +36,21 @@ extension RoutineDetailView {
     /// What a run leaves behind (its practice log rows, its note, its takes) names the routine by a
     /// loose `uid` and outlives it either way (ADR 0117, 0143), so being in Routines was never what
     /// made a run count.
+    ///
+    /// The player opens on the routine as the store has it, so a session that couldn't be written doesn't
+    /// open: the screen says *Couldn’t save*, and *Try again* opens it once the save works (ADR 0318).
     private func startPlaying() {
         if !existsInStore {
-            switch startsAs {
-            case .temporary: commitTemporary()
-            case .saved: commitProvisional(named: routine.name)
+            let saved = switch startsAs {
+            case .temporary: commitTemporary(then: .start)
+            case .saved: commitProvisional(named: routine.name, then: .start)
             }
+            guard saved else { return }
         }
+        openPlayer()
+    }
+
+    func openPlayer() {
         playingRoutine = appContext.model(for: routine.persistentModelID) as? Routine
         haptic(.medium)
     }

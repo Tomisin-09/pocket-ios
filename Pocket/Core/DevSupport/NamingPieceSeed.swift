@@ -100,7 +100,7 @@ enum NamingPieceSeed {
         case .none:
             return
         }
-        try? context.save()
+        context.saveOrLog()
     }
 
     @MainActor

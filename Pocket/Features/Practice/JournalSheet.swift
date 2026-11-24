@@ -10,18 +10,20 @@ import SwiftUI
 /// history. Reached from the Practice run screens and (ADR 0088, reversing 0058's waveform
 /// read-only) the loop edit sheet — writing a song loop's journal no longer needs a run.
 ///
+/// The sheet writes through `JournalWriter` and saves itself (ADR 0318). Until then each of its four
+/// hosts passed the same three callbacks, and a host that passed none (the freeform block did, once)
+/// got a journal whose Add, edit and delete did nothing. Saving here is also what lets a failed save
+/// say so on the sheet, where the player is, rather than on the screen underneath it.
+///
 /// Presented at `.large` only — a journal wants room, and a single large detent keeps the
 /// push-to-edit navigation clear of the medium-detent push bug (see LoopEditSheet).
 struct JournalSheet: View {
     let owner: JournalOwner
-    /// Add an entry — snapshots the owner's current context.
-    var onAdd: (String, EntryKind) -> Void = { _, _ in }
-    /// Edit an existing entry's text + kind (the snapshot stays fixed).
-    var onUpdate: (JournalEntry, String, EntryKind) -> Void = { _, _, _ in }
-    var onDelete: (JournalEntry) -> Void = { _ in }
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var draftText = ""
+    @State private var saveFailed = false
     @State private var draftKind: EntryKind = .default
     @FocusState private var draftFocused: Bool
 
@@ -61,7 +63,31 @@ struct JournalSheet: View {
                 }
             }
         }
+        .saveFailedAlert(isPresented: $saveFailed, retry: commitAdd)
         .presentationDetents([.large])
+    }
+
+    /// Add an entry, snapshotting the owner's context as it is now (ADR 0058). An empty draft writes
+    /// nothing. The draft clears either way: the entry is in the list, saved or not.
+    private func addEntry() {
+        if JournalWriter.add(to: owner, text: draftText, kind: draftKind, into: modelContext) {
+            commitAdd()
+        }
+        draftText = ""
+        draftKind = .default
+    }
+
+    /// The save after an add, which *Try again* repeats without writing the entry twice (ADR 0318).
+    private func commitAdd() {
+        guard modelContext.saveOrLog() else { saveFailed = true; return }
+        haptic(.light)
+    }
+
+    /// A delete that fails to save only comes back after a relaunch, so it logs and says nothing (0318).
+    private func delete(_ entry: JournalEntry) {
+        JournalWriter.delete(entry, from: modelContext)
+        modelContext.saveOrLog()
+        haptic(.light)
     }
 
     /// One day's section of entries. Rows push to the editor; swipe-to-delete removes an entry.
@@ -70,13 +96,13 @@ struct JournalSheet: View {
         Section(dayHeader(section.day)) {
             ForEach(section.entries) { entry in
                 NavigationLink {
-                    JournalEntryEditor(entry: entry, onUpdate: onUpdate)
+                    JournalEntryEditor(entry: entry)
                 } label: {
                     JournalEntryRow(entry: entry, ownerLabel: nil)
                 }
             }
             .onDelete { offsets in
-                offsets.map { section.entries[$0] }.forEach(onDelete)
+                offsets.map { section.entries[$0] }.forEach(delete)
             }
         }
     }
@@ -135,11 +161,7 @@ struct JournalSheet: View {
         // clear row, separated from the input fields' grouped container by the standard
         // section gap — so its rounded corners no longer nest awkwardly into the text field's.
         Section {
-            Button {
-                onAdd(draftText, draftKind)
-                draftText = ""
-                draftKind = .default
-            } label: {
+            Button(action: addEntry) {
                 Text("Add entry")
                     .font(.futura(.headline))
                     .frame(maxWidth: .infinity)
@@ -222,16 +244,16 @@ struct JournalSheet: View {
 
 private struct JournalEntryEditor: View {
     let entry: JournalEntry
-    let onUpdate: (JournalEntry, String, EntryKind) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var text: String
     @State private var kind: EntryKind
+    @State private var saveFailed = false
     @FocusState private var textFocused: Bool
 
-    init(entry: JournalEntry, onUpdate: @escaping (JournalEntry, String, EntryKind) -> Void) {
+    init(entry: JournalEntry) {
         self.entry = entry
-        self.onUpdate = onUpdate
         _text = State(initialValue: entry.text)
         _kind = State(initialValue: entry.kind)
     }
@@ -318,12 +340,20 @@ private struct JournalEntryEditor: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
-                    onUpdate(entry, text, kind)
-                    dismiss()
+                    // The snapshot stays fixed; only the text and kind change.
+                    JournalWriter.update(entry, text: text, kind: kind)
+                    commit()
                 }
                 .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
+        .saveFailedAlert(isPresented: $saveFailed, retry: commit)
+    }
+
+    /// The save and the pop back, which *Try again* repeats. A failed save stays on the editor (ADR 0318).
+    private func commit() {
+        guard modelContext.saveOrLog() else { saveFailed = true; return }
+        dismiss()
     }
 }
 

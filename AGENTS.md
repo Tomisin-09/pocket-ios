@@ -62,13 +62,15 @@ Run these before every commit that touches app code. Do not push until all pass.
 
 1. **Lint** — `swiftlint`. Fix all errors. Suppress only with
    `// swiftlint:disable:next <rule>` on the exact line, never file-wide.
-   One of the rules is this project's own invariant rather than style
-   (`.swiftlint.yml` → `custom_rules`), and it exists because the thing it
-   catches already shipped: **user-facing copy says Red Moon, never Pocket** —
+   Two of the rules are this project's own invariants rather than style
+   (`.swiftlint.yml` → `custom_rules`). **User-facing copy says Red Moon, never
+   Pocket**, and it exists because the thing it catches already shipped —
    `Pocket` is the target and bundle id, not a name the app goes by. A path or
    bundle-id literal that legitimately contains it takes a line-scoped
-   suppression. (There were two until ADR 0239 removed analytics, and with it
-   the rule that analytics events take no free `String`.)
+   suppression. **A save's error is never thrown away** (ADR 0318): no
+   `try? ….save()`; call `context.saveOrLog()`, and where the player has just
+   asked for something to be kept, read its result and show `saveFailedAlert`.
+   (ADR 0239 removed a third, that analytics events take no free `String`.)
 2. **Build** — `xcodebuild build -scheme Pocket -destination 'generic/platform=iOS Simulator'`.
    Fix all errors and warnings. This catches breakage in files with no test
    coverage — do not skip it.

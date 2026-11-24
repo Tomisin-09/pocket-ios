@@ -129,9 +129,10 @@ struct NameTheNotesSheet: View {
     let loop: Loop
     let player: ContinuousLoopPlayer
     let spelling: NoteSpelling
-    let onDone: (NamingResult) -> Void
+    /// Keeps the result, and says whether its save worked (ADR 0318).
+    let onDone: (NamingResult) -> Bool
 
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) var modelContext
     /// The pass being named: its taps, and since ADR 0231 any taken out or tapped in. Handed back on Done.
     @State var taps: [PieceTranscription.Tap]
@@ -169,6 +170,9 @@ struct NameTheNotesSheet: View {
     @State var history = NamingHistory()
     /// The line being written on the current note's snag, while it is (ADR 0234 D7).
     @State var lineDraft: String?
+    /// A save that failed, for *Couldn’t save* (ADR 0318). Not cleared when the alert closes: its retry reads it.
+    @State var saveFailed = false
+    @State var failedSave = FailedSave.line
     /// Bumped when the pad is tapped with nothing playing, to say why nothing was added.
     @State var missedNudge = 0
     /// *Higher*, *Same* or *Lower* the player gave a note, by its tap's time (ADR 0301). Kept while the sheet
@@ -178,7 +182,7 @@ struct NameTheNotesSheet: View {
     @State var refretDeclined = false
 
     init(request: NamingRequest, loop: Loop, player: ContinuousLoopPlayer, spelling: NoteSpelling,
-         onDone: @escaping (NamingResult) -> Void) {
+         onDone: @escaping (NamingResult) -> Bool) {
         self.request = request
         self.loop = loop
         self.player = player
@@ -247,13 +251,14 @@ struct NameTheNotesSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        onDone(NamingResult(taps: taps, openMidi: tuning.openMidi, tuningLabel: tuning.label))
-                        dismiss()
+                        let result = NamingResult(taps: taps, openMidi: tuning.openMidi, tuningLabel: tuning.label)
+                        if onDone(result) { dismiss() } else { failed(.done) }
                     }
                     .fontWeight(.semibold)
                 }
             }
         }
+        .saveFailedAlert(isPresented: $saveFailed, retry: retrySave)
         .presentationDetents([.large])
         .interactiveDismissDisabled(taps != request.taps)
         .onChange(of: active) { chipChanged() }

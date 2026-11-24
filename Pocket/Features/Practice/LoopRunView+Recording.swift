@@ -30,6 +30,6 @@ extension LoopRunView {
     func deleteTake(_ take: Recording) {
         try? RecordingStore.delete(fileName: take.fileName)
         modelContext.delete(take)
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 }
