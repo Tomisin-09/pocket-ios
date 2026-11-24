@@ -3,6 +3,7 @@ import Link from 'next/link'
 import type { StaticImageData } from 'next/image'
 import Reveal from './_components/Reveal'
 import ShotRail from './_components/ShotRail'
+import MoonPicker, { type Moon } from './_components/MoonPicker'
 import { Phone, RedMoonFooter, RedMoonNav, StoreButton } from './_components/brand'
 import home from './_media/home.png'
 import songPlayer from './_media/song-player.png'
@@ -14,6 +15,22 @@ import today from './_media/today.png'
 import byEar from './_media/by-ear.png'
 import sources from './_media/sources.png'
 import log from './_media/log.png'
+import homeBlood from './_media/moons/home-blood.png'
+import iconBlood from './_media/moons/icon-blood.png'
+import homeBlue from './_media/moons/home-blue.png'
+import iconBlue from './_media/moons/icon-blue.png'
+import homeJade from './_media/moons/home-jade.png'
+import iconJade from './_media/moons/icon-jade.png'
+import homeCorn from './_media/moons/home-corn.png'
+import iconCorn from './_media/moons/icon-corn.png'
+import homeSilver from './_media/moons/home-silver.png'
+import iconSilver from './_media/moons/icon-silver.png'
+import homePink from './_media/moons/home-pink.png'
+import iconPink from './_media/moons/icon-pink.png'
+import homeHarvest from './_media/moons/home-harvest.png'
+import iconHarvest from './_media/moons/icon-harvest.png'
+import homeCold from './_media/moons/home-cold.png'
+import iconCold from './_media/moons/icon-cold.png'
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
@@ -94,6 +111,20 @@ const MORE: Shot[] = [
   },
 ]
 
+// The app's eight moons, in the order its Theme screen lists them (pocket-ios `MoonTheme`). Each Home is
+// `AppStoreShots.testHomeInEachMoon` on the Pro Max, the shoot that serves the listing's themes frame;
+// each icon is the app's own tile (`IconTile*`).
+const MOONS: Moon[] = [
+  { id: 'blood', name: 'Blood', home: homeBlood, icon: iconBlood },
+  { id: 'blue', name: 'Blue', home: homeBlue, icon: iconBlue },
+  { id: 'jade', name: 'Jade', home: homeJade, icon: iconJade },
+  { id: 'corn', name: 'Corn', home: homeCorn, icon: iconCorn },
+  { id: 'silver', name: 'Silver', home: homeSilver, icon: iconSilver },
+  { id: 'pink', name: 'Pink', home: homePink, icon: iconPink },
+  { id: 'harvest', name: 'Harvest', home: homeHarvest, icon: iconHarvest },
+  { id: 'cold', name: 'Cold', home: homeCold, icon: iconCold },
+]
+
 export default function RedMoonPage() {
   return (
     <div className="rm-page rm-dark rm-land">
@@ -160,6 +191,14 @@ export default function RedMoonPage() {
           </ShotRail>
         </section>
 
+        <MoonPicker moons={MOONS}>
+          <p className="rm-kicker">Make it yours</p>
+          <h2 id="rm-moons-title">Pick your moon.</h2>
+          <p className="rm-chapter-line">
+            Eight moons, each in light and dark. Red Moon wears the one you pick, and its icon can follow.
+          </p>
+        </MoonPicker>
+
         <section className="rm-promises" aria-label="Yours, and only yours">
           <div className="rm-promise reveal">
             <h3>No account.</h3>
@@ -196,7 +235,7 @@ export default function RedMoonPage() {
         <section className="rm-plan" id="get" aria-labelledby="rm-plan-title">
           <div className="rm-plan-card reveal">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="rm-plan-logo" src="/redmoon/logo.svg" alt="Red Moon" width={180} height={158} />
+            <img className="rm-plan-logo" src="/redmoon/logo.svg" alt="Red Moon" width={180} height={158} data-moon-art="logo" />
             <h2 id="rm-plan-title">One plan</h2>
 
             <div className="rm-plan-split">
@@ -206,7 +245,7 @@ export default function RedMoonPage() {
               </div>
               <div>
                 <h3>The plan</h3>
-                <p>For practising: drills, routines, Today’s session and the loop trainer.</p>
+                <p>For practising: drills, routines, Today’s session and the loop trainer. And the other seven moons.</p>
               </div>
             </div>
 

@@ -44,9 +44,9 @@ export function RedMoonNav({ current, onLanding = false }: { current?: Place; on
       <div className="rm-nav-inner">
         <Link href="/" className="rm-nav-brand" aria-label="Red Moon Practice Studio, home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/redmoon/mark.svg" alt="" width={17} height={25} className="rm-nav-mark" />
+          <img src="/redmoon/mark.svg" alt="" width={17} height={25} className="rm-nav-mark" data-moon-art="mark" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/redmoon/wordmark.svg" alt="" width={77} height={15} className="rm-nav-word" />
+          <img src="/redmoon/wordmark.svg" alt="" width={77} height={15} className="rm-nav-word" data-moon-art="wordmark" />
         </Link>
         <nav className="rm-nav-links" aria-label="Red Moon">
           {item('/story', 'Liner notes', 'story')}

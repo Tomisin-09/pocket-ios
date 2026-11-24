@@ -78,7 +78,8 @@ export default function RedMoonSupportPage() {
               markers. So are the Metronome, your <strong>Journal</strong>{' '}and Practice log, and
               everything in the <strong>Toolkit</strong>: the tuner, your chords, progressions and tabs, and
               the glossary. The plan is for practising: drills, routines, Today&rsquo;s session, the loop
-              trainer, Train your ear, Improvise and Watch it on the neck.
+              trainer, Train your ear, Improvise and Watch it on the neck. Blood Moon is free too; the
+              other seven moons, and their icons, come with the plan.
             </p>
             <p>
               <strong>£0.99 a month, or £4.99 once.</strong>{' '}That&rsquo;s the founding price, and
@@ -100,7 +101,8 @@ export default function RedMoonSupportPage() {
             <h3>What happens if I stop paying?</h3>
             <p>
               Nothing you made is deleted. Your songs, loops and markers, your Journal and the Toolkit stay
-              open, and the practice screens wait behind the plan, just as you left them.
+              open, and the practice screens wait behind the plan, just as you left them. Red Moon goes
+              back to Blood Moon, and so does its icon.
               Settings &#9656; Your data can always export everything, plan or not.
             </p>
 
