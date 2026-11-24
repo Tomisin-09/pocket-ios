@@ -39,7 +39,7 @@ FIELDS = [
     ("promotional-text", "## Promotional text", 170),
     ("keywords", "## Keywords", 100),
     ("description", "## Description", 4000),
-    ("whats-new", "## What's New in This Version — 1.5", 4000),
+    ("whats-new", "## What's New in This Version — 1.6", 4000),
     ("review-notes", "## App Review notes", 4000),
 ]
 
