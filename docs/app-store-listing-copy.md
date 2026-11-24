@@ -8,8 +8,8 @@
 >
 > **Current, so paste from these:** Name, Subtitle, Promotional text, Keywords, Description (with
 > its *One plan* block and the EULA line), *What's New — 1.6*, Price / availability, App Review
-> notes, and the **1.4 pre-submission checklist**. Every other *What's New* draft and checklist
-> below is history. Don't paste from it.
+> notes, *Screenshots — 1.6*, and the **1.4 pre-submission checklist**. Every other *What's New*
+> draft, screenshot set and checklist below is history. Don't paste from it.
 >
 > **Don't copy from this file into App Store Connect.** Its blockquotes are wrapped and marked up for
 > reading here, and App Store Connect's fields are plain text that keep every line break. Run
@@ -167,9 +167,13 @@ made transposing a real feature, and it's a common search for apps like this one
 > • A tuner for guitar and bass, a metronome, chord shapes, a placer that names any voicing, and a
 >   glossary
 >
+> **Make it yours**
+> • Pick your moon: eight themes, each in light and dark, and an app icon to match. Blood Moon is
+>   free; the other seven come with the plan
+>
 > **One plan**
 > Your songs and loops, the Metronome, the Journal and everything in the Toolkit are free. The plan
-> is for practising: drills, routines, Today's session and the loop trainer.
+> is for practising: drills, routines, Today's session and the loop trainer. And the other seven moons.
 >
 > **£0.99 a month, or £4.99 once.**
 > That's the founding price, and it's yours for as long as you keep the plan. Nothing you can do
@@ -213,6 +217,10 @@ where it reads as the next step; App Store Connect holds the order actually past
   D1), with the UK prices (ADR 0277). ADR 0145 D6's rule against hardcoded prices is about in-app
   help copy, not this field. Still name no trial length: the storefront shows it, and App Store
   Connect sets it.*
+- *1.6 (2026-11-24): **Make it yours** and the plan's "And the other seven moons." are new. The themes
+  are shown in frame 10, and seven of the eight are on the plan, so the description says so (Guideline
+  2.3.2: what a screenshot features that needs a purchase is disclosed). The site says the same thing
+  in the same words.*
 - *The prices are in pounds because this is the English (U.K.) text. If the app has no other English
   localization, every storefront reads £. An English (U.S.) description would use the US prices App
   Store Connect generated, so read them off the products first.*
@@ -685,7 +693,44 @@ itself in the face the file names, and stops if that face isn't installed. Anyth
 these SVGs gets the same problem, a browser off Apple hardware included, since it has no Futura. For
 the site and anywhere else, ask the designer for an export with the text converted to outlines.
 
-## Screenshots — 1.4.1 (reshot 2026-11-16 for ADR 0292; the story is ADR 0279's)
+## Screenshots — 1.6 (shot 2026-11-24; the story is ADR 0279's, four frames changed)
+
+Four frames change, decided by Tomisin on 2026-11-24; the other six are the same screens as 1.4.1's set
+(checked capture against capture: 03 and 05 identical, 06 one pixel, 01 a playhead second, 08 two loop
+tiles swapped, 09 a later week). The site led on three of the four.
+
+| # | Verb | Headline | Capture (test → slug) | Change |
+|---|---|---|---|---|
+| 1 | WORK IT OUT | Loop the bar you can't play. Slow it down. | `AppStoreShots.testWorkItOut` | — |
+| 2 | BUILD IT UP | Every drill runs against a click. | `AppStoreShots.testBuildItUpArpeggio` | **new**: an A minor 7 arpeggio drawing its neck, in place of *Alternate Picking*'s staircase over half a phone of black. Made through New exercise, since a fresh install seeds no arpeggio |
+| 3 | RUN IT | Line up the hard parts. Press play. | `AppStoreShots.testRunIt` | — |
+| 4 | KEEP IT | Pick up where you left off. | `journal/timeline` | **new**: the Journal, as on the site since 11-18 |
+| 5 | YOUR SOURCES | Keep the lesson beside the part it's for. | `references/section` | — |
+| 6 | WORK IT OUT | Name the notes by ear. See them on the neck. | `reference/watch-on-neck` | — |
+| 7 | KEEP IT | Record a take. Note what you heard. | `journal/take-moments` | **new**: the take, moved from frame 4 and reshot (its screen says *Take 1* since ADR 0307); the loop ramp it replaces is gone |
+| 8 | RUN IT | Today's session, shaped by your goals. | `reference/practice-hub` | — |
+| 9 | KEEP IT | See the days you played. Never a score. | `AppStoreShots.testKeepItLog` | — |
+| 10 | MAKE IT YOURS | Pick your moon. | `AppStoreShots.testHomeInEachMoon`: Blood in front, Jade and Cold behind | **new**: replaces plain Home (*Your method*). Three captures in one frame, `"behind"` in the manifest |
+
+The finished set is `~/Documents/Red Moon Screenshots 2/appstore-2026-11-24/` (`6.3/`, `6.9/`, `6.5/`,
+`captures/`, `frames.json`), shot on main's 1.6 (14) code on the iPhone 17 Pro Max simulator. **To update
+1.6 in App Store Connect**, which starts with 1.5's frames: delete 02, 04, 07 and 10, upload
+`02-build-it-up`, `04-keep-it-journal`, `07-keep-it-take` and `10-make-it-yours` from `6.3/`, and drag each
+into its place. If the optional large-display slot holds frames, do the same there from `6.9/`.
+
+Frame 10 shows the themes, which are on the plan, so the description's **Make it yours** and **One plan**
+lines say so (Guideline 2.3.2).
+
+**To shoot them again:** as below, plus `AppStoreShots/testBuildItUpArpeggio` and
+`AppStoreShots/testHomeInEachMoon`, **each in a run of its own**: the arpeggio run writes a drill and its
+history, and the moon test passes `-moonTheme <raw>` per launch, which leaves nothing on the simulator.
+Run the manual figures by test name (`POCKET_SHOOT_ONLY="ManualShotsUITests/testJournalTimeline …"`)
+rather than whole passes; `testWatchOnTheNeck` needs a run of its own (pass `map`). On 2026-11-24 the
+first `base` run lost `testPracticeHub` to dropped taps on a cold simulator and `testWatchOnTheNeck`
+waited out 90 s of audio loading; both passed on a retry. A run with a failure files nothing, so export
+its passing captures with `xcrun xcresulttool export attachments --path shoot.xcresult --output-path <dir>`.
+
+## Screenshots — 1.4.1 (reshot 2026-11-16 for ADR 0292; the story is ADR 0279's) — history, superseded by 1.6's
 
 Ten frames, one story: the four verbs twice, then the roof. Shot dark at 09:41 on the iPhone 17 Pro
 Max simulator by the manual's harness, with the plan unlocked (no padlocks, no prices: Guideline
@@ -732,20 +777,6 @@ bar. Last week is always whole. Its header reads the dates, with a *This week* b
 Frame 5's links read `example.com`. The practice log's
 lower half (`journal/month-heatmap`) is unusable as a frame: its header ghosts under the navigation bar,
 and it ends on *0 Mastered*.
-
-**Captures for 1.6, shot 2026-11-24, not yet framed or decided.** Two new `AppStoreShots` tests, run with
-`POCKET_SHOOT_ONLY="AppStoreShots/<test>"` and the Pro Max, one test per run so neither sees the other's
-writes:
-
-- `testBuildItUpArpeggio`: an A minor 7 arpeggio running, its neck drawn between the tempo and the
-  staircase (42 → 50 BPM, the form's default). Made through New exercise, because a fresh install seeds
-  no arpeggio. Proposed for frame 2, replacing *Alternate Picking*; the site uses it already.
-- `testHomeInEachMoon`: Home in each of the eight moons (`appstore-home-<moon>`), the theme passed as
-  `-moonTheme <raw>` at launch so nothing is left on the simulator. Proposed as frame 10's subject, a
-  themes frame in place of plain Home; that needs a composite layout `appstore-frames.swift` doesn't do
-  yet. Themes are on the plan, so the description owes a line saying so (Guideline 2.3.2).
-
-With the Journal and take swap owed since 11-18 (frames 4 and 7), that's four frames for 1.6.
 
 ## Screenshots — REVISED shoot guide (re-shoot, 2026-07-21) — history
 
