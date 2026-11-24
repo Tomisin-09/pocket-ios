@@ -84,6 +84,8 @@ Practice wears. **ADR 0311 (built for 1.6, with ADR 0312 making the themes part 
 themes, picked in Settings → Appearance, each mapping Practice, the song player and every space onto
 shared colour families, while the colours that carry a meaning (green, red, the loops, the chords)
 stay put. Blood Moon stays the default, so the values in the table below are Blood Moon's.
+**One exception, for the look (ADR 0316):** the Settings hub's row icons wear the theme's Practice
+colour, under Red Moon's lockup. They mean nothing by it, and no other place follows from it.
 
 **Light + dark appearance (ADR 0062), pinnable in Settings (ADR 0063).** The app
 follows the system Light/Dark setting by default; **Settings → Appearance** can pin

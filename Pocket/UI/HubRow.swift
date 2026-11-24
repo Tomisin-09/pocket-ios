@@ -14,6 +14,8 @@ struct HubRow<Value: View>: View {
     let icon: String
     let title: String
     @ViewBuilder let value: () -> Value
+    /// Grey, unless the screen says otherwise: Settings wears the theme (ADR 0316).
+    @Environment(\.hubRowIconColor) private var iconColor
 
     var body: some View {
         LabeledContent {
@@ -23,7 +25,7 @@ struct HubRow<Value: View>: View {
                 Text(title).foregroundStyle(PocketColor.textPrimary)
             } icon: {
                 Image(systemName: icon)
-                    .foregroundStyle(PocketColor.textSecondary)
+                    .foregroundStyle(iconColor)
             }
         }
     }
@@ -45,5 +47,19 @@ struct HubRowText: View {
                 .foregroundStyle(PocketColor.textSecondary)
                 .lineLimit(1)
         }
+    }
+}
+
+/// The colour a hub row's icon is drawn in: grey by default, so a row reads as plain chrome. The Settings hub
+/// sets the theme's Practice colour, the one place the theme colour is worn for its look rather than for a
+/// meaning (ADR 0316).
+private struct HubRowIconColorKey: EnvironmentKey {
+    static let defaultValue: Color = PocketColor.textSecondary
+}
+
+extension EnvironmentValues {
+    var hubRowIconColor: Color {
+        get { self[HubRowIconColorKey.self] }
+        set { self[HubRowIconColorKey.self] = newValue }
     }
 }

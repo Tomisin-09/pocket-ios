@@ -28,7 +28,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   own *Start* button, waveform and mastery dots in light and in dark, and tapping a card applies it at
   once. A theme sets the colour Practice, the mastery dots and the song player wear. It moves a space's
   colour only where that space would sit beside the theme's colour, and the colours that mean something
-  (live green, delete red, the loops, the chords) stay put. The Red Moon wordmark and logo and the Home
+  (live green, delete red, the loops, the chords) stay put. Every sheet wears it as well: Name the notes,
+  Watch it on the neck, Active listening and the rest. So does Settings (ADR 0316): Red Moon's moon and
+  wordmark head it on one line, and its icons take the theme's colour. The Red Moon wordmark and logo and the Home
   Screen icon follow the theme too. Blood Moon is free and stays the default; the other seven come with
   the plan, and a lapsed plan draws Blood Moon again while keeping the choice. *Save to Red Moon* draws in
   the app's theme.
@@ -81,6 +83,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   the Metronome's purple that the two read as one colour. A printed tab keeps its colours.
 
 ### Fixed
+- **A loop that repeats keeps time with the song** (ADR 0315). Set a loop to repeat to the end of its
+  section or the song, and its passes used to step by the loop's length as you drew it. A loop is almost
+  never exactly a whole number of bars, so each pass landed a little early or late, and the chords slid off
+  the record as the song went on: on one cover, a beat out by the solo. When the song has bars, each pass
+  is now a whole number of bars, as a copy's already is, and every chord keeps its place in the bar to the
+  last pass: on the map's band and its count, in the Tab view, and in what Watch lights. The loop itself
+  plays what you drew, as before.
 - **A long run on the fretboard no longer makes its screen stutter.** The board worked out which frets to
   show about a hundred times every frame it drew, once for each fret line, number and dot, and each time it
   read every note of the run. A Triads progression up the neck, played together, took over ten times a

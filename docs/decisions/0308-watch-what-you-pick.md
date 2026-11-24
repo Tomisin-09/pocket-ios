@@ -17,6 +17,8 @@
   pieces…** (it was *Put it together…*), its bar offers **Watch** beside **Put it together**, and the
   bar's line shows only when the picks can't be put together (D8). The two shapes, and everything Put it
   together makes, stand.
+- **Amended by:** ADR 0315 (2026-11-24) — **D2**: the stretch's repeats keep to the bar, so what plays
+  and lights on a repeat lands where the song's bars are. What plays, and how the sheet says so, stand.
 - **Amended by:** ADR 0310 (2026-11-21) — **D1**: a section's name carries a visible eye that watches
   that section, and the map's toolbar a **Pick** button that starts picking with nothing picked. Picking,
   the section's hold menu, and the whole-song eye staying gone all stand.

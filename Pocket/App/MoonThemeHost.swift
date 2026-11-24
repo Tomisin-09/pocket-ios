@@ -31,10 +31,31 @@ private struct MoonThemeHost: ViewModifier {
     func body(content: Content) -> some View {
         content
             .environment(\.moonTheme, effective)
+            // And on the window scene, for what's presented over this (see `MoonThemeScenes`).
+            .onChange(of: effective, initial: true) { _, theme in MoonThemeScenes.apply(theme) }
             .onChange(of: icon, initial: true) { _, icon in AppIcon.follow(icon) }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .active { AppIcon.follow(icon) }
             }
+    }
+}
+
+/// **The theme for everything presented**: sheets, covers, popovers, alerts (ADR 0312 D6, fixed in pocket-469).
+///
+/// A presented sheet doesn't take `\.moonTheme` from the view that presented it. Its hosting
+/// controller reads the value back from its own UIKit traits, and those come from the window scene,
+/// not from the root's environment. So with the environment alone, every sheet drew Blood Moon
+/// whatever the theme: Name the notes, Watch, the wordmark in a prompt. Setting the trait on the
+/// scene gives every window and everything presented in it the same theme as the root.
+@MainActor
+enum MoonThemeScenes {
+    static func apply(_ theme: MoonTheme, to scenes: Set<UIScene> = UIApplication.shared.connectedScenes) {
+        for case let scene as UIWindowScene in scenes {
+            // Reading an override that was never set is an assertion failure in UIKit, so ask first.
+            let overrides = scene.traitOverrides
+            if overrides.contains(MoonThemeTrait.self), overrides[MoonThemeTrait.self] == theme { continue }
+            scene.traitOverrides[MoonThemeTrait.self] = theme
+        }
     }
 }
 

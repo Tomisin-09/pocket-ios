@@ -24,7 +24,7 @@ enum SongMapLayout {
         let grid = input.grid.flatMap { $0.downbeats.isEmpty || $0.barSeconds <= 0 ? nil : $0 }
         let (sectionMarkers, pinMarkers) = splitMarkers(input.markers, duration: input.duration)
         let cuts = spans(of: sectionMarkers, duration: input.duration)
-        let pieces = placePieces(input.loops, duration: input.duration, spans: cuts)
+        let pieces = placePieces(input.loops, duration: input.duration, spans: cuts, grid: input.grid)
         let repeated = sameAs(sectionMarkers, spans: cuts)
         let sections = cuts.map { span in
             let edges = rowSpans(from: span.start, to: span.end, grid: grid)
@@ -70,7 +70,7 @@ enum SongMapLayout {
     /// loop's repeats hold its lane as far as they run (D14, D15), so a piece worked out under them takes
     /// the next lane down rather than being drawn over them.
     static func placePieces(_ loops: [SongMapInput.LoopInput], duration: TimeInterval,
-                            spans: [Span] = []) -> [SongMap.Piece] {
+                            spans: [Span] = [], grid: SongMapInput.Grid? = nil) -> [SongMap.Piece] {
         struct Clamped { let loop: SongMapInput.LoopInput, start: TimeInterval, end: TimeInterval }
         let clamped = loops.compactMap { loop -> Clamped? in
             let start = min(max(loop.start, 0), duration), end = min(max(loop.end, 0), duration)
@@ -90,7 +90,7 @@ enum SongMapLayout {
             let bound = sectionEnd(from: item.start, to: item.end, spans: spans, duration: duration)
             let runs = repeatEnd(item.loop.repeatsTo, sectionEnd: bound, spans: spans, duration: duration)
             let repeating = item.loop.repeatsToSectionEnd
-                ? repeats(from: item.start, to: item.end, sectionEnd: runs.end) : nil
+                ? repeats(from: item.start, to: item.end, sectionEnd: runs.end, grid: grid) : nil
             let reach = repeating?.end ?? item.end
             var ends = laneEnds[layer, default: []]
             let lane = ends.firstIndex { $0 <= item.start + tolerance } ?? ends.count
