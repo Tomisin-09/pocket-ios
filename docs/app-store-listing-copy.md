@@ -277,7 +277,7 @@ own custom-EULA field instead of the description — and then all three surfaces
 > • A loop that repeats to the end of the song keeps time with it to the last pass
 > • Long runs on the fretboard no longer make the screen stutter
 
-*Drafted 2026-11-24 for 1.6 (14), not yet pasted. Each line is a `[1.6]` CHANGELOG entry: the moon
+*Drafted 2026-11-24 for 1.6 (14), **pasted into App Store Connect by Tomisin on 2026-11-24**. Each line is a `[1.6]` CHANGELOG entry: the moon
 themes and Settings (ADRs 0311, 0312, 0316) with the App Icon (ADR 0314) in the opening; then triads
 (ADR 0313 D2 to D6, D10), Play as (D7, D8), Practice as triads (D9), dim and aug (D1), the pink Toolkit
 (0312 D5), repeats that keep to the bar (ADR 0315) and the fretboard stutter fix. Left out as too
@@ -562,7 +562,7 @@ there, for ADR 0304: a take now keeps recording with the screen locked. The live
 "Practicing" and "practicing", in the plan paragraph. This file keeps "practising". Otherwise the export
 matches the live text exactly.*
 
-*The Themes and app icons paragraph is new for 1.6, drafted 2026-11-24 and not yet pasted: seven of the
+*The Themes and app icons paragraph is new for 1.6, drafted and pasted 2026-11-24: seven of the
 eight themes and their icons are the plan (ADR 0312 D1, ADR 0314 D3), so a reviewer on a free install
 meets the plan screen in Settings as well as in Practice.*
 
@@ -717,6 +717,7 @@ The finished set is `~/Documents/Red Moon Screenshots 2/appstore-2026-11-24/` (`
 1.6 in App Store Connect**, which starts with 1.5's frames: delete 02, 04, 07 and 10, upload
 `02-build-it-up`, `04-keep-it-journal`, `07-keep-it-take` and `10-make-it-yours` from `6.3/`, and drag each
 into its place. If the optional large-display slot holds frames, do the same there from `6.9/`.
+**Done by Tomisin on 2026-11-24**, with the 1.6 description (Make it yours, the seven moons on the plan).
 
 Frame 10 shows the themes, which are on the plan, so the description's **Make it yours** and **One plan**
 lines say so (Guideline 2.3.2).
