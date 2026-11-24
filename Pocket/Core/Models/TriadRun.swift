@@ -113,7 +113,7 @@ struct TriadRun: Equatable, Sendable {
          highFret: Int = 7,
          climbInversion: Int = 0,
          playAs: PlayAs = .broken,
-         notesPerBeat: Int = 2,
+         notesPerBeat: Int = 3,
          roundTrip: Bool = false,
          version: Int = TriadRun.currentVersion) {
         self.version = version
@@ -146,7 +146,9 @@ struct TriadRun: Equatable, Sendable {
 
 extension TriadRun {
     /// What a new Triads run opens on (D10): the teacher's step 3. C major on G‑B‑e, the key's seven kept
-    /// between frets 3 and 7, in eighths. It shows the range and the nearest move before anything is tapped.
+    /// between frets 3 and 7. It shows the range and the nearest move before anything is tapped. In triplets
+    /// (ADR 0317), so a triad's three notes fill a beat and every chord starts on one; a saved run keeps the
+    /// rhythm it was saved with.
     static let starter = TriadRun(tonic: 0)
 
     /// The progression the Chords row's *Progression* copies in when none is held yet: the four-chord loop,

@@ -23,6 +23,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Changed
+- **A new Triads run opens on triplets** (ADR 0317), not eighths. A triad's three notes now fill a
+  beat, so each chord of the key's seven starts on the beat and a progression's bar holds whole triads
+  instead of cutting the last one off. *Practice as triads* opens on triplets too. Exercises already
+  saved keep the rhythm they were saved with, and Rhythm under Advanced still changes it.
+
 ## [1.6] — build 14, cut 2026-11-24
 
 ### Added
