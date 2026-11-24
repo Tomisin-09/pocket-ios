@@ -23,6 +23,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Changed
+- **A new Triads run opens on triplets** (ADR 0317), not eighths. A triad's three notes now fill a
+  beat, so each chord of the key's seven starts on the beat and a progression's bar holds whole triads
+  instead of cutting the last one off. *Practice as triads* opens on triplets too. Exercises already
+  saved keep the rhythm they were saved with, and Rhythm under Advanced still changes it.
+
 ### Fixed
 - **A save that fails now says so** (ADR 0318). Every save in the app threw its error away, so a change
   that failed to save looked kept and was gone after the next launch. Where you've just asked for

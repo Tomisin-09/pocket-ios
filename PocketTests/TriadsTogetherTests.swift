@@ -12,9 +12,11 @@ final class TriadsTogetherTests: XCTestCase {
     private func note(_ string: Int, _ fret: Int) -> FretNote { FretNote(string: string, fret: fret) }
 
     /// I – V – vi – IV in C, G‑B‑e, frets 3 to 7: C 5‑5‑3, G 4‑3‑3, Am 5‑5‑5, F 5‑6‑5 (`TriadRunTests`).
+    /// In eighths, so a 4/4 bar is 8 slots: the slot numbers below are counted in them, and the rhythm a
+    /// new run opens on (ADR 0317) is `TriadRunTests`' to hold.
     private func loop(_ playAs: TriadRun.PlayAs = .broken, placement: TriadRun.Placement = .stayInFrets) -> TriadRun {
         TriadRun(tonic: 0, source: .progression, progression: TriadRun.defaultProgression, placement: placement,
-                 playAs: playAs)
+                 playAs: playAs, notesPerBeat: 2)
     }
 
     // MARK: - Play as (D7)
@@ -56,7 +58,8 @@ final class TriadsTogetherTests: XCTestCase {
 
     func testAChordThatRestsHasNoCompanions() {
         let run = TriadRun(tonic: 0, source: .progression,
-                           progression: progression("I–I5", [.init(0), .init(0, .fifth)]), playAs: .together)
+                           progression: progression("I–I5", [.init(0), .init(0, .fifth)]), playAs: .together,
+                           notesPerBeat: 2)
         let drill = run.expanded(beatsPerBar: 4)
         XCTAssertEqual(drill.noteCount, 16)
         XCTAssertTrue((8..<16).allSatisfy { drill.notes[$0] == nil && drill.sounding(at: $0).isEmpty })
