@@ -9,7 +9,9 @@ import UIKit
 /// The theme travels as an environment value that is also a UIKit trait (`UITraitBridgedEnvironmentKey`,
 /// iOS 17). Setting `\.moonTheme` once at the `PocketApp` root writes the trait, and a change of trait
 /// redraws every dynamic colour beneath it, including views whose bodies never read the theme, and
-/// UIKit's own (bars, alerts, segmented controls). A sheet inherits the environment like any child.
+/// UIKit's own (bars, alerts, segmented controls). **A sheet does not inherit it**: a presented
+/// hosting controller reads the value back from its own traits, which come from the window scene, so
+/// the host sets the trait there too (`MoonThemeScenes`).
 ///
 /// Anywhere the root hasn't set it (a preview, the share extension before its snapshot arrives) it
 /// reads Blood Moon, the default (D1).

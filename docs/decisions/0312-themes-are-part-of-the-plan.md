@@ -141,6 +141,13 @@ while keeping every screen's state. None of the ~600 call sites changed. The sha
 app's theme too: the owner snapshot carries it, and a snapshot written before themes still decodes, as
 Blood Moon.
 
+  *Fixed 2026-11-24, before 1.6 shipped (pocket-469):* **the root's environment didn't reach a sheet.** A
+  presented sheet's hosting controller reads the theme back from its own UIKit traits, which come from
+  the window scene, not from the view that presented it, so every sheet drew Blood Moon whatever the
+  theme. Tomisin saw it on Name the notes under Cold Moon. `MoonThemeHost` now also sets the trait on
+  each window scene (`MoonThemeScenes`), and `MoonThemeSheetTests` presents a sheet, and a sheet inside
+  it, to hold that. The decision stands; only the mechanism had a gap.
+
 ## Consequences
 
 - **What the plan covers has grown, and three places outside the repo say what it covers:** the App Store
