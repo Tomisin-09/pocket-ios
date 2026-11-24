@@ -30,6 +30,8 @@ enum SectionWatch {
         let reach: TimeInterval
         let piece: PieceTranscription
         var isChords = false
+        /// The song's bars, so a repeat's passes keep to them (ADR 0315). `nil` steps by the loop's length.
+        var grid: SongMapInput.Grid?
     }
 
     /// One tap of the run.
@@ -154,21 +156,28 @@ enum SectionWatch {
         let index: Int
     }
 
-    /// A loop's taps on every pass, kept only where this loop is the one showing.
+    /// A loop's taps on every pass, kept only where this loop is the one showing. A pass after the first
+    /// steps by whole bars when the song has them, each tap keeping its place in the bar, and starts no
+    /// earlier than the loop's end (ADR 0315, `SongMapRepeats`).
     private static func entries(of kept: [Source], at index: Int, from: TimeInterval, to: TimeInterval) -> [Entry] {
         let source = kept[index]
-        let length = source.end - source.start
-        guard length > 0 else { return [] }
-        let passes = max(1, Int(((source.reach - source.start) / length).rounded(.up)))
+        guard source.end - source.start > 0 else { return [] }
+        let (start, end, grid) = (source.start, source.end, source.grid)
+        let passes = SongMapRepeats.passesToTry(from: start, to: end, upTo: source.reach, grid: grid)
         // The latest-starting loop that covers a moment is the one showing then.
         let showing = { (time: TimeInterval) in
             kept.indices.last { kept[$0].start <= time && time < kept[$0].reach } == index
         }
         return (0..<passes).flatMap { pass in
             source.piece.taps.enumerated().compactMap { tapIndex, tap -> Entry? in
-                guard tap.seconds >= source.start - tolerance, tap.seconds < source.end else { return nil }
-                let time = max(tap.seconds, source.start) + Double(pass) * length
-                guard time < source.reach, time >= from, time < to, showing(time) else { return nil }
+                guard tap.seconds >= start - tolerance, tap.seconds < end else { return nil }
+                let counted = max(tap.seconds, start)
+                if pass > 0 {
+                    guard SongMapRepeats.repeats(counted, from: start, to: end, grid: grid) else { return nil }
+                }
+                let time = SongMapRepeats.time(of: counted, pass: pass, from: start, to: end, grid: grid)
+                guard pass == 0 || time >= end - tolerance,
+                      time < source.reach, time >= from, time < to, showing(time) else { return nil }
                 return Entry(seconds: time, label: tap.label, source: index, pass: pass, index: tapIndex)
             }
         }
@@ -189,7 +198,7 @@ extension SectionWatch {
         map.pieces.values.compactMap { piece in
             guard case .piece(let counted) = piece.content else { return nil }
             return Source(id: piece.uid, name: piece.name, start: piece.start, end: piece.end, reach: piece.reach,
-                          piece: counted, isChords: piece.layer == .chords)
+                          piece: counted, isChords: piece.layer == .chords, grid: map.grid)
         }
     }
 

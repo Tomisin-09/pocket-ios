@@ -83,6 +83,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   the Metronome's purple that the two read as one colour. A printed tab keeps its colours.
 
 ### Fixed
+- **A loop that repeats keeps time with the song** (ADR 0315). Set a loop to repeat to the end of its
+  section or the song, and its passes used to step by the loop's length as you drew it. A loop is almost
+  never exactly a whole number of bars, so each pass landed a little early or late, and the chords slid off
+  the record as the song went on: on one cover, a beat out by the solo. When the song has bars, each pass
+  is now a whole number of bars, as a copy's already is, and every chord keeps its place in the bar to the
+  last pass: on the map's band and its count, in the Tab view, and in what Watch lights. The loop itself
+  plays what you drew, as before.
 - **A long run on the fretboard no longer makes its screen stutter.** The board worked out which frets to
   show about a hundred times every frame it drew, once for each fret line, number and dot, and each time it
   read every note of the run. A Triads progression up the neck, played together, took over ten times a

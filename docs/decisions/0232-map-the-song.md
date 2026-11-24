@@ -10,6 +10,9 @@
   and 0225 D10 (never detected, never suggested) · 0233 (the map reads a piece's version in use, and its tab sheet
   opens **Versions**) · 0111 (a routine made for you is reviewed before it's kept) · 0138 (a Practice block
   needs a command tempo).
+- **Amended by:** ADR 0315 (2026-11-24) — **D14**, **D18**: with bars, a repeat steps by the loop's
+  length to the nearest whole bar, each tap keeping its place in the bar, so a loop drawn a hair short
+  no longer drifts off the record pass by pass. *↻ ×N* counts those passes. Without bars, both stand.
 - **Amended by:** ADR 0236 — **D12**: the Export tab is no longer waiting on a legal review. A
   song's tab, and a tab written in My tabs, export as plain text or PDF (0236 D9). No hosting, no
   importing and never inside a routine file all stand; the last now because a song sent inside a
@@ -320,6 +323,9 @@ over and over? D8 repeats a whole section. This repeats one loop within a sectio
   changes ×8**, with the count said once, where the repeats begin. It's a chart's repeat sign, in words.~~
   *Replaced by D18 (slice 3b): the tab writes every pass out, with **↻ ×8** where the repeats begin.*
 
+*Amended by ADR 0315 (2026-11-24):* with bars, N counts passes of the loop's length to the nearest whole
+bar, not of its length as drawn.
+
 *Slice 3b (2026-09-29):* repeats can now run past their section (D15). "Never copies" still holds for
 repeats; copying is a separate act the player asks for (D16).
 
@@ -390,6 +396,8 @@ label sends the reader back to the intro to find out.
 
 - **Every pass is written out**, each tap as far into its pass as it is into the loop, for as long as
   the repeats run. A last pass cut short by the section's end is written as far as it gets.
+  *Amended by ADR 0315 (2026-11-24):* with bars, a pass is whole bars and each tap keeps its place in the
+  bar; without bars, as written here.
 - **Drawn, never copied** (D10). Each pass is drawn from the one piece, every time, so a change to it
   changes every pass. Nothing is stored, and D14's reason for never copying repeats still stands.
 - **↻ ×8 where the repeats begin**, in front of the tap it shares a time with. It's the count, said once,

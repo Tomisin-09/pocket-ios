@@ -107,6 +107,7 @@ On the phone on 2026-11-21, Tomisin found two things on the song map.
   where four bars are 10.878 s, so each pass came 41 ms early, about a beat by the Solo and a beat and a half
   by the end. Stepping repeats by whole bars when there are bars would amend 0232 D14 and D18. Tomisin put it
   in the backlog the same day (`docs/backlog.md`, *A loop's repeats keep to the bar*).
+  *Decided 2026-11-24 in ADR 0315:* with bars, a repeat now steps by whole bars, as a copy does.
 - **The song's grid looking a beat early** on Tomisin's song (every marker on beat 2, the chords changing
   on 2 and 4). That's the song's own 1, set on the waveform.
 

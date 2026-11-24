@@ -35,13 +35,15 @@ extension SongMapLayout {
     }
 
     /// A loop's repeats, from its end to where they stop, when there's room for at least half a pass more,
-    /// so there's something to draw. The count is to the nearest whole pass; the band still runs all the
-    /// way, because that's what the player said.
-    static func repeats(from start: TimeInterval, to end: TimeInterval,
-                        sectionEnd: TimeInterval) -> SongMap.Repeat? {
+    /// so there's something to draw. The count is to the nearest whole pass, and with bars a pass is whole
+    /// bars (ADR 0315, `SongMapRepeats`); the band still runs all the way, because that's what the player
+    /// said.
+    static func repeats(from start: TimeInterval, to end: TimeInterval, sectionEnd: TimeInterval,
+                        grid: SongMapInput.Grid? = nil) -> SongMap.Repeat? {
         let length = end - start
         guard length > tolerance, sectionEnd - end >= length / 2 else { return nil }
-        return SongMap.Repeat(end: sectionEnd, passes: Int(((sectionEnd - start) / length).rounded()))
+        return SongMap.Repeat(end: sectionEnd,
+                              passes: SongMapRepeats.passes(from: start, to: end, reach: sectionEnd, grid: grid))
     }
 
     /// The part of a loop's repeats that falls in a row.
@@ -82,7 +84,7 @@ extension SongMapLayout {
             reaches.append(Reach(to: .songEnd, title: "To the end of the song", end: songEnd))
         }
         return reaches.compactMap { reach in
-            repeats(from: piece.start, to: piece.end, sectionEnd: reach.end).map {
+            repeats(from: piece.start, to: piece.end, sectionEnd: reach.end, grid: map.grid).map {
                 SongMap.RepeatChoice(to: reach.to, title: reach.title, passes: $0.passes)
             }
         }

@@ -467,10 +467,10 @@ click through the speaker and through headphones.
 
   Needs its own ADR, amending 0004's rung 2 and 0011's import if it goes ahead. **Not decided.**
 
-## A loop's repeats keep to the bar (logged 2026-11-21, found building ADR 0310)
+## A loop's repeats keep to the bar — **BUILT as ADR 0315** (2026-11-24, `pocket-470`, for 1.6)
 
-When is not decided here (Tomisin, 2026-11-21: *"we'll put it in the backlog"*). It needs its own ADR,
-amending 0232 D14 and D18, which draw and write a repeat out.
+Logged 2026-11-21 while building ADR 0310; Tomisin asked to revisit it before 1.6 shipped and chose to
+build it then. ADR 0315 amends 0232 D14 and D18, and 0308 D2. Owed: a phone pass on *Sunday Morning*.
 
 - **What happened.** In *Sunday Morning guitar cover*, Tomisin set the intro's *Chords* to repeat to the end
   of the song, and the chord changes slid off the record as the song went on. A repeat steps by the loop's
