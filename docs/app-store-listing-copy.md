@@ -7,7 +7,7 @@
 > Journal and Practice log, and the Toolkit are free (ADR 0263). Practising is the plan.
 >
 > **Current, so paste from these:** Name, Subtitle, Promotional text, Keywords, Description (with
-> its *One plan* block and the EULA line), *What's New — 1.5*, Price / availability, App Review
+> its *One plan* block and the EULA line), *What's New — 1.6*, Price / availability, App Review
 > notes, and the **1.4 pre-submission checklist**. Every other *What's New* draft and checklist
 > below is history. Don't paste from it.
 >
@@ -252,7 +252,31 @@ Apple's standard terms. Only if that ever changes does the link move into ASC's
 own custom-EULA field instead of the description — and then all three surfaces
 (description, paywall, Settings) must point at the custom one, not Apple's.
 
-## What's New in This Version — 1.5 (paste this)
+## What's New in This Version — 1.6 (paste this)
+
+> Pick your moon. Settings ▸ Appearance ▸ Theme has eight: Blood Moon, Blue, Jade, Corn, Silver, Pink,
+> Harvest and Cold, each in light and dark, and Red Moon wears the one you pick, Settings and every
+> sheet included. The app icon can follow it, or keep the moon you like best. Blood Moon is free, and
+> the other seven come with the plan.
+>
+> Also new:
+> • Triads on three strings in the Arpeggios exercise: the key's chord, its seven chords or a
+>   progression, kept between two frets you choose or climbing the neck
+> • Play triads broken, a note at a time, or together, with rings where your fingers just were
+> • Practice as triads opens any of your progressions as a triads drill
+> • Diminished and augmented chords, in the chord picker and in your progressions
+> • The Toolkit is pink, so it no longer looks like the Metronome
+> • A loop that repeats to the end of the song keeps time with it to the last pass
+> • Long runs on the fretboard no longer make the screen stutter
+
+*Drafted 2026-11-24 for 1.6 (14), not yet pasted. Each line is a `[1.6]` CHANGELOG entry: the moon
+themes and Settings (ADRs 0311, 0312, 0316) with the App Icon (ADR 0314) in the opening; then triads
+(ADR 0313 D2 to D6, D10), Play as (D7, D8), Practice as triads (D9), dim and aug (D1), the pink Toolkit
+(0312 D5), repeats that keep to the bar (ADR 0315) and the fretboard stutter fix. Left out as too
+small: an exercise made in a newer version being left alone (0313 D4). Like 1.5's, it names no price
+and nothing held back.*
+
+## What's New in This Version — 1.5 — history, do not paste
 
 > Play it in any key. In Active listening, move a loop up or down a semitone at a time and take a lick
 > through all twelve keys at the same speed. In Edit song, raise or lower a whole song to meet your
@@ -499,6 +523,10 @@ shipping code, not aspiration.
 > sandbox account. To reach the plan screen, tap **Practice** on the home screen. Every practising
 > screen leads to it until the plan is bought, and **Restore purchases** is on the same screen.
 >
+> **Themes and app icons:** Settings ▸ Appearance has a **Theme** row and an **App Icon** row. Blood
+> Moon is free; the other seven moon themes and their icons are part of the plan, and tapping one
+> while the plan is off opens the same plan screen. Changing the app icon shows iOS's own alert.
+>
 > **To try the song player, open the Song library and tap "Try the demo".** That adds a playable practice track so you can try the waveform, loop
 > capture and speed control immediately. You can also import your own audio from the
 > Files app; the app plays DRM-free local and iCloud Drive files only, and never
@@ -525,6 +553,10 @@ shipping code, not aspiration.
 there, for ADR 0304: a take now keeps recording with the screen locked. The live copy spells it the US way,
 "Practicing" and "practicing", in the plan paragraph. This file keeps "practising". Otherwise the export
 matches the live text exactly.*
+
+*The Themes and app icons paragraph is new for 1.6, drafted 2026-11-24 and not yet pasted: seven of the
+eight themes and their icons are the plan (ADR 0312 D1, ADR 0314 D3), so a reviewer on a free install
+meets the plan screen in Settings as well as in Practice.*
 
 **Before pasting, re-check each claim still holds** — a stale one is worse than no
 note at all. For 1.4, confirm the plan sentence on the TestFlight build during the sandbox pass:

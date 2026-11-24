@@ -15,6 +15,9 @@ settings:
     # strings, so a "1.1.0" build will not appear in the build picker for a version
     # named "1.1". 1.0 is released ("Ready for Distribution") and therefore locked.
     #
+    # 1.6 follows 1.5, which cleared review on 2026-11-24. It is a new version, so ASC needs a "1.6"
+    # version record of its own before a build can be attached to it.
+    #
     # 1.5 follows 1.4.1, which cleared review on 2026-11-18. It is a new version, so ASC needs a "1.5"
     # version record of its own before a build can be attached to it.
     #
@@ -25,7 +28,7 @@ settings:
     # last version approved. 1.2 and 1.3 lived on TestFlight (builds 4-7), and 1.3 (7), cut
     # 2026-09-10 for review, was never submitted. The open version record in ASC, created as
     # "1.2", is renamed to 1.4 rather than replaced, so the store's history reads 1.1, then 1.4.
-    MARKETING_VERSION: "1.5"
+    MARKETING_VERSION: "1.6"
     # Monotonic, and must exceed every build already uploaded under this bundle id —
     # ASC rejects a duplicate build number outright. Bump this every archive, not just
     # every version. If an upload is refused as a duplicate, raise it again; there is
@@ -56,7 +59,10 @@ settings:
     # **13** replaces it before review (2026-11-22). 12 was archived from `55c1d9f`, uploaded and
     # attached to the 1.5 record; then *Remove copy*'s checks were made to fail closed, and ASC holds
     # 12, so the replacement takes the next number.
-    CURRENT_PROJECT_VERSION: "13"
+    #
+    # **14** is 1.6's first build (2026-11-24): everything merged after 1.5 (13) was archived at
+    # `13a2b3f`, through the theme on every sheet and Settings, and a loop's repeats (#461).
+    CURRENT_PROJECT_VERSION: "14"
     DEVELOPMENT_TEAM: "" # set via CI / local xcconfig; do not hard-code
 
 # Per-configuration backend base URL (Debug → dev, Release → prod).
