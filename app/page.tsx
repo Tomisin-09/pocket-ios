@@ -23,11 +23,13 @@ export const metadata: Metadata = {
 }
 
 // Show, don't tell: each idea is one screen and one line. The kickers and headlines are the App Store
-// frames' own (appstore-2026-11-16/frames.json), so the site and the listing say the same thing; the
-// detail they used to carry lives in the manual now. One exception, and the site leads on it: the Journal
-// is the fourth chapter, and the take it replaced took the loop ramp's place in the rail. The listing's
-// screenshots can't change until 1.5 is submitted, so frame 04 becomes the Journal and frame 07 the take
-// then. The Journal is the manual's `journal/timeline`, shot on the Pro Max with the other frames (11-16).
+// frames' own (appstore-2026-11-16/frames.json), so the site and the listing say the same thing. The site
+// leads the listing where a frame is owed a change it can only take with a new version: the Journal is the
+// fourth chapter, and the take it replaced took the loop ramp's place in the rail (frames 04 and 07, owed
+// since 11-18); and Build it up is an arpeggio drawing its neck rather than a tempo drill over half a
+// phone of black (frame 02, 11-24: `AppStoreShots.testBuildItUpArpeggio` on main, the drill made through
+// New exercise as a player makes it). The Journal is the manual's `journal/timeline`, shot on the Pro Max
+// with the other frames (11-16).
 type Shot = { kicker: string; title: string; image: StaticImageData; alt: string }
 
 const CHAPTERS: Array<Shot & { line: string }> = [
@@ -43,7 +45,7 @@ const CHAPTERS: Array<Shot & { line: string }> = [
     title: 'Every drill runs against a click.',
     line: 'Tap in a tempo and let the automator raise it, by bars or by time.',
     image: drill,
-    alt: 'An alternate-picking drill running at 76 BPM, stepping up a tempo staircase toward 90.',
+    alt: 'An A minor 7 arpeggio drill running at 42 BPM, the note being played lit on the neck above a tempo staircase climbing toward 50.',
   },
   {
     kicker: 'Run it',
