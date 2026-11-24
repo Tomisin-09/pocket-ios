@@ -132,7 +132,7 @@ extension RoutineDetailView {
         Binding(get: { item.usesAuthoredLength },
                 set: { newValue in
                     item.usesAuthoredLength = newValue
-                    if existsInStore { try? editContext.save() }
+                    if existsInStore { editContext.saveOrLog() }
                 })
     }
 

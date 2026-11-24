@@ -29,7 +29,7 @@ extension RoutinePlayerView {
             // The revision last. An accepted raise moves the command off the rating just given, which
             // sets it aside: the drill reads unrated at its new tempo, "Last rated…" at the old one.
             revise(owner, with: revision)
-            try? modelContext.save()
+            modelContext.saveOrLog()
         }
         doneStage = nil
         haptic(.light)
@@ -157,7 +157,7 @@ extension RoutinePlayerView {
     func deleteTake(_ take: Recording) {
         try? RecordingStore.delete(fileName: take.fileName)
         modelContext.delete(take)
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 
     /// The tempo anchors the Done screen sizes its revision offer from **and the unit they read in**

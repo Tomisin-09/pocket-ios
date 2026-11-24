@@ -96,10 +96,13 @@ extension WaveformPracticeModel {
     /// Save `draft` as `snag`'s line, straight to the Journal like *Name the notes* does (ADR 0234 D7):
     /// change the line it has, take it out when emptied, or write a new one, of `SnagLine.kind`, to
     /// `snagLineHome`.
-    func saveSnagLine(_ draft: String, for snag: Snag) {
+    ///
+    /// Returns false only when there was something to keep and its save failed (ADR 0318).
+    @discardableResult
+    func saveSnagLine(_ draft: String, for snag: Snag) -> Bool {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         if let line = snagLine(for: snag) {
-            guard text != line.text else { return }
+            guard text != line.text else { return true }
             if text.isEmpty {
                 JournalWriter.delete(line, from: context)
             } else {
@@ -108,12 +111,19 @@ extension WaveformPracticeModel {
         } else if let home = snagLineHome(for: snag) {
             guard JournalWriter.add(to: .loop(home), text: text,
                                     kind: SnagLine.kind(markedWhileNaming: snag.markedWhileNaming),
-                                    snagUID: snag.uid, into: context) else { return }
+                                    snagUID: snag.uid, into: context) else { return true }
         } else {
-            return
+            return true
         }
-        try? context.save()
+        return commitSnagLine()
+    }
+
+    /// The save after a snag's line is written, which *Try again* repeats (ADR 0318). Calling
+    /// `saveSnagLine` again would find the line already says it, and save nothing.
+    func commitSnagLine() -> Bool {
+        guard context.saveOrLog() else { return false }
         haptic(.light)
+        return true
     }
 
     /// Tap a snag row — go there and play, like a marker row.

@@ -1681,6 +1681,15 @@ empty, because that line was Home's only word about adding a first song.
   neither can CI's unsigned build, which has no group. `PocketStoreTests` pins the URL, and it bites on
   a local, signed-to-run simulator. The App Group itself holds only the share extension's snapshot and
   inbox (Toolkit hub, above).
+- **Every save goes through `ModelContext.saveOrLog()`** (`Core/Storage/ModelContext+SaveOrLog.swift`,
+  ADR 0318), which logs a failure (file and line, the error's domain and code; category `store`) and
+  returns whether the save worked. `.swiftlint.yml`'s `save_error_discarded` bans `try? ….save()`. Where
+  the player has just asked for something to be kept, the caller reads the result: the screen stays as
+  it was and `saveFailedAlert` (`UI/SaveFailedAlert.swift`) says *Couldn’t save*, with *Try again*
+  repeating the save and never the edit. A take is `RecordingController.unsavedTake` until its save
+  works (`reportsUnsavedTake` beside `endsTakeOnInterruption`). A restore whose save fails rolls back
+  and writes no file (0188 D7). `-failSaveIn <file>` fails one save in a Debug `-uiTesting` build
+  (`SaveFailureDrill`), for `SaveFailedUITests`.
 - **SwiftData `@Model` domain** (`Core/Models/`): `Song` is the aggregate root, with
   cascade relationships to its `Loop`s and `Marker`s. The practice screen binds to a
   persisted `Song` via the `ModelContext`; loops/markers persist across launches. ADR 0011.

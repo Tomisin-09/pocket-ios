@@ -55,6 +55,17 @@ enum UITestRuntime {
     /// builds only, so no launch argument can open the plan on a build a player holds.
     static let planOverride = parsePlan(in: CommandLine.arguments)
 
+    /// The file whose first save should fail, when a UI test names one (`UITestHooks.failSaveInArgument`).
+    /// `nil` in every normal launch. `ModelContext.saveOrLog` reads it in Debug builds only.
+    static let failingSaveFile = parseFailSaveIn(in: CommandLine.arguments)
+
+    static func parseFailSaveIn(in arguments: [String]) -> String? {
+        guard arguments.contains(UITestHooks.launchArgument),
+              let flag = arguments.firstIndex(of: UITestHooks.failSaveInArgument),
+              arguments.indices.contains(flag + 1) else { return nil }
+        return arguments[flag + 1]
+    }
+
     /// Split out to be tested, like `parseShotHour`. Anything after `-plan` that isn't a known value
     /// falls back to Pay once rather than to no plan: a typo should cost one test its wall, not stop
     /// fifty tests at it.

@@ -201,7 +201,7 @@ struct ReferencesSection<Owner: ReferenceLinkOwner & AnyObject>: View {
     /// Make the change durable, unless the host owns that decision.
     private func persist() {
         guard savesImmediately else { return }
-        try? writeContext.save()
+        writeContext.saveOrLog()
     }
 }
 

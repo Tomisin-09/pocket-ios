@@ -90,6 +90,35 @@ final class RestoreCoordinatorTests: XCTestCase {
                          "the door reads its own copy, not the file the player chose")
     }
 
+    /// **A restore that can't save adds nothing** (ADR 0318). It says so, writes no file, and takes its
+    /// rows back out of the context: left there, they could be saved later without their files, which is
+    /// the state 0188 D7's order exists to rule out. The same archive restores into a store that saves.
+    @MainActor
+    func testARestoreThatCantSaveAddsNothing() async throws {
+        let refusingStore = try ReadOnlyStore.container(for: PocketStore.models)
+        let refusing = ModelContext(refusingStore)
+        guard case let .success(pending) = await RestoreCoordinator.inspect(try pickedArchive(), in: refusing) else {
+            return XCTFail("a real export should open")
+        }
+        defer { RestoreCoordinator.discard(pending.workingDirectory) }
+        let outcome = await RestoreCoordinator.restore(pending, in: refusing, takesDirectory: root,
+                                                       attachmentsDirectory: root)
+        XCTAssertFalse(outcome.saved)
+        XCTAssertEqual(outcome.rowsAdded, 0)
+        XCTAssertEqual(outcome.takeFilesWritten, 0)
+        XCTAssertFalse(refusing.hasChanges, "the rows came back out, so no later save can keep them")
+        XCTAssertTrue(refusing.insertedModelsArray.isEmpty)
+        // Read through a fresh context: the one that failed can't be trusted to say what's stored
+        // (`SaveOrLogTests.testARollbackAfterAFailedSaveLeavesNothingToSave`).
+        XCTAssertEqual(try ModelContext(refusingStore).fetch(FetchDescriptor<Exercise>()).count, 0)
+
+        let saving = try makeContext()
+        let restored = await RestoreCoordinator.restore(pending, in: saving, takesDirectory: root,
+                                                        attachmentsDirectory: root)
+        XCTAssertTrue(restored.saved)
+        XCTAssertEqual(try saving.fetchCount(FetchDescriptor<Exercise>()), 1)
+    }
+
     @MainActor
     func testDiscardingRemovesTheCopy() async throws {
         let context = try makeContext()

@@ -262,7 +262,7 @@ struct ExerciseBlockPreview: View {
     /// Apply a model mutation and persist it — the preview edits are live, not deferred.
     private func commit(_ change: () -> Void) {
         change()
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 }
 

@@ -136,6 +136,7 @@ struct MetronomeView: View {
         .onDisappear(perform: endSession)
         // The take ends when the player leaves the app; the click plays on, as it always has.
         .endsTakeOnInterruption(finishTake)
+        .reportsUnsavedTake(recorder)
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
             keyboardUp = true
         }

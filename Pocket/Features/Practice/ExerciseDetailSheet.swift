@@ -139,7 +139,7 @@ struct ExerciseDetailSheet: View {
         let trimmed = notes.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed != exercise.notes else { return }
         exercise.notes = trimmed
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 
     /// Persist an edited mastery rating on Done, only when it differs from what's stored — a
@@ -147,7 +147,7 @@ struct ExerciseDetailSheet: View {
     func commitMastery() {
         guard mastery != exercise.mastery else { return }
         exercise.rateMastery(mastery)
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 }
 

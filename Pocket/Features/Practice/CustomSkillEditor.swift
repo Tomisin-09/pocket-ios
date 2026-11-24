@@ -20,6 +20,10 @@ struct CustomSkillEditor: View {
 
     @State private var name: String
     @State private var info: String
+    /// The skill a first Save made, so Save after a failed save edits it rather than adding a second
+    /// (ADR 0318).
+    @State private var created: CustomSkill?
+    @State private var saveFailed = false
 
     init(existing: CustomSkill?, initialName: String = "", onCreate: @escaping (String) -> Void = { _ in }) {
         self.existing = existing
@@ -30,7 +34,10 @@ struct CustomSkillEditor: View {
 
     /// Why the name can't be saved, or `nil`. The skill being renamed doesn't clash with itself.
     private var problem: String? {
-        let taken = customSkills.filter { $0.uid != existing?.uid }.map(\.name) + TechniqueTaxonomy.all.map(\.name)
+        // Not the skill being edited, nor one a failed save left in the store unsaved (ADR 0318): it would
+        // read as its own name taken.
+        let editing = (existing ?? created)?.uid
+        let taken = customSkills.filter { $0.uid != editing }.map(\.name) + TechniqueTaxonomy.all.map(\.name)
         return CustomSkill.nameProblem(name, takenNames: taken)
     }
 
@@ -69,6 +76,7 @@ struct CustomSkillEditor: View {
                 }
             }
         }
+        .saveFailedAlert(isPresented: $saveFailed, retry: commit)
     }
 
     // The two fields are their own properties rather than modifier chains written inline in their
@@ -99,15 +107,21 @@ struct CustomSkillEditor: View {
     private func save() {
         let cleanName = Labels.canonical(name) ?? ""
         let cleanInfo = info.trimmingCharacters(in: .whitespacesAndNewlines)
-        if let existing {
-            existing.name = cleanName
-            existing.info = cleanInfo
+        if let skill = existing ?? created {
+            skill.name = cleanName
+            skill.info = cleanInfo
         } else {
             let skill = CustomSkill(name: cleanName, info: cleanInfo)
             context.insert(skill)
+            created = skill
             onCreate(skill.skillID)
         }
-        try? context.save()
+        commit()
+    }
+
+    /// The save and the close, which *Try again* repeats. A failed save keeps the editor open (ADR 0318).
+    private func commit() {
+        guard context.saveOrLog() else { saveFailed = true; return }
         haptic(.medium)
         dismiss()
     }

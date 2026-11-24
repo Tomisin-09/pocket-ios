@@ -45,6 +45,10 @@ struct GoalEditorView: View {
     /// rather than a sentinel template, because `template` is also what supplies the fallback title,
     /// and a blank start deliberately has none.
     @State private var startedBlank = false
+    /// The goal a first Save made, so Save after a failed save edits it rather than adding a second
+    /// (ADR 0318).
+    @State private var created: Goal?
+    @State private var saveFailed = false
 
     /// Whether any kept skill routes via the target song (Path B) — drives the song picker's presence.
     private var needsTargetSong: Bool { goalNeedsTargetSong(keptSkillIDs) }
@@ -80,6 +84,7 @@ struct GoalEditorView: View {
             }
         }
         .onAppear(perform: loadExisting)
+        .saveFailedAlert(isPresented: $saveFailed, retry: commit)
     }
 
     // MARK: - Editor form
@@ -200,20 +205,28 @@ struct GoalEditorView: View {
     private func save() {
         let keptOrdered = offeredSkillIDs.filter { keptSkillIDs.contains($0) }
         let finalTitle = title.trimmingCharacters(in: .whitespaces)
-        let goal = existing ?? Goal()
+        let goal = existing ?? created ?? Goal()
         goal.title = finalTitle.isEmpty ? (template?.title ?? "Goal") : finalTitle
         goal.weight = priority.weight
         goal.skillIDs = keptOrdered
         goal.targetSong = needsTargetSong ? targetSong : nil
         goal.isMet = isMet
-        if existing == nil { context.insert(goal) }
-        try? context.save()
+        if existing == nil, created == nil {
+            context.insert(goal)
+            created = goal
+        }
+        commit()
+    }
+
+    /// The save and the close, which *Try again* repeats. A failed save keeps the editor open (ADR 0318).
+    private func commit() {
+        guard context.saveOrLog() else { saveFailed = true; return }
         haptic(.medium)
         dismiss()
     }
 
     private func deleteGoal() {
-        if let existing { context.delete(existing); try? context.save() }
+        if let existing { context.delete(existing); context.saveOrLog() }
         haptic(.medium)
         dismiss()
     }

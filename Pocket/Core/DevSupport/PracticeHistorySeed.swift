@@ -106,7 +106,7 @@ enum PracticeHistorySeed {
         seedLongTermGoals(songs: (try? context.fetch(FetchDescriptor<Song>())) ?? [], into: context)
         seedRoutines(exercises: exercises, loops: loops, into: context)
 
-        try? context.save()
+        context.saveOrLog()
     }
 
     // MARK: - The chords behind My chords

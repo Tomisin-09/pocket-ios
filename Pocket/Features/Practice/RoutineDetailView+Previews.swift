@@ -21,7 +21,7 @@ import SwiftUI
                      RoutineItem.rest(order: 1),
                      RoutineItem.item(drill, order: 2)]
     container.mainContext.insert(routine)
-    try? container.mainContext.save()
+    container.mainContext.saveOrLog()
     return NavigationStack { RoutineDetailView(container: container, existing: routine) }
         .modelContainer(container)
         .preferredColorScheme(.dark)

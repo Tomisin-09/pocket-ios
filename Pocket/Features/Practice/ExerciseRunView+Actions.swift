@@ -42,16 +42,6 @@ extension ExerciseRunView {
         }
     }
 
-    /// Write a new entry, snapshotting the exercise's current command tempo in BPM (ADR 0058). Serves
-    /// the full `JournalSheet`; the compact capture sheet (ADR 0142) owns its own write, since it can
-    /// be opened where this screen's sheet cannot.
-    func addJournalEntry(_ text: String, _ kind: EntryKind) {
-        if JournalWriter.add(to: .exercise(exercise), text: text, kind: kind, into: modelContext) {
-            try? modelContext.save()
-            haptic(.light)
-        }
-    }
-
     /// The caption under the live BPM — the tempo marking, plus the **rhythm** the drill is played in
     /// when it declares one ("BPM · Allegro · 16ths"). The big number stays the BPM the player set;
     /// this only says what that BPM is counting, which is the fact a bare tempo omits (device pass
@@ -111,7 +101,7 @@ extension ExerciseRunView {
         exercise.backoffTempoOverride = backoffOverride
         exercise.beatsPerBar = signature.beats
         exercise.noteValue = signature.noteValue
-        try? modelContext.save()
+        modelContext.saveOrLog()
         baseline = current
     }
 
@@ -135,7 +125,7 @@ extension ExerciseRunView {
         // Stamp the exercise as practised now, so the planner's dueness / warm-up LRU advance
         // (V2 planner Slice 1). Persist() already saved; this rides the next context save.
         exercise.markPracticed()
-        try? modelContext.save()
+        modelContext.saveOrLog()
         // Start the practice log's clock (ADR 0117) — consumed by whichever completion hook fires.
         runStartedAt = .now
         // Standalone: arm the post-run completion offer (ADR 0079), capturing the reach being run so

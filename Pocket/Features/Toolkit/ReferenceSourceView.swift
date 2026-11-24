@@ -42,9 +42,9 @@ struct ReferenceSourceView: View {
         .background(PocketColor.background.ignoresSafeArea())
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $editing) { draft in
-            ReferenceLinkEditor(draft: draft, accent: PocketColor.toolkit) { title, url, note in
-                commit(draft, title: title, url: url, note: note)
-            }
+            ReferenceLinkEditor(draft: draft, accent: PocketColor.toolkit,
+                                save: { title, url, note in commit(draft, title: title, url: url, note: note) },
+                                retry: { context.saveOrLog() })
         }
         .referenceAttachmentViewing($presenting)
         .sheet(isPresented: $attaching) { ReferenceAttachSheet(anchor: anchor) }
@@ -226,18 +226,19 @@ struct ReferenceSourceView: View {
     }
 
     /// The editor's save: the name to every row, the note to this one (`ReferenceLinkStore.edit`).
-    private func commit(_ draft: ReferenceLinkDraft, title: String, url: String, note: String) {
-        guard let row = draft.link else { return }
+    /// Returns false only when its save failed (ADR 0318).
+    private func commit(_ draft: ReferenceLinkDraft, title: String, url: String, note: String) -> Bool {
+        guard let row = draft.link else { return true }
         let source = ReferenceLibrary.source(containing: row.uid, in: links)
-        guard ReferenceLinkStore.edit(row, of: source, title: title, url: url, note: note) else { return }
-        try? context.save()
+        guard ReferenceLinkStore.edit(row, of: source, title: title, url: url, note: note) else { return true }
+        return context.saveOrLog()
     }
 
     // MARK: - Delete
 
     private func delete(_ source: ReferenceSource) {
         ReferenceLinkStore.delete(source, in: context)
-        try? context.save()
+        context.saveOrLog()
         dismiss()
     }
 }

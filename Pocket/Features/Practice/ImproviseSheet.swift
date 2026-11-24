@@ -67,6 +67,7 @@ struct ImproviseView: View {
             player.stop()
         }
         .endsTakeOnInterruption(finishTake)
+        .reportsUnsavedTake(recorder)
         .sheet(isPresented: $showingTakes) {
             TakesSheet(owner: .loop(loop, .improvise), onDelete: deleteTake)
         }
@@ -96,7 +97,7 @@ struct ImproviseView: View {
     private func deleteTake(_ take: Recording) {
         try? RecordingStore.delete(fileName: take.fileName)
         modelContext.delete(take)
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 
     // MARK: - Intro (jam over it — no target, no verdict)

@@ -43,7 +43,7 @@ enum ShareInboxDrain {
             }
             if file(save, on: place, in: context, fileManager) { filed += 1 }
         }
-        guard (try? context.save()) != nil else { return 0 }
+        guard context.saveOrLog() else { return 0 }
         for save in done { ShareInbox.remove(save, fileManager) }
         return filed
     }

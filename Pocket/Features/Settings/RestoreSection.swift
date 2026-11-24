@@ -37,6 +37,8 @@ struct RestoreSection: View {
     @State private var isChoosing = false
     @State private var pending: PendingRestore?
     @State private var failure: String?
+    /// The restore's save failed, so nothing was added (ADR 0318).
+    @State private var notSaved = false
     /// Held beside `pending` because cleanup has to outlive it: `.sheet(item:)` nils its binding
     /// before `onDismiss` runs, so a discard expressed in terms of `pending` would find nothing.
     @State private var working: URL?
@@ -77,6 +79,11 @@ struct RestoreSection: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(failure ?? "")
+        }
+        .alert("Couldn’t restore", isPresented: $notSaved) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(Self.notSavedMessage)
         }
     }
 
@@ -136,8 +143,20 @@ struct RestoreSection: View {
     /// rows are saved (D7). `discardPending` runs later, from `onDismiss`.
     /// The files are written out of the zip **after** the rows are saved (D7), so the archive has to
     /// stay on disk for the whole of this — which is why the discard is here and not in `onDismiss`.
+    static let notSavedMessage = "Nothing was added. If your iPhone is nearly full, freeing up some space "
+        + "and restoring again should fix it."
+
     private func restore(_ arrival: PendingRestore) async {
         let outcome = await RestoreCoordinator.restore(arrival, in: context)
+        guard outcome.saved else {
+            // Not *Couldn’t save*'s "it's still here": a restore that can't save takes its rows back out,
+            // so there is nothing here to try again on (ADR 0318). Restoring again is the retry.
+            phase = .idle
+            notSaved = true
+            RestoreCoordinator.discard(arrival.workingDirectory)
+            working = nil
+            return
+        }
         phase = .done(outcome)
         RestoreCoordinator.discard(arrival.workingDirectory)
         working = nil

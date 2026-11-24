@@ -115,6 +115,7 @@ struct EarTrainingView: View {
             player.stop()
         }
         .endsTakeOnInterruption(finishTake)
+        .reportsUnsavedTake(recorder)
         .sheet(isPresented: $showingTakes) {
             TakesSheet(owner: .loop(loop, .ear), onDelete: deleteTake)
         }
@@ -164,7 +165,7 @@ struct EarTrainingView: View {
     private func deleteTake(_ take: Recording) {
         try? RecordingStore.delete(fileName: take.fileName)
         modelContext.delete(take)
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 
     // MARK: - Intro (hum / sing, away from the guitar)

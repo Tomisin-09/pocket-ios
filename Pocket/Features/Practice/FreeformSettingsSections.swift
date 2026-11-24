@@ -37,7 +37,7 @@ struct FreeformInstructionsSection: View {
             // ADR 0139 O6 — player-declared, never inferred.
             Toggle("I can do this without my instrument", isOn: Binding(
                 get: { exercise.awayFromInstrument },
-                set: { exercise.awayFromInstrument = $0; try? modelContext.save() }))
+                set: { exercise.awayFromInstrument = $0; modelContext.saveOrLog() }))
         } header: {
             Text("Instructions")
         } footer: {
@@ -53,7 +53,7 @@ struct FreeformInstructionsSection: View {
         let trimmed = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmed != exercise.notes else { return }
         exercise.notes = trimmed
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 }
 
@@ -73,7 +73,7 @@ struct FreeformMetronomeSection: View {
         Section {
             Toggle("Metronome", isOn: Binding(
                 get: { exercise.clickEnabled },
-                set: { exercise.clickEnabled = $0; try? modelContext.save() }))
+                set: { exercise.clickEnabled = $0; modelContext.saveOrLog() }))
             if exercise.clickEnabled {
                 EditableTempoRow(label: "Tempo", caption: "BPM",
                                  value: exercise.clickBPM, tint: PocketColor.practice,
@@ -89,7 +89,7 @@ struct FreeformMetronomeSection: View {
                         exercise.beatsPerBar = signature.beats
                         exercise.noteValue = signature.noteValue
                         exercise.accentBeats = signature.accentBeats
-                        try? modelContext.save()
+                        modelContext.saveOrLog()
                     })) {
                         ForEach(TimeSignature.presets) { preset in
                             Text("\(preset.name) · \(preset.context)").tag(preset)
@@ -109,6 +109,6 @@ struct FreeformMetronomeSection: View {
 
     private func setBPM(_ value: Int) {
         exercise.clickBPM = min(range.upperBound, max(range.lowerBound, value))
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 }

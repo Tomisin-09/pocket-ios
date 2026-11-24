@@ -60,6 +60,7 @@ struct StandaloneTakeSheet: View {
         }
         // An interruption saves the take too. That is still the save, not a gesture that meant
         // something else, so it doesn't break the rule above. Leaving the app does not (ADR 0304).
+        .reportsUnsavedTake(recorder)
         .endsTakeOnInterruption {
             recorder.finishIfRecording(owner: .standalone, context: modelContext)
         }

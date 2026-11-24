@@ -136,6 +136,28 @@ extension View {
     func endsTakeOnInterruption(_ finish: @escaping () -> Void) -> some View {
         modifier(TakeEndsOnInterruption(finish: finish))
     }
+
+    /// Say *Couldn’t save* when a take's save fails (ADR 0318). Goes beside `endsTakeOnInterruption`, on
+    /// every screen that records a take.
+    func reportsUnsavedTake(_ recorder: RecordingController) -> some View {
+        modifier(UnsavedTakeAlert(recorder: recorder))
+    }
+}
+
+/// The alert `reportsUnsavedTake` attaches. Its own flag rather than a binding over `unsavedTake`, so a
+/// second failure after *Try again* presents it again once the first has closed.
+private struct UnsavedTakeAlert: ViewModifier {
+    var recorder: RecordingController
+    @State private var presented = false
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: recorder.unsavedTake) { _, take in presented = take != nil }
+            .saveFailedAlert(isPresented: $presented, retry: {
+                recorder.retryUnsavedTake()
+                if recorder.unsavedTake != nil { presented = true }
+            }, onCancel: recorder.dismissUnsavedTake)
+    }
 }
 
 /// The **direct take toggle**, for a surface with no Start to arm against (ADR 0069 amendment,

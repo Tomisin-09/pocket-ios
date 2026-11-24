@@ -116,7 +116,7 @@ extension WaveformPracticeModel {
         }).value else { return }
         song.amplitudes = extracted.amplitudes
         amplitudes = extracted.amplitudes
-        try? context.save()
+        context.saveOrLog()
     }
 
     /// Generate the dev arpeggio off the main actor and hand it to the engine (the

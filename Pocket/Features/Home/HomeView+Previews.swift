@@ -43,7 +43,7 @@ private struct HomePreviewSeed {
             routine.lastPracticed = now.addingTimeInterval(offset)
             container.mainContext.insert(routine)
         }
-        try? container.mainContext.save()
+        container.mainContext.saveOrLog()
         return container
     }
 }

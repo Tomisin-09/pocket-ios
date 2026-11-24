@@ -76,7 +76,11 @@ struct ReferenceLinkEditor: View {
     /// Called with a title, a URL string that has already passed `ReferenceURL.isValid`, and a
     /// note. All three are `String`, so the order — **title, url, note**, matching the store — is
     /// the one thing here the compiler cannot check for you.
-    let save: (String, String, String) -> Void
+    ///
+    /// Returns whether it's kept: false when its save failed (ADR 0318).
+    let save: (String, String, String) -> Bool
+    /// Saves again after a failed save, without writing the link twice.
+    let retry: () -> Bool
 
     @Environment(\.dismiss) private var dismiss
     @State private var title: String
@@ -84,11 +88,17 @@ struct ReferenceLinkEditor: View {
     @State private var note: String
     /// Set only after a failed save attempt, so the field is not red while it is still being typed.
     @State private var showingRejection = false
+    /// Set once `save` has run, so Save after a failed save only saves. The fields lock then, so what's
+    /// on screen is what was written (ADR 0318).
+    @State private var written = false
+    @State private var saveFailed = false
 
-    init(draft: ReferenceLinkDraft, accent: Color, save: @escaping (String, String, String) -> Void) {
+    init(draft: ReferenceLinkDraft, accent: Color, save: @escaping (String, String, String) -> Bool,
+         retry: @escaping () -> Bool) {
         self.draft = draft
         self.accent = accent
         self.save = save
+        self.retry = retry
         _title = State(initialValue: draft.title)
         _urlString = State(initialValue: draft.urlString)
         _note = State(initialValue: draft.note)
@@ -141,6 +151,7 @@ struct ReferenceLinkEditor: View {
                            + "it under the site.")
                 }
             }
+            .disabled(written)
             .navigationTitle(navigationTitle)
             .navigationBarTitleDisplayMode(.inline)
             .tint(accent)
@@ -162,6 +173,7 @@ struct ReferenceLinkEditor: View {
                 }
             }
         }
+        .saveFailedAlert(isPresented: $saveFailed) { keep(retry()) }
     }
 
     /// The file half — what you are describing, shown rather than typed.
@@ -273,18 +285,23 @@ struct ReferenceLinkEditor: View {
     /// model from every caller; this one exists so the player sees why, instead of a Save button
     /// that silently does nothing.
     private func attemptSave() {
+        guard !written else { return keep(retry()) }
         if isAttachmentDraft {
             // No URL to gate. The commit side branches on the link's own kind, so what is passed
             // here for the URL is ignored rather than trusted.
-            save(title, urlString, note)
-            dismiss()
-            return
+            written = true
+            return keep(save(title, urlString, note))
         }
         guard ReferenceURL.isValid(urlString) else {
             showingRejection = true
             return
         }
-        save(title, urlString, note)
-        dismiss()
+        written = true
+        keep(save(title, urlString, note))
+    }
+
+    /// Close once it's kept; say so when it isn't (ADR 0318).
+    private func keep(_ saved: Bool) {
+        if saved { dismiss() } else { saveFailed = true }
     }
 }

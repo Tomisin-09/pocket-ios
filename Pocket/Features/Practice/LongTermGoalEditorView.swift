@@ -47,6 +47,10 @@ struct LongTermGoalEditorView: View {
     /// rather than a sentinel template, because `template` is also what supplies the fallback title,
     /// and a blank start deliberately has none.
     @State private var startedBlank = false
+    /// The goal a first Save made, so Save after a failed save edits it rather than adding a second
+    /// (ADR 0318).
+    @State private var created: LongTermGoal?
+    @State private var saveFailed = false
 
     private var needsTargetSong: Bool { !holdsSet && goalNeedsTargetSong(keptSkillIDs) }
 
@@ -89,6 +93,7 @@ struct LongTermGoalEditorView: View {
             }
         }
         .onAppear(perform: loadExisting)
+        .saveFailedAlert(isPresented: $saveFailed, retry: commit)
     }
 
     // MARK: - Editor form
@@ -199,20 +204,28 @@ struct LongTermGoalEditorView: View {
     private func save() {
         let keptOrdered = offeredSkillIDs.filter { keptSkillIDs.contains($0) }
         let finalTitle = title.trimmingCharacters(in: .whitespaces)
-        let goal = existing ?? LongTermGoal(order: newGoalOrder)
+        let goal = existing ?? created ?? LongTermGoal(order: newGoalOrder)
         goal.title = finalTitle.isEmpty ? (template?.title ?? "Long-term goal") : finalTitle
         goal.skillIDs = keptOrdered
         goal.targetSong = needsTargetSong ? targetSong : nil
         goal.setSongIDs = holdsSet ? liveSetSongIDs : []
         goal.isMet = isMet
-        if existing == nil { context.insert(goal) }
-        try? context.save()
+        if existing == nil, created == nil {
+            context.insert(goal)
+            created = goal
+        }
+        commit()
+    }
+
+    /// The save and the close, which *Try again* repeats. A failed save keeps the editor open (ADR 0318).
+    private func commit() {
+        guard context.saveOrLog() else { saveFailed = true; return }
         haptic(.medium)
         dismiss()
     }
 
     private func deleteGoal() {
-        if let existing { context.delete(existing); try? context.save() }
+        if let existing { context.delete(existing); context.saveOrLog() }
         haptic(.medium)
         dismiss()
     }

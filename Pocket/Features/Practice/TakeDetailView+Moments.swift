@@ -133,7 +133,7 @@ extension TakeDetailView {
         // that no longer exists.
         take.moments.removeAll { $0.uid == moment.uid }
         modelContext.delete(moment)
-        try? modelContext.save()
+        modelContext.saveOrLog()
         haptic(.light)
     }
 }

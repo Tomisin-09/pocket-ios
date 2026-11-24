@@ -100,14 +100,14 @@ extension JournalTabView {
         case .note(let entry):
             rowDeletion.request(PocketRowDelete(id: item.id, name: name(of: item)) {
                 JournalWriter.delete(entry, from: context)
-                try? context.save()
+                context.saveOrLog()
             })
         case .take(let take):
             if player.isPlaying(take.fileName) { player.stop() }
             rowDeletion.request(PocketRowDelete(id: item.id, name: name(of: item)) {
                 try? RecordingStore.delete(fileName: take.fileName)
                 context.delete(take)
-                try? context.save()
+                context.saveOrLog()
             })
         case .piece:
             // A piece row has no hold menu (ADR 0229); it belongs to its loop, not to the feed.
@@ -133,7 +133,7 @@ extension JournalTabView {
         case .take(let take): take.isPinned.toggle()
         case .piece: return
         }
-        try? modelContext.save()
+        modelContext.saveOrLog()
         haptic(.light)
     }
 

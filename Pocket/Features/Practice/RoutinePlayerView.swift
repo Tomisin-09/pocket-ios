@@ -56,6 +56,8 @@ struct RoutinePlayerView: View {
     /// on a block or a rest, the exit on the Done screen — raises this rather than dismissing, so one
     /// alert at the root serves them all.
     @State var confirmingExit = false
+    /// *Save as a routine* failed to save (ADR 0318).
+    @State var saveFailed = false
 
     init(routine: Routine) {
         self.routine = routine
@@ -126,7 +128,7 @@ struct RoutinePlayerView: View {
     private func markPracticed() {
         guard !player.stages.isEmpty else { return }
         routine.lastPracticed = .now
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 
     /// A block finished on its own. On a **multi-rep** block with reps left, it runs the next rep
@@ -305,7 +307,7 @@ private func previewRoutinePlayer() -> some View {
                      RoutineItem.rest(order: 1),
                      RoutineItem.item(drill, order: 2)]
     container.mainContext.insert(routine)
-    try? container.mainContext.save()
+    container.mainContext.saveOrLog()
     return RoutinePlayerView(routine: routine)
         .modelContainer(container)
 }

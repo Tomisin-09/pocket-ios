@@ -18,6 +18,7 @@ struct CountTheNotesSection: View {
     let togglePlay: () -> Void
 
     @Environment(\.modelContext) private var modelContext
+    @State private var saveFailed = false
     @AppStorage(AppSettings.Key.countShowsBeats) private var showsBeats = AppSettings.countShowsBeatsDefault
 
     /// Beats show only when the switch is on **and** the song has a grid to draw.
@@ -140,7 +141,7 @@ struct CountTheNotesSection: View {
             // No *Name the notes* here (ADR 0234 D1): a pass is saved first, then named from *Saved on this
             // loop*, so names are never left on a pass that Clear or the twelve-pass cap can throw away.
             Button("Save") {
-                model.save(context: modelContext)
+                if !model.save(context: modelContext) { saveFailed = true }
             }
             .buttonStyle(.bordered)
             .tint(PocketColor.journal)
@@ -149,5 +150,9 @@ struct CountTheNotesSection: View {
                                + "version. The Journal lists it under Pieces.")
         }
         .font(.futura(.subheadline))
+        // On this row, not the section: a modifier on a `Section` in a list can crash it (ADR 0318).
+        .saveFailedAlert(isPresented: $saveFailed) {
+            if modelContext.saveOrLog() { haptic(.success) } else { saveFailed = true }
+        }
     }
 }

@@ -22,6 +22,9 @@ struct PendingRestore: Identifiable {
 /// What a restore actually did.
 @MainActor
 struct RestoreOutcome: Equatable {
+    /// False when the rows couldn't be saved (ADR 0318). Then nothing was added: the rows are taken back
+    /// out and no file is written, since a file with no saved row is what *Reclaim space* deletes (D7).
+    var saved = true
     var rowsAdded: Int = 0
     var takeFilesWritten: Int = 0
     var filesFailed: Int = 0
@@ -151,8 +154,15 @@ enum RestoreCoordinator {
         var outcome = RestoreOutcome(rowsAdded: landing.rowCount)
 
         landing.insert(into: context)
-        // Saved before a single byte is written, which is D7's rule stated as code.
-        try? context.save()
+        // Saved before a single byte is written, which is D7's rule stated as code. A save that fails
+        // stops here (ADR 0318), and the rows come back out rather than wait in memory to be saved later
+        // without their files. `rollback()`, because after a failed save deleting the inserted rows
+        // doesn't cancel them and a rollback does (`SaveOrLogTests`). It drops every unsaved change in the
+        // context, which the failed save had already failed to keep.
+        guard context.saveOrLog() else {
+            context.rollback()
+            return RestoreOutcome(saved: false)
+        }
         // A take from an archive written before ADR 0307 arrives without a number. Numbered now
         // rather than at the next launch, so it doesn't read *Take* until then (0307 D8).
         TakeNumberBackfill.run(into: context)

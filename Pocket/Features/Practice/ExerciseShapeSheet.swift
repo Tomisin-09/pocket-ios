@@ -59,6 +59,7 @@ struct ExerciseShapeSheet: View {
     /// A rhythm change awaiting the player's answer (ADR 0121) — set on Done, cleared by either
     /// answer. While it's non-`nil` nothing has been written.
     @State private var pendingRhythmChange: RhythmChangePrompt?
+    @State private var saveFailed = false
     /// The stored content was written by a newer version and this one can't read it (ADR 0313 D4). The
     /// sheet then says so in place of an editor, and Done writes nothing.
     private let contentIsUnreadable: Bool
@@ -129,6 +130,7 @@ struct ExerciseShapeSheet: View {
                                 onKeep: { resolveRhythmChange(keepingNoteSpeed: true) },
                                 onReMeasure: { resolveRhythmChange(keepingNoteSpeed: false) })
         }
+        .saveFailedAlert(isPresented: $saveFailed, retry: closeIfSaved)
     }
 
     /// Whether Done may write. The run editor's finger pattern is clearable to empty now (that is what
@@ -152,7 +154,7 @@ struct ExerciseShapeSheet: View {
             return
         }
         commitAll()
-        dismiss()
+        closeIfSaved()
     }
 
     /// Apply the player's answer, then commit the shape edit itself. The tempo move happens **first**
@@ -169,15 +171,23 @@ struct ExerciseShapeSheet: View {
         pendingRhythmChange = nil
         commitAll()
         haptic(.medium)
-        dismiss()
+        closeIfSaved()
     }
 
+    /// Write the edit onto the exercise. Each commit writes only what differs from what's stored, so Done
+    /// again after a failed save writes nothing twice. One save after all of them, in `closeIfSaved`.
     private func commitAll() {
         commitStrum(); commitFretboard(); commitChords(); commitStrumChords()
         // Re-bind after the content lands: a drill whose rhythm changed without revaluing anything
         // (no measured command, or none bound) still needs its binding to match what it now plays.
         exercise.bindCommandRhythmToContent()
-        try? modelContext.save()
+    }
+
+    /// The save and the close, which *Try again* repeats. A tempo answer is never applied twice: it's
+    /// already on the exercise. A failed save keeps the sheet open (ADR 0318).
+    private func closeIfSaved() {
+        guard modelContext.saveOrLog() else { saveFailed = true; return }
+        dismiss()
     }
 
     /// The rhythm the **edited** content states, before it's committed — the value the change is
@@ -217,7 +227,6 @@ struct ExerciseShapeSheet: View {
             return
         }
         exercise.setStrumPattern(strum)
-        try? modelContext.save()
     }
 
     /// Persist edited fretboard content on Done, only for a fretboard-family template and only when
@@ -238,7 +247,6 @@ struct ExerciseShapeSheet: View {
         }
         guard content != exercise.fretboardContent else { return }
         exercise.setFretboardContent(content)
-        try? modelContext.save()
     }
 
     /// Persist an edited chord progression on Done, only for a chords template and only when it
@@ -248,7 +256,6 @@ struct ExerciseShapeSheet: View {
             return
         }
         exercise.setChordProgression(chords)
-        try? modelContext.save()
     }
 
     /// Persist an edited strum-chord sheet on Done, only for a strum-chords template and only when it
@@ -257,6 +264,5 @@ struct ExerciseShapeSheet: View {
         guard exercise.template.bespokeEditor == .strumChords,
               strumChords != exercise.strumChordSheet else { return }
         exercise.setStrumChordSheet(strumChords)
-        try? modelContext.save()
     }
 }

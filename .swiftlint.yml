@@ -65,3 +65,19 @@ custom_rules:
     regex: '"[^"\n]*\bPocket\b[^"\n]*"'
     message: "This string says 'Pocket', the internal target name. The app is called Red Moon — a player never sees the word Pocket. If this literal is a path or a bundle id rather than copy, suppress it on the line."
     severity: error
+  # A save's error is never thrown away (1.6.1). Until then, all but three of the app's saves were
+  # `try? context.save()`: a save that failed left the change on screen, gone after the next launch, and
+  # nothing anywhere recorded it. There were 117 of them when this rule landed. `ModelContext.saveOrLog()`
+  # (`Core/Storage/ModelContext+SaveOrLog.swift`) logs the failure and returns whether the save worked,
+  # so a caller with something to do on failure reads the result, and the rest carry on as before.
+  #
+  # Comments are excluded by kind, so the helper's own explanation, which quotes the pattern, stands.
+  save_error_discarded:
+    name: "A save's error is never thrown away"
+    included: ".*/Pocket/.*\\.swift"
+    regex: 'try\?\s*[\w.?]+\.save\(\)'
+    excluded_match_kinds:
+      - comment
+      - doccomment
+    message: "`try? ….save()` throws a failed save's error away: the change looks saved and is gone after the next launch. Use `context.saveOrLog()`, which logs the failure and returns whether it worked."
+    severity: error

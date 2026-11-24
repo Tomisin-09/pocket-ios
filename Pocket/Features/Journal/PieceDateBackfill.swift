@@ -20,7 +20,7 @@ enum PieceDateBackfill {
         let loops = (try? context.fetch(FetchDescriptor<Loop>())) ?? []
         // Every loop is visited: `map` first, so a `contains` can't stop at the first write.
         guard loops.map({ apply(to: $0, now: now) }).contains(true) else { return }
-        try? context.save()
+        context.saveOrLog()
     }
 
     /// The per-loop rule, apart from the store so it's unit-tested. Returns whether it wrote.
