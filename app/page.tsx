@@ -260,7 +260,7 @@ export default function RedMoonPage() {
               <StoreButton />
             </div>
             <p className="rm-price-note">
-              The founding price is for Red Moon’s first 90 days on sale. After that, it’s £2.99 a month,
+              The founding price is for Red Moon’s first 30 days on sale. After that, it’s £2.99 a month,
               or £9.99 once. The monthly starts with a free week if you haven’t had one. Prices are for the
               UK; the App Store shows yours in your own currency.
             </p>

@@ -91,7 +91,7 @@ export default function RedMoonSupportPage() {
 
             <h3>Will the price go up?</h3>
             <p>
-              Not for you, if you join at the founding price. It&rsquo;s for Red Moon&rsquo;s first 90
+              Not for you, if you join at the founding price. It&rsquo;s for Red Moon&rsquo;s first 30
               days on sale. After that, new players pay £2.99 a month, or £9.99 once. If you&rsquo;re on
               the monthly, you keep £0.99 for as long as you keep the plan, and Pay once is never charged
               again. If you stop the monthly, Apple holds your price for a while in case you come back;
