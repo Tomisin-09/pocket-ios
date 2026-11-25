@@ -30,8 +30,15 @@ final class AppStoreShots: ManualShotCase {
             revealing: app.buttons["Deactivate loop"], called: "the active loop transport")
         tap(app.buttons["0.75×"], labelled: "the 0.75× preset",
             revealing: app.buttons["Playback speed 0.75 times"], called: "the reduced speed readout")
-        tap(app.buttons["Hide gridlines"], labelled: "the Grid chip",
-            revealing: app.buttons["Show gridlines"], called: "the gridlines switched off")
+        // The grid is a stored setting, so a moon run's later passes on the same device find it off
+        // already, with no *Hide gridlines* to tap (`ManualShotCase+Moon`, 2026-11-25).
+        let gridOff = app.buttons["Show gridlines"]
+        if gridOff.exists {
+            note("the gridlines are already off, as an earlier pass left them")
+        } else {
+            tap(app.buttons["Hide gridlines"], labelled: "the Grid chip",
+                revealing: gridOff, called: "the gridlines switched off")
+        }
 
         captureChromeless(app, slug: "appstore/work-it-out",
                           screen: "the song player, looping and slowed",
@@ -110,7 +117,16 @@ final class AppStoreShots: ManualShotCase {
         let name = app.textFields["e.g. A minor 7 arpeggio"]
         XCTAssertTrue(name.waitForExistence(timeout: Self.shootTimeout),
                       "the New arpeggios form has no name field.\n\(stepLog)")
-        name.tap()
+        // A tap doesn't always give the field focus, and typing without it fails outright ("Neither
+        // element nor any descendant has keyboard focus"): two runs in eight on 2026-11-25. So tap
+        // until it has focus, as `tap` retries a swallowed tap, then type.
+        let focused = NSPredicate(format: "hasKeyboardFocus == true")
+        for attempt in 1...3 {
+            name.tap()
+            let wait = expectation(for: focused, evaluatedWith: name)
+            if XCTWaiter().wait(for: [wait], timeout: Self.tapProbeTimeout) == .completed { break }
+            note("tap \(attempt) on the name field didn't give it focus")
+        }
         name.typeText("A Minor 7 Arpeggio")
         note("named the drill 'A Minor 7 Arpeggio'")
         tap(app.navigationBars["New arpeggios"].buttons["Create"], labelled: "Create",

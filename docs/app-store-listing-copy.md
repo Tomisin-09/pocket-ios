@@ -731,6 +731,39 @@ first `base` run lost `testPracticeHub` to dropped taps on a cold simulator and 
 waited out 90 s of audio loading; both passed on a retry. A run with a failure files nothing, so export
 its passing captures with `xcrun xcresulttool export attachments --path shoot.xcresult --output-path <dir>`.
 
+### The site's landing screens in each moon
+
+The site's landing page shows its ten screens in the moon a visitor picks (`site` branch,
+`app/_media/shots/<moon>/<screen>.png`). That is the nine frames above other than the themes frame,
+plus Home (`reference/home`), each shot eight times; the site's picker uses the same Homes.
+
+**`POCKET_SHOOT_MOON="blood blue jade corn silver pink harvest cold"` runs each test once per moon, on
+one seeded device** (`ManualShotCase+Moon`; the script forwards it to the test runner and refuses a
+name that isn't a `MoonTheme` raw value, since the app would quietly shoot Blood Moon). One device, not
+one per moon, because **the seed isn't the same twice**: shot on eight erased devices on 2026-11-25,
+Home's *Jump back in* named three different songs across the moons, and the Journal, the take, Today
+and the song player differed the same way, so switching moons on the site would have changed the
+content too. Seeded once, a screen says the same thing in every moon and only its colours change. Four
+runs, each its own erased device, as above:
+
+| Run | Tests | Site screens |
+|---|---|---|
+| App Store | `AppStoreShots/testWorkItOut` `testRunIt` `testKeepItLog` | song-player, routine, log |
+| Manual | `ManualShotsUITests/testHome` `testJournalTimeline` `testTakeMoments`, `ManualPracticeShots/testPracticeHub`, `ManualReferenceShots/testReferencesSection` | home, journal, take, today, sources |
+| Arpeggio | `AppStoreShots/testBuildItUpArpeggio` | drill |
+| Neck | `ManualSongMapShots/testWatchOnTheNeck` | by-ear |
+
+`POCKET_SIM="iPhone 17 Pro Max" POCKET_SHOOT_MOON="…" POCKET_SHOT_OUT=build/shots-moons/manual
+POCKET_SHOOT_ONLY="…" ./scripts/shoot-manual.sh` per run. A moon run's images are named
+`<slug>@<moon>`, so nothing is filed: take them from the run's `export/` by the names in its
+`manifest.json`. They are 1320 px wide; the site takes them at 900 (`sips --resampleWidth 900`).
+
+On 2026-11-25 the drill, the routine, the log, the sources and the neck came from a device per moon
+instead (`POCKET_SHOOT_MOON=<one moon>`, the first way this was tried): their content doesn't depend on
+the seed, and the drill writes a new drill on every pass, so it hasn't been tried eight times on one
+device. In those runs the drill's name field failed twice (it is now tapped until it has focus) and its
+count-in twice; each passed on a retry.
+
 ## Screenshots — 1.4.1 (reshot 2026-11-16 for ADR 0292; the story is ADR 0279's) — history, superseded by 1.6's
 
 Ten frames, one story: the four verbs twice, then the roof. Shot dark at 09:41 on the iPhone 17 Pro
