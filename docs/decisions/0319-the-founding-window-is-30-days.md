@@ -3,6 +3,10 @@
 - **Status:** Accepted. Decided by Tomisin on 2026-11-24, with availability still off and nobody
   ever having bought the plan. Built on `pocket-478-founding-window-30-days`.
 - **Date:** 2026-11-24
+- **Amended by:** ADR 0320 (2026-11-25) — **D5**: the wording is chosen. The wall says *"That's your
+  price for as long as you keep the plan."*, and the FAQ says the price you join at is yours and the
+  price for new players can change. The description takes the same promise; the site keeps the
+  founding line until day 31.
 - **Amends:** ADR 0280 — **D1**: the founding window is the first 30 days on sale, not 90, so its
   last day is 29 days after day 1. **D5**: the description's schedule line says 30 days (D2 here).
   **D6** and **D7** count to day 30 and day 31 instead of day 90 and day 91 (D3, D4 here), and
@@ -90,7 +94,7 @@ gets from day 1 already carries the new line, and no build is owed inside the wi
 - **The new line is shown during the window too**, so it has to be true on both sides of day 30. A
   line that switches on a date is possible only if day 1 is fixed before 1.6.1 is archived, and it
   would still trust the phone's clock.
-- **The wording isn't chosen here.** It needs its own ADR, amending 0274 D1 (0280 D7), written
+- **The wording isn't chosen here** (chosen since, in 0320). It needs its own ADR, amending 0274 D1 (0280 D7), written
   before 1.6.1 is archived. The listing and the site keep saying *founding price* and the schedule
   (D2), so the founding price is still said where a buyer reads about the plan.
 
@@ -109,9 +113,9 @@ gets from day 1 already carries the new line, and no build is owed inside the wi
   `docs/app-store-listing-copy.md` (the banner, the description's *One plan* block, *Price /
   availability*) and the CHANGELOG.
 - **Owed outside the repo:**
-  - **The description in App Store Connect.** 1.6 went to review on 2026-11-24 with the
-    description pasted that day, so it can't change there, and it doesn't need to: 1.6 never goes on
-    sale. 1.6.1's record starts as a copy of it, so that is where the line becomes D2's.
+  - **The description in App Store Connect.** Done for 1.6: Tomisin changed its description to D2's
+    line on 2026-11-24 while 1.6 was waiting for review, which App Store Connect allows. 1.6.1's
+    record starts as a copy of it.
   - The site's landing and support pages, which say 90 days (`site` branch, ADR 0306).
   - The Marketing Foundation, revised the same day.
   - Day 1's date, in 0280 D1.

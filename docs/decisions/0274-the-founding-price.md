@@ -12,6 +12,10 @@
   after. *"No end date"* and
   *"no 'limited time'"* no longer hold; the app still shows no countdown. The lock (D1's wording, D3)
   stands, so a founder keeps their price.
+  ADR 0320 (2026-11-25) — **D1**: the second line reads *"That's your price for as long as you keep
+  the plan. Nothing you can do today will ever move behind a higher one."* It stays true after the
+  founding window, when the first line shows the later prices. The wall and the description carry it
+  word for word; the site keeps D1's founding line until day 31, then takes the new one (0320 D3).
 - **Amends:** ADR 0256 — **D8**: the promise's second line. *"We'll never raise the price"* goes, and
   a price lock takes its place (D1, D2 here). The second half, *"nothing you can do today will ever
   move behind a higher one"*, stays word for word. Two other things go with it: D8's reason for
@@ -54,6 +58,10 @@ This ADR chooses the lock.
 ## Decisions
 
 ### D1 — The promise, verbatim
+
+> **Amended by 0320 (2026-11-25):** the second line is *"That's your price for as long as you keep
+> the plan. Nothing you can do today will ever move behind a higher one."* The rest of D1 stands.
+> What follows is D1 as it was decided.
 
 This replaces 0256 D8's quote. It appears in the same places: the wall, the App Store description
 and the site.

@@ -8,6 +8,9 @@
   day 30 and day 31. The prices, D2, D3 and D4 stand. D7's first step moves before day 1: the
   wall's line changes in 1.6.1, the build that goes on sale, because a month is short for a review
   and an update doesn't reach every phone.
+  ADR 0320 (2026-11-25) — **D5**: the wall's line during the window is *"That's your price for as
+  long as you keep the plan."*, then the same second sentence. The app never says *founding*; the
+  description, the site and posts say it in the schedule sentence.
 - **Amends:** ADR 0277 — **D1**: Pay once is £4.99 during the founding window, not £14.99, and after
   it the prices are £2.99 a month and £9.99 once (D1, D2 here). The product ids, the group and the
   free week stand. ADR 0274 — **D2**: *"No end date, no countdown, no 'limited time'"* no longer holds
@@ -81,6 +84,10 @@ change is a price rise or cut under 0274 D4, with its own ADR.
 
 > **Amended by 0319 (2026-11-24):** the description's line says *"first 30 days on sale"*. The
 > rest of D5 stands.
+>
+> **Amended by 0320 (2026-11-25):** the wall's words below become *"£0.99 a month, or £4.99 once.
+> That's your price for as long as you keep the plan."* They're true on both sides of day 30, so
+> the wall never says *founding*.
 
 - **The site, the App Store description, posts and the promotional text** say when the founding
   price ends and what follows. The description says it as a schedule (*"The founding price is for Red

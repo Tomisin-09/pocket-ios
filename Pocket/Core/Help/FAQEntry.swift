@@ -249,15 +249,16 @@ extension FAQEntry {
                 + "plan. Pay monthly, or pay once. The monthly starts with a free trial if you haven't had one, "
                 + "and the plan's screen says how long it lasts.",
               area: .plan),
-        // ADR 0274: the founding price is a lock, not a freeze. Apple's grace after a lapse is Apple's
-        // figure, so it stays "a while" here (ADR 0145 D6).
+        // ADR 0274: the price is a lock, not a freeze. ADR 0320: the answer names no founding price,
+        // so it holds on both sides of the founding window, for a reader who has the plan and one who
+        // hasn't. Apple's grace after a lapse is Apple's figure, so it stays "a while" (ADR 0145 D6).
         .init(question: "Will the price go up?",
-              answer: "Not for you. Today's price is the founding price, and it's yours for as long as "
-                + "you keep the plan: a monthly plan renews at the price you joined at, and Pay once is "
-                + "never charged again. If you stop the monthly, Apple holds your price for a while in "
-                + "case you come back; after that, you'd join at the price of the day. Nothing you can "
-                + "do today will ever move behind a higher one. There is one plan, and new features "
-                + "join it.",
+              answer: "Not once you have the plan. The price you join at is yours for as long as you "
+                + "keep it: a monthly plan renews at that price, and Pay once is never charged again. "
+                + "The price for new players can change; yours doesn't. If you stop the monthly, Apple "
+                + "holds your price for a while in case you come back; after that, you'd join at the "
+                + "price of the day. Nothing you can do today will ever move behind a higher one. There "
+                + "is one plan, and new features join it.",
               area: .plan),
         .init(question: "What happens if I stop paying?",
               answer: "Nothing you made is deleted. Your songs, loops and markers, your Journal and the "

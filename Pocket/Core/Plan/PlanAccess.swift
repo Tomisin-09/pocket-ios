@@ -231,8 +231,10 @@ enum PlanWallCopy {
     }
 
     /// The promise's second line, verbatim (D8, as ADR 0274 D1 rewrote it: a price lock, not a freeze).
+    /// ADR 0320: it says *your price*, not *the founding price*, so it stays true after the founding
+    /// window, when the line above shows the prices that follow it.
     static let promiseLine =
-        "That's the founding price, and it's yours for as long as you keep the plan. "
+        "That's your price for as long as you keep the plan. "
             + "Nothing you can do today will ever move behind a higher one."
 
     /// The monthly button's two lines (D1): the free week first, while the player can still have it.

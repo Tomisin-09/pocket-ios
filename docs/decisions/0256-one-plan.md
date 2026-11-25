@@ -14,7 +14,8 @@
   D8's promise, and the rest, stand.
   **ADR 0274** (2026-10-23) — **D8**: *"We'll never raise the price"* goes. The promise's second
   line becomes *"That's the founding price, and it's yours for as long as you keep the plan. Nothing
-  you can do today will ever move behind a higher one."* The price can now rise for new players, but
+  you can do today will ever move behind a higher one."* (Since 0320, 2026-11-25: *"That's your
+  price for as long as you keep the plan."*, then the same second sentence.) The price can now rise for new players, but
   never for a player who holds it. D8's reason for *"We'll"* and the Consequences' *"A price can
   never rise"* go with it. D1's prices, and D8's second half, stand.
   **ADR 0277** (2026-10-26) — **D1**: the prices are **£0.99 a month and £14.99 once**, because App
@@ -235,7 +236,8 @@ grant. Tomisin buys first on a real TestFlight build. The "What to Test" note th
 
 > **Amended by 0274 (2026-10-23):** before anything was sold, the second line became *"That's the
 > founding price, and it's yours for as long as you keep the plan. Nothing you can do today will
-> ever move behind a higher one."* It's a price lock, not a price freeze. What follows is the promise
+> ever move behind a higher one."* It's a price lock, not a price freeze. (Since 0320, 2026-11-25,
+> the first sentence is *"That's your price for as long as you keep the plan."*) What follows is the promise
 > as it was first made.
 
 Verbatim on the wall, in the App Store description and on the site:
