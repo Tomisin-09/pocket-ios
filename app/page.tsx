@@ -1,35 +1,19 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import type { StaticImageData } from 'next/image'
 import Reveal from './_components/Reveal'
 import ShotRail from './_components/ShotRail'
 import MoonPicker, { type Moon } from './_components/MoonPicker'
-import { Phone, RedMoonFooter, RedMoonNav, StoreButton } from './_components/brand'
-import home from './_media/home.png'
-import songPlayer from './_media/song-player.png'
-import drill from './_media/drill.png'
-import routine from './_media/routine.png'
-import journal from './_media/journal.png'
-import take from './_media/take.png'
-import today from './_media/today.png'
-import byEar from './_media/by-ear.png'
-import sources from './_media/sources.png'
-import log from './_media/log.png'
-import homeBlood from './_media/moons/home-blood.png'
+import { MoonArt, MoonPage } from './_components/moon'
+import MoonPhone, { type MoonShots } from './_components/MoonPhone'
+import { RedMoonFooter, RedMoonNav, StoreButton } from './_components/brand'
+import { SHOTS } from './_media/shots'
 import iconBlood from './_media/moons/icon-blood.png'
-import homeBlue from './_media/moons/home-blue.png'
 import iconBlue from './_media/moons/icon-blue.png'
-import homeJade from './_media/moons/home-jade.png'
 import iconJade from './_media/moons/icon-jade.png'
-import homeCorn from './_media/moons/home-corn.png'
 import iconCorn from './_media/moons/icon-corn.png'
-import homeSilver from './_media/moons/home-silver.png'
 import iconSilver from './_media/moons/icon-silver.png'
-import homePink from './_media/moons/home-pink.png'
 import iconPink from './_media/moons/icon-pink.png'
-import homeHarvest from './_media/moons/home-harvest.png'
 import iconHarvest from './_media/moons/icon-harvest.png'
-import homeCold from './_media/moons/home-cold.png'
 import iconCold from './_media/moons/icon-cold.png'
 
 export const metadata: Metadata = {
@@ -45,38 +29,41 @@ export const metadata: Metadata = {
 // fourth chapter, and the take it replaced took the loop ramp's place in the rail (frames 04 and 07, owed
 // since 11-18); and Build it up is an arpeggio drawing its neck rather than a tempo drill over half a
 // phone of black (frame 02, 11-24: `AppStoreShots.testBuildItUpArpeggio` on main, the drill made through
-// New exercise as a player makes it). The Journal is the manual's `journal/timeline`, shot on the Pro Max
-// with the other frames (11-16).
-type Shot = { kicker: string; title: string; image: StaticImageData; alt: string }
+// New exercise as a player makes it). The Journal is the manual's `journal/timeline`.
+//
+// Every screen is in all eight moons and follows the one picked (`MoonPhone`, `_media/shots.ts`): one
+// shoot of the 1.6 cut on the Pro Max, 2026-11-25, with each screen's eight moons from one seed, so a
+// screen says the same thing in every moon and only its colours change.
+type Shot = { kicker: string; title: string; shots: MoonShots; alt: string }
 
 const CHAPTERS: Array<Shot & { line: string }> = [
   {
     kicker: 'Work it out',
     title: 'Loop the bar you can’t play. Slow it down.',
     line: 'Bring in songs you own. Slow them down and the pitch stays true.',
-    image: songPlayer,
+    shots: SHOTS['song-player'],
     alt: 'The song player looping a bar at 0.75× speed, with two saved loops under the waveform.',
   },
   {
     kicker: 'Build it up',
     title: 'Every drill runs against a click.',
     line: 'Tap in a tempo and let the automator raise it, by bars or by time.',
-    image: drill,
+    shots: SHOTS.drill,
     alt: 'An A minor 7 arpeggio drill running at 42 BPM, the note being played lit on the neck above a tempo staircase climbing toward 50.',
   },
   {
     kicker: 'Run it',
     title: 'Line up the hard parts. Press play.',
     line: 'Chain loops, songs, drills and rests into a routine.',
-    image: routine,
+    shots: SHOTS.routine,
     alt: 'A routine called Open mic, Friday: two drills, a rest and two loops, above a Start button.',
   },
   {
     kicker: 'Keep it',
     title: 'Pick up where you left off.',
     line: 'Your notes and takes go in the Journal, so your practice adds up instead of starting over.',
-    image: journal,
-    alt: 'The Journal, newest first: a struggle and a breakthrough noted against the loops they’re about, a take of a verse riff, and a goal for a chord exercise.',
+    shots: SHOTS.journal,
+    alt: 'The Journal, newest first: a breakthrough, a take and a struggle, each against the loop it’s about, then a goal for a warm-up exercise.',
   },
 ]
 
@@ -84,52 +71,51 @@ const MORE: Shot[] = [
   {
     kicker: 'Run it',
     title: 'Today’s session, shaped by your goals.',
-    image: today,
+    shots: SHOTS.today,
     alt: 'The Practice tab: Today’s session shaped by two goals, then routines, exercises and loops.',
   },
   {
     kicker: 'Keep it',
     title: 'Record a take. Note what you heard.',
-    image: take,
-    alt: 'A recorded take of a verse riff with a note, and two comments pinned to moments in it.',
+    shots: SHOTS.take,
+    alt: 'A recorded take of a song’s chords, with a note and two comments pinned to moments in it.',
   },
   {
     kicker: 'Work it out',
     title: 'Name the notes by ear. See them on the neck.',
-    image: byEar,
+    shots: SHOTS['by-ear'],
     alt: 'A verse riff’s eight notes named and shown on a guitar fretboard.',
   },
   {
     kicker: 'Your sources',
     title: 'Keep the lesson beside the part it’s for.',
-    image: sources,
+    shots: SHOTS.sources,
     alt: 'A part’s references: a lesson link, a tab page and a photo of the pattern written out.',
   },
   {
     kicker: 'Keep it',
     title: 'See the days you played. Never a score.',
-    image: log,
-    alt: 'The practice log: 75 minutes over 5 days this week, by kind, and a month of practised days.',
+    shots: SHOTS.log,
+    alt: 'The practice log: 80 minutes over 5 days in one week, by kind, and a month of practised days.',
   },
 ]
 
 // The app's eight moons, in the order its Theme screen lists them (pocket-ios `MoonTheme`). Each Home is
-// `AppStoreShots.testHomeInEachMoon` on the Pro Max, the shoot that serves the listing's themes frame;
-// each icon is the app's own tile (`IconTile*`).
+// the hero's own, in that moon (`SHOTS.home`); each icon is the app's own tile (`IconTile*`).
 const MOONS: Moon[] = [
-  { id: 'blood', name: 'Blood', home: homeBlood, icon: iconBlood },
-  { id: 'blue', name: 'Blue', home: homeBlue, icon: iconBlue },
-  { id: 'jade', name: 'Jade', home: homeJade, icon: iconJade },
-  { id: 'corn', name: 'Corn', home: homeCorn, icon: iconCorn },
-  { id: 'silver', name: 'Silver', home: homeSilver, icon: iconSilver },
-  { id: 'pink', name: 'Pink', home: homePink, icon: iconPink },
-  { id: 'harvest', name: 'Harvest', home: homeHarvest, icon: iconHarvest },
-  { id: 'cold', name: 'Cold', home: homeCold, icon: iconCold },
+  { id: 'blood', name: 'Blood', home: SHOTS.home.blood, icon: iconBlood },
+  { id: 'blue', name: 'Blue', home: SHOTS.home.blue, icon: iconBlue },
+  { id: 'jade', name: 'Jade', home: SHOTS.home.jade, icon: iconJade },
+  { id: 'corn', name: 'Corn', home: SHOTS.home.corn, icon: iconCorn },
+  { id: 'silver', name: 'Silver', home: SHOTS.home.silver, icon: iconSilver },
+  { id: 'pink', name: 'Pink', home: SHOTS.home.pink, icon: iconPink },
+  { id: 'harvest', name: 'Harvest', home: SHOTS.home.harvest, icon: iconHarvest },
+  { id: 'cold', name: 'Cold', home: SHOTS.home.cold, icon: iconCold },
 ]
 
 export default function RedMoonPage() {
   return (
-    <div className="rm-page rm-dark rm-land">
+    <MoonPage className="rm-page rm-dark rm-land">
       <Reveal />
       {/* The scroll-in starts hidden and needs script to show; without script, show it all, prices
           included. */}
@@ -150,8 +136,8 @@ export default function RedMoonPage() {
             <p className="rm-hero-meta">iPhone · Guitar and bass · No account</p>
           </div>
           <div className="rm-hero-stage">
-            <Phone
-              src={home}
+            <MoonPhone
+              shots={SHOTS.home}
               alt="Red Moon’s home screen: Start today’s session, the song you last practised, and this week’s minutes and days."
               sizes="(max-width: 600px) 78vw, 400px"
               eager
@@ -168,7 +154,7 @@ export default function RedMoonPage() {
                 <p className="rm-chapter-line">{c.line}</p>
               </div>
               <div className="rm-chapter-media reveal">
-                <Phone src={c.image} alt={c.alt} sizes="(max-width: 820px) 72vw, 340px" />
+                <MoonPhone shots={c.shots} alt={c.alt} sizes="(max-width: 820px) 72vw, 340px" />
               </div>
             </section>
           ))}
@@ -182,7 +168,7 @@ export default function RedMoonPage() {
             {MORE.map((s) => (
               <li className="rm-rail-item" key={s.title}>
                 <figure>
-                  <Phone src={s.image} alt={s.alt} sizes="(max-width: 600px) 64vw, 270px" />
+                  <MoonPhone shots={s.shots} alt={s.alt} sizes="(max-width: 600px) 64vw, 270px" />
                   <figcaption>
                     <span className="rm-kicker">{s.kicker}</span>
                     {s.title}
@@ -236,8 +222,7 @@ export default function RedMoonPage() {
 
         <section className="rm-plan" id="get" aria-labelledby="rm-plan-title">
           <div className="rm-plan-card reveal">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="rm-plan-logo" src="/redmoon/logo.svg" alt="Red Moon" width={180} height={158} data-moon-art="logo" />
+            <MoonArt art="logo" className="rm-plan-logo" alt="Red Moon" width={180} height={158} />
             <h2 id="rm-plan-title">One plan</h2>
 
             <div className="rm-plan-split">
@@ -269,6 +254,6 @@ export default function RedMoonPage() {
       </main>
 
       <RedMoonFooter />
-    </div>
+    </MoonPage>
   )
 }

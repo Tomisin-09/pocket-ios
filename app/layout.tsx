@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Cormorant_Garamond, DM_Sans, Jost } from 'next/font/google'
 import { APP_STORE_ID } from './_components/brand'
+import { MoonProvider } from './_components/moon'
 import './globals.css'
 
 // The three faces the pages used when they shared a deployment with Deco Operations' site, kept as
@@ -40,10 +41,14 @@ export const metadata: Metadata = {
   itunes: { appId: APP_STORE_ID },
 }
 
+// The moon picked on the landing page lives here, so it's still there when a visitor comes back to
+// the landing page from another page, until a reload (`_components/moon.tsx`).
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${cormorant.variable} ${dmSans.variable} ${jost.variable}`}>
-      <body>{children}</body>
+      <body>
+        <MoonProvider>{children}</MoonProvider>
+      </body>
     </html>
   )
 }

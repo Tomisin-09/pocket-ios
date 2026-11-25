@@ -1,5 +1,6 @@
 import Image, { type StaticImageData } from 'next/image'
 import Link from 'next/link'
+import { MoonArt } from './moon'
 
 // The pieces every Red Moon page shares: the nav, the footer, the store button and the phone frame.
 // One place, so a page can't drift from the others.
@@ -46,17 +47,24 @@ export function RedMoonNav({ current, onLanding = false }: { current?: Place; on
     <header className="rm-nav">
       <div className="rm-nav-inner">
         <Link href="/" className="rm-nav-brand" aria-label="Red Moon Practice Studio, home">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/redmoon/mark.svg" alt="" width={17} height={25} className="rm-nav-mark" data-moon-art="mark" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/redmoon/wordmark.svg" alt="" width={77} height={15} className="rm-nav-word" data-moon-art="wordmark" />
+          {/* The logos wear the page's moon: the picked one on the landing page, Blood elsewhere. */}
+          <MoonArt art="mark" alt="" width={17} height={25} className="rm-nav-mark" />
+          <MoonArt art="wordmark" alt="" width={77} height={15} className="rm-nav-word" />
         </Link>
         <nav className="rm-nav-links" aria-label="Red Moon">
           {item('/story', 'Liner notes', 'story')}
           {item('/support', 'Support', 'support')}
-          <a href={onLanding ? '#get' : '/#get'} className="rm-nav-cta">
-            Get the app
-          </a>
+          {/* Off the landing page it's a `Link`, not a plain `<a>`: a plain link reloads the site,
+              and a reload drops the moon picked there. */}
+          {onLanding ? (
+            <a href="#get" className="rm-nav-cta">
+              Get the app
+            </a>
+          ) : (
+            <Link href="/#get" className="rm-nav-cta">
+              Get the app
+            </Link>
+          )}
         </nav>
       </div>
     </header>
