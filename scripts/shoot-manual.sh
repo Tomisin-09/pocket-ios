@@ -21,6 +21,8 @@
 # manual's figure set is never in reach:
 #
 #   POCKET_SHOOT_AX=1 POCKET_SHOT_OUT=shots-ax ./scripts/shoot-manual.sh   # dump the tree per figure
+#   POCKET_SHOOT_MOON="blood jade" POCKET_SHOT_OUT=build/shots-moons POCKET_SHOOT_ONLY=… \
+#     ./scripts/shoot-manual.sh                    # each test once per moon, on one seeded device
 #   POCKET_SHOOT_CONTENT_SIZE=accessibility-extra-extra-extra-large \
 #     POCKET_SHOT_OUT=shots-ax ./scripts/shoot-manual.sh                   # the Dynamic Type sweep
 #
@@ -144,6 +146,23 @@ PARTIAL=""
 # arriving through the front door instead. Pair it with `POCKET_SHOT_OUT` so the two sets cannot
 # even share a parent.
 [ -n "${POCKET_SHOOT_CONTENT_SIZE:-}" ] && PARTIAL="1"
+
+# **A moon run is partial too, for the same reason.** `POCKET_SHOOT_MOON="blood jade …"` runs each test
+# once per moon on the one seeded device (`ManualShotCase+Moon`): right for the site, whose landing
+# page shows its screens in the moon a visitor picks, and wrong for the manual. Each name is checked
+# here because the app ignores one it doesn't know, so a typo would shoot Blood Moon under another
+# moon's name. The list is `MoonTheme`'s raw values. The images are named `<slug>@<moon>`, so they
+# stay in `export/` (see `manifest.json`) rather than being filed.
+if [ -n "${POCKET_SHOOT_MOON:-}" ]; then
+    for moon in $POCKET_SHOOT_MOON; do
+        case "$moon" in
+            blood|blue|jade|corn|silver|pink|harvest|cold) ;;
+            *) echo "POCKET_SHOOT_MOON: '$moon' is not a moon (MoonTheme's raw values)" >&2; exit 1 ;;
+        esac
+    done
+    PARTIAL="1"
+    echo "▸ In each of: $POCKET_SHOOT_MOON (partial run — not the manual's set)"
+fi
 BUNDLE_ID="click.decooperations.pocket"
 SEED_AUDIO_SRC="${POCKET_SEED_AUDIO:-$HOME/Documents/Red Moon Screenshots 2/seed-audio}"
 DERIVED="${POCKET_DERIVED:-build-sim}"
@@ -483,6 +502,8 @@ done
 # empty array is an unbound-variable error on the bash macOS actually ships (3.2), so the
 # conditional-prefix form fails on the common path — the one where the audit is off.
 [ "${POCKET_SHOOT_AX:-}" = "1" ] && export TEST_RUNNER_POCKET_SHOOT_AX=1
+# The moon goes the same way, and fails the same way without the prefix: every image in Blood Moon.
+[ -n "${POCKET_SHOOT_MOON:-}" ] && export TEST_RUNNER_POCKET_SHOOT_MOON="$POCKET_SHOOT_MOON"
 xcodebuild test-without-building \
     -scheme Pocket \
     -destination "platform=iOS Simulator,name=$SIM_NAME" \

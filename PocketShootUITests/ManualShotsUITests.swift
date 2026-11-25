@@ -147,7 +147,9 @@ final class ManualShotsUITests: ManualShotCase {
         // --verify` flagged exactly this pair. `alsoServing` is what the harness already provides for
         // a frame shown on a second page, and `Take position` comes across from the deleted test so
         // the transport is still asserted.
-        capture(app, slug: "journal/take-moments", assertingOnScreen: "Take",
+        // `Take 1`, not `Take`: since ADR 0307 a take's screen is titled by its number, and the seed's
+        // one take on *Main lick* is its first. Asserting `Take` failed on the right screen (11-24).
+        capture(app, slug: "journal/take-moments", assertingOnScreen: "Take 1",
                 alsoRequiring: ["Moments", "Take position"],
                 alsoServing: ["journal/take-detail"])
     }

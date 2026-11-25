@@ -55,6 +55,9 @@ class ManualShotCase: UITestCase {
     /// is piped through `tail`, which is how the output is read on every machine this runs on.
     private var steps: [String] = []
 
+    /// The moon this pass of the test is in, in a run that shoots several (`+Moon`).
+    var shootMoonPass: String?
+
     /// Record a step. Lives here beside `steps`, which is `private` — Swift has no
     /// cross-file-private, so the log's writer cannot move to the `+Reach` half.
     @MainActor
@@ -71,12 +74,14 @@ class ManualShotCase: UITestCase {
     ///   which matches the faked status bar; pass another only for a figure whose `state:` asks for
     ///   a different part of the day, as `getting-started/home` does.
     /// - Parameter seeding: further launch arguments a pass needs — `-seedSongMap`, or a pack to receive.
+    ///   The pass's moon, if the run has one, is added here too (`+Moon`).
     @MainActor
     @discardableResult
     func launchForShoot(hour: Int = ManualShotCase.defaultShotHour,
                         seeding extra: [String] = []) -> XCUIApplication {
         launchApp(extraArguments: Self.shootArguments
-                  + [UITestHooks.shotHourArgument, String(hour)] + extra)
+                  + [UITestHooks.shotHourArgument, String(hour)]
+                  + moonArguments(besides: extra) + extra)
     }
 
     /// Wait until `element` will actually take a touch.
@@ -367,7 +372,7 @@ class ManualShotCase: UITestCase {
         // one they have always used.
         let shot = XCTAttachment(screenshot: wholeDisplay ? XCUIScreen.main.screenshot()
                                                           : app.screenshot())
-        shot.name = slug.replacingOccurrences(of: "/", with: "-")
+        shot.name = slug.replacingOccurrences(of: "/", with: "-") + moonSuffix
         shot.lifetime = .keepAlways
         add(shot)
 
