@@ -24,6 +24,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Changed
+- **The founding prices are for the first 30 days on sale, not 90** (ADR 0319). £0.99 a month or
+  £4.99 once, then £2.99 or £9.99 for players who join after; founders keep theirs. The window itself
+  needs nothing in the app, which reads its prices from the App Store; the App Store description and
+  the site say the schedule. The paywall's line about the founding price changes in 1.6.1, the build
+  that goes on sale, under an ADR of its own (ADR 0319 D5).
 - **A new Triads run opens on triplets** (ADR 0317), not eighths. A triad's three notes now fill a
   beat, so each chord of the key's seven starts on the beat and a progression's bar holds whole triads
   instead of cutting the last one off. *Practice as triads* opens on triplets too. Exercises already

@@ -4,7 +4,7 @@
   Connect (release step 5). Built on `pocket-390-release-1-4`.
 - **Date:** 2026-10-26
 - **Amended by:** ADR 0280 (2026-11-02) — **D1**: Pay once is £4.99, not £14.99, for the first 90
-  days on sale, and afterwards the prices are £2.99 a month and £9.99 once. The product ids, the
+  days on sale (30 since 0319, 2026-11-24), and afterwards the prices are £2.99 a month and £9.99 once. The product ids, the
   group *Red Moon* and the free week stand.
 - **Amends:** ADR 0256 — **D1**: the prices become £0.99 a month and £14.99 once, and *"Round on
   purpose"* goes. The monthly's product id becomes `click.decooperations.pocket.plan.monthly2`. The
@@ -35,7 +35,7 @@ Two other things came up the same day:
 ### D1 — £0.99 a month, or £14.99 once
 
 > **Amended by 0280 (2026-11-02):** before anything was sold, Pay once became £4.99 for the first 90
-> days on sale, and the prices after that became £2.99 a month and £9.99 once. What follows is D1 as
+> days on sale (30 since 0319, 2026-11-24), and the prices after that became £2.99 a month and £9.99 once. What follows is D1 as
 > it was decided.
 
 | | Price (UK, the base storefront) | Kind | Product id |

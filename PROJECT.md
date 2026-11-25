@@ -33,7 +33,8 @@ move it here. Full argument, competitor roster and the surfaces still contradict
   and "Red Moon" as the product. Red Moon has **one plan**, £0.99 a month (with a free week
   first, an App Store intro offer) or £4.99 once (**ADR 0256**, reversing 0237 before its free
   build shipped; the product ids are **ADR 0277**'s). That's the **founding price**, for the first
-  90 days on sale; players who join after pay £2.99 a month or £9.99 once (**ADR 0280**). It's a
+  30 days on sale; players who join after pay £2.99 a month or £9.99 once (**ADR 0280**, with
+  **ADR 0319** cutting the window from 90 days to 30). It's a
   lock, not a freeze: a price can rise for new players, never for a player who holds it
   (**ADR 0274**). Playing is free: the Song library,
   the song player with saved loops and markers, the Metronome, the Journal and Practice log, and the

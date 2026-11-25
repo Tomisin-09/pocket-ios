@@ -3,7 +3,8 @@
 > ## 1.4 is the release (2026-10-26): what's current
 >
 > One plan (ADR 0256): **£0.99 a month** (a free week first) **or £4.99 once**, the founding price
-> (ADR 0274) for the first 90 days on sale, then £2.99 or £9.99 (ADR 0280). The Song library, the song player with saved loops, the Metronome, the
+> (ADR 0274) for the first 30 days on sale, then £2.99 or £9.99 (ADR 0280; 30 days, not 90, since
+> ADR 0319 on 2026-11-24). The Song library, the song player with saved loops, the Metronome, the
 > Journal and Practice log, and the Toolkit are free (ADR 0263). Practising is the plan.
 >
 > **Current, so paste from these:** Name, Subtitle, Promotional text, Keywords, Description (with
@@ -175,7 +176,7 @@ made transposing a real feature, and it's a common search for apps like this one
 > That's the founding price, and it's yours for as long as you keep the plan. Nothing you can do
 > today will ever move behind a higher one.
 >
-> The founding price is for Red Moon's first 90 days on sale. After that, it's £2.99 a month, or
+> The founding price is for Red Moon's first 30 days on sale. After that, it's £2.99 a month, or
 > £9.99 once.
 >
 > Red Moon plays audio files you own. It can't play Apple Music or Spotify streams.
@@ -496,8 +497,8 @@ Questionnaire answers are all "None" → **4+**.
   week as an introductory offer; product `click.decooperations.pocket.plan.monthly2` in the group
   **Red Moon**) or **Pay once** (£4.99, non-consumable; `…plan.payonce`). UK is the base storefront;
   the rest are App Store Connect's generated prices. `…plan.monthly` is spent (ADR 0277 D3). Family Sharing off (ADR 0259). These are the
-  founding prices, for the first 90 days on sale; on day 91 they become £2.99 and £9.99, keeping
-  existing subscribers' price (ADR 0280 D7). The founding price is held for as long as a player keeps
+  founding prices, for the first 30 days on sale; on day 31 they become £2.99 and £9.99, keeping
+  existing subscribers' price (ADR 0280 D7, with the days from ADR 0319). The founding price is held for as long as a player keeps
   the plan (ADR 0274).
 - **In-app purchases:** the two products above. *History, kept for the record:* the two auto-renewable subscriptions that ADR 0144
   set up (`click.decooperations.pocket.pro.annual` and `…pro.monthly`, group
