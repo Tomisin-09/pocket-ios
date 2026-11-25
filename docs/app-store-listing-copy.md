@@ -7,6 +7,11 @@
 > ADR 0319 on 2026-11-24). The Song library, the song player with saved loops, the Metronome, the
 > Journal and Practice log, and the Toolkit are free (ADR 0263). Practising is the plan.
 >
+> **The promise changed on 2026-11-25 (ADR 0320):** *"That's your price for as long as you keep the
+> plan."* replaces *"That's the founding price, and it's yours…"*, word for word on the wall and here.
+> The site keeps the founding line until day 31 (ADR 0320 D3). 1.6 was approved with the old line, so
+> paste the description's *One plan* block into **1.6.1's** record.
+>
 > **Current, so paste from these:** Name, Subtitle, Promotional text, Keywords, Description (with
 > its *One plan* block and the EULA line), *What's New — 1.6*, Price / availability, App Review
 > notes, and the **1.4 pre-submission checklist**. Every other *What's New* draft and checklist
@@ -173,8 +178,8 @@ made transposing a real feature, and it's a common search for apps like this one
 > is for practising: drills, routines, Today's session and the loop trainer.
 >
 > **£0.99 a month, or £4.99 once.**
-> That's the founding price, and it's yours for as long as you keep the plan. Nothing you can do
-> today will ever move behind a higher one.
+> That's your price for as long as you keep the plan. Nothing you can do today will ever move behind
+> a higher one.
 >
 > The founding price is for Red Moon's first 30 days on sale. After that, it's £2.99 a month, or
 > £9.99 once.

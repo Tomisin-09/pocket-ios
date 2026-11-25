@@ -24,6 +24,11 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Changed
+- **The plan's promise says *your price*** (ADR 0320). Under the prices, the plan's screen now reads
+  *"That's your price for as long as you keep the plan. Nothing you can do today will ever move behind
+  a higher one."* It said *the founding price*, which stops being true once the founding window ends.
+  Help's *Will the price go up?* now answers for a player who has the plan and one who hasn't yet: the
+  price you join at is yours, and the price for new players can change.
 - **The founding prices are for the first 30 days on sale, not 90** (ADR 0319). £0.99 a month or
   £4.99 once, then £2.99 or £9.99 for players who join after; founders keep theirs. The window itself
   needs nothing in the app, which reads its prices from the App Store; the App Store description and

@@ -83,6 +83,17 @@ final class FAQEntryTests: XCTestCase {
         }
     }
 
+    func testNoAnswerCallsTheirPriceTheFoundingPrice() {
+        // ADR 0320: the founding price lasts the first days on sale (ADR 0319), and the build that
+        // carries this help is still on phones after it ends. The listing and the site say the
+        // schedule; the app says only that the price you join at is yours.
+        XCTAssertFalse(FAQEntry.all.isEmpty)
+        for entry in FAQEntry.all {
+            XCTAssertFalse(entry.answer.localizedCaseInsensitiveContains("founding"),
+                           "“\(entry.question)” says founding, which is false after the window (ADR 0320).")
+        }
+    }
+
     // MARK: - D5: quoted copy, so the surfaces can't drift
 
     func testMasteryAnswerQuotesTheInAppExplanations() {
