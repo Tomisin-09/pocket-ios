@@ -4,10 +4,12 @@ import Link from 'next/link'
 // The pieces every Red Moon page shares: the nav, the footer, the store button and the phone frame.
 // One place, so a page can't drift from the others.
 
-// Red Moon's App Store page. Every store button on the site reads this one constant. The id is the
-// app's Apple ID, the same one its Rate Red Moon row opens (AboutSection.swift on main). The page
-// 404s until availability is switched on in App Store Connect, so merging this waits for that.
-export const APP_STORE_URL = 'https://apps.apple.com/app/red-moon-practice-studio/id6789618726'
+// Red Moon's Apple ID, the same one the app's Rate Red Moon row opens (AboutSection.swift on main).
+// Every store button reads the URL, and the Smart App Banner (app/layout.tsx) reads the id, so the
+// two can't point at different apps. The page 404s until availability is switched on in App Store
+// Connect, so merging this waits for that.
+export const APP_STORE_ID = '6789618726'
+export const APP_STORE_URL = `https://apps.apple.com/app/red-moon-practice-studio/id${APP_STORE_ID}`
 
 // Apple logo mark for the store button
 function AppleMark() {

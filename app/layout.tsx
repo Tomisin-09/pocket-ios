@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Cormorant_Garamond, DM_Sans, Jost } from 'next/font/google'
+import { APP_STORE_ID } from './_components/brand'
 import './globals.css'
 
 // The three faces the pages used when they shared a deployment with Deco Operations' site, kept as
@@ -30,10 +31,13 @@ const jost = Jost({
 
 // Link previews, og:image and canonical URLs resolve against the site's own domain. A page that sets
 // none of its own (the beta guide, a 404) gets Red Moon's name, not another company's.
+// `itunes` is Apple's Smart App Banner: Safari on iPhone shows a Get (or Open) bar above every page.
+// It is set here, not per page, and no page sets its own, so every page inherits it.
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.redmoonpracticestudio.co.uk'),
   title: 'Red Moon Practice Studio',
   description: 'Red Moon is a practice studio for guitar and bass players, for iPhone.',
+  itunes: { appId: APP_STORE_ID },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
