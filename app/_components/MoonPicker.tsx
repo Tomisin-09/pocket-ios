@@ -1,13 +1,8 @@
 'use client'
 
 import Image, { type StaticImageData } from 'next/image'
-import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
-
-/** A logo (`mark`, `wordmark`, `logo`) in a moon. Blood Moon's are the site's own files, which are the
- *  app's byte for byte; the other seven are the app's recoloured copies (`derive-brand-svgs.py --themes`). */
-function moonArt(art: string, moon: string) {
-  return moon === 'blood' ? `/redmoon/${art}.svg` : `/redmoon/moons/${art}-${moon}.svg`
-}
+import { useRef, type KeyboardEvent, type ReactNode } from 'react'
+import { moonArt, usePickedMoon } from './moon'
 
 export type Moon = {
   /** `MoonTheme`'s raw value in the app: `blood`, `jade`, … It names the art in /redmoon/moons/. */
@@ -21,24 +16,15 @@ export type Moon = {
 /**
  * The app's eight moon themes (pocket-ios ADRs 0311, 0312, 0314), tried on the page. Picking one swaps
  * the phone to Home in that moon and the icon beside it, and the landing page wears it too: its accent
- * tokens follow `data-moon` on `.rm-land` (globals.css), and the logos marked `data-moon-art` take that
- * moon's copy. Nothing is stored, so a reload is Blood Moon again, like a fresh install.
+ * tokens follow `data-moon` (globals.css), and its logos take that moon's copy (`moon.tsx`). The pick
+ * lasts for the visit, so it's still there after a trip to the liner notes, and it's never stored, so
+ * a reload is Blood Moon again, like a fresh install.
  */
 export default function MoonPicker({ moons, children }: { moons: Moon[]; children: ReactNode }) {
-  const [current, setCurrent] = useState(0)
+  const { moon: picked, pick } = usePickedMoon()
+  const current = Math.max(0, moons.findIndex((m) => m.id === picked))
+  const setCurrent = (i: number) => pick(moons[i].id)
   const swatches = useRef<Array<HTMLButtonElement | null>>([])
-  const moon = moons[current]
-
-  useEffect(() => {
-    const page = document.querySelector<HTMLElement>('.rm-land')
-    if (!page) return
-    if (moon.id === 'blood') delete page.dataset.moon
-    else page.dataset.moon = moon.id
-    document.querySelectorAll<HTMLImageElement>('img[data-moon-art]').forEach((img) => {
-      const next = moonArt(img.dataset.moonArt ?? '', moon.id)
-      if (img.getAttribute('src') !== next) img.src = next
-    })
-  }, [moon.id])
 
   // A radio group: one tab stop, and the arrow keys move the choice, as they do in any set of radios.
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {

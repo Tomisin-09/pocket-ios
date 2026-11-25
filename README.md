@@ -71,7 +71,17 @@ Red Moon's pages take the app's Blood Moon values (pocket-ios ADR 0292) as `--rm
 | `--rm-ink` | `#000000` | Landing and story background; the app captures sit on it |
 
 The landing page and the story are dark (`.rm-dark`); support, privacy, manual and the beta guide are
-cream. `.rm-page` re-points the shared `--accent` and `--stone-*` tokens, so the prose classes
+cream.
+
+The landing page wears the moon picked in its *Pick your moon*: accents, logos and every phone's
+screenshot. Each screen is in `app/_media/shots/<moon>/<screen>.png`, listed in `app/_media/shots.ts`
+(a missing one fails the build), all from one shoot with each screen's eight moons from one seed, so
+only the colours change; how to shoot them again is in pocket-ios's `docs/app-store-listing-copy.md`
+(*The site's landing screens in each moon*). The pick is held in memory in the root layout (`app/_components/moon.tsx`), so it is
+still there when a visitor comes back from another page by `<Link>`, and a reload or a new tab is Blood
+Moon. It is never stored, so links, previews and the press kit are always Blood Moon. Every other page
+stays Blood Moon, nav included: the story because it's the song's red moon, the cream pages because
+they're for reading. A page wears the moon only by wrapping itself in `MoonPage`. `.rm-page` re-points the shared `--accent` and `--stone-*` tokens, so the prose classes
 (`.privacy-*`, `.section-*`) take Red Moon's colours. The nav, footer, store button and phone frame
 are shared, in `app/_components/brand.tsx`. The logo SVGs in `public/redmoon/` are the app's
 (`scripts/derive-brand-svgs.py` on `main`): copy them, don't edit them.

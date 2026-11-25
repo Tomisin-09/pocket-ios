@@ -257,7 +257,8 @@ footer {
 }
 
 /* The landing page can wear any of the app's eight moons (pocket-ios ADRs 0311, 0312): the moon
-   picker sets `data-moon` on `.rm-land`, and only the accents move. Each moon gives its logo colour
+   picked there sets `data-moon` on `.rm-land` (`MoonPage`, app/_components/moon.tsx), and only the
+   accents move. Each moon gives its logo colour
    (--rm-red) and crescent rim (--rm-flare), byte for byte from the app's recoloured marks, and its
    Practice colour in the dark appearance (--rm-ember), from the app's colour catalog. The rest is
    derived here, the way Blood Moon's own values relate. Registered as colours so a change fades
