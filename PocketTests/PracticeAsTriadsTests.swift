@@ -28,7 +28,7 @@ final class PracticeAsTriadsTests: XCTestCase {
         XCTAssertEqual(run.placement, .stayInFrets)
         XCTAssertEqual(run.fretRange, 3...7)
         XCTAssertEqual(run.playAs, .broken)
-        XCTAssertEqual(run.notesPerBeat, 2, "eighths")
+        XCTAssertEqual(run.notesPerBeat, 3, "triplets (ADR 0317)")
         XCTAssertFalse(run.roundTrip)
     }
 

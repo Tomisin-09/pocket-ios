@@ -3,6 +3,14 @@
 - **Status:** Accepted. Decided with Tomisin on 2026-11-02, while 1.4 was in review and before the
   plan had been sold to anyone.
 - **Date:** 2026-11-02
+- **Amended by:** ADR 0319 (2026-11-24) — **D1**: the window is the first 30 days on sale, not 90,
+  so its last day is 29 days after day 1. D5's schedule line says 30 days, and D6 and D7 count to
+  day 30 and day 31. The prices, D2, D3 and D4 stand. D7's first step moves before day 1: the
+  wall's line changes in 1.6.1, the build that goes on sale, because a month is short for a review
+  and an update doesn't reach every phone.
+  ADR 0320 (2026-11-25) — **D5**: the wall's line during the window is *"That's your price for as
+  long as you keep the plan."*, then the same second sentence. The app never says *founding*; the
+  description, the site and posts say it in the schedule sentence.
 - **Amends:** ADR 0277 — **D1**: Pay once is £4.99 during the founding window, not £14.99, and after
   it the prices are £2.99 a month and £9.99 once (D1, D2 here). The product ids, the group and the
   free week stand. ADR 0274 — **D2**: *"No end date, no countdown, no 'limited time'"* no longer holds
@@ -33,6 +41,10 @@ from anyone who was given it.
 ## Decisions
 
 ### D1 — The founding window: the first 90 days on sale
+
+> **Amended by 0319 (2026-11-24):** the window is the first **30** days on sale, before anything
+> was sold. The prices in the table stand. What follows is D1 as it was decided; day 1's date is
+> still recorded here.
 
 | | Founding (days 1–90) | After |
 |---|---|---|
@@ -70,6 +82,13 @@ change is a price rise or cut under 0274 D4, with its own ADR.
 
 ### D5 — Where the window is said
 
+> **Amended by 0319 (2026-11-24):** the description's line says *"first 30 days on sale"*. The
+> rest of D5 stands.
+>
+> **Amended by 0320 (2026-11-25):** the wall's words below become *"£0.99 a month, or £4.99 once.
+> That's your price for as long as you keep the plan."* They're true on both sides of day 30, so
+> the wall never says *founding*.
+
 - **The site, the App Store description, posts and the promotional text** say when the founding
   price ends and what follows. The description says it as a schedule (*"The founding price is for Red
   Moon's first 90 days on sale. After that, it's £2.99 a month, or £9.99 once."*), so it stays true
@@ -81,11 +100,18 @@ change is a price rise or cut under 0274 D4, with its own ADR.
 
 ### D6 — Nothing about the price changes during the window
 
+> **Amended by 0319 (2026-11-24):** this holds for the 30 days. The next look at price stays after
+> day 90, which now brings two months of sales at the after-window prices.
+
 Neither price, nor the plan's shape, changes in the 90 days. The next look at price is after day 90,
 with sales in hand. Tomisin: *"I shouldn't think too much about the price, I'm definitely overthinking
 that."*
 
 ### D7 — The order for day 91
+
+> **Amended by 0319 (2026-11-24):** day 90 is day 30, and day 91 is day 31. Step 1 moves before
+> day 1: 1.6.1, the build that goes on sale, carries the new line, so no build is owed inside the
+> window (0319 D5). Its wording still needs its own ADR. Steps 2 and 3 stand.
 
 0274 D4, applied:
 

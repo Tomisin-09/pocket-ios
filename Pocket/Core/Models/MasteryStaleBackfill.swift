@@ -23,7 +23,7 @@ enum MasteryStaleBackfill {
         // Every unit is visited: `map` first, so a `contains` can't stop at the first write.
         let wrote = exercises.map(apply(to:)) + loops.map(apply(to:))
         guard wrote.contains(true) else { return }
-        try? context.save()
+        context.saveOrLog()
     }
 
     /// The per-exercise rule, apart from the store so it's unit-tested. Returns whether it wrote.

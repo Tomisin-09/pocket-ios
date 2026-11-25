@@ -356,7 +356,7 @@ private enum JournalTabPreview {
             createdAt: now.addingTimeInterval(-1800))
         context.insert(session)
 
-        try? context.save()
+        context.saveOrLog()
         return container
     }
 }

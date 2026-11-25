@@ -30,7 +30,7 @@ enum ExerciseNoteRateBackfill {
         for exercise in (try? context.fetch(FetchDescriptor<Exercise>())) ?? [] {
             apply(to: exercise)
         }
-        try? context.save()
+        context.saveOrLog()
         defaults.set(true, forKey: backfillKey)
     }
 

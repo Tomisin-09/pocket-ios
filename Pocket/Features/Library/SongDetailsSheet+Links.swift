@@ -177,7 +177,7 @@ struct SongExercisesScreen: View {
         } else {
             song.linkedExercises.append(exercise)
         }
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 
     private func unlink(at offsets: IndexSet) {
@@ -185,6 +185,6 @@ struct SongExercisesScreen: View {
         for exercise in targets {
             song.linkedExercises.removeAll { $0.persistentModelID == exercise.persistentModelID }
         }
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 }

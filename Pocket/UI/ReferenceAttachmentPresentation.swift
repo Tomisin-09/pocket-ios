@@ -196,7 +196,7 @@ struct ReferenceAttachmentPicking<Owner: ReferenceLinkOwner & AnyObject>: ViewMo
         do {
             let link = try ReferenceLinkStore.addAttachment(data, contentType: contentType,
                                                             to: owner, in: writeContext)
-            if savesImmediately { try? writeContext.save() }
+            if savesImmediately { writeContext.saveOrLog() }
             describe(link)
         } catch ReferenceAttachmentStore.ImportError.tooLarge {
             failure = Self.tooLarge

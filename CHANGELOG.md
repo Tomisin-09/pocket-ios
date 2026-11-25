@@ -23,6 +23,35 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 
 ## [Unreleased]
 
+### Changed
+- **The plan's promise says *your price*** (ADR 0320). Under the prices, the plan's screen now reads
+  *"That's your price for as long as you keep the plan. Nothing you can do today will ever move behind
+  a higher one."* It said *the founding price*, which stops being true once the founding window ends.
+  Help's *Will the price go up?* now answers for a player who has the plan and one who hasn't yet: the
+  price you join at is yours, and the price for new players can change.
+- **The founding prices are for the first 30 days on sale, not 90** (ADR 0319). £0.99 a month or
+  £4.99 once, then £2.99 or £9.99 for players who join after; founders keep theirs. The window itself
+  needs nothing in the app, which reads its prices from the App Store; the App Store description and
+  the site say the schedule. The paywall's line about the founding price changes in 1.6.1, the build
+  that goes on sale, under an ADR of its own (ADR 0319 D5).
+- **A new Triads run opens on triplets** (ADR 0317), not eighths. A triad's three notes now fill a
+  beat, so each chord of the key's seven starts on the beat and a progression's bar holds whole triads
+  instead of cutting the last one off. *Practice as triads* opens on triplets too. Exercises already
+  saved keep the rhythm they were saved with, and Rhythm under Advanced still changes it.
+
+### Fixed
+- **A save that fails now says so** (ADR 0318). Every save in the app threw its error away, so a change
+  that failed to save looked kept and was gone after the next launch. Where you've just asked for
+  something to be kept (Save or Done on a note, a goal, a skill, Edit shape, the routine editor, a
+  reference; stopping a take; a trim; receiving or restoring), a failed save now says **Couldn’t save**
+  and keeps the screen as it was, and **Try again** saves it without writing it twice. Every other save
+  logs the failure on the device.
+- **A take only says *Take saved* once it is.** It said so even when the save failed.
+- **Starting a new session no longer silently doesn't open** when its save fails, and **receiving**
+  says *Added* only once it's saved.
+- **A restore that can't save adds nothing.** It no longer writes the takes' audio with no saved rows
+  to own them (which *Reclaim space* deletes), and says **Couldn’t restore**.
+
 ## [1.6] — build 14, cut 2026-11-24
 
 ### Added

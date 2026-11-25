@@ -12,7 +12,7 @@ import SwiftUI
 /// from the store) and returns to the read-only view. A brand-new routine opens straight in edit mode
 /// and only lands in the library if you Save.
 struct RoutineDetailView: View {
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) var dismiss
     /// The app's (main) context — used to resolve the routine for the player, so the run screens
     /// write to the real store, not this view's private editing sandbox. Internal so the
     /// block-preview extension (`RoutineDetailView+BlockPreview`) can resolve a tapped unit into it.
@@ -83,6 +83,9 @@ struct RoutineDetailView: View {
     @State var referenceAttachments: ReferenceAttachmentPresentation?
     /// The send screen, for a routine that plays songs (ADR 0236 D6). Internal for `+Share`.
     @State var sendingRoutine = false
+    /// A save that failed, and what follows it once *Try again* works (ADR 0318, `+Saving`).
+    @State var saveFailed = false
+    @State var afterSave = AfterSave.stored
 
     /// The session length the user asked the planner for, in minutes — set only on a provisional
     /// generated session so the review screen can show its estimate against a soft budget (R3).
@@ -240,6 +243,7 @@ struct RoutineDetailView: View {
         // taps, so edit mode is suspended (not exited) for its duration.
         .environment(\.editMode, .constant(isEditing && !insertingRests ? .active : .inactive))
         .modifier(MicAccessAlert(isPresented: $micAccessBlocked))
+        .saveFailedAlert(isPresented: $saveFailed, retry: retrySave)
         .toolbar { toolbarContent }
         .safeAreaInset(edge: .bottom) { startBar }
         // The picker no longer dismisses on a pick (ADR 0127) — it adds and stays open, so the
@@ -279,17 +283,18 @@ struct RoutineDetailView: View {
     ///
     /// A temporary session is left out of the names it is de-duplicated against (ADR 0243 D4): it is
     /// about to be replaced, and numbering a kept routine against it would leave a gap in the dates.
-    func commitProvisional(named name: String) {
-        guard !existsInStore else { return }
+    @discardableResult
+    func commitProvisional(named name: String, then next: AfterSave = .stored) -> Bool {
+        guard !existsInStore else { return true }
         trimDescription()
         let others = Routine.saved((try? editContext.fetch(FetchDescriptor<Routine>())) ?? [])
             .filter { $0.persistentModelID != routine.persistentModelID }
             .map(\.name)
         routine.name = QuickSessionNaming.savedName(requested: name, existing: others, date: .now)
-        try? editContext.save()
-        existsInStore = true
-        isEditing = false
+        guard saveSandbox(then: next) else { return false }
+        markStored()
         haptic(.medium)
+        return true
     }
 
     @ToolbarContentBuilder
@@ -331,42 +336,6 @@ struct RoutineDetailView: View {
                     .tint(PocketColor.practice)
             }
         }
-    }
-
-    // MARK: - Commit / discard
-
-    /// Commit the sandbox and drop back to the read-only view. A brand-new routine with nothing in it
-    /// is dismissed rather than saved (an abandoned "New routine" leaves no empty shell).
-    ///
-    /// "Nothing in it" counts the **description** too (ADR 0177): typing what a session is for and
-    /// nothing else is thin, but it is something the player wrote, and dropping it on Save would be
-    /// the screen discarding work without saying so.
-    private func saveEdits() {
-        trimDescription()
-        if !existsInStore && routine.items.isEmpty && routine.notes.isEmpty
-            && routine.name.trimmingCharacters(in: .whitespaces).isEmpty {
-            dismiss()
-            return
-        }
-        try? editContext.save()
-        existsInStore = true
-        isEditing = false
-        insertingRests = false
-        haptic(.medium)
-    }
-
-    /// Discard in-flight edits. A new routine has nothing to return to, so it dismisses; an existing
-    /// one rebuilds a clean sandbox from the store and returns to the read-only view.
-    private func cancelEdits() {
-        // Leaving edit mode must leave rest-insert mode with it — the gap rows are an editing
-        // affordance, and their only way out is hidden once the add section goes.
-        insertingRests = false
-        restGuardSlot = nil
-        discardUnsavedReferenceImages()
-        guard existsInStore else { dismiss(); return }
-        rebuildSandbox()
-        isEditing = false
-        haptic(.light)
     }
 
     /// Drop the sandbox and fault the routine into a fresh one, as the store has it now. Cancel's way

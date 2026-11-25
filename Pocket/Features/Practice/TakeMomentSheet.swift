@@ -32,6 +32,11 @@ struct TakeMomentSheet: ViewModifier {
     let take: Recording
     let context: ModelContext
 
+    @State private var saveFailed = false
+    /// The moment a draft already wrote, so Save after a failed save edits it rather than adding the
+    /// moment twice (ADR 0318).
+    @State private var written: (draft: UUID, note: TakeNote)?
+
     func body(content: Content) -> some View {
         content
             .sheet(item: $draft) { item in
@@ -95,6 +100,7 @@ struct TakeMomentSheet: ViewModifier {
                     .disabled(item.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
+        .saveFailedAlert(isPresented: $saveFailed, retry: commit)
     }
 
     /// Edits land back on the presented draft, so the Save button's enablement tracks what is
@@ -104,12 +110,18 @@ struct TakeMomentSheet: ViewModifier {
     }
 
     private func save(_ item: TakeMomentDraft) {
-        if let note = existing(item) {
+        if let note = existing(item) ?? (written?.draft == item.id ? written?.note : nil) {
             note.setText(item.text)
-        } else {
-            take.addMoment(at: item.time, text: item.text)
+        } else if let note = take.addMoment(at: item.time, text: item.text) {
+            written = (item.id, note)
         }
-        try? context.save()
+        commit()
+    }
+
+    /// The save and what follows it. *Try again* repeats this, never the edit, so a new moment isn't
+    /// added twice. A failed save keeps the sheet open (ADR 0318).
+    private func commit() {
+        guard context.saveOrLog() else { saveFailed = true; return }
         haptic(.light)
         draft = nil
     }
@@ -119,7 +131,7 @@ struct TakeMomentSheet: ViewModifier {
         // cascade-owned row left in it renders as a deleted model until the next fetch.
         take.moments.removeAll { $0.uid == note.uid }
         context.delete(note)
-        try? context.save()
+        context.saveOrLog()
         haptic(.light)
         draft = nil
     }

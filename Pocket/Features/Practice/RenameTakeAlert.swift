@@ -15,6 +15,7 @@ struct RenameTakeAlert: ViewModifier {
     let context: ModelContext
 
     @State private var draft = ""
+    @State private var saveFailed = false
 
     func body(content: Content) -> some View {
         content
@@ -27,15 +28,22 @@ struct RenameTakeAlert: ViewModifier {
                 Button("Save") {
                     // An empty field clears the name and brings the number back (ADR 0307 D4).
                     ref.value.rename(to: draft)
-                    try? context.save()
-                    haptic(.light)
                     take = nil
+                    commit()
                 }
             } message: { _ in
                 Text("Something you'll recognise later — what you were working on, or how it went.")
             }
+            // An alert closes on any button, so a failed save can't keep this one open: it says so in
+            // its own alert, and *Try again* saves the name already given (ADR 0318).
+            .saveFailedAlert(isPresented: $saveFailed, retry: commit)
             // Seed the field from the take being named, not from the last one named.
             .onChange(of: take?.id) { _, _ in draft = take?.value.title ?? "" }
+    }
+
+    private func commit() {
+        guard context.saveOrLog() else { saveFailed = true; return }
+        haptic(.light)
     }
 
     private var isPresented: Binding<Bool> {

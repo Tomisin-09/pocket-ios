@@ -58,8 +58,8 @@
 │              MusicKit (browse) is PLANNED-ONLY and not shipped — no MusicKit import,
 │              no MPMediaLibrary, no NSAppleMusicUsageDescription
 │ Monetization — one plan (ADR 0256, 0277, 0280): `…plan.monthly2` (£0.99, auto-renewing, group *Red Moon*, a free week
-│              as its intro offer) or `…plan.payonce` (£4.99, non-consumable), the founding prices for the first 90 days
-│              on sale, then £2.99 and £9.99 (ADR 0280); neither family-shareable (ADR 0259). Playing and keeping are free, the Journal and the Toolkit included (ADR 0263); practising is the plan.
+│              as its intro offer) or `…plan.payonce` (£4.99, non-consumable), the founding prices for the first 30 days
+│              on sale, then £2.99 and £9.99 (ADR 0280, 0319); neither family-shareable (ADR 0259). Playing and keeping are free, the Journal and the Toolkit included (ADR 0263); practising is the plan.
 │              `PlanStore` (Core/Plan, StoreKit 2) reads `currentEntitlements`, listens to `Transaction.updates`
 │              and refreshes on every return to the foreground (a plain expiry mints no transaction). Pure
 │              rules in `PlanAccess`. Gated screens wrap their own bodies in `PlanGated` (Features/Plan), so
@@ -1681,6 +1681,15 @@ empty, because that line was Home's only word about adding a first song.
   neither can CI's unsigned build, which has no group. `PocketStoreTests` pins the URL, and it bites on
   a local, signed-to-run simulator. The App Group itself holds only the share extension's snapshot and
   inbox (Toolkit hub, above).
+- **Every save goes through `ModelContext.saveOrLog()`** (`Core/Storage/ModelContext+SaveOrLog.swift`,
+  ADR 0318), which logs a failure (file and line, the error's domain and code; category `store`) and
+  returns whether the save worked. `.swiftlint.yml`'s `save_error_discarded` bans `try? ….save()`. Where
+  the player has just asked for something to be kept, the caller reads the result: the screen stays as
+  it was and `saveFailedAlert` (`UI/SaveFailedAlert.swift`) says *Couldn’t save*, with *Try again*
+  repeating the save and never the edit. A take is `RecordingController.unsavedTake` until its save
+  works (`reportsUnsavedTake` beside `endsTakeOnInterruption`). A restore whose save fails rolls back
+  and writes no file (0188 D7). `-failSaveIn <file>` fails one save in a Debug `-uiTesting` build
+  (`SaveFailureDrill`), for `SaveFailedUITests`.
 - **SwiftData `@Model` domain** (`Core/Models/`): `Song` is the aggregate root, with
   cascade relationships to its `Loop`s and `Marker`s. The practice screen binds to a
   persisted `Song` via the `ModelContext`; loops/markers persist across launches. ADR 0011.

@@ -344,7 +344,7 @@ enum PracticePresets {
                 exercise.presetSlug = match
             }
         }
-        try? context.save()
+        context.saveOrLog()
         defaults.set(true, forKey: presetSlugBackfillKey)
     }
 
@@ -353,7 +353,7 @@ enum PracticePresets {
                                   into context: ModelContext, defaults: UserDefaults) {
         guard !defaults.bool(forKey: key) else { return }
         for exercise in makeExercises(specs) { context.insert(exercise) }
-        try? context.save()
+        context.saveOrLog()
         defaults.set(true, forKey: key)
     }
 }

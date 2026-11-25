@@ -15,6 +15,11 @@ enum UITestHooks {
     /// spelling the literal out at the call site.
     static let launchArgument = "-uiTesting"
 
+    /// `-failSaveIn <file>`: under `-uiTesting`, in a Debug build, the first save made from that file
+    /// fails (ADR 0318), so a UI test can see *Couldn’t save* and watch *Try again* work. The file is a
+    /// `#fileID`, like `Pocket/QuickJournalSheet.swift`.
+    static let failSaveInArgument = "-failSaveIn"
+
     /// `-shotHour <0…23>`: the hour Home's greeting is computed from, for the manual's shoot.
     ///
     /// Home reads the wall clock, and the shoot fakes the status bar to 09:41 — two clocks that

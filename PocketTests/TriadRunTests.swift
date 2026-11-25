@@ -66,7 +66,7 @@ final class TriadRunTests: XCTestCase {
         XCTAssertEqual(run.source, .keysSeven)
         XCTAssertEqual(run.placement, .stayInFrets)
         XCTAssertEqual(run.fretRange, 3...7)
-        XCTAssertEqual(run.notesPerBeat, 2)
+        XCTAssertEqual(run.notesPerBeat, 3, "triplets (ADR 0317)")
         XCTAssertFalse(run.roundTrip)
         XCTAssertTrue(run.chordsWithNoShape().isEmpty, "frets 3 to 7 holds every chord of C on G-B-e")
         XCTAssertEqual(run.title(), "Triads in C major")
@@ -220,10 +220,47 @@ final class TriadRunTests: XCTestCase {
         XCTAssertEqual(drill.noteCount, 8 * 3)
         XCTAssertEqual(Array(drill.notes.prefix(3)),
                        [FretNote(string: 2, fret: 5), FretNote(string: 1, fret: 5), FretNote(string: 0, fret: 3)])
-        XCTAssertEqual(drill.notesPerBeat, 2)
+        XCTAssertEqual(drill.notesPerBeat, 3)
         XCTAssertEqual(drill.rootPitchClass, 0)
         XCTAssertEqual(drill.shadedFrets, 3...7)
         XCTAssertNil(drill.noteGroups, "one pass: nothing fades")
+    }
+
+    // MARK: - Triplets (ADR 0317)
+
+    /// In triplets each chord of the key's seven is one beat, so all eight, back to the tonic, fill two
+    /// bars of 4/4 exactly and the run loops on the bar line. In eighths a chord was a beat and a half.
+    func testANewRunGivesEachChordOfTheKeysSevenOneBeat() {
+        let drill = TriadRun.starter.expanded(beatsPerBar: 4)
+        XCTAssertEqual(drill.noteCount, 8 * drill.notesPerBeat, "one beat a chord")
+        XCTAssertEqual(drill.noteCount, 2 * 4 * drill.notesPerBeat, "two whole bars of 4/4")
+    }
+
+    /// A progression's chord in a new run fills its bar with whole triads: every group of three starts on
+    /// a beat, and the bar ends on the triad's top note rather than cutting it off (in eighths a 4/4 bar
+    /// was 8 notes, R 3 5 R 3 5 R 3).
+    func testANewProgressionRunFillsEachBarWithWholeTriads() {
+        let run = TriadRun(tonic: 0, source: .progression, progression: TriadRun.defaultProgression)
+        let drill = run.expanded(beatsPerBar: 4)
+        let chords = drill.chords ?? []
+        XCTAssertEqual(chords.count, 4)
+        for chord in chords {
+            let notes = drill.notes[chord.slots].compactMap { $0 }
+            XCTAssertEqual(notes.count, 4 * 3, "\(chord.root): one 4/4 bar of triplets")
+            let triad = Array(notes.prefix(3))
+            XCTAssertEqual(notes, triad + triad + triad + triad, "\(chord.root): four whole triads")
+        }
+    }
+
+    /// A run saved before ADR 0317 keeps the eighths it was saved with: the rhythm is stored with the run,
+    /// so a new default reaches only runs made after it. The JSON is what 1.6 writes.
+    func testASavedRunKeepsItsEighths() throws {
+        let json = #"{"version":1,"tonic":0,"isMinor":false,"strings":"gbe","source":"keysSeven","#
+            + #""placement":"stayInFrets","lowFret":3,"highFret":7,"climbInversion":0,"playAs":"broken","#
+            + #""notesPerBeat":2,"roundTrip":false}"#
+        let run = try JSONDecoder().decode(TriadRun.self, from: Data(json.utf8))
+        XCTAssertEqual(run.notesPerBeat, 2)
+        XCTAssertEqual(run.expanded(beatsPerBar: 4).notesPerBeat, 2)
     }
 
     /// A progression's chord holds for its bars, and Broken repeats its three notes upward to fill them.

@@ -35,6 +35,7 @@ struct JournalNoteComposer: View {
     @Environment(\.modelContext) private var modelContext
     @State private var draftNote = ""
     @State private var savedThisSession = 0
+    @State private var saveFailed = false
     @FocusState private var noteFocused: Bool
 
     private var canAdd: Bool {
@@ -78,6 +79,9 @@ struct JournalNoteComposer: View {
             // Needs a `KeyboardFollowingScroll` around the host's container — every host has one;
             // inert if a new one forgets.
             .scrollsIntoViewWhenFocused("mode-note", focused: $noteFocused)
+            // On the field, which both styles draw and is never disabled: the button is, once the
+            // draft clears, and a disabled host can grey out an alert's own buttons (ADR 0318).
+            .saveFailedAlert(isPresented: $saveFailed, retry: commit)
     }
 
     private var saveButton: some View {
@@ -110,9 +114,16 @@ struct JournalNoteComposer: View {
     private func addNote() {
         guard JournalWriter.add(to: owner, text: draftNote, kind: kind, into: modelContext)
         else { return }
-        try? modelContext.save()
-        haptic(.light)
+        // The note is written either way, so the field clears: adding it again would write it twice.
         draftNote = ""
+        commit()
+    }
+
+    /// The save after a note is written, which *Try again* repeats. The receipt counts a note once it's
+    /// saved, since the receipt is what says the write landed (ADR 0318).
+    private func commit() {
+        guard modelContext.saveOrLog() else { saveFailed = true; return }
+        haptic(.light)
         savedThisSession += 1
     }
 }

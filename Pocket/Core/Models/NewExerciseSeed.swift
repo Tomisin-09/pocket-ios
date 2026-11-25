@@ -19,7 +19,7 @@ struct NewExerciseSeed: Equatable, Sendable {
 extension NewExerciseSeed {
     /// *Practice as triads* (D9): an Arpeggios exercise, generating Triads, with this progression chosen
     /// in the key it was written in, and D10's defaults for the rest (G‑B‑e, *Stay in frets* 3 to 7,
-    /// Broken, eighths). Its name is the progression's with "as triads" after it.
+    /// Broken, triplets since ADR 0317). Its name is the progression's with "as triads" after it.
     ///
     /// `nil` when no chord in it has a triad: no chords, or only power chords, which have no third (D5). A
     /// run of nothing but rests would open on a board that never lights.

@@ -168,12 +168,15 @@ final class PlanAccessTests: XCTestCase {
                        "$1.00 a month, or $15.00 once.")
     }
 
-    /// ADR 0274 D1: the founding price is a lock on the player's price, with its condition in the
-    /// promise itself, and the free line's half kept word for word.
+    /// ADR 0274 D1: the price is a lock on the player's price, with its condition in the promise
+    /// itself, and the free line's half kept word for word. ADR 0320: it says *your price*, because
+    /// the wall shows it after the founding window too, beside the prices that follow it.
     func testThePromiseLineIsVerbatim() {
         XCTAssertEqual(PlanWallCopy.promiseLine,
-                       "That's the founding price, and it's yours for as long as you keep the plan. "
+                       "That's your price for as long as you keep the plan. "
                         + "Nothing you can do today will ever move behind a higher one.")
+        XCTAssertFalse(PlanWallCopy.promiseLine.localizedCaseInsensitiveContains("founding"),
+                       "the wall is shown after the founding window too (ADR 0320)")
     }
 
     /// Guideline 3.1.2: the disclosure names the renewing price and how to cancel.

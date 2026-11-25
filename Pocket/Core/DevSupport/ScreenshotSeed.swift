@@ -134,7 +134,7 @@ enum ScreenshotSeed {
         if !bintaStaged, let bundled = StarterTrack.bundledURL {
             importReal(bundled, into: context)
         }
-        try? context.save()
+        context.saveOrLog()
     }
 
     /// `.mp3`/`.m4a`/`.wav` files staged in `Documents/SeedAudio/`, sorted by name.

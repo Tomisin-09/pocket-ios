@@ -136,6 +136,26 @@ final class RecordingController {
     struct SavedTake: Equatable { let uid: UUID; let duration: TimeInterval }
     private(set) var lastSaved: SavedTake?
 
+    /// A take that was kept but whose save failed (ADR 0318). It's on the take list in memory, and gone
+    /// after a relaunch unless a save works first, so it is never `lastSaved`: nothing says *Take saved*
+    /// for it. `reportsUnsavedTake` says *Couldn’t save* instead, and `retryUnsavedTake` saves again.
+    private(set) var unsavedTake: SavedTake?
+    @ObservationIgnored private var unsavedContext: ModelContext?
+
+    /// *Try again* on an unsaved take: once its save works, it's saved like any other.
+    func retryUnsavedTake() {
+        guard let take = unsavedTake, let context = unsavedContext, context.saveOrLog() else { return }
+        unsavedTake = nil
+        unsavedContext = nil
+        lastSaved = take
+    }
+
+    /// *Cancel* on an unsaved take. It stays in memory, and the next save that works keeps it.
+    func dismissUnsavedTake() {
+        unsavedTake = nil
+        unsavedContext = nil
+    }
+
     /// Dismiss the "take saved" confirmation once its moment has passed.
     func clearSavedNote() { lastSaved = nil }
 
@@ -280,8 +300,13 @@ final class RecordingController {
                 let take = Recording(fileName: finished.fileName, duration: duration, uid: finished.uid)
                 owner.attach(to: take, in: context)
                 context.insert(take)
-                try? context.save()
-                lastSaved = SavedTake(uid: finished.uid, duration: duration)
+                let kept = SavedTake(uid: finished.uid, duration: duration)
+                if context.saveOrLog() {
+                    lastSaved = kept
+                } else {
+                    unsavedTake = kept
+                    unsavedContext = context
+                }
             } else {
                 // The one place a take's audio is destroyed. Logged because when this fires for a take
                 // the player actually made, something stopped the recorder behind our back — the

@@ -23,6 +23,11 @@ struct QuickJournalSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var text = ""
     @State private var kind: EntryKind
+    /// Set once the note is written, so Save after a failed save only saves, rather than writing the
+    /// note a second time. The field and tags lock then, so what's on screen is what was written
+    /// (ADR 0318).
+    @State private var written = false
+    @State private var saveFailed = false
     @FocusState private var textFocused: Bool
 
     init(owner: JournalOwner, initialKind: EntryKind = .note) {
@@ -42,6 +47,7 @@ struct QuickJournalSheet: View {
                     VStack(alignment: .leading, spacing: 20) {
                         noteField
                         EntryKindChipRow(selection: $kind, kinds: offeredKinds)
+                            .disabled(written)
                         destinationLine
                     }
                     .padding(20)
@@ -62,6 +68,7 @@ struct QuickJournalSheet: View {
         }
         // Medium by default so the run screen stays half-visible behind it — this is an aside, not a
         // destination — and draggable to large for a longer note.
+        .saveFailedAlert(isPresented: $saveFailed, retry: commit)
         .presentationDetents([.medium, .large])
     }
 
@@ -77,6 +84,7 @@ struct QuickJournalSheet: View {
             // Opened *to write*, so the caret is already there. `.task` rather than `.onAppear`: the
             // focus has to land after the sheet's presentation transition or it is dropped.
             .task { textFocused = true }
+            .disabled(written)
     }
 
     /// The tags this sheet offers. An **ownerless** note can't honestly carry the three tags that
@@ -130,8 +138,17 @@ struct QuickJournalSheet: View {
     }
 
     private func save() {
-        guard JournalWriter.add(to: owner, text: text, kind: kind, into: modelContext) else { return }
-        try? modelContext.save()
+        if !written {
+            guard JournalWriter.add(to: owner, text: text, kind: kind, into: modelContext) else { return }
+            written = true
+        }
+        commit()
+    }
+
+    /// The save and the close, which *Try again* repeats without writing the note twice. A failed save
+    /// keeps the sheet open (ADR 0318).
+    private func commit() {
+        guard modelContext.saveOrLog() else { saveFailed = true; return }
         haptic(.light)
         dismiss()
     }

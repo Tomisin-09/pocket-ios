@@ -252,7 +252,7 @@ struct ArtistIntakeView: View {
         for goal in LongTermGoalStore.makeGoals(from: templates, below: existing) {
             context.insert(goal)
         }
-        try? context.save()
+        context.saveOrLog()
     }
 }
 

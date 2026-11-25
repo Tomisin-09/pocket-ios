@@ -21,6 +21,9 @@
   the window starts at the nut, on every board. And a run that names its chords follows the chord, not
   the note, so its window moves only when the chord changes. The rest of S5, and how any other wider run
   follows, stand.
+- **Amended by:** ADR 0317 (2026-11-24, for 1.6.1) — **D10**: a new Triads run opens on triplets, not
+  eighths, so each triad fills a beat. A run saved in eighths keeps them. The rest of D10 stands, and
+  the meter stays the exercise's (0317 D3).
 - **Relates to:** 0065 (the fretboard payload, and Arpeggios as a template) · 0083 S5 (the board holds
   still inside eight frets and follows a wider run) · 0084 (the movable grip) · 0107 (generate or
   draw) · 0123 (key-first spelling) · 0164 (the bass shapes that stand in for guitar grips) · 0188 (an
@@ -246,7 +249,7 @@ the loop sheet's *Practice now* (whose accessibility label is "Practice this loo
 ### D10 — What a new Triads run opens on
 
 *Proposed here.* The teacher's step 3: C major, G‑B‑e, the key's seven, *Stay in frets* 3 to 7, Broken,
-eighths. It shows the range and the nearest move before anything is tapped, the way 0218's sheet opens
+eighths. *(Amended by 0317: triplets.)* It shows the range and the nearest move before anything is tapped, the way 0218's sheet opens
 on a progression rather than empty.
 
 ## Alternatives considered

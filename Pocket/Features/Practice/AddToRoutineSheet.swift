@@ -72,6 +72,7 @@ struct AddToRoutineSheet: View {
     @State private var added: [String: UUID] = [:]
     @State private var creating = false
     @State private var draftName = ""
+    @State private var saveFailed = false
 
     private var choice: AddToRoutineChoice? {
         request.choices.first { $0.id == choiceID } ?? request.choices.first
@@ -137,6 +138,7 @@ struct AddToRoutineSheet: View {
                 Text("With “\(request.unitName)” as its first block.")
             }
         }
+        .saveFailedAlert(isPresented: $saveFailed, retry: commitNew)
         .presentationDetents([.large])
     }
 
@@ -213,7 +215,7 @@ struct AddToRoutineSheet: View {
         } else {
             append(to: routine)
         }
-        try? context.save()
+        context.saveOrLog()
     }
 
     private func append(to routine: Routine) {
@@ -230,7 +232,12 @@ struct AddToRoutineSheet: View {
         let routine = Routine(name: name)
         context.insert(routine)
         append(to: routine)
-        try? context.save()
+        commitNew()
+    }
+
+    /// The save after a new routine is made, which *Try again* repeats without making it twice (ADR 0318).
+    private func commitNew() {
+        guard context.saveOrLog() else { saveFailed = true; return }
         haptic(.medium)
     }
 }

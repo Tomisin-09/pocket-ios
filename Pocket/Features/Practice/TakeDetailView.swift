@@ -49,6 +49,8 @@ struct TakeDetailView: View {
     @State var confirmingTrim = false
     @State var isTrimming = false
     @State var trimFailure: String?
+    /// The trim's save failed (ADR 0318): the file is trimmed, and the take's length isn't kept yet.
+    @State var saveFailed = false
 
     var body: some View {
         ScrollView {
@@ -74,6 +76,9 @@ struct TakeDetailView: View {
         .renameTakeAlert($renaming, context: modelContext)
         .takeNoteSheet($editingNote, context: modelContext)
         .takeMomentSheet($editing, take: take, context: modelContext)
+        .saveFailedAlert(isPresented: $saveFailed) {
+            if modelContext.saveOrLog() { haptic(.light) } else { saveFailed = true }
+        }
         .alert("Couldn’t trim", isPresented: trimFailurePresented) {
             Button("OK", role: .cancel) { trimFailure = nil }
         } message: {

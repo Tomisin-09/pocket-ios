@@ -282,7 +282,7 @@ struct SongPlayAlongView: View {
     private func commitAndStart() {
         song.lastPracticedSpeed = SongPlayAlongModel.rate(forPercent: model.percent)
         song.lastPracticed = .now
-        try? modelContext.save()
+        modelContext.saveOrLog()
         runStartedAt = .now     // the practice log's clock (ADR 0117)
         model.start(percent: model.percent, loopWholeSong: AppSettings.routineSongLoop)
         haptic(.medium)

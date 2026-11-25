@@ -16,6 +16,7 @@ struct TakeNoteSheet: ViewModifier {
     let context: ModelContext
 
     @State private var draft = ""
+    @State private var saveFailed = false
 
     func body(content: Content) -> some View {
         content
@@ -49,18 +50,27 @@ struct TakeNoteSheet: ViewModifier {
                 Button("Cancel") { take = nil }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    // `setNote` trims and stores `nil` for an empty result, so a cleared editor
-                    // removes the note rather than leaving whitespace that renders as a blank block.
-                    ref.value.setNote(draft)
-                    try? context.save()
-                    haptic(.light)
-                    take = nil
-                }
+                Button("Save") { save(ref) }
             }
         }
+        .saveFailedAlert(isPresented: $saveFailed, retry: commit)
         // Seed from the take being edited, not from the last one edited.
         .onAppear { draft = ref.value.note ?? "" }
+    }
+
+    /// `setNote` trims and stores `nil` for an empty result, so a cleared editor removes the note rather
+    /// than leaving whitespace that renders as a blank block.
+    private func save(_ ref: StableRef<Recording>) {
+        ref.value.setNote(draft)
+        commit()
+    }
+
+    /// The save and what follows it, which *Try again* repeats without making the edit twice. A failed
+    /// save keeps the sheet open (ADR 0318).
+    private func commit() {
+        guard context.saveOrLog() else { saveFailed = true; return }
+        haptic(.light)
+        take = nil
     }
 }
 

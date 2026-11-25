@@ -77,7 +77,7 @@ enum PracticeLogWriter {
                               songSourceID: songSourceID,
                               unitLabel: label(unitLabel))
         context.insert(run)
-        try? context.save()
+        context.saveOrLog()
         return true
     }
 

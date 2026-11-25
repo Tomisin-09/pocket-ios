@@ -90,6 +90,7 @@ struct FreeformRunView: View {
         }
         // On an interruption, the take only: the held session stays, because the click plays on and
         // releasing would flip the category under it.
+        .reportsUnsavedTake(recorder)
         .endsTakeOnInterruption {
             recorder.finishIfRecording(owner: .exercise(exercise), context: modelContext)
         }
@@ -106,26 +107,9 @@ struct FreeformRunView: View {
                              done: BlockDone(title: routineContext?.finishTitle ?? "Done",
                                              accessibilityLabel: "Done with this block"),
                              onFinish: finish)
-        // The three callbacks are not optional decoration: `JournalSheet` defaults them to no-ops, so
-        // presenting it bare — as this screen did — gave a freeform block a journal whose Add, edit and
-        // swipe-delete all silently did nothing. The same write path every other host uses.
+        // The sheet writes and saves its own entries (ADR 0318), so presenting it bare is all a host does.
         .sheet(isPresented: $showingJournal) {
-            JournalSheet(owner: .exercise(exercise),
-                         onAdd: { text, kind in
-                             if JournalWriter.add(to: .exercise(exercise), text: text, kind: kind,
-                                                  into: modelContext) {
-                                 try? modelContext.save()
-                                 haptic(.light)
-                             }
-                         },
-                         onUpdate: { entry, text, kind in
-                             JournalWriter.update(entry, text: text, kind: kind)
-                             try? modelContext.save()
-                         },
-                         onDelete: { entry in
-                             JournalWriter.delete(entry, from: modelContext)
-                             try? modelContext.save(); haptic(.light)
-                         })
+            JournalSheet(owner: .exercise(exercise))
         }
         .sheet(isPresented: $showingDetail) {
             ExerciseDetailSheet(exercise: exercise)
@@ -275,7 +259,7 @@ struct FreeformRunView: View {
         metronome.stop()
         logCompletedRun()   // before advancing — advancing tears this screen down
         exercise.markPracticed()
-        try? modelContext.save()
+        modelContext.saveOrLog()
         if let routineContext {
             routineContext.onFinished()
         } else {
@@ -288,7 +272,7 @@ struct FreeformRunView: View {
     private func deleteTake(_ take: Recording) {
         try? RecordingStore.delete(fileName: take.fileName)
         modelContext.delete(take)
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 
     /// Log the block as a completed unit-run (ADR 0117). **Done is a genuine completion here**, not a

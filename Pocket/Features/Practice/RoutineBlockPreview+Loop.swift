@@ -234,6 +234,6 @@ struct LoopBlockPreview: View {
     /// Apply a model mutation and persist it — the preview's edits are live, not deferred.
     private func commit(_ change: () -> Void) {
         change()
-        try? modelContext.save()
+        modelContext.saveOrLog()
     }
 }

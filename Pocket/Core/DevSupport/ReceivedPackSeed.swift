@@ -95,7 +95,7 @@ enum ReceivedPackSeed {
         guard !songs.isEmpty || !routines.isEmpty else { return }
         routines.forEach(context.delete)
         songs.forEach(context.delete)
-        try? context.save()
+        context.saveOrLog()
     }
 }
 #endif

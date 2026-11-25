@@ -239,21 +239,7 @@ struct LoopEditSheet: View {
             // Authorable again from song loops (ADR 0088, reversing 0058's waveform read-only) —
             // the same `JournalWriter` path the Practice run screen uses, each entry snapshotting
             // the loop's mastery + command tempo at write time.
-            JournalSheet(owner: .loop(loop),
-                         onAdd: { text, kind in
-                             if JournalWriter.add(to: .loop(loop), text: text, kind: kind,
-                                                  into: modelContext) {
-                                 try? modelContext.save(); haptic(.light)
-                             }
-                         },
-                         onUpdate: { entry, text, kind in
-                             JournalWriter.update(entry, text: text, kind: kind)
-                             try? modelContext.save()
-                         },
-                         onDelete: { entry in
-                             JournalWriter.delete(entry, from: modelContext)
-                             try? modelContext.save(); haptic(.light)
-                         })
+            JournalSheet(owner: .loop(loop))
         }
         .sheet(isPresented: $showingEarTraining) {
             // Ears-only ear training on this loop (ADR 0104) — plays the loop's real audio and captures
