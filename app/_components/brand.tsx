@@ -4,9 +4,10 @@ import Link from 'next/link'
 // The pieces every Red Moon page shares: the nav, the footer, the store button and the phone frame.
 // One place, so a page can't drift from the others.
 
-// TODO (availability ON): the live App Store URL. Every store button on the site reads this one
-// constant, so switching it on is a one-line change.
-export const APP_STORE_URL = '#'
+// Red Moon's App Store page. Every store button on the site reads this one constant. The id is the
+// app's Apple ID, the same one its Rate Red Moon row opens (AboutSection.swift on main). The page
+// 404s until availability is switched on in App Store Connect, so merging this waits for that.
+export const APP_STORE_URL = 'https://apps.apple.com/app/red-moon-practice-studio/id6789618726'
 
 // Apple logo mark for the store button
 function AppleMark() {
