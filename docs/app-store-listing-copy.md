@@ -268,24 +268,34 @@ own custom-EULA field instead of the description — and then all three surfaces
 
 ## What's New in This Version — 1.6.1 (paste this)
 
-> The Practice log counts the time you played, not the time a screen was open. Active listening,
-> Improvise and a routine's song block now count only while the music plays, so a pause, a call or an
-> evening away is left out. The song player logs too: a loop you play for 30 seconds or more goes under
-> Loops, and the rest of your time with a song, making loops and playing it through, is Exploring,
-> listed by song.
+> Pick your moon. Settings ▸ Appearance ▸ Theme has eight: Blood Moon, Blue, Jade, Corn, Silver, Pink,
+> Harvest and Cold, each in light and dark, and Red Moon wears the one you pick, Settings and every
+> sheet included. The app icon can follow it, or keep the moon you like best. Blood Moon is free, and
+> the other seven come with the plan.
 >
 > Also new:
+> • Triads on three strings in the Arpeggios exercise: the key's chord, its seven chords or a
+>   progression, kept between two frets you choose or climbing the neck
+> • Play triads broken, a note at a time, or together, with rings where your fingers just were
+> • Practice as triads opens any of your progressions as a triads drill
+> • Diminished and augmented chords, in the chord picker and in your progressions
+> • The Toolkit is pink, so it no longer looks like the Metronome
+> • A loop that repeats to the end of the song keeps time with it to the last pass
+> • Long runs on the fretboard no longer make the screen stutter
+> • The Practice log counts the time you played, not the time a screen was open, and time in the
+>   song player now counts too
 > • New Triads runs open on triplets, three notes to a beat, so each chord starts on the beat
 > • A call, Siri or another app's audio pauses what was playing, or stops a loop, and nothing starts
 >   again until you press play. Headphones coming out does the same
-> • When something you've asked to keep can't be saved, Red Moon says so and lets you try again,
->   rather than looking saved and being gone the next time you open it
+> • When something you've asked to keep can't be saved, Red Moon says so and lets you try again
 
-*Drafted 2026-11-26 for 1.6.1 (15), not yet pasted. Each line is a `[1.6.1]` CHANGELOG entry: the
-opening is the 755-minute fix and its kin (ADRs 0321, 0322, 0324); then triplets (ADR 0317), a call
-(ADR 0323) and a save that fails (ADR 0318). Left out: the price lines (ADRs 0319, 0320), because like
-1.6's it names no price, and the My tabs row fix, as too small. **The call line holds only once ADR
-0323's device pass with a real call is done** on the TestFlight build: check it before pasting.*
+*1.6's What's New, whole, with 1.6.1's changes added as its last four bullets (Tomisin, 2026-11-26).
+1.6 was approved and never released, so nobody has read its notes, and little changed after it. The
+four are `[1.6.1]` CHANGELOG entries: the Practice log counting the time you played (ADRs 0321, 0322,
+0324), triplets (ADR 0317), a call (ADR 0323) and a save that fails (ADR 0318). Left out: the price
+lines (ADRs 0319, 0320), because it names no price, and the My tabs row fix, as too small. The call
+line rests on ADR 0323's device pass, which Tomisin did with a real call on 2026-11-26. An earlier
+draft, which led with the Practice log and dropped 1.6's text, was replaced before it was pasted.*
 
 ## What's New in This Version — 1.6 — history, do not paste
 
