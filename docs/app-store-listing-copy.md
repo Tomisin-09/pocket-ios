@@ -13,7 +13,7 @@
 > paste the description's *One plan* block into **1.6.1's** record.
 >
 > **Current, so paste from these:** Name, Subtitle, Promotional text, Keywords, Description (with
-> its *One plan* block and the EULA line), *What's New — 1.6*, Price / availability, App Review
+> its *One plan* block and the EULA line), *What's New — 1.6.1*, Price / availability, App Review
 > notes, *Screenshots — 1.6*, and the **1.4 pre-submission checklist**. Every other *What's New*
 > draft, screenshot set and checklist below is history. Don't paste from it.
 >
@@ -266,7 +266,28 @@ Apple's standard terms. Only if that ever changes does the link move into ASC's
 own custom-EULA field instead of the description — and then all three surfaces
 (description, paywall, Settings) must point at the custom one, not Apple's.
 
-## What's New in This Version — 1.6 (paste this)
+## What's New in This Version — 1.6.1 (paste this)
+
+> The Practice log counts the time you played, not the time a screen was open. Active listening,
+> Improvise and a routine's song block now count only while the music plays, so a pause, a call or an
+> evening away is left out. The song player logs too: a loop you play for 30 seconds or more goes under
+> Loops, and the rest of your time with a song, making loops and playing it through, is Exploring,
+> listed by song.
+>
+> Also new:
+> • New Triads runs open on triplets, three notes to a beat, so each chord starts on the beat
+> • A call, Siri or another app's audio pauses what was playing, or stops a loop, and nothing starts
+>   again until you press play. Headphones coming out does the same
+> • When something you've asked to keep can't be saved, Red Moon says so and lets you try again,
+>   rather than looking saved and being gone the next time you open it
+
+*Drafted 2026-11-26 for 1.6.1 (15), not yet pasted. Each line is a `[1.6.1]` CHANGELOG entry: the
+opening is the 755-minute fix and its kin (ADRs 0321, 0322, 0324); then triplets (ADR 0317), a call
+(ADR 0323) and a save that fails (ADR 0318). Left out: the price lines (ADRs 0319, 0320), because like
+1.6's it names no price, and the My tabs row fix, as too small. **The call line holds only once ADR
+0323's device pass with a real call is done** on the TestFlight build: check it before pasting.*
+
+## What's New in This Version — 1.6 — history, do not paste
 
 > Pick your moon. Settings ▸ Appearance ▸ Theme has eight: Blood Moon, Blue, Jade, Corn, Silver, Pink,
 > Harvest and Cold, each in light and dark, and Red Moon wears the one you pick, Settings and every
