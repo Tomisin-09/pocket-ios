@@ -46,6 +46,9 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   saved keep the rhythm they were saved with, and Rhythm under Advanced still changes it.
 
 ### Fixed
+- **A tab you've just written opens when you tap it in My tabs.** Its row was keyed on an id SwiftData
+  changes when it first saves a new tab, so a tap landing as that save happened could do nothing. Rows
+  now use the tab's own id, which never changes.
 - **Active listening and Improvise no longer log time you weren't listening** (ADR 0321). They logged
   how long their screen was open, and leaving Red Moon doesn't close a screen: a loop stopped in the
   evening, with the app left in the background, logged 755 minutes when it was opened again the next

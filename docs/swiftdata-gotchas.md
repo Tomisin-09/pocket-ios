@@ -60,6 +60,12 @@ tuition.
       `SongDetailsSheet`'s nested Edit sheet both do this.)
       → [ADR 0090](decisions/0090-present-model-sheets-by-stable-uid.md),
       memory `swiftdata-sheet-item-persistentid-dismiss`
+- [ ] **The same flip moves a `ForEach` row keyed on the model's own `id`.**
+      `ForEach(models)` keys each row on `persistentModelID`, so a row for a model
+      made this visit is replaced when autosave first saves it, and a tap landing
+      then does nothing. Key on the stable `uid`: `ForEach(models, id: \.uid)`.
+      Found as a CI flake in My tabs (`MyTabsUITests`, 2026-11-20): the tap on a
+      tab just written opened nothing, on a list at rest.
 
 ## When two contexts write rows that point at the same model
 
