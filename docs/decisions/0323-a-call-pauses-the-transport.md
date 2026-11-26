@@ -2,7 +2,8 @@
 
 - **Status:** Accepted. Built on `pocket-488-calls-play-along-and-flakes` (PR #478, 2026-11-26)
   and driven on the simulator through a stand-in for a call (D6). Tomisin chose D2 the same day.
-  The device pass, with a real call, is owed.
+  **The device pass is done**: Tomisin made a real call on the phone on 2026-11-26, and it worked as
+  expected, which covers D3's half that the simulator couldn't.
 - **Date:** 2026-11-26
 - **Amends:** ADR 0321 — **D3** stopped the loop modes' count at an interruption with a flag on the
   player, and left *"the ■ over silence"* as a transport question. This answers it: the loop stops, so
@@ -115,7 +116,7 @@ the device's.
   over silence.
 - **The manual's line about the ramp sheet is true now**, for a call and for headphones.
 - **The device pass needs a real call**: on the song player, Active listening, the Metronome and the
-  play-along. Pass if each shows ▶ or Resume, and plays again when pressed.
+  play-along. Pass if each shows ▶ or Resume, and plays again when pressed. Passed on 2026-11-26.
 
 ## What stays out
 
