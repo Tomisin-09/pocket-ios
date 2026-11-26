@@ -68,10 +68,12 @@ final class MetronomePracticeLogTests: XCTestCase {
     // MARK: - The floor
 
     /// Thirty seconds for the metronome, one for everything else: the floor is keyed by kind, so a
-    /// short exercise run is not dropped by a rule written for a tempo check.
+    /// short exercise run is not dropped by a rule written for a tempo check. The song player's two
+    /// kinds keep a floor of their own, for the same reason (ADR 0322, `SongPlayerPracticeLogTests`).
     func testTheFloorIsThirtySecondsForTheMetronomeOnly() {
         XCTAssertEqual(PracticeLogWriter.minimumSeconds(for: .metronome), 30)
-        for kind in PracticeRunKind.allCases where kind != .metronome {
+        let ownFloor: Set<PracticeRunKind> = [.metronome, .songPlayerLoop, .exploring]
+        for kind in PracticeRunKind.allCases where !ownFloor.contains(kind) {
             XCTAssertEqual(PracticeLogWriter.minimumSeconds(for: kind), PracticeLogWriter.minimumSeconds,
                            "\(kind) picked up the metronome's floor")
         }

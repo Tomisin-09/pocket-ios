@@ -201,6 +201,18 @@ what you can do to all of them together — including a bulk edit sheet carrying
 Deleting from here goes through the same undo toast as anywhere else — the loops are only really
 gone once it has passed.
 
+## What the practice log counts
+
+The [practice log](journal-and-practice-log.md) keeps the time the song player plays, not the time it
+is open: a paused song, or the screen left open with nothing playing, adds nothing.
+
+- **A loop you play** for 30 seconds or more on a visit, in one go or coming back to it, is time on
+  that loop, under **Loops** with the time you give it anywhere else.
+- **Everything else is Exploring**: playing the song, setting A and B, adjusting a loop's range, and a
+  loop you only heard for a few seconds after saving it. It is listed by song, and counts like any
+  other practice, so a day spent making loops is a day practised. Under 30 seconds of it on a visit,
+  such as a quick listen to check a song, isn't logged.
+
 ## Landscape
 
 Turn the phone and the waveform takes the full width, with the loops and markers moving into a

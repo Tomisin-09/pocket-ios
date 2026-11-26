@@ -117,8 +117,17 @@ final class WaveformPracticeModel {
             case .restoreSongTempo: speed = song.resumeSpeed         // loop → full song: restore it
             case .none: break
             }
+            syncPlayedTime()        // a different loop, or none, is now what sounds (ADR 0322)
         }
     }
+
+    /// What the practice log will be told this visit sounded, and as what (ADR 0322). Brought up to
+    /// date after every change that could move it, taken once as the screen closes: `+PracticeLog`.
+    @ObservationIgnored var playedTime = SongPlayerTime()
+    /// An interruption stopped the engine under a transport that still reads as playing (the rule
+    /// ADR 0321 D3 set for the loop modes). Cleared when the transport next moves.
+    @ObservationIgnored var silencedByInterruption = false
+    @ObservationIgnored var interruptionObserver: NSObjectProtocol?
     // Edit-sheet targets are held as `uid`-keyed `StableRef`s, not the raw @Model, so a SwiftData
     // autosave promoting a freshly-created loop/marker's temporary `persistentModelID` doesn't read as
     // an identity change and dismiss the open sheet mid-edit (see `StableModelRef`).
@@ -226,7 +235,11 @@ final class WaveformPracticeModel {
     /// playing along; `abEditingLoop` holds a *saved* loop lifted in for a range edit (Save
     /// writes back). Transient (ADR 0029); behaviour in `+ABSpan.swift`.
     var abSpan: ABSpan = .idle {
-        didSet { if abSpan != oldValue { walkthroughSpanDidChange(from: oldValue) } }
+        didSet {
+            guard abSpan != oldValue else { return }
+            walkthroughSpanDidChange(from: oldValue)
+            syncPlayedTime()        // a span open is making or changing a loop: Exploring (ADR 0322)
+        }
     }
     var abEditingLoop: Loop?
 

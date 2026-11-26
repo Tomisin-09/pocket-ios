@@ -7,7 +7,9 @@ import Foundation
 /// **By what was played, not by where in the app.** The log holds practice runs and nothing else; it
 /// has never seen the song library or the tuner, and it is not going to start timing screens (ADR 0241
 /// D3). Time with the metronome is here because it is practice, logged as a run of its own kind by
-/// the screen that plays it (ADR 0242) — not because the screen was open. Every row already says its
+/// the screen that plays it (ADR 0242) — not because the screen was open. The song player's time is
+/// here on the same terms (ADR 0322): the time its audio sounded. A loop played there is listed with
+/// the loop (`listedAs`), and the rest is *Exploring*, on the song. Every row already says its
 /// kind and which unit it was, so this is a grouping over data the app writes anyway.
 ///
 /// **Ranked by minutes and nothing else (ADR 0070).** The largest group leads because it is the
@@ -79,12 +81,14 @@ enum PracticeBreakdown {
         var buckets: [PracticeRunKind: [String: Bucket]] = [:]
         for record in records.sorted(by: { $0.startedAt < $1.startedAt }) {
             let key = itemKey(record)
-            var bucket = buckets[record.kind]?[key] ?? Bucket()
+            // A loop played on the song player is a loop's time (ADR 0322), so it joins the trainer's.
+            let kind = record.kind.listedAs
+            var bucket = buckets[kind]?[key] ?? Bucket()
             bucket.seconds += record.durationSeconds
             // Oldest first, so the **latest** row's copies win: a loop renamed and then deleted is
             // remembered by the last name it was played under.
             bucket.latest = record
-            buckets[record.kind, default: [:]][key] = bucket
+            buckets[kind, default: [:]][key] = bucket
         }
 
         let order = PracticeRunKind.allCases
@@ -128,9 +132,9 @@ enum PracticeBreakdown {
     /// one row, because the log cannot tell them apart.
     private static func itemKey(_ record: SessionRecord) -> String {
         switch record.kind {
-        case .song:
+        case .song, .exploring:
             return record.songSourceID.map { "song:\($0)" } ?? "song:unrecorded"
-        case .exercise, .loop, .earLoop, .improvise:
+        case .exercise, .loop, .earLoop, .improvise, .songPlayerLoop:
             return record.unitUID.map { "unit:\($0.uuidString)" } ?? "unit:none"
         case .metronome:
             return "metronome"
@@ -149,7 +153,7 @@ enum PracticeBreakdown {
             }
             return deleted(label: record.unitLabel, placeholder: "A deleted exercise", song: nil)
 
-        case .loop, .earLoop, .improvise:
+        case .loop, .earLoop, .improvise, .songPlayerLoop:
             if let uid = record.unitUID, let live = names.loops[uid] {
                 let song = (live.songSourceID ?? record.songSourceID).flatMap { names.songs[$0] }
                 return Described(name: live.name.isEmpty ? "Untitled loop" : live.name,
@@ -158,7 +162,7 @@ enum PracticeBreakdown {
             return deleted(label: record.unitLabel, placeholder: "A deleted loop",
                            song: record.songSourceID.flatMap { names.songs[$0] })
 
-        case .song:
+        case .song, .exploring:
             guard let sourceID = record.songSourceID else {
                 return Described(name: "Song not recorded", detail: nil, isUnnamed: true)
             }
@@ -258,10 +262,13 @@ extension PracticeBreakdown {
             let home = songHome(record, names: names)
             var bucket = homes[home] ?? HomeBucket()
             bucket.seconds += record.durationSeconds
-            // A play-along's label is its song's title; a loop's is the loop's name. Only the first
-            // can name a song that has since been deleted. Oldest first, so the latest wins.
-            if record.kind == .song, let label = record.unitLabel { bucket.songLabel = label }
-            let key = home.opensOntoUnits ? itemKey(record) : "kind:\(record.kind.rawValue)"
+            // A play-along's label is its song's title, and so is Exploring's; a loop's is the loop's
+            // name. Only a song's can name a song that has since been deleted. Oldest first, so the
+            // latest wins.
+            if record.kind == .song || record.kind == .exploring, let label = record.unitLabel {
+                bucket.songLabel = label
+            }
+            let key = home.opensOntoUnits ? itemKey(record) : "kind:\(record.kind.listedAs.rawValue)"
             var inner = bucket.items[key] ?? Bucket()
             inner.seconds += record.durationSeconds
             inner.latest = record
@@ -273,7 +280,7 @@ extension PracticeBreakdown {
         return homes.map { home, bucket -> Row in
             let items = bucket.items.compactMap { key, inner -> (item: Item, rank: Int)? in
                 guard let record = inner.latest else { return nil }
-                let rank = order.firstIndex(of: record.kind) ?? 0
+                let rank = order.firstIndex(of: record.kind.listedAs) ?? 0
                 guard home.opensOntoUnits else {
                     return (Item(id: key, name: record.kind.groupLabel, detail: nil,
                                  seconds: inner.seconds, isUnnamed: false), rank)
@@ -324,9 +331,9 @@ extension PracticeBreakdown {
 
     private static func songHome(_ record: SessionRecord, names: Names) -> SongHome {
         switch record.kind {
-        case .song:
+        case .song, .exploring:
             return record.songSourceID.map(SongHome.song) ?? .unrecordedSong
-        case .loop, .earLoop, .improvise:
+        case .loop, .earLoop, .improvise, .songPlayerLoop:
             let live = record.unitUID.flatMap { names.loops[$0] }
             return (live?.songSourceID ?? record.songSourceID).map(SongHome.song) ?? .unrecordedSong
         case .exercise:

@@ -4,6 +4,10 @@
   checked on the simulator and on a device. Still owed: the Practice log figures in the reshoot
   (Consequences).
 - **Date:** 2026-10-02
+- **Amended by:** ADR 0322 (2026-11-26) — **D3**: the song player now writes rows, for the time its
+  audio sounded: a loop played there is listed under **Loops** with the trainer's runs, and the rest
+  is a new kind, **Exploring**, on the song. D3's refusal to time parts of the app stands: these are
+  runs of what was played, not a screen being open, and the library's list and the tuner stay out.
 - **Amended by:** ADR 0295 (2026-11-13) — **D3**: *What you played* gains a second grouping, by
   song, behind a switch under its header; a song opens onto the kinds of work its time went on. The
   grouping by kind is unchanged and is what the list opens on, and D3's refusal to time parts of the

@@ -10,7 +10,13 @@ import Observation
 @Observable
 final class PracticeAudioEngine {
 
-    private(set) var isPlaying = false
+    private(set) var isPlaying = false {
+        didSet { if isPlaying != oldValue { onPlayingChange?() } }
+    }
+    /// Fired as soon as `isPlaying` flips, from whatever flipped it: a button, the lock screen, the file
+    /// ending. Synchronous, so the song player's practice-log count (ADR 0322) stops when the audio does,
+    /// even in the background, where a view's `onChange` may wait for the app to come back.
+    var onPlayingChange: (() -> Void)?
     private(set) var currentTime: TimeInterval = 0
     private(set) var duration: TimeInterval = 0
     /// How many times the active loop has wrapped since its buffer started (0-based) —
@@ -317,28 +323,6 @@ final class PracticeAudioEngine {
             currentTime = min(duration, Double(seekFrame) / sampleRate + played)
         }
         onTick?(currentTime)
-    }
-
-    /// Pull a rendered position back to what the ear is hearing, through the stretcher's
-    /// rate-dependent latency (ADR 0140 §3). `currentTime` is published in *heard* time, which is why
-    /// the metronome needs no offset of its own: `MetronomeSchedule` measures each beat from this
-    /// value, so the click and the visual playhead are corrected by the same single subtraction.
-    func heard(_ rendered: TimeInterval) -> TimeInterval {
-        guard compensatesStretcherLatency else { return max(0, rendered) }
-        return AudioMath.heardPlayhead(rendered: rendered, latency: stretcher.latency,
-                                       rate: stretcher.rate)
-    }
-
-    /// Release always compensates — ADR 0140 closes off exposing the stretcher to the player. The
-    /// DEBUG toggle exists only to A/B the correction by ear against the uncorrected build, which is
-    /// a far easier judgment than deciding in the absolute whether a click is 93 ms early. Read live
-    /// rather than cached so flipping it in Settings takes effect on the next frame.
-    private var compensatesStretcherLatency: Bool {
-        #if DEBUG
-        return AppSettings.compensateStretchLatency
-        #else
-        return true
-        #endif
     }
 
     func startEngineIfNeeded() {

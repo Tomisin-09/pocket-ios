@@ -451,7 +451,10 @@ It lists what you *played*, not where you were in the app: time spent browsing t
 tuning isn't practice, so it isn't here. Time with the [metronome](metronome.md#starting-and-stopping)
 is — the time the click sounded, once it has sounded for 30 seconds. Active listening and improvising
 count the same way: the time the loop played, not the time the screen was open, so a loop you stopped
-before leaving Red Moon stops counting when you stop it. An exercise or loop you have
+before leaving Red Moon stops counting when you stop it. So does the
+[song player](looping.md#what-the-practice-log-counts): a loop you play there for 30 seconds or more
+is listed under **Loops** with that loop's other time, and the rest of what plays there, making loops
+and playing the song, is **Exploring**, listed by song. An exercise or loop you have
 deleted keeps its minutes and is marked *Deleted*. Play-alongs from before Red Moon
 started noting which song they were are listed together as *Song not recorded*.
 

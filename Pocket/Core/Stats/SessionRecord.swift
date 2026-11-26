@@ -26,6 +26,20 @@ enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
     /// screen only, never by the engine it shares with the exercise screens (which log `.exercise`)
     /// and the previews (which are not practice).
     case metronome
+    /// A saved loop played on the **song player** (ADR 0322): armed and cycling, with no A/B span
+    /// open, for at least `SongPlayerTime.floorSeconds` on one visit. The same material as `.loop`,
+    /// and listed with it in *What you played* (`listedAs`), so a loop's time is one row wherever it
+    /// was played. **Its own kind** because it is not a trainer run: Home's *Jump back in* reopens a
+    /// loop in the mode its newest run names, and this one has none to name (the song player is
+    /// reopened through the song, which it stamps on arrival). And a goal counts a loop in the mode
+    /// it would run it in (ADR 0298 D2), which this isn't. **No tempo**: the speed moves under you,
+    /// by hand or by the ramp, so no one number is the speed it was played at.
+    case songPlayerLoop
+    /// Everything else the **song player** sounded on a visit (ADR 0322): the song playing through,
+    /// an A/B span being set or adjusted, a loop heard too briefly to be its own run. Not practice in
+    /// the trainer's sense, but time on the song, and counted as such: minutes, a practised day, a row
+    /// in *What you played*. **Its song and no unit**, so it moves no loop's recency in the planner.
+    case exploring
     /// A row written by a newer build than the one reading it. Counts towards time totals; claims
     /// nothing about what it was.
     case other
@@ -47,6 +61,8 @@ enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
         case .improvise: "Improvising"
         case .song: "Song"
         case .metronome: "Metronome"
+        case .songPlayerLoop: "Loop"
+        case .exploring: "Exploring"
         case .other: "Practice"
         }
     }
@@ -63,9 +79,16 @@ enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
         case .improvise: "Improvising"
         case .song: "Play-alongs"
         case .metronome: "Metronome"
+        case .songPlayerLoop: "Loops"
+        case .exploring: "Exploring"
         case .other: "Other practice"
         }
     }
+
+    /// The kind a run is listed under in *What you played*: itself, except a loop played on the song
+    /// player, which is a loop's time as the trainer's is (ADR 0322). Only the listing folds them;
+    /// everything that needs to know where a run was played still reads `self`.
+    var listedAs: PracticeRunKind { self == .songPlayerLoop ? .loop : self }
 
     /// The loop mode a run of this kind was practised in, or `nil` for a kind that isn't a loop mode.
     /// Read by the take-mode backfill (ADR 0265 D4) and Home's Jump back in (ADR 0267).
@@ -75,7 +98,8 @@ enum PracticeRunKind: String, Codable, CaseIterable, Equatable, Sendable {
         case .loop: .trainer
         case .earLoop: .ear
         case .improvise: .improvise
-        case .exercise, .song, .metronome, .other: nil
+        // A loop on the song player was not played in a loop mode: the song player reopens it.
+        case .exercise, .song, .metronome, .songPlayerLoop, .exploring, .other: nil
         }
     }
 

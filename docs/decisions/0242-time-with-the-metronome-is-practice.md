@@ -2,6 +2,9 @@
 
 - **Status:** Accepted. Built on `pocket-354-metronome-counts-as-practice` (2026-10-02).
 - **Date:** 2026-10-02
+- **Amended by:** ADR 0322 (2026-11-26) — *What stays out*: the song library is no longer untimed.
+  The song player logs the time its audio sounded, by D2's rule here applied to the song, with D4's
+  30-second floor and D6's reason for no tempo. The tuner and the library's list of songs stay out.
 - **Amends:** ADR 0241 — its *What stays out* left metronome-only time **"not decided here"**, for
   want of an honest length. Decided: it counts (D1), and its length is the time the click sounded
   (D2). *What you played* gains a sixth kind, **Metronome** (D7). 0241's refusal to time parts of the
@@ -139,7 +142,9 @@ on a path almost nobody takes. ADR 0181's rule stands: an additive change does n
 - **A sitting ended by closing the app from the app switcher.** No seam runs, so it is not logged.
   iOS *may* announce termination to an app playing in the background, and the screen could listen for
   that; it does not promise to, so it is not built here.
-- **The tuner and the song library.** Still not practice, and still not timed (0241's D3).
+- **The tuner and the song library.** Still not practice, and still not timed (0241's D3). *(The song
+  player is timed since ADR 0322, for the time its audio sounded. The tuner and the library's list are
+  not.)*
 - **Backfill.** Never recorded, so there is nothing to recover.
 
 ## Consequences
