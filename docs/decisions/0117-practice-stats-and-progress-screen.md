@@ -1,5 +1,11 @@
 # 0117 — Practice stats & the Progress screen: measure effort, never performance; streaks are opt-in
 
+> **Amended by ADR 0321 (2026-11-26).** Standalone **Active listening** and **Improvise** are logged,
+> and have been since #259 (2026-08-18), which no ADR recorded. *Two surfaces stay unlogged* below no
+> longer describes them. Their length, standalone and as a routine block, is the **time the loop
+> sounded**, not the time the screen was open: that was what #259 logged, and it ran up 755 minutes
+> overnight on a stopped loop. The objection in that paragraph stands, and is the reason for the length.
+
 > **Amended by ADR 0266 (2026-10-21).** A **looping** song play-along in a routine is no longer
 > unlogged: its **Done** ends it and writes a `.song` row, timed from **Play along**. The rule behind the
 > *Two surfaces stay unlogged* paragraph, that the screen being open is not an honest length, still stands.

@@ -336,9 +336,7 @@ final class RecordingController {
     ///
     /// The pure half of `endsTakeOnInterruption`, split out so it can be tested without a microphone.
     nonisolated static func endsTake(onInterruption userInfo: [AnyHashable: Any]?) -> Bool {
-        guard let raw = userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
-              let type = AVAudioSession.InterruptionType(rawValue: raw) else { return false }
-        return type == .began
+        AudioInterruption.began(userInfo)
     }
 
     // MARK: - Start-less surfaces (ADR 0069 amendment, 2026-08-05)

@@ -40,6 +40,13 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   saved keep the rhythm they were saved with, and Rhythm under Advanced still changes it.
 
 ### Fixed
+- **Active listening and Improvise no longer log time you weren't listening** (ADR 0321). They logged
+  how long their screen was open, and leaving Red Moon doesn't close a screen: a loop stopped in the
+  evening, with the app left in the background, logged 755 minutes when it was opened again the next
+  morning. They now log the time the loop played, as the Metronome logs the time the click sounded.
+  Stopping the loop stops the count, so do a call or another app's audio, and a visit that never
+  played the loop logs nothing. A loop playing with the phone locked still counts. The same goes for
+  their blocks in a routine. Runs already in the log are unchanged.
 - **A save that fails now says so** (ADR 0318). Every save in the app threw its error away, so a change
   that failed to save looked kept and was gone after the next launch. Where you've just asked for
   something to be kept (Save or Done on a note, a goal, a skill, Edit shape, the routine editor, a

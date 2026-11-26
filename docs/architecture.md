@@ -653,6 +653,17 @@ not the Hear synth (ADR 0097). **Slice 2** makes it a **routine block**: a loop 
 routine chrome + a manual **Done**, no completion screen — nothing to grade), authored from a peer **Ear
 training** bucket in `AddRoutineUnitSheet`. Same `Loop` unit, no new schema — just a mode.
 
+**What Active listening and Improvise log** (ADR 0321): the time the loop **sounded**. The player keeps the
+count, the screen writes the row. `ContinuousLoopPlayer` holds a pure `SoundedTime` (a `PlayClock` plus
+when audio first sounded) and calls `syncSoundedTime()` after every change to what it plays: the loop
+starting or stopping, on screen or from the lock screen, a Name-the-notes slice, and an interruption,
+which `RampLessRunLog` passes in because nothing restarts the engine after one and the transport goes on
+reading as playing. The host takes the run with `takeSoundedRun()`, either when a standalone screen closes or on a
+routine block's Done or planned length, and hands its start and sounded length to `PracticeLogWriter`.
+It is in the player because a stop from the lock screen happens in the background, where a view's
+`onChange` may not run until the app comes back. The write is on the screen because the same player
+plays *Watch it on the neck*, which is not practice.
+
 **Count the notes** (ADR 0225) is a fourth section of the same `EarTrainingView` core: tap once for
 each note you hear, then name them. The pieces, from the audio up:
 
