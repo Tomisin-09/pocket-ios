@@ -15,6 +15,10 @@
 - **Amended by:** ADR 0271 (2026-10-22) — **L3**: the readout sits in a bar with a background, which
   it shares with the block's Done, so it no longer draws over what scrolls under it, and it is set
   larger and semibold. Its register stands, and it stays on screen while the keyboard is up.
+- **Amended by:** ADR 0321 (2026-11-26) — **L7**: standalone Active listening and Improvise are
+  logged, for the time the loop sounded. Its reason stands as a rule about the length, not about
+  whether to log: the screen being open is not one. An ear or improvise block logs that same length on
+  Done. The planned length and its countdown here are unchanged.
 
 ## Context
 

@@ -22,9 +22,6 @@ struct ImproviseLoopRunView: View {
     var routineContext: RoutineRunContext?
     @Environment(\.modelContext) private var modelContext
     @State private var player: ContinuousLoopPlayer
-    /// When this block began (ADR 0117). An improvise block has no Start — the bed plays from
-    /// arrival — so the clock starts on appearance rather than on a transport action.
-    @State private var startedAt: Date?
     /// Takes are on **inside the routine** here (ADR 0069 amendment): an improvise block is
     /// open-ended by construction, so the take is its only record. Ramped blocks stay gated.
     @State private var recorder = RecordingController()
@@ -41,7 +38,7 @@ struct ImproviseLoopRunView: View {
             .navigationTitle(loop.name.isEmpty ? LoopRunMode.improvise.label : loop.name)
             .navigationBarTitleDisplayMode(.inline)
             .routineSessionChrome(routineContext)
-            .onAppear { if startedAt == nil { startedAt = .now }; armIfBlockRecords() }
+            .onAppear(perform: armIfBlockRecords)
             .rampLessBlockLength(plannedMinutes: routineContext?.plannedMinutes,
                                  cycleSeconds: { player.cycleSeconds(for: loop) },
                                  isPlaying: { player.isPlaying },
@@ -73,11 +70,14 @@ struct ImproviseLoopRunView: View {
     /// earns minutes and days without muddying the loop's tempo trajectory. **No tempo** is
     /// recorded — a jam isn't practised *at* a tempo you own, and the live percent is a comfort
     /// setting rather than an achievement.
+    ///
+    /// The length is the time the bed sounded in this block (ADR 0321), not the time since it
+    /// appeared: a routine left in the background and come back to had logged every hour it sat there.
     private func logCompletedRun() {
-        guard let startedAt else { return }
-        self.startedAt = nil
+        guard let run = player.takeSoundedRun() else { return }
         PracticeLogWriter.log(kind: .improvise,
-                              startedAt: startedAt,
+                              startedAt: run.start,
+                              endedAt: run.end,
                               unitUID: loop.uid,
                               routineUID: routineContext?.routineUID,
                               songSourceID: loop.song?.sourceID,

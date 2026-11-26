@@ -17,6 +17,9 @@
   question (outsource vs self-record 3–5 first-party tracks). This ADR answers it a different way for
   the first build: the player already owns backing tracks — they are sections of their own songs.
   First-party recorded content stays parked, not cancelled.
+- **Amended by:** ADR 0321 (2026-11-26) — the Slice 1 build note that the standalone `ImproviseSheet`
+  writes no practice-log row: it does, for the time the bed sounded, and an improvise block logs that
+  same length. Everything else here stands.
 
 ## Context
 

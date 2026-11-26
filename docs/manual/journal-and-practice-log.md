@@ -449,7 +449,9 @@ With **Haptics** on, in Settings ▸ **Sound & feel**, each tap also gives a lig
 
 It lists what you *played*, not where you were in the app: time spent browsing the song library or
 tuning isn't practice, so it isn't here. Time with the [metronome](metronome.md#starting-and-stopping)
-is — the time the click sounded, once it has sounded for 30 seconds. An exercise or loop you have
+is — the time the click sounded, once it has sounded for 30 seconds. Active listening and improvising
+count the same way: the time the loop played, not the time the screen was open, so a loop you stopped
+before leaving Red Moon stops counting when you stop it. An exercise or loop you have
 deleted keeps its minutes and is marked *Deleted*. Play-alongs from before Red Moon
 started noting which song they were are listed together as *Song not recorded*.
 

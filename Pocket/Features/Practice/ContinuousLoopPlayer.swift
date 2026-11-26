@@ -42,6 +42,15 @@ final class ContinuousLoopPlayer {
     /// Runs before a lock-screen stop silences the loop. A host that records sets it to its take finish,
     /// so the take is finalised before the bed stops, as the on-screen ■ does it (ADR 0304).
     @ObservationIgnored var onRemoteStop: (() -> Void)?
+    /// The practice log's clock (ADR 0321): how long audio has sounded on this visit — the loop, or a
+    /// slice of it for Name the notes — across every stop. Not the lock screen's `clock`, which a stop
+    /// resets; only `takeSoundedRun()` resets this one.
+    @ObservationIgnored private var sounded = SoundedTime()
+    /// An interruption (a call, another app's audio) has silenced the audio under the transport. The
+    /// transport still reads as playing, its ■ up, because nothing restarts the engine after an
+    /// interruption, so `isPlaying` alone would go on counting a loop nobody can hear. Cleared when the
+    /// audio is stopped or starts.
+    @ObservationIgnored private var silencedByInterruption = false
 
     /// - Parameter startPercent: where the adjuster opens, in integer percent-of-original. Defaults
     ///   to the loop's own command (`loop.ramp.command`) — the tempo the player owns the passage at,
@@ -115,6 +124,8 @@ final class ContinuousLoopPlayer {
             await model.loadIfNeeded()
             guard !Task.isCancelled, !model.loadFailed else { return }
             model.startAudition(percent: self.percent)
+            silencedByInterruption = false
+            syncSoundedTime()
             claimLockScreen()
         }
     }
@@ -152,6 +163,35 @@ final class ContinuousLoopPlayer {
         sliceTask = nil
         isSlicePlaying = false
         model.stop()
+        silencedByInterruption = false
+        syncSoundedTime()
+    }
+
+    // MARK: - Practice log (ADR 0321)
+
+    /// Whether audio is actually coming out: the loop or a slice, unless an interruption has cut it.
+    private var isSounding: Bool { (isPlaying || isSlicePlaying) && !silencedByInterruption }
+
+    /// Bring the practice-log clock up to what is sounding now. Called after every change to it, so the
+    /// clock follows this player's own state rather than each call site remembering to start or stop it.
+    private func syncSoundedTime() {
+        if isSounding {
+            sounded.began(at: .now, uptime: PlayClock.now)
+        } else {
+            sounded.ended(uptime: PlayClock.now)
+        }
+    }
+
+    /// What this visit logs: from when audio first sounded, for as long as it sounded, with every stop
+    /// left out — then start over. `nil` when nothing sounded. Read by the screen that logs the run
+    /// (`RampLessRunLog`, or a routine block's Done), never by this player, which doesn't know whether
+    /// it is practice: *Watch it on the neck* plays one too.
+    func takeSoundedRun() -> DateInterval? { sounded.take(uptime: PlayClock.now) }
+
+    /// An audio interruption has begun. The engine has stopped under the transport; stop counting it.
+    func audioWasInterrupted() {
+        silencedByInterruption = true
+        syncSoundedTime()
     }
 
     // MARK: - Lock screen (ADR 0303)
@@ -222,7 +262,12 @@ final class ContinuousLoopPlayer {
             guard !Task.isCancelled, !model.loadFailed, !model.isRunning else { return }
             isSlicePlaying = model.playSlice(from: first, to: last, percent: percent) { [weak self] in
                 self?.isSlicePlaying = false
+                self?.syncSoundedTime()
                 then?()
+            }
+            if isSlicePlaying {
+                silencedByInterruption = false
+                syncSoundedTime()
             }
         }
     }
@@ -236,5 +281,6 @@ final class ContinuousLoopPlayer {
         sliceTask = nil
         isSlicePlaying = false
         model.stopSlice()
+        syncSoundedTime()
     }
 }
