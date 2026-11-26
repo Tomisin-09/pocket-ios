@@ -684,6 +684,11 @@ runs before it wipes the session state: one `songPlayerLoop` row per loop played
 one `exploring` row on the song for the rest, a loop under 30 s included. Not in the engine, which the
 loop trainer and the play-along share and which log their own runs (ADR 0242 D3).
 
+**What a song block's play-along logs** (ADR 0324): the time the song sounded. `SongPlayAlongModel`
+keeps a `SoundedTime`, brought up to date from its own engine's `onPlayingChange`, so a pause on screen,
+from the lock screen or by a call (ADR 0323) stops it. `SongPlayAlongView` takes it with
+`takeSoundedRun()` on Done or at the song's end and writes the `.song` row; Skip and exit don't.
+
 **Count the notes** (ADR 0225) is a fourth section of the same `EarTrainingView` core: tap once for
 each note you hear, then name them. The pieces, from the audio up:
 

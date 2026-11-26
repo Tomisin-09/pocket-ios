@@ -46,6 +46,10 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
   saved keep the rhythm they were saved with, and Rhythm under Advanced still changes it.
 
 ### Fixed
+- **A song block's play-along logs the time the song played** (ADR 0324). It logged from **Play
+  along** to **Done**, so a routine paused on its song block and left until the next day logged the
+  whole time between. Pauses, a call and time away with nothing playing are now left out, as they are
+  for Active listening, Improvise and the song player. Runs already in the log are unchanged.
 - **A call pauses whatever was playing** (ADR 0323). A call, Siri, an alarm or another app's audio
   stopped Red Moon's sound but left the controls reading as playing: ■ stayed up on the song player,
   Active listening still offered *Stop the loop*, and the Metronome read **Pause** while its practice

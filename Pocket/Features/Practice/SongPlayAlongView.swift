@@ -23,10 +23,6 @@ struct SongPlayAlongView: View {
     /// Whether the routine count-in overlay is showing (routine mode only) — gates playback start.
     @State private var showCountIn = false
     @State private var wired = false
-    /// When the current play-through started, or `nil` when nothing is playing — the practice log's
-    /// clock (ADR 0117). Consumed by the natural-completion hook, so a play-along stopped by hand logs
-    /// nothing, exactly as a hand-stopped ramp does.
-    @State private var runStartedAt: Date?
 
     init(song: Song, routineContext: RoutineRunContext? = nil) {
         self.song = song
@@ -204,18 +200,21 @@ struct SongPlayAlongView: View {
     ///
     /// Two ways in: the song **playing through** with *Loop song blocks* off, and **Done** (ADR 0266).
     /// A looping play-along has no end of its own, so the player saying they're finished *is* its end,
-    /// as it is for an improvise block (ADR 0135 B3b). The length is from Play along to Done. Skip and
-    /// exit still log nothing.
+    /// as it is for an improvise block (ADR 0135 B3b). Skip and exit still log nothing.
+    ///
+    /// **The length is the time the song sounded** (ADR 0324), counted by the model: from when it first
+    /// played, with pauses, a call and the app left in the background with nothing playing all left out.
+    /// It was Play along to Done, so a routine paused on its song block overnight logged the night.
     ///
     /// `unitUID` is deliberately `nil`: `Song` is the one model with no business `uid` — it is
     /// identified by its `SongRef`. The song travels as `songSourceID` instead (ADR 0241), the same
     /// key the archive already uses for a song, so the Practice log can say which song was played
     /// without a `uid` being added to the store's aggregate root.
     private func logCompletedRun() {
-        guard let startedAt = runStartedAt else { return }
-        runStartedAt = nil
+        guard let run = model.takeSoundedRun() else { return }
         PracticeLogWriter.log(kind: .song,
-                              startedAt: startedAt,
+                              startedAt: run.start,
+                              endedAt: run.end,
                               unitUID: nil,
                               routineUID: routineContext?.routineUID,
                               songSourceID: song.sourceID,
@@ -283,7 +282,6 @@ struct SongPlayAlongView: View {
         song.lastPracticedSpeed = SongPlayAlongModel.rate(forPercent: model.percent)
         song.lastPracticed = .now
         modelContext.saveOrLog()
-        runStartedAt = .now     // the practice log's clock (ADR 0117)
         model.start(percent: model.percent, loopWholeSong: AppSettings.routineSongLoop)
         haptic(.medium)
     }
