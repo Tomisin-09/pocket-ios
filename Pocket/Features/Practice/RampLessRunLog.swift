@@ -1,4 +1,3 @@
-import AVFoundation
 import SwiftData
 import SwiftUI
 
@@ -27,8 +26,7 @@ import SwiftUI
 /// **No-op inside a routine — for the log.** There the routine player owns the completion seam — Done
 /// and the planned length log and advance, while **skip and exit deliberately log nothing** — so the
 /// block host takes the same sounded run itself and this modifier's write stands down. Passing the
-/// `RoutineRunContext` through the core is what states which of the two seams is in force. The
-/// interruption hook below runs in a routine too, because the block's run is counted by the same player.
+/// `RoutineRunContext` through the core is what states which of the two seams is in force.
 ///
 /// **No tempo is recorded**, matching both routine hosts: ear training isn't practised *at* a tempo,
 /// and a jam's live percent is a comfort setting rather than an achievement.
@@ -48,16 +46,9 @@ struct RampLessRunLog: ViewModifier {
     private var isStandalone: Bool { routineContext == nil }
 
     func body(content: Content) -> some View {
-        content
-            // A call or another app's audio stops the engine without telling the player, which goes on
-            // reading as playing. Hopped to main, as `TakeEndsOnInterruption` does: nothing promises the
-            // session posts there.
-            .onReceive(NotificationCenter.default
-                .publisher(for: AVAudioSession.interruptionNotification)
-                .receive(on: DispatchQueue.main)) { note in
-                if AudioInterruption.began(note.userInfo) { player.audioWasInterrupted() }
-            }
-            .onDisappear(perform: logSoundedRun)
+        // An interruption needs nothing here: the engine pauses itself and the player stops with it
+        // (ADR 0323), so the count stops because the audio did.
+        content.onDisappear(perform: logSoundedRun)
     }
 
     private func logSoundedRun() {

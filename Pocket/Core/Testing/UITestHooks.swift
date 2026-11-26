@@ -20,6 +20,13 @@ enum UITestHooks {
     /// `#fileID`, like `Pocket/QuickJournalSheet.swift`.
     static let failSaveInArgument = "-failSaveIn"
 
+    /// A **Darwin notification** a UI test posts to stand in for a call (ADR 0323): under `-uiTesting`,
+    /// in a Debug build, the app answers it by posting the `AVAudioSession` interruption the system
+    /// would, so a test can watch every transport pause. Nothing else can make an interruption on a
+    /// simulator. A Darwin name rather than a launch argument because the test picks the moment: after
+    /// it has pressed play.
+    static let interruptAudioNotification = "redmoon.uitest.interruptAudio"
+
     /// `-shotHour <0…23>`: the hour Home's greeting is computed from, for the manual's shoot.
     ///
     /// Home reads the wall clock, and the shoot fakes the status bar to 09:41 — two clocks that

@@ -46,11 +46,6 @@ final class ContinuousLoopPlayer {
     /// slice of it for Name the notes — across every stop. Not the lock screen's `clock`, which a stop
     /// resets; only `takeSoundedRun()` resets this one.
     @ObservationIgnored private var sounded = SoundedTime()
-    /// An interruption (a call, another app's audio) has silenced the audio under the transport. The
-    /// transport still reads as playing, its ■ up, because nothing restarts the engine after an
-    /// interruption, so `isPlaying` alone would go on counting a loop nobody can hear. Cleared when the
-    /// audio is stopped or starts.
-    @ObservationIgnored private var silencedByInterruption = false
 
     /// - Parameter startPercent: where the adjuster opens, in integer percent-of-original. Defaults
     ///   to the loop's own command (`loop.ramp.command`) — the tempo the player owns the passage at,
@@ -60,6 +55,7 @@ final class ContinuousLoopPlayer {
     init(loop: Loop, startPercent: Int? = nil) {
         model = LoopRunModel(loop: loop)
         percent = Self.clamp(startPercent ?? loop.ramp.command)
+        model.onInterrupted = { [weak self] in self?.wasInterrupted() }
     }
 
     /// A stretch of a song rather than one loop (ADR 0289): *Watch it on the neck* for a section, or the
@@ -69,6 +65,7 @@ final class ContinuousLoopPlayer {
         let duration = max(song.duration, 1)
         model = LoopRunModel(song: song, start: max(0, start / duration), end: min(1, end / duration))
         percent = 100
+        model.onInterrupted = { [weak self] in self?.wasInterrupted() }
     }
 
     private static func clamp(_ value: Int) -> Int { min(max(value, minPercent), maxPercent) }
@@ -124,7 +121,6 @@ final class ContinuousLoopPlayer {
             await model.loadIfNeeded()
             guard !Task.isCancelled, !model.loadFailed else { return }
             model.startAudition(percent: self.percent)
-            silencedByInterruption = false
             syncSoundedTime()
             claimLockScreen()
         }
@@ -163,14 +159,14 @@ final class ContinuousLoopPlayer {
         sliceTask = nil
         isSlicePlaying = false
         model.stop()
-        silencedByInterruption = false
         syncSoundedTime()
     }
 
     // MARK: - Practice log (ADR 0321)
 
-    /// Whether audio is actually coming out: the loop or a slice, unless an interruption has cut it.
-    private var isSounding: Bool { (isPlaying || isSlicePlaying) && !silencedByInterruption }
+    /// Whether audio is coming out: the loop or a slice. An interruption stops both (ADR 0323), so a
+    /// transport reading as playing is one that can be heard.
+    private var isSounding: Bool { isPlaying || isSlicePlaying }
 
     /// Bring the practice-log clock up to what is sounding now. Called after every change to it, so the
     /// clock follows this player's own state rather than each call site remembering to start or stop it.
@@ -188,10 +184,12 @@ final class ContinuousLoopPlayer {
     /// it is practice: *Watch it on the neck* plays one too.
     func takeSoundedRun() -> DateInterval? { sounded.take(uptime: PlayClock.now) }
 
-    /// An audio interruption has begun. The engine has stopped under the transport; stop counting it.
-    func audioWasInterrupted() {
-        silencedByInterruption = true
-        syncSoundedTime()
+    /// A call or another app's audio has stopped the engine (ADR 0323). The loop stops as the lock
+    /// screen's pause stops it: the host's take is finished first, the lock-screen claim is kept so its
+    /// play is still there to press, and ▶ comes back on screen. A slice is cut. Nothing resumes by itself.
+    private func wasInterrupted() {
+        stopSlice()
+        stopFromLockScreen()
     }
 
     // MARK: - Lock screen (ADR 0303)
@@ -265,10 +263,7 @@ final class ContinuousLoopPlayer {
                 self?.syncSoundedTime()
                 then?()
             }
-            if isSlicePlaying {
-                silencedByInterruption = false
-                syncSoundedTime()
-            }
+            if isSlicePlaying { syncSoundedTime() }
         }
     }
 

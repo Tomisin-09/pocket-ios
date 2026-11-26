@@ -1,4 +1,4 @@
-import AVFoundation
+import Foundation
 
 // MARK: - The practice log (ADR 0322)
 //
@@ -17,39 +17,19 @@ extension WaveformPracticeModel {
 
     /// What the practice log counts as sounding right now (the rule is `SongPlayerTime.sounding`).
     var soundingForLog: SongPlayerTime.Sounding? {
-        SongPlayerTime.sounding(isPlaying: engine.isPlaying, silenced: silencedByInterruption,
-                                armedLoop: activeLoopID, spanOpen: abSpan != .idle)
+        SongPlayerTime.sounding(isPlaying: engine.isPlaying, armedLoop: activeLoopID, spanOpen: abSpan != .idle)
     }
 
     /// Bring the count up to date. Called after every change that could move `soundingForLog`: the
-    /// transport, the armed loop, the A/B span, an interruption. A call that changes nothing is free.
+    /// transport, the armed loop, the A/B span. A call that changes nothing is free.
     func syncPlayedTime() {
         playedTime.update(soundingForLog, at: .now, uptime: PlayClock.now)
     }
 
-    /// Start counting, as the screen's playback session begins.
+    /// Start counting, as the screen's playback session begins. A call or another app's audio needs
+    /// nothing of its own: the engine pauses itself (ADR 0323), and the pause arrives here like any other.
     func beginCountingPlayedTime() {
-        engine.onPlayingChange = { [weak self] in
-            // The transport moved, so whatever it says now is what is heard (ADR 0321 D3).
-            self?.silencedByInterruption = false
-            self?.syncPlayedTime()
-        }
-        // A call or another app's audio stops the engine without telling it, and `isPlaying` stays
-        // true over the silence. On the main queue, as `KeyboardDismissAccessory` observes. A session
-        // begun twice keeps one observer.
-        if let interruptionObserver { NotificationCenter.default.removeObserver(interruptionObserver) }
-        interruptionObserver = NotificationCenter.default.addObserver(
-            forName: AVAudioSession.interruptionNotification, object: nil, queue: .main
-        ) { [weak self] note in
-            guard AudioInterruption.began(note.userInfo) else { return }
-            MainActor.assumeIsolated { self?.audioWasInterrupted() }
-        }
-        syncPlayedTime()
-    }
-
-    /// An interruption has begun: stop counting until the transport next moves.
-    func audioWasInterrupted() {
-        silencedByInterruption = true
+        engine.onPlayingChange = { [weak self] in self?.syncPlayedTime() }
         syncPlayedTime()
     }
 
@@ -59,8 +39,6 @@ extension WaveformPracticeModel {
     /// name it was played under.
     func logPlayedTime() {
         engine.onPlayingChange = nil
-        if let interruptionObserver { NotificationCenter.default.removeObserver(interruptionObserver) }
-        interruptionObserver = nil
         let runs = playedTime.take(uptime: PlayClock.now)
         guard !isPreview else { return }
         for run in runs.loops {

@@ -59,12 +59,34 @@ final class LoopRunModel {
     /// then — a *manual* `stop()` never invokes it. The routine player (ADR 0066, slice 3) hangs
     /// its auto-advance off this. `nil` for a standalone `LoopRunView`. Not persisted.
     var onFinished: (() -> Void)?
+    /// How the owner of an **audition or a slice** ends one an interruption has cut (ADR 0323):
+    /// `ContinuousLoopPlayer` stops it as its lock screen's pause does. With no hook, it stops. A ramp
+    /// run never reaches this; it pauses itself.
+    var onInterrupted: (() -> Void)?
 
-    init(loop: Loop) { region = .loop(loop) }
+    init(loop: Loop) {
+        region = .loop(loop)
+        engine.onInterrupted = { [weak self] in self?.wasInterrupted() }
+    }
 
     /// A stretch of `song`, from `start` to `end` as fractions of it, looped the way a loop's region is:
     /// *Watch it on the neck* for a section or the whole song (ADR 0289).
-    init(song: Song, start: Double, end: Double) { region = .span(song, start: start, end: end) }
+    init(song: Song, start: Double, end: Double) {
+        region = .span(song, start: start, end: end)
+        engine.onInterrupted = { [weak self] in self?.wasInterrupted() }
+    }
+
+    /// The engine has paused itself under an interruption (ADR 0323). A ramp run pauses with it and
+    /// holds its place, as the on-screen pause does, so Resume carries on up the same staircase.
+    private func wasInterrupted() {
+        if ramp != nil {
+            if transport == .playing { toggle() }
+        } else if let onInterrupted {
+            onInterrupted()
+        } else if transport == .playing {
+            stop()
+        }
+    }
 
     /// The song being played. Read through the region rather than kept, so a loop's is read when the audio
     /// loads, as it always was.

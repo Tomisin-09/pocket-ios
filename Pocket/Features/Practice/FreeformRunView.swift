@@ -209,19 +209,25 @@ struct FreeformRunView: View {
     /// This can stop the metronome **mid-take**, which no ordering can protect against — silencing
     /// the click while recording is the point of the control. `RecordingController`'s session lease
     /// is what keeps the take alive when the metronome releases its own.
+    ///
+    /// On means **sounding**. This screen never pauses the click itself, but a call does (ADR 0323), and
+    /// a paused click is silent, so it reads *Click off* and the tap brings it back.
     @ViewBuilder private var clickToggle: some View {
         if exercise.playsFreeformClick {
+            let isOn = metronome.transport == .playing
             Button {
                 haptic(.light)
-                if metronome.transport == .stopped { metronome.start() } else { metronome.stop() }
+                switch metronome.transport {
+                case .playing: metronome.stop()
+                case .paused: metronome.resume()
+                case .stopped: metronome.start()
+                }
             } label: {
-                Label(metronome.transport == .stopped ? "Click off" : "Click on",
-                      systemImage: metronome.transport == .stopped ? "speaker.slash" : "metronome")
+                Label(isOn ? "Click on" : "Click off", systemImage: isOn ? "metronome" : "speaker.slash")
                     .font(.futura(.footnote))
                     .foregroundStyle(PocketColor.textSecondary)
             }
-            .accessibilityLabel(metronome.transport == .stopped
-                                ? "Metronome off, turn it on" : "Metronome on, turn it off")
+            .accessibilityLabel(isOn ? "Metronome on, turn it off" : "Metronome off, turn it on")
         }
     }
 

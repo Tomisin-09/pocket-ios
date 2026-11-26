@@ -50,10 +50,10 @@ struct SongPlayerTime: Equatable {
 
     /// What the song player is sounding, from its state. A saved loop armed with no A/B span open is
     /// that loop being played. An open span is a loop being made or changed, and with no loop armed the
-    /// song is playing through: both Exploring. Nothing while the engine is quiet, or while an
-    /// interruption has silenced it under a transport that still reads as playing.
-    static func sounding(isPlaying: Bool, silenced: Bool, armedLoop: UUID?, spanOpen: Bool) -> Sounding? {
-        guard isPlaying, !silenced else { return nil }
+    /// song is playing through: both Exploring. Nothing while the engine is quiet, which includes an
+    /// interruption: the engine pauses itself under one (ADR 0323).
+    static func sounding(isPlaying: Bool, armedLoop: UUID?, spanOpen: Bool) -> Sounding? {
+        guard isPlaying else { return nil }
         if let armedLoop, !spanOpen { return .loop(armedLoop) }
         return .exploring
     }

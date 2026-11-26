@@ -20,19 +20,16 @@ final class SongPlayerTimeTests: XCTestCase {
 
     /// The rule the model reads its state through. A loop armed with no span open is that loop; an open
     /// span is a loop being made or changed, even with a loop armed (Adjust range lifts one into a span);
-    /// the song through is Exploring; and nothing is counted while quiet or interrupted.
+    /// the song through is Exploring; and nothing is counted while quiet. An interruption is quiet: the
+    /// engine pauses itself under one (ADR 0323, `PracticeAudioEngineInterruptionTests`).
     func testWhatSoundsIsTheArmedLoopUnlessASpanIsOpen() {
-        XCTAssertEqual(SongPlayerTime.sounding(isPlaying: true, silenced: false, armedLoop: verse, spanOpen: false),
-                       .loop(verse))
-        XCTAssertEqual(SongPlayerTime.sounding(isPlaying: true, silenced: false, armedLoop: verse, spanOpen: true),
+        XCTAssertEqual(SongPlayerTime.sounding(isPlaying: true, armedLoop: verse, spanOpen: false), .loop(verse))
+        XCTAssertEqual(SongPlayerTime.sounding(isPlaying: true, armedLoop: verse, spanOpen: true),
                        .exploring, "adjusting a loop's range is changing the loop, not playing it")
-        XCTAssertEqual(SongPlayerTime.sounding(isPlaying: true, silenced: false, armedLoop: nil, spanOpen: true),
-                       .exploring)
-        XCTAssertEqual(SongPlayerTime.sounding(isPlaying: true, silenced: false, armedLoop: nil, spanOpen: false),
+        XCTAssertEqual(SongPlayerTime.sounding(isPlaying: true, armedLoop: nil, spanOpen: true), .exploring)
+        XCTAssertEqual(SongPlayerTime.sounding(isPlaying: true, armedLoop: nil, spanOpen: false),
                        .exploring, "the song playing through")
-        XCTAssertNil(SongPlayerTime.sounding(isPlaying: false, silenced: false, armedLoop: verse, spanOpen: false))
-        XCTAssertNil(SongPlayerTime.sounding(isPlaying: true, silenced: true, armedLoop: verse, spanOpen: false),
-                     "an interruption silenced the engine under a transport still reading as playing")
+        XCTAssertNil(SongPlayerTime.sounding(isPlaying: false, armedLoop: verse, spanOpen: false))
     }
 
     // MARK: - A loop's run

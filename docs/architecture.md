@@ -244,8 +244,19 @@ the outgoing one tears down (they overlap, ADR 0129). The hub registers the remo
 while any claim is held and looks the owner up per command, so no closure keeps an engine alive. The
 artwork is **`DefaultArtwork`, the App Icon's own render** (`derive-brand-svgs.py --app-icon` copies
 it), since imported songs carry no embedded cover art. It stays Blood Moon's whatever the theme or the
-icon the player keeps (ADR 0312 D3, ADR 0314 D5). On the song screen,
-`WaveformPracticeView.onDisappear` → `model.endPlaybackSession()` lets go of the lock screen and
+icon the player keeps (ADR 0312 D3, ADR 0314 D5).
+
+**A call pauses the transport** (ADR 0323). A call, Siri, an alarm or another app's audio stops the
+non-mixing `.playback` session's audio without telling the engine, and so does the output going away
+(headphones out). `PracticeAudioEngine`, `StandaloneMetronomeEngine` and `RecordingPlayer` each hold an
+`AudioInterruptionObserver` and pause themselves; an owner with a transport of its own is told through
+`PracticeAudioEngine.onInterrupted` (`LoopRunModel` pauses a ramp run, `ContinuousLoopPlayer` stops as
+its lock-screen pause does, `SongPlayAlongModel` pauses). Nothing resumes by itself. The next start
+reasserts the session the system deactivated, and the Metronome's Resume restarts its engine. Under
+`-uiTesting` in Debug, `UITestInterruptionDrill` answers a Darwin notification from a UI test with the
+system's interruption, since a simulator can't ring.
+
+On the song screen, `WaveformPracticeView.onDisappear` → `model.endPlaybackSession()` lets go of the lock screen and
 calls `engine.stop()` (halt → deactivate the session), so
 audio stops on leaving the screen — while
 backgrounding mid-practice keeps playing under the existing `audio`
@@ -656,9 +667,8 @@ training** bucket in `AddRoutineUnitSheet`. Same `Loop` unit, no new schema — 
 **What Active listening and Improvise log** (ADR 0321): the time the loop **sounded**. The player keeps the
 count, the screen writes the row. `ContinuousLoopPlayer` holds a pure `SoundedTime` (a `PlayClock` plus
 when audio first sounded) and calls `syncSoundedTime()` after every change to what it plays: the loop
-starting or stopping, on screen or from the lock screen, a Name-the-notes slice, and an interruption,
-which `RampLessRunLog` passes in because nothing restarts the engine after one and the transport goes on
-reading as playing. The host takes the run with `takeSoundedRun()`, either when a standalone screen closes or on a
+starting or stopping, on screen or from the lock screen, and a Name-the-notes slice. An interruption
+stops the loop (ADR 0323), so it needs nothing of its own. The host takes the run with `takeSoundedRun()`, either when a standalone screen closes or on a
 routine block's Done or planned length, and hands its start and sounded length to `PracticeLogWriter`.
 It is in the player because a stop from the lock screen happens in the background, where a view's
 `onChange` may not run until the app comes back. The write is on the screen because the same player
@@ -669,7 +679,7 @@ saved loop armed with no A/B span open is that loop; anything else (the song thr
 or adjusted) is *Exploring*. `WaveformPracticeModel` tells a pure `SongPlayerTime` what is sounding after
 every change that could move it: `PracticeAudioEngine.onPlayingChange` (a hook only the song player
 sets, fired as `isPlaying` flips, so a lock-screen pause is counted at once), the armed loop's and the
-span's `didSet`, and an interruption observed on the main queue. `endPlaybackSession` takes the visit's
+span's `didSet`. An interruption reaches it as the engine's own pause (ADR 0323). `endPlaybackSession` takes the visit's
 runs before it wipes the session state: one `songPlayerLoop` row per loop played for 30 s or more, and
 one `exploring` row on the song for the rest, a loop under 30 s included. Not in the engine, which the
 loop trainer and the play-along share and which log their own runs (ADR 0242 D3).

@@ -57,6 +57,19 @@ final class RecordingPlayer {
     private let nowPlaying = NowPlayingController()
     /// What the lock screen calls the loaded take.
     private var label = NowPlayingLabel(title: "Take", subtitle: "")
+    /// A call or another app's audio pauses the take, so its row and its screen show play rather than
+    /// pause over silence (ADR 0323). The system has paused `AVAudioPlayer` already; this says so. The
+    /// output going away pauses it too, rather than carrying on out of the speaker (D4).
+    @ObservationIgnored private var interruptions: AudioInterruptionObserver?
+    /// The interruption deactivated the session, so the next resume asserts it again.
+    @ObservationIgnored private var sessionNeedsReassert = false
+
+    init() {
+        interruptions = AudioInterruptionObserver { [weak self] in
+            self?.sessionNeedsReassert = true
+            self?.pause()
+        }
+    }
 
     /// Whether `fileName` is the loaded take *and* it is advancing. What a row's play/pause glyph
     /// binds to.
@@ -139,6 +152,10 @@ final class RecordingPlayer {
         guard let player, !isRunning else { return false }
         if player.currentTime >= (playUntil ?? player.duration) - 0.05 {
             player.currentTime = 0
+        }
+        if sessionNeedsReassert {
+            sessionNeedsReassert = false
+            AudioPlumbing.ensurePlaybackSession(label: "take-playback")
         }
         guard player.play() else {
             AudioPlumbing.log.error("RecordingPlayer: play() refused on resume")

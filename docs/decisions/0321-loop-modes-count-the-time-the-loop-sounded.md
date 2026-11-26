@@ -4,6 +4,10 @@
   on the simulator. Tomisin confirmed D1 the same day, sounded time rather than time with the app in
   front, taking the smaller number as the right trade. The device pass is owed.
 - **Date:** 2026-11-26
+- **Amended by:** ADR 0323 (2026-11-26) — **D3**: an interruption no longer leaves the loop playing
+  over silence with a flag to stop the count. The engine pauses itself and the loop stops, so ▶ comes
+  back and the count stops because the audio did; the flag is gone. D3's rule, that time after an
+  interruption isn't counted, stands, and so does the rest of this ADR.
 - **Amends:** ADR 0117 — *Two surfaces stay unlogged*: standalone Active listening has logged since
   #259 (2026-08-18), which no ADR recorded, and so has standalone Improvise. Both now log the time the
   loop sounded (D1). The paragraph's objection, that *"however long the screen was open"* is not an
@@ -100,7 +104,7 @@ player stays away. That is the reported bug again, by another door: start a loop
 video. So an interruption beginning (`AudioInterruption.began`, the rule a take already ends on) stops
 the count until the loop is stopped or started again.
 
-The ■ over silence is not fixed here. It is older than this ADR and it is a transport question.
+The ■ over silence is not fixed here. It is older than this ADR and it is a transport question, answered by ADR 0323.
 
 ### D4 — Routine blocks log the same length
 

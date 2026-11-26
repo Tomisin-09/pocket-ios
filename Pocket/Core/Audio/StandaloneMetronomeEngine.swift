@@ -116,6 +116,9 @@ final class StandaloneMetronomeEngine {
     // tick the cycle counts bar 0 from, re-captured and never carried across a phase re-anchor.
     var allowsClickWithdrawal = false
     var drillOriginTick: Int?
+    /// Pauses the click when a call or another app's audio stops it (ADR 0323): the `+Interruption` split.
+    @ObservationIgnored var interruptions: AudioInterruptionObserver?
+    @ObservationIgnored var sessionNeedsReassert = false
 
     /// Active-practice time banked before the current play stretch (grows on each pause).
     private var accumulatedSession: TimeInterval = 0
@@ -146,6 +149,7 @@ final class StandaloneMetronomeEngine {
 
     init() {
         clickVoice.attach(to: engine)
+        interruptions = AudioInterruptionObserver { [weak self] in self?.wasInterrupted() }
     }
 
     // MARK: - Transport
@@ -196,6 +200,7 @@ final class StandaloneMetronomeEngine {
     /// cleanly) and continue the session clock.
     func resume() {
         guard transport == .paused else { return }
+        restartAudioIfInterrupted()
         clickVoice.start()
         beginPlayStretch()
         pushNowPlaying()
@@ -255,9 +260,6 @@ final class StandaloneMetronomeEngine {
         pushNowPlaying()
     }
 
-    /// Nudge the tempo by `delta` BPM (the −/+ steppers).
-    func adjustBPM(by delta: Int) { setBPM(bpm + delta) }
-
     /// Apply a tempo and re-anchor the beat phase, clamped — the shared mechanism for a
     /// **manual** change (steppers / slider / tap) and a ramp restart. Returns whether the
     /// tempo actually changed. The hard re-anchor (`reanchorPhase`) is right here: a manual
@@ -309,9 +311,6 @@ final class StandaloneMetronomeEngine {
         subdivision = value
         reanchorPhase()
     }
-
-    /// The Italian tempo marking for the current tempo (ADR 0043, slice 1).
-    var tempoMarking: TempoMarking { TempoMarking.marking(forBPM: Double(bpm)) }
 
     // MARK: - Driving
 

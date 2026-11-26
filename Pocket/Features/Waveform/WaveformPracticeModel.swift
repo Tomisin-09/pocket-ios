@@ -124,10 +124,6 @@ final class WaveformPracticeModel {
     /// What the practice log will be told this visit sounded, and as what (ADR 0322). Brought up to
     /// date after every change that could move it, taken once as the screen closes: `+PracticeLog`.
     @ObservationIgnored var playedTime = SongPlayerTime()
-    /// An interruption stopped the engine under a transport that still reads as playing (the rule
-    /// ADR 0321 D3 set for the loop modes). Cleared when the transport next moves.
-    @ObservationIgnored var silencedByInterruption = false
-    @ObservationIgnored var interruptionObserver: NSObjectProtocol?
     // Edit-sheet targets are held as `uid`-keyed `StableRef`s, not the raw @Model, so a SwiftData
     // autosave promoting a freshly-created loop/marker's temporary `persistentModelID` doesn't read as
     // an identity change and dismiss the open sheet mid-edit (see `StableModelRef`).

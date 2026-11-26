@@ -51,7 +51,18 @@ final class SongPlayAlongModel {
     /// a song that doesn't loop. Its pause and play are the on-screen ones.
     private let nowPlaying = NowPlayingController()
 
-    init(song: Song) { self.song = song }
+    init(song: Song) {
+        self.song = song
+        engine.onInterrupted = { [weak self] in self?.wasInterrupted() }
+    }
+
+    /// A call or another app's audio has paused the engine (ADR 0323): the play-along pauses with it,
+    /// keeping its place, so Play picks the song up where it stopped. Nothing resumes by itself.
+    private func wasInterrupted() {
+        guard transport == .playing else { return }
+        transport = .paused
+        pushNowPlaying()
+    }
 
     var isRunning: Bool { transport != .stopped }
     /// Live playhead / total, in seconds — passthrough to the engine (observed through it).
