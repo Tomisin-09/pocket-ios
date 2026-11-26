@@ -15,7 +15,8 @@ import SwiftData
 /// A run that is **stopped by hand** logs nothing. That is deliberate — the log records completed
 /// unit-runs, and an aborted run has no honest length or tempo to claim. The **Metronome screen**
 /// is the exception (ADR 0242): it has no course to complete, so stopping is how it ends, and its
-/// length is the time the click sounded.
+/// length is the time the click sounded. So is the **song player** (ADR 0322), for the time its audio
+/// sounded, written as the screen closes.
 ///
 /// **The "one seam" above holds for the *ramped* screens only.** Ear training (ADR 0104) and
 /// improvising (ADR 0135) are a shared core view inside several different hosts, not one screen with
@@ -38,9 +39,15 @@ enum PracticeLogWriter {
     /// `minimumSeconds`: a ramp or a loop that ran at all was practice.
     nonisolated static let metronomeMinimumSeconds: Double = 30
 
-    /// The shortest run of `kind` the log keeps.
+    /// The shortest run of `kind` the log keeps. The song player's two kinds (ADR 0322) keep its floor,
+    /// for the Metronome's reason: it is also where you go to check what a song or a loop sounds like.
+    /// `SongPlayerTime` already holds a loop's run to it; this holds Exploring to it.
     nonisolated static func minimumSeconds(for kind: PracticeRunKind) -> Double {
-        kind == .metronome ? metronomeMinimumSeconds : minimumSeconds
+        switch kind {
+        case .metronome: metronomeMinimumSeconds
+        case .songPlayerLoop, .exploring: SongPlayerTime.floorSeconds
+        case .exercise, .loop, .earLoop, .improvise, .song, .other: minimumSeconds
+        }
     }
 
     /// Append one completed unit-run. Returns whether a row was written, so a caller can tell "logged"

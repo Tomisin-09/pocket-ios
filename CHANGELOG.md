@@ -24,6 +24,12 @@ ear training before it — so 1.0 and 1.1 each carry their own copy of that head
 ## [Unreleased]
 
 ### Changed
+- **The song player counts in the Practice log** (ADR 0322). It logged nothing, so looping a passage
+  there, or ramping it on the automator, counted only if you had started it from Practice. It now logs
+  the time it plays, not the time it's open. A loop you play for 30 seconds or more is listed under
+  **Loops** with that loop's other time. Everything else that plays there, making loops, adjusting
+  them, playing the song, is a new kind, **Exploring**, listed by song and counted like any other
+  practice, so a day of making loops is a day practised. A quick listen under 30 seconds isn't logged.
 - **The plan's promise says *your price*** (ADR 0320). Under the prices, the plan's screen now reads
   *"That's your price for as long as you keep the plan. Nothing you can do today will ever move behind
   a higher one."* It said *the founding price*, which stops being true once the founding window ends.

@@ -664,6 +664,16 @@ It is in the player because a stop from the lock screen happens in the backgroun
 `onChange` may not run until the app comes back. The write is on the screen because the same player
 plays *Watch it on the neck*, which is not practice.
 
+**What the song player logs** (ADR 0322): the time its audio sounded, split by what was sounding. A
+saved loop armed with no A/B span open is that loop; anything else (the song through, a span being set
+or adjusted) is *Exploring*. `WaveformPracticeModel` tells a pure `SongPlayerTime` what is sounding after
+every change that could move it: `PracticeAudioEngine.onPlayingChange` (a hook only the song player
+sets, fired as `isPlaying` flips, so a lock-screen pause is counted at once), the armed loop's and the
+span's `didSet`, and an interruption observed on the main queue. `endPlaybackSession` takes the visit's
+runs before it wipes the session state: one `songPlayerLoop` row per loop played for 30 s or more, and
+one `exploring` row on the song for the rest, a loop under 30 s included. Not in the engine, which the
+loop trainer and the play-along share and which log their own runs (ADR 0242 D3).
+
 **Count the notes** (ADR 0225) is a fourth section of the same `EarTrainingView` core: tap once for
 each note you hear, then name them. The pieces, from the audio up:
 

@@ -29,6 +29,7 @@ extension WaveformPracticeModel {
         // most-recently-practised — the home "Jump back in" card and the library's "recently
         // practised" ordering both read this. SwiftData autosaves the tracked song.
         song.lastPracticed = .now
+        beginCountingPlayedTime()       // the practice log's count of what sounds (ADR 0322)
         nowPlaying.activate(onPlay: { [weak self] in self?.engine.play() },
                             onPause: { [weak self] in self?.engine.pause() },
                             onToggle: { [weak self] in self?.engine.togglePlay() })
@@ -52,6 +53,7 @@ extension WaveformPracticeModel {
     /// screen is dismissed — rather than lingering until the model deallocs (and
     /// the global command center would otherwise keep the engine alive).
     func endPlaybackSession() {
+        logPlayedTime()                 // first: it reads the armed loop, which the wipe below clears (ADR 0322)
         nowPlaying.teardown()
         engine.onReachedEnd = nil       // the repeat hook must not outlive the screen (ADR 0124)
         engine.onTick = nil             // nor may the walkthrough's watcher (ADR 0220 D3)
