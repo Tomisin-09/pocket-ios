@@ -4,6 +4,29 @@ Deferred work that's intentionally parked — known, but not scheduled. Each ite
 notes enough context to pick it up cold. Promote to a branch (and an ADR if it
 closes off an alternative) when it's time to act.
 
+## What a freeform block's time should be (parked 2026-11-26, from ADR 0321 and ADR 0324)
+
+A freeform block (*Your own practice*: sight-reading, a teacher's assignment) logs from opening the block
+to **Done**, wall clock (`FreeformRunView.startedAt`). So the app left in the background mid-block logs
+the time away when Done is tapped, and in a routine the planned length runs out while away and logs it on
+return. The same hole ADR 0321 closed for Active listening and Improvise, and ADR 0324 for the play-along.
+**No evidence of it yet:** none of the phone's 471 rows (2026-11-26) is an inflated freeform run.
+
+It has no audio, so the loop modes' answer (the time it sounded) doesn't apply. Tomisin, 2026-11-26:
+*"this one is a bit tricky because I guess it doesn't factor in the screen timing out… let's leave it
+as-is for now but put a note in the backlog"*. The options weighed:
+
+- **Time with the app in front** (pause while Red Moon is in the background or the phone locked; the
+  elapsed readout shows the same). With the screen held awake (ADR 0050, the default) a phone left on
+  the stand still counts. With it off, the screen locking mid-sight-read cuts the count while the player
+  is still playing: Tomisin's objection.
+- **In front, or its click sounding.** As above, plus a locked phone while the block's own click plays.
+  Helps only blocks with a click.
+- **Capped at the planned length** in a routine. Standalone keeps the hole.
+
+Whichever is chosen needs an ADR amending 0136 F4 (the clock starts on appearance) and 0117, and the
+elapsed readout should show what will be logged.
+
 ## Moon themes, for 1.6 (decided 2026-11-22, ADR 0311)
 
 Eight themes picked in Settings → Appearance: Blood Moon (still the default and the brand), Blue,

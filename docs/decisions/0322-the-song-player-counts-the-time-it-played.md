@@ -3,6 +3,10 @@
 - **Status:** Accepted. Built on `pocket-484-song-player-counts-its-time` (2026-11-26) and driven on
   the simulator (Build notes). Tomisin agreed D1–D5 the same day. The device pass is owed.
 - **Date:** 2026-11-26
+- **Amended by:** ADR 0323 (2026-11-26) — **D5**: the model no longer watches for an interruption
+  itself. The engine pauses under one, and the pause reaches the count through `onPlayingChange` like any
+  other; the observer and the flag are gone, and `SongPlayerTime.sounding` takes no `silenced` input.
+  Who counts and who writes stands, and so does the rest of this ADR.
 - **Amends:** ADR 0241 — **D3** named the song library among the parts of the app the log *"has no
   rows for … and was never meant to"*. The song player now writes rows: runs of what was played, for
   the time its audio sounded (D1), not a part of the app being open. D3's refusal to time screens

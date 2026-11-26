@@ -46,7 +46,10 @@ struct MyTabsView: View {
 
     private var list: some View {
         List {
-            ForEach(visible) { tab in
+            // Keyed by `uid`, not the model's own id: a tab written this visit gets a new persistent id at
+            // its first save, which autosave makes whenever it runs, and a row keyed on that is replaced
+            // under the finger, so the tap that should open it does nothing (docs/swiftdata-gotchas.md).
+            ForEach(visible, id: \.uid) { tab in
                 NavigationLink { WrittenTabView(tab: tab) } label: { row(tab) }
                     .listRowBackground(PocketColor.background)
                     .pocketRowActions(tab.displayTitle,

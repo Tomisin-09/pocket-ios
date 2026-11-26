@@ -51,7 +51,40 @@ final class SongPlayAlongModel {
     /// a song that doesn't loop. Its pause and play are the on-screen ones.
     private let nowPlaying = NowPlayingController()
 
-    init(song: Song) { self.song = song }
+    /// The practice log's clock (ADR 0324): how long the song has sounded on this visit, across every
+    /// pause. Kept here rather than on the screen because a pause from the lock screen reaches the engine
+    /// in the background, where a view's `onChange` may not run until the app comes back (ADR 0321 D2).
+    @ObservationIgnored private var sounded = SoundedTime()
+
+    init(song: Song) {
+        self.song = song
+        engine.onInterrupted = { [weak self] in self?.wasInterrupted() }
+        // Whatever moved the transport — a button, the lock screen, a call (ADR 0323), the song ending —
+        // the count follows what the engine is doing now.
+        engine.onPlayingChange = { [weak self] in self?.syncSoundedTime() }
+    }
+
+    /// Bring the count up to what the engine is playing.
+    private func syncSoundedTime() {
+        if engine.isPlaying {
+            sounded.began(at: .now, uptime: PlayClock.now)
+        } else {
+            sounded.ended(uptime: PlayClock.now)
+        }
+    }
+
+    /// What this visit logs (ADR 0324): from when the song first sounded, for as long as it sounded,
+    /// with every pause left out, then start over. `nil` when it never played. Taken by the screen on
+    /// Done or at the song's end, never here: Skip and exit log nothing (ADR 0266 D4).
+    func takeSoundedRun() -> DateInterval? { sounded.take(uptime: PlayClock.now) }
+
+    /// A call or another app's audio has paused the engine (ADR 0323): the play-along pauses with it,
+    /// keeping its place, so Play picks the song up where it stopped. Nothing resumes by itself.
+    private func wasInterrupted() {
+        guard transport == .playing else { return }
+        transport = .paused
+        pushNowPlaying()
+    }
 
     var isRunning: Bool { transport != .stopped }
     /// Live playhead / total, in seconds — passthrough to the engine (observed through it).

@@ -64,6 +64,10 @@ struct PocketApp: App {
             if UITestRuntime.walkthroughIsOpen { AppSettings.resetSongWalkthroughForUITest() }
             // And the hold tips' (ADR 0244): the first run retires the tag it shows.
             if UITestRuntime.gestureHintsAreOpen { AppSettings.resetGestureHints() }
+            #if DEBUG
+            // A UI test's stand-in for a call (ADR 0323). Debug only, so no build a player holds listens.
+            UITestInterruptionDrill.listen()
+            #endif
         }
     }
 

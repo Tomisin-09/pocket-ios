@@ -454,7 +454,8 @@ count the same way: the time the loop played, not the time the screen was open, 
 before leaving Red Moon stops counting when you stop it. So does the
 [song player](looping.md#what-the-practice-log-counts): a loop you play there for 30 seconds or more
 is listed under **Loops** with that loop's other time, and the rest of what plays there, making loops
-and playing the song, is **Exploring**, listed by song. An exercise or loop you have
+and playing the song, is **Exploring**, listed by song. A play-along in a routine counts the time the
+song played too, so a song block left paused doesn't add up while you're away. An exercise or loop you have
 deleted keeps its minutes and is marked *Deleted*. Play-alongs from before Red Moon
 started noting which song they were are listed together as *Song not recorded*.
 

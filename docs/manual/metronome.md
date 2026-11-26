@@ -17,7 +17,7 @@ brings you back.
 
 **Start** at the bottom begins the click; it becomes **Pause** while it runs and **Resume** after.
 A **■** appears beside it once anything is running: pause keeps the sitting, stop ends it and zeroes
-it.
+it. A call coming in, or headphones coming out, pauses the click; **Resume** carries on when you're ready.
 
 **Time with the click counts as practice.** When a sitting ends — with **■**, or by leaving the
 screen — the time the click sounded goes into your [practice log](journal-and-practice-log.md#the-practice-log)

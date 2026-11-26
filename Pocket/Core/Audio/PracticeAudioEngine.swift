@@ -30,6 +30,13 @@ final class PracticeAudioEngine {
     /// Fired once per display frame while playing, after `currentTime` moves: the model-side playhead
     /// watcher ADR 0220 D3 needs, which ADR 0153 keeps out of every view body.
     var onTick: ((TimeInterval) -> Void)?
+    /// Fired when a call, another app's audio or the output going away has cut this engine, after it
+    /// has paused itself (ADR 0323). An owner with a transport of its own (`LoopRunModel`, `SongPlayAlongModel`) moves it.
+    var onInterrupted: (() -> Void)?
+    @ObservationIgnored private var interruptions: AudioInterruptionObserver?
+    /// An interruption deactivated the session, so the next start asserts it again (ADR 0323 D3).
+    /// Internal for the `+Interruption` split, which sets it.
+    @ObservationIgnored var sessionNeedsReassert = false
 
     private let engine = AVAudioEngine()
     let player = AVAudioPlayerNode()
@@ -88,6 +95,7 @@ final class PracticeAudioEngine {
         // untouched. Set once: it must not move under the player mid-session.
         engine.mainMixerNode.outputVolume = AudioMath.headroomTrim(
             peakClick: ClickTimbre.loudestPeakAmplitude)
+        interruptions = AudioInterruptionObserver { [weak self] in self?.wasInterrupted() }
     }
 
     /// Open `url` and wire it into the graph. The header read happens off the main
@@ -326,6 +334,10 @@ final class PracticeAudioEngine {
     }
 
     func startEngineIfNeeded() {
+        if sessionNeedsReassert {
+            sessionNeedsReassert = false
+            AudioPlumbing.ensurePlaybackSession(label: "practice")
+        }
         AudioPlumbing.startIfNeeded(engine, label: "practice")
         // Starting the engine initialises the stretcher's audio unit, and `'tmpt'`'s rate and pitch are
         // raw parameter writes rather than retained Swift properties (ADR 0140 §4). One write each here
