@@ -19,7 +19,7 @@ final class SongMapCopyUITests: UITestCase {
         let riff = openMap(in: app)
         let before = Set(app.buttons.matching(notesPiece).allElementsBoundByIndex.map(\.label))
 
-        riff.press(forDuration: 1.0)
+        holdForMenu(riff)
         let copyTo = app.buttons["Copy to…"]
         XCTAssertTrue(copyTo.waitForExistence(timeout: Self.uiTimeout), "the riff's hold menu has no Copy to…")
         copyTo.tap()
@@ -36,7 +36,7 @@ final class SongMapCopyUITests: UITestCase {
         XCTAssertTrue(copy.waitForExistence(timeout: Self.uiTimeout), "no new piece on the map after Copy")
         let name = copy.label
         attach(app, named: "copy-made")
-        copy.press(forDuration: 1.0)
+        holdForMenu(copy)
         let remove = app.buttons["Remove copy"]
         XCTAssertTrue(remove.waitForExistence(timeout: Self.uiTimeout),
                       "a copy the map just made offers no Remove copy")
@@ -50,7 +50,7 @@ final class SongMapCopyUITests: UITestCase {
         XCTAssertEqual(Set(app.buttons.matching(notesPiece).allElementsBoundByIndex.map(\.label)), before,
                        "removing the copy changed something else on the map")
 
-        riff.press(forDuration: 1.0)
+        holdForMenu(riff)
         XCTAssertTrue(app.buttons["Copy to…"].waitForExistence(timeout: Self.uiTimeout))
         XCTAssertFalse(app.buttons["Remove copy"].exists, "a loop the player made offers Remove copy")
     }
@@ -76,6 +76,16 @@ final class SongMapCopyUITests: UITestCase {
         let riff = app.buttons["Verse riff, notes"]
         XCTAssertTrue(tap(map, until: riff, in: app), "the riff's piece isn't on the map")
         return riff
+    }
+
+    /// Hold a piece for its menu. Two seconds, not the suite's usual one: right after a copy the app is
+    /// busy, and on CI a one-second hold let go while the context menu was still lifting, which iOS reads
+    /// as a tap, so the copy's tab opened instead of its menu (three retries, 23–24 Nov; the run's video
+    /// shows the lift starting and the tab sheet opening). Holding past the menu's opening costs nothing:
+    /// it stays open. `GestureHintUITests` met the same thing and holds for 1.5.
+    @MainActor
+    private func holdForMenu(_ piece: XCUIElement) {
+        piece.press(forDuration: 2.0)
     }
 
     @MainActor
