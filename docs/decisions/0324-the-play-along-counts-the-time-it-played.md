@@ -1,7 +1,7 @@
 # ADR 0324 — The play-along counts the time it played
 
-- **Status:** Accepted. Built on `pocket-486-play-along-counts-its-time` (2026-11-26), on top of
-  ADR 0323's branch, whose engine pause this relies on. Tomisin asked for it the same day, after
+- **Status:** Accepted. Built on `pocket-488-calls-play-along-and-flakes` (PR #478, 2026-11-26),
+  with ADR 0323, whose engine pause this relies on. Tomisin asked for it the same day, after
   ADR 0321 named the play-along as one of two timers it left open. The device pass is owed.
 - **Date:** 2026-11-26
 - **Amends:** ADR 0266 — **D3** logged a looping play-along *"from the moment Play along was
