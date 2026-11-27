@@ -79,6 +79,7 @@ export function RedMoonFooter() {
           <Link href="/story">Liner notes</Link>
           <Link href="/support">Support</Link>
           <Link href="/privacy">Privacy</Link>
+          <Link href="/press">Press</Link>
           <a
             href="https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
             target="_blank"

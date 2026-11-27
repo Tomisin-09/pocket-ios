@@ -1360,3 +1360,131 @@ body:has(.rm-dark) { background: var(--rm-ink); }
 }
 .privacy-section h2[id] { scroll-margin-top: 1.25rem; }
 .rm-page .section-label a { color: inherit; text-decoration: none; }
+
+/* ---- RED MOON — PRESS KIT ---- */
+/* A cream reading page like Support, with a fact list, copy a writer can lift whole, and downloads. */
+.rm-press-facts {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: .85rem 1.25rem;
+  margin: 0;
+}
+.rm-press-facts dt {
+  font-size: .72rem;
+  font-weight: 500;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding-top: .28rem;
+}
+.rm-press-facts dd {
+  margin: 0;
+  font-size: .95rem;
+  font-weight: 300;
+  line-height: 1.7;
+  color: var(--stone-600);
+  text-wrap: pretty;
+}
+.rm-press-facts a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+@media (max-width: 560px) {
+  .rm-press-facts { grid-template-columns: 1fr; gap: .2rem; }
+  .rm-press-facts dd { margin-bottom: .9rem; }
+}
+
+/* Lift-ready copy: set off from the page's own prose, so it's clear where it starts and ends */
+.rm-press-copy {
+  padding: 1.25rem 1.5rem;
+  border-left: 2px solid var(--accent);
+  background: var(--stone-50);
+  border-radius: 0 12px 12px 0;
+}
+.rm-press-copy p { color: var(--stone-700); }
+
+.privacy-section ul.rm-press-shots {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: .9rem;
+  margin-top: 1.25rem;
+}
+.privacy-section ul.rm-press-shots li { padding: 0; }
+.privacy-section ul.rm-press-shots li::before { content: none; }
+@media (max-width: 600px) {
+  .privacy-section ul.rm-press-shots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.rm-press-shot {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  text-decoration: none !important;
+}
+.rm-press-shot img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 1px 0 var(--stone-200), 0 6px 18px rgba(28, 25, 23, .14);
+}
+.rm-press-shot span {
+  font-size: .72rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.rm-press-assets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin: 1.25rem 0 1.5rem;
+}
+@media (max-width: 560px) {
+  .rm-press-assets { grid-template-columns: 1fr 1fr; }
+}
+.rm-press-assets figure { margin: 0; display: flex; flex-direction: column; gap: .7rem; }
+.rm-press-tile {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  border: 1px solid var(--stone-200);
+  background: var(--stone-50);
+  overflow: hidden;
+}
+.rm-press-tile img { width: 100%; height: auto; }
+.rm-press-tile-dark { background: #0F0F0F; border-color: #0F0F0F; padding: 18%; }
+.rm-press-tile-dark img { width: auto; max-width: 100%; max-height: 100%; height: auto; }
+.rm-press-assets figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  font-size: .88rem;
+  font-weight: 500;
+  color: var(--stone-700);
+}
+.rm-press-assets figcaption a {
+  font-size: .82rem;
+  font-weight: 300;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.rm-press-maker {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 1.75rem;
+  align-items: start;
+}
+.rm-press-maker figure { margin: 0; display: flex; flex-direction: column; gap: .5rem; }
+.rm-press-maker img { width: 100%; height: auto; border-radius: 12px; }
+.rm-press-maker figcaption a {
+  font-size: .82rem;
+  font-weight: 300;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+@media (max-width: 560px) {
+  .rm-press-maker { grid-template-columns: 1fr; }
+}
+.rm-press-maker figcaption { display: flex; flex-direction: column; gap: .2rem; }
+.rm-press-credit { font-size: .8rem; font-weight: 300; line-height: 1.5; color: var(--stone-500); }
